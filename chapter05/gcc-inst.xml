@@ -1,3 +1,5 @@
+<sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
+
 <sect2>
 <title>Installation of GCC</title>
 
@@ -11,17 +13,92 @@ that override default optimizations, such as CFLAGS and CXXFLAGS, we
 recommend unsetting or modifying them when building GCC. You have
 been warned.</para>
 
-<para>Install GCC by running the following commands:</para>
+<para>It is recommended by the GCC installation documentation to build
+GCC outside of the source directory in a dedicated directory:</para>
 
-<para><screen><userinput>mkdir ../gcc-build &amp;&amp;
-cd ../gcc-build &amp;&amp;
-../gcc-&gcc-version;/configure --prefix=/static \
+<para><screen><userinput>mkdir ../gcc-build
+cd ../gcc-build</userinput></screen></para>
+
+<para>Prepare GCC to be compiled:</para>
+
+<para><screen><userinput>../gcc-&gcc-version;/configure --prefix=/static \
 &nbsp;&nbsp;&nbsp;--disable-nls --disable-shared \
 &nbsp;&nbsp;&nbsp;--with-as=$LFS/static/bin/as \
-&nbsp;&nbsp;&nbsp;--with-ld=$LFS/static/bin/ld &amp;&amp;
-make BOOT_LDFLAGS="-static" bootstrap &amp;&amp;
-make prefix=$LFS/static install-no-fixedincludes &amp;&amp;
-ln -s gcc $LFS/static/bin/cc</userinput></screen></para>
+&nbsp;&nbsp;&nbsp;--with-ld=$LFS/static/bin/ld</userinput></screen></para>
+
+<para>The meaning of the configure options are:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--prefix=/static:</userinput> This is NOT a
+typo. GCC hard codes some paths while compiling and so we need to pass
+<filename class="directory">/static</filename> as the prefix during the
+configure stage. We pass the real install prefix during the installation
+stage later on.</para></listitem>
+
+<listitem><para><userinput>--disable-shared:</userinput> This prevents the
+build of dynamic libraries. They are useless to us at the moment. We'll
+create them when we reinstall GCC in chapter 6.</para></listitem>
+
+<listitem><para><userinput>--with-as=$LFS/static/bin/as and
+--with-ld=$LFS/static/bin/ld:</userinput> GCC can be miscompiled if your
+host distribution's Binutils package is quite old. We need a good working
+static GCC until we reinstall GCC later in chapter 6. So by using
+<filename>as</filename> and <filename>ld</filename> from the Binutils
+package we compiled earlier in this chapter we ensure that GCC will work
+correctly.</para></listitem>
+</itemizedlist>
+
+<para>Continue with compiling the package:</para>
+
+<para><screen><userinput>make BOOT_LDFLAGS="-static" bootstrap</userinput></screen></para>
+
+<para>The meaning of the make options are:</para>
+
+<itemizedlist>
+<listitem><para><userinput>BOOT_LDFLAGS="-static":</userinput> This is
+GCC's equivalent to make LDFLAGS="-static" as we use with other packages to
+compile them statically.</para></listitem>
+
+<listitem><para><userinput>bootstrap:</userinput> The
+<emphasis>bootstrap</emphasis> target doesn't just compile GCC, but it
+compiles GCC a second time. It uses the first compiled programs to compile
+itself a second and third time to make sure the compiler compiled properly
+and can compile itself properly.</para></listitem>
+</itemizedlist>
+
+<para>And finish off installing the package:</para>
+
+<para><screen><userinput>make prefix=$LFS/static install-no-fixedincludes</userinput></screen></para>
+
+<para>The meaning of the make option is:</para>
+
+<itemizedlist>
+<listitem><para><userinput>install-no-fixedincludes:</userinput> This prevents
+the fixincludes script from running. Preventing this is necessary because
+under normal circumstances the GCC installation will run the fixincludes
+script which scans your system for header files that need to be fixed. It
+might find that the Glibc header files of your host system need to be fixed.
+If so, it will fix them and put them in
+<filename>$LFS/static/lib/gcc-lib/i686-pc-linux-gnu/3.2</filename>. Later on
+in chapter 6 you will install Glibc which will put its header files in
+<filename>/usr/include</filename>. Next you will install other programs that
+use the Glibc headers. GCC will look in
+<filename>/static/lib/gcc-lib</filename> before looking in
+<filename>/usr/include</filename>, with the result of finding and using the
+fixed Glibc header files from your host distribution, which are probably
+incompatible with the Glibc version actually used on the LFS
+system.</para></listitem>
+</itemizedlist>
+
+<para>As the finishing touch we'll create the <filename
+class="symlink">$LFS/static/bin/cc</filename> symlink. A lot of programs
+and scripts try to run <userinput>cc</userinput> instead of
+<userinput>gcc</userinput> This is to keep programs generic and usable on
+all kinds of Unix systems. Not everybody has GNU CC installed. Just running
+cc (C Compiler) leaves the user free to decide which C compiler to install.
+The symlink will point to the system's default compiler.</para>
+
+<para><screen><userinput>ln -s gcc $LFS/static/bin/cc</userinput></screen></para>
 
 </sect2>
 
