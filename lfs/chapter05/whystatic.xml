@@ -1,62 +1,67 @@
 <sect1 id="ch05-whystatic">
-<title>Why do we use static linking?</title>
+<title>Pourquoi utiliser une édition de lien statique ?</title>
 <?dbhtml filename="whystatic.html" dir="chapter05"?>
 
-<para>Thanks to Plasmatic for posting the text on which this is mainly
-based to one of the LFS mailing lists.</para>
+<para>Merci à Plasmatic d'avoir posté, dans une des listes de diffusion, le 
+texte sur lequel cette partie est principalement fondée.</para>
 
-<para>When making (compiling) a program, rather than having to rewrite all the
-functions for dealing with the kernel, hardware, files, etc. every time you
-write a new program, all these basic functions are instead kept in libraries.
-glibc, which you install later, is one of these major libraries, which
-contains code for all the basic functions programs use, like opening files,
-printing information on the screen, and getting feedback from the user. When
-the program is compiled, these libraries of code are linked together with the
-new program, so that it can use any of the functions that the library
-has.</para>
+<para>Lorsque l'on crée (compile) un programme, plutôt que d'avoir à 
+réécrire l'ensemble des fonctions nécessaires à l'accès au noyau, au
+matériel, aux fichiers, etc. on récupère toutes ces fonctions de base
+dans des bibliothèques. glibc, que l'on installera plus tard, est une
+des principales bibliothèques, qui contient le code pour toutes les fonctions
+de base nécessaires aux programmes, telles que l'accès aux fichiers, 
+l'affichage d'informations à l'écran, et les comptes-rendus aux utilisateurs.
+A la compilation du programme, ces bibliothèques sont liées au nouveau 
+programme, de façon à ce qu'il puisse utiliser toutes les fonctions contenues
+dans les bibliothèques.</para>
 
-<para>However, these libraries can be very large (for example, libc.a from
-can often be around 2.5MB), so you may not want a separate copy of each
-library attached to the program. Just imagine if you had a simple command
-like ls with an extra 2.5MB attached to it! Instead of making the library
-an actual part of the program, or statically linked, the library is kept a
-separate file, which is loaded only when the program needs it. This is what
-we call dynamically linked, as the library is loaded and unloaded dynamically,
-as the program needs it.</para>
+<para>Cependant, ces bibliothèques peuvent être assez volumineuses (par 
+exemple, libc.a approche régulièrement les 2,5Mo), vous ne voudrez sans doute
+pas dupliquer chaque bibliothèque liée à votre programme. Imaginez que vous 
+ayez une commande simple comme ls liée avec une bibliothèque de 2,5Mo! Au lieu
+de fusionner la bibliothèque et le programme, ce qui correspond à une édition 
+de liens statique, mieux vaut la laisser dans un fichier indépendant et ne la 
+charger qu'en cas de besoin. C'est cette édition de liens dynamiques qui permet
+de charger et décharger dynamiquement une bibliothèque selon les besoins du 
+programme.</para>
 
-<para>So now we have a 1kb file and a 2.5MB file, but we still haven't saved any
-space (except maybe RAM until the library is needed). The REAL advantage to
-dynamically linked libraries is that we only need one copy of the library.
-If <filename>ls</filename> and <filename>rm</filename> both use the same 
-library, then we don't need two copies of the
-library, as they can both get the code from the same file.  
-Even when in memory, both programs share the same code, rather than loading
-duplicates into memory. So not only are we saving hard disk space, but also
-precious RAM.</para>
+<para>Nous avons maintenant un fichier de 1Ko et un de 2.5Mo, mais somme toute
+nous n'avons pas économisé d'espace mémoire (excepté peut-être en 
+mémoire vive jusqu'à ce que l'on utilise la bibliothèque). L'avantage 
+REEL de l'édition de liens dynamiques est qu'il nous suffit d'une seule
+copie de cette bibliothèque.
+Si <filename>ls</filename> et <filename>rm</filename>utilisent tous deux la 
+même bibliothèque, ils n'ont pas besoin de deux copies de cette bibliothèque, 
+alors qu'ils peuvent tous les deux accéder au code d'un seul et même fichier.  
+Même en mémoire, les deux programmes se partagent le même code, plutôt que de
+le dupliquer en mémoire. Du coup, nous n'économisons pas seulement l'espace 
+disque, mais aussi la mémoire vive si précieuse.</para>
 
-<para>If dynamic linking saves so much room, then why are we making everything
-statically linked?  Well, that's because when you chroot into your brand new
-(but very incomplete) LFS environment, these dynamic libraries won't be
-available because they are somewhere else in your old directory tree
-(<filename>/usr/lib</filename> for example) which won't be accessible 
-from within your LFS root (<filename>$LFS</filename>).</para>
+<para>Si l'édition de liens dynamiques a tous ces avantages, pourquoi utiliser
+alors exclusivement l'édition de liens statiques ?
+Et bien, c'est parce que lorsque vous exécuterez chroot dans votre flambant 
+neuf (mais plutôt incomplet) environnement LFS, ces bibliothèques dynamiques
+ne seront pas disponibles car elles se situeront dans votre ancienne 
+arborescence de répertoires (<filename>/usr/lib</filename> par exemple) qui 
+ne sera pas accessible depuis votre racine LFS (<filename>$LFS</filename>).</para>
 
-<para>So in order for your new programs to run inside the chroot environment you
-need to make sure that the libraries are statically linked when you build
-them, hence the <userinput>--enable-static-link</userinput>, 
-<userinput>--disable-shared</userinput>, and
-<userinput>-static</userinput> flags used
-through Chapter 5. Once in Chapter 6, the first thing we do is build the
-main set of system libraries, glibc. Once this is made we start rebuilding 
-all the programs we just did in Chapter 5, but this time dynamically linked, 
-so that we can take advantage of the space saving opportunities.</para>
+<para>Ainsi, pour que vos nouveaux programmes fonctionnent dans l'environnement
+chroot vous devrez être sûr que les bibliothèques soient liées statiquement lorsque 
+vous les compilerez, ce qui explique les options 
+<userinput>--enable-static-link</userinput>, <userinput>--disable-shared</userinput>,
+et <userinput>-static</userinput> utilisées tout au long du chapitre 5.
+Au Chapitre 6, la première chose que nous ferons sera la création de la principale
+bibliothèque du système, glibc. Cela fait, nous commencerons à recréer tous les
+programmes étudiés au chapitre 5, mais en les liant dynamiquement cette fois,
+de façon à profiter du gain d'espace proposé par cette méthode.</para>
 
-<para>And there you have it, that's why you need to use those weird
-<userinput>-static</userinput> flags.  If you try building everything 
-without them, you'll see very quickly what
-happens when you chroot into your newly crippled LFS system.</para>
+<para>Et maintenant vous savez pourquoi utiliser cette mystérieuse option 
+<userinput>-static</userinput>.  Si vous essayer de ne pas l'utiliser,
+vous verrez très rapidement ce qui arrivera lors de l'exécution du chroot 
+dans votre nouveau et imparfait système LFS.</para>
 
-<para>If you want to know more about Dynamically Linked Libraries, consult a 
-book or website on programming, especially a Linux-related site.</para>
+<para>Si vous voulez en savoir plus sur l'édition de liens dynamiques, consultez un 
+ouvrage ou un site web sur la programmation, plus spéciallement consacré à Linux.</para>
 
 </sect1>
