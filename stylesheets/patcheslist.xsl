@@ -30,7 +30,17 @@
       <xsl:text>  cp </xsl:text>
       <xsl:value-of select="$deep.to.downloads"/>
       <xsl:text>downloads/</xsl:text>
-      <xsl:value-of select="substring-before (substring-after(@url, $links.directory), '-')"/>
+      <xsl:if test="contains (@url, '-')">
+        <xsl:variable name="cut" select="translate (@url, '0123456789', '2222222222')"/>
+        <xsl:choose>
+          <xsl:when test="contains ($cut, ',')">
+            <xsl:value-of select="substring-before (substring-after($cut, $links.directory), ',2')"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="substring-before (substring-after($cut, $links.directory), '-2')"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:if>
       <xsl:text>/</xsl:text>
       <xsl:value-of select="substring-after(@url, $links.directory)"/>
       <xsl:text> . &amp;&amp;&#x0a;</xsl:text>
