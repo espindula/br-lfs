@@ -6,48 +6,55 @@
 
 <para>Le but ici est de créer un "disque de démarrage de dépannage" qui
 chargera assez 'linux' pour vous permettre de faire des opérations de dépannage.
-Avec ce qui est présenté ici, vous serez capable de faire des manipulations de
+Ce qui est présenté ici est suffisant pour faire des manipulations de
 fichiers, de monter et démonter, ainsi que d'autres tâches. Ceci n'est pas
 néanmoins une limite. Le disque minimal est décrit ici, et vous pouvez ajouter
 tout ce qui pourra tenir dans la disquette.</para>
 
 <para>Disque de démarrage/Disque de dépannage</para>
 
-<para>Tout d'abord, nous allons créer un fichier loopback pour construire une
-image du disque de dépannage, puis nous créerons un système de fichiers sur le
-fichier image, ensuite nous utiliserons 'mount' pour monter le fichier comme
-un disque standard, nous permettant de lire et écrire des fichiers sur le
-fichier loopback. Les commandes suivantes construisent une image de 4Mo.</para>
-<screen><userinput>dd if=/dev/zero of=/tmp/rfloppy bs=1k count=4096 &amp;&amp;
+<para>Tout d'abord, nous allons créer un fichier loopback sur lequel nous allons
+construire le système de fichiers racine pour notre image disque de dépannage.
+Ceci est habituellement connu sous le nom de ramdisk initial, ou initrd en plus
+court, et il est automatiquement chargé lors du processus de démarrage si
+toute la configuration est faite correctement.</para>
+
+<para>Ensuite, nous créerons un système de fichiers sur le fichier loopback et
+utiliserons <command>mount</command> pour monter le fichier loopback comme un
+disque ordinaire, nous permettant de lire et d'écrire des fichiers. Les
+commandes suivantes nous construirons une image de 4 Mo.</para>
+
+<screen><userinput><command>dd if=/dev/zero of=/tmp/rfloppy bs=1k count=4096 &amp;&amp;
 mke2fs -m 0 -N 2000 /tmp/rfloppy &amp;&amp;
 mount -o loop /tmp/rfloppy /mnt/loop1 &amp;&amp;
-rmdir /mnt/loop1/lost+found/</userinput></screen>
+rmdir /mnt/loop1/lost+found/</command></userinput></screen>
 
 <para>Maintenant que nous avons un fichier monté et utilisable, nous allons le
 remplir de matériaux utiles. Comme ce n'est qu'une disquette de dépannage, nous
 aurons seulement besoin de mettre en place les répertoires minimums.</para>
 
-<para><screen><userinput>mkdir /mnt/loop1/{dev,proc,etc,sbin,bin,lib,mnt,usr,var}</userinput></screen></para>
+<screen><userinput><command>mkdir /mnt/loop1/{dev,proc,etc,sbin,bin,lib,mnt,usr,var}</command></userinput></screen>
 
 <para>Ensuite, nous allons mettre en place les fichiers périphériques. J'utilise
 devfs sur mon système, donc la commande suivante fonctionne bien, car je dispose
-seulement des périphériques que j'utilise. Si vous avez utilisé MAKEDEV pour
-créer vos fichiers périphériques, vous devrez faire le ménage dans le répertoire
-<filename>/mnt/loop1/dev</filename> pour réclamer les inodes perdues par tous
-les périphériques du répertoire <filename>dev</filename> que vous n'utilisez
-pas.</para>
+seulement des périphériques que j'utilise. Si vous avez utilisé
+<command>MAKEDEV</command> pour créer vos fichiers périphériques, vous devrez
+faire le ménage dans le répertoire <filename>/mnt/loop1/dev</filename> pour
+réclamer les inodes perdues par tous les périphériques du répertoire
+<filename>dev</filename> que vous n'utilisez pas.</para>
 
-<para><screen><userinput>cp -dpR /dev/* /mnt/loop1/dev</userinput></screen></para>
+<screen><userinput><command>cp -dpR /dev/* /mnt/loop1/dev</command></userinput></screen>
 
 <para>Maintenant pour le répertoire <filename>/etc</filename>. Pour commencer,
 tout ce que nous ferons est d'utiliser les fichiers passwd et group, qui
 fonctionnaient, dans un environnement statique chroot lors de la construction
-de LFS. Nous copierons aussi les scripts de démarrage et quelques autres
-fichiers qui servent bien comme point d'entrée.</para>
-<para><screen><userinput>cp -ax /etc/rc* /mnt/loop1/etc
+de <acronym>LFS</acronym>. Nous copierons aussi les scripts de démarrage et
+quelques autres fichiers qui servent bien comme point d'entrée.</para>
+
+<screen><userinput><command>cp -ax /etc/rc* /mnt/loop1/etc
 cp -ax /etc/fstab /mnt/loop1/etc
 echo "root:x:0:0:root:/root:/bin/bash" &gt; /mnt/loop1/etc/passwd
-cat &gt; /mnt/loop1/etc/group &lt;&lt; "EOF"
+cat &gt; /mnt/loop1/etc/group &lt;&lt; "EOF"</command>
 root:x:0:
 bin:x:1:
 sys:x:2:
@@ -60,25 +67,24 @@ disk:x:8:
 lp:x:9:
 dialout:x:10:
 audio:x:11:
-EOF</userinput></screen>
-</para>
+<command>EOF</command></userinput></screen>
 
 <para>Pour empêcher le montage automatique des partitions des disques durs,
 assurez-vous d'ajouter l'option noauto dans les entrées fstab. Ajoutez aussi les
 entrées suivantes dans <filename>/mnt/loop1/etc/fstab</filename> pour vous aider
 à monter notre disquette et l'image ram.</para>
-<para><screen>/dev/ram0       /               ext2    defaults
-/dev/fd0        /               ext2    defaults</screen></para>
+<screen><userinput>/dev/ram0       /               ext2    defaults
+/dev/fd0        /               ext2    defaults</userinput></screen>
 
 <para>Ensuite, nous installerons <ulink
 url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox</ulink>
 sur l'image. Busybox intègre un grand nombre des fonctions unix dans un seul
 petit exécutable.</para>
 
-<screen><userinput>make &amp;&amp;
+<screen><userinput><command>make &amp;&amp;
 make PREFIX=/mnt/loop1 install &amp;&amp;
 cp -ax /var/utmp /mnt/loop1/var &amp;&amp;
-mkdir /mnt/loop1/var/log</userinput></screen>
+mkdir /mnt/loop1/var/log</command></userinput></screen>
 
 <para>Conservez aussi en tête vos limitations en espace disque, copiez tous les
 autres binaires et bibliothèques, dont vous avez besoin, sur l'image. Utilisez
@@ -89,45 +95,47 @@ bibliothèques devront être copiées.</para>
 libérer ainsi des précieuses inodes sur la disquettes, nous allons aussi
 installer devfsd pour les périphériques que busybox attends de trouver.</para>
 
-<screen><userinput>mv GNUmakefile Makefile &amp;&amp;
+<screen><userinput><command>mv GNUmakefile Makefile &amp;&amp;
 make &amp;&amp;
 make PREFIX=/mnt/loop1 install &amp;&amp;
-cp /lib/libc.so.6 /lib/ld-linux.so.2 /lib/libdl.so.2 /tmp &amp;/&amp;
+cp /lib/libc.so.6 /lib/ld-linux.so.2 /lib/libdl.so.2 /tmp &amp;&amp;
 strip --strip-deb /tmp/ld-linux.so.2 /tmp/libc.so.6 /tmp/libdl.so.2 &amp;&amp;
-mv /tmp/ld-linux.so.2 /tmp/libc.so.6 /tmp/libdl.so.2 /mnt/loop1/lib/</userinput></screen>
+mv /tmp/ld-linux.so.2 /tmp/libc.so.6 /tmp/libdl.so.2 /mnt/loop1/lib/</command></userinput></screen>
+
 <para>Nous aurons aussi besoin mettre en place un script rc pour gérer le
 lancement de devfsd. Mettre ceci dans
 <filename>/mnt/loop1/etc/init.d/rcS</filename></para>
-<screen>#!/bin/sh
+
+<screen><userinput>#!/bin/sh
 mount -t devfs devfs /dev
-/sbin/devfsd /dev</screen>
+/sbin/devfsd /dev</userinput></screen>
 
 <para>Ensuite, créez votre système de fichiers root compressé. Nous utilisons
 l'option -9 avec gzip pour rendre l'image compressé la plus petite possible.
 </para>
-<screen><userinput>umount /mnt/loop1 &amp;&amp; dd if=/tmp/rfloppy bs=1k | gzip -v9 > rootfs.gz</userinput></screen>  
-<screen><userinput>ls -l rootfs.gz</userinput> pour s'assurer qu'il tient sur
-une disquette.
-</screen>
+
+<screen><userinput><command>umount /mnt/loop1 &amp;&amp; dd if=/tmp/rfloppy bs=1k | gzip -v9 > rootfs.gz</command></userinput></screen>  
+
+<para><userinput><command>ls -l rootfs.gz</command></userinput> pour s'assurer
+qu'il tient sur une disquette.</para>
+
 <para>Créez un noyau personnalisé optimisé en taille. Incluez seulement les
 fonctionnalités dont vous avez besoin pour dépanner votre système. Il n'y a
 aucun intérêt à construire le support de choses comme xfree86 dri, etc..., car
 la plupart des dépannages est réalisée à la ligne de commande.</para>
-<screen><userinput>dd if=rescueimg of=/dev/floppy/0 bs=1k</userinput>
+<screen><userinput><command>dd if=rescueimg of=/dev/floppy/0bs=1k</command>
         429+1 records in
         429+1 records out
-<userinput>rdev /dev/floppy/0 /dev/floppy/0</userinput>
-<userinput>rdev -R /dev/floppy/0 0</userinput>
-</screen>
+<command>rdev /dev/floppy/0 /dev/floppy/0
+rdev -R /dev/floppy/0 0</command></userinput></screen>
 
 <para>Dans cet exemple, l'image de dépannage (NOYAU) est de 429+1 blocs de
 taille. Nous nous en rappelerons pour la commande suivante. Nous allons
 maintenant écrire le système de fichiers root juste après le noyau sur la
 disquette en faisant 16384+429+1=16814 </para>
-<screen><userinput>rdev -r /dev/floppy/0 16738</userinput></screen>
 
-
-<screen><userinput>dd if=rootfs.gz of=/dev/floppy/0 bs=1k seek=430</userinput></screen>
+<screen><userinput><command>rdev -r /dev/floppy/0 16814
+dd if=rootfs.gz of=/dev/floppy/0 bs=1k seek=430</command></userinput></screen>
 
 <para>Dans cette commande, nous utilisons seek pour rechercher la fin du noyau
 (429+1) et écrire le système de fichiers root sur la disquette.</para>
