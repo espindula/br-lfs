@@ -7,9 +7,8 @@
     <!-- screen -->
   <xsl:template match="screen">
     <xsl:choose>
-        <!-- Temporally hack -->
       <xsl:when test="child::* = userinput">
-        <pre class="{name(.)}">
+        <pre class="userinput">
           <kbd class="command">
             <xsl:value-of select="."/>
           </kbd>
