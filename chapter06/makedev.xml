@@ -1,8 +1,9 @@
-<sect1 id="ch-system-MAKEDEV" xreflabel="Makedev">
-<title>Creating devices with Makedev-&makedev-version;</title>
-<?dbhtml filename="makedev.html" dir="chapter06"?>
+<sect1 id="ch-system-MAKEDEV" xreflabel="Make_devices">
+<title>Creating devices with Make_devices-&makedev-version;</title>
+<?dbhtml filename="makedevices.html" dir="chapter06"?>
 
-<para>The MAKEDEV package contains a script for making device nodes.</para>
+<para>The Make_devices package contains a script for creating device
+nodes.</para>
 
 <screen>&buildtime; &makedev-time;
 &diskspace; &makedev-compsize;</screen>
@@ -15,62 +16,79 @@
 <sect2>
 <title>Making devices</title>
 
-<para>Note that unpacking the <filename>MAKEDEV-&makedev-version;.bz2</filename>
-file doesn't create a directory for you to <command>cd</command> into, as
-the file contains only a shell script.</para>
+<para>Note that unpacking the
+<filename>make_devices-&makedev-version;.bz2</filename> file doesn't
+create a directory for you to <command>cd</command> into, as the file
+contains only a shell script.</para>
 
-<para>Install the <command>MAKEDEV</command> script:</para>
+<para>Install the <filename>make_devices</filename> script:</para>
 
-<screen><userinput>bzcat MAKEDEV-&makedev-version;.bz2 &gt; /dev/MAKEDEV
-chmod 754 /dev/MAKEDEV</userinput></screen>
+<screen><userinput>bzcat make_devices-&makedev-version;.bz2 &gt; /dev/make_devices
+chmod 754 /dev/make_devices</userinput></screen>
 
-<para>Run the script to create the device files:</para>
+<para>Device nodes are special files: things that can generate or receive data.
+They usually correspond to physical pieces of hardware, and can be created by
+issuing commands of the form: <command>mknod -m mode name type major
+minor</command>. In such a command, <emphasis>mode</emphasis> is the usual
+octal read/write/execute permissions triplet, and <emphasis>name</emphasis> is
+the name of the device file to be created. It may seem surprising, but the
+device name is actually arbitrary, except that most programs rely on devices
+such as <filename>/dev/null</filename> having their usual names. The remaining
+three parameters tell the kernel what piece of hardware the device node
+actually refers to. The <emphasis>type</emphasis> is a letter, either b or c,
+indicating whether the device is accessed in blocks (such as a hard disk) or
+character by character (such as the console). And <emphasis>major</emphasis>
+and <emphasis>minor</emphasis> are numbers, together forming a code that
+identifies the device to the kernel. A list of the currently assigned device
+numbers for Linux can be found in the file <filename>devices.txt</filename> in
+the <filename class="directory">Documentation</filename> subdirectory of the
+kernel sources.</para>
+
+<para>Note that the same major/minor combination are usually assigned to both a
+block and a character device. These are, however, completely unrelated devices
+that cannot be interchanged. A device is identified by the type/major/minor
+triple, not just the major/minor pair, so when creating a device node it is
+important to choose the correct <emphasis>type</emphasis> of device.</para>
+
+<para>Because looking up the type/major/minor triples and using
+<command>mknod</command> manually is tedious and error-prone, the
+<filename>make_devices</filename> script has been created. It contains a whole
+series of <command>mknod</command> commands, one for each device, complete with
+recommended name, permissions and group assignment. It has been set up so that
+only a minimal set of commonly used devices is enabled and the other lines are
+commented out. You should open <filename>make_devices</filename> in an editor
+and customize it to your needs. This takes some time, but is very simple. When
+you are satisfied, run the script to create the device files:</para>
 
 <screen><userinput>cd /dev
-./MAKEDEV -v generic-nopty</userinput></screen>
+./make_devices</userinput></screen>
 
-<para>The meaning of the arguments:</para>
+<para>(The FHS states that there should be a <filename>MAKEDEV</filename>
+script present in the <filename class="directory">/dev</filename> directory.
+But the FHS is mistaken: it should not dictate anything about files, and limit
+itself to directories.)</para>
 
-<itemizedlist>
-<listitem><para><userinput>-v</userinput>: This tells the script to run in
-verbose mode.</para></listitem>
-
-<listitem><para><userinput>generic-nopty</userinput>: This instructs
-<command>MAKEDEV</command> to create a generic selection of commonly used
-device special files, except for the ptyXX and ttyXX range of files. We don't
-need those files because we are going to use Unix98 PTYs via the
-<emphasis>devpts</emphasis> file system.</para></listitem>
-</itemizedlist>
-
-<para>If it turns out that some special device <filename>zzz</filename> that
-you need is missing, try running <userinput>./MAKEDEV -v zzz</userinput>.
-Alternatively, you may create devices via the <command>mknod</command>
-program. Please refer to its man and info pages if you need more
-information.</para>
-
-<para>If you wish your system to be FHS-compliant, then the
-<filename>MAKEDEV</filename> script has to remain present in the
-<filename class="directory">/dev</filename> directory. This way it is always
-available for making extra device nodes.</para>
-
-<para>Additionally, if you were unable to mount the devpts file system earlier
-in <xref linkend="ch-system-proc"/>, now is the time to try the alternatives. If
-your kernel supports the devfs file system, run the following command to mount
+<para>If you had success with mounting the devpts file system earlier in <xref
+linkend="ch-system-proc"/>, you can continue with the next section. If you were
+unable to mount devpts, now is the time to try the alternatives. If your kernel
+supports the devfs file system, run the following command to mount
 devfs:</para>
 
 <screen><userinput>mount -t devfs devfs /dev</userinput></screen>
 
 <para>This will mount the devfs file system over the top of the new static
-<filename>/dev</filename> structure. This poses no problems, as the device nodes
-created are still present, they are just hidden by the new devfs
-file system.</para>
+<filename>/dev</filename> structure. This poses no problems, as the device
+nodes created are still present, they are just hidden by the new devfs file
+system.</para>
 
-<para>If this still doesn't work, the only option left is to use the MAKEDEV
-script to create the ptyXX and ttyXX range of files that would otherwise not be
-needed. Ensure you are still in the <filename>/dev</filename> directory then run
-<userinput>./MAKEDEV -v pty</userinput>. The downside of this is, we are
-creating an extra 512 device special files which will not be needed when we
-finally boot into the finished LFS system.</para>
+<para>If that didn't work either, the only option left is to create a few ptyXX
+and ttyXX device nodes. To do this, open <filename>make_devices</filename> in
+your editor, go to the section "Pseudo-TTY masters" and enable as many ptyXX
+devices as you think you will need (one for every active xterm, ssh connection,
+telnet connection, and so on). In the immediately following section "Pseudo-TTY
+slaves", enable the corresponding ttyXX devices. When you are done, rerun
+<command>./make_devices</command> from inside <filename>/dev</filename> to have
+it create the new devices.</para>
 
 </sect2>
 
