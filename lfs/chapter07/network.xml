@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
-"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
@@ -9,102 +8,108 @@
 <?dbhtml filename="network.html"?>
 
 <indexterm zone="ch-scripts-network">
-<primary sortas="d-network">réseau</primary>
-<secondary>configuration</secondary></indexterm>
+<primary sortas="d-network">network</primary>
+<secondary>configurer</secondary></indexterm>
 
-<para>Cette section n'est utile que si vous souhaitez configurer une
-carte réseau.</para>
+<para>Cette section s'applique seulement si une carte réseau doit être
+configurée.</para>
 
-<para>Si vous ne possédez aucune carte réseau, vous pouvez ne pas créer
-les fichiers de configuration en rapport avec celle-ci. Si c'est le
-cas, vous devez supprimer les liens symboliques de <filename>network</filename>
-de tous les répertoires des niveaux d'exécution
-(<filename class="directory">/etc/rc.d/rc*.d</filename>)</para>
-
-<sect2>
-<title>Configurer la passerelle par défaut</title>
-
-<para>Si vous êtes sur un réseau, vous pouvez avoir besoin de configurer la
-passerelle par défaut (un n&oelig;ud dans votre réseau qui fournit un accès 
-à d'autres réseaux) de cette machine. Ceci se fait en ajoutant les bonnes
-valeurs au fichier /etc/sysconfig/network en lançant les commandes
-suivantes&nbsp;:</para>
-
-<screen><userinput>cat &gt;&gt; /etc/sysconfig/network &lt;&lt; "EOF"</userinput>
-GATEWAY=192.168.1.2
-GATEWAY_IF=eth0
-<userinput>EOF</userinput></screen>
-
-<para>Les valeurs pour GATEWAY et GATEWAY_IF doivent être changées pour
-correspondre à la configuration de votre réseau. GATEWAY contient
-l'adresse IP de la passerelle par défaut, et GATEWAY_IF contient
-l'interface réseau par laquelle la passerelle par défaut peut être
-jointe.</para>
-
-</sect2>
+<para>Si une carte réseau ne sera pas utilisée, il n'y a aucun besoin de créer
+des fichiers de configuration relatifs aux cartes réseau. Si c'est le cas,
+supprimez les liens symboliques <filename class="symlink">network</filename> de
+tous les répertoires des niveaux d'exécution (<filename
+class="directory">/etc/rc.d/rc*.d</filename>).</para>
 
 <sect2>
-<title>Créer les fichiers de configuration d'interfaces</title>
+<title>Créer des fichiers de configuration des interfaces réseau</title>
 
-<para>Quelles interfaces doivent être activées ou non dépendent des
-fichiers du répertoire /etc/sysconfig/network-devices. Ce répertoire
-contient des fichiers de la forme ifconfig.xyz, où xyz est le nom
-de l'interface (comme eth0 ou eth0:1).</para>
+<para>Les interfaces activées et désactivées par le script network dépendent
+des fichiers compris dans le répertoire <filename
+class="directory">/etc/sysconfig/network-devices</filename>. Ce répertoire
+devrait contenir des fichiers de la forme <filename>ifconfig.xyz</filename>,
+où <quote>xyz</quote> est un nom d'interface réseau (tel eth0 ou
+eth0:1).</para>
 
-<para>Si vous décidez de renommer ou changer le répertoire
-/etc/sysconfig/network-devices, assurez-vous de modifier le fichier
-/etc/sysconfig/rc et de mettre à jour la variable network_devices en
-lui indiquant le nouveau chemin.</para>
+<para>Si le répertoire <filename
+class="directory">/etc/sysconfig/network-devices</filename> doit être renommé
+ou déplacé, assurez-vous d'éditer le fichier
+<filename>/etc/sysconfig/rc</filename> et de mettre à jour l'option
+<quote>network_devices</quote> en lui fournissant le nouveau chemin.</para>
 
-<para>Maintenant, de nouveaux fichiers sont créés dans ce répertoire. La
-commande suivante crée un fichier d'exemple ifconfig.eth0&nbsp;:</para>
+<para>Les nouveaux fichiers sont créés dans ce répertoire. La commande suivan
+te crée un fichier d'exemple <filename>ipv4</filename> pour le périphérique
+<emphasis>eth0</emphasis>&nbsp;:</para>
 
-<screen><userinput>cat &gt; /etc/sysconfig/network-devices/ifconfig.eth0 &lt;&lt; "EOF"</userinput>
-ONBOOT=yes
+<screen><userinput>cd /etc/sysconfig/network-devices &amp;&amp;
+mkdir ifconfig.eth0 &amp;&amp;
+cat &gt; ifconfig.eth0/ipv4 &lt;&lt; "EOF"
+<literal>ONBOOT=yes
+SERVICE=ipv4-static
 IP=192.168.1.1
-NETMASK=255.255.255.0
-BROADCAST=192.168.1.255
-<userinput>EOF</userinput></screen>
+GATEWAY=192.168.1.2
+PREFIX=24
+BROADCAST=192.168.1.255</literal>
+EOF</userinput></screen>
 
-<para>Bien sûr, les valeurs de ces variables doivent être changées dans
-chaque fichier pour correspondre à votre propre configuration.
-Si la variable ONBOOT est mise à yes, le script network activera la carte
-réseau équivalente lors du
-démarrage du système. Pour une quelconque autre valeur, cette interface sera
-ignorée par le script network et donc non activée.</para>
+<para>Les valeurs de ces variables doivent être modifiées dans chaque fichier
+pour correspondre à la bonne configuration. Si la variable
+<envar>ONBOOT</envar> est configurée à <quote>yes</quote>, le script network
+configurera la carte réseau (NIC) pendant le démarrage du système. S'il est
+configuré avec toute auter valeur que <quote>yes</quote>, l'interface réseau 
+sera ignorée par le script network et non montée.</para>
 
-<para>L'entrée SERVICE définit la méthode d'obtention de l'adresse IP. Les
-scripts de démarrage LFS ont un format d'affectation IP modulaire et, en créant
-des fichiers supplémentaires dans /etc/sysconfig/network-devices/services, vous
-pouvez activer d'autres méthodes d'affection d'IP. Ceci serait habituellement
-utilisé si vous avez besoin de DHCP, qui est couvert dans le livre BLFS.</para>
+<para>La variable <envar>SERVICE</envar> définit la méthode pour obtenir une
+adresse IP. Les scripts de démarrage LFS ont un format d'affectation IP
+modulaire. Créer les fichier supplémentaires dans le répertoire <filename
+class="directory">/etc/sysconfig/network-devices/services</filename> autorise
+d'autres méthodes d'affectation. Ceci est habituellement utilisé pour le DHCP,
+qui est adressé dans le livre BLFS.</para>
+
+<para>La variable <envar>GATEWAY</envar> devrait contenir l'adresse IP par
+défaut de la passerelle, si elle existe. Sinon, mettez entièrement en
+commentaire la variable.</para>
+
+<para>La variable <envar>PREFIX</envar> a besoin de contenir le nombre de bits
+utilisé dans le sous-réseau. Chaque octet dans une adresse IP est sur huit
+bits. Si le masque réseau du sous-réseau est 255.255.255.0, alors il est en
+train d'utiliser les trois premiers octets (24 bits) pour spécifier le numéro
+réseau number. Si le masque réseau est is 255.255.255.240, il utiliserait les
+128 premiers bits. Les préfixes plus longs que 24 bits sont habituellement u
+tilisés par les fournisseurs d'accès à Internet DSL et cable. Dans cet exemple
+(PREFIX=24), le masque réseau est 255.255.255.0. Ajustez-le en accordan
+ce avec le sous-réseau spécifique.</para>
 
 </sect2>
 
-<sect2>
+<sect2 id="resolv.conf">
 <title>Créer le fichier /etc/resolv.conf</title>
+<indexterm zone="resolv.conf"><primary sortas="e-/etc/resolv.conf">/etc/resolv.conf</primary></indexterm>
 
-<para>Si vous allez être connecté à Internet, vous aurez besoin de moyens DNS
-pour résoudre les noms de domaines Internet en adresses IP. Ceci est réalisé en
-enregistrant l'adresse IP du DNS de votre FAI (Fournisseur d'Accès à Internet)
-ou de votre adminstrateur réseau dans le fichier
-<filename>/etc/resolv.conf</filename>. Créez ce fichier en lançant la commande
-suivante&nbsp;:</para>
+<para>Si le système a besoin d'être connecté à Internet, il aura besoin de la
+résolution de noms proposée par le DNS (Domain Name Service) pour résoudre les
+noms de domaines Internet, et vice-versa. Ceci se fait en plaçant les adresses
+IP du serveur DNS, disponibles auprès du FAI ou de l'administrateur système,
+dans <filename>/etc/resolv.conf</filename>. Créez le fichier en lançant ce qui
+suit&nbsp;:</para>
 
-<screen><userinput>cat &gt; /etc/resolv.conf &lt;&lt; "EOF"</userinput>
-# Début /etc/resolv.conf
+<screen><userinput>cat &gt; /etc/resolv.conf &lt;&lt; "EOF"
+<literal># Début /etc/resolv.conf
 
-nameserver &lt;adresse IP de votre serveur de nom&gt;
+domain {<replaceable>[Votre nom de domaine]</replaceable>}
+nameserver <replaceable>[adresse IP de votre DNS principal]</replaceable>
+nameserver <replaceable>[adresse IP de votre DNS secondaire]</replaceable>
 
-# Fin   /etc/resolv.conf
-<userinput>EOF</userinput></screen>
+# Fin /etc/resolv.conf</literal>
+EOF</userinput></screen>
 
-<para>Bien sûr, remplacez &lt;adresse IP de votre serveur de nom&gt; avec
-l'adresse IP du DNS le plus approprié pour votre configuration. Il y aura
-souvent plus d'une entrée (un serveur secondaire est important en cas de
-problème sur le premier). L'adresse IP pourrait même être un routeur sur votre
-réseau local.</para>
-
+<para>Remplacez <replaceable>[adresse IP du DNS]</replaceable> avec l'adresse
+IP du DNS le plus approprié pour la configuration. Il y aura souvent plus d'une
+entrée (les conseils recommandent des serveurs DNS disposant de capacité de
+prise en charge. Si vous avez seulement besoin ou si vous voulez uniquement le
+serveur DNS, supprimez la seconde ligne <emphasis>serveur de noms</emphasis> à
+partir du fichier. L'adresse IP pourrait aussi être un routeur sur le réseau
+local.</para>
 </sect2>
 
 </sect1>
+
