@@ -10,10 +10,6 @@
 <indexterm zone="ch-system-glibc"><primary sortas="a-Glibc">Glibc</primary></indexterm>
 
 <sect2 role="package"><title/>
-<para>The Glibc package contains the main C library. This library provides all
-the basic routines for allocating memory, searching directories, opening and
-closing files, reading and writing them, string handling, pattern matching,
-arithmetic, and so on.</para>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -21,27 +17,12 @@ arithmetic, and so on.</para>
 <seglistitem><seg>12.3 SBU</seg><seg>784 MB</seg></seglistitem>
 </segmentedlist>
 
-<segmentedlist>
-<segtitle>Glibc installation depends on</segtitle>
-<seglistitem><seg>Bash, Binutils, Coreutils, Diffutils,
-Gawk, GCC, Gettext, Grep, Make, Perl, Sed, Texinfo</seg></seglistitem>
-</segmentedlist>
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of Glibc</title>
 
-<para>The Glibc build system is very well self-contained and will install
-perfectly, even though our compiler specs file and linker are still pointing
-at <filename class="directory">/tools</filename>. We cannot adjust the specs and linker before
-the Glibc install, because the Glibc autoconf tests would then give bogus
-results and thus defeat our goal of achieving a clean build.</para>
-
-<para>Before starting to build Glibc, remember to unset any environment
-variables that override the default optimization flags.</para>
-
-<para>The Glibc documentation recommends building Glibc outside of the source
-directory in a dedicated build directory:</para>
+<para>Create a build directory:</para>
 
 <screen><userinput>mkdir ../glibc-build
 cd ../glibc-build</userinput></screen>
@@ -53,58 +34,18 @@ cd ../glibc-build</userinput></screen>
     --enable-kernel=2.6.0 --without-cvs \
     --libexecdir=/usr/lib/glibc</userinput></screen>
 
-<para>The meaning of the new configure options:</para>
-
-<variablelist>
-<varlistentry>
-<term><parameter>--libexecdir=/usr/lib/glibc</parameter></term>
-<listitem><para>This changes the location of the <command>pt_chown</command> 
-program from its default of <filename class="directory">/usr/libexec</filename> to
-<filename class="directory">/usr/lib/glibc</filename>.</para></listitem>
-</varlistentry>
-</variablelist>
-
 <para>Compile the package:</para>
 
 <screen><userinput>make</userinput></screen>
-
-<important><para>The test suite for Glibc in this section is considered
-<emphasis>critical</emphasis>. Our advice is to not skip it under any
-circumstance.</para></important>
 
 <para>Test the results:</para>
 
 <screen><userinput>make check</userinput></screen>
 
 <para>The Glibc test suite is highly dependent on certain functions of your host
-system, in particular the kernel.  In general, the Glibc test suite is always
-expected to pass. However, in certain circumstances some failures are
-unavoidable. Here is a list of the most common issues we are aware of:</para>
+system. See testing for explanations.</para>
 
-<itemizedlist>
-<listitem><para>The <emphasis>math</emphasis> tests sometimes fail when running
-on systems where the CPU is not a relatively new genuine Intel or authentic AMD.
-Certain optimization settings are also known to be a factor here.</para></listitem>
-
-<listitem><para>The <emphasis>gettext</emphasis> test sometimes fails due to
-host system issues. The exact reasons are not yet clear.</para></listitem>
-
-<listitem><para>The <emphasis>atime</emphasis> test sometimes fails when the
-LFS partition is mounted with the <parameter>noatime</parameter> option, or due
-to other file system quirks.</para></listitem>
-
-<listitem><para>The <emphasis>shm</emphasis> test might fail when the host
-system is running the devfs file system but doesn't have the <systemitem class="filesystem">tmpfs</systemitem> file system
-mounted at <filename class="directory">/dev/shm</filename> due to lack of support for tmpfs in
-the kernel.</para></listitem>
-
-<listitem><para>When running on older and slower hardware, some tests might
-fail due to test timeouts being exceeded.</para></listitem>
-</itemizedlist>
-
-<para>Though it is a harmless message, the install stage of Glibc will
-complain about the absence of <filename>/etc/ld.so.conf</filename>. Fix this
-annoying little warning with:</para>
+<para>Fix an annoying little warning with:</para>
 
 <screen><userinput>touch /etc/ld.so.conf</userinput></screen>
 
@@ -112,22 +53,17 @@ annoying little warning with:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<para>The locales that can make your system respond in a different language
-weren't installed by the above command. Do it with this:</para>
+<para>To install the Glibc locales, use the following
+command:</para>
 
 <screen><userinput>make localedata/install-locales</userinput></screen>
 
 <para>An alternative to running the previous command is to install only those
-locales which you need or want. This can be achieved by using the
-<command>localedef</command> command. Information on this can be found in
-the <filename>INSTALL</filename> file in the Glibc source. However, there are
-a number of locales that are essential for the tests of future packages to
-pass, in particular, the <emphasis>libstdc++</emphasis> tests from GCC. The
-following instructions, instead of the install-locales target above, will
-install the minimum set of locales necessary for the tests to run
-successfully:</para>
+locales which you need or want. The following instructions, instead of the 
+install-locales target above, will install the minimum set of locales necessary 
+for the tests to run successfully:</para>
 
-<screen><userinput>mkdir -p /usr/lib/locale
+<screen><userinput>mkdir -p /tools/lib/locale
 localedef -i de_DE -f ISO-8859-1 de_DE
 localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
 localedef -i en_HK -f ISO-8859-1 en_HK
@@ -140,28 +76,7 @@ localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
 localedef -i it_IT -f ISO-8859-1 it_IT
 localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
 
-<para>In fact, some locales installed by the
-<command>make localedata/install-locales</command>
-command above are not properly
-supported by some applications that are in LFS and BLFS books. Because
-of various problems that arise
-due to application programmers making
-assumptions that break in such locales, LFS <emphasis>should not</emphasis>
-be used in locales that utilize
-multibyte character sets (including UTF-8) or
-right-to-left writing order.
-Numerous unofficial and unstable patches are required to fix these problems,
-and it has been decided not to support such complex locales.
-This applies to the ja_JP and fa_IR locales as well:
-they have been installed only
-for GCC and Gettext tests to pass, and e.g.
-the <command>watch</command> program (part of Procps)
-compiled according to this book doesn't work properly in them.
-Various attempts to circumvent these
-restrictions are documented in internationalization-related hints.</para>
-
-<para>Finally, build the linuxthreads man pages, which are a great reference
-on the threading API (applicable to NPTL as well):</para>
+<para>Build the linuxthreads man pages:</para>
 
 <screen><userinput>make -C ../glibc-&glibc-version;/linuxthreads/man</userinput></screen>
 
@@ -173,13 +88,6 @@ on the threading API (applicable to NPTL as well):</para>
 
 
 <sect2 id="conf-glibc" role="configuration"><title>Configuring Glibc</title>
-<indexterm zone="conf-glibc"><primary sortas="e-/etc/nsswitch.conf">/etc/nsswitch.conf</primary></indexterm>
-<indexterm zone="conf-glibc"><primary sortas="e-/etc/localtime">/etc/localtime</primary></indexterm>
-
-<para>We need to create the <filename>/etc/nsswitch.conf</filename> file,
-because, although Glibc provides defaults when this file is missing or corrupt,
-the Glibc defaults don't work well with networking. Also, our time zone needs
-to be set up.</para>
 
 <para>Create a new file <filename>/etc/nsswitch.conf</filename> by running the
 following:</para>
@@ -206,48 +114,16 @@ EOF</userinput></screen>
 
 <screen><userinput>tzselect</userinput></screen>
 
-<para>When you've answered a few questions about your location, the script will
-output the name of your time zone, something like <emphasis>EST5EDT</emphasis>
-or <emphasis>Canada/Eastern</emphasis>. Then create the
-<filename>/etc/localtime</filename> file by running:</para>
+<para>Then create the <filename>/etc/localtime</filename> file by running:</para>
 
-<screen><userinput>cp --remove-destination /usr/share/zoneinfo/Canada/Eastern /etc/localtime</userinput></screen>
-
-<para>The meaning of the option:</para>
-
-<variablelist>
-<varlistentry>
-<term><parameter>--remove-destination</parameter></term>
-<listitem><para>This is needed to force removal of the already existing symbolic 
-link. The reason why we copy instead of symlink is to cover the situation where 
-<filename class="directory">/usr</filename> is on a separate partition. This could matter, for
-example, when booted into single user mode.</para></listitem>
-</varlistentry>
-</variablelist>
-
-<para>Of course, instead of <emphasis>Canada/Eastern</emphasis>, fill in
-the name of the time zone that the <command>tzselect</command> script
-gave you.</para>
+<screen><userinput>cp --remove-destination /usr/share/zoneinfo/<replaceable>[xxx]</replaceable> \
+    /etc/localtime</userinput></screen>
 
 </sect2>
 
 
 <sect2 id="conf-ld" role="configuration">
 <title>Configuring Dynamic Loader</title>
-<indexterm zone="conf-ld"><primary sortas="e-/etc/ld.so.conf">/etc/ld.so.conf</primary></indexterm>
-
-<para>By default, the dynamic loader
-(<filename class="libraryfile">/lib/ld-linux.so.2</filename>) searches through <filename
-class="directory">/lib</filename> and <filename class="directory">/usr/lib</filename> 
-for dynamic libraries that are needed
-by programs when you run them. However, if there are libraries in
-directories other than <filename class="directory">/lib</filename> and
-<filename class="directory">/usr/lib</filename>, you need to add them to
-the <filename>/etc/ld.so.conf</filename> file for the dynamic
-loader to find them. Two directories that are commonly known to contain
-additional libraries are <filename class="directory">/usr/local/lib</filename> 
-and <filename class="directory">/opt/lib</filename>, so we add those directories to the
-dynamic loader's search path.</para>
 
 <para>Create a new file <filename>/etc/ld.so.conf</filename> by running the
 following:</para>
@@ -266,417 +142,7 @@ EOF</userinput></screen>
 
 <sect2 id="contents-glibc" role="content"><title>Contents of Glibc</title>
 
-<segmentedlist>
-<segtitle>Installed programs</segtitle>
-<segtitle>Installed libraries</segtitle>
-<seglistitem><seg>catchsegv, gencat, getconf,
-getent, glibcbug, iconv, iconvconfig, ldconfig, ldd, lddlibc4, locale,
-localedef, mtrace, nscd, nscd_nischeck, pcprofiledump, pt_chown, rpcgen,
-rpcinfo, sln, sprof, tzselect, xtrace, zdump and zic</seg>
-<seg>ld.so, libBrokenLocale.[a,so],
-libSegFault.so, libanl.[a,so], libbsd-compat.a, libc.[a,so], libc_nonshared.a,
-libcrypt.[a,so], libdl.[a,so], libg.a, libieee.a, libm.[a,so], libmcheck.a,
-libmemusage.so, libnsl.a, libnss_compat.so, libnss_dns.so, libnss_files.so,
-libnss_hesiod.so, libnss_nis.so, libnss_nisplus.so, libpcprofile.so,
-libpthread.[a,so], libresolv.[a,so], librpcsvc.a, librt.[a,so], libthread_db.so
-and libutil.[a,so]</seg></seglistitem>
-</segmentedlist>
-
-<variablelist><title>Short descriptions</title>
-
-<varlistentry id="catchsegv">
-<term><command>catchsegv</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc catchsegv"><primary sortas="b-catchsegv">catchsegv</primary></indexterm>
-<para>can be used to create a stack trace
-when a program terminates with a segmentation fault.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="gencat">
-<term><command>gencat</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc gencat"><primary sortas="b-gencat">gencat</primary></indexterm>
-<para>generates message catalogues.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="getconf">
-<term><command>getconf</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc getconf"><primary sortas="b-getconf">getconf</primary></indexterm>
-<para>displays the system configuration values for file system specific variables.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="getent">
-<term><command>getent</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc getent"><primary sortas="b-getent">getent</primary></indexterm>
-<para>gets entries from an administrative database.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="glibcbug">
-<term><command>glibcbug</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc glibcbug"><primary sortas="b-glibcbug">glibcbug</primary></indexterm>
-<para>creates a bug report and mails it to the bug email address.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="iconv">
-<term><command>iconv</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc iconv"><primary sortas="b-iconv">iconv</primary></indexterm>
-<para>performs character set conversion.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="iconvconfig">
-<term><command>iconvconfig</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc iconvconfig"><primary sortas="b-iconvconfig">iconvconfig</primary></indexterm>
-<para>creates fastloading <command>iconv</command> module configuration file.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ldconfig">
-<term><command>ldconfig</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc ldconfig"><primary sortas="b-ldconfig">ldconfig</primary></indexterm>
-<para>configures the dynamic linker runtime bindings.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ldd">
-<term><command>ldd</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc ldd"><primary sortas="b-ldd">ldd</primary></indexterm>
-<para>reports which shared libraries are required
-by each given program or shared library.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="lddlibc4">
-<term><command>lddlibc4</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc lddlibc4"><primary sortas="b-lddlibc4">lddlibc4</primary></indexterm>
-<para>assists <command>ldd</command> with object files.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="locale">
-<term><command>locale</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc locale"><primary sortas="b-locale">locale</primary></indexterm>
-<para>is a Perl program that tells the compiler
-to enable or disable the use of POSIX locales for built-in operations.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="localedef">
-<term><command>localedef</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc localedef"><primary sortas="b-localedef">localedef</primary></indexterm>
-<para>compiles locale specifications.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="mtrace">
-<term><command>mtrace</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc mtrace"><primary sortas="b-mtrace">mtrace</primary></indexterm>
-<para>...</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="nscd">
-<term><command>nscd</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc nscd"><primary sortas="b-nscd">nscd</primary></indexterm>
-<para>is a name service cache daemon providing a
-cache for the most common name service requests.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="nscd_nischeck">
-<term><command>nscd_nischeck</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc nscd_nischeck"><primary sortas="b-nscd_nischeck">nscd_nischeck</primary></indexterm>
-<para>checks whether or not secure mode is necessary for NIS+ lookup.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="pcprofiledump">
-<term><command>pcprofiledump</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc pcprofiledump"><primary sortas="b-pcprofiledump">pcprofiledump</primary></indexterm>
-<para>dumps information generated by PC profiling.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="pt_chown">
-<term><command>pt_chown</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc pt_chown"><primary sortas="b-pt_chown">pt_chown</primary></indexterm>
-<para>is a helper program for grantpt to set
-the owner, group and access permissions of a slave pseudo terminal.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="rpcgen">
-<term><command>rpcgen</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc rpcgen"><primary sortas="b-rpcgen">rpcgen</primary></indexterm>
-<para>generates C code to implement the RPC protocol.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="rpcinfo">
-<term><command>rpcinfo</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc rpcinfo"><primary sortas="b-rpcinfo">rpcinfo</primary></indexterm>
-<para>makes an RPC call to an RPC server.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="sln">
-<term><command>sln</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc sln"><primary sortas="b-sln">sln</primary></indexterm>
-<para>is used to make symbolic links. The program
-is statically linked, so it is useful for making symbolic links to dynamic
-libraries if the dynamic linking system for some reason is nonfunctional.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="sprof">
-<term><command>sprof</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc sprof"><primary sortas="b-sprof">sprof</primary></indexterm>
-<para>reads and displays shared object profiling data.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="tzselect">
-<term><command>tzselect</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc tzselect"><primary sortas="b-tzselect">tzselect</primary></indexterm>
-<para>asks the user about the location of the
-system and reports the corresponding time zone description.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="xtrace">
-<term><command>xtrace</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc xtrace"><primary sortas="b-xtrace">xtrace</primary></indexterm>
-<para>traces the execution of a program by
-printing the currently executed function.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="zdump">
-<term><command>zdump</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc zdump"><primary sortas="b-zdump">zdump</primary></indexterm>
-<para>is the time zone dumper.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="zic">
-<term><command>zic</command></term>
-<listitem>
-<indexterm zone="ch-system-glibc zic"><primary sortas="b-zic">zic</primary></indexterm>
-<para>is the time zone compiler.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ld.so">
-<term><filename class="libraryfile">ld.so</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc ld.so"><primary sortas="c-ld.so">ld.so</primary></indexterm>
-<para>is the helper program for shared library executables.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libBrokenLocale">
-<term><filename class="libraryfile">libBrokenLocale</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libBrokenLocale"><primary sortas="c-libBrokenLocale">libBrokenLocale</primary></indexterm>
-<para>is used by programs, such as Mozilla, to solve broken locales.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libSegFault">
-<term><filename class="libraryfile">libSegFault</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libSegFault"><primary sortas="c-libSegFault">libSegFault</primary></indexterm>
-<para>is a segmentation fault signal handler. It tries to catch segfaults.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libanl">
-<term><filename class="libraryfile">libanl</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libanl"><primary sortas="c-libanl">libanl</primary></indexterm>
-<para>is an asynchronous name lookup library.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libbsd-compat">
-<term><filename class="libraryfile">libbsd-compat</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libbsd-compat"><primary sortas="c-libbsd-compat">libbsd-compat</primary></indexterm>
-<para>provides the portability needed
-in order to run certain BSD programs under Linux.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libc">
-<term><filename class="libraryfile">libc</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libc"><primary sortas="c-libc">libc</primary></indexterm>
-<para>is the main C library -- a collection of commonly used functions.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libcrypt">
-<term><filename class="libraryfile">libcrypt</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libcrypt"><primary sortas="c-libcrypt">libcrypt</primary></indexterm>
-<para>is the cryptography library.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libdl">
-<term><filename class="libraryfile">libdl</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libdl"><primary sortas="c-libdl">libdl</primary></indexterm>
-<para>is the dynamic linking interface library.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libg">
-<term><filename class="libraryfile">libg</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libg"><primary sortas="c-libg">libg</primary></indexterm>
-<para>is a runtime library for <command>g++</command>.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libieee">
-<term><filename class="libraryfile">libieee</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libieee"><primary sortas="c-libieee">libieee</primary></indexterm>
-<para>is the IEEE floating point library.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libm">
-<term><filename class="libraryfile">libm</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libm"><primary sortas="c-libm">libm</primary></indexterm>
-<para>is the mathematical library.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libmcheck">
-<term><filename class="libraryfile">libmcheck</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libmcheck"><primary sortas="c-libmcheck">libmcheck</primary></indexterm>
-<para>contains code run at boot.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libmemusage">
-<term><filename class="libraryfile">libmemusage</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libmemusage"><primary sortas="c-libmemusage">libmemusage</primary></indexterm>
-<para>is used by <command>memusage</command> to help collect
-information about the memory usage of a program.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libnsl">
-<term><filename class="libraryfile">libnsl</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libnsl"><primary sortas="c-libnsl">libnsl</primary></indexterm>
-<para>is the network services library.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libnss">
-<term><filename class="libraryfile">libnss*</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libnss"><primary sortas="c-libnss*">libnss*</primary></indexterm>
-<para>are the Name Service Switch libraries,
-containing functions for resolving host names, user names, group names,
-aliases, services, protocols, and the like.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libpcprofile">
-<term><filename class="libraryfile">libpcprofile</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libpcprofile"><primary sortas="c-libpcprofile">libpcprofile</primary></indexterm>
-<para>contains profiling functions used
-to track the amount of CPU time spent in which source code lines.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libpthread">
-<term><filename class="libraryfile">libpthread</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libpthread"><primary sortas="c-libpthread">libpthread</primary></indexterm>
-<para>is the POSIX threads library.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libresolv">
-<term><filename class="libraryfile">libresolv</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libresolv"><primary sortas="c-libresolv">libresolv</primary></indexterm>
-<para>contains functions for creating,
-sending, and interpreting packets to the Internet domain name servers.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="librpcsvc">
-<term><filename class="libraryfile">librpcsvc</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc librpcsvc"><primary sortas="c-librpcsvc">librpcsvc</primary></indexterm>
-<para>contains functions providing miscellaneous RPC services.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="librt">
-<term><filename class="libraryfile">librt</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc librt"><primary sortas="c-librt">librt</primary></indexterm>
-<para>contains functions providing most of the
-interfaces specified by the POSIX.1b Realtime Extension.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libthread_db">
-<term><filename class="libraryfile">libthread_db</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libthread_db"><primary sortas="c-libthread_db">libthread_db</primary></indexterm>
-<para>contains functions useful for
-building debuggers for multi-threaded programs.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="libutil">
-<term><filename class="libraryfile">libutil</filename></term>
-<listitem>
-<indexterm zone="ch-system-glibc libutil"><primary sortas="c-libutil">libutil</primary></indexterm>
-<para>contains code for <quote>standard</quote> functions used in many different Unix utilities.</para>
-</listitem>
-</varlistentry>
-</variablelist>
+<para>See testing</para>
 
 </sect2>
 
