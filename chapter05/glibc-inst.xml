@@ -1,0 +1,90 @@
+<sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
+
+<sect2>
+<title>Glibc installation</title>
+
+<para>Before starting to install Glibc, you must <userinput>cd</userinput>
+into the <filename>glibc-&glibc-version;</filename> directory and unpack
+Glibc-linuxthreads in that directory, not in <filename>/usr/src</filename> as
+you would normally do.</para>
+
+<para>This package is known to behave badly when you have changed its
+default optimization flags (including the -march and -mcpu options).
+Therefore, if you have defined any environment variables that override
+default optimizations, such as CFLAGS and CXXFLAGS, we recommend unsetting
+them when building Glibc.</para>
+
+<para>Basically, compiling Glibc in any other way than the book suggests
+is putting your system at a very high risk.</para>
+
+<para>Glibc will check for the <filename>/etc/ld.so.conf</filename> file
+and abort with an error if the file is missing, so we must create it:</para>
+
+<para><screen><userinput>touch /stage1/etc/ld.so.conf</userinput></screen></para>
+
+<para>The documentation that comes with Glibc recommends to build the package
+not in the source directory but in a separate, dedicated directory:</para>
+
+<para><screen><userinput>mkdir ../glibc-build &amp;&amp;
+cd ../glibc-build</userinput></screen></para>
+
+<para>Next, prepare Glibc to be compiled:</para>
+
+<para><screen><userinput>CFLAGS="-O2 -pipe" \
+&nbsp;&nbsp;&nbsp;&nbsp;../glibc-&glibc-version;/configure --prefix=/stage1 \
+&nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
+&nbsp;&nbsp;&nbsp;&nbsp;--with-headers=/stage1/include \
+&nbsp;&nbsp;&nbsp;&nbsp;--with-binutils=/stage1/bin \
+&nbsp;&nbsp;&nbsp;&nbsp;--without-gd</userinput></screen></para>
+
+<para>The meaning of the configure options are:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--disable-profile</userinput>: This disables the
+building of the libraries with profiling information. Omit this option if you
+plan to do profiling.</para></listitem>
+
+<listitem><para><userinput>--enable-add-ons</userinput>: This enables any
+add-ons that we installed with Glibc, in our case Linuxthreads.</para></listitem>
+
+<listitem><para><userinput>--libexecdir=/usr/bin</userinput>: This will
+cause the <filename>pt_chown</filename> program to be installed in the
+<filename>/usr/bin</filename> directory.</para></listitem>
+</itemizedlist>
+
+<para>During this stage you will see the following warning:</para>
+
+<blockquote><screen>configure: warning:
+*** These auxiliary programs are missing or too old: msgfmt
+*** some features will be disabled.
+*** Check the INSTALL file for required versions.</screen></blockquote>
+
+<para>The missing <filename>msgfmt</filename> program (from the Gettext
+package, which we'll install later) won't cause any problems. The
+<filename>msgfmt</filename> is used to generate the binary translation
+files that can make your system talk in a different language. Because these
+translation files have already been generated for you, there is no need for
+<filename>msgfmt</filename>. You'd only need the program if you change the
+translation source files (the <filename>*.po</filename> files in the
+<filename class="directory">po</filename> subdirectory), which
+would require you to regenerate the binary files.</para>
+
+<para>Continue with compiling the package:</para>
+
+<para><screen><userinput>make
+make check
+make install</userinput></screen></para>
+
+<para>The locales (used by Glibc to make your Linux system talk in a different
+language) weren't installed when you ran the previous command, so we have to
+do that ourselves now:</para>
+
+<para><screen><userinput>make localedata/install-locales</userinput></screen></para>
+
+<para>An alternative to running the previous command is to install only those
+locales which you need or want. This can be achieved using the localedef
+command. Information on this can be found in the <filename>INSTALL</filename>
+file in the <filename>glibc-&glibc-version;</filename> tree.</para>
+
+</sect2>
+

@@ -3,63 +3,6 @@
 <sect2>
 <title>Glibc installation</title>
 
-<para>Before starting to install Glibc, you must <userinput>cd</userinput>
-into the <filename>glibc-&glibc-version;</filename> directory and unpack
-Glibc-linuxthreads in that directory, not in <filename>/usr/src</filename> as
-you would normally do.</para>
-
-<para>This package is known to behave badly when you have changed its
-default optimization flags (including the -march and -mcpu options).
-Therefore, if you have defined any environment variables that override
-default optimizations, such as CFLAGS and CXXFLAGS, we recommend unsetting
-them when building Glibc.</para>
-
-<para>Basically, compiling Glibc in any other way than the book suggests
-is putting your system at a very high risk.</para>
-
-<para>We'll start by applying a patch that does the following:</para>
-
-<itemizedlist>
-<listitem><para>It converts all occurrences of <emphasis>$(PERL)</emphasis>
-to <emphasis>/usr/bin/perl</emphasis> in the
-<filename>malloc/Makefile</filename> file. This is done because Glibc
-can't autodetect the location of <filename>perl</filename> because the Perl
-package hasn't been installed yet. And if Glibc thinks Perl isn't installed, the
-perl program <filename>mtrace</filename> won't be installed
-either.</para></listitem>
-
-<listitem><para>It replaces all occurrences of <emphasis>root</emphasis>
-with <emphasis>0</emphasis> in the <filename>login/Makefile</filename>
-file. This is done because Glibc itself isn't installed yet and therefore
-username-to-userid resolving isn't working yet, so a
-<userinput>chown root file</userinput> would fail. Using numeric IDs (as in
-<userinput>chown 0 file</userinput>) works fine.</para></listitem>
-
-</itemizedlist>
-
-<para><screen><userinput>patch -Np1 -i ../glibc-&glibc-rootperl-patch-version;-root-perl.patch</userinput></screen></para>
-
-<para>There is a potential problem that causes statically linked binaries
-to crash that were linked against Glibc-2.2 or older libraries. Even though
-static binaries have all the necessary parts of Glibc built-in, they still
-rely on one external library set: Glibc's NSS libraries. These libraries,
-among other things, tell programs where the system's password database is
-(in <filename>/etc/password</filename>, NIS, or whatever other scheme has
-been configured).</para>
-
-<para>Glibc has undergone some changes since version 2.2.x and the new NSS
-code is incompatible with the old one. So when Glibc is installed it will
-install its new NSS libraries, and static programs will load these new NSS
-libraries and will abort with a <emphasis>segmentation fault</emphasis>
-error. This patch undoes some of the changes to overcome the problem.</para>
-
-<para>If you started chapter 5 with a host system that uses Glibc-2.2.x
-or older, you must apply the following patch. We will install Glibc again at
-the end of this chapter to remove this patch so you'll have a pristine Glibc
-as the developers intended it.</para>
-
-<para><screen><userinput>patch -Np1 -i ../glibc-&glibc-libnss-patch-version;-libnss.patch</userinput></screen></para>
-
 <para>Glibc will check for the <filename>/etc/ld.so.conf</filename> file
 and abort with an error if the file is missing, so we must create it:</para>
 
@@ -73,9 +16,12 @@ cd ../glibc-build</userinput></screen></para>
 
 <para>Next, prepare Glibc to be compiled:</para>
 
-<para><screen><userinput>../glibc-&glibc-version;/configure --prefix=/usr \
+<para><screen><userinput>CFLAGS="-O2 -pipe" \
+&nbsp;&nbsp;&nbsp;&nbsp;../glibc-&glibc-version;/configure --prefix=/usr \
 &nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
-&nbsp;&nbsp;&nbsp;&nbsp;--libexecdir=/usr/bin</userinput></screen></para>
+&nbsp;&nbsp;&nbsp;&nbsp;--libexecdir=/usr/bin \
+&nbsp;&nbsp;&nbsp;&nbsp;--with-headers=/usr/include \
+&nbsp;&nbsp;&nbsp;&nbsp;--mandir=/usr/share/man --infodir=/usr/share/info</userinput></screen></para>
 
 <para>The meaning of the configure options are:</para>
 
@@ -129,6 +75,8 @@ pages are not going to be installed at this point because it requires a
 working Perl installation. We'll install Perl later on in this chapter,
 and the man pages will be installed when Glibc is installed for the second
 time at the end of this chapter.</para>
+
+<para><screen><userinput>make check</userinput></screen></para>
 
 <para><screen><userinput>make install</userinput></screen></para>
 
