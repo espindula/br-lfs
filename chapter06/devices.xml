@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+<sect1 id="ch-system-devices" xreflabel="devices">
+<title>Populating /dev with device nodes</title>
+<?dbhtml filename="devices.html"?>
+
+<indexterm zone="ch-system-devices"><primary sortas="a-Devices">Devices</primary></indexterm>
+
+<sect2>
+<title>Creating initial device nodes</title>
+
+<para>When the kernel boots the system, it requires the presence of a few device
+nodes, in particular the console and null devices:</para>
+
+<screen><userinput>mknod -m 600 /dev/console c 5 1
+mknod -m 666 /dev/null c 1 3</userinput></screen>
+</sect2>
+
+<sect2>
+<title>Mounting ramfs and populating /dev</title>
+
+<para>The ideal way to populate /dev is to mount a ramfs onto /dev (like tmpfs, but it
+cannot be swapped) and create the devices on there during each bootup.  Since we haven't
+booted the system, we have to do what the bootscripts would otherwise do for us, and
+populate /dev ourselves.  Begin by mounting /dev:</para>
+
+<screen><userinput>mount -n -t ramfs none /dev</userinput></screen>
+
+<para>Now use the provided udevstart utility to create the initial devices based on
+all the information in /sys:</para>
+
+<screen><userinput>/tools/sbin/udevstart</userinput></screen>
+
+<para>There are some symlinks and directories required by LFS that are not created by
+Udev, so we create those ourselves here:</para>
+
+<screen><userinput>ln -s /proc/self/fd /dev/fd
+ln -s /proc/self/fd/0 /dev/stdin
+ln -s /proc/self/fd/1 /dev/stdout
+ln -s /proc/self/fd/2 /dev/stderr
+ln -s /proc/kcore /dev/core
+mkdir /dev/pts
+mkdir /dev/shm</userinput></screen>
+
+<para>Finally, mount the proper virtual (kernel) file systems on the directories we just
+created:</para>
+
+<screen><userinput>mount -t devpts -o gid=4,mode=620 none /dev/pts
+mount -t tmpfs none /dev/shm</userinput></screen>
+</sect2>
+
+
+</sect1>
