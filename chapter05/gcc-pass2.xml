@@ -13,33 +13,33 @@
 <sect2>
 <title>Re-installation of GCC</title>
 
-<para>The tools required to test GCC and Binutils are installed now (Tcl, Expect
-and DejaGnu). We can continue on rebuilding GCC and Binutils, link them against
-the new Glibc, and test them properly (if performing the test suites in this
-chapter). One thing to note, however, is that these test suites are highly
-dependent on properly functioning pseudo terminals (PTYs) which are provided by
-your host distribution. These days, PTYs are most commonly implemented via the
+<para>The tools required to test GCC and Binutils are installed now: Tcl,
+Expect and DejaGnu. Therefore we can now rebuild GCC and Binutils, linking
+them against the new Glibc, and test them properly (if running the test suites
+in this chapter). One thing to note, however, is that these test suites are
+highly dependent on properly functioning pseudo terminals (PTYs) which are
+provided by your host. These days, PTYs are most commonly implemented via the
 <emphasis>devpts</emphasis> file system. You can quickly check if your host
 system is set up correctly in this regard by performing a simple test:</para>
 
 <screen><userinput>expect -c "spawn ls"</userinput></screen>
 
-<para>If you receive the message:</para>
+<para>The response might be:</para>
 
 <blockquote><screen>The system has no more ptys.  Ask your system administrator to create more.</screen></blockquote>
 
-<para>Your host distribution is not set up for proper PTY operation. In this
-case there is no point in running the test suites for GCC and Binutils until
-you are able to resolve the issue. You can consult the LFS Wiki at
-<ulink url="&wiki-root;"/> for more information on how to get PTYs
+<para>If you receive the above message, your host doesn't have its PTYs set up
+properly. In this case there is no point in running the test suites for GCC
+and Binutils until you are able to resolve the issue. You can consult the LFS
+Wiki at <ulink url="&wiki-root;"/> for more information on how to get PTYs
 working.</para>
 
 <para>This time we will build both the C and the C++ compilers, so you'll have
-to unpack all three GCC tarballs (-core, -g++, and -testsuite) in one and the
-same working directory. They will all unfold into a single
-<filename>&gcc-dir;/</filename> subdirectory.</para>
+to unpack both the core and the g++ tarballs (and testsuite too, if you want to
+run the tests). Unpacking them in your working directory, they will all unfold
+into a single <filename>&gcc-dir;/</filename> subdirectory.</para>
 
-<para>First correct one problem and make an essential adjustment:</para>
+<para>First correct a problem and make an essential adjustment:</para>
 
 <screen><userinput>patch -Np1 -i ../&gcc-nofixincludes-patch;
 patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
@@ -56,7 +56,7 @@ directory, resulting in GCC finding the fixed headers from the host system,
 which would most likely not match the Glibc version actually used for the LFS
 system.</para>
 
-<para>The last patch changes GCC's default location of the dynamic linker
+<para>The second patch changes GCC's default location of the dynamic linker
 (typically <filename>ld-linux.so.2</filename>). It also removes
 <filename class="directory">/usr/include</filename> from GCC's include search
 path. Patching now rather than adjusting the specs file after installation
@@ -86,6 +86,14 @@ variables that override the default optimization flags.</para>
 <para>The meaning of the new configure options:</para>
 
 <itemizedlist>
+<listitem><para><userinput>--enable-clocale=gnu</userinput>: This option
+ensures the correct locale model is selected for the C++ libraries under all
+circumstances. If the configure script finds the <emphasis>de_DE</emphasis>
+locale installed, it will select the correct <emphasis>gnu</emphasis> locale
+model. However, people who don't install the <emphasis>de_DE</emphasis> locale
+would run the risk of building ABI incompatible C++ libraries due to the wrong
+<emphasis>generic</emphasis> locale model being selected.</para></listitem>
+
 <listitem><para><userinput>--enable-threads=posix</userinput>: This enables
 C++ exception handling for multi-threaded code.</para></listitem>
 
@@ -96,16 +104,8 @@ handling of destructors. It also affects the C++ ABI and therefore results in
 C++ shared libraries and C++ programs that are interoperable with other Linux
 distributions.</para></listitem>
 
-<listitem><para><userinput>--enable-clocale=gnu</userinput>: This option ensures
-the correct locale model is selected for the C++ libraries under all
-circumstances. If the configure script finds the <emphasis>de_DE</emphasis>
-locale installed, it will select the correct model of <emphasis>gnu</emphasis>.
-However, people who don't install the <emphasis>de_DE</emphasis> locale, run the
-risk of building ABI incompatible C++ libraries due to the wrong locale model of
-<emphasis>generic</emphasis> being selected.</para></listitem>
-
-<listitem><para><userinput>--enable-languages=c,c++</userinput>: This option is
-needed to ensure that both C and C++ compilers are built.</para></listitem>
+<listitem><para><userinput>--enable-languages=c,c++</userinput>: This option
+ensures that both the C and C++ compilers are built.</para></listitem>
 </itemizedlist>
 
 <para>Compile the package:</para>
@@ -116,7 +116,7 @@ needed to ensure that both C and C++ compilers are built.</para></listitem>
 as the compiler we're using to compile this GCC was built from the exact same
 version of the GCC sources we used earlier.</para>
 
-<para>Compilation is now complete. As discussed earlier, we don't recommend
+<para>Compilation is now complete. As mentioned earlier, we don't recommend
 running the test suites for the temporary tools here in this chapter. If you
 still want to run the GCC test suite anyway, the following command will do
 so:</para>
@@ -150,17 +150,18 @@ supported by GCC have support for "__cxa_atexit" in their C libraries, so this
 test is not always expected to pass.</para>
 
 <para>The 24 unexpected passes for libstdc++ are due to the use of
-<emphasis>--enable-clocale=gnu</emphasis>, which is the correct choice on
-Glibc-based systems of versions 2.2.5 and above. The underlying locale support
-in the GNU C library is superior to that of the otherwise selected "generic"
-model (which may be applicable if for instance you were using Newlibc, Sun-libc
-or whatever libc). The libstdc++ test suite is apparently expecting the
-"generic" model, hence those tests are not always expected to pass.</para>
+<emphasis>--enable-clocale=gnu</emphasis>. This option, which is the correct
+choice on Glibc-based systems of versions 2.2.5 and above, enables in the GNU C
+library a locale support that is superior to the otherwise selected
+<emphasis>generic</emphasis> model (which may be applicable if for instance you
+were using Newlibc, Sun-libc or whatever other libc). The libstdc++ test suite
+is apparently expecting the <emphasis>generic</emphasis> model, hence those
+tests are not always expected to pass.</para>
 
-<para>Unexpected failures often cannot be avoided. The GCC developers are
-usually aware of them but haven't yet gotten around to fixing them. In short,
-unless your results are vastly different from those at the above URL, it is safe
-to continue on.</para>
+<para>Having a few unexpected failures often cannot be avoided. The GCC
+developers are usually aware of these, but haven't yet gotten around to fixing
+them. In short, unless your results are vastly different from those at the
+above URL, it is safe to continue.</para>
 
 <para>And finally install the package:</para>
 
@@ -168,9 +169,9 @@ to continue on.</para>
 
 <note><para>At this point it is strongly recommended to repeat the sanity check
 we performed earlier in this chapter. Refer back to
-<xref linkend="ch-tools-adjusting"/> and repeat the check. If the results are
-wrong, then most likely you forgot to apply the above mentioned GCC Specs
-patch.</para></note>
+<xref linkend="ch-tools-adjusting"/> and repeat the little test compilation. If
+the result is wrong, then most likely you forgot to apply the above mentioned
+GCC Specs patch.</para></note>
 
 </sect2>
 
