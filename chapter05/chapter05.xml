@@ -2,21 +2,513 @@
 <title>Constructing a temporary system</title>
 <?dbhtml filename="chapter05.html" dir="chapter05"?>
 
-&c5-introduction;
-&c5-toolchaintechnotes;
-&c5-creatingtoolsdir;
-&c5-addinguser;
-&c5-settingenviron;
+
+<sect1 id="ch05-introduction">
+<title>Introduction</title>
+<?dbhtml filename="introduction.html" dir="chapter05"?>
+
+<para>In this chapter we will compile and install a minimal
+Linux system. This system will contain just enough tools to be able
+to start constructing the final LFS system in the next chapter.</para>
+
+<para>The building of this minimal system is done in two steps: first we
+build a brand-new and host-independent toolchain (compiler, assembler,
+linker and libraries), and then use this to build all the other essential
+tools.</para>
+
+<para>The files compiled in this chapter will be installed under the
+<filename class="directory">$LFS/tools</filename> directory
+to keep them separate from the files installed in the next chapter.
+Since the packages compiled here are merely temporary, we don't want
+them to pollute the soon-to-be LFS system.</para>
+
+<para>The key to learning what makes a Linux system work is to know
+what each package is used for and why the user or the system needs it.
+For this purpose a short summary of the content of each package is given
+before the actual installation instructions. For a short description of
+each program in a package, please refer to the corresponding section in
+<xref linkend="appendixa"/>.</para>
+
+<para>The build instructions assume that you are using the bash shell. There
+is also a general expectation that you have already unpacked the sources for a
+package and have performed a <userinput>cd</userinput> into the unpacked source
+directory before issuing the build commands.</para>
+
+<para>Several of the packages are patched before compilation, but only when
+the patch is needed to circumvent a problem. Often the patch is needed in
+both this and the next chapter, but sometimes in only one of them. Therefore,
+don't worry when instructions for a downloaded patch seem to be missing.</para>
+
+<para>During the installation of most packages you will
+see all kinds of compiler warnings scroll by on your screen. These are
+normal and can be safely ignored. They are just what they say they are:
+warnings -- mostly about deprecated, but not invalid, use of the C or C++
+syntax. It's just that C standards have changed rather often and some
+packages still use the older standard, which is not really a problem.</para>
+
+<para><emphasis>Unless</emphasis> told not to, you should normally delete the
+source and build directories after installing each package -- for cleanness
+sake and to save space.</para>
+
+<para>Before continuing, make sure the LFS environment variable is set up
+properly by executing the following:</para>
+
+<screen><userinput>echo $LFS</userinput></screen>
+
+<para>Make sure the output shows the path to your LFS partition's mount
+point, which is <filename class="directory">/mnt/lfs</filename> if you
+followed our example.</para>
+
+</sect1>
+
+
+<sect1 id="ch05-toolchaintechnotes">
+<title>Toolchain technical notes</title>
+<?dbhtml filename="toolchaintechnotes.html" dir="chapter05"?>
+
+<para>This section attempts to explain some of the rationale and technical
+details behind the overall build method. It's not essential that you understand
+everything here immediately. Most of it will make sense once you have performed
+an actual build. Feel free to refer back here at any time.</para>
+
+<para>The overall goal of <xref linkend="chapter05"/> is to provide a sane,
+temporary environment that we can chroot into, and from which we can produce a
+clean, trouble-free build of the target LFS system in
+<xref linkend="chapter06"/>. Along the way, we attempt to divorce ourselves
+from the host system as much as possible, and in so doing build a
+self-contained and self-hosted toolchain. It should be noted that the
+build process has been designed in such a way so as to minimize the risks for
+new readers and provide maximum educational value at the same time. In other
+words, more advanced techniques could be used to build the system.</para>
+
+<important>
+<para>Before continuing, you really should be aware of the name of your working
+platform, often also referred to as the <emphasis>target triplet</emphasis>. For
+many folks the target triplet will be, for example:
+<emphasis>i686-pc-linux-gnu</emphasis>. A simple way to determine your target
+triplet is to run the <filename>config.guess</filename> script that comes with
+the source for many packages. Unpack the Binutils sources and run the script:
+<userinput>./config.guess</userinput> and note the output.</para>
+
+<para>You'll also need to be aware of the name of your platform's
+<emphasis>dynamic linker</emphasis>, often also referred to as the
+<emphasis>dynamic loader</emphasis>, not to be confused with the standard linker
+<emphasis>ld</emphasis> that is part of Binutils. The dynamic linker is provided
+by Glibc and has the job of finding and loading the shared libraries needed by a
+program, preparing the program to run and then running it. For most folks, the
+name of the dynamic linker will be <emphasis>ld-linux.so.2</emphasis>. On
+platforms that are less prevalent, the name might be
+<emphasis>ld.so.1</emphasis> and newer 64 bit platforms might even have
+something completely different. You should be able to determine the name
+of your platform's dynamic linker by looking in the
+<filename class="directory">/lib</filename> directory on your host system. A
+surefire way is to inspect a random binary from your host system by running:
+<userinput>'readelf -l &lt;name of binary&gt; | grep interpreter'</userinput>
+and noting the output. The authoritative reference covering all platforms is in
+the <filename>shlib-versions</filename> file in the root of the Glibc source
+tree.</para>
+</important>
+
+<para>Some key technical points of how the <xref linkend="chapter05"/> build
+method works:</para>
+
+<itemizedlist>
+<listitem><para>Similar in principle to cross compiling whereby tools installed
+into the same prefix work in cooperation and thus utilize a little GNU
+"magic".</para></listitem>
+
+<listitem><para>Careful manipulation of the standard linker's library search
+path to ensure programs are linked only against libraries we
+choose.</para></listitem>
+
+<listitem><para>Careful manipulation of <userinput>gcc</userinput>'s
+<emphasis>specs</emphasis> file to tell the compiler which target dynamic
+linker will be used.</para></listitem>
+</itemizedlist>
+
+<para>Binutils is installed first because both GCC and Glibc perform various
+feature tests on the assembler and linker during their respective runs of
+<userinput>./configure</userinput> to determine which software features to enable
+or disable. This is more important than one might first realize. An incorrectly
+configured GCC or Glibc can result in a subtly broken toolchain where the impact
+of such breakage might not show up until near the end of the build of a whole
+distribution. Thankfully, a test suite failure will usually alert us before too
+much time is wasted.</para>
+
+<para>Binutils installs its assembler and linker into two locations,
+<filename class="directory">/tools/bin</filename> and
+<filename class="directory">/tools/$TARGET_TRIPLET/bin</filename>. In reality,
+the tools in one location are hard linked to the other. An important facet of
+the linker is its library search order. Detailed information can be obtained
+from <userinput>ld</userinput> by passing it the <emphasis>--verbose</emphasis>
+flag. For example: <userinput>'ld --verbose | grep SEARCH'</userinput> will
+show you the current search paths and their order. You can see what files are
+actually linked by <userinput>ld</userinput> by compiling a dummy program and
+passing the <emphasis>--verbose</emphasis> switch. For example:
+<userinput>'gcc dummy.c -Wl,--verbose 2>&amp;1 | grep succeeded'</userinput>
+will show you all the files successfully opened during the link.</para>
+
+<para>The next package installed is GCC and during its run of
+<userinput>./configure</userinput> you'll see, for example:</para>
+
+<blockquote><screen>checking what assembler to use... /tools/i686-pc-linux-gnu/bin/as
+checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</screen></blockquote>
+
+<para>This is important for the reasons mentioned above. It also demonstrates
+that GCC's configure script does not search the $PATH directories to find which
+tools to use. However, during the actual operation of <userinput>gcc</userinput>
+itself, the same search paths are not necessarily used. You can find out which
+standard linker <userinput>gcc</userinput> will use by running:
+<userinput>'gcc -print-prog-name=ld'</userinput>.
+Detailed information can be obtained from <userinput>gcc</userinput> by passing
+it the <emphasis>-v</emphasis> flag while compiling a dummy program. For
+example: <userinput>'gcc -v dummy.c'</userinput> will show you detailed
+information about the preprocessor, compilation and assembly stages, including
+<userinput>gcc</userinput>'s include search paths and their order.</para>
+ 
+<para>The next package installed is Glibc. The most important considerations for
+building Glibc are the compiler, binary tools and kernel headers. The compiler
+is generally no problem as Glibc will always use the <userinput>gcc</userinput>
+found in a $PATH directory. The binary tools and kernel headers can be a little
+more troublesome. Therefore we take no risks and use the available configure
+switches to enforce the correct selections. After the run of
+<userinput>./configure</userinput> you can check the contents of the
+<filename>config.make</filename> file in the
+<filename class="directory">glibc-build</filename> directory for all the
+important details. You'll note some interesting items like the use of
+<userinput>CC="gcc -B/tools/bin/"</userinput> to control which binary tools are
+used, and also the use of the <emphasis>-nostdinc</emphasis> and
+<emphasis>-isystem</emphasis> flags to control the compiler's include search
+path. These items help to highlight an important aspect of the Glibc package:
+it is very self-sufficient in terms of its build machinery and generally does
+not rely on toolchain defaults.</para>
+
+<para>After the Glibc installation, we make some adjustments to ensure that
+searching and linking take place only within our <filename>/tools</filename>
+prefix. We install an adjusted <userinput>ld</userinput>, which has a hard-wired
+search path limited to <filename class="directory">/tools/lib</filename>. Then
+we amend <userinput>gcc</userinput>'s specs file to point to our new dynamic
+linker in <filename class="directory">/tools/lib</filename>. This last step is
+<emphasis>vital</emphasis> to the whole process. As mentioned above, a
+hard-wired path to a dynamic linker is embedded into every ELF shared
+executable. You can inspect this by running:
+<userinput>'readelf -l &lt;name of binary&gt; | grep interpreter'</userinput>.
+By amending <userinput>gcc</userinput>'s specs file, we are ensuring that every
+program compiled from here through the end of <xref linkend="chapter05"/> will
+use our new dynamic linker in
+<filename class="directory">/tools/lib</filename>.</para>
+
+<para>The need to use the new dynamic linker is also the reason why we apply the
+Specs patch for the second pass of GCC. Failure to do so will result in the GCC
+programs themselves having the name of the dynamic linker from the host system's
+<filename class="directory">/lib</filename> directory embedded into them, which
+would defeat our goal of getting away from the host.</para>
+
+<para>During the second pass of Binutils, we are able to utilize the
+<emphasis>--with-lib-path</emphasis> configure switch to control
+<userinput>ld</userinput>'s library search path. From this point onwards, the
+core toolchain is self-contained and self-hosted. The remainder of the
+<xref linkend="chapter05"/> packages all build against the new Glibc in
+<filename class="directory">/tools</filename> and all is well.</para>
+
+<para>Upon entering the chroot environment in <xref linkend="chapter06"/>, the
+first major package we install is Glibc, due to its self-sufficient nature that
+we mentioned above. Once this Glibc is installed into
+<filename class="directory">/usr</filename>, we perform a quick changeover of
+the toolchain defaults, then proceed for real in building the rest of the
+target <xref linkend="chapter06"/> LFS system.</para>
+
+<sect2>
+<title>Notes on static linking</title>
+
+<para>Most programs have to perform, beside their specific task, many rather
+common and sometimes trivial operations. These include allocating memory,
+searching directories, reading and writing files, string handling, pattern
+matching, arithmetic and many other tasks. Instead of obliging each program to
+reinvent the wheel, the GNU system provides all these basic functions in
+ready-made libraries. The major library on any Linux system is
+<emphasis>Glibc</emphasis>.</para>
+
+<para>There are two primary ways of linking the functions from a library to a
+program that uses them: statically or dynamically. When a program is linked
+statically, the code of the used functions is included in the executable,
+resulting in a rather bulky program. When a program is dynamically linked, what
+is included is a reference to the dynamic linker, the name of the library, and
+the name of the function, resulting in a much smaller executable. (A third way
+is to use the programming interface of the dynamic linker. See the
+<emphasis>dlopen</emphasis> man page for more information.)</para>
+
+<para>Dynamic linking is the default on Linux and has three major advantages
+over static linking. First, you need only one copy of the executable library
+code on your hard disk, instead of having many copies of the same code included
+into a whole bunch of programs -- thus saving disk space. Second, when several
+programs use the same library function at the same time, only one copy of the
+function's code is required in core -- thus saving memory space. Third, when a
+library function gets a bug fixed or is otherwise improved, you only need to
+recompile this one library, instead of having to recompile all the programs that
+make use of the improved function.</para>
+
+<para>If dynamic linking has several advantages, why then do we statically link
+the first two packages in this chapter? The reasons are threefold: historical,
+educational, and technical. Historical, because earlier versions of LFS
+statically linked every program in this chapter. Educational, because knowing
+the difference is useful. Technical, because we gain an element of independence
+from the host in doing so, meaning that those programs can be used
+independently of the host system. However, it's worth noting that an overall
+successful LFS build can still be achieved when the first two packages are
+built dynamically.</para>
+
+</sect2>
+
+</sect1>
+
+
+<sect1 id="ch05-creatingtoolsdir">
+<title>Creating the $LFS/tools directory</title>
+<?dbhtml filename="creatingtoolsdir.html" dir="chapter05"?>
+
+<para>All programs compiled in this chapter will be installed under <filename
+class="directory">$LFS/tools</filename> to keep them separate from the
+programs compiled in the next chapter. The programs compiled here are only
+temporary tools and won't be a part of the final LFS system and by keeping them
+in a separate directory, we can later easily throw them away.</para>
+
+<para>If later you wish to search through the binaries of your system to see
+what files they make use of or link against, then to make this searching easier
+you may want to choose a unique name. Instead of the simple "tools" you could
+use something like "tools-for-lfs".</para>
+
+<para>Create the required directory by running the following:</para>
+
+<screen><userinput>mkdir $LFS/tools</userinput></screen>
+
+<para>The next step is to create a <filename>/tools</filename> symlink on
+your host system. It will point to the directory we just created on the LFS
+partition:</para>
+
+<screen><userinput>ln -s $LFS/tools /</userinput></screen>
+
+<para>This symlink enables us to compile our toolchain so that it always
+refers to <filename>/tools</filename>, meaning that the compiler, assembler
+and linker will work both in this chapter (when we are still using some tools
+from the host) <emphasis>and</emphasis> in the next (when we are chrooted to
+the LFS partition).</para>
+
+<note><para>Study the above command closely. It can be confusing at first
+glance. The <userinput>ln</userinput> command has several syntax variations,
+so be sure to check the ln man page before reporting what you may think is an
+error.</para></note>
+
+</sect1>
+
+
+<sect1 id="ch05-addinguser">
+<title>Adding the user lfs</title>
+<?dbhtml filename="addinguser.html" dir="chapter05"?>
+
+<para>When logged in as <emphasis>root</emphasis>, making a single mistake
+can damage or even wreck your system. Therefore we recommend that you
+build the packages in this chapter as an unprivileged user. You could
+of course use your own user name,  but to make it easier to set up a clean
+work environment we'll create a new user <emphasis>lfs</emphasis> and
+use this one during the installation process. As <emphasis>root</emphasis>,
+issue the following commands to add the new user:</para>
+
+<screen><userinput>useradd -s /bin/bash -m lfs
+passwd lfs</userinput></screen>
+
+<para>Now grant this new user <emphasis>lfs</emphasis> full access to
+<filename class="directory">$LFS/tools</filename> by giving it ownership
+of the directory:</para>
+
+<screen><userinput>chown lfs $LFS/tools</userinput></screen>
+
+<para>If you made a separate working directory as suggested, give user
+<emphasis>lfs</emphasis> ownership of this directory too:</para>
+
+<screen><userinput>chown lfs $LFS/sources</userinput></screen>
+
+<para>Next, login as user <emphasis>lfs</emphasis>. This can be done via a
+virtual console, through a display manager, or with the following substitute
+user command:</para>
+
+<screen><userinput>su - lfs</userinput></screen>
+
+<para>The "<userinput>-</userinput>" instructs <userinput>su</userinput> to
+start a new, clean shell.</para>
+
+</sect1>
+
+
+<sect1 id="ch05-settingenviron">
+<title>Setting up the environment</title>
+<?dbhtml filename="settingenvironment.html" dir="chapter05"?>
+
+<para>While logged in as user <emphasis>lfs</emphasis>, issue the
+following commands to set up a good work environment:</para>
+
+<screen><userinput>cat &gt; ~/.bash_profile &lt;&lt; "EOF"</userinput>
+set +h
+umask 022
+LFS=/mnt/lfs
+LC_ALL=POSIX
+PATH=/tools/bin:$PATH
+export LFS LC_ALL PATH
+unset CC CXX CPP LD_LIBRARY_PATH LD_PRELOAD
+<userinput>EOF
+
+source ~/.bash_profile</userinput></screen>
+
+<para>The <userinput>set +h</userinput> command turns off
+<userinput>bash</userinput>'s hash function. Normally hashing is a useful
+feature: <userinput>bash</userinput> uses a hash table to remember the
+full pathnames of executable files to avoid searching the PATH time and time
+again to find the same executable. However, we'd like the new tools to be
+used as soon as they are installed.  By switching off the hash function, our
+"interactive" commands (<userinput>make</userinput>,
+<userinput>patch</userinput>, <userinput>sed</userinput>,
+<userinput>cp</userinput> and so forth) will always use
+the newest available version during the build process.</para>
+
+<para>Setting the user file-creation mask to 022 ensures that newly created
+files and directories are only writable for their owner, but readable and
+executable for anyone.</para>
+ 
+<para>The LFS variable should of course be set to the mount point you
+chose.</para>
+
+<para>The LC_ALL variable controls the localization of certain programs,
+making their messages follow the conventions of a specified country. If your
+host system uses a version of Glibc older than 2.2.4,
+having LC_ALL set to something other than "POSIX" or "C" during this chapter
+may cause trouble if you exit the chroot environment and wish to return later.
+By setting LC_ALL to "POSIX" (or "C", the two are equivalent)  we ensure that
+everything will work as expected in the chroot environment.</para>
+
+<para>We prepend <filename>/tools/bin</filename> to the standard PATH so
+that, as we move along through this chapter, the tools we build will get used
+during the rest of the building process.</para>
+
+<para>The CC, CXX, CPP, LD_LIBRARY_PATH and LD_PRELOAD environment variables all
+have the potential to cause havoc with our Chapter 5 toolchain. We therefore
+unset them to prevent any chance of this happening.</para>
+
+<para>Now, after sourcing the just-created profile, we're all set to begin
+building the temporary tools that will support us in later chapters.</para>
+
+</sect1>
+
+
 &c5-binutils-pass1;
 &c5-gcc-pass1;
 &c5-kernelheaders;
 &c5-glibc;
-&c5-lockingglibc;
+
+
+<sect1 id="ch05-locking-glibc">
+<title>"Locking in" Glibc</title>
+<?dbhtml filename="lockingglibc.html" dir="chapter05"?>
+
+<para>Now that the temporary C libraries have been installed, we want all
+the tools compiled in the rest of this chapter to be linked against these
+libraries. To accomplish this, we need to adjust the linker and the compiler's
+specs file.</para>
+
+<para>First install the adjusted linker by running the following from within
+the <filename class="directory">binutils-build</filename> directory:</para>
+
+<screen><userinput>make -C ld install</userinput></screen>
+
+<para>The linker was adjusted a little while back, at the end of the first
+pass of Binutils. From this point onwards everything will link <emphasis>only
+</emphasis> against the libraries in <filename>/tools/lib</filename>.</para>
+
+<note><para>If you somehow missed the earlier warning to retain the Binutils
+source and build directories from the first pass or otherwise accidentally
+deleted them or just don't have access to them, don't worry, all is not lost.
+Just ignore the above command. The result is a small chance of subsequent
+programs linking against libraries on the host. This is not ideal, however,
+it's not a major problem. The situation is corrected when we install the
+second pass of Binutils later on.</para></note>
+
+<para>Now that the adjusted linker is installed, you have to remove the
+Binutils build and source directories.</para>
+
+<para>The next thing to do is to amend our GCC specs file so that it points
+to the new dynamic linker. A simple sed will accomplish this:</para>
+
+<!-- Ampersands are needed to allow cut and paste -->
+   
+<screen><userinput>SPECFILE=/tools/lib/gcc-lib/*/*/specs &amp;&amp;
+sed -e 's@ /lib/ld-linux.so.2@ /tools/lib/ld-linux.so.2@g' \
+&nbsp;&nbsp;&nbsp;&nbsp;$SPECFILE &gt; tempspecfile &amp;&amp;
+mv -f tempspecfile $SPECFILE &amp;&amp;
+unset SPECFILE</userinput></screen>
+
+<para>We recommend that you cut-and-paste the above rather than try and type it
+all in. Or you can edit the specs file by hand if you want to: just replace any
+occurrence of "/lib/ld-linux.so.2" with "/tools/lib/ld-linux.so.2".</para>
+
+<important><para>If you are working on a platform where the name of the dynamic
+linker is something other than <filename>ld-linux.so.2</filename>, you
+<emphasis>must</emphasis> substitute <filename>ld-linux.so.2</filename> with the
+name of your platform's dynamic linker in the above commands. Refer back to
+<xref linkend="ch05-toolchaintechnotes"/> if necessary.</para></important>
+
+<para>Lastly, there is a possibility that some include files from the host
+system have found their way into GCC's private include dir. This can happen
+because of GCC's "fixincludes" process which runs as part of the GCC build.
+We'll explain more about this further on in this chapter.  For now, run the
+following commands to eliminate this possibility:</para>
+
+<screen><userinput>rm -f /tools/lib/gcc-lib/*/*/include/{pthread.h,bits/sigthread.h}</userinput></screen>
+
+<!-- HACK - Force some whitespace to appease tidy -->
+<literallayout></literallayout>
+
+<caution><para>It is imperative at this point to stop and ensure that the basic
+functions (compiling and linking) of the new toolchain are working as expected.
+For this we are going to perform a simple sanity check:</para>
+
+<screen><userinput>echo 'main(){}' &gt; dummy.c
+gcc dummy.c
+readelf -l a.out | grep ': /tools'</userinput></screen>
+
+<para>If everything is working correctly, there should be no errors, and the
+output of the last command will be:</para>
+
+<blockquote><screen>[Requesting program interpreter: /tools/lib/ld-linux.so.2]</screen></blockquote>
+
+<para>If you did not receive the output as shown above, or received no output at
+all, then something is seriously wrong. You will need to investigate and retrace
+your steps to find out where the problem is and correct it. There is no point in
+continuing until this is done. Most likely something went wrong with the specs
+file amendment above. Note especially that <filename>/tools/lib</filename>
+appears as the prefix of our dynamic linker. Of course, if you are working on a
+platform where the name of the dynamic linker is something other than
+<filename>ld-linux.so.2</filename>, then the output will be slightly
+different.</para>
+
+<para>Once you are satisfied that all is well, clean up the test files:</para>
+
+<screen><userinput>rm dummy.c a.out</userinput></screen>
+</caution>
+
+<!-- HACK - Force some whitespace to appease tidy -->
+<literallayout></literallayout>
+
+<para>This completes the installation of the self-contained toolchain, and it
+can now be used to build the rest of the temporary tools.</para>
+
+</sect1>
+
+
 &c5-tcl;
 &c5-expect;
 &c5-dejagnu;
 &c5-gcc-pass2;
 &c5-binutils-pass2;
+
 &c5-gawk;
 &c5-coreutils;
 &c5-bzip2;
