@@ -1,0 +1,83 @@
+<sect2>
+<title>Configuring nfs-utils</title>
+
+<sect3><title>Config files</title>
+<para><filename>~/.nwclient</filename></para>
+</sect3>
+
+<sect3><title>Configuration Information</title>
+
+<para>A config file <filename>~/.nwclient</filename> should be placed
+in each user's home directory that intends to use ncpfs.
+The permissions on this file should be set to 600, for obvious security
+reasons.  The configuration file should contain a sinlge line
+per server that the user will use.  Each line should contain
+the sever name, the user name, and optionally the password.  Below is a
+sample <filename>.nwclient</filename> file.</para>
+
+<para><screen># Begin example <filename>~/.nwclient</filename> config file
+
+Server1/User1 Password
+Server2/User1 
+Server2/Guest1 -
+
+# End example .nwclient config file</screen></para>
+
+<para>The syntax for the <filename>.nwclient</filename> file is simple,
+<userinput>server_name/user_name password</userinput>.  Be extremely
+careful when creating or editing this file as the client utilities are
+very picky about syntax.  There should always be a space immediately
+after the username.  If this space is substituted by a tab or multiple 
+spaces, you will not get the expected results when attempting to use 
+the ncpfs tools.  If no password is supplied, the client utilities will 
+ask for a password when it is needed.  If no password is needed, for 
+instance when using a guest account, a single '-' should be put in 
+place of a password.</para>
+
+<para>It should be noted that the ncpmount is not intended to mount
+individual volumes because each mountpoint creates a separate client
+connection to the Novell server.  Mounting each individual volume
+separately would be unwise, as mounting all volumes on a server 
+under one mount point, uses only one client connection.</para>
+
+<para>If you need to set up the IPX protocol at boot, you can create the 
+following scripts.  These scripts assume IPX will be set up on eth0  
+and the network frame type is 802.2.  You should confirm that these 
+are the correct settings and adjust as necessary.</para>
+
+<para><screen>cat &gt; /etc/sysconfig/network-devices/ifup-ipx0 &lt;&lt; "EOF"
+#!/bin/sh
+# Begin /etc/sysconfig/network-devices/ifup-ipx0
+
+source /etc/sysconfig/rc || exit
+source $rc_functions || exit
+
+echo "Setting up the IPX protocol on eth0..."
+/sbin/ipx_interface add eth0 802.2 &&
+/sbin/ipx_configure --auto_interface=on --auto_primary=on
+evaluate_retval
+
+# End /etc/sysconfig/network-devices/ifup-ipx0
+EOF
+cat &gt; /etc/sysconfig/network-devices/ifdown-ipx0 &lt;&lt; "EOF"
+#!/bin/sh
+# Begin /etc/sysconfig/network-devices/ifdown-ipx0
+
+source /etc/sysconfig/rc || exit
+source $rc_functions || exit
+
+echo "Stoping IPX on the eth0 interface..."
+/usr/bin/ipx_configure --auto_interface=off --auto_primary=off &&
+/usr/bin/ipx_interface del eth0 802.2
+evaluate_retval
+
+# End /etc/sysconfig/network-devices/ifdown-ipx0
+EOF
+echo "ONBOOT=yes" &gt; /etc/sysconfig/network-devices/ifconfig.ipx0
+chmod 755 /etc/sysconfig/network-devices/ifup-ipx0
+chmod 755 /etc/sysconfig/network-devices/ifdown-ipx0</screen></para>
+
+</sect3>
+
+</sect2>
+
