@@ -3,7 +3,6 @@ CHUNK_QUIET=0
 PDF_OUTPUT=LFS-BOOK.pdf
 NOCHUNKS_OUTPUT=LFS-BOOK.html
 XSLROOTDIR=/usr/share/xml/docbook/xsl-stylesheets-current
-TIDY=/home/manuel/bin/lfs-tidy
 
 lfs:
 	xsltproc --xinclude --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
@@ -26,7 +25,7 @@ lfs:
 	  index.html part1.html part2.html part3.html longindex.html
 
 	for filename in `find $(BASEDIR) -name "*.html"`; do \
-	  $(TIDY) -config tidy.conf $$filename; \
+	  tidy -config tidy.conf $$filename; \
 	  true; \
 	done;
 
