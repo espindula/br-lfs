@@ -3,21 +3,82 @@
 <sect2>
 <title>Installation of GCC</title>
 
-<para><screen><userinput>patch -Np1 -i ../gcc-&gcc-specs-version;.patch
-patch -Np1 -i ../gcc-&gcc-version;-mmap_test.patch
-patch -Np1 -i ../gcc-&gcc-version;-no_fixincludes.patch</userinput></screen></para>
+<para>First correct two problems and make an essential adjustment:</para>
+
+<para><screen><userinput>patch -Np1 -i ../gcc-&gcc-version;-mmap_test.patch
+patch -Np1 -i ../gcc-&gcc-version;-no_fixincludes.patch
+patch -Np1 -i ../gcc-&gcc-specs-version;.patch</userinput></screen></para>
+
+<para>The last patch changes GCC's default location of the dynamic linker,
+a simple substitution of "/lib/ld-linux.so.2" with "/stage1/lib/ld-linux.so.2"
+in <filename>config/i386/linux.h</filename>. Patching now rather than adjusting
+the specs file after installation ensures that our new dynamic linker gets
+used during the actual build of GCC. That is, all the final (and temporary)
+binaries created during the build will link against the new Glibc.</para>
+
+<para>Create a separate build directory again:</para>
 
 <para><screen><userinput>mkdir ../gcc-build
 cd ../gcc-build</userinput></screen></para>
+
+<para>Now prepare GCC to be compiled:</para>
 
 <para><screen><userinput>../gcc-&gcc-version;/configure --prefix=/stage1 \
 &nbsp;&nbsp;&nbsp;&nbsp;--with-local-prefix=/stage1 \
 &nbsp;&nbsp;&nbsp;&nbsp;--enable-clocale=gnu --enable-shared \
 &nbsp;&nbsp;&nbsp;&nbsp;--enable-threads=posix --enable-__cxa_atexit \
-&nbsp;&nbsp;&nbsp;&nbsp;--enable-languages=c,c++
-make
-make -k check
-make install</userinput></screen></para>
+&nbsp;&nbsp;&nbsp;&nbsp;--enable-languages=c,c++</userinput></screen></para>
+
+<para>Compile the package:</para>
+
+<para><screen><userinput>make</userinput></screen></para>
+<para>There is no need to use the <userinput>bootstrap</userinput> target now,
+as the compiler we're using to compile this GCC has been built from the exact
+same sources.</para>
+
+<para>Test the package:</para>
+
+<para><screen><userinput>make -k check</userinput></screen></para>
+
+<para>The <userinput>-k</userinput> flag is used to make the test suite run
+through to completion and not stop at the first failure. The GCC test suite is
+very comprehensive and is almost guaranteed to generate a few failures. To get
+a summary of the test suite results, run this:</para>
+ 
+<para><screen><userinput>../gcc-3*/contrib/test_summary | less</userinput></screen></para>
+
+<para>You can compare your results to those posted to the gcc-testresults
+mailing list for similar configurations to your own. For an example of how
+current GCC-3.2.x should look on i686-pc-linux-gnu, see
+<ulink url="http://gcc.gnu.org/ml/gcc-testresults/2003-02/msg00204.html"/>.</para>
+
+<para>Note that the results contain:</para>
+
+<screen>* 1 XPASS (unexpected pass) for g++
+* 26 XPASS's for libstdc++
+* 1 FAIL for libstdc++</screen>
+ 
+<para>The unexpected pass for g++ is due to the use of
+<userinput>--enable-__cxa_atexit</userinput>. Apparently not all platforms
+supported by GCC have support for "__cxa_atexit" in their C libraries, so this
+test is not always expected to pass.</para>
+
+<para>The 26 unexpected passes for libstdc++ are due to the use of
+<userinput>--enable-clocale=gnu</userinput>, which is the correct choice on
+Glibc-based systems of versions 2.2.5 and above. The underlying locale support
+in the GNU C library is superior to that of the otherwise selected "generic"
+model (which may be applicable if for instance you were using Newlibc, Sun-libc
+or whatever libc). The libstdc++ test suite is apparently expecting the
+"generic" model, hence those tests are not always expected to pass.</para>
+
+<para>The failure for libstdc++ is in
+<filename>26_numerics/c99_classification_macros_c.cc</filename> and is a
+long-standing known failure (since at least January 2002) that the developers
+are apparently unable to easily fix.</para>
+
+<para>And finally install the package:</para>                                              
+
+<para><screen><userinput>make install</userinput></screen></para>
 
 </sect2>
 
