@@ -8,7 +8,8 @@
 <sect3><title>Informations de configuration</title>
 
 <para>Les fichiers de configurations gdm PAM contiennent des modules non
-présents lors d'une installation BLFS, donc:</para>
+présents lors d'une installation BLFS. Les commandes suivantes vont remplacer
+ces fichiers:</para>
 <screen><userinput>cat &gt; /etc/pam.d/gdm &lt;&lt; "EOF"</userinput>
 auth        required    pam_unix.so
 auth        required    pam_nologin.so
@@ -25,16 +26,67 @@ password    required    pam_unix.so
 session     required    pam_unix.so
 <userinput>EOF</userinput></screen>
 
-<para>gpm peut être testé en le lançant à partir de la console root.</para>
+<para>gdm peut être testé en le lançant à partir de la console root.</para>
 
-<para>Pour terminer l'installation de gpm, vous avez besoin de créer un script
-init.d approprié et de la placer dans le répertoire
-<filename>/etc/rc.d/init.d</filename>, créer les fichiers S et K pour les
-niveaux d'exécution appropriés et changer le niveau d'exécution par défaut dans
-<filename>/etc/inittab</filename>.</para>
+<para>Pour automatiser le lancement de gdm, utilisez la commande suivante pour
+créer le script init.d:
+<screen><userinput>cat &gt; /etc/rc.d/init.d/gdm &lt;&lt; "EOF"</userinput>
+#!/bin/bash
+# Debut $rc_base/init.d/gdm
 
-<para><emphasis>Si les instructions ci-dessus vous semblent vagues, pourquoi
-installez-vous ce package?</emphasis></para>
+# Basé sur le script sysklogd de LFS-3.1 et précédent.
+# Réécrit par Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+        start)
+                echo "Starting gdm..."
+                loadproc /opt/gnome2/bin/gdm
+                ;;
+
+        stop)
+                echo "Stopping gdm..."
+                loadproc /opt/gnome2/sbin/gdm-stop
+                ;;
+
+        reload)
+                echo "Reloading gdm..."
+                reloadproc /opt/gnome2/sbin/gdm-safe-restart
+                ;;
+
+        restart)
+                echo "Restarting gdm..."
+		loadproc /opt/gnome2/sbin/gdm-restart
+               ;;
+
+        *)
+                echo "Usage: $0 {start|stop|reload|restart}"
+                exit 1
+                ;;
+esac
+
+# Fin $rc_base/init.d/gdm
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/gdm</userinput></screen></para>
+
+<para>Créez les liens symboliques vers ce fichier dans les répertoires rc.d
+avec les commandes suivantes:
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/gdm ../rc0.d/K05gdm &amp;&amp;
+ln -sf ../init.d/gdm ../rc1.d/K05gdm &amp;&amp;
+ln -sf ../init.d/gdm ../rc2.d/K05gdm &amp;&amp;
+ln -sf ../init.d/gdm ../rc3.d/K05gdm &amp;&amp;
+ln -sf ../init.d/gdm ../rc4.d/K05gdm &amp;&amp;
+ln -sf ../init.d/gdm ../rc5.d/S95gdm &amp;&amp;
+ln -sf ../init.d/gdm ../rc6.d/K05gdm</userinput></screen></para>
+
+<para>Pour démarrer automatiquement avec un login graphique, éditez
+<filename>/etc/inittab</filename> de façon à ce que la ligne indiquant
+<screen>id:3:initdefault:</screen>
+soit changé en
+<screen>id:5:initdefault:</screen></para>
 
 </sect3>
 
