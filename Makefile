@@ -1,4 +1,4 @@
-BASEDIR=~/lfs-book
+BASEDIR=~/belfs-book
 
 lfs:
 	xsltproc --xinclude --nonet -stringparam base.dir $(BASEDIR)/ \
