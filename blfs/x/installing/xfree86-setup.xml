@@ -1,0 +1,195 @@
+<sect1 id="x-setup">
+<?dbhtml filename="xfree86-setup.html" dir="x"?>
+<title>Setting up XFree86 Components</title>
+
+<sect2>
+<title>Checking Direct Rendering Infrastructure (DRI) Installation</title>
+<para>DRI is a framework for allowing software to access graphics hardware
+in a safe and effecient manner.  It is installed in XFree86 by default if 
+you have a supported video card.  To check if DRI is installed properly, 
+check the log file <filename>/var/log/XFree86.0.log</filename> for statements
+like:</para>
+
+<para><screen>(II) R128(0): Direct rendering enabled</screen></para>
+
+<para>From an xterm, run <userinput>glxinfo</userinput> and look for the phrase:</para> 
+<para><screen>direct rendering: Yes</screen></para>
+
+<para>You can also run the test program <userinput>glxgears</userinput>.
+This program brings up a window with three gears turning.  The
+<filename>xterm</filename> will display how many frames were drawn every
+five seconds so this is a reasonable benchmark.  The window is scalable, and
+the frames drawn per second is highly dependent on the size of
+the window.</para>
+ 
+<para>For troubleshooting problems, check the DRI Users Guide at
+<userinput><ulink url="http://dri.sourceforge.net/doc/DRIuserguide.html"/></userinput>.
+</para>
+</sect2>
+
+<!-- ================================================== -->
+
+<sect2>
+<title>Adding TrueType fonts to XFree86</title>
+
+<para>TrueType font support is built into XFree86.  The following items need to 
+be completed to make the fonts available.</para>
+
+<itemizedlist>
+
+<listitem><para>Establish a directory for the fonts and move any 
+TrueType fonts you want into that directory.</para></listitem>
+
+<listitem><para>Create the <filename>fonts.scale</filename> and 
+<filename>fonts.dir</filename> files in the TrueType font 
+directory.</para></listitem>
+
+<listitem><para>Ensure the truetype module is loaded in 
+<filename>XF86Config</filename>.</para></listitem>
+
+<listitem><para>Ensure the <parameter>FontPath</parameter> in 
+<filename>XF86Config</filename> contains the TrueType font 
+directory.</para></listitem>
+
+</itemizedlist>
+
+<sect3><title>Establish a TrueType font directory</title>
+
+<para>The build of XFree86 as given above automatically creates a TrueType
+font directory: <filename>/usr/X11R6/lib/X11/fonts/TTF</filename>.  This
+directory already has some TrueType fonts and is set up correctly.
+If this directory is satisfactory, copy any other TrueType fonts you want
+into that directory.  If not, create a new directory, preferably in
+the <filename>/usr/X11R6/lib/X11/fonts/</filename> directory and put 
+your TrueType fonts there.</para></sect3>
+
+<sect3><title>Create <filename>fonts.scale</filename> and 
+<filename>fonts.dir</filename></title>
+
+<para>Now change to the directory where you have your TrueType fonts and run
+<screen><userinput>mkfontscale &amp;&amp;
+mkfontdir</userinput></screen></para></sect3>
+
+<sect3><title>Ensure TrueType is loaded in <filename>XF86Config</filename></title> 
+<para>The "Module" section should look like:
+<screen>Section "Module"
+        ...
+        Load  "freetype"
+        ...
+EndSection</screen></para></sect3>
+
+<sect3><title>Ensure the <parameter>FontPath</parameter> in
+<filename>XF86Config</filename> points to the TrueType font directory</title>
+<para>The "Files" section should look like
+<screen>Section "Files"
+        ...
+        FontPath     "/usr/X11R6/lib/X11/fonts/&lt;TruetypeDir&gt;/"
+        ...
+EndSection</screen></para>
+</sect3>
+
+<sect3><title>Update the font cache files</title> 
+<para>Finally, to update all the font
+cache files specified in <filename>/etc/fonts/fonts.conf</filename>, run
+<screen><userinput>fc-cache</userinput></screen>
+</para>
+
+<para>XFree86 will now be able to use TrueType fonts when it is restarted.
+You can check to see if the new fonts are available with the
+<userinput>xlsfonts</userinput>  or <userinput>xfontsel</userinput> 
+program.</para>
+
+<note><para>You should re-run <userinput>mkfontscale</userinput> and  
+<userinput>mkfontdir</userinput> any time you add or delete TrueType fonts.
+You should also rerun <userinput>fc-cache</userinput> each time
+you add or remove any fonts.</para></note>
+
+</sect3>
+</sect2>
+
+<!-- ================================================== -->
+<sect2>
+<title>Setting up keyboards</title>
+<para>In this version of XFree86, it has been reported that non-latin
+keyboard layouts do not include latin configurations as was previous
+practice. To set up a keyboard for latin and non-latin input, 
+change the XkbLayout keyboard driver option in the InputDevice section
+of the <filename>XF86Config</filename> file.  For example:</para>
+
+<para><screen>   Section "InputDevice"
+     Identifier          "Keyboard0"
+     Driver              "Keyboard"
+     Option "XkbModel"   "pc105"
+     Option "XkbLayout"  "en_US,ru"
+     Option "XkbOptions" "grp:switch,grp:alt_shift_toggle,grp_led:scroll"
+   EndSection</screen></para>
+
+<para>In this example, you can use the Alt-Shift combination to switch
+between keyboard layouts and use the Scroll Lock LED to indicate when
+the second layout is active.</para>
+</sect2>
+
+<!-- ================================================== -->
+<sect2>
+<title>Setting up xdm</title>
+<para><filename>xdm</filename> provides a graphical logon capability and is
+normally set up in <filename>/etc/inittab</filename>.  Most of the information 
+you need to customize <filename>xdm</filename> is found in its man page.  To 
+execute xdm during bootup, change the initdefault level to 5 and 
+add the following lines to 
+<filename>/etc/inittab</filename>:</para>
+
+<para><screen># Run xdm as a separate service
+x:5:respawn:/usr/X11R6/bin/xdm -nodaemon</screen></para>
+</sect2>
+
+<!-- ================================================== -->
+<sect2>
+<title>Using XFree86 Resources</title>
+<para>There are many options that can be set in XFree86 and X clients via
+resources.  Typically resources are set in the <filename>~/.Xresources</filename>
+file.</para>
+
+<para>The layout of the <filename>~/.Xresources</filename> file consists
+if a list of specifications in the form of</para>
+
+<para><screen>object.subobject[.subobject...].attribute: value</screen></para>
+
+<para>Typically, components of a resource specification are linked together 
+by either <emphasis>tight</emphasis>, represented bu a dot (.),
+or <emphasis>loose</emphasis>, represented by an asterisk (*),  bindings.
+A tight binding indicates that the components on either side of the dot must
+be directly next to each other as defined in a specific implementation.  An
+asterisk is a wildcard character that means that any number of levels in
+a defined hierarchy can be between the components. 
+For example, XFree86 offers two new cursors: redglass and whiteglass.  To
+use one of these resources, you need to add the following line:</para>
+
+<para><screen>Xcursor.theme: whiteglass</screen></para>
+
+<para>However, you can specify the backgound for all clients with:</para>
+
+<para><screen>*background: blue</screen></para>
+
+<para>More specific resource variables will override less specific names. </para>
+
+<para>Resource definitions can be found in the man pages for each
+respective client.</para>
+
+<para>In order to load your resources, the <filename>xrdb</filename> 
+program must be
+called with the appropriate parameters.  Typically, the first time 
+resources are loaded, you use:</para>
+
+<para><screen>xrdb -load &lt;filename&gt;</screen></para>
+
+<para>To add resources to XFree86's database in memory use:</para>
+<para><screen>xrdb -merge &lt;filename&gt;</screen></para>
+
+<para>The <filename>xrdb</filename> instruction is usually placed in 
+<filename>~/.xinitrc</filename> or <filename>~/.xsession</filename>.
+To get more information, see the <filename>xrdb</filename> man page.</para>
+</sect2>
+
+</sect1>
+
