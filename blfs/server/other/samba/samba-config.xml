@@ -1,0 +1,228 @@
+<sect2>
+<title>Configuring Samba</title>
+<para>We will configure 1 Samba server(SAMBABOX) to act as a primary
+domain controller, as well as configure 1 domain client running
+Windows 2000 Server(WIN2KBOX) and acting as a member server of the
+domain.  Detailed instructions will be given for adding WIN2KBOX to
+the domain due to the extra steps necessary.  Instructions for adding
+Windows 95/98/XP clients can be found in the newly installed
+documentation by pointing a web browser to : </para>
+
+<para><screen><userinput>
+file:///var/www/swat/using_samba/ch03_01.html#ch03-55770
+.</userinput></screen></para>
+
+<sect3><title>Config files</title>
+<para><userinput>
+/etc/samba/smb.conf, /etc/rc.d/init.d/samba </userinput></para>
+
+<para>First we set up some directories needed by Samba:</para>
+<para><screen><userinput>
+mkdir /var/lib/samba &amp;&amp;
+mkdir /var/lib/samba/netlogon &amp;&amp;
+mkdir /var/lib/samba/ntprofile &amp;&amp;
+mkdir /var/lib/samba/profiles &amp;&amp;
+chmod -R 1777 /var/lib/samba
+</userinput></screen></para>
+
+<para>And the Samba configuration file: </para>
+<para><screen><userinput>
+cat &gt; /etc/samba/smb.conf &lt;&lt; "EOF"
+[global]
+    netbios name = SAMBABOX
+    workgroup = DOMAIN01
+    os level = 64
+    preferred master = yes
+    domain master = yes
+    local master = yes
+    security = user
+    encrypt passwords = yes
+    domain logons = yes
+    log file = /var/log/log.%m
+    log level = 1
+    logon path = \\%N\home\%u
+    logon drive = H:
+    logon home = \\homeserver\%u
+    logon script = logon.cmd
+[netlogon]
+      path = /var/lib/samba/netlogon
+      read only = yes
+      write list = ntadmin
+[profiles]
+      path = /var/lib/samba/ntprofile
+      read only = no
+      create mask = 0600
+      directory mask = 0700
+; World writable share for testing
+[tmp]
+comment = Temporary file space
+        path = /tmp
+        read only = no
+        public = yes
+[home]
+comment = Users' home directories
+        path = /home
+        read only = no
+        public = no
+EOF
+</userinput></screen></para>
+
+<para>Now add the machine trust account for WIN2KBOX:</para>
+<para><screen><userinput>
+/usr/sbin/useradd -g 100 -d /dev/null -c \
+    "machine nickname" -s /bin/false win2kbox$ &amp;&amp;
+passwd -l win2kbox$ &amp;&amp;
+smbpasswd -a -m win2kbox
+</userinput></screen></para>
+
+<para>Create the Samba boot script:</para>
+<para><screen><userinput>
+cat &gt; /etc/rc.d/init.d/samba &lt;&lt; "EOF"
+#!/bin/bash
+# Begin $rc_base/init.d/samba
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+source /etc/sysconfig/rc
+source $rc_functions
+case "$1" in
+	start)
+		echo "Starting nmbd..."
+		loadproc /usr/sbin/nmbd -D
+		echo "Starting smbd..."
+		loadproc /usr/sbin/smbd -D
+		;;
+	stop)
+		echo "Stopping smbd..."
+		killproc /usr/sbin/smbd
+		echo "Stopping nmbd..."
+		killproc /usr/sbin/nmbd
+		;;
+	reload)
+		echo "Reloading smbd..."
+		reloadproc /usr/sbin/smbd
+		echo "Reloading nmbd..."
+		reloadproc /usr/sbin/nmbd
+		;;
+	restart)
+		$0 stop
+		sleep 1
+		$0 start
+		;;
+	status)
+		statusproc /usr/sbin/nmbd
+		statusproc /usr/sbin/smbd
+		;;
+	*)
+		echo "Usage: $0 {start|stop|reload|restart|status}"
+		exit 1
+		;;
+esac
+# End $rc_base/init.d/samba
+EOF
+
+</userinput></screen></para>
+<para>Add the run level symlinks:</para>
+<para><screen><userinput>
+chmod 754 /etc/rc.d/init.d/samba &&
+ln -s  /etc/rc.d/init.d/samba /etc/rc.d/rc0.d/K48samba &&
+ln -s  /etc/rc.d/init.d/samba /etc/rc.d/rc1.d/K48samba &&
+ln -s  /etc/rc.d/init.d/samba /etc/rc.d/rc2.d/K48samba &&
+ln -s  /etc/rc.d/init.d/samba /etc/rc.d/rc3.d/S23samba &&
+ln -s  /etc/rc.d/init.d/samba /etc/rc.d/rc4.d/S23samba &&
+ln -s  /etc/rc.d/init.d/samba /etc/rc.d/rc5.d/S23samba &&
+ln -s  /etc/rc.d/init.d/samba /etc/rc.d/rc6.d/K48samba
+</userinput></screen></para>
+
+<para>Now, we'll use our new boot script to start Samba: </para>
+<para><screen><userinput>
+/etc/rc.d/init.d/samba start
+</userinput></screen></para>
+<para>We have to add the SAMBABOX root account to the Samba user list
+first in order to join WIN2KBOX to the DOMAIN01 domain: </para>
+
+<para><screen><userinput>
+smbpasswd -a root
+</userinput></screen></para>
+
+<para>After starting Samba and adding root to the Samba user list, the
+first machine we'll join to DOMAIN01 will be WIN2KBOX, the Windows
+2000 Server box we created the machine trust account for.  On
+WIN2KBOX:</para><para><screen><userinput>
+
+1.  Right click on My Computer.
+2.  Click on Properties.
+3.  Click on the Network Identification notebook tab.
+4.  Click on the Properties button.
+5.  In the Computer Name: edit field enter WIN2KBOX.
+6.  Click on the Domain: radio button and enter DOMAIN01 in the edit
+    field and click OK.
+7.  When presented with the Domain Username And Password dialog box,
+    enter root and root's password on SAMBABOX and click OK.
+8.  After the machine trust is negotiated, click the OK button in the
+    dialog box welcoming you to the DOMAIN01 domain.
+9.  Click OK in the reboot reminder dialog box.
+10. Click OK to close the System Properties window.
+11. Click Yes to reboot WIN2KBOX.
+</userinput></screen></para></sect3>
+
+<sect3><title>Add a new user to the DOMAIN01 domain.</title>
+<para>Before logging on to WIN2KBOX, we will create a new user with
+    the following commands:</para>
+<para><screen><userinput>
+useradd -m win2kuser01 &amp;&amp;
+passwd win2kuser01 &amp;&amp;
+smbpasswd -a win2kuser01 
+</userinput></screen></para></sect3>
+
+<sect3><title>Logging on to DOMAIN01.</title>
+<para>Now we will log on the the domain as our newly created user as
+    follows:</para> 
+<para><screen><userinput>
+1. Press Ctrl-Alt-Del to bring up the Log On to Windows dialog box.
+2. Enter the win2kuser01 name and password.
+3. Select DOMAIN01 from the Log on to: combination box and click OK.
+</userinput></screen></para>
+
+<para>Add the swat entry to <filename>/etc/services</filename>with the
+following command: </para>
+
+<para><screen><userinput>
+echo "swat            901/tcp" &gt;&gt; /etc/services
+</userinput></screen></para>
+
+<para>If inetd is used, the following command will add the swat entry
+to <filename>/etc/inetd.conf</filename>: </para>
+<para><screen><userinput>
+echo "swat stream tcp nowait.400 root /usr/sbin/swat swat" \
+    &gt;&gt; /etc/inetd.conf
+</userinput></screen></para>
+
+<para>If xinetd is used, the following command will add the swat entry
+to <filename>/etc/xinetd.conf</filename>: </para>
+<para><screen><userinput>
+cat &gt;&gt; /etc/xinetd.conf &lt;&lt; "EOF"
+service swat
+{
+    port            = 901
+    socket_type     = stream
+    wait            = no
+    only_from       = 127.0.0.1
+    user            = root
+    server          = /usr/sbin/swat
+    log_on_failure  += USERID
+}
+EOF
+</userinput></screen></para>
+
+<para>The Samba Web Administration Tool, swat, can be launched with the
+following command on SAMBABOX: </para>
+<para><screen><userinput>
+lynx http://localhost:901
+</userinput></screen></para>
+<note><para>Be sure inetd is running, and issue a killall -HUP inetd
+before starting swat.</para></note>
+<para>The lynx browser is used in this demonstration, but is not
+necessary.</para></sect3>
+
+</sect2>
+

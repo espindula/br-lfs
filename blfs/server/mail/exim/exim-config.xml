@@ -1,0 +1,83 @@
+<sect2>
+<title>Configuring exim</title>
+
+<sect3><title>Config files</title>
+<para><userinput>/etc/exim.conf, /etc/aliases</userinput></para>
+</sect3>
+
+<sect3><title>Configuration of exim</title>
+<para>Create the exim configuration files with the following commands:
+</para> 
+<para><screen><userinput>
+cat >> /etc/aliases << "EOF"
+postmaster: root
+MAILER-DAEMON: root
+EOF
+exim -v -bi
+/usr/sbin/exim -bd -q1m
+</userinput></screen></para>
+<note><para>To protect an existing <filename>/etc/aliases</filename>
+file, we will append these aliases to it if it exists.  This file
+should be checked and duplicate aliases removed, if
+present.</para></note>
+
+
+<para>To start and stop exim on system boot/shutdown create the
+exim boot script with the following commands: </para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/exim &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/exim
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+
+        start)
+        echo "Starting exim..."
+        loadproc /usr/sbin/exim -bd -q1m
+        ;;
+
+        stop)
+        echo "Stopping exim..."
+        killproc exim
+        ;;
+		
+	status)
+	statusproc exim
+	;;
+	
+        restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+
+        *)
+        echo "Usage: $0 {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+
+# End $rc_base/init.d/exim
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/exim</userinput></screen></para>
+
+<para>Create the run level symlinks with the following commands:
+</para>
+<para>
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/exim ../rc0.d/K25exim &amp;&amp;
+ln -sf ../init.d/exim ../rc1.d/K25exim &amp;&amp;
+ln -sf ../init.d/exim ../rc2.d/K25exim &amp;&amp;
+ln -sf ../init.d/exim ../rc3.d/S35exim &amp;&amp;
+ln -sf ../init.d/exim ../rc4.d/S35exim &amp;&amp;
+ln -sf ../init.d/exim ../rc5.d/S35exim &amp;&amp;
+ln -sf ../init.d/exim ../rc6.d/K25exim</userinput></screen></para>
+</sect3>
+
+</sect2>

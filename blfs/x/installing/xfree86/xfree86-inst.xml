@@ -1,50 +1,47 @@
 <sect2>
 <title>Installation of XFree86</title>
 
-
 <sect3>
 <title>Kernel Compilation Settings</title>
-<para>
-If you have an Intel P6 (Pentium Pro, Pentium II and later) it is recommneded 
+<para>If you have an Intel P6 (Pentium Pro, Pentium II and later) it is recommneded 
 that you compile MTRR (Memory Type Range Registers) support into the kernel.
 The kernel can map Cyrix and AMD CPUs to the MTRR interface so selecting this
 option is useful for those processors also.
 This option is found in the 
 "Processor type and features" menu.  It can increase performance of
-image write operations 2.5 times or more on PCI or AGP video cards. 
-</para>
+image write operations 2.5 times or more on PCI or AGP video cards.</para>
 
-<para>
-In the "Character Devices" section, enable AGP Support and select the chipset
+<para>In the "Character Devices" section, enable AGP Support and select the chipset
 support on your motherboard.  If you do not know the chipset, you may select
 all the chip types at the expense of extra kernel size. You can usually 
 determine your motherboard's chipset by doing:
-<screen><userinput>cat /proc/pci</userinput></screen>
-</para>
+<screen><userinput>cat /proc/pci</userinput></screen></para>
 
-<para>
-In the "Character Devices" section, <emphasis>disable</emphasis> Direct 
+<para>In the "Character Devices" section, <emphasis>disable</emphasis> Direct 
 Rendering Manager unless you have a Direct Rendering Infrastructure (DRI) 
 supported video card.  See the DRI section below for a list.  If you do
 enable DRI here, make sure you select the video card(s) you want to support
-as a <emphasis>module</emphasis>.
-</para>
+as a <emphasis>module</emphasis>.</para>
 
 <para>If you made any changes to the kernel configuration, recompile with
-<screen>make dep &amp;&amp;
+<screen><userinput>make dep &amp;&amp;
 make bzImage &amp;&amp;
 make modules &amp;&amp;
-make modules_install</screen>
+make modules_install</userinput></screen>
 </para>
 
-<para>
-Copy <filename>/usr/src/linux/arch/i386/boot/bzImage</filename> and
+<para>Copy <filename>/usr/src/linux/arch/i386/boot/bzImage</filename> and
 <filename>/usr/src/linux/System.map</filename> to
 <filename>/boot</filename>, edit <filename>/etc/lilo.conf</filename>
-appropriately and run <userinput>lilo</userinput>.
-</para>
+appropriately and run <userinput>lilo</userinput>.</para>
+
+<note><para>If you build XFree86 in a chroot environment, make sure the kernel 
+version of the base system and the target system are the same.  This is 
+especially important if you enabled DRI support as a module as 
+instructed above.</para></note>
 
 </sect3>
+
 <sect3><title>Creating <filename>host.def</filename></title>
 
 <para>Although XFree86 will compile without a host.def file, the following file 
@@ -56,8 +53,10 @@ the <filename>xc</filename> directory.</para>
 
 /* System Related Information.  If you read and configure only one
  * section then it should be this one.  The Intel architecture defaults are 
- * set for a i686 and higher.  Apx is for the Alpha architecture and Ppc is  
- * for the Power PC. *******************************************************/
+ * set for a i686 and higher.  Axp is for the Alpha architecture and Ppc is  
+ * for the Power PC.  Note that there have been reports that the Ppc 
+ * optimization line causes segmentation faults during build.  If that 
+ * happens, try building without the DefaultGcc2PpcOpt line.  **************/
 
 #define DefaultGcc2i386Opt  -O2 -fomit-frame-pointer -march=i686  
 #define DefaultGcc2AxpOpt   -O2 -mcpu=ev6
@@ -67,7 +66,7 @@ the <filename>xc</filename> directory.</para>
  * You can uncomment them if you want to make sure. ************************/
  
 /* #define HasMTRRSupport      YES  */ /* Enabled in kernel see kernel docs */
-/* #define HasMMXSupport        NO         */ /* Any i586 or above */
+/* #define HasMMXSupport        NO  */ /* Any i586 or above */
 /* #define HasKatmaiSupport     NO  */ /* PIII SSE instuctions */
 /* #define Has3DNowSupport      NO  */ /* AMD instructions */
 
@@ -90,14 +89,17 @@ the <filename>xc</filename> directory.</para>
 
 /* FONT SERVER AND LIBRARY SETTINGS ****************************************/
 
-
 /* These setting should be set by default, but we are making sure. *********/
 
-#define BuildFontServer                YES  /* Need for GhostScript Print Server */
-#define BuildFreetype2Library          YES  /* For using TrueType Fonts */
-#define SharedLibFont                  YES  /* Needed for Truetype */
-#define CompressAllFonts               YES
-#define GzipFontCompression            YES
+#define BuildFontServer          YES  /* Need for GhostScript Print Server */
+#define SharedLibFont            YES  
+#define CompressAllFonts         YES
+#define GzipFontCompression      YES
+
+/* These setting ensure we use the proper version of freetype **************/
+#define HasFreetype2             YES
+#define BuildFreetype2Library     NO
+#define Freetype2Dir            /usr
 
 /* The font path can be redefined in the XF86Config file *******************/
 
@@ -133,9 +135,6 @@ $(FONTDIR)/TrueType,$(FONTDIR)/CID,$(FONTDIR)/Speedo
 /* Linux Distribution Information - Not essential that it is totally right.*/
 
 #define LinuxDistribution         LFS 
-#define LinuxCLimbMajorVersion    3
-#define LinuxCLimbMinorVersion    3        
-#define LinuxCLimbTeenyVersion    0
 
 /* GENERAL SETTINGS: You generally want to leave these alone when
  * building X on an LFS system *********************************************/
@@ -163,19 +162,21 @@ $(FONTDIR)/TrueType,$(FONTDIR)/CID,$(FONTDIR)/Speedo
 EOF</userinput></screen></para>
 
 <para>Edit the file for your hardware and desires.</para>
+
 </sect3>
 
 <sect3>
 <title>Build Commands</title>
 <para>Install XFree86 by running the following commands:</para>
 
-<para><screen><userinput>patch -Np1 -i ../4.2.0-libGLU-bad-extern.patch &amp;&amp;</userinput>
-<userinput>make World 2&gt;&amp;1 | tee xfree-compile.log &amp;&amp;</userinput>
-<userinput>make install &amp;&amp;</userinput>
-<userinput>make install.man &amp;&amp;</userinput>
-<userinput>ln -sf /usr/X11R6/bin /usr/bin/X11 &amp;&amp;</userinput>
-<userinput>ln -sf /usr/X11R6/lib/X11 /usr/lib/X11 &amp;&amp;</userinput>
-<userinput>ln -sf /usr/X11R6/include/X11 /usr/include/X11</userinput></screen></para>
+
+<para><screen><userinput>patch -Np1 -i ../4.2.0-4.2.1.diff &amp;&amp;
+make World 2&gt;&amp;1 | tee xfree-compile.log &amp;&amp;
+make install &amp;&amp;
+make install.man &amp;&amp;
+ln -sf /usr/X11R6/bin /usr/bin/X11 &amp;&amp;
+ln -sf /usr/X11R6/lib/X11 /usr/lib/X11 &amp;&amp;
+ln -sf /usr/X11R6/include/X11 /usr/include/X11</userinput></screen></para>
 
 </sect3>
 </sect2>

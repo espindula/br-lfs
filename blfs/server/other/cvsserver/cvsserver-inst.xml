@@ -1,0 +1,115 @@
+<sect2>
+<title>Setting up a CVS server.</title>
+
+<para>We will discuss setting up a CVS server using OpenSSH as the
+remote access method.  Other access methods, including :pserver: and
+:server: will not be used for write access to the CVS repository.  The
+:pserver: method sends clear text passwords over the network and the
+:server: method is not supported in all CVS ports.  Instructions for
+anonymous, read only CVS access using :pserver: can be found at the
+end of this section.</para>
+
+<para>Configuration of our CVS server consists of four steps:</para>
+
+<sect3><title>1. Create a repository.</title>
+<para>Create a new CVS repository with the following commands,
+logged in as root:</para>
+<para><screen><userinput>
+mkdir /cvsroot &amp;&amp;
+chmod 1777 /cvsroot &amp;&amp;
+export CVSROOT=/cvsroot
+cvs init</userinput></screen></para></sect3>
+
+<sect3><title>2. Import source code into the repository.</title>
+<para>Import a source module into the repository with the following
+commands, issued from a user account on the same machine as the CVS
+repository:</para>
+
+<para><screen><userinput>
+export CVSROOT=/cvsroot &amp;&amp;
+cd sourcedir &amp;&amp;
+cvs import -m "repository test" cvstest vendortag releasetag
+</userinput></screen></para></sect3>
+
+<sect3><title>3. Verify local repository access.</title>
+<para>Test access to the CVS repository from the same user account
+with the following command:</para>
+
+<para><screen><userinput>
+cvs co cvstest
+</userinput></screen></para></sect3>
+
+<sect3><title>4. Verify remote repository access.</title>
+<para>Test access to the CVS repository from a remote machine using a
+user account that has ssh access to the CVS server with the following
+commands:
+<note><para>Replace "servername" with the IP address or host name
+ofthe CVS repository machine.  You will be prompted for the user's
+shellaccount password before CVS checkout can
+continue.</para></note></para>
+
+
+<para><screen><userinput>
+export CVS_RSH=/usr/bin/ssh &amp;&amp;
+cvs -d:ext:servername:/cvsroot co cvstest 
+</userinput></screen></para></sect3>
+</sect2>
+<sect2>
+<title>Configuring CVS for anonymous read only access.</title>
+
+<para>CVS can be set up to allow anonymous read only access using the
+:pserver: method by logging on as root and executing the following
+commands:</para> 
+
+<para><screen><userinput>
+(grep anonymous /etc/passwd || useradd anonymous -s /bin/false) &amp;&amp;
+echo anonymous: > /cvsroot/CVSROOT/passwd &amp;&amp;
+echo anonymous > /cvsroot/CVSROOT/readers
+</userinput></screen></para>
+
+<para>If you use inetd, the following command will add the pserver
+entry to /etc/inetd.conf:</para>
+
+<para><screen><userinput>
+echo "2401  stream  tcp  nowait  root  /usr/bin/cvs cvs -f \
+        --allow-root=/cvsroot pserver" &gt;&gt; /etc/inetd.conf
+</userinput></screen></para>
+
+<para>Issue a killall -HUP inetd to reread the changed inetd.conf
+file.</para>
+
+<para>If you use xinetd, the following command will add the pserver
+entry to /etc/xinetd.conf:</para>
+
+<para><screen><userinput>
+cat &gt;&gt; /etc/xinetd.conf &lt;&lt; "EOF"
+     service cvspserver
+     {
+          port        = 2401
+          socket_type = stream
+          protocol    = tcp
+          wait        = no
+          user        = root
+          passenv     = PATH
+          server      = /usr/bin/cvs
+         server_args = -f --allow-root=/cvsroot pserver
+     }
+EOF
+</userinput></screen></para>
+<para>Issue a killall -HUP xinetd to reread the changed xinetd.conf
+file.</para>
+
+<para>Testing anonymous access to the new repository requires an account
+on another machine that can reach the CVS server via network.  No
+account on the CVS repository is needed.  To test anonymous access to
+the CVS repository log in to another machine as an unprivileged user
+and execute the following command:</para>
+
+<para><screen><userinput>
+cvs -d:pserver:anonymous@servername:/cvsroot co cvstest
+</userinput></screen><note><para>Replace "servername" with the IP
+address or hostname of the CVS server</para></note></para>
+
+</sect2>
+
+

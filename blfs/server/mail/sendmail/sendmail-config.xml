@@ -1,0 +1,82 @@
+<sect2>
+<title>Configuring sendmail</title>
+
+<sect3><title>Config files</title>
+<para><userinput>/etc/mail/aliases.db, /etc/mail/sendmail.cf,
+/etc/mail/submit.cf</userinput> and
+<userinput>/etc/mail/local-host-names</userinput></para>
+</sect3>
+
+<sect3><title>Configuring sendmail</title>
+<para><screen><userinput>
+echo `hostname` > /etc/mail/local-host-names
+cat > /etc/mail/aliases << "EOF"
+postmaster: root
+MAILER-DAEMON: root
+EOF
+cd /etc/mail &amp;&amp;
+cp -R  /usr/src/sendmail-8.12.6/cf/* . &amp;&amp;
+cp -R  /usr/src/sendmail-8.12.6/cf/cf/submit.mc . &amp;&amp;
+cp -R  /usr/src/sendmail-8.12.6/cf/cf/sendmail.mc . &amp;&amp;
+sendmail -v -bi &amp;&amp;
+/usr/sbin/sendmail -bs -bd -q1m
+</userinput></screen></para>
+
+<para>To start and stop sendmail on system boot/shutdown create the
+sendmail boot script with the following commands: </para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/sendmail &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/sendmail
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+
+        start)
+        echo "Starting sendmail..."
+        loadproc /usr/sbin/sendmail -bs -bd -q1m start
+        ;;
+
+        stop)
+        echo "Stopping Sendmail..."
+        killproc sendmail
+        ;;
+		
+	status)
+	statusproc sendmail
+	;;
+	
+        restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+
+        *)
+        echo "Usage: $0 {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+
+# End $rc_base/init.d/sendmail
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/sendmail</userinput></screen></para>
+
+<para>Create the run level symlinks with the following commands:
+
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/sendmail ../rc0.d/K25sendmail &amp;&amp;
+ln -sf ../init.d/sendmail ../rc1.d/K25sendmail &amp;&amp;
+ln -sf ../init.d/sendmail ../rc2.d/K25sendmail &amp;&amp;
+ln -sf ../init.d/sendmail ../rc3.d/S35sendmail &amp;&amp;
+ln -sf ../init.d/sendmail ../rc4.d/S35sendmail &amp;&amp;
+ln -sf ../init.d/sendmail ../rc5.d/S35sendmail &amp;&amp;
+ln -sf ../init.d/sendmail ../rc6.d/K25sendmail</userinput></screen></para>
+</sect3>
+
+</sect2>

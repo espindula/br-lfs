@@ -1,0 +1,132 @@
+<sect2>
+<title>Configuring alsa-driver</title>
+
+<sect3><title>Config files</title>
+
+<para><userinput>/etc/modules.conf</userinput> and 
+<userinput>/etc/asound.state</userinput></para>
+
+</sect3>
+
+<sect3><title>Configuration Information</title>
+
+<para>To configure the alsa drivers, you need to add some lines to
+<filename>/etc/modules.conf</filename>:</para>
+
+<para><screen><userinput>cat &gt;&gt; /etc/modules.conf &lt;&lt; "EOF"</userinput>
+alias char-major-14 soundcore
+alias char-major-116 snd
+
+alias snd-card-0 snd-&lt;soundcard-name&gt;
+
+alias sound-slot-0 snd-card-0
+
+alias sound-service-0-0 snd-mixer-oss
+alias sound-service-0-1 snd-seq-oss
+alias sound-service-0-3 snd-pcm-oss
+alias sound-service-0-8 snd-seq-midi
+<userinput>EOF</userinput></screen></para>
+
+<para>&lt;soundcard-name&gt; needs to be replaced with the driver relevant
+to your soundcard.  If you have more than one soundcard, you can add
+additional sections by repeating the above but changing the first 0 to 1 and
+so on.</para>
+
+<para>After editing <filename>/etc/modules.conf</filename> you need to run
+<filename>depmod</filename>.  If the drivers you have compiled are for the
+version of the kernel you are currently running, simply run
+<screen><userinput>depmod</userinput></screen>  If you are compiling 
+drivers for a different kernel version to that which you are running, you 
+will need to use a line along the lines of:
+<screen><userinput>depmod -a 2.4.19 -F /boot/System.map-2.4.19</userinput></screen></para>
+
+<para>Probably the easiest way to store mixer levels is to set and retrieve
+them using a bootscript.  It is possible to do this with a
+<userinput>post-install</userinput> line in
+<filename>/etc/modules.conf</filename> but this is left as an exercise for
+those readers who wish to do this.</para>
+
+<para>The alsa-drivers package installs a script as
+<filename>/etc/rc.d/init.d/alsasound</filename>.  While it is possible to use
+this script, it contains a lot of extraneous detail which isn't needed on an
+LFS system and so we create our own script
+<filename>/etc/rc.d/init.d/alsa</filename>.</para>
+
+<para>To create the alsa script, do the following:</para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/alsa &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/alsa
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+# ALSA specific parts by Mark Hymers - markh@linuxfromscratch.org
+# Stores mixer settings in the default location: /etc/asound.state
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+    start)
+        echo -n "Starting alsa...    Restoring volumes..."
+        loadproc /usr/sbin/alsactl restore
+        #echo -n "                    Loading MIDI font..."
+        #loadproc sfxload /path/to/soundfont
+        ;;
+
+    stop)
+        echo -n "Stopping alsa...    Saving volumes......"
+        loadproc /usr/sbin/alsactl store
+        #echo -n "            Removing MIDI font.........."
+        #loadproc sfxload -i
+        ;;
+
+    restart)
+        $0 stop
+        /usr/bin/sleep 1
+        $0 start
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+
+esac
+
+# End $rc_base/init.d/alsa
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/alsa</userinput></screen></para>
+
+<para>You can then create the appropriate symlinks:
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/alsa ../rc0.d/K35alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc1.d/K35alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc2.d/S40alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc3.d/S40alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc4.d/S40alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc5.d/S40alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc6.d/K35alsa</userinput></screen></para>
+
+<para>Note that all channels of your soundcard are muted by default. You can
+use the <filename>alsamixer</filename> program from alsa-utils (or any other
+OSS mixer) to change this.</para>
+
+<para>Also, the first time the above script is run, it will complain that
+there is no state in <filename>/etc/asound.state</filename>.  You can
+prevent this by running the following commands after installing alsa-utils:
+<screen><userinput>touch /etc/asound.state &amp;&amp;
+alsactl store</userinput></screen></para>
+
+<para>A final note is that the lines loading <filename>sfxload</filename>
+are commented out.  They are there as an example of other things you may
+wish to do in the startup script.  <filename>sfxload</filename> is a
+seperate package of interest to SoundBlaster AWE and Live! users.  It is
+designed for loading "sound-fonts" (which are used for MIDI output).  You
+may wish to delete these lines and add your own or, if you have the relevant
+soundcard, install <filename>sfxload</filename> and uncomment them.</para>
+
+</sect3>
+
+</sect2>
+
