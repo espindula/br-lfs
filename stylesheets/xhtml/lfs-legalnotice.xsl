@@ -33,7 +33,14 @@
                     <xsl:attribute name="href">
                       <xsl:text>../index.html</xsl:text>
                     </xsl:attribute>
-                    <xsl:text>Home</xsl:text>
+                    <xsl:attribute name="title">
+                      <xsl:value-of select="/book/bookinfo/title"/>
+                      <xsl:text> - </xsl:text>
+                      <xsl:value-of select="/book/bookinfo/subtitle"/>
+                    </xsl:attribute>
+                    <xsl:call-template name="navig.content">
+                      <xsl:with-param name="direction" select="'home'"/>
+                    </xsl:call-template>
                   </a>
                 </li>
               </ul>
