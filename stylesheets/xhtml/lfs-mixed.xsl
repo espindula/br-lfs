@@ -50,5 +50,59 @@
       </dl>
     </div>
   </xsl:template>
-  
+
+    <!-- Body attributes -->
+  <xsl:template name="body.attributes">
+    <xsl:attribute name="id">
+      <xsl:text>lfs</xsl:text>
+    </xsl:attribute>
+    <xsl:attribute name="class">
+      <xsl:value-of select="substring-after(/book/bookinfo/subtitle, ' ')"/>
+    </xsl:attribute>
+  </xsl:template>
+
+   <!-- Sect1 attributes -->
+  <xsl:template match="sect1">
+    <div>
+      <xsl:choose>
+        <xsl:when test="@role">
+          <xsl:attribute name="class">
+            <xsl:value-of select="@role"/>
+          </xsl:attribute>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:attribute name="class">
+            <xsl:value-of select="name(.)"/>
+          </xsl:attribute>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:call-template name="language.attribute"/>
+      <xsl:call-template name="sect1.titlepage"/>
+      <xsl:apply-templates/>
+      <xsl:call-template name="process.chunk.footnotes"/>
+    </div>
+  </xsl:template>
+
+    <!-- Sect2 attributes -->
+  <xsl:template match="sect2">
+    <div>
+      <xsl:choose>
+        <xsl:when test="@role">
+          <xsl:attribute name="class">
+            <xsl:value-of select="@role"/>
+          </xsl:attribute>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:attribute name="class">
+            <xsl:value-of select="name(.)"/>
+          </xsl:attribute>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:call-template name="language.attribute"/>
+      <xsl:call-template name="sect2.titlepage"/>
+      <xsl:apply-templates/>
+      <xsl:call-template name="process.chunk.footnotes"/>
+    </div>
+  </xsl:template>
+
 </xsl:stylesheet>
