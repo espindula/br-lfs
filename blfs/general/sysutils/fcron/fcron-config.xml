@@ -1,0 +1,74 @@
+<sect2>
+<title>Configuring fcron</title>
+
+<sect3><title>make install script</title>
+
+<para>After the files are installed, the make install script enters into a
+configuration routine.  The first test will be for a group named fcron.  If
+it does not exist, you will be given the command line that the script proposes
+to run and a prompt for a 'y' or 'n'.  This is repeated to create a user named
+fcron and to install a script in the init.d directory with the appropriate
+symbolic links in runlevels 2, 3, 4, and 5.  The final configuation step is to
+stop any current fcron processes and start the new fcron.  A yes here will stop
+current fcron processes but will fail to start new fcron.  The following
+commands will correct this:</para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/fcron &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/fcron
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+        start)
+                echo "Starting fcron..."
+                loadproc fcron
+                ;;
+
+        stop)
+                echo "Stopping fcron..."
+                killproc fcron
+                ;;
+
+        restart)
+                $0 stop
+                sleep 1
+                $0 start
+                ;;
+
+        status)
+                statusproc fcron
+                ;;
+
+        *)
+                echo "Usage: $0 {start|stop|restart|status}"
+                exit 1
+                ;;
+esac
+
+# End $rc_base/init.d/fcron
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/fcron &amp;&amp;
+/etc/rc.d/init.d/fcron start &amp;&amp;
+mv /etc/rc.d/rc0.d/K60fcron /etc/rc.d/rc0.d/K08fcron &amp;&amp;
+mv /etc/rc.d/rc6.d/K60fcron /etc/rc.d/rc6.d/K08fcron</userinput></screen></para>
+</sect3>
+
+<sect3><title>Config files</title>
+
+<para><userinput>/etc/fcron.conf, /etc/fcron.allow,
+/etc/fcron.deny</userinput></para>
+
+<para>There are no required changes in any of these files.
+Configuration information can be found in the man page for
+fcron.conf.</para>
+
+<para>fcron scripts are written using fcrontab.  Refer to the man page
+for fcrontab for proper parameters for your situation.</para></sect3>
+
+</sect2>
+

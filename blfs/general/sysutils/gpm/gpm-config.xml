@@ -1,0 +1,106 @@
+<sect2>
+<title>Configuring gpm</title>
+
+<sect3><title>gpm init.d script</title>
+<para>The gpm init.d script can be created using the following
+commands:  (This assumes that you have followed the LFS default of
+having your $rc_base set to <filename
+class="directory">/etc/rc.d</filename>)</para>
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/gpm &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/gpm
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+# GPM specific parts by Mark Hymers - markh@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+if [ -f /etc/sysconfig/mouse ]
+	then
+        source /etc/sysconfig/mouse
+fi
+
+if [ -z "$MDEVICE" ] || [ -z "$PROTOCOL" ]
+	then
+	echo "Please create an /etc/sysconfig/mouse file containing"
+	echo "MDEVICE and PROTOCOL values"
+	exit 1;
+fi
+
+case "$1" in
+        start)
+                echo "Starting gpm..."
+                loadproc gpm -m $MDEVICE -t $PROTOCOL
+                ;;
+
+        stop)
+                echo "Stopping gpm..."
+                killproc gpm
+                ;;
+
+        restart)
+                $0 stop
+                sleep 1
+                $0 start
+                ;;
+
+        status)
+                statusproc gpm
+                ;;
+
+        *)
+                echo "Usage: $0 {start|stop|restart|status}"
+                exit 1
+                ;;
+esac
+
+# End $rc_base/init.d/gpm
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/gpm</userinput></screen></para>
+
+<para>You then need to create symbolic links to this file in the relevant rc.d
+directories.  For example:
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/gpm ../rc0.d/K10gpm &amp;&amp;
+ln -sf ../init.d/gpm ../rc1.d/K10gpm &amp;&amp;
+ln -sf ../init.d/gpm ../rc2.d/K10gpm &amp;&amp;
+ln -sf ../init.d/gpm ../rc3.d/S70gpm &amp;&amp;
+ln -sf ../init.d/gpm ../rc4.d/S70gpm &amp;&amp;
+ln -sf ../init.d/gpm ../rc5.d/S70gpm &amp;&amp;
+ln -sf ../init.d/gpm ../rc6.d/K10gpm</userinput></screen></para></sect3>
+
+<sect3><title>Config files</title>
+<para><userinput>/etc/sysconfig/mouse</userinput>
+This file contains the name of your mouse device and the protocol which
+it uses.  To create this file, run the following:</para>
+
+<para><screen><userinput>cat &gt; /etc/sysconfig/mouse &lt;&lt; "EOF"</userinput> 
+# start /etc/sysconfig/mouse
+MDEVICE=yourdevice
+PROTOCOL=yourprotocol
+# end /etc/sysconfig/mouse
+<userinput>EOF</userinput></screen></para>
+</sect3>
+
+<sect3><title>Configuration Information</title>
+
+<para>Examples of values to set MDEVICE and PROTOCOL to are</para>
+
+<para><screen>MDEVICE=/dev/psaux
+PROTOCOL=imps2</screen></para>
+
+<para>A list of which protocol values are known can be found by running
+<userinput>gpm -t -help</userinput>.  Your MDEVICE setting depends on
+which type of mouse you have.  For example,
+<userinput>/dev/ttyS0</userinput> for a serial mouse (on Windows this is
+COM1), <userinput>/dev/input/mice</userinput> is often used for USB mice
+and <userinput>/dev/psaux</userinput> for PS2 mice.  It is normally
+thought not a good idea to link /dev/mouse to the relevant device, but
+instead to reference it directly.</para>
+
+</sect3>
+
+</sect2>
+

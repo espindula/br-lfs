@@ -1,0 +1,68 @@
+<sect1 id="postlfs-config-random" xreflabel="random">
+<?dbhtml filename="random.html" dir="postlfs"?>
+<title>Random number generation</title>
+
+<para>The Linux kernel supplies a random number generator which is accessed
+through <filename>/dev/random</filename> and 
+<filename>/dev/urandom</filename>.  Programs that utilize the random and
+urandom devices, such as OpenSSH, will benefit from these instructions.</para>
+
+<para>When a Linux system starts up without much operator interaction, the
+entropy pool, data used to compute a random number, may be in a fairly
+predictable state.  This creates the real possibility that the number generated
+at startup may always be the same.  In order to counteract this effect,
+you should carry the entropy pool information across your shut-downs and
+start-ups. The following init.d script and links will perform this function
+for you automatically.</para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/random &lt;&lt; "EOF"
+</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/random
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+# Random script elements by Larry Lawrence
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+        start)
+                echo "Initializing kernel random number generator..."
+                if [ -f /var/tmp/random-seed ]; then
+	                cat /var/tmp/random-seed >/dev/urandom
+		fi
+		dd if=/dev/urandom of=/var/tmp/random-seed count=1 &>/dev/null
+		evaluate_retval
+		;;
+		
+	stop)
+		echo "Saving random seed..."
+		dd if=/dev/urandom of=/var/tmp/random-seed count=1 &>/dev/null
+		evaluate_retval
+		;;
+
+        *)
+                echo "Usage: $0 {start|stop}"
+                exit 1
+                ;;
+esac
+
+# End $rc_base/init.d/random
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/random</userinput></screen></para>
+
+<para>Create the symbolic links to this file in the relevant rc.d directories 
+with the following commands:
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/random ../rc0.d/K45random &amp;&amp;
+ln -sf ../init.d/random ../rc2.d/S25random &amp;&amp;
+ln -sf ../init.d/random ../rc3.d/S25random &amp;&amp;
+ln -sf ../init.d/random ../rc4.d/S25random &amp;&amp;
+ln -sf ../init.d/random ../rc5.d/S25random &amp;&amp;
+ln -sf ../init.d/random ../rc6.d/K45random</userinput></screen></para>
+
+
+</sect1>
+

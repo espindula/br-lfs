@@ -1,0 +1,189 @@
+<sect2>
+<title>Installation of alsa</title>
+
+<para>Unpack the packages you've downloaded</para>
+
+<sect3>
+<title>Installation of the driver</title>
+
+<para><screen><userinput>./configure \
+    --with-moddir=/lib/modules/&lt;kernel-version&gt;/kernel/drivers/sound/ \
+	--with-kernel=&lt;path-to-kernel-source-tree-to-build-for&gt; \
+	--with-sequencer=yes --with-oss=yes \
+	--with-cards=&lt;soundcards-to-compile&gt; &&
+make &&
+make install </userinput></screen></para>
+
+<para>Replace &lt;path-to-kernel-source-tree-to-build-for&gt; and
+&lt;kernel-version&gt; with which the path to the source tree of the 
+kernel version you want to build the drivers for (most commonly your 
+current version) and the kernel version number respectively.  You also
+need to replace &lt;soundcards-to-compile&gt; with the card names 
+you need drivers for (read the SOUNDCARDS section below); otherwise 
+"./configure --help" gives you a list of
+drivers you can compile.</para>
+
+<para>There are two ways of setting up the modules. The easiest
+way is the "let the kernel module loader load them automatically"-way, 
+the other one is to use the bootscript you'll find in the
+/utils-directory of the driver.</para>
+
+<para>For both ways, you need to add some lines to /etc/modules.conf:</para>
+
+<para><screen><userinput>cat &gt;&gt; /etc/modules.conf &lt;&lt; "EOF"</userinput>
+alias char-major-116 snd
+options snd snd_major=116 snd_cards_limit=1
+alias snd-card-0 snd-card-&lt;soundcard&gt;
+alias sound-slot-0 snd-card-0
+alias sound-service-0-0 snd-mixer-oss
+alias sound-service-0-3 snd-pcm-oss
+post-install snd-card-&lt;soundcard&gt; /usr/sbin/alsactl restore
+<userinput>EOF</userinput></screen></para>
+
+<para>Remember to replace &lt;soundcard&gt; with whatever is 
+appropriate.  Note that if you are going to use the LFS-style alsa
+script we give below, there is no need for the post-install line.</para>
+
+<para>If you want kmod to automatically load the modules, as long as you
+have the post-install line in modules.conf, you don't need a startup
+script.  If on the other hand you want to use an LFS style startup
+script (because you want to perform other operations at startup/shutdown
+or for another reason), you can use this script here:</para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/alsa &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/alsa
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+# ALSA specific parts by Mark Hymers - markh@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+if [ -f /etc/sysconfig/alsa ]
+then
+	source /etc/sysconfig/alsa
+fi
+
+if [ -z "$CONF" ] 
+then
+	echo "Please create an /etc/sysconfig/alsa file containing"
+	echo "a CONF value (usually /etc/asound.conf)"
+	exit 1;
+fi
+
+case "$1" in
+	start)
+		echo -n "Starting alsa...    Restoring volumes..."
+		loadproc /usr/sbin/alsactl -f $CONF restore
+		#echo -n "                    Loading MIDI font..."
+		#loadproc sfxload $FONT
+		;;
+
+	stop)
+		echo -n "Stopping alsa...    Saving volumes......"
+		loadproc /usr/sbin/alsactl -f $CONF store
+		#echo -n "            Removing MIDI font.........."
+		#loadproc sfxload -i
+		;;
+
+	restart)
+		$0 stop
+		/usr/bin/sleep 1
+		$0 start
+		;;
+	
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+
+esac
+
+# End $rc_base/init.d/alsa
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/alsa</userinput></screen></para>
+
+<para>Note that the Loading and Removing MIDI font lines are commented out.
+This is because they are only needed for certain soundcards and also
+require an additional program (<userinput>sfxload</userinput>).  An
+example of a soundcard which needs MIDI fonts loaded in order to play
+MIDI files is the Soundblaster Live! which is based on a emu10k1
+chip.</para>
+
+<para>If you are using the above script, you will also need 
+a <filename>/etc/sysconfig/alsa</filename> file.  Create this using
+the following commands:</para>
+
+<para><screen><userinput>cat &gt; /etc/sysconfig/alsa &lt;&lt; "EOF"</userinput>
+# Begin /etc/sysconfig/alsa
+
+# CONF is where you want the system to store volume settings.
+# /etc/asound.conf is recommended
+CONF=/etc/asound.conf
+
+# FONT is where your midi font (if any) is stored.
+FONT=/usr/share/8mbgmsfx.sf2
+
+# End /etc/sysconfig/alsa
+<userinput>EOF</userinput></screen></para>
+
+<para>Then create the appropriate symlinks:
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/alsa ../rc0.d/K35alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc1.d/K35alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc2.d/S40alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc3.d/S40alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc4.d/S40alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc5.d/S40alsa &amp;&amp;
+ln -sf ../init.d/alsa ../rc6.d/K35alsa</userinput></screen></para>
+
+<para>Beware. All channels of your soundcard are muted by default. You can use
+the <filename>alsamixer</filename> (in alsa-utils, requires alsa-lib) or any 
+other OSS mixer program (like kmix, gmix, aumix) to unmute them.  We
+recommend that you do this <emphasis>before</emphasis> running the
+script above because otherwise alsactl will complain that it cannot read
+the <filename>/etc/asound.conf</filename> file.  You can do this by 
+running <userinput>alsamixer</userinput>, setting the volumes and then
+running <userinput>alsactl -f /etc/asound.conf store</userinput>.  This
+means that the first time you run the script, it will have a valid
+<filename>asound.conf</filename> file to use.</para>
+
+<para>If you get an error like
+<screen>alsamixer: failed to open mixer #0/#0: No such file or directory</screen>
+run the snddevices script in the alsa-driver directory.  From the
+alsa-driver source directory run:</para>
+
+<para><screen><userinput>./snddevices</userinput></screen></para>
+</sect3>
+
+<sect3>
+<title>Installation of the library</title>
+<para>From the alsa-lib source directory, run:</para>
+<para><screen><userinput>./configure &&
+make install</userinput></screen></para>
+</sect3>
+
+<sect3>
+<title>Installation of the utils</title>
+<para>From the alsa-utils source directory, run:</para>
+<para><screen><userinput>./configure &&
+make install</userinput></screen></para>
+</sect3>
+
+<sect3>
+<title>Installation of additional packages (alsa-oss-lib and alsa-tools)</title>
+
+<para><screen><userinput>./configure &&
+make install</userinput></screen></para>
+
+<para>These commands are all you need to install 
+alsa-oss-lib or alsa-tools.  Remember oss-lib is only for future 
+versions and the alsa-tools are only useful for the owners of very old 
+or expensive cards (e.g multichannel cards), so most people 
+don't need it.</para>
+
+</sect3>
+</sect2>
+

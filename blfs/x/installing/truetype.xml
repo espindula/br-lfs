@@ -1,0 +1,109 @@
+<sect1 id="x-installing-truetype">
+<?dbhtml filename="truetype.html" dir="x"?>
+<title>Adding TrueType font support to XFree86</title>
+
+<para>
+TrueType font support is now built into XFree86.  The following items need to 
+be completed to make the fonts available.
+</para>
+<itemizedlist>
+
+<listitem><para>Establish a directory for the fonts and move any TrueType fonts
+you want into that directory.
+</para></listitem>
+<listitem><para>Create the <filename>fonts.scale</filename> and 
+<filename>fonts.dir</filename> files in the TrueType font directory.
+</para></listitem>
+<listitem><para>Ensure the truetype module is loaded in 
+<filename>XF86Config</filename>.
+</para></listitem>
+<listitem><para>Ensure the <parameter>FontPath</parameter> in 
+<filename>XF86Config</filename> contains the TrueType font directory.
+</para></listitem>
+</itemizedlist>
+
+<sect2><title>Establish a TrueType font directory</title>
+<para>The build of XFree86 as given above automatically creates a TrueType
+font directory: <filename>/usr/X11R6/lib/Xll/fonts/TTF</filename>.  This
+directory is already has some TrueType fonts and is set up correctly.
+If this directory is satisfactory, copy any other TrueType fonts you want
+into that directory.  If not, create a new directory, preferably in
+the <filename>/usr/X11R6/lib/Xll/fonts/</filename> directory and put 
+your TrueType fonts there.
+</para></sect2>
+
+<sect2><title>Create <filename>fonts.scale</filename> and 
+<filename>fonts.dir</filename></title>
+<para>To make the <filename>fonts.scale</filename> file, you have to build the
+program <filename>ttmkfdir</filename>. Unfortunately, this program needs 
+libraries from the <filename>freetype</filename> project, so we need to make 
+that first.</para>
+
+<screen>Download location: 
+   <ulink url="http://prdownloads.sourceforge.net/freetype/freetype-1.3.1.tar.gz"/></screen>
+
+<para>Unpack the file and build with
+<screen>./configure --prefix=/usr &amp;&amp;
+make &amp;&amp;
+make install &amp;&amp;
+ldconfig</screen>
+</para>
+
+<para>
+Now build the <filename>ttmkfdir</filename> utility. 
+
+<screen>Download location: <ulink url="http://freshmeat.net/projects/ttmkfdir"/></screen> 
+The filename is <filename>ttmkfdir.tar.gz</filename>.
+</para>
+
+<para>
+This is a very short  program that unpacks it is files in the current 
+directory, so its best to make a separate directory.
+<screen>mkdir ttmkfdir &amp;&amp; 
+cd ttmkfdir &amp;&amp; 
+tar zxvf ../ttmkfdir.tar.gz</screen>
+</para>
+
+<para>Edit the <filename>Makefile</filename> to make the following changes:
+<screen>FREETYPE_BASE=/usr
+FREETYPE_INCL=$(FREETYPE_BASE)/include/freetype
+FREETYPE_LIB=-L$(FREETYPE_BASE)/lib -lttf</screen>
+</para>
+
+<para>Run
+<screen>make &amp;&amp;
+install -m755 ttmkfdir /usr/bin</screen>
+</para>
+
+<para>Now change to the directory where you have your TrueType fonts and run
+<screen>ttmkfdir -o fonts.scale &amp;&amp;
+mkfontdir</screen></para>
+</sect2>
+
+<sect2><title>Ensure TrueType is loaded in <filename>XF86Config</filename>
+</title> 
+<para>The "Module" section should look like:
+<screen>Section "Module"
+        ...
+        Load  "freetype"
+        Load  "speedo"
+EndSection</screen>
+</para></sect2>
+
+<sect2><title>Ensure the <parameter>FontPath</parameter> in
+<filename>XF86Config</filename> points to the TrueType font directory</title>
+<para>The "Files"section should look like
+<screen>Section "Files"
+        ...
+        FontPath     "/usr/X11R6/lib/X11/fonts/TTF/"
+EndSection</screen>
+</para>
+
+<para>XFree86 will now be able to use TrueType fonts when it is restarted.
+You can check to see if the new fonts are available with the
+<userinput>xlsfonts</userinput> program.
+</para>
+</sect2>
+
+</sect1>
+

@@ -1,0 +1,64 @@
+<sect3 id="postlfs-security-fw-persFw" xreflabel="Personal Firewall">
+<title>Personal Firewall</title>
+
+<para>A Personal Firewall is supposed to let you access the all services
+offered on the internet, but keep your box secure and your data private.</para>
+
+<para>Below is a slightly modified version of Rusty Russell's
+recommendation from the <ulink
+url="http://netfilter.samba.org/unreliable-guides/packet-filtering-HOWTO/packet-filtering-HOWTO.linuxdoc-5.html">Linux
+2.4 Packet Filtering HOWTO</ulink>:</para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/firewall &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+
+# Begin $rc_base/init.d/firewall
+
+# Insert connection-tracking modules (not needed if built into the kernel).
+modprobe ip_tables
+modprobe iptable_filter
+modprobe ip_conntrack
+modprobe ip_conntrack_ftp
+modprobe ipt_state
+modprobe ipt_LOG
+
+# allow local-only connections
+iptables -A INPUT  -i lo -j ACCEPT
+# free output on any interface to any ip for any service (equal to -P ACCEPT)
+iptables -A OUTPUT -j ACCEPT
+
+# permit answers on already established connections
+# and permit new connections related to established ones (eg active-ftp)
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Log everything else:  What's Windows' latest exploitable vulnerability?
+iptables -A INPUT -j LOG --log-prefix "FIREWALL:INPUT "
+
+# set a sane policy:    everything not accepted &gt; /dev/null
+iptables -P INPUT    DROP
+iptables -P FORWARD  DROP
+iptables -P OUTPUT   DROP
+
+# be verbose on dynamic ip-addresses     (not needed in case of static IP)
+echo 2 &gt; /proc/sys/net/ipv4/ip_dynaddr
+
+# disable ExplicitCongestionNotification - too many routers are still ignorant
+echo 0 &gt; /proc/sys/net/ipv4/tcp_ecn
+
+# End $rc_base/init.d/firewall
+<userinput>EOF</userinput></screen></para>
+
+<para>His script is quite simple, it drops all traffic coming in into your 
+computer that wasn't initiated from your box, but as long as you are simply 
+surfing the internet you are unlikely to exceed its limits.</para> 
+
+<para>If you frequently encounter certain delays at accessing ftp-servers,
+please have a look at <xref linkend="postlfs-security-fw-busybox"/> - 
+<xref linkend="postlfs-security-fw-BB-4"/>.</para>
+
+<para>Even if you have daemons / services running on your box, these
+should be inaccessible everywhere but from your box itself.
+If you want to allow access to services on your machine, such as ssh or pinging, 
+take a look at <xref linkend="postlfs-security-fw-busybox"/>.</para> 
+
+</sect3>

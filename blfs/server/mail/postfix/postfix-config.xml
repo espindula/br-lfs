@@ -1,0 +1,103 @@
+<sect2>
+<title>Configuring postfix</title>
+
+<sect3><title>Config files</title>
+<para><userinput>/etc/aliases, /etc/postfix/main.cf</userinput> and <userinput>/etc/postfix/master.cf</userinput></para>
+</sect3>
+
+<sect3><title>Configuration Information</title>
+
+<para><screen><userinput>cat > /etc/aliases << "EOF"</userinput>
+# Begin /etc/aliases
+
+MAILER-DAEMON:    postmaster
+postmaster:       root
+
+root:             LOGIN
+# End /etc/aliases
+<userinput>EOF</userinput></screen></para>
+
+<para>The /etc/aliases file that was just created, the main.cf and the 
+master.cf must be personalized for your system. The aliases file needs your 
+non-root login identity so mail addressed to root can be forwarded to 
+you at the user level.  The main.cf file needs your fully qualified 
+hostname.  The master.cf needs to be modified to prevent your machine from 
+becoming a relay for unauthorized entities.  All of these edits can be done 
+with sed commands entered into the console with appropriate substitutions of 
+your non-root login name for [user] and your fully qualified hostname for 
+[localhost.localdomain]. These edits will create a single host mail system, 
+other edits are necessary to perform the many other functions available.  
+You will find the main.cf file is self documenting, so load it into your editor to make the changes you need for your situation.</para>
+
+<para><screen><userinput>cp /etc/aliases /etc/aliases.bak
+cp /etc/postfix/main.cf /etc/postfix/main.cf.bak
+cp /etc/postfix/master.cf /etc/postfix/master.cf.bak
+sed "s/LOGIN/[user]/" /etc/aliases.bak > /etc/aliases
+sed "s/#myhostname = host.domain.tld/myhostname = \ 
+	[localhost.localdomain]/" \
+	/etc/postfix/main.cf.bak > /etc/postfix/main.cf
+sed '/^smtp.*smtpd$/s/inet/unix/' /etc/postfix/master.cf.bak > \
+	/etc/postfix/master.cf
+/usr/bin/newaliases
+/usr/sbin/postfix start</userinput></screen></para></sect3>
+
+<sect3><title>postfix init.d script</title>
+
+<para>To automate the running of postfix, use following command to create the init.d script:</para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/postfix &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/postfix
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+
+        start)
+        echo "Starting Postfix..."
+        loadproc postfix start
+        ;;
+
+        stop)
+        echo "Stopping Postfix..."
+        loadproc postfix stop
+        ;;
+		
+        reload)
+        echo "Reloading Postfix..."
+        loadproc postfix reload
+        ;;
+
+        restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+
+        *)
+        echo "Usage: $0 {start|stop|reload|restart}"
+        exit 1
+        ;;
+esac
+
+# End $rc_base/init.d/postfix
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/postfix</userinput></screen></para>
+
+<para>Create the symbolic links to this file in the relevant rc.d directory with the following commands:
+
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/postfix ../rc0.d/K25postfix &amp;&amp;
+ln -sf ../init.d/postfix ../rc1.d/K25postfix &amp;&amp;
+ln -sf ../init.d/postfix ../rc2.d/K25postfix &amp;&amp;
+ln -sf ../init.d/postfix ../rc3.d/S35postfix &amp;&amp;
+ln -sf ../init.d/postfix ../rc4.d/S35postfix &amp;&amp;
+ln -sf ../init.d/postfix ../rc5.d/S35postfix &amp;&amp;
+ln -sf ../init.d/postfix ../rc6.d/K25postfix</userinput></screen></para>
+</sect3>
+
+</sect2>

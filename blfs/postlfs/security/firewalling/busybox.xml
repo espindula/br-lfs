@@ -1,0 +1,116 @@
+<sect3 id="postlfs-security-fw-busybox" xreflabel="BusyBox">
+<title>BusyBox</title>
+
+<para>This scenario isn't too different from (<xref linkend="postlfs-security-fw-masqRouter"/>), 
+but in this case you want to offer some services to your intranet.
+Examples of this can be when you want to admin your box from another host 
+on your intranet or use it as a proxy or a nameserver. Note: Outlining a true 
+concept howto protect a server that offers services on the internet 
+goes far beyond the scope of this document, 
+see <xref linkend="postlfs-security-fw-disclaimer"/>.</para>
+
+<para>Be cautious.  Every service you offer and have enabled makes your
+setup more complex and your box less secure: You induce the risks of 
+misconfigured services or running a service with an exploitable bug, both risks 
+that a firewall principially should be immune of. See the introduction to 
+<xref linkend="postlfs-security-fw-masqRouter"/> for some more details.</para>
+
+<para>If the services you'd like to offer do not need to access the internet 
+themselves, like internal-only samba- or name-servers, it's quite
+simple and should still be acceptable from a security standpoint.
+Just add the following lines <emphasis>before</emphasis> the logging-rules 
+into the script.
+
+<screen>iptables -A INPUT	-i ! ppp+				-j ACCEPT
+iptables -A OUTPUT	-o ! ppp+				-j ACCEPT</screen></para>
+
+<para>If your daemons have to access the web themselves, like squid would need
+to, you could open OUTPUT generally and restrict INPUT.
+
+<screen>iptables -A INPUT	-m state --state ESTABLISHED,RELATED	-j ACCEPT
+iptables -A OUTPUT						-j ACCEPT</screen></para>
+
+<para>However, it is generally not advisable to leave OUTPUT unrestricted: you lose 
+any control on trojans who'd like to "call home", and a bit of redundancy in case 
+you've (mis-)configured a service so that it does broadcast its existence to the 
+world.</para>
+
+<para>If you prefer to have this protection, you may restrict INPUT and OUTPUT
+on all ports except those that it's absolutely necessary to have open.
+Which ports you have to open depends on your needs: mostly you will find them 
+by looking for failed accesses in your log-files.</para>
+
+<orderedlist numeration="arabic" spacing="compact">
+<title>Have a look at the following examples:</title>
+
+<listitem><para>Squid is caching the web:</para>
+<para><screen>iptables -A OUTPUT	-p tcp --dport 80			-j ACCEPT
+iptables -A INPUT	-p tcp --sport 80	-m state --state ESTABLISHED \
+&nbsp;&nbsp;&nbsp;-j ACCEPT</screen></para></listitem>
+
+<listitem><para>Your caching-nameserver (e.g., dnscache) does its
+lookups via udp:</para>
+<para><screen>iptables -A OUTPUT	-p udp --dport 53			-j ACCEPT
+iptables -A INPUT	-p udp --sport 53	-m state --state ESTABLISHED \
+&nbsp;&nbsp;&nbsp;-j ACCEPT</screen></para></listitem>
+
+<listitem><para>Alternatively, if you want to be able to ping your box to ensure
+it's still alive:</para>
+<para><screen>iptables -A INPUT	-p icmp	-m icmp --icmp-type echo-request	\
+&nbsp;&nbsp;&nbsp;-j ACCEPT
+iptables -A OUTPUT	-p icmp	-m icmp --icmp-type echo-reply	-j ACCEPT</screen></para></listitem>
+
+<listitem><para><anchor id='postlfs-security-fw-BB-4' xreflabel="example no. 4"/>If you are 
+frequently accessing ftp-servers or enjoy chatting you might notice certain 
+delays because some implementations of these daemons have the feature of 
+querying an identd on your box for your username for logging.
+Although there's really no harm in this, having an identd running is not 
+recommended because some implementions are known to be vulnerable.</para>
+
+<para>To avoid these delays you could reject the requests 
+with a 'tcp-reset':</para>
+
+<para><screen>iptables -A INPUT	-p tcp --dport 113			-j REJECT \
+&nbsp;&nbsp;&nbsp;--reject-with tcp-reset
+iptables -A OUTPUT	-p tcp --sport 113	-m state --state RELATED \
+&nbsp;&nbsp;&nbsp;-j ACCEPT</screen></para></listitem>
+
+<listitem><para>To log and drop invalid packets, mostly harmless packets
+that came in after netfilter's timeout, sometimes scans:</para>
+
+<para><screen>iptables -I INPUT 1	-p tcp	-m state --state INVALID	-j LOG \ 
+&nbsp;&nbsp;&nbsp;--log-prefix "FIREWALL:INVALID"
+iptables -I INPUT 2	-p tcp	-m state --state INVALID	-j DROP</screen></para></listitem>
+
+<listitem><para>Anything coming from the outside should not have a
+private address, this is a common attack called IP-spoofing:</para>
+
+<para><screen>iptables -t nat -A PREROUTING	-i ppp+	-s 10.0.0.0/8		-j DROP
+iptables -t nat -A PREROUTING	-i ppp+	-s 172.16.0.0/12	-j DROP
+iptables -t nat -A PREROUTING	-i ppp+	-s 192.168.0.0/16	-j DROP</screen></para></listitem>
+
+<listitem><para>To simplify debugging and be fair to anyone who'd like to 
+access a service you have disabled, purposely or by mistake, you should REJECT 
+those packets that are dropped.</para>
+
+<para>Obviously this must be done directly after logging as the very
+last lines before the packets are dropped by policy:</para>
+
+<para><screen>iptables -A INPUT						-j REJECT
+iptables -A OUTPUT		-p icmp --icmp-type 3		-j ACCEPT</screen></para></listitem>
+
+</orderedlist>
+
+<para>These are only examples to show you some of the capabilities of the new 
+firewalling-code in Linux-Kernel 2.4. Have a look at the man-page of
+iptables.
+There you will find more of them. The port-numbers you'll need for this
+can be found in /etc/services, in case you didn't find them via "try'n'error" 
+in your logfile.</para>
+
+<para>If you add any of your offered or accessed services such as the above,
+maybe even in FORWARD and for intranet-communication, and delete the
+general clauses, you get an old fashioned packet filter.</para>
+
+
+</sect3>

@@ -1,0 +1,87 @@
+<sect2>
+<title>Configuring dhcp</title>
+
+<sect3><title>Config files</title>
+<para><userinput>/etc/dhclient.conf</userinput></para>
+</sect3>
+
+<sect3><title>Configuration Information</title>
+
+<para>Information on configuring the dhcp client can be found in
+Chapter 06.</para>
+
+<para>Note that you only want to start the dhcp server if you want to
+issue LAN addresses over your network.  The dhcp client doesn't need
+this script to be used.  Also note that this script is coded for the
+'eth1' INTERFACE, which may need to be modified for your hardware
+configuration. With that in mind the dhcp init.d script can be created
+using the following commands.</para>
+
+<para><screen><userinput>cat &gt; /etc/rc.d/init.d/dhcp &lt;&lt; "EOF"</userinput>
+#!/bin/sh
+# Begin $rc_base/init.d/dhcp
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+        start)
+                echo "Starting DHCP Server..."
+                loadproc dhcpd -q eth1
+                ;;
+
+        stop)
+                echo "Stopping DHCP Server..."
+                killproc dhcpd
+                ;;
+
+        reload)
+                echo "Reloading DHCP Server..."
+                reloadproc dhcpd
+                ;;
+
+        restart)
+                $0 stop
+                sleep 1
+                $0 start
+                ;;
+
+        status)
+                statusproc dhcpd
+                ;;
+
+        *)
+                echo "Usage: $0 {start|stop|reload|restart|status}"
+                exit 1
+                ;;
+esac
+
+# End $rc_base/init.d/dhcp
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/dhcp</userinput></screen></para>
+
+<para>The follow commands will create a base configuration file for a
+dhcp server.  There are several options that you may want to
+add (information that is passed back to the dhcp client) and those are
+covered in the man pages for <filename>dhcp.conf</filename>.</para>
+
+<para><screen><userinput>cat &gt; /etc/dhcpd.conf &lt;&lt; "EOF"</userinput>
+default-lease-time 72000;
+max-lease-time 144000;
+
+subnet 192.168.5.0 netmask 255.255.255.0 {
+  range 192.168.5.10 192.168.5.240;
+  option broadcast-address 195.168.5.255;
+  option routers 192.168.5.1;
+}
+<userinput>EOF</userinput></screen></para>
+
+<para>All addresses should be changed to meet your circumstance.</para>
+
+</sect3>
+
+</sect2>
+

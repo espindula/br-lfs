@@ -1,0 +1,56 @@
+<sect2>
+<title>Command explanations</title>
+
+<para>The first thing to understand in installing any package written 
+by Daniel J. Bernstein, and 
+this includes Qmail, djbdns and ucspi-tcp in addition to daemontools, is 
+that he is willing to completely disregard standards if his idea of the 
+correct thing to do differs from an particular standard. Professor 
+Bernstein is a standards body unto himself when it comes to his own 
+software. </para>
+
+<para>It is therefore necessary to make quite a few changes to the 
+installation commands for his packages to get them to install in a manner 
+that is compliant with the Filesystem Hierarchy Standard (FHS). Most of 
+the following commands are due to this difficulty.</para>
+
+<para><userinput>cd admin/daemontools-0.76: </userinput>First off, the 
+package is unpacked in an "admin" directory. You will find the actual 
+packages two directory levels below this.</para>
+
+<para><userinput>package/compile: </userinput>This command actually 
+compiles the source and puts the binaries in a command directory.</para>
+
+<para><screen><userinput>sed 's|command|usr/sbin|' boot.inittab &gt; boot.inittab~</userinput>
+<userinput>mv boot.inittab~ boot.inittab</userinput></screen></para>
+<para>These two commands are necessary to get the 
+binaries installed in /usr/sbin rather than 
+creating a non-standard /command directory and installing them there.
+</para>
+
+<para><screen><userinput>sed 's|/command:/usr/local/bin:/usr/local/sbin:||' svscanboot &gt; svscanboot~</userinput>
+<userinput>sed 's|/service|/etc/service|g' svscanboot~ &gt; svscanboot</userinput>
+<userinput>rm svscanboot~</userinput></screen></para>
+<para>This changes the svscanboot script so that it checks the 
+/etc/service directory for daemons to run instead of the default 
+/service directory.</para>
+
+<para><userinput>cp * /usr/sbin: </userinput>We must manually copy the 
+binaries to the /usr/sbin directory.</para>
+
+<para><screen><userinput>cat /etc/inittab boot.inittab &gt; /etc/inittab~</userinput>
+<userinput>mv -f /etc/inittab~ /etc/inittab</userinput></screen></para>
+
+<para>These commands append a line to /etc/inittab so that init will launch
+the svscan program.</para>
+
+<para><userinput>telinit Q: </userinput>This command tells the init 
+process to re-read its configuration file (inittab) and act upon any 
+changes that have been made.</para>
+
+<para><userinput>mkdir /etc/service: </userinput>This command creates
+the daemontools control directory, which needs to exist, even if empty
+for daemontools to run properly.</para>
+
+</sect2>
+

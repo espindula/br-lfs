@@ -1,0 +1,87 @@
+<sect1 id="dhcpclient" xreflabel="Configuring dhcp for a client">
+<?dbhtml filename="configdhcp.html" dir="connect"?>
+<title>Configuring dhcp for a client</title>
+
+<sect2><title>Config files</title>
+<para><userinput>/etc/sysconfig/network, 
+/etc/sysconfig/network-devices/ifup-eth0,
+/etc/sysconfig/network-devices/ifdown-eth0,
+/etc/sysconfig/networkdevices/ifconfig.eth0</userinput></para>
+</sect2>
+
+<sect2><title>Configuration Information</title>
+
+<para>Note that we use <userinput>eth0</userinput> as the interface
+throughout these instructions.  If you want to configure a different (or
+more than one) interface, simply replace <userinput>eth0</userinput>
+with the interface you wish to use.</para>
+
+<para>These instructions will convert the configuration files from LFS
+(a static configuration) to a DHCP configuration.  Note that static and
+DHCP interfaces can co-exist on a LFS system, only make the
+alterations to those interfaces which need to support DHCP.</para>
+
+<para>The first step is to remove the GATEWAY and GATEWAY_IF variables 
+from <filename>/etc/sysconfig/network</filename>.  This should only be done
+if the default interface you intend to use will be using DHCP and only
+needs to be done once; regardless of how many interfaces you are setting
+up.</para>
+
+<para><screen><userinput>cd /etc/sysconfig &amp;&amp;
+cp network network.bak &amp;&amp;
+sed "s/GATEWAY/# GATEWAY/" network.bak > network</userinput></screen></para>
+
+<para>Now you can create the appropriate <filename>ifconfig.eth0</filename> 
+file with the following commands (note that this will overwrite any
+existing file):</para>
+
+<para><screen><userinput>cd /etc/sysconfig/network-devices &amp;&amp;
+cat &gt; ifconfig.eth0 &lt;&lt; "EOF"</userinput>
+ONBOOT=yes
+DHCP_PROG=&lt;path to dhcp&gt;
+DHCP_START=&lt;start parameters&gt;
+DHCP_STOP=&lt;stop parameter&gt;
+<userinput>EOF</userinput></screen></para>
+
+<para>Review the appropriate manpages for parameters; for example, the
+stop parameter for dhcpcd is '-k', while the stop parameter for dhclient
+is '-r'.</para>
+
+<para>You then need to create DHCP specific scripts.  First, the
+<filename>ifup-eth0</filename> script:</para>
+
+<para><screen><userinput>cat &gt; ifup-eth0 &lt;&lt; "EOF" </userinput>
+#!/bin/sh
+
+source /etc/sysconfig/rc || exit
+source $rc_functions || exit
+source $network_devices/ifconfig.eth0 || exit
+
+echo "Bringing up the eth0 interface..."
+modprobe eth0
+loadproc $DHCP_PROG $DHCP_START
+<userinput>EOF</userinput></screen></para>
+
+<para>Then the <filename>ifdown-eth0</filename> script:</para>
+
+<para><screen><userinput>cat &gt; ifdown-eth0 &lt;&lt; "EOF" </userinput>
+#!/bin/sh
+
+source /etc/sysconfig/rc || exit
+source $rc_functions || exit
+source $network_devices/ifconfig.eth0 || exit
+
+echo "Bringing down the eth0 interface..."
+$DHCP_PROG $DHCP_STOP
+evaluate_retval
+<userinput>EOF</userinput></screen></para>
+
+<para>Finally, we need to make these scripts executable:</para>
+
+<para><screen><userinput>chmod 755 ifup-eth0 &amp;&amp;
+chmod 755 ifdown-eth0</userinput></screen></para>
+
+</sect2>
+
+</sect1>
+
