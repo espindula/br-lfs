@@ -27,19 +27,19 @@ words, more advanced techniques could be used to build the system.</para>
 platform, often also referred to as the <emphasis>target triplet</emphasis>. For
 many folks the target triplet will probably be
 <emphasis>i686-pc-linux-gnu</emphasis>. A simple way to determine your target
-triplet is to run the <filename>config.guess</filename> script that comes with
+triplet is to run the <command>config.guess</command> script that comes with
 the source for many packages. Unpack the Binutils sources and run the script:
 <userinput>./config.guess</userinput> and note the output.</para>
 
 <para>You'll also need to be aware of the name of your platform's
 <emphasis>dynamic linker</emphasis>, often also referred to as the
 <emphasis>dynamic loader</emphasis>, not to be confused with the standard linker
-<emphasis>ld</emphasis> that is part of Binutils. The dynamic linker is provided
+<command>ld</command> that is part of Binutils. The dynamic linker is provided
 by Glibc and has the job of finding and loading the shared libraries needed by a
 program, preparing the program to run and then running it. For most folks the
-name of the dynamic linker will be <emphasis>ld-linux.so.2</emphasis>. On
+name of the dynamic linker will be <filename>ld-linux.so.2</filename>. On
 platforms that are less prevalent, the name might be
-<emphasis>ld.so.1</emphasis> and newer 64 bit platforms might even have
+<filename>ld.so.1</filename> and newer 64 bit platforms might even have
 something completely different. You should be able to determine the name
 of your platform's dynamic linker by looking in the
 <filename class="directory">/lib</filename> directory on your host system. A
@@ -63,7 +63,7 @@ path to ensure programs are linked only against libraries we
 choose.</para></listitem>
 
 <listitem><para>Careful manipulation of <command>gcc</command>'s
-<emphasis>specs</emphasis> file to tell the compiler which target dynamic
+<filename>specs</filename> file to tell the compiler which target dynamic
 linker will be used.</para></listitem>
 </itemizedlist>
 
@@ -81,29 +81,29 @@ much time is wasted.</para>
 <filename class="directory">/tools/$TARGET_TRIPLET/bin</filename>. In reality,
 the tools in one location are hard linked to the other. An important facet of
 the linker is its library search order. Detailed information can be obtained
-from <command>ld</command> by passing it the <emphasis>--verbose</emphasis>
+from <command>ld</command> by passing it the <parameter>--verbose</parameter>
 flag. For example: <command>ld --verbose | grep SEARCH</command> will
 show you the current search paths and their order. You can see what files are
 actually linked by <command>ld</command> by compiling a dummy program and
-passing the <emphasis>--verbose</emphasis> switch to the linker. For example:
-<command>gcc dummy.c -Wl,--verbose 2&gt;&amp;1 | grep succeeded</command>
+passing the <parameter>--verbose</parameter> switch to the linker. For example:
+<userinput>gcc dummy.c -Wl,--verbose 2&gt;&amp;1 | grep succeeded</userinput>
 will show you all the files successfully opened during the linking.</para>
 
 <para>The next package installed is GCC and during its run of
 <command>./configure</command> you'll see, for example:</para>
 
-<blockquote><screen>checking what assembler to use... /tools/i686-pc-linux-gnu/bin/as
-checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</screen></blockquote>
+<blockquote><screen><computeroutput>checking what assembler to use... /tools/i686-pc-linux-gnu/bin/as
+checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</computeroutput></screen></blockquote>
 
 <para>This is important for the reasons mentioned above. It also demonstrates
 that GCC's configure script does not search the PATH directories to find which
 tools to use. However, during the actual operation of <command>gcc</command>
 itself, the same search paths are not necessarily used. You can find out which
 standard linker <command>gcc</command> will use by running:
-<command>gcc -print-prog-name=ld</command>.
+<userinput>gcc -print-prog-name=ld</userinput>.
 Detailed information can be obtained from <command>gcc</command> by passing
-it the <emphasis>-v</emphasis> flag while compiling a dummy program. For
-example: <command>gcc -v dummy.c</command> will show you detailed
+it the <parameter>-v</parameter> flag while compiling a dummy program. For
+example: <userinput>gcc -v dummy.c</userinput> will show you detailed
 information about the preprocessor, compilation and assembly stages, including
 <command>gcc</command>'s include search paths and their order.</para>
  
@@ -117,15 +117,15 @@ switches to enforce the correct selections. After the run of
 <filename>config.make</filename> file in the
 <filename class="directory">glibc-build</filename> directory for all the
 important details. You'll note some interesting items like the use of
-<emphasis>CC="gcc -B/tools/bin/"</emphasis> to control which binary tools are
-used, and also the use of the <emphasis>-nostdinc</emphasis> and
-<emphasis>-isystem</emphasis> flags to control the compiler's include search
+<parameter>CC="gcc -B/tools/bin/"</parameter> to control which binary tools are
+used, and also the use of the <parameter>-nostdinc</parameter> and
+<parameter>-isystem</parameter> flags to control the compiler's include search
 path. These items help to highlight an important aspect of the Glibc package:
 it is very self-sufficient in terms of its build machinery and generally does
 not rely on toolchain defaults.</para>
 
 <para>After the Glibc installation, we make some adjustments to ensure that
-searching and linking take place only within our <filename>/tools</filename>
+searching and linking take place only within our <filename class="directory">/tools</filename>
 prefix. We install an adjusted <command>ld</command>, which has a hard-wired
 search path limited to <filename class="directory">/tools/lib</filename>. Then
 we amend <command>gcc</command>'s specs file to point to our new dynamic
@@ -133,7 +133,7 @@ linker in <filename class="directory">/tools/lib</filename>. This last step is
 <emphasis>vital</emphasis> to the whole process. As mentioned above, a
 hard-wired path to a dynamic linker is embedded into every ELF shared
 executable. You can inspect this by running:
-<command>readelf -l &lt;name of binary&gt; | grep interpreter</command>.
+<userinput>readelf -l &lt;name of binary&gt; | grep interpreter</userinput>.
 By amending <command>gcc</command>'s specs file, we are ensuring that every
 program compiled from here through the end of this chapter will use our new
 dynamic linker in <filename class="directory">/tools/lib</filename>.</para>
@@ -145,7 +145,7 @@ programs themselves having the name of the dynamic linker from the host system's
 would defeat our goal of getting away from the host.</para>
 
 <para>During the second pass of Binutils, we are able to utilize the
-<emphasis>--with-lib-path</emphasis> configure switch to control
+<parameter>--with-lib-path</parameter> configure switch to control
 <command>ld</command>'s library search path. From this point onwards, the
 core toolchain is self-contained and self-hosted. The remainder of the
 <xref linkend="chapter-temporary-tools"/> packages all build against the new Glibc in
