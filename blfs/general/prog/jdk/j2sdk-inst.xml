@@ -1,46 +1,47 @@
 <sect2>
-<title>Installation de j2sdk</title>
+<title>Installation de <application>J2SDK</application></title>
 
 <para>Les deux versions seront installées en parallèle. Vous pouvez choisir
 d'en garder une ou les deux.</para>
 
-<para>Installez la version binaire du jdk en lançant les commandes suivantes:
-</para>
+<para>L'installation du <acronym>JDK</acronym> précompilé est facile, elle
+change le bit d'exécutable pour le fichier téléchargé, va dans le répertoire où
+vous souhaitez l'installer et exécute le fichier téléchargé.</para>
 
-<para><screen><userinput>VERSION=&j2sdk-bin-version; &amp;&amp;
+<screen><userinput><command>VERSION=&j2sdk-bin-version; &amp;&amp;
 MV=`echo $VERSION | cut -d "_" -f 1,1` &amp;&amp;
 V=`echo ${VERSION} | sed -e "s/\./_/g"` &amp;&amp;
-T=`grep -a tail j2sdk-${V}-linux-i?86.bin | cut -f 2 -d " "` &amp;&amp;
-tail $T j2sdk-${V}-linux-i?86.bin > install.sfx.$$ &amp;&amp;
-chmod +x install.sfx.$$ &amp;&amp;
-./install.sfx.$$ &amp;&amp;
+chmod +x j2sdk-${V}-linux-i?86.bin &amp;&amp;
+./j2sdk-${V}-linux-i?86.bin &amp;&amp;
 cd j2sdk${VERSION} &amp;&amp;
 install -d /opt/j2sdk/j2sdk-precompiled-${MV} &amp;&amp;
-mv * /opt/j2sdk/j2sdk-precompiled-${MV}</userinput></screen></para>
+mv * /opt/j2sdk/j2sdk-precompiled-${MV}</command></userinput></screen>
 
 <para>La version binaire est maintenant installée.</para>
 
-<para>Si vous ne voulez pas compiler les sources, passez directement à la
-section de configuration.</para>
+<para>Si vous ne voulez pas compiler les sources, ou ne pouvez pas pour des
+raisons de licence, passez directement à la section de configuration.</para>
 
-<para>Ajoutez le JDK tout juste compilé dans le chemin.</para>
+<para>Ajoutez le <acronym>JDK</acronym> tout juste compilé dans le chemin.</para>
 <screen><userinput>export JAVA_HOME=/opt/j2sdk/j2sdk-precompiled-${MV} &amp;&amp;
 export PATH=$PATH:${JAVA_HOME}/bin</userinput></screen>
 
 <para>Décompressez et appliquez le correctif aux sources:</para>
 
-<para><screen><userinput>VERSION=&j2sdk-src-version; &amp;&amp;
+<screen><userinput><command>VERSION=&j2sdk-src-version; &amp;&amp;
 V=`echo $VERSION | sed -e "s/\./_/g"` &amp;&amp;
 unzip j2sdk-${V}-src-scsl.zip &amp;&amp;
 unzip j2sdk-${V}-mozilla_headers-unix.zip &amp;&amp;
+patch -Np1 -i j2sdk-${VERSION}-gcc33-1.patch &amp;&amp;
 patch -Np1 -i j2sdk-${VERSION}-fix-intl-files.patch &amp;&amp;
 patch -Np1 -i j2sdk-${VERSION}-link-missing-libs.patch &amp;&amp;
 patch -Np1 -i j2sdk-${VERSION}-remove-fixed-paths.patch &amp;&amp;
 patch -Np1 -i j2sdk-${VERSION}-syntax-fixes.patch &amp;&amp;
-patch -Np1 -i j2sdk-${VERSION}-use-included-motif.patch</userinput></screen></para>
+patch -Np1 -i j2sdk-${VERSION}-motif-mkmsgcat.patch &amp;&amp;
+patch -Np1 -i j2sdk-${VERSION}-use-included-motif.patch</command></userinput></screen>
 
 <para>Mettez en place quelques variables qui modifieront la construction:</para>
-<para><screen><userinput>export ALT_BOOTDIR="$JAVA_HOME" &amp;&amp;
+<screen><userinput><command>export ALT_BOOTDIR="$JAVA_HOME" &amp;&amp;
 unset JAVA_HOME &amp;&amp;
 unset CLASSPATH
 unset CFLAGS
@@ -52,28 +53,31 @@ export DEV_ONLY=true &amp;&amp;
 export ALT_MOZILLA_PATH=$PWD &amp;&amp;
 export INSANE=true &amp;&amp;
 export MAKE_VERBOSE=true &amp;&amp;
-export ALT_CACERTS_FILE=${ALT_BOOTDIR}/jre/lib/security/cacerts</userinput></screen></para>
+export ALT_CACERTS_FILE=${ALT_BOOTDIR}/jre/lib/security/cacerts</command></userinput></screen>
 
-<para>Le programme motif inclus ne se construit pas correctement avec la
-version actuelle de glibc/xfree86. Une solution possible est de construire la
-bibliothèque motif avant de compiler j2sdk. Notez que la construction de motif
-échoue la première fois à cause de certaines erreurs de syntaxe. La plus simple
-solution est d'utiliser la force en relançant la commande make :)</para>
+<para>De plus, si vous souhaitez le faire en parallèle, ajoutez ce qui suit
+(ajustez <envar>MAKE_PARALLEL</envar> à votre appréciation):</para>
+<screen><userinput><command>export HOTSPOT_BUILD_JOBS=$MAKE_PARALLEL</command></userinput></screen>
 
-<para><screen><userinput>cd motif/lib/Xm &amp;&amp;
-make || make &amp;&amp;
-cd ../../..</userinput></screen></para>
+<para>Si le <application>Motif</application> inclus ne peut pas être construit
+correctement, l'erreur est remarquée plus tard lors de la construction. Une
+solution est de construire la bibliothèque <application>Motif</application>
+avant de compiler le <application>J2SDK</application>.</para>
 
-<para>Lancez le make et installez j2sdk avec les commandes suivantes. Il y aura
-un grand nombre de messages sur des fichiers manquants, ressemblant à des
-erreurs. Tant que la construction continue, les messages sont sans gravité, donc
-ignorez-les.</para>
+<screen><userinput><command>cd motif/lib/Xm &amp;&amp;
+make &amp;&amp;
+cd ../../..</command></userinput></screen>
 
-<para><screen><userinput>cd control/make &amp;&amp;
+<para>Construisez et installez <application>J2SDK</application> avec les
+commandes suivantes. Il y aura beaucoup de messages sur des fichiers manquants,
+messages ressemblant à des erreurs. Tant que le construction continue, les
+messages ne sont pas gênants, donc ignorez-les.</para>
+
+<screen><userinput><command>cd control/make &amp;&amp;
 make &amp;&amp;
 cd ../.. &amp;&amp;
 cd control/build/linux-i?86 &amp;&amp;
-cp -a j2sdk-image /opt/j2sdk/j2sdk-&j2sdk-src-version;</userinput></screen></para>
+cp -a j2sdk-image /opt/j2sdk/j2sdk-&j2sdk-src-version;</command></userinput></screen>
 
 </sect2>
 
