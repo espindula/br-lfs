@@ -54,6 +54,22 @@
     </div>
   </xsl:template>
 
+  
+  <!-- variablelist -->
+  <xsl:template match="variablelist">
+    <xsl:choose>
+      <xsl:when test="@role">
+        <div class="{@role}">
+          <xsl:apply-imports/>
+        </div>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-imports/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  
+
     <!-- Body attributes -->
   <xsl:template name="body.attributes">
     <xsl:attribute name="id">
