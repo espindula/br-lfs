@@ -1,0 +1,121 @@
+<sect2>
+<title>Configuring mysql</title>
+
+<sect3>
+<title>Config files</title>
+
+<para><userinput>/etc/my.cnf, ~/.my.cnf</userinput></para>
+
+</sect3>
+
+<sect3>
+<title>Configuration Information</title>
+
+<para>There are several default configurations file available in
+/usr/share/mysql which you can use.</para>
+
+<screen><userinput>cp /usr/share/mysql/my-medium.cnf /etc/my.cnf</userinput></screen>
+
+<para>We can now install a database and change the ownership to the
+unpriviledged user and group.</para>
+
+<screen><userinput>mysql_install_db
+chown -R mysql:mysql /var/lib/mysql</userinput></screen>
+
+<para>Further configuration requires that the mysql server be running:</para>
+
+<screen><userinput>safe_mysqld 2&gt;&amp;1 &gt;/dev/null &amp;</userinput></screen>
+
+<para>A default installation, does not setup a password for the administrator.
+So here we will login and set one.  We strongly suggest changing
+'new-password' to your own.</para>
+
+<screen><userinput>mysql -uroot mysql</userinput>
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 2 to server version: 3.23.51-log
+
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
+
+mysql&gt; <userinput>UPDATE user SET password=password('new-password') WHERE user='root';</userinput>
+Query OK, 2 rows affected (0.00 sec)
+Rows matched: 2  Changed: 2  Warnings: 0
+
+mysql&gt; <userinput>FLUSH PRIVILEGES;</userinput>
+Query OK, 0 rows affected (0.00 sec)
+
+mysql&gt; <userinput>EXIT;</userinput>
+bye
+</screen>
+
+<para>Now that we are done with the configuration of the server, we can
+shut it down.</para>
+
+<screen><userinput>kill `pidof -x safe_mysqld mysqld`</userinput></screen>
+
+
+<sect4>
+<title>mysql init.d script</title>
+
+<para>To automate the running of mysql, use the following command to create
+the init.d script:</para>
+
+<screen><userinput>cat &gt; /etc/rc.d/init.d/mysql &lt;&lt; "EOF"</userinput>
+#!/bin/bash
+# Begin $rc_base/init.d/
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+        start)
+                echo "Starting MySQL daemon..."
+                /usr/bin/safe_mysqld 2&gt;&amp;1 &gt;/dev/null &amp;
+                evaluate_retval
+                ;;
+
+        stop)
+                echo "Stopping MySQL daemon..."
+                killproc mysqld
+                ;;
+
+        restart)
+                $0 stop
+                sleep 1
+                $0 start
+                ;;
+
+        status)
+                statusproc /usr/sbin/mysqld
+                ;;
+
+        *)
+                echo "Usage: $0 {start|stop|restart|status}"
+                exit 1
+                ;;
+esac
+
+# End $rc_base/init.d/
+<userinput>EOF
+chmod 755 /etc/rc.d/init.d/mysql</userinput></screen>
+
+<para>Create the symbolic links to this file in the relevant rc.d directory
+with the following commands:</para>
+
+<screen><userinput>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/mysql ../rc0.d/K26mysql &amp;&amp;
+ln -sf ../init.d/mysql ../rc1.d/K26mysql &amp;&amp;
+ln -sf ../init.d/mysql ../rc2.d/K26mysql &amp;&amp;
+ln -sf ../init.d/mysql ../rc3.d/S34mysql &amp;&amp;
+ln -sf ../init.d/mysql ../rc4.d/S34mysql &amp;&amp;
+ln -sf ../init.d/mysql ../rc5.d/S34mysql &amp;&amp;
+ln -sf ../init.d/mysql ../rc6.d/K26mysql</userinput></screen>
+
+</sect4>
+
+</sect3>
+
+</sect2>
+
