@@ -9,6 +9,9 @@ Based on the original lfs-chunked.xsl created by Matthew Burgess -->
 
   	<!-- We use XHTML -->
   <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.65.1/xhtml/docbook.xsl"/>
+
+  <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
+  <xsl:output method="html" encoding="ISO-8859-1" indent="no" />
   
  	<!-- Including our others customized templates -->
   <xsl:include href="xhtml/lfs-admon.xsl"/>
