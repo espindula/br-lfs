@@ -16,6 +16,7 @@
   cd /home/httpd/www.linuxfromscratch.org/patches/</xsl:text>
     <xsl:value-of select="$links.directory"/>
     <xsl:text> &amp;&amp;&#x0a;&#x0a;</xsl:text>
+    <xsl:text>  rm -f *.patch &amp;&amp;&#x0a;&#x0a;</xsl:text>
     <xsl:apply-templates/>
     <xsl:text>&#x0a;  exit</xsl:text>
   </xsl:template>
