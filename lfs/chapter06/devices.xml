@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+<sect1 id="ch-system-devices">
+<title>Peupler /dev</title>
+<?dbhtml filename="devices.html"?>
+
+<indexterm zone="ch-system-devices"><primary sortas="e-Devices">Périphériques</primary></indexterm>
+
+<sect2>
+<title>Créer les n&oelig;uds périphériques initiaux</title>
+
+<para>Lorsque le noyau démarre le système, il requiert la présence de quelques
+n&oelig;uds périphériques, en particulier les périphériques <filename
+class="devicefile">console</filename> et <filename
+class="devicefile">null</filename>. Créez-les en lançant les commandes
+suivantes&nbsp;:</para>
+
+<screen><userinput>mknod -m 600 /dev/console c 5 1
+mknod -m 666 /dev/null c 1 3</userinput></screen>
+</sect2>
+
+<sect2>
+<title>Monter ramfs et peupler /dev</title>
+
+<para>La façon idéale de peupler <filename
+class="directory">/dev</filename> est de monter un <systemitem
+class="filesystem">ramfs</systemitem> sur <filename
+class="directory">/dev</filename>, comme <systemitem
+class="filesystem">tmpfs</systemitem> et de créer les périphériques là-dessus
+à chaque démarrage. Comme le système n'a pas encore démarré, il est nécessaire
+de faire ce que les scripts de démarrage feraient sinon et de peupler
+<filename class="directory">/dev</filename>. Commencez en montant
+<filename class="directory">/dev</filename>&nbsp;:</para>
+
+<screen><userinput>mount -n -t ramfs none /dev</userinput></screen>
+
+<para>Lancez le programme installé <command>udevstart</command> pour créer les
+périphériques initiaux basés sur toutes les informations dans <filename
+class="directory">/sys</filename>&nbsp;:</para>
+
+<screen><userinput>/tools/sbin/udevstart</userinput></screen>
+
+<para>Voici quelques liens symboliques et répertoires requis par LFS, non créés
+par Udev, donc créez-les ici&nbsp;:</para>
+
+<screen><userinput>ln -s /proc/self/fd /dev/fd
+ln -s /proc/self/fd/0 /dev/stdin
+ln -s /proc/self/fd/1 /dev/stdout
+ln -s /proc/self/fd/2 /dev/stderr
+ln -s /proc/kcore /dev/core
+mkdir /dev/pts
+mkdir /dev/shm</userinput></screen>
+
+<para>Enfin, montez les bons systèmes de fichiers virtuels (noyau) sur les
+répertoires nouvellement créés:</para>
+
+<screen><userinput>mount -t devpts -o gid=4,mode=620 none /dev/pts
+mount -t tmpfs none /dev/shm</userinput></screen>
+
+<para>Les commandes <command>mount</command> exécutées ci-dessus pourraient
+causer les messages d'avertissement suivants&nbsp;:</para>
+
+<screen><computeroutput>can't open /etc/fstab: No such file or directory.</computeroutput></screen>
+
+<para>Ce fichier&mdash;<filename>/etc/fstab</filename>&mdash;n'a pas été encore
+créé mais il n'est pas non plus requis pour le bon montage des systèmes de
+fichiers. De cette façon, le message peut être ignoré sans crainte.</para>
+</sect2>
+
+</sect1>
+
