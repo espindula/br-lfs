@@ -26,7 +26,7 @@ lfs:
 	  index.html part1.html part2.html part3.html longindex.html
 
 	for filename in `find $(BASEDIR) -name "*.html"`; do \
-	  $TIDY -config tidy.conf $$filename; \
+	  $(TIDY) -config tidy.conf $$filename; \
 	  true; \
 	done;
 
