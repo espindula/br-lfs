@@ -26,6 +26,9 @@ lfs:
 
 	sh goTidy $(BASEDIR)/
 
+	for filename in `find $(BASEDIR) -name "*.html"`; do \
+	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
+	done;
 #
 # This is the old "pdf" target. The old "print" target below has been
 # renamed to "pdf" and will be used. This commented out previous_pdf

@@ -23,8 +23,8 @@
     <!-- Dropping some unwanted style attributes -->
   <xsl:param name="ulink.target" select="''"></xsl:param>
   <xsl:param name="css.decoration" select="0"></xsl:param>
-  
+
     <!-- No XML declaration -->
-  <xsl:param name="chunker.output.omit-xml-declaration" select="'yes'"/>
+<!--  <xsl:param name="chunker.output.omit-xml-declaration" select="'yes'"/> -->
 
 </xsl:stylesheet>
