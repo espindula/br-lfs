@@ -2,83 +2,63 @@
 <title>Pourquoi utiliser une édition de lien statique ?</title> 
 <?dbhtml filename="whystatic.html" dir="chapter05"?> 
  
-<para>(Merci à Plasmatic d'avoir posté, dans une des listes de diffusion, le  
-texte sur lequel cette partie est principalement fondée.)</para> 
+<para>Most programs have to perform, beside their specific task, many rather
+common and trivial operations, such as allocating memory, searching
+directories, opening and closing files, reading and writing them, string
+handling, pattern matching, arithmetic, and so on.  Instead of obliging each
+program to reinvent the wheel, the GNU system provides all these basic
+functions ready-made in libraries. The major library on any Linux system is
+<filename>glibc</filename>. To get an idea of what it contains, have a look at
+<filename>glibc/index.html</filename> somewhere on your host system.</para>
 
-<para>Lors de la création (compilation) d'un programme, plutôt que
-d'avoir à réécrire toutes les fonctions pour accéder au noyau, au
-matériel, aux fichiers, etc., à chaque fois que vous écrivez un nouveau
-programme, toutes ces fonctions de base sont conservées dans des
-bibliothèques. Glibc, que l'on installera plus tard, est une
-des principales bibliothèques, qui contient le code pour toutes les
-fonctions de base nécessaires aux programmes, telles que l'ouverture de
-fichiers, l'affichage d'informations à l'écran, et la récupération des
-saisies faites par les utilisateurs. A la compilation du programme,
-ces bibliothèques sont liées au nouveau programme, de façon à ce
-qu'il puisse utiliser toutes les fonctions contenues dans les
-bibliothèques.</para>
- 
-<para>Cependant, ces bibliothèques peuvent être assez volumineuses (par  
-exemple, libc.a approche souvent les 2,5Mo), vous ne voudrez sans doute
-pas dupliquer chaque bibliothèque liée à votre programme. Imaginez que vous
-ayez une commande simple comme ls liée avec une bibliothèque de 2,5Mo! Au lieu 
-de fusionner la bibliothèque et le programme, ce qui correspond à une édition
-de liens statique, mieux vaut la laisser dans un fichier indépendant et ne la  
-charger qu'en cas de besoin. C'est cette édition de liens dynamiques qui permet 
-de charger et décharger dynamiquement une bibliothèque selon les besoins du  
-programme.</para> 
+<para>There are two ways of linking the functions from a library to a program
+that uses them: statically or dynamically. When a program is linked
+statically, the code of the used functions is included in the executable,
+resulting in a rather bulky program. When a program is dynamically linked,
+what is included is a reference to the linker, the name of the library, and
+the name of the function, resulting in a much smaller executable. This
+executable has the disadvantage of being somewhat slower than a statically
+linked one, as the linking at run time takes a few moments.</para>
 
-<para>Comme ces libraires peuvent être très grosses (par exemple,
-libc.a approche souvent 2.5 Mo), alors vous ne voudriez pas qu'une
-copie séparée de chaque librairie soit attachée au progamme.
-Imaginez simplement, que si vous avec une simple commande comme ls,
-un supplément de 2.5 Mo lui est attachée. Au lieu de faire de la
-librairie une partie intégrante du programme, c'est à dire une liaison
-statique, la librairie est stockée dans un fichier séparé, qui n'est
-chargé seulement qu'au moment où le programme en a besoin. C'est ce
-qui s'appelle une liaison dynamique, puisque la librairie est chargée
-et déchargée dynamiquement, en fonction des besoins du programme. </para>
+<para>Aside form this small drawback, dynamic linking has two major advantages
+over static linking. First, you need only one copy of the executable library
+code on your hard disk, instead of having many copies of the same code included
+into a whole bunch of programs -- thus saving disk space. Second, when several
+programs use the same library function at the same time, only one copy of the
+function's code is required in core -- thus saving memory space.</para>
 
-<para>Nous avons maintenant un fichier de 1Ko et un de 2.5Mo, mais somme toute
-nous n'avons pas économisé d'espace mémoire (excepté peut-être en mémoire vive
-jusqu'au moment où la librarie est chargée). L'avantage
-<emphasis>réel</emphasis> de l'édition de liens dynamique est que nous
-n'avons besoin que d'une seule copie de cette bibliothèque.
-Si <filename>ls</filename> et <filename>rm</filename> utilisent tous deux la
-même librairie, nous n'avons pas besoin de deux copies de cette librarie,
-puisqu'ils peuvent tous les deux obtenir le code à partir du même fichier.
-Même en mémoire, les deux programmes se partagent le même code, plutôt que de
-le dupliquer en mémoire. Du coup, nous n'économisons pas seulement l'espace
-disque, mais aussi la mémoire vive si précieuse.</para> 
+<para>Nowadays saving a few megabytes of space may not seem like much, but
+many moons ago, when disks were measured in megabytes and core in kilobytes,
+such savings were essential. It meant being able to keep several programs in
+core at the same time and to contain an entire Unix system on just a few disk
+volumes.</para>
+
+<para>A third but minor advantage of dynamic linking is that when a library
+function gets a bug fixed, or is otherwise improved, you only need to recompile
+this one library, instead of having to recompile all the programs that make use
+of the improved function.</para>
  
-<para>Si la liaison dynamique a tous ces avantages, pourquoi utiliser
-alors exclusivement la liaison statique ? Et bien, c'est parce que
-lorsque vous passerez via chroot dans votre environnement LFS flambant
-neuf (mais plutôt incomplet), ces bibliothèques dynamiques ne seront pas
-disponibles car elles se situeront à un endroit de votre ancienne
-arborescence de répertoires (<filename>/usr/lib</filename> par exemple)
-qui ne sera pas accessible depuis votre racine LFS
-(<filename>$LFS</filename>).</para>
- 
-<para>Ainsi, pour que vos nouveaux programmes fonctionnent dans
-l'environnement chroot, vous devrez vous assurer que les bibliothèques
-soient liées statiquement lorsque vous les compilerez ; ce qui explique
-les options <userinput>--enable-static-link</userinput>,
-<userinput>--disable-shared</userinput>, et <userinput>-static</userinput>
-utilisées tout au long du chapitre 5.
-Au chapitre 6, la première chose que nous ferons sera de créer la
-principale bibliothèque du système, glibc. Cela fait, nous commencerons à
-reconstruire tous les programmes étudiés au chapitre 5, mais en les liant
-dynamiquement cette fois, de façon à profiter du gain d'espace proposé par 
-cette méthode.</para> 
- 
-<para>Et maintenant vous savez pourquoi utiliser cette mystérieuse option  
-<userinput>-static</userinput>.  Si vous essayez de ne pas l'utiliser, 
-vous verrez très rapidement ce qui arrivera lors de l'exécution du chroot  
-dans votre nouveau et imparfait système LFS.</para> 
- 
-<para>Si vous voulez en savoir plus sur les librairies à liaison dynamique,
-consultez un ouvrage ou un site web sur la programmation, plus spécialement 
-consacré à Linux.</para> 
- 
-</sect1> 
+<para>In summary we can say that dynamic linking trades run time against
+memory space, disk space, and recompile time.</para>
+
+<para>But if dynamic linking saves so much space, why then are we linking
+all programs in this chapter statically? The reason is that we won't be
+compiling a temporary <filename>glibc</filename> here. And we avoid doing this
+simply to save some time -- around 14 SBUs. Another reason is that the
+Glibc version on the LFS system might not be compatible with the Glibc on
+the host system. Applications compiled against your host system's Glibc
+version may not run properly (or at all) on the LFS system.</para>
+
+<para>This means that the tools compiled in this chapter will have to be
+self-contained, because when later on we chroot to the LFS partition the
+GNU library won't be available. That is why we use the
+<userinput>-static</userinput>, <userinput>--enable-static-link</userinput>,
+and <userinput>--disable-shared</userinput> flags throughout this chapter, to
+ensure that all executables are statically linked. When we come to the next
+chapter, almost the first thing we do is build <filename>glibc</filename>, the
+main set of system libraries. Once this is done, we can link all other programs
+dynamically (including the ones installed statically in this chapter) and
+take advantage of the space saving opportunities.</para>
+
+</sect1>
+
