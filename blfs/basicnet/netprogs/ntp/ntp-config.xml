@@ -1,0 +1,69 @@
+<sect2>
+<title>Configurer <application>NTP</application></title>
+
+<sect3><title>Fichier de configuration</title>
+<para><filename>/etc/ntp.conf</filename></para>
+</sect3>
+
+<sect3><title>Informations de configuration</title>
+
+<para>Le fichier de configuration suivant définit différents serveurs
+<acronym>NTP</acronym> à utiliser avec le serveur primaire désigné par la
+balise prefer. Il crée aussi un fichier où <command>ntpd</command> stocke le
+décalage de fréquence. Comme la documentation inclus avec le package est
+minuscule, visitez le site NTP, <ulink url="http://www.ntp.org/"/>, pour plus
+d'informations.</para>
+
+<screen><userinput>server time-a.nist.gov prefer
+server time-b.nist.gov
+server tick.usno.navy.mil
+driftfile /var/cache/ntp.drift</userinput></screen>
+</sect3>
+
+<sect3><title>Synchroniser le temps</title>
+
+<para>Il existe deux options. La première consiste à lancer
+<command>ntpd</command> continuellement et à lui permettre de synchroniser
+l'heure de manière graduelle. La deuxième option est de lancer
+<command>ntpd</command> périodiquement (avec cron) et de mettre à jour l'heure
+à chaque lancement de <command>ntpd</command>.</para>
+
+<para>Si vous choisissez l'option une, alors créez le script de démarrage
+<filename>/etc/rc.d/init.d/ntp</filename> avec les liens symboliques de
+lancement et d'arrêt&nbsp;:</para>
+<screen><userinput>#!/bin/bash
+# Début $rc_base/init.d/ntp
+source /etc/sysconfig/rc
+source $rc_functions
+case "$1" in
+        start)
+                echo "Starting ntpd..."
+                loadproc ntpd
+                ;;
+        stop)
+                echo "Stopping ntpd..."
+                killproc ntpd
+                ;;
+        restart)
+                $0 stop
+                sleep 1
+                $0 start
+                ;;
+        status)
+                statusproc ntpd
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart|status}"
+                exit 1
+                ;;
+esac
+# Fin $rc_base/init.d/ntp</userinput></screen>
+
+<para>Si vous préférez lancer ntpd périodiquement, ajoutez la commande suivante
+au <filename>crontab</filename> de root&nbsp;:</para>
+<screen><userinput>ntpd -q</userinput></screen>
+
+</sect3>
+
+</sect2>
+
