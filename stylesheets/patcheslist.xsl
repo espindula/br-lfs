@@ -1,25 +1,29 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
+<!DOCTYPE xsl:stylesheet [
+ <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
 
-<!-- This work against BLFS also -->
+<!-- To work against BLFS some changes are needed -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version="1.0">
 
   <xsl:output method="text"/>
 
-  <xsl:param name="links.directory">lfs/cvs/unstable/</xsl:param>
-  <xsl:param name="deep.to.downloads">../../../</xsl:param>
+  <xsl:param name="links.directory">
+    <xsl:value-of select="substring-after('&patches-root;', 'patches/')"/>
+  </xsl:param>
 
   <xsl:template match="/">
-    <xsl:text>#! /bin/bash
-
-  cd /home/httpd/www.linuxfromscratch.org/patches/</xsl:text>
-    <xsl:value-of select="$links.directory"/>
+    <xsl:text>#! /bin/bash&#x0a;</xsl:text>
+    <xsl:text>&#x0a;  cd /home/httpd/</xsl:text>
+    <xsl:value-of select="substring-after('&patches-root;', 'http://')"/>
     <xsl:text> &amp;&amp;&#x0a;&#x0a;</xsl:text>
     <xsl:text>  rm -f *.patch &amp;&amp;&#x0a;&#x0a;</xsl:text>
     <xsl:apply-templates/>
     <xsl:text>&#x0a;  chgrp lfswww *.patch &amp;&amp;&#x0a;</xsl:text>
-    <xsl:text>&#x0a;  exit</xsl:text>
+    <xsl:text>&#x0a;  exit&#x0a;</xsl:text>
   </xsl:template>
 
   <xsl:template match="//text()">
@@ -27,9 +31,10 @@
   </xsl:template>
 
   <xsl:template match="//ulink">
-    <xsl:if test="contains(@url, '.patch') and contains(@url, 'linuxfromscratch')">
+    <xsl:if test="contains(@url, '.patch') and contains(@url, '&patches-root;')">
       <xsl:text>  cp </xsl:text>
-      <xsl:value-of select="$deep.to.downloads"/>
+      <xsl:text>/home/httpd/</xsl:text>
+      <xsl:value-of select="substring-before (substring-after ('&patches-root;', 'http://'), $links.directory)"/>
       <xsl:text>downloads/</xsl:text>
       <xsl:if test="contains (@url, '-')">
         <xsl:variable name="cut" select="translate (@url, '0123456789', '2222222222')"/>
