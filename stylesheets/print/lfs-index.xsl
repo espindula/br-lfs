@@ -122,4 +122,14 @@
     </xsl:choose>
   </xsl:template>
 
+    <!-- Page number in Index-->
+  <xsl:template match="*" mode="page.citation">
+    <xsl:param name="id" select="'???'"/>
+    <fo:inline keep-together.within-line="always">
+      <!--<xsl:text>[p</xsl:text>-->
+      <fo:page-number-citation ref-id="{$id}"/>
+      <!--<xsl:text>]</xsl:text>-->
+    </fo:inline>
+  </xsl:template>
+
 </xsl:stylesheet>
