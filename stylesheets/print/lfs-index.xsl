@@ -13,7 +13,7 @@
     <!--Title-->
   <xsl:template match="index" mode="title.markup">
     <xsl:param name="allow-anchors" select="0"/>
-    <xsl:text>Index of packages and important installed files</xsl:text>
+    <xsl:text>Index</xsl:text>
   </xsl:template>
 
     <!-- Divisions-->

@@ -77,8 +77,8 @@
   </xsl:template>
 
     <!-- Margins -->
-  <xsl:param name="page.margin.inner">1in</xsl:param>
-  <xsl:param name="page.margin.outer">0.5in</xsl:param>
+  <xsl:param name="page.margin.inner">0.5in</xsl:param>
+  <xsl:param name="page.margin.outer">0.375in</xsl:param>
   <xsl:param name="title.margin.left">-1pc</xsl:param>
   <xsl:attribute-set name="normal.para.spacing">
     <xsl:attribute name="space-before.optimum">0.8em</xsl:attribute>
