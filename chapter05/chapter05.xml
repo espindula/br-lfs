@@ -36,59 +36,6 @@
 &c5-perl;
 
 
-<sect1 id="ch05-adjustingtoolchain">
-<title>Re-adjusting the toolchain</title>
-<?dbhtml filename="adjustingtoolchain.html" dir="chapter05"?>
-
-<para>Now that we have compiled all the necessary tools, it is time to
-re-adjust our toolchain. We will set it up so that it will link any newly
-compiled program against the new Glibc, which is the first thing to get
-compiled in the next chapter. Basically, this is the reverse of what we did
-in the "Locking in" stage in the beginning of this chapter.</para>
-
-<para>The first thing to do is to adjust the linker scripts. For this we
-retained the <filename>binutils-build</filename> directory from the second
-pass over Binutils. Do the following:</para>
-
-<para><screen><userinput>cd binutils-build
-make -C ld INSTALL=/stage1/bin/install install-data-local</userinput></screen></para>
-
-<para>This installs the adjusted linker scripts. The linker scripts now contain
-no mention of <filename>/stage1/lib</filename>. From now on every compiled
-program will link <emphasis>only</emphasis> against the libraries in
-<filename>/usr/lib</filename> and <filename>/lib</filename>. The extra
-<userinput>INSTALL=/stage1/bin/install</userinput> is needed because the
-Makefile created during the second pass still contains the reference to
-<filename>/usr/bin/install</filename>, which we obviously haven't installed
-yet.</para>
-
-<para>You can now remove the Binutils source and build directories.</para>
-
-<para>The next thing to do is to amend our GCC specs file so that it points to
-the new dynamic linker. Just like earlier on, we use a sed to accomplish
-this:</para>
-
-<para><screen><userinput>CURRENTSPECFILE=/stage1/lib/gcc-lib/*/*/specs
-sed -e 's@/stage1/lib/ld.so.1@/lib/ld.so.1@g' \
-&nbsp;&nbsp;&nbsp;&nbsp;-e 's@/stage1/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' \
-&nbsp;&nbsp;&nbsp;&nbsp;$CURRENTSPECFILE > newspecfile
-mv newspecfile $CURRENTSPECFILE
-unset CURRENTSPECFILE</userinput></screen></para>
-
-<para>Again, cutting and pasting the above is recommended. And just like
-before, it is a good idea to check the linker scripts and the specs file to
-ensure the intended changes were actually made.</para>
-
-<para>Note that the linker scripts will still contain a reference to
-<filename>/stage1/i686-pc-linux-gnu/lib</filename>. This is unavoidable, but
-luckily does not present a problem. There are no libraries in that location
-as all the temporary stage1 libraries are located in
-<filename>/stage1/lib</filename>.</para>
-
-</sect1>
-
-
-
 <sect1 id="ch05-stripping">
 <title>Stripping</title>
 <?dbhtml filename="stripping.html" dir="chapter05"?>
