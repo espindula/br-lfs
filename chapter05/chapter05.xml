@@ -23,9 +23,9 @@ Since the packages compiled here are merely temporary, we don't want
 them to pollute the soon-to-be LFS system.</para>
 
 <para>Before issuing the build instructions for a package you are expected to
-have already unpacked it as user <emphasis>lfs</emphasis> (explained shortly),
-and to have performed a <userinput>cd</userinput> into the created directory.
-The build instructions assume that you are using the <command>bash</command>
+have already unpacked it as user <emphasis>lfs</emphasis>, and to have
+performed a <userinput>cd</userinput> into the created directory. The build
+instructions assume that you are using the <command>bash</command>
 shell.</para>
 
 <para>Several of the packages are patched before compilation, but only when
@@ -50,21 +50,12 @@ reinstalled further on. Only for three packages you will need to keep the
 source and build directories around for a while, so their contents can be used
 by later commands. Do not miss the reminders.</para>
 
-<para>Now first check that your LFS environment variable is set up
-properly:</para>
-
-<screen><userinput>echo $LFS</userinput></screen>
-
-<para>Make sure the output shows the path to your LFS partition's mount
-point, which is <filename class="directory">/mnt/lfs</filename> if you
-followed our example.</para>
-
 </sect1>
 
 
-<sect1 id="ch-tools-toolchaintechnotes">
-<title>Toolchain technical notes</title>
-<?dbhtml filename="toolchaintechnotes.html" dir="chapter05"?>
+<sect1 id="tools-technicalnotes">
+<title>Technical notes</title>
+<?dbhtml filename="technicalnotes.html" dir="chapter05"?>
 
 <para>This section attempts to explain some of the rationale and technical
 details behind the overall build method. It's not essential that you understand
@@ -217,8 +208,12 @@ we mentioned above. Once this Glibc is installed into
 the toolchain defaults, then proceed for real in building the rest of the
 target LFS system.</para>
 
-<sect2>
+</sect1>
+
+
+<sect1 id="tools-aboutlinking">
 <title>Notes on static linking</title>
+<?dbhtml filename="aboutlinking.html" dir="chapter05"?>
 
 <para>Most programs have to perform, beside their specific task, many rather
 common and sometimes trivial operations. These include allocating memory,
@@ -256,179 +251,6 @@ from the host in doing so, meaning that those programs can be used
 independently of the host system. However, it's worth noting that an overall
 successful LFS build can still be achieved when the first two packages are
 built dynamically.</para>
-
-</sect2>
-
-</sect1>
-
-
-<sect1 id="ch-tools-creatingtoolsdir">
-<title>Creating the $LFS/tools directory</title>
-<?dbhtml filename="creatingtoolsdir.html" dir="chapter05"?>
-
-<para>All programs compiled in this chapter will be installed under <filename
-class="directory">$LFS/tools</filename> to keep them separate from the
-programs compiled in the next chapter. The programs compiled here are only
-temporary tools and won't be a part of the final LFS system and by keeping them
-in a separate directory, we can later easily throw them away.</para>
-
-<para>Later on you might wish to search through the binaries of your system to
-see what files they make use of or link against. To make this searching easier
-you may want to choose a unique name for the directory in which the temporary
-tools are stored. Instead of the simple "tools" you could use something like
-"tools-for-lfs". However, you'll need to be careful to adjust all references to
-"tools" throughout the book -- including those in any patches, notably the
-GCC Specs Patch.</para>
-
-<para>Create the required directory by running the following:</para>
-
-<screen><userinput>mkdir $LFS/tools</userinput></screen>
-
-<para>The next step is to create a <filename>/tools</filename> symlink on
-your host system. It will point to the directory we just created on the LFS
-partition:</para>
-
-<screen><userinput>ln -s $LFS/tools /</userinput></screen>
-
-<note><para>The above command is correct. The <command>ln</command> command
-has a few syntactic variations, so be sure to check the info page before
-reporting what you may think is an error.</para></note>
-
-<para>The created symlink enables us to compile our toolchain so that it always
-refers to <filename>/tools</filename>, meaning that the compiler, assembler
-and linker will work both in this chapter (when we are still using some tools
-from the host) <emphasis>and</emphasis> in the next (when we are chrooted to
-the LFS partition).</para>
-
-</sect1>
-
-
-<sect1 id="ch-tools-addinguser">
-<title>Adding the user lfs</title>
-<?dbhtml filename="addinguser.html" dir="chapter05"?>
-
-<para>When logged in as <emphasis>root</emphasis>, making a single mistake
-can damage or even wreck your system. Therefore we recommend that you
-build the packages in this chapter as an unprivileged user. You could
-of course use your own user name, but to make it easier to set up a clean
-work environment we'll create a new user <emphasis>lfs</emphasis> and
-use this one during the installation process. As <emphasis>root</emphasis>,
-issue the following command to add the new user:</para>
-
-<screen><userinput>useradd -s /bin/bash -m -k /dev/null lfs</userinput></screen>
-
-<para>The meaning of the switches:</para>
-
-<itemizedlist>
-<listitem><para><userinput>-s /bin/bash</userinput>: This makes
-<userinput>bash</userinput> the default shell for user
-<emphasis>lfs</emphasis>.</para></listitem>
-
-<listitem><para><userinput>-m -k /dev/null</userinput>: These create a home
-directory for <emphasis>lfs</emphasis>, while preventing the files from a
-possible <filename>/etc/skel</filename> being copied into it.</para></listitem>
-</itemizedlist>
-
-<para>If you want to be able to log in as <emphasis>lfs</emphasis>, then give
-this new user a password:</para>
-
-<screen><userinput>passwd lfs</userinput></screen>
-
-<para>Now grant this new user <emphasis>lfs</emphasis> full access to
-<filename class="directory">$LFS/tools</filename> by giving it ownership
-of the directory:</para>
-
-<screen><userinput>chown lfs $LFS/tools</userinput></screen>
-
-<para>If you made a separate working directory as suggested, give user
-<emphasis>lfs</emphasis> ownership of this directory too:</para>
-
-<screen><userinput>chown lfs $LFS/sources</userinput></screen>
-
-<para>Next, login as user <emphasis>lfs</emphasis>. This can be done via a
-virtual console, through a display manager, or with the following substitute
-user command:</para>
-
-<screen><userinput>su - lfs</userinput></screen>
-
-<para>The "<command>-</command>" instructs <command>su</command> to start a
-<emphasis>login</emphasis> shell.</para>
-
-</sect1>
-
-
-<sect1 id="ch-tools-settingenviron">
-<title>Setting up the environment</title>
-<?dbhtml filename="settingenvironment.html" dir="chapter05"?>
-
-<para>We're going to set up a good working environment by creating two new
-startup files for the <command>bash</command> shell. While logged in as
-user <emphasis>lfs</emphasis>, issue the following command to create a new
-<filename>.bash_profile</filename>:</para>
-
-<screen><userinput>cat &gt; ~/.bash_profile &lt;&lt; "EOF"</userinput>
-exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
-<userinput>EOF</userinput></screen>
-
-<para>Normally, when you log on as user <emphasis>lfs</emphasis>,
-the initial shell is a <emphasis>login</emphasis> shell which reads the
-<filename>/etc/profile</filename> of your host (probably containing some
-settings of environment variables) and then <filename>.bash_profile</filename>.
-The <command>exec env -i ... /bin/bash</command> command in the latter file
-replaces the running shell with a new one with a completely empty environment,
-except for the HOME, TERM and PS1 variables. This ensures that no unwanted and
-potentially hazardous environment variables from the host system leak into our
-build environment. The technique used here is a little strange, but it achieves
-the goal of enforcing a clean environment.</para>
-
-<para>The new instance of the shell is a <emphasis>non-login</emphasis> shell,
-which doesn't read the <filename>/etc/profile</filename> or
-<filename>.bash_profile</filename> files, but reads the
-<filename>.bashrc</filename> file instead. Create this latter file now:</para>
-
-<screen><userinput>cat &gt; ~/.bashrc &lt;&lt; "EOF"</userinput>
-set +h
-umask 022
-LFS=/mnt/lfs
-LC_ALL=POSIX
-PATH=/tools/bin:/bin:/usr/bin
-export LFS LC_ALL PATH
-<userinput>EOF</userinput></screen>
-
-<para>The <command>set +h</command> command turns off
-<command>bash</command>'s hash function. Normally hashing is a useful
-feature: <command>bash</command> uses a hash table to remember the
-full pathnames of executable files to avoid searching the PATH time and time
-again to find the same executable. However, we'd like the new tools to be
-used as soon as they are installed. By switching off the hash function, our
-"interactive" commands (<command>make</command>,
-<command>patch</command>, <command>sed</command>,
-<command>cp</command> and so forth) will always use
-the newest available version during the build process.</para>
-
-<para>Setting the user file-creation mask to 022 ensures that newly created
-files and directories are only writable for their owner, but readable and
-executable for anyone.</para>
-
-<para>The LFS variable should of course be set to the mount point you
-chose.</para>
-
-<para>The LC_ALL variable controls the localization of certain programs,
-making their messages follow the conventions of a specified country. If your
-host system uses a version of Glibc older than 2.2.4,
-having LC_ALL set to something other than "POSIX" or "C" during this chapter
-may cause trouble if you exit the chroot environment and wish to return later.
-By setting LC_ALL to "POSIX" (or "C", the two are equivalent) we ensure that
-everything will work as expected in the chroot environment.</para>
-
-<para>We prepend <filename>/tools/bin</filename> to the standard PATH so
-that, as we move along through this chapter, the tools we build will get used
-during the rest of the building process.</para>
-
-<para>Finally, to have our environment fully prepared for building the
-temporary tools, source the just-created profile:</para>
-
-<screen><userinput>source ~/.bash_profile</userinput></screen>
 
 </sect1>
 
@@ -490,7 +312,7 @@ made.</para>
 linker is something other than <filename>ld-linux.so.2</filename>, you
 <emphasis>must</emphasis> substitute <filename>ld-linux.so.2</filename> with the
 name of your platform's dynamic linker in the above commands. Refer back to
-<xref linkend="ch-tools-toolchaintechnotes"/> if necessary.</para></important>
+<xref linkend="tools-technicalnotes"/> if necessary.</para></important>
 
 <para>Lastly, there is a possibility that some include files from the host
 system have found their way into GCC's private include dir. This can happen
@@ -531,9 +353,9 @@ First, redo the sanity check using <command>gcc</command> instead of
 is correct. You can check this by running <userinput>echo $PATH</userinput> and
 verifying that <filename class="directory">/tools/bin</filename> is at the head
 of the list. If the PATH is wrong it could mean you're not logged in as user
-<emphasis>lfs</emphasis> or something went wrong back in
-<xref linkend="ch-tools-settingenviron"/>. Third, something may have gone wrong with
-the specs file amendment above. In this case redo the specs file amendment
+<emphasis>lfs</emphasis> or something went wrong back in <xref
+linkend="prepare-settingenvironment"/>. Third, something may have gone wrong
+with the specs file amendment above. In this case redo the specs file amendment
 ensuring to cut-and-paste the commands as was recommended.</para>
 
 <para>Once you are satisfied that all is well, clean up the test files:</para>
