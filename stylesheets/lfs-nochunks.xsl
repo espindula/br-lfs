@@ -5,7 +5,7 @@
                 version="1.0">
 
     <!-- We use XHTML -->
-  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/docbook.xsl"/>
+  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.66.1/xhtml/docbook.xsl"/>
 
   <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
   <xsl:output method="html" encoding="ISO-8859-1" indent="no" />
@@ -14,12 +14,53 @@
   <xsl:include href="xhtml/lfs-admon.xsl"/>
   <xsl:include href="xhtml/lfs-index.xsl"/>
   <xsl:include href="xhtml/lfs-mixed.xsl"/>
-  <xsl:include href="xhtml/lfs-navigational.xsl"/>
+  <xsl:include href="xhtml/lfs-sections.xsl"/>
   <xsl:include href="xhtml/lfs-toc.xsl"/>
+  <xsl:include href="xhtml/lfs-xref.xsl"/>
+
+    <!-- This file contains our localization strings (for internationalization) -->
+  <xsl:param name="local.l10n.xml" select="document('lfs-l10n.xml')"/>
 
     <!-- Dropping some unwanted style attributes -->
   <xsl:param name="ulink.target" select="''"></xsl:param>
   <xsl:param name="css.decoration" select="0"></xsl:param>
+
+    <!-- To drop the remainig dot when title is empty (from lfs-titles.xsl)-->
+  <xsl:template name="sect2.titlepage">
+    <xsl:choose>
+      <xsl:when test="string-length(title) = 0"/>
+      <xsl:otherwise>
+        <div class="titlepage">
+          <xsl:if test="@id">
+            <a id="{@id}" name="{@id}"/>
+          </xsl:if>
+          <h3 class="{name(.)}">
+            <xsl:apply-templates select="." mode="label.markup"/>
+            <xsl:text>. </xsl:text>
+            <xsl:value-of select="title"/>
+          </h3>
+        </div>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+    <!-- Added the role param for proper punctuation in xref calls
+            (from lfs-titles.xsl). -->
+  <xsl:template match="*" mode="insert.title.markup">
+    <xsl:param name="purpose"/>
+    <xsl:param name="xrefstyle"/>
+    <xsl:param name="title"/>
+    <xsl:param name="role"/>
+    <xsl:choose>
+      <xsl:when test="$purpose = 'xref' and titleabbrev">
+        <xsl:apply-templates select="." mode="titleabbrev.markup"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:copy-of select="$title"/>
+        <xsl:value-of select="$role"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
 
     <!-- The CSS Stylesheet -->
   <xsl:template name='user.head.content'>
@@ -171,6 +212,12 @@ div.segmentedlist {
 
 div.segmentedlist p {
   margin: 0px auto;
+}
+
+/* itemizedlist */
+
+div.itemizedlist {
+  margin-left: 1em;
 }
 
 /* Indented blocks */

@@ -4,7 +4,7 @@
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version="1.0">
     <!-- We use FO and FOP as the processor -->
-  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.67.2/fo/docbook.xsl"/>
+  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.66.1/fo/docbook.xsl"/>
   <xsl:param name="fop.extensions" select="1"/>
   <xsl:param name="draft.mode" select="'no'"/>
 
@@ -12,7 +12,12 @@
   <xsl:include href="pdf/lfs-index.xsl"/>
   <xsl:include href="pdf/lfs-pagesetup.xsl"/>
   <xsl:include href="pdf/lfs-sections.xsl"/>
+  <xsl:include href="pdf/lfs-admon.xsl"/>
   <xsl:include href="pdf/lfs-mixed.xsl"/>
+  <xsl:include href="pdf/lfs-xref.xsl"/>
+
+    <!-- This file contains our localization strings (for internationalization) -->
+  <xsl:param name="local.l10n.xml" select="document('lfs-l10n.xml')"/>
 
     <!-- Paper size required by the publisher -->
   <xsl:param name="paper.type" select="'Customized'"/>
@@ -25,7 +30,7 @@
   <xsl:param name="alignment">justify</xsl:param>
 
     <!-- Font size -->
-  <xsl:param name="body.font.master">10</xsl:param>
+  <xsl:param name="body.font.master">9</xsl:param>
   <xsl:param name="body.font.size">12pt</xsl:param>
 
     <!-- TOC stuff -->

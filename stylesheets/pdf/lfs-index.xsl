@@ -13,7 +13,9 @@
     <!--Title-->
   <xsl:template match="index" mode="title.markup">
     <xsl:param name="allow-anchors" select="0"/>
-    <xsl:text>Index</xsl:text>
+    <xsl:call-template name="gentext">
+      <xsl:with-param name="key">Index</xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
 
     <!-- Divisions-->
@@ -30,24 +32,34 @@
             <xsl:with-param name="titlecontent">
               <xsl:choose>
                 <xsl:when test="$divtitle = 'A'">
-                  <xsl:text>Packages</xsl:text>
-              </xsl:when>
-              <xsl:when test="$divtitle = 'B'">
-                  <xsl:text>Programs</xsl:text>
-              </xsl:when>
-              <xsl:when test="$divtitle = 'C'">
-                  <xsl:text>Libraries</xsl:text>
-              </xsl:when>
-              <xsl:when test="$divtitle = 'D'">
-                  <xsl:text>Scripts</xsl:text>
-              </xsl:when>
-              <xsl:when test="$divtitle = 'E'">
-                  <xsl:text>Others</xsl:text>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:value-of select="$divtitle"/>
-              </xsl:otherwise>
-            </xsl:choose>
+                  <xsl:call-template name="gentext">
+                    <xsl:with-param name="key">Packages</xsl:with-param>
+                  </xsl:call-template>
+                </xsl:when>
+                <xsl:when test="$divtitle = 'B'">
+                  <xsl:call-template name="gentext">
+                    <xsl:with-param name="key">Programs</xsl:with-param>
+                  </xsl:call-template>
+                </xsl:when>
+                <xsl:when test="$divtitle = 'C'">
+                  <xsl:call-template name="gentext">
+                    <xsl:with-param name="key">Libraries</xsl:with-param>
+                  </xsl:call-template>
+                </xsl:when>
+                <xsl:when test="$divtitle = 'D'">
+                  <xsl:call-template name="gentext">
+                    <xsl:with-param name="key">Scripts</xsl:with-param>
+                  </xsl:call-template>
+                </xsl:when>
+                <xsl:when test="$divtitle = 'E'">
+                  <xsl:call-template name="gentext">
+                    <xsl:with-param name="key">Others</xsl:with-param>
+                  </xsl:call-template>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:value-of select="$divtitle"/>
+                </xsl:otherwise>
+              </xsl:choose>
             </xsl:with-param>
           </xsl:call-template>
         </xsl:if>

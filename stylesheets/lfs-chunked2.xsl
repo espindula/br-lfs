@@ -5,14 +5,19 @@
                 version="1.0">
 
     <!-- We use XHTML -->
-  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/docbook.xsl"/>
+  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.66.1/xhtml/docbook.xsl"/>
   <xsl:param name="chunker.output.encoding" select="'ISO-8859-1'"/>
 
     <!-- Including our others customized elements templates -->
   <xsl:include href="xhtml/lfs-admon.xsl"/>
+  <xsl:include href="xhtml/lfs-sections.xsl"/>
   <xsl:include href="xhtml/lfs-mixed.xsl"/>
   <xsl:include href="xhtml/lfs-titles.xsl"/>
   <xsl:include href="xhtml/lfs-toc.xsl"/>
+  <xsl:include href="xhtml/lfs-xref.xsl"/>
+
+    <!-- This file contains our localization strings (for internationalization) -->
+  <xsl:param name="local.l10n.xml" select="document('lfs-l10n.xml')"/>
 
     <!-- The CSS Stylesheet -->
   <xsl:param name="html.stylesheet" select="'../stylesheets/lfs.css'"/>

@@ -20,9 +20,9 @@ lfs:
 	cp $(XSLROOTDIR)/images/*.png \
 	  $(BASEDIR)/images
 	cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" \
-	  index.html part1.html part2.html part3.html longindex.html
+	  *.html
 	cd $(BASEDIR)/; sed -i -e "s@../images@images@g" \
-	  index.html part1.html part2.html part3.html longindex.html
+	  *.html
 
 	for filename in `find $(BASEDIR) -name "*.html"`; do \
 	  tidy -config tidy.conf $$filename; \
@@ -47,7 +47,7 @@ lfs:
 
 pdf:
 	xsltproc --xinclude --nonet --stringparam profile.condition print \
-		--output $(BASEDIR)/lfs-pdf.xml stylesheets/lfs-profile.xsl index-pdf.xml
+		--output $(BASEDIR)/lfs-pdf.xml stylesheets/lfs-profile.xsl index.xml
 	xsltproc --nonet --output $(BASEDIR)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
 		$(BASEDIR)/lfs-pdf.xml
 	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo

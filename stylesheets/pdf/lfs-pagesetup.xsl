@@ -62,6 +62,17 @@
     </fo:block>
   </xsl:template>
 
+    <!-- Font size for chapter title. -->
+  <xsl:template match="title" mode="chapter.titlepage.recto.auto.mode">
+    <fo:block xmlns:fo="http://www.w3.org/1999/XSL/Format" 
+            xsl:use-attribute-sets="chapter.titlepage.recto.style" 
+            font-size="21pt" font-weight="bold" text-align="left">
+      <xsl:call-template name="component.title">
+        <xsl:with-param name="node" select="ancestor-or-self::chapter[1]"/>
+      </xsl:call-template>
+    </fo:block>
+  </xsl:template>
+
     <!-- Margins -->
   <xsl:param name="page.margin.inner">0.5in</xsl:param>
   <xsl:param name="page.margin.outer">0.375in</xsl:param>

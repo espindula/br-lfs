@@ -4,21 +4,95 @@
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version="1.0">
 
-  
-    <!-- This is a hack and isn't correct semantically. The beginpage tags must
-      be placed in the XML source only to render the final PDF output, and must
-      be removed after.-->
+
+    <!-- This is a hack and isn't correct semantically. Theoretically, the beginpage 
+      tags should be placed in the XML source only to render the PDF output and 
+      should be removed after it. But there is no a better way and we need this.-->
   <xsl:template match="beginpage">
     <fo:block break-after="page"/>
   </xsl:template>
+  
+    <!-- Allow forced line breaks inside paragraphs emulating literallayout. -->
+ <xsl:template match="para">
+    <xsl:choose>
+      <xsl:when test="./@remap='verbatim'">
+        <fo:block wrap-option="no-wrap"
+                    white-space-collapse="false"
+                    white-space-treatment="preserve"
+                    text-align="start"
+                    linefeed-treatment="preserve">
+          <xsl:call-template name="anchor"/>
+          <xsl:apply-templates/>
+        </fo:block>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-imports/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
 
-    <!-- Split URLs -->
-  <xsl:template name="hyphenate-url">
+    <!-- Show URLs in italic font -->
+  <xsl:template match="ulink" name="ulink">
+    <fo:inline font-style="italic">
+      <fo:basic-link xsl:use-attribute-sets="xref.properties">
+        <xsl:attribute name="external-destination">
+          <xsl:call-template name="fo-external-image">
+            <xsl:with-param name="filename" select="@url"/>
+          </xsl:call-template>
+        </xsl:attribute>
+        <xsl:choose>
+          <xsl:when test="count(child::node())=0">
+            <xsl:call-template name="hyphenate-url">
+              <xsl:with-param name="url" select="@url"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </fo:basic-link>
+    </fo:inline>
+    <xsl:if test="count(child::node()) != 0
+                  and string(.) != @url
+                  and $ulink.show != 0">
+      <!-- yes, show the URI -->
+      <xsl:choose>
+        <xsl:when test="$ulink.footnotes != 0 and not(ancestor::footnote)">
+          <xsl:text>&#xA0;</xsl:text>
+          <fo:footnote>
+            <xsl:call-template name="ulink.footnote.number"/>
+            <fo:footnote-body font-family="{$body.fontset}"
+                              font-size="{$footnote.font.size}">
+              <fo:block>
+                <xsl:call-template name="ulink.footnote.number"/>
+                <xsl:text> </xsl:text>
+                <fo:inline>
+                  <xsl:value-of select="@url"/>
+                </fo:inline>
+              </fo:block>
+            </fo:footnote-body>
+          </fo:footnote>
+        </xsl:when>
+        <xsl:otherwise>
+          <fo:inline hyphenate="false">
+            <xsl:text> [</xsl:text>
+            <xsl:call-template name="hyphenate-url">
+              <xsl:with-param name="url" select="@url"/>
+            </xsl:call-template>
+            <xsl:text>]</xsl:text>
+          </fo:inline>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
+  </xsl:template>
+
+    <!-- Split URLs (obsolete, keeped as reference) -->
+  <!--<xsl:template name="hyphenate-url">
     <xsl:param name="url" select="''"/>
     <xsl:choose>
       <xsl:when test="ancestor::varlistentry">
         <xsl:choose>
-          <xsl:when test="string-length($url) > 88">
+          <xsl:when test="string-length($url) > 90">
             <xsl:value-of select="substring($url, 1, 50)"/>
             <xsl:param name="rest" select="substring($url, 51)"/>
             <xsl:value-of select="substring-before($rest, '/')"/>
@@ -31,15 +105,15 @@
         </xsl:choose>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:value-of select="$url"/>
+        <xsl:value-of select="$url"/>-->
       <!--  <xsl:value-of select="substring-before($url, '//')"/>
         <xsl:text>// </xsl:text>
         <xsl:call-template name="split-url">
           <xsl:with-param name="url2" select="substring-after($url, '//')"/>
         </xsl:call-template>-->
-      </xsl:otherwise>
+     <!-- </xsl:otherwise>
     </xsl:choose>
-  </xsl:template>
+  </xsl:template>-->
 
   <!--<xsl:template name="split-url">
     <xsl:choose>
@@ -59,88 +133,6 @@
 
     <!-- Shade screen -->
   <xsl:param name="shade.verbatim" select="1"/>
-
-    <!-- Graphics in admonitions -->
-  <xsl:param name="admon.graphics" select="1"/>
-  <xsl:param name="admon.graphics.path"
-    select="'/usr/share/xml/docbook/xsl-stylesheets-1.67.2/images/'"/>
-
-    <!-- Admonition block properties -->
-  <xsl:template match="important|warning|caution">
-    <xsl:choose>
-      <xsl:when test="$admon.graphics != 0">
-        <fo:block space-before.minimum="0.4em" space-before.optimum="0.6em"
-              space-before.maximum="0.8em" border-style="solid" border-width="1pt"
-              border-color="#500" background-color="#FFFFE6">
-        <xsl:call-template name="graphical.admonition"/>
-        </fo:block>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:call-template name="nongraphical.admonition"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
-  <xsl:template match="note|tip">
-    <xsl:choose>
-      <xsl:when test="$admon.graphics != 0">
-        <fo:block space-before.minimum="0.4em" space-before.optimum="0.6em"
-              space-before.maximum="0.8em" border-style="solid" border-width="1pt"
-              border-color="#E0E0E0" background-color="#FFFFE6">
-        <xsl:call-template name="graphical.admonition"/>
-        </fo:block>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:call-template name="nongraphical.admonition"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-  
-    <!-- Admonitions text properties -->
-  <xsl:attribute-set name="admonition.properties">
-    <xsl:attribute name="margin-right">6pt</xsl:attribute>
-  </xsl:attribute-set>
-
-    <!-- Adding left space to the graphics and color to the titles -->
-  <xsl:template name="graphical.admonition">
-    <xsl:variable name="id">
-      <xsl:call-template name="object.id"/>
-    </xsl:variable>
-    <fo:block id="{$id}">
-      <fo:list-block xsl:use-attribute-sets="list.block.spacing">
-        <fo:list-item>
-            <fo:list-item-label end-indent="label-end()">
-              <fo:block margin-left="4pt">
-                <fo:external-graphic width="auto" height="auto">
-                  <xsl:attribute name="src">
-                    <xsl:call-template name="admon.graphic"/>
-                  </xsl:attribute>
-                </fo:external-graphic>
-              </fo:block>
-            </fo:list-item-label>
-            <fo:list-item-body start-indent="body-start()">
-              <xsl:if test="$admon.textlabel != 0 or title">
-                <fo:block xsl:use-attribute-sets="admonition.title.properties">
-                  <xsl:if test="ancestor-or-self::important">
-                    <xsl:attribute name="color">#500</xsl:attribute>
-                  </xsl:if>
-                  <xsl:if test="ancestor-or-self::warning">
-                    <xsl:attribute name="color">#500</xsl:attribute>
-                  </xsl:if>
-                  <xsl:if test="ancestor-or-self::caution">
-                    <xsl:attribute name="color">#500</xsl:attribute>
-                  </xsl:if>
-                  <xsl:apply-templates select="." mode="object.title.markup"/>
-                </fo:block>
-              </xsl:if>
-              <fo:block xsl:use-attribute-sets="admonition.properties">
-                <xsl:apply-templates/>
-              </fo:block>
-            </fo:list-item-body>
-        </fo:list-item>
-      </fo:list-block>
-    </fo:block>
-  </xsl:template>
 
     <!-- How is rendered by default a variablelist -->
   <xsl:param name="variablelist.as.blocks" select="1"/>
@@ -176,5 +168,80 @@
       <!--</xsl:otherwise>
     </xsl:choose>-->
   </xsl:template>
+
+    <!-- Presentation of literal tag -->
+  <xsl:template match="literal">
+    <fo:inline  font-weight="normal">
+      <xsl:call-template name="inline.monoseq"/>
+    </fo:inline>
+  </xsl:template>
+
+    <!-- Left alingnament for itemizedlist -->
+  <xsl:template match="itemizedlist">
+    <xsl:variable name="id">
+      <xsl:call-template name="object.id"/>
+    </xsl:variable>
+    <xsl:variable name="label-width">
+      <xsl:call-template name="dbfo-attribute">
+        <xsl:with-param name="pis"
+                        select="processing-instruction('dbfo')"/>
+        <xsl:with-param name="attribute" select="'label-width'"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:if test="title">
+      <xsl:apply-templates select="title" mode="list.title.mode"/>
+    </xsl:if>
+    <!-- Preserve order of PIs and comments -->
+    <xsl:apply-templates
+        select="*[not(self::listitem
+                  or self::title
+                  or self::titleabbrev)]
+                |comment()[not(preceding-sibling::listitem)]
+                |processing-instruction()[not(preceding-sibling::listitem)]"/>
+    <fo:list-block id="{$id}" xsl:use-attribute-sets="list.block.spacing"
+                  provisional-label-separation="0.2em" text-align="left">
+      <xsl:attribute name="provisional-distance-between-starts">
+        <xsl:choose>
+          <xsl:when test="$label-width != ''">
+            <xsl:value-of select="$label-width"/>
+          </xsl:when>
+          <xsl:otherwise>1.5em</xsl:otherwise>
+        </xsl:choose>
+      </xsl:attribute>
+      <xsl:apply-templates
+            select="listitem
+                    |comment()[preceding-sibling::listitem]
+                    |processing-instruction()[preceding-sibling::listitem]"/>
+    </fo:list-block>
+  </xsl:template>
+
+    <!-- Addibg a bullet, and left alignament, for packages and paches list. -->
+
+<xsl:template match="varlistentry" mode="vl.as.blocks">
+  <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
+  <xsl:choose>
+    <xsl:when test="ancestor::variablelist/@role = 'materials'">
+      <fo:block id="{$id}" xsl:use-attribute-sets="list.item.spacing"
+          keep-together.within-column="always"
+          keep-with-next.within-column="always" text-align="left">
+        <xsl:text>&#x2022;   </xsl:text>
+        <xsl:apply-templates select="term"/>
+      </fo:block>
+      <fo:block margin-left="0.1in" text-align="left">
+        <xsl:apply-templates select="listitem"/>
+      </fo:block>
+    </xsl:when>
+    <xsl:otherwise>
+      <fo:block id="{$id}" xsl:use-attribute-sets="list.item.spacing"
+          keep-together.within-column="always"
+          keep-with-next.within-column="always">
+        <xsl:apply-templates select="term"/>
+      </fo:block>
+      <fo:block margin-left="0.25in">
+        <xsl:apply-templates select="listitem"/>
+      </fo:block>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
 
 </xsl:stylesheet>

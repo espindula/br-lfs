@@ -68,14 +68,32 @@
                   </xsl:call-template>
                 </xsl:attribute>
                 <xsl:attribute name="title">
-                  <xsl:value-of select="$next/title"/>
+                  <xsl:choose>
+                    <xsl:when test="local-name($next)='index'">
+                      <xsl:call-template name="gentext">
+                        <xsl:with-param name="key">Index</xsl:with-param>
+                      </xsl:call-template>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="$next/title"/>
+                    </xsl:otherwise>
+                  </xsl:choose>
                 </xsl:attribute>
                 <xsl:call-template name="navig.content">
                   <xsl:with-param name="direction" select="'next'"/>
                 </xsl:call-template>
               </a>
               <p>
-                <xsl:value-of select="$next/title"/>
+                <xsl:choose>
+                  <xsl:when test="local-name($next)='index'">
+                    <xsl:call-template name="gentext">
+                      <xsl:with-param name="key">Index</xsl:with-param>
+                    </xsl:call-template>
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <xsl:value-of select="$next/title"/>
+                  </xsl:otherwise>
+                </xsl:choose>
               </p>
             </li>
           </xsl:if>
@@ -160,14 +178,32 @@
                   </xsl:call-template>
                 </xsl:attribute>
                 <xsl:attribute name="title">
-                  <xsl:value-of select="$next/title"/>
+                  <xsl:choose>
+                    <xsl:when test="local-name($next)='index'">
+                      <xsl:call-template name="gentext">
+                        <xsl:with-param name="key">Index</xsl:with-param>
+                      </xsl:call-template>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="$next/title"/>
+                    </xsl:otherwise>
+                  </xsl:choose>
                 </xsl:attribute>
                 <xsl:call-template name="navig.content">
                   <xsl:with-param name="direction" select="'next'"/>
                 </xsl:call-template>
               </a>
               <p>
-                <xsl:value-of select="$next/title"/>
+                <xsl:choose>
+                  <xsl:when test="local-name($next)='index'">
+                    <xsl:call-template name="gentext">
+                      <xsl:with-param name="key">Index</xsl:with-param>
+                    </xsl:call-template>
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <xsl:value-of select="$next/title"/>
+                  </xsl:otherwise>
+                </xsl:choose>
               </p>
             </li>
           </xsl:if>

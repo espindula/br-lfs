@@ -16,16 +16,20 @@
   </xsl:template>
 
     <!--Title-->
-  <xsl:param name="index-title">Index of packages and important installed files</xsl:param>
+  <xsl:param name="index-title">Index</xsl:param>
   
   <xsl:template match="index" mode="title.markup">
-    <xsl:value-of select="$index-title"/>
+    <xsl:call-template name="gentext">
+      <xsl:with-param name="key" select="$index-title"/>
+    </xsl:call-template>
   </xsl:template>
-  
+
   <xsl:template name="index.titlepage">
     <div class="titlepage">
       <h1 class="index">
-        <xsl:value-of select="$index-title"/>
+        <xsl:call-template name="gentext">
+          <xsl:with-param name="key" select="$index-title"/>
+        </xsl:call-template>
       </h1>
     </div>
   </xsl:template>
@@ -42,19 +46,29 @@
           <h2>
             <xsl:choose>
               <xsl:when test="$divtitle = 'A'">
-                <xsl:text>Packages</xsl:text>
+                <xsl:call-template name="gentext">
+                  <xsl:with-param name="key">Packages</xsl:with-param>
+                </xsl:call-template>
              </xsl:when>
              <xsl:when test="$divtitle = 'B'">
-                <xsl:text>Programs</xsl:text>
+                <xsl:call-template name="gentext">
+                  <xsl:with-param name="key">Programs</xsl:with-param>
+                </xsl:call-template>
              </xsl:when>
              <xsl:when test="$divtitle = 'C'">
-                <xsl:text>Libraries</xsl:text>
+                <xsl:call-template name="gentext">
+                  <xsl:with-param name="key">Libraries</xsl:with-param>
+                </xsl:call-template>
              </xsl:when>
              <xsl:when test="$divtitle = 'D'">
-                <xsl:text>Scripts</xsl:text>
+                <xsl:call-template name="gentext">
+                  <xsl:with-param name="key">Scripts</xsl:with-param>
+                </xsl:call-template>
              </xsl:when>
               <xsl:when test="$divtitle = 'E'">
-                  <xsl:text>Others</xsl:text>
+                <xsl:call-template name="gentext">
+                  <xsl:with-param name="key">Others</xsl:with-param>
+                </xsl:call-template>
               </xsl:when>
              <xsl:otherwise>
               <xsl:value-of select="$divtitle"/>
@@ -162,7 +176,9 @@
               <xsl:with-param name="object" select="$target2[1]"/>
             </xsl:call-template>
           </xsl:attribute>
-          <xsl:text>description</xsl:text>
+          <xsl:call-template name="gentext">
+            <xsl:with-param name="key">description</xsl:with-param>
+          </xsl:call-template>
         </a>
       </xsl:when>
       <xsl:otherwise>

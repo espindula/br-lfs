@@ -9,9 +9,7 @@
     <xsl:choose>
       <xsl:when test="child::* = userinput">
         <pre class="userinput">
-          <kbd class="command">
-            <xsl:value-of select="."/>
-          </kbd>
+            <xsl:apply-templates/>
         </pre>
       </xsl:when>
       <xsl:otherwise>
@@ -21,6 +19,20 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+  
+  <xsl:template match="userinput">
+    <xsl:choose>
+      <xsl:when test="ancestor::screen">
+        <kbd class="command">
+          <xsl:apply-templates/>
+        </kbd>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-imports/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
   
   <!-- variablelist -->
   <xsl:template match="variablelist">
@@ -60,48 +72,27 @@
     </xsl:attribute>
   </xsl:template>
 
-   <!-- Sect1 attributes -->
-  <xsl:template match="sect1">
-    <div>
-      <xsl:choose>
-        <xsl:when test="@role">
-          <xsl:attribute name="class">
-            <xsl:value-of select="@role"/>
-          </xsl:attribute>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:attribute name="class">
-            <xsl:value-of select="name(.)"/>
-          </xsl:attribute>
-        </xsl:otherwise>
-      </xsl:choose>
-      <xsl:call-template name="language.attribute"/>
-      <xsl:call-template name="sect1.titlepage"/>
-      <xsl:apply-templates/>
-      <xsl:call-template name="process.chunk.footnotes"/>
-    </div>
+    <!-- External URLs in italic font -->
+  <xsl:template match="ulink" name="ulink">
+    <a>
+      <xsl:if test="@id">
+        <xsl:attribute name="id">
+          <xsl:value-of select="@id"/>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:attribute name="href"><xsl:value-of select="@url"/></xsl:attribute>
+       <i>
+        <xsl:choose>
+          <xsl:when test="count(child::node())=0">
+            <xsl:value-of select="@url"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </i>
+    </a>
   </xsl:template>
 
-    <!-- Sect2 attributes -->
-  <xsl:template match="sect2">
-    <div>
-      <xsl:choose>
-        <xsl:when test="@role">
-          <xsl:attribute name="class">
-            <xsl:value-of select="@role"/>
-          </xsl:attribute>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:attribute name="class">
-            <xsl:value-of select="name(.)"/>
-          </xsl:attribute>
-        </xsl:otherwise>
-      </xsl:choose>
-      <xsl:call-template name="language.attribute"/>
-      <xsl:call-template name="sect2.titlepage"/>
-      <xsl:apply-templates/>
-      <xsl:call-template name="process.chunk.footnotes"/>
-    </div>
-  </xsl:template>
 
 </xsl:stylesheet>

@@ -32,31 +32,37 @@
 
   <xsl:template match="//ulink">
     <xsl:if test="contains(@url, '.patch') and contains(@url, '&patches-root;')">
-      <xsl:text>  cp </xsl:text>
-      <xsl:text>/home/httpd/</xsl:text>
-      <xsl:value-of select="substring-before (substring-after ('&patches-root;', 'http://'), $links.directory)"/>
-      <xsl:text>downloads/</xsl:text>
-      <xsl:if test="contains (@url, '-')">
-        <xsl:variable name="cut" select="translate (@url, '0123456789', '2222222222')"/>
-        <xsl:choose>
-          <xsl:when test="contains ($cut, ',')">
-            <xsl:value-of select="substring-before (substring-after($cut, $links.directory), ',2')"/>
-          </xsl:when>
-          <xsl:otherwise>
+      <xsl:choose>
+        <xsl:when test="ancestor-or-self::*/@condition = 'pdf'"/>
+        <xsl:otherwise>
+          <xsl:text>  cp </xsl:text>
+          <xsl:text>/home/httpd/</xsl:text>
+          <xsl:value-of select="substring-before (substring-after ('&patches-root;', 'http://'), $links.directory)"/>
+          <xsl:text>downloads/</xsl:text>
+          <xsl:if test="contains (@url, '-')">
+            <xsl:variable name="cut" select="translate (@url, '0123456789', '2222222222')"/>
+            <xsl:variable name="links.directory2" select="translate ($links.directory, '0123456789', '2222222222')"/>
             <xsl:choose>
-              <xsl:when test="contains ($cut, '-src-2')">
-                <xsl:value-of select="substring-before (substring-after($cut, $links.directory), '-src-2')"/>
+              <xsl:when test="contains ($cut, ',')">
+                <xsl:value-of select="substring-before (substring-after($cut, $links.directory2), ',2')"/>
               </xsl:when>
               <xsl:otherwise>
-                <xsl:value-of select="substring-before (substring-after($cut, $links.directory), '-2')"/>
+                <xsl:choose>
+                  <xsl:when test="contains ($cut, '-src-2')">
+                    <xsl:value-of select="substring-before (substring-after($cut, $links.directory2), '-src-2')"/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <xsl:value-of select="substring-before (substring-after($cut, $links.directory2), '-2')"/>
+                  </xsl:otherwise>
+                </xsl:choose>
               </xsl:otherwise>
             </xsl:choose>
-          </xsl:otherwise>
-        </xsl:choose>
-      </xsl:if>
-      <xsl:text>/</xsl:text>
-      <xsl:value-of select="substring-after(@url, $links.directory)"/>
-      <xsl:text> . &#x0a;</xsl:text>
+          </xsl:if>
+          <xsl:text>/</xsl:text>
+          <xsl:value-of select="substring-after(@url, $links.directory)"/>
+          <xsl:text> . &#x0a;</xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:if>
   </xsl:template>
 
