@@ -1,0 +1,74 @@
+<sect1 id="dhcpclient" xreflabel="Configuring the LFS bootscripts to support DHCP clients">
+<?dbhtml filename="configdhcp.html" dir="connect"?>
+<title>Configuring the LFS bootscripts to support DHCP clients</title>
+
+<sect2><title>Config files</title>
+<para><userinput>/etc/sysconfig/network, 
+/etc/sysconfig/network-devices/ifup-eth0,
+/etc/sysconfig/network-devices/ifdown-eth0,
+/etc/sysconfig/network-devices/ifconfig.eth0</userinput></para>
+</sect2>
+
+<sect2><title>Configuration Information</title>
+
+<para>Note that on this and the following pages, we 
+use <userinput>eth0</userinput> as the example interface.
+If you want to configure a different (or more than one) interface, simply 
+replace <userinput>eth0</userinput> with the interface you wish to use.</para>
+
+<para>These instructions will convert the configuration files from LFS
+(a static configuration) to a configuration using the DHCP protocol.  
+Note that static and DHCP-based interfaces can co-exist on a LFS system.  To
+do this, you should only make the alterations to those interfaces which 
+need to support DHCP.  All of the instructions on this page are applicable
+no matter which DHCP client you intend to use.</para>
+
+<para>If the interface you intend to use as your default gateway is going to 
+use DHCP, the first step is to remove the GATEWAY and GATEWAY_IF variables 
+from <filename>/etc/sysconfig/network</filename>.  This will only need to be
+done once.</para>
+
+<para><screen><userinput>cd /etc/sysconfig &amp;&amp;
+cp network network.bak &amp;&amp;
+sed "s/GATEWAY/# GATEWAY/" network.bak > network</userinput></screen></para>
+
+<para>You then need to create scripts which will override the default
+network scripts and provide DHCP support.  These two scripts are generic and
+so for use with both DHCP clients.  First, the
+<filename>ifup-eth0</filename> script:</para>
+
+<para><screen><userinput>cat &gt; /etc/sysconfig/network-devices/ifup-eth0 &lt;&lt; "EOF" </userinput>
+#!/bin/sh
+
+source /etc/sysconfig/rc || exit
+source $rc_functions || exit
+source $network_devices/ifconfig.eth0 || exit
+
+echo "Bringing up the eth0 interface..."
+modprobe eth0
+loadproc $DHCP_PROG $DHCP_START
+<userinput>EOF</userinput></screen></para>
+
+<para>Then the <filename>ifdown-eth0</filename> script:</para>
+
+<para><screen><userinput>cat &gt; /etc/sysconfig/network-devices/ifdown-eth0 &lt;&lt; "EOF" </userinput>
+#!/bin/sh
+
+source /etc/sysconfig/rc || exit
+source $rc_functions || exit
+source $network_devices/ifconfig.eth0 || exit
+
+echo "Bringing down the eth0 interface..."
+$DHCP_PROG $DHCP_STOP
+evaluate_retval
+<userinput>EOF</userinput></screen></para>
+
+<para>Finally, we need to make these scripts executable:</para>
+
+<para><screen><userinput>chmod 755 /etc/sysconfig/network-devices/ifup-eth0 &amp;&amp;
+chmod 755 /etc/sysconfig/network-devices/ifdown-eth0</userinput></screen></para>
+
+</sect2>
+
+</sect1>
+
