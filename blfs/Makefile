@@ -5,8 +5,8 @@
 OUTPUTDIR = $(HOME)/public_html/blfs-book
 INSTALL = install
 JADE = openjade
-DOCBOOK = /usr/share/sgml/docbook/dsssl-stylesheets-1.78
-BASEDIR= $(HOME)/public_html/blfs-book-xsl/
+DOCBOOK = /usr/share/sgml/docbook/stylesheet/xsl/nwalsh
+BASEDIR= $(HOME)/public_html/blfs/
 TEXBASEDIR= $(HOME)/public_html/blfs-book-tex/
 
 SRCDIR = $(PWD)
