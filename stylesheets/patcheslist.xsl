@@ -18,6 +18,7 @@
     <xsl:text> &amp;&amp;&#x0a;&#x0a;</xsl:text>
     <xsl:text>  rm -f *.patch &amp;&amp;&#x0a;&#x0a;</xsl:text>
     <xsl:apply-templates/>
+    <xsl:text>&#x0a;  chgrp lfswww *.patch &amp;&amp;&#x0a;</xsl:text>
     <xsl:text>&#x0a;  exit</xsl:text>
   </xsl:template>
 
@@ -37,7 +38,14 @@
             <xsl:value-of select="substring-before (substring-after($cut, $links.directory), ',2')"/>
           </xsl:when>
           <xsl:otherwise>
-            <xsl:value-of select="substring-before (substring-after($cut, $links.directory), '-2')"/>
+            <xsl:choose>
+              <xsl:when test="contains ($cut, '-src-2')">
+                <xsl:value-of select="substring-before (substring-after($cut, $links.directory), '-src-2')"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="substring-before (substring-after($cut, $links.directory), '-2')"/>
+              </xsl:otherwise>
+            </xsl:choose>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:if>
