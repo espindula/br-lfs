@@ -41,7 +41,7 @@ lfs:
 
 pdf:
 	xsltproc --xinclude --nonet --stringparam profile.condition print \
-		--output $(BASEDIR)/lfs-print.xml stylesheets/lfs-profile.xsl index-print.xml
+		--output $(BASEDIR)/lfs-pdf.xml stylesheets/lfs-profile.xsl index-pdf.xml
 	xsltproc --nonet --output $(BASEDIR)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
 		$(BASEDIR)/lfs-pdf.xml
 	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo
