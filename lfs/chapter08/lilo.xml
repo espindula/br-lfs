@@ -1,0 +1,55 @@
+<sect1 id="ch08-lilo">
+<title>Rendre son système LFS démarrable</title>
+<?dbhtml filename="lilo.html" dir="chapter08"?>
+
+<para>Afin de pouvoir démarrer son système LFS, nous avons besoin de 
+mettre à jour notre chargeur de démarrage. Nous avons supposé que votre
+système hôte utilise LILO (car c'est le chargeur le plus commun pour
+le moment).</para>
+
+<para>Nous n'allons pas lancer le programme LILO à l'intérieur du chroot.
+Lancer lilo à l'intérieur du chroot peut avoir comme conséquence de rendre 
+votre MBR inutile et vous auriez besoin d'une disquette de démarrage pour 
+être capable de lancer tout système Linux (le système de base ainsi que le
+système LFS).</para>
+
+<para>Premièrement nous sortirons du chroot et copirons le fichier lfskernel
+sur le système de base:</para>
+
+<para><screen><userinput>logout</userinput>
+<userinput>cp $LFS/boot/lfskernel /boot</userinput></screen></para>
+
+<para>L'étape suivante est d'ajouter l'entrée dans /etc/lilo.conf ce qui
+nous permettra de choisir LFS lorsque nous démarrerons l'ordinateur:</para>
+
+<para><screen><userinput>cat &gt;&gt; /etc/lilo.conf &lt;&lt; "EOF"</userinput>
+image=/boot/lfskernel
+        label=lfs
+        root=&lt;partition&gt;
+        read-only
+<userinput>EOF</userinput></screen></para>
+
+<para>&lt;partition&gt; doit être remplacé par l'emplacement de la partition.</para>
+
+<para>Notez également que si vous utilisez reiserfs comme partition racine, la ligne
+<userinput>read-only</userinput> devra être changée en <userinput>read-write</userinput>.
+</para>
+
+
+<para>Maintenant, mettez à jour le chargeur en lancant:</para>
+
+<para><screen><userinput>/sbin/lilo -v</userinput></screen></para>
+
+<para>La dernière étape est la synchronisation des fichiers de
+configuration du système de base avec ceux du système LFS:</para>
+
+<para><screen><userinput>cp /etc/lilo.conf $LFS/etc &amp;&amp;</userinput>
+<userinput>cp &lt;kernel images&gt; $LFS/boot</userinput></screen></para>
+
+<para>Pour savoir laquelle des images du noyau est utilisée, regardez dans
+le fichier /etc/lilo.conf les lignes commencant par <emphasis>image=</emphasis>.
+Si les fichiers noyaux du système de base se trouvent ailleurs que dans le répertoire
+/boot, soyez certain de mettre à jour les chemins dans le fichier $LFS/etc/lilo.conf
+afin qu'il puisse les trouver dans le répertoire /boot.</para>
+
+</sect1>
