@@ -4,40 +4,31 @@
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version="1.0">
 
-    <!-- Force section1's onto a new page -->
-  <xsl:attribute-set name="section.level1.properties">
-    <xsl:attribute name="break-after">
-      <xsl:choose>
-        <xsl:when test="not(position()=last())">
-          <xsl:text>page</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>auto</xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:attribute>
-  </xsl:attribute-set>
-
     <!-- Header -->
-  <xsl:attribute-set name="header.content.properties">
-    <xsl:attribute name="font-family">
-      <xsl:value-of select="$body.fontset"/>
-    </xsl:attribute>
-    <xsl:attribute name="text-align">right</xsl:attribute>
-  </xsl:attribute-set>
-
   <xsl:template name="header.content">
-    <xsl:value-of select="/book/bookinfo/title"/>
-    <xsl:text> - </xsl:text>
-    <xsl:value-of select="/book/bookinfo/subtitle"/>
+    <xsl:param name="sequence" select="''"/>
+    <fo:block>
+      <xsl:attribute name="text-align">
+        <xsl:choose>
+          <xsl:when test="$sequence = 'first' or $sequence = 'odd'">right</xsl:when>
+          <xsl:otherwise>left</xsl:otherwise>
+        </xsl:choose>
+      </xsl:attribute>
+      <xsl:value-of select="/book/bookinfo/title"/>
+      <xsl:text> - </xsl:text>
+      <xsl:value-of select="/book/bookinfo/subtitle"/>
+    </fo:block>
   </xsl:template>
 
   <xsl:template name="header.table">
+    <xsl:param name="sequence" select="''"/>
     <xsl:param name="gentext-key" select="''"/>
     <xsl:choose>
-      <xsl:when test="$gentext-key = 'book'"/>
+      <xsl:when test="$gentext-key = 'book' or $sequence = 'blank'"/>
       <xsl:otherwise>
-        <xsl:call-template name="header.content"/>
+        <xsl:call-template name="header.content">
+          <xsl:with-param name="sequence" select="$sequence"/>
+        </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -58,7 +49,7 @@
   </xsl:template>
 
   <xsl:template name="part.titlepage">
-    <fo:block xmlns:fo="http://www.w3.org/1999/XSL/Format">
+    <fo:block>
       <fo:block space-before="2.5in">
         <xsl:call-template name="part.titlepage.before.recto"/>
         <xsl:call-template name="part.titlepage.recto"/>
@@ -72,8 +63,8 @@
   </xsl:template>
 
     <!-- Margins -->
-  <xsl:param name="page.margin.inner">0.75in</xsl:param>
-  <xsl:param name="page.margin.outer">0.75in</xsl:param>
+  <xsl:param name="page.margin.inner">0.5in</xsl:param>
+  <xsl:param name="page.margin.outer">0.375in</xsl:param>
   <xsl:param name="title.margin.left">-1pc</xsl:param>
   <xsl:attribute-set name="normal.para.spacing">
     <xsl:attribute name="space-before.optimum">0.8em</xsl:attribute>
@@ -110,7 +101,5 @@
     <!-- Dropping a blank page -->
   <xsl:template name="book.titlepage.separator"/>
 
-    <!-- How render a variablelist -->
-  <xsl:param name="variablelist.as.blocks" select="1"/>
 
 </xsl:stylesheet>
