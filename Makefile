@@ -3,6 +3,7 @@ CHUNK_QUIET=0
 PDF_OUTPUT=LFS-BOOK.pdf
 PRINT_OUTPUT=LFS-BOOK-PRINTABLE.pdf
 NOCHUNKS_OUTPUT=LFS-BOOK.html
+XSLROOTDIR=/usr/share/xml/docbook/xsl-stylesheets-current
 
 lfs:
 	xsltproc --xinclude --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
@@ -17,7 +18,7 @@ lfs:
 	if [ ! -e $(BASEDIR)/images ]; then \
 	  mkdir -p $(BASEDIR)/images; \
 	fi;
-	cp /usr/share/xml/docbook/xsl-stylesheets-1.65.1/images/*.png \
+	cp $(XSLROOTDIR)/images/*.png \
 	  $(BASEDIR)/images
 	cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" \
 	  index.html part1.html part2.html part3.html longindex.html
