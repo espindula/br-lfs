@@ -18,12 +18,16 @@
 
     <!-- This file contains our localization strings (for internationalization) -->
   <xsl:param name="local.l10n.xml" select="document('lfs-l10n.xml')"/>
+  
+   <!-- Standart paper size -->
+  <xsl:param name="paper.type" select="'letter'"/>
 
-    <!-- Paper size required by the publisher -->
+    <!-- Paper size required by the publisher 
   <xsl:param name="paper.type" select="'Customized'"/>
   <xsl:param name="page.width">7.25in</xsl:param>
   <xsl:param name="page.height">9.25in</xsl:param>
-
+    -->
+    
     <!-- Printing Style -->
   <xsl:param name="double.sided" select="1"/>
   <xsl:param name="hyphenate">false</xsl:param>

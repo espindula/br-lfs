@@ -33,27 +33,23 @@ lfs:
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
 
-#
-# This is the old "pdf" target. The old "print" target below has been   
-# renamed to "pdf" and will be used. This commented out previous_pdf
-# target can be removed eventually. It'll remain here for a bit for
-# historical reasons
-#
-#previous_pdf:
-#	xsltproc --xinclude --nonet --output $(BASEDIR)/lfs.fo stylesheets/lfs-pdf.xsl \
-#	  index.xml
-#	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs.fo
-#	fop.sh $(BASEDIR)/lfs.fo $(BASEDIR)/$(PDF_OUTPUT)
-#	rm lfs.fo
+# Uncomment this for testing and stable versions
+#pdf:
+#	xsltproc --xinclude --nonet --stringparam profile.condition pdf \
+#		--output $(BASEDIR)/lfs-pdf.xml stylesheets/lfs-profile.xsl index.xml
+#	xsltproc --nonet --output $(BASEDIR)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
+#		$(BASEDIR)/lfs-pdf.xml
+#	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo
+#	fop.sh $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+#	rm $(BASEDIR)/lfs-pdf.xml $(BASEDIR)/lfs-pdf.fo
 
+# Remove this for testing and stable versions
 pdf:
-	xsltproc --xinclude --nonet --stringparam profile.condition pdf \
-		--output $(BASEDIR)/lfs-pdf.xml stylesheets/lfs-profile.xsl index.xml
-	xsltproc --nonet --output $(BASEDIR)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
-		$(BASEDIR)/lfs-pdf.xml
+	xsltproc --xinclude --nonet --output $(BASEDIR)/lfs-pdf.fo \
+		stylesheets/lfs-pdf.xsl index.xml
 	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo
 	fop.sh $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
-	rm $(BASEDIR)/lfs-pdf.xml $(BASEDIR)/lfs-pdf.fo
+	rm $(BASEDIR)/lfs-pdf.fo
 
 nochunks:
 	xsltproc --xinclude --nonet -stringparam profile.condition html \
