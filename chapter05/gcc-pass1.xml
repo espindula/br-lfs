@@ -7,7 +7,12 @@
 <title>GCC-&gcc-version; - Pass 1</title>
 <?dbhtml filename="gcc-pass1.html"?>
 
+<indexterm zone="ch-tools-gcc-pass1">
+<primary sortas="a-GCC">GCC</primary>
+<secondary>tools, pass 1</secondary></indexterm>
+
 <sect2 role="package"><title/>
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="../chapter06/gcc.xml" xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -15,36 +20,117 @@
 <seglistitem><seg>4.4 SBU</seg><seg>300 MB</seg></seglistitem>
 </segmentedlist>
 
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="../chapter06/gcc.xml" xpointer="xpointer(/sect1/sect2[1]/segmentedlist[2])"/>
+
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of GCC</title>
 
-<para>Create a build dir:</para>
+<para>Unpack only the gcc-core tarball because neither the C++
+compiler nor the test suite will be needed here.</para>
+
+<para>This package is known to have issues when its default
+optimization flags (including the <parameter>-march</parameter> and
+<parameter>-mcpu</parameter> options) are changed. If any environment
+variables that override default optimizations have been defined, such
+as <envar>CFLAGS</envar> and <envar>CXXFLAGS</envar>,
+unset them when building GCC.</para>
+
+<para>The GCC documentation recommends building GCC outside of the
+source directory in a dedicated build directory:</para>
 
 <screen><userinput>mkdir ../gcc-build
 cd ../gcc-build</userinput></screen>
 
 <para>Prepare GCC for compilation:</para>
 
-<!--NEW-->
-<screen><userinput>CC="gcc -B/usr/bin" ../gcc-&gcc-version;/configure \
-    --prefix=/tools --libexecdir=/tools/lib \
-    --with-local-prefix=/tools --disable-nls \
-    --enable-shared --enable-languages=c</userinput></screen>
+<screen><userinput>../gcc-&gcc-version;/configure --prefix=/tools \
+    --libexecdir=/tools/lib --with-local-prefix=/tools \
+    --disable-nls --enable-shared --enable-languages=c</userinput></screen>
+
+<para>The meaning of the configure options:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>--with-local-prefix=/tools</parameter></term>
+<listitem><para>The purpose of this switch is to remove <filename class="directory">/usr/local/include</filename>
+from <command>gcc</command>'s include search path. This is not absolutely
+essential, however, it helps to minimize the influence of the host
+system.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--enable-shared</parameter></term>
+<listitem><para>This switch may seem counter-intuitive at first.
+However, this switch allows the building of
+<filename class="libraryfile">libgcc_s.so.1</filename> and
+<filename class="libraryfile">libgcc_eh.a</filename>, and having
+<filename class="libraryfile">libgcc_eh.a</filename> available ensures that the configure
+script for Glibc (the next package we compile) produces the proper
+results. Note that the GCC binaries will still be linked statically
+because this is controlled by the <parameter>-static</parameter> value of
+the <envar>BOOT_LDFLAGS</envar> variable in the next
+step.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--enable-languages=c</parameter></term>
+<listitem><para>This option ensures that only the C compiler is built.
+This option is only needed when you have downloaded and unpacked the
+full GCC tarball, as opposed to just the gcc-core
+tarball.</para></listitem>
+</varlistentry>
+</variablelist>
 
 <para>Continue with compiling the package:</para>
 
 <screen><userinput>make BOOT_LDFLAGS="-static" bootstrap</userinput></screen>
 
-<para>Now install the package:</para>
+<para>The meaning of the make parameters:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>BOOT_LDFLAGS="-static"</parameter></term>
+<listitem><para>This tells GCC to link its programs statically.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>bootstrap</parameter></term>
+<listitem><para>This target does not just compile GCC, but compiles it
+several times. It uses the programs compiled in a first round to
+compile itself a second time, and then again a third time. It then
+compares these second and third compiles to make sure it can reproduce
+itself flawlessly.  This also implies that it was compiled
+correctly.</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>Compilation is now complete. At this point, the test suite would
+normally be run, but, as mentioned before, the test suite framework is
+not in place yet. The benefits of running the tests at this point
+are minimal since the programs from this first pass will soon be
+replaced.</para>
+
+<para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<para>Create a symlink:</para>
+<para>As a finishing touch, create a symlink. Many programs and
+scripts run <command>cc</command> instead of <command>gcc</command>, which is used to keep programs generic
+and therefore usable on all kinds of UNIX systems where the GNU C compiler
+is not always installed. Running <command>cc</command> leaves the system administrator
+free to decide which C compiler to install.</para>
 
 <screen><userinput>ln -s gcc /tools/bin/cc</userinput></screen>
 
 </sect2>
 
+<sect2 role="content"><title/>
+<para>Details on this package are located in <xref
+linkend="contents-gcc" role="."/></para>
+</sect2>
+
 </sect1>
+

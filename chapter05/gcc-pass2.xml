@@ -7,6 +7,10 @@
 <title>GCC-&gcc-version; - Pass 2</title>
 <?dbhtml filename="gcc-pass2.html"?>
 
+<indexterm zone="ch-tools-gcc-pass2">
+<primary sortas="a-GCC">GCC</primary>
+<secondary>tools, pass 2</secondary></indexterm>
+
 <sect2 role="package"><title/>
 
 <segmentedlist>
@@ -15,24 +19,87 @@
 <seglistitem><seg>11.0 SBU</seg><seg>274 MB</seg></seglistitem>
 </segmentedlist>
 
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="../chapter06/gcc.xml" xpointer="xpointer(/sect1/sect2[1]/segmentedlist[2])"/>
+
 </sect2>
 
 <sect2 role="installation">
 <title>Re-installation of GCC</title>
 
-<para>Check if there is PTYs for the test suites:</para>
+<para>This package is known to have issues when its default
+optimization flags (including the <parameter>-march</parameter> and
+<parameter>-mcpu</parameter> options) are changed. If any environment
+variables that override default optimizations have been defined, such
+as <envar>CFLAGS</envar> and <envar>CXXFLAGS</envar>,
+unset them when building GCC.</para>
+
+<para>The tools required to test GCC and Binutils&mdash;Tcl, Expect
+and DejaGNU&mdash;are installed now. GCC and Binutils can now be
+rebuilt, linking them against the new Glibc and testing them properly
+(if running the test suites in this chapter). Please note that these
+test suites are highly dependent on properly functioning PTYs which
+are provided by the host. PTYs are most commonly implemented via the
+<systemitem class="filesystem">devpts</systemitem> file system. Check
+to see if the host system is set up correctly in this regard by
+performing a quick test:</para>
 
 <screen><userinput>expect -c "spawn ls"</userinput></screen>
 
-<para>Apply two patches:</para>
+<para>The response might be:</para>
+
+<screen><computeroutput>The system has no more ptys.  
+Ask your system administrator to create more.</computeroutput></screen>
+
+<para>If the above message is received, the host does not have its
+PTYs set up properly. In this case, there is no point in running the
+test suites for GCC and Binutils until this issue is resolved. Please
+consult the LFS Wiki at <ulink url="&wiki-root;"/> for more
+information on how to get PTYs working.</para>
+
+<para>Because the C and the C++ compilers will be built, unpack both
+the core and the g++ tarballs (as well as test suite, if you want to
+run the tests). By unpacking them in the working directory, they will
+all unfold into a single <filename
+class="directory">gcc-&gcc-version;/</filename> subdirectory.</para>
+
+<para>First correct a known problem and make an essential adjustment:</para>
 
 <screen><userinput>patch -Np1 -i ../gcc-&gcc-version;-no_fixincludes-1.patch
 patch -Np1 -i ../gcc-&gcc-version;-specs-2.patch</userinput></screen>
+
+<para>The first patch disables the GCC <command>fixincludes</command>
+script. This was briefly mentioned earlier, but a more in-depth
+explanation of the fixincludes process is warranted here. Under normal
+circumstances, the GCC <command>fixincludes</command> script scans the
+system for header files that need to be fixed. It might find that some
+Glibc header files on the host system need to be fixed, and will fix
+them and put them in the GCC private include directory. In <xref
+linkend="chapter-building-system"/>, after the newer Glibc has been
+installed, this private include directory will be searched before the
+system include directory.  This may result in GCC finding the fixed
+headers from the host system, which most likely will not match the
+Glibc version used for the LFS system.</para>
+
+<para>The second patch changes GCC's default location of the dynamic
+linker (typically <filename class="libraryfile">ld-linux.so.2</filename>). It also removes
+<filename class="directory">/usr/include</filename> from GCC's include
+search path. Patching now rather than adjusting the specs file after
+installation ensures that the new dynamic linker is used during the
+actual build of GCC. That is, all of the final (and temporary)
+binaries created during the build will link against the new
+Glibc.</para>
+
+<important><para>The above patches are critical in ensuring a
+successful overall build. Do not forget to apply
+them.</para></important>
 
 <para>Create a separate build directory again:</para>
 
 <screen><userinput>mkdir ../gcc-build
 cd ../gcc-build</userinput></screen>
+
+<para>Before starting to build GCC, remember to unset any environment
+variables that override the default optimization flags.</para>
 
 <para>Now prepare GCC for compilation:</para>
 
@@ -42,36 +109,105 @@ cd ../gcc-build</userinput></screen>
     --enable-threads=posix --enable-__cxa_atexit \
     --enable-languages=c,c++ --disable-libstdcxx-pch</userinput></screen>
 
+<para>The meaning of the new configure options:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>--enable-clocale=gnu</parameter></term>
+<listitem><para>This option ensures the correct locale model is
+selected for the C++ libraries under all circumstances. If the
+configure script finds the <emphasis>de_DE</emphasis> locale installed, it will select the
+correct gnu locale model. However, if the <emphasis>de_DE</emphasis> locale is not
+installed, there is the risk of building Application Binary Interface
+(ABI)-incompatible C++ libraries because the incorrect generic locale
+model may be selected.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--enable-threads=posix</parameter></term>
+<listitem><para>This enables C++ exception handling for multi-threaded
+code.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--enable-__cxa_atexit</parameter></term>
+<listitem><para>This option allows use of
+<emphasis>__cxa_atexit</emphasis>, rather than
+<emphasis>atexit</emphasis>, to register C++ destructors for local
+statics and global objects.  This option is essential for fully
+standards-compliant handling of destructors. It also effects the C++
+ABI, and therefore results in C++ shared libraries and C++ programs
+that are interoperable with other Linux
+distributions.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--enable-languages=c,c++</parameter></term>
+<listitem><para>This option
+ensures that both the C and C++ compilers are built.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--disable-libstdcxx-pch</parameter></term>
+<listitem><para>Do not build the pre-compiled header (PCH) for
+<filename class="libraryfile">libstdc++</filename>. It takes up a lot of space,
+and we have no use for it.</para></listitem>
+</varlistentry>
+</variablelist>
+
 <para>Compile the package:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<para>Test the results</para>
+<para>There is no need to use the <parameter>bootstrap</parameter>
+target now because the compiler being used to compile this GCC was
+built from the exact same version of the GCC sources used
+earlier.</para>
+
+<para>Compilation is now complete. As previously mentioned, running
+the test suites for the temporary tools compiled in this chapter is
+not mandatory. To run the GCC test suite anyway, use the following
+command:</para>
 
 <screen><userinput>make -k check</userinput></screen>
 
-<para>To get a summary of the test suite results, run this:</para>
+<para>The <parameter>-k</parameter> flag is used to make the test suite run
+through to completion and not stop at the first failure. The GCC test
+suite is very comprehensive and is almost guaranteed to generate a few
+failures. To receive a summary of the test suite results, run:</para>
  
 <screen><userinput>../gcc-&gcc-version;/contrib/test_summary</userinput></screen>
 
 <para>For only the summaries, pipe the output through
-<userinput>grep -A7 Summ</userinput></para>
+<userinput>grep -A7 Summ</userinput>.</para>
 
 <para>Results can be compared to those posted to the gcc-testresults
-mailing list to see similar configurations to the one being built. For an example of how
-current GCC-&gcc-version; should look on i686-pc-linux-gnu, see
-<ulink url="http://gcc.gnu.org/ml/gcc-testresults/2004-11/msg00569.html"/>.</para>
+mailing list to see similar configurations to the one being built. For
+an example of how current GCC-&gcc-version; should look on
+i686-pc-linux-gnu, see <ulink
+url="http://gcc.gnu.org/ml/gcc-testresults/2004-07/msg00179.html"/>.</para>
 
-<para>And finally install the package:</para>
+<para>A few unexpected failures cannot always be avoided. The
+GCC developers are usually aware of these issues, but have not
+resolved them yet. Unless the test results are vastly different from
+those at the above URL, it is safe to continue.</para>
+
+<para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<note><para>At this point it is strongly recommended to repeat the sanity check
-we performed earlier in this chapter. Refer back to
-<xref linkend="ch-tools-adjusting"/> and repeat the little test compilation. If
-the result is wrong, then most likely you forgot to apply the above mentioned
-GCC Specs patch.</para></note>
+<note><para>At this point it is strongly recommended to repeat the
+sanity check we performed earlier in this chapter. Refer back to <xref
+linkend="ch-tools-adjusting" role=","/> and repeat the test compilation.  If
+the result is wrong, the most likely reason is that the GCC Specs
+patch was not properly applied.</para></note>
 
 </sect2>
 
+<sect2 role="content"><title/>
+<para>Details on this package are located in <xref
+linkend="contents-gcc" role="."/></para>
+</sect2>
+
 </sect1>
+

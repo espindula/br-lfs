@@ -7,7 +7,12 @@
 <title>Glibc-&glibc-version;</title>
 <?dbhtml filename="glibc.html"?>
 
+<indexterm zone="ch-tools-glibc">
+<primary sortas="a-Glibc">Glibc</primary>
+<secondary>tools</secondary></indexterm>
+
 <sect2 role="package"><title/>
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="../chapter06/glibc.xml" xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -15,12 +20,26 @@
 <seglistitem><seg>11.8 SBU</seg><seg>800 MB</seg></seglistitem>
 </segmentedlist>
 
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="../chapter06/glibc.xml" xpointer="xpointer(/sect1/sect2[1]/segmentedlist[2])"/>
+
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of Glibc</title>
 
-<para>Create a build dir:</para>
+<para>This package is known to have issues when its default
+optimization flags (including the <parameter>-march</parameter> and
+<parameter>-mcpu</parameter> options) are changed. If any environment
+variables that override default optimizations have been defined, such
+as <envar>CFLAGS</envar> and <envar>CXXFLAGS</envar>,
+unset them when building Glibc.</para>
+
+<para>It should be noted that compiling Glibc in any way other than
+the method suggested in this book puts the stability of the system at
+risk.</para>
+
+<para>The Glibc documentation recommends building Glibc outside of the source
+directory in a dedicated build directory:</para>
 
 <screen><userinput>mkdir ../glibc-build
 cd ../glibc-build</userinput></screen>
@@ -33,32 +52,153 @@ cd ../glibc-build</userinput></screen>
     --without-gd --without-cvs --with-headers=/tools/include \
     --disable-selinux</userinput></screen>
 
+<para>The meaning of the configure options:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>--disable-profile</parameter></term>
+<listitem><para>This builds the libraries without profiling
+information. Omit this option if profiling on the temporary tools is
+necessary.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--enable-add-ons</parameter></term>
+<listitem><para>This tells Glibc to use the NPTL add-on as its threading 
+library.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--enable-kernel=2.6.0</parameter></term>
+<listitem><para>This tells Glibc to compile the library with support
+for 2.6.x Linux kernels.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--with-binutils=/tools/bin</parameter></term>
+<listitem><para>While not required, this switch ensures that there are
+no errors pertaining to which Binutils programs get used during the
+Glibc build.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--without-gd</parameter></term>
+<listitem><para>This prevents the build of the
+<command>memusagestat</command> program, which insists on linking
+against the host's libraries (libgd, libpng, libz,
+etc.).</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--without-cvs</parameter></term>
+<listitem><para>This prevents the Makefile files from
+attempting automatic CVS checkouts when using a CVS snapshot. While
+this command is not required, it is recommended because it suppresses
+an annoying, but harmless, warning about a missing autoconf
+program.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--with-headers=/tools/include</parameter></term>
+<listitem><para>This tells Glibc to compile itself against the headers recently
+installed to the tools directory, so that it knows exactly what features the
+kernel has and can optimize itself accordingly.</para></listitem>
+</varlistentry>
+
+<!-- Edit Me -->
+<varlistentry>
+<term><parameter>--disable-selinux</parameter></term>
+<listitem><para>When building from hosts using SELinux functionality
+(i.e. Fedora Core 3), glibc will try to integrate this functionality into
+itself, but will fail, because we do not have this functionality in the LFS
+tools enviornment.  This option will disable this, allowing glibc to build
+correctly, but will not otherwise affect the build.</para></listitem>
+</varlistentry>
+<!-- -->
+</variablelist>
+
+<para>During this stage the following warning might appear:</para>
+
+<blockquote><screen><computeroutput>configure: WARNING:
+*** These auxiliary programs are missing or 
+*** incompatible versions: msgfmt
+*** some features will be disabled.
+*** Check the INSTALL file for required versions.</computeroutput></screen></blockquote>
+
+<para>The missing or incompatible <command>msgfmt</command> program is
+generally harmless, but it can sometimes cause issues when running the
+test suite. This <command>msgfmt</command> program is part of the
+Gettext package which the host distribution should provide. If
+<command>msgfmt</command> is present but deemed incompatible, upgrade
+the host system's Gettext package or continue without it and see if
+the test suite runs without problems regardless.</para>
+
 <para>Compile the package:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<para>Test the results:</para>
+<para>Compilation is now complete. As mentioned earlier, running the
+test suites for the temporary tools installed in this chapter is not
+mandatory. To run the Glibc test suite (if desired), the following
+command will do so:</para>
 
 <screen><userinput>make check</userinput></screen>
 
 <para>For a discussion of test failures that are of particular
-importance, please see <xref linkend="ch-system-glibc"/>.</para>
+importance, please see <xref linkend="ch-system-glibc" role="."/></para>
+
+<para>In this chapter, some tests can be adversely effected by
+existing tools or environmental issues on the host system. Glibc test
+suite failures in this chapter are typically not worrisome. The Glibc
+installed in <xref linkend="chapter-building-system"/> is the one that
+will ultimately end up being used, so that is the one that needs to pass
+most tests (even in <xref linkend="chapter-building-system"/>, some
+failures could still occur, for example, with the math tests).</para>
+
+<para>When experiencing a failure, make a note of it, then continue by
+reissuing the <command>make check</command> command. The test suite should pick up where it left
+off and continue. This stop-start sequence can be circumvented by
+issuing a <command>make -k check</command> command. If using this option, be sure to log the
+output so that the log file can be examined for failures later.</para>
+
+<para>The install stage of Glibc will issue a harmless warning at the
+end about the absence of <filename>/tools/etc/ld.so.conf</filename>. 
+Prevent this warning with:</para>
 
 <screen><userinput>mkdir /tools/etc
 touch /tools/etc/ld.so.conf</userinput></screen>
 
-<para>Now install the package:</para>
+<para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<para>To install the Glibc locales, use the following
+<para>Different countries and cultures have varying conventions for
+how to communicate. These conventions range from the format for
+representing dates and times to more complex issues, such as the
+language spoken. The <quote>internationalization</quote> of GNU
+programs works by locale.</para>
+
+<note><para>If the test suites are not being run in this chapter (as
+per the recommendation), there is no need to install the locales now.
+The appropriate locales will be installed in the next
+chapter.</para></note>
+
+<para>To install the Glibc locales anyway, use the following
 command:</para>
 
 <screen><userinput>make localedata/install-locales</userinput></screen>
 
-<para>An alternative to running the previous command is to install only those
-locales which you need or want. The following instructions, instead of the 
-install-locales target above, will install the minimum set of locales necessary 
+<para>To save time, an alternative to running the
+previous command (which generates and installs every locale Glibc is
+aware of) is to install only those locales that are wanted and needed.
+This can be achieved by using the <command>localedef</command>
+command. Information on this command is located in the
+<filename>INSTALL</filename> file in the Glibc source.  However, there
+are a number of locales that are essential in order for the tests of
+future packages to pass, in particular, the
+<emphasis>libstdc++</emphasis> tests from GCC. The following
+instructions, instead of the <parameter>install-locales</parameter>
+target used above, will install the minimum set of locales necessary
 for the tests to run successfully:</para>
 
 <screen><userinput>mkdir -p /tools/lib/locale
@@ -76,4 +216,10 @@ localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
 
 </sect2>
 
+<sect2 role="content"><title/>
+<para>Details on this package are located in <xref
+linkend="contents-glibc" role="."/></para>
+</sect2>
+
 </sect1>
+

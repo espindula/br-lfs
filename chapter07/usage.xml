@@ -7,7 +7,112 @@
 <title>How Do These Bootscripts Work?</title>
 <?dbhtml filename="usage.html"?>
 
+<indexterm zone="ch-scripts-usage">
+<primary sortas="a-Bootscripts">Bootscripts</primary>
+<secondary>usage</secondary></indexterm>
 
-<para>See testing</para>
+<para>Linux uses a special booting facility named SysVinit that is
+based on a concept of <emphasis>run-levels</emphasis>. It can be quite
+different from one system to another, so it cannot be assumed that
+because things worked in &lt;insert distro name&gt;, they should work
+the same in LFS too. LFS has its own way of doing things, but it
+respects generally accepted standards.</para>
+
+<para>SysVinit (which will be referred to as <quote>init</quote> from
+now on) works using a run-levels scheme. There are seven (from 0 to 6)
+run-levels (actually, there are more run-levels, but they are for
+special cases and are generally not used. The init man page describes
+those details), and each one of those corresponds to the actions the
+computer is supposed to perform when it starts up. The default
+run-level is 3. Here are the descriptions of the different run-levels
+as they are implemented:</para>
+
+<literallayout>0: halt the computer
+1: single-user mode
+2: multi-user mode without networking
+3: multi-user mode with networking
+4: reserved for customization, otherwise does the same as 3
+5: same as 4, it is usually used for GUI login (like X's <command>xdm</command> or KDE's <command>kdm</command>)
+6: reboot the computer</literallayout>
+
+<para>The command used to change run-levels is <command>init
+<replaceable>[runlevel]</replaceable></command>, where
+<replaceable>[runlevel]</replaceable> is the target run-level. For
+example, to reboot the computer, a user would issue the <command>init
+6</command> command.  The <command>reboot</command> command is an
+alias for it, as is the <command>halt</command> command an alias for
+<command>init 0</command>.</para>
+
+<para>There are a number of directories under <filename
+class="directory">/etc/rc.d</filename> that look like <filename
+class="directory">rc?.d</filename> (where ? is the number of the
+run-level) and <filename class="directory">rcsysinit.d</filename>, all
+containing a number of symbolic links. Some begin with a
+<emphasis>K</emphasis>, the others begin with an
+<emphasis>S</emphasis>, and all of them have two numbers following the
+initial letter. The K means to stop (kill) a service and the S means
+to start a service. The numbers determine the order in which the
+scripts are run, from 00 to 99&mdash;the lower the number the earlier it
+gets executed. When init switches to another run-level, the
+appropriate services get killed and others get started.</para>
+
+<para>The real scripts are in <filename
+class="directory">/etc/rc.d/init.d</filename>. They do the actual
+work, and the symlinks all point to them. Killing links and starting
+links point to the same script in <filename
+class="directory">/etc/rc.d/init.d</filename>. This is because the
+scripts can be called with different parameters like
+<parameter>start</parameter>, <parameter>stop</parameter>,
+<parameter>restart</parameter>, <parameter>reload</parameter>, and
+<parameter>status</parameter>. When a K link is encountered, the
+appropriate script is run with the <parameter>stop</parameter>
+argument. When an S link is encountered, the appropriate script is run
+with the <parameter>start</parameter> argument.</para>
+
+<para>There is one exception to this explanation. Links that start
+with an <emphasis>S</emphasis> in the <filename
+class="directory">rc0.d</filename> and <filename
+class="directory">rc6.d</filename> directories will not cause anything
+to be started. They will be called with the parameter
+<parameter>stop</parameter> to stop something. The logic behind this
+is that when a user is going to reboot or halt the system, nothing
+needs to be started.  The system only needs to be stopped.</para>
+
+<para>These are descriptions of what the arguments make the scripts
+do:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>start</parameter></term>
+<listitem><para>The service is started.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>stop</parameter></term>
+<listitem><para>The service is stopped.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>restart</parameter></term>
+<listitem><para>The service is stopped and then started again.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>reload</parameter></term>
+<listitem><para>The configuration of the service is updated.
+This is used after the configuration file of a service was modified, when 
+the service does not need to be restarted.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>status</parameter></term>
+<listitem><para>Tells if the service is running and with which PIDs.</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>Feel free to modify the way the boot process works (after all,
+it is your own LFS system). The files given here are an example of how
+it can be done.</para>
 
 </sect1>
+

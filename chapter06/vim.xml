@@ -3,13 +3,14 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-system-vim" xreflabel="Vim" role="wrap">
+<sect1 id="ch-system-vim" role="wrap">
 <title>Vim-&vim-version;</title>
 <?dbhtml filename="vim.html"?>
 
 <indexterm zone="ch-system-vim"><primary sortas="a-Vim">Vim</primary></indexterm>
 
 <sect2 role="package"><title/>
+<para>The Vim package contains a powerful text editor.</para>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -17,12 +18,30 @@
 <seglistitem><seg>0.4 SBU</seg><seg>34 MB</seg></seglistitem>
 </segmentedlist>
 
+<segmentedlist>
+<segtitle>Vim installation depends on</segtitle>
+<seglistitem><seg>Bash, Binutils, Coreutils, Diffutils,
+GCC, Glibc, Grep, Make, Ncurses, and Sed</seg></seglistitem>
+</segmentedlist>
+
+<tip>
+<title>Alternatives to Vim</title>
+<para>If you prefer another editor&mdash;such as Emacs, Joe, or
+Nano&mdash;please refer to <ulink url="&blfs-root;view/svn/postlfs/editors.html"/>
+for suggested installation instructions.</para>
+</tip>
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of Vim</title>
 
-<para>Change the default locations of the configuration files:</para>
+<para>First, unpack both
+<filename>vim-&vim-version;.tar.bz2</filename> and (optionally)
+<filename>vim-&vim-version;-lang.tar.gz</filename> archives into the
+same directory. Then, change the default locations of the
+<filename>vimrc</filename> and <filename>gvimrc</filename>
+configuration files to <filename
+class="directory">/etc</filename>:</para>
 
 <screen><userinput>echo '#define SYS_VIMRC_FILE "/etc/vimrc"' &gt;&gt; src/feature.h
 echo '#define SYS_GVIMRC_FILE "/etc/gvimrc"' &gt;&gt; src/feature.h</userinput></screen>
@@ -36,28 +55,56 @@ following patch fixes the problem:</para>
 
 <screen><userinput>./configure --prefix=/usr --enable-multibyte</userinput></screen>
 
+<para>The optional but highly recommended
+<parameter>--enable-multibyte</parameter> switch includes support for
+editing files in multibyte character encodings into
+<command>vim</command>.  This is needed if using a locale with
+a multibyte character set. This switch is also helpful to be able to
+edit text files initially created in Linux distributions like Fedora
+Core that use UTF-8 as a default character set.</para>
+
 <para>Compile the package:</para>
 
 <screen><userinput>make</userinput></screen>
 
 <para>To test the results, issue:
-<userinput>make test</userinput></para>
+<userinput>make test</userinput>. However, this test suite outputs a
+lot of chaotic characters to the screen, which can cause issues with
+the settings of the current terminal. Therefore, running the test
+suite here is optional.</para>
 
-<para>Now install the package:</para>
+<para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<para>Create a symlink:</para>
+<para>Many users are used to using <command>vi</command> instead of
+<command>vim</command>. To allow execution of <command>vim</command>
+when users habitually enter <command>vi</command>, create a
+symlink:</para>
 
 <screen><userinput>ln -s vim /usr/bin/vi</userinput></screen>
 
+<para>If the X Window System is going to be installed on the LFS
+system, it may be necessary to recompile Vim after installing X. Vim
+comes with a GUI version of the editor that requires X and some
+additional libraries to be installed. For more information on this
+process, refer to the Vim documentation and the Vim installation page
+in the BLFS book at <ulink
+url="&blfs-root;view/svn/postlfs/editors.html#postlfs-editors-vim"/>.</para>
+
 </sect2>
 
-
 <sect2 id="conf-vim" role="configuration"><title>Configuring Vim</title>
+<indexterm zone="conf-vim"><primary sortas="e-/etc/vim">/etc/vim</primary></indexterm>
 
-<para>Create a default vim configuration file by running
-the following:</para>
+<para>By default, <command>vim</command> runs in vi-incompatible mode.
+This may be new to users who have used other editors in the past. The
+<quote>nocompatible</quote> setting is included below to highlight the
+fact that a new behavior is being used. It also reminds those who
+would change to <quote>compatible</quote> mode that it should appear
+first.  This is necessary because it changes other settings, and
+overrides must come after this setting.  Create a default <command>vim</command>
+configuration file by running the following:</para>
 
 <screen><userinput>cat &gt; /etc/vimrc &lt;&lt; "EOF"
 <literal>" Begin /etc/vimrc
@@ -65,7 +112,6 @@ the following:</para>
 set nocompatible
 set backspace=2
 syntax on
-<!-- set fileencodings=ucs-bom,utf-8,<replaceable>[your-8-bit-charset]</replaceable> -->
 if (&amp;term == "iterm") || (&amp;term == "putty")
   set background=dark
 endif
@@ -73,32 +119,215 @@ endif
 " End /etc/vimrc</literal>
 EOF</userinput></screen>
 
-<!-- XXX: the ascii-only files are considered to be in utf-8 - that's not what
-one expects . That's why fileencodings stuff is commented out for now
+<para>The <parameter>set nocompatible</parameter> makes
+<command>vim</command> behave in a more useful way (the default) than
+the vi-compatible manner. Remove the <quote>no</quote> to keep the 
+old <command>vi</command> behavior. The <parameter>set
+backspace=2</parameter> allows backspacing over line breaks,
+autoindents, and the start of insert. The <parameter>syntax
+on</parameter> enables vim's syntax highlighting. Finally, the
+<emphasis>if</emphasis> statement with the <parameter>set
+background=dark</parameter> corrects <command>vim</command>'s guess
+about the background color of some terminal emulators. This gives the
+highlighting a better color scheme for use on the black background of
+these programs.</para>
 
-The <parameter>set fileencodings=...</parameter> makes
-<command>vim</command> capable of automatically detecting the character
-set of the file being edited (replace
-"<replaceable>[your-8-bit-charset]</replaceable>"
-with the value appropriate for your country, e.g. iso-8859-15 in Italy).
-This line is useful because bleeding-edge distributions
-like Fedora Core use UTF-8, and conservative ones like Debian
-use traditional 8-bit encodings for text files. If you have not
-passed the <parameter>- -enable-multibyte</parameter> switch to the
-<command>./configure</command> command above, this line will not work. -->
-
-<para>Documentation for other available options can be obtained by running
-the following command:</para>
+<para>Documentation for other available options can be obtained by
+running the following command:</para>
 
 <screen><userinput>vim -c ':options'</userinput></screen>
 
 </sect2>
 
-
 <sect2 id="contents-vim" role="content"><title>Contents of Vim</title>
 
-<para>See testing</para>
+<segmentedlist>
+<segtitle>Installed programs</segtitle>
+<seglistitem><seg>efm_filter.pl, efm_perl.pl, ex (link to vim), less.sh, mve.awk, 
+pltags.pl, ref, rview (link to vim), rvim (link to vim), shtags.pl, tcltags, vi (link to vim), 
+view (link to vim), vim, vim132, vim2html.pl, vimdiff (link to vim), vimm, vimspell.sh, 
+vimtutor, and xxd</seg></seglistitem>
+</segmentedlist>
+
+<variablelist><bridgehead renderas="sect3">Short Descriptions</bridgehead>
+<?dbfo list-presentation="list"?>
+
+<varlistentry id="efm_filter.pl">
+<term><command>efm_filter.pl</command></term>
+<listitem>
+<para>A filter for creating an error file that can be read by <command>vim</command></para>
+<indexterm zone="ch-system-vim efm_filter.pl"><primary sortas="b-efm_filter.pl">efm_filter.pl</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="efm_perl.pl">
+<term><command>efm_perl.pl</command></term>
+<listitem>
+<para>Reformats the error messages of the
+Perl interpreter for use with the <quote>quickfix</quote> mode of <command>vim</command></para>
+<indexterm zone="ch-system-vim efm_perl.pl"><primary sortas="b-efm_perl.pl">efm_perl.pl</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="ex">
+<term><command>ex</command></term>
+<listitem>
+<para>Starts <command>vim</command> in ex mode</para>
+<indexterm zone="ch-system-vim ex"><primary sortas="b-ex">ex</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="less.sh">
+<term><command>less.sh</command></term>
+<listitem>
+<para>A script that starts <command>vim</command> with less.vim</para>
+<indexterm zone="ch-system-vim less.sh"><primary sortas="b-less.sh">less.sh</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="mve.awk">
+<term><command>mve.awk</command></term>
+<listitem>
+<para>Processes <command>vim</command> errors</para>
+<indexterm zone="ch-system-vim mve.awk"><primary sortas="b-mve.awk">mve.awk</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="pltags.pl">
+<term><command>pltags.pl</command></term>
+<listitem>
+<para>Creates a tags file for Perl code for use by <command>vim</command></para>
+<indexterm zone="ch-system-vim pltags.pl"><primary sortas="b-pltags.pl">pltags.pl</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="ref">
+<term><command>ref</command></term>
+<listitem>
+<para>Checks the spelling of arguments</para>
+<indexterm zone="ch-system-vim ref"><primary sortas="b-ref">ref</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="rview">
+<term><command>rview</command></term>
+<listitem>
+<para>Is a restricted version of <command>view</command>; no shell
+commands can be started and <command>view</command> cannot be suspended</para>
+<indexterm zone="ch-system-vim rview"><primary sortas="b-rview">rview</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="rvim">
+<term><command>rvim</command></term>
+<listitem>
+<para>Is a restricted version of <command>vim</command>; no shell
+commands can be started and <command>vim</command> cannot be suspended</para>
+<indexterm zone="ch-system-vim rvim"><primary sortas="b-rvim">rvim</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="shtags.pl">
+<term><command>shtags.pl</command></term>
+<listitem>
+<para>Generates a tag file for Perl scripts</para>
+<indexterm zone="ch-system-vim shtags.pl"><primary sortas="b-shtags.pl">shtags.pl</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="tcltags">
+<term><command>tcltags</command></term>
+<listitem>
+<para>Generates a tag file for TCL code</para>
+<indexterm zone="ch-system-vim tcltags"><primary sortas="b-tcltags">tcltags</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="view">
+<term><command>view</command></term>
+<listitem>
+<para>Starts <command>vim</command> in read-only mode</para>
+<indexterm zone="ch-system-vim view"><primary sortas="b-view">view</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="vi">
+<term><command>vi</command></term>
+<listitem>
+<para>Is the editor</para>
+<indexterm zone="ch-system-vim vi"><primary sortas="b-vi">vi</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="vim">
+<term><command>vim</command></term>
+<listitem>
+<para>Is the editor</para>
+<indexterm zone="ch-system-vim vim"><primary sortas="b-vim">vim</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="vim132">
+<term><command>vim132</command></term>
+<listitem>
+<para>Starts <command>vim</command> with the terminal in 132-column mode</para>
+<indexterm zone="ch-system-vim vim132"><primary sortas="b-vim132">vim132</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="vim2html.pl">
+<term><command>vim2html.pl</command></term>
+<listitem>
+<para>Converts Vim documentation to HypterText Markup Language (HTML)</para>
+<indexterm zone="ch-system-vim vim2html.pl"><primary sortas="b-vim2html.pl">vim2html.pl</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="vimdiff">
+<term><command>vimdiff</command></term>
+<listitem>
+<para>Edits two or three versions of a file with <command>vim</command> and show differences</para>
+<indexterm zone="ch-system-vim vimdiff"><primary sortas="b-vimdiff">vimdiff</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="vimm">
+<term><command>vimm</command></term>
+<listitem>
+<para>Enables the DEC locator input model on a remote terminal</para>
+<indexterm zone="ch-system-vim vimm"><primary sortas="b-vimm">vimm</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="vimspell.sh">
+<term><command>vimspell.sh</command></term>
+<listitem>
+<para>Spells a file and generates the syntax statements necessary 
+to highlight in <command>vim</command>. This script requires the old Unix <command>spell</command>
+command, which is provided neither in LFS nor in BLFS</para>
+<indexterm zone="ch-system-vim vimspell.sh"><primary sortas="b-vimspell.sh">vimspell.sh</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="vimtutor">
+<term><command>vimtutor</command></term>
+<listitem>
+<para>Teaches the basic keys and commands of <command>vim</command></para>
+<indexterm zone="ch-system-vim vimtutor"><primary sortas="b-vimtutor">vimtutor</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="xxd">
+<term><command>xxd</command></term>
+<listitem>
+<para>Creates a hex dump of the given file; it can
+also do the reverse, so it can be used for binary patching</para>
+<indexterm zone="ch-system-vim xxd"><primary sortas="b-xxd">xxd</primary></indexterm>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
 
 </sect1>
+

@@ -7,7 +7,12 @@
 <title>Binutils-&binutils-version; - Pass 1</title>
 <?dbhtml filename="binutils-pass1.html"?>
 
+<indexterm zone="ch-tools-binutils-pass1">
+<primary sortas="a-Binutils">Binutils</primary>
+<secondary>tools, pass 1</secondary></indexterm>
+
 <sect2 role="package"><title/>
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="../chapter06/binutils.xml" xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -15,44 +20,134 @@
 <seglistitem><seg>1.0 SBU</seg><seg>194 MB</seg></seglistitem>
 </segmentedlist>
 
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="../chapter06/binutils.xml" xpointer="xpointer(/sect1/sect2[1]/segmentedlist[2])"/>
+
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of Binutils</title>
 
-<para>Create a build dir:</para>
+<para>It is important that Binutils be the first package compiled
+because both Glibc and GCC perform various tests on the available
+linker and assembler to determine which of their own features to
+enable.</para>
+
+<para>This package is known to have issues when its default
+optimization flags (including the <parameter>-march</parameter> and
+<parameter>-mcpu</parameter> options) are changed. If any environment
+variables that override default optimizations have been defined, such
+as <envar>CFLAGS</envar> and <envar>CXXFLAGS</envar>,
+unset them when building Binutils.</para>
+
+<para>The Binutils documentation recommends building Binutils outside of the
+source directory in a dedicated build directory:</para>
 
 <screen><userinput>mkdir ../binutils-build
 cd ../binutils-build</userinput></screen>
 
-<note><para>If you want the SBU values you could wrap the four commands in a 
-<command>time</command> command like this: 
-<userinput>time { ./configure ... &amp;&amp; ... &amp;&amp; ...
-&amp;&amp; make install; }</userinput>.</para></note>
+<note><para>In order for the SBU values listed in the rest of the book
+to be of any use, measure the time it takes to build this package from
+the configuration, up to and including the first install. To achieve
+this easily, wrap the four commands in a <command>time</command>
+command like this: <userinput>time { ./configure ... &amp;&amp; ...
+&amp;&amp; ... &amp;&amp; make install; }</userinput>.</para></note>
 
 <para>Now prepare Binutils for compilation:</para>
 
 <screen><userinput>../binutils-&binutils-version;/configure --prefix=/tools \
     --disable-nls</userinput></screen>
 
+<para>The meaning of the configure options:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>--prefix=/tools</parameter></term>
+<listitem><para>This tells the configure script to prepare to install the Binutils
+programs in the <filename class="directory">/tools</filename> directory.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>--disable-nls</parameter></term>
+<listitem><para>This disables internationalization. This is not needed
+for the static programs, and NLS can cause problems when linking
+statically.</para></listitem>
+</varlistentry>
+</variablelist>
+
 <para>Continue with compiling the package:</para>
 
 <screen><userinput>make configure-host
 make LDFLAGS="-all-static"</userinput></screen>
 
-<para>Now install the package:</para>
+<para>The meaning of the make parameters:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>configure-host</parameter></term>
+<listitem><para>This forces all subdirectories to be configured
+immediately. A statically-linked build will fail without it. Use this
+option to work around the problem.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>LDFLAGS="-all-static"</parameter></term>
+<listitem><para>This tells the linker that all Binutils programs
+should be linked statically. However, strictly speaking,
+<parameter>"-all-static"</parameter> is passed to the
+<command>libtool</command> program, which then passes
+<parameter>"-static"</parameter> to the linker.</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>Compilation is now complete. Ordinarily we would now run the
+test suite, but at this early stage the test suite framework (Tcl,
+Expect, and DejaGNU) is not yet in place. The benefits of running the
+tests at this point are minimal since the programs from this
+first pass will soon be replaced by those from the second.</para>
+
+<para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<para>Now prepare the linker for the <quote>Adjusting</quote> phase later on:</para>
+<para>Next, prepare the linker for the <quote>Adjusting</quote> phase
+later on:</para>
 
 <screen><userinput>make -C ld clean
 make -C ld LDFLAGS="-all-static" LIB_PATH=/tools/lib</userinput></screen>
 
-<warning><para><emphasis>Do not yet remove</emphasis> the Binutils build and
-source directories. You will need them again in their current state a bit
-further on in this chapter.</para></warning>
+<para>The meaning of the make parameters:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>-C ld clean</parameter></term>
+<listitem><para>This tells the make program to remove all compiled
+files in the <filename class="directory">ld</filename>
+subdirectory.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><parameter>-C ld LDFLAGS="-all-static"
+LIB_PATH=/tools/lib</parameter></term>
+<listitem><para>This option rebuilds everything in the
+<filename class="directory">ld</filename> subdirectory. Specifying 
+the <envar>LIB_PATH</envar> Makefile variable on the command 
+line allows us to override the default value
+and point it to the temporary tools location. The value of this variable
+specifies the linker's default library search path. This preparation
+is used later in the chapter.</para></listitem>
+</varlistentry>
+</variablelist>
+
+<warning><para><emphasis>Do not</emphasis> remove the Binutils
+build and source directories yet. These will be needed again in their
+current state later in this chapter.</para></warning>
 
 </sect2>
 
+<sect2 role="content"><title/>
+<para>Details on this package are located in <xref
+linkend="contents-binutils" role="."/></para>
+</sect2>
+
 </sect1>
+

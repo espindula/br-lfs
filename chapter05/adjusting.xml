@@ -7,12 +7,34 @@
 <title>Adjusting the Toolchain</title>
 <?dbhtml filename="adjusting.html"?>
 
-<para>Run the following command from within
-the <filename class="directory">binutils-build</filename> directory:</para>
+<para>Now that the temporary C libraries have been installed, all
+tools compiled in the rest of this chapter should be linked against
+these libraries. In order to accomplish this, the linker and the
+compiler's specs file need to be adjusted.</para>
+
+<para>The linker, adjusted at the end of the first pass of Binutils,
+is installed by running the following command from within the
+<filename class="directory">binutils-build</filename> directory:</para>
 
 <screen><userinput>make -C ld install</userinput></screen>
 
-<para>Amend the GCC specs file:</para>
+<para>From this point onwards, everything will link only
+against the libraries in <filename class="directory">/tools/lib</filename>.</para>
+
+<note><para>If the earlier warning to retain the Binutils source and
+build directories from the first pass was missed, ignore the above
+command. This results in a small chance that the subsequent testing
+programs will link against libraries on the host. This is not ideal,
+but it is not a major problem. The situation is corrected when the
+second pass of Binutils is installed later.</para></note>
+
+<para>Now that the adjusted linker is installed, the Binutils build and source
+directories should be removed.</para>
+
+<para>The next task is to amend the GCC specs file so that it points
+to the new dynamic linker. A simple sed script will accomplish this:</para>
+
+<!-- Ampersands are needed to allow copy and paste -->
 
 <screen><userinput>SPECFILE=`gcc --print-file specs` &amp;&amp;
 sed 's@ /lib/ld-linux.so.2@ /tools/lib/ld-linux.so.2@g' \
@@ -20,24 +42,71 @@ sed 's@ /lib/ld-linux.so.2@ /tools/lib/ld-linux.so.2@g' \
 mv -f tempspecfile $SPECFILE &amp;&amp;
 unset SPECFILE</userinput></screen>
 
-<para>Make clean-up:</para>
+<para><phrase condition="html">It is recommended that the above
+command be copy-and-pasted in order to ensure accuracy.</phrase>
+Alternatively, the specs file can be edited by hand. This is done by
+replacing every occurrence of <quote>/lib/ld-linux.so.2</quote> with
+<quote>/tools/lib/ld-linux.so.2</quote></para>
+
+<para>Be sure to visually inspect the specs file in order to verify the
+intended changes have been made.</para>
+
+<important><para>If working on a platform where the name of the
+dynamic linker is something other than
+<filename class="libraryfile">ld-linux.so.2</filename>, replace
+<quote>ld-linux.so.2</quote> with the name of the platform's
+dynamic linker in the above commands. Refer back to <xref
+linkend="ch-tools-toolchaintechnotes" role=","/> if
+necessary.</para></important>
+
+<para>There is a possibility that some include files from the host
+system have found their way into GCC's private include dir. This can
+happen as a result of GCC's <quote>fixincludes</quote> process, which runs as part
+of the GCC build. This is explained in more detail later in this
+chapter. Run the following command to eliminate this
+possibility:</para>
 
 <screen><userinput>rm -f /tools/lib/gcc/*/*/include/{pthread.h,bits/sigthread.h}</userinput></screen>
 
-<para>Test the tools:</para>
+<caution><para>At this point, it is imperative to stop and ensure that
+the basic functions (compiling and linking) of the new toolchain are
+working as expected. To perform a sanity check, run the following
+commands:</para>
 
 <screen><userinput>echo 'main(){}' &gt; dummy.c
 cc dummy.c
 readelf -l a.out | grep ': /tools'</userinput></screen>
 
-<para>The output of the last command will be of the form:</para>
+<para>If everything is working correctly, there should be no errors,
+and the output of the last command will be of the form:</para>
 
 <screen><computeroutput>[Requesting program interpreter: 
     /tools/lib/ld-linux.so.2]</computeroutput></screen>
 
-<para>Remove the test files:</para>
+<para>Note that <filename class="directory">/tools/lib</filename>
+appears as the prefix of the dynamic linker.</para>
+
+<para>If the output is not shown as above or there was no output at
+all, then something is wrong. Investigate and retrace the steps to
+find out where the problem is and correct it. This issue must be
+resolved before continuing on. First, perform the sanity check again,
+using <command>gcc</command> instead of <command>cc</command>. If this
+works, then the <filename class="symlink">/tools/bin/cc</filename> symlink is missing.
+Revisit <xref linkend="ch-tools-gcc-pass1" role=","/> and install the symlink.
+Next, ensure that the <envar>PATH</envar> is correct. This can be checked by running
+<command>echo $PATH</command> and verifying that <filename
+class="directory">/tools/bin</filename> is at the head of the list. If
+the <envar>PATH</envar> is wrong it could mean that you are not logged in as user
+<emphasis>lfs</emphasis> or that something went wrong back in <xref
+linkend="ch-tools-settingenviron" role="."/> Another option is that something
+may have gone wrong with the specs file amendment above. In this case,
+redo the specs file amendment<phrase condition="html">, being careful to copy-and-paste the
+commands</phrase>.</para>
+
+<para>Once all is well, clean up the test files:</para>
 
 <screen><userinput>rm dummy.c a.out</userinput></screen>
-
+</caution>
 
 </sect1>
+

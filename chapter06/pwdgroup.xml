@@ -7,13 +7,30 @@
 <title>Creating the passwd, group, and log Files</title>
 <?dbhtml filename="pwdgroup.html"?>
 
-<para>Create the <filename>/etc/passwd</filename> file:</para>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/etc/passwd">/etc/passwd</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/etc/group">/etc/group</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/var/run/utmp">/var/run/utmp</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/var/log/btmp">/var/log/btmp</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/var/log/lastlog">/var/log/lastlog</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/var/log/wtmp">/var/log/wtmp</primary></indexterm>
+
+<para>In order for user <emphasis>root</emphasis> to be able to login
+and for the name <quote>root</quote> to be recognized, there need to
+be relevant entries in the <filename>/etc/passwd</filename> and
+<filename>/etc/group</filename> files.</para>
+
+<para>Create the <filename>/etc/passwd</filename> file by running the following
+command:</para>
 
 <screen><userinput>cat &gt; /etc/passwd &lt;&lt; "EOF"
 <literal>root:x:0:0:root:/root:/bin/bash</literal>
 EOF</userinput></screen>
 
-<para>Create the <filename>/etc/group</filename> file:</para>
+<para>The actual password for <emphasis>root</emphasis> (the <quote>x</quote>
+used here is just a placeholder) will be set later.</para>
+
+<para>Create the <filename>/etc/group</filename> file by running the following 
+command:</para>
 
 <screen><userinput>cat &gt; /etc/group &lt;&lt; "EOF"
 <literal>root:x:0:
@@ -33,14 +50,49 @@ utmp:x:13:
 usb:x:14:</literal>
 EOF</userinput></screen>
 
-<para>Start a new shell:</para>
+<para>The created groups are not part of any standard&mdash;they are some
+of the groups that the Udev configuration will be using in the next
+section. The Linux Standard Base (LSB, available at <ulink
+url="http://www.linuxbase.org"/>) recommends only that, besides the
+group <quote>root</quote> with a Group ID (GID) of 0, a group
+<quote>bin</quote> with a GID of 1 be present. All other group names
+and GIDs can be chosen freely by the system administrator since
+well-written packages do not depend on GID numbers, but rather use the
+group's name.</para>
+
+<para>To remove the <quote>I have no name!</quote> prompt, start a new
+shell. Since a full Glibc was installed in <xref
+linkend="chapter-temporary-tools"/> and the
+<filename>/etc/passwd</filename> and <filename>/etc/group</filename>
+files have been created, user name and group name resolution will now
+work.</para>
 
 <screen><userinput>exec /tools/bin/bash --login +h</userinput></screen>
 
-<para>Initialize the log files and give them their proper permissions:</para>
+<para>Note the use of the <parameter>+h</parameter> directive. This
+tells <command>bash</command> not to use its internal path hashing.
+Without this directive, <command>bash</command> would remember the
+paths to binaries it has executed. In order to use the newly compiled
+binaries as soon as they are installed, turn off this function for the
+duration of this chapter.</para>
+
+<para>The <command>login</command>, <command>agetty</command>, and
+<command>init</command> programs (and others) use a number of log
+files to record information such as who was logged into the system and
+when. However, these programs will not write to the log files if they
+do not already exist. Initialize the log files and give them 
+proper permissions:</para>
 
 <screen><userinput>touch /var/run/utmp /var/log/{btmp,lastlog,wtmp}
 chgrp utmp /var/run/utmp /var/log/lastlog
 chmod 664 /var/run/utmp /var/log/lastlog</userinput></screen>
 
+<para>The <filename>/var/run/utmp</filename> file records the users
+that are currently logged in. The <filename>/var/log/wtmp</filename>
+file records all logins and logouts. The
+<filename>/var/log/lastlog</filename> file records when
+each user last logged in. The <filename>/var/log/btmp</filename> file
+records the bad login attempts.</para>
+
 </sect1>
+

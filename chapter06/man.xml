@@ -3,13 +3,14 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-system-man" xreflabel="Man" role="wrap">
+<sect1 id="ch-system-man" role="wrap">
 <title>Man-&man-version;</title>
 <?dbhtml filename="man.html"?>
 
 <indexterm zone="ch-system-man"><primary sortas="a-Man">Man</primary></indexterm>
 
 <sect2 role="package"><title/>
+<para>The Man package contains programs for finding and viewing manual pages.</para>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -17,40 +18,160 @@
 <seglistitem><seg>0.1 SBU</seg><seg>1.9MB</seg></seglistitem>
 </segmentedlist>
 
+<segmentedlist>
+<segtitle>Man installation depends on</segtitle>
+<seglistitem><seg>Bash, Binutils, Coreutils, Gawk, GCC,
+Glibc, Grep, Make, and Sed</seg></seglistitem>
+</segmentedlist>
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of Man</title>
 
-<para>Issue a sed substitution:</para>
+<para>Two adjustments need to be made to the sources of Man.</para>
+
+<para>The first is a sed substitution to add the
+<parameter>-R</parameter> switch to the <envar>PAGER</envar>
+variable so that escape sequences are properly handled by Less:</para>
 
 <screen><userinput>sed -i 's@-is@&amp;R@g' configure</userinput></screen>
 
-<para>Issue another sed substitution:</para>
+<para>The second is also a sed substitution to comment out the
+<quote>MANPATH /usr/man</quote> line in the
+<filename>man.conf</filename> file to prevent redundant results when
+using programs such as <command>whatis</command>:</para>
 
 <screen><userinput>sed -i 's@MANPATH./usr/man@#&amp;@g' src/man.conf.in</userinput></screen>
  
-<para>Now prepare Man for compilation:</para>
+<para>Prepare Man for compilation:</para>
 
 <screen><userinput>./configure -confdir=/etc</userinput></screen>
+
+<para>The meaning of the configure options:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>-confdir=/etc</parameter></term>
+<listitem><para>This tells the <command>man</command> program to look for the
+<filename>man.conf</filename> configuration file in the <filename
+class="directory">/etc</filename> directory.</para></listitem>
+</varlistentry>
+</variablelist>
 
 <para>Compile the package:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<para>Lastly, install it:</para>
+<para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<para>For some internazionalitation issues, see testing.</para>
+<note><para>To disable Select Graphic Rendition (SGR) escape
+sequences, edit the <filename>man.conf</filename> file and
+add the <parameter>-c</parameter> switch to
+the <envar>NROFF</envar> variable.</para></note>
+
+<para>If the character set uses 8-bit characters, search for the line
+beginning with <quote>NROFF</quote> in
+<filename>/etc/man.conf</filename>, and verify that it looks as
+follows:</para>
+
+<screen>NROFF  /usr/bin/nroff -Tlatin1 -mandoc</screen>
+
+<para>Note that <quote>latin1</quote> should be used even if it is not
+the character set of the locale. The reason is that, according to the
+specification, <command>groff</command> has no means of typesetting
+characters outside International Organization for Standards
+(ISO) 8859-1 without some strange escape codes. When formatting manual
+pages, <command>groff</command> thinks that they are in the ISO 8859-1
+encoding and this <parameter>-Tlatin1</parameter> switch tells
+<command>groff</command> to use the same encoding for output. Since
+<command>groff</command> does no recoding of input characters, the
+formatted result is really in the same encoding as input, and therefore
+it is usable as the input for a pager.</para>
+
+<para>This does not solve the problem of a non-working
+<command>man2dvi</command> program for localized manual pages in
+non-ISO 8859-1 locales. Also, it does not work with multibyte
+character sets. The first problem does not currently have a solution.
+The second issue is not of concern because the LFS installation does
+not support multibyte character sets.</para>
+
+<para>Additional information with regards to the compression of
+man and info pages can be found in the BLFS book at
+<ulink url="&blfs-root;view/cvs/postlfs/compressdoc.html"><phrase 
+condition="pdf">http://www.linuxfromscratch.org/blfs/view/cvs/postlfs/
+compressdoc.html</phrase></ulink>.</para>
 
 </sect2>
 
 
 <sect2 id="contents-man" role="content"><title>Contents of Man</title>
 
-<para>See testing</para>
+<segmentedlist>
+<segtitle>Installed programs</segtitle>
+<seglistitem><seg>apropos, makewhatis, man,
+man2dvi, man2html, and whatis</seg></seglistitem>
+</segmentedlist>
+
+<variablelist><bridgehead renderas="sect3">Short Descriptions</bridgehead>
+<?dbfo list-presentation="list"?>
+
+<varlistentry id="apropos">
+<term><command>apropos</command></term>
+<listitem>
+<para>Searches the whatis database and displays the short descriptions
+of system commands that contain a given string</para>
+<indexterm zone="ch-system-man apropos"><primary sortas="b-apropos">apropos</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="makewhatis">
+<term><command>makewhatis</command></term>
+<listitem>
+<para>Builds the whatis database; it reads all the manual pages in the
+manpath and writes the name and a short description in the whatis
+database for each page</para>
+<indexterm zone="ch-system-man makewhatis"><primary sortas="b-makewhatis">makewhatis</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="man">
+<term><command>man</command></term>
+<listitem>
+<para>Formats and displays the requested on-line manual page</para>
+<indexterm zone="ch-system-man man"><primary sortas="b-man">man</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="man2dvi">
+<term><command>man2dvi</command></term>
+<listitem>
+<para>Converts a manual page into dvi format</para>
+<indexterm zone="ch-system-man man2dvi"><primary sortas="b-man2dvi">man2dvi</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="man2html">
+<term><command>man2html</command></term>
+<listitem>
+<para>Converts a manual page into HTML</para>
+<indexterm zone="ch-system-man man2html"><primary sortas="b-man2html">man2html</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="whatis">
+<term><command>whatis</command></term>
+<listitem>
+<para>Searches the whatis database and displays the short descriptions
+of system commands that contain the given keyword as a separate
+word</para>
+<indexterm zone="ch-system-man whatis"><primary sortas="b-whatis">whatis</primary></indexterm>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
 
 </sect1>
+

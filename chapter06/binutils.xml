@@ -3,13 +3,15 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-system-binutils" xreflabel="Binutils" role="wrap">
+<sect1 id="ch-system-binutils" role="wrap">
 <title>Binutils-&binutils-version;</title>
 <?dbhtml filename="binutils.html"?>
 
 <indexterm zone="ch-system-binutils"><primary sortas="a-Binutils">Binutils</primary></indexterm>
 
 <sect2 role="package"><title/>
+<para>The Binutils package contains a linker, an assembler, and other tools for
+handling object files.</para>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -17,21 +19,45 @@
 <seglistitem><seg>1.4 SBU</seg><seg>167 MB</seg></seglistitem>
 </segmentedlist>
 
+<segmentedlist>
+<segtitle>Binutils installation depends on</segtitle>
+<seglistitem><seg>Bash, Bison, Coreutils, Diffutils, Flex, GCC, Gettext,
+Glibc, Grep, M4, Make, Perl, Sed, and Texinfo</seg></seglistitem>
+</segmentedlist>
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of Binutils</title>
 
-<para>Check if there is PTYs for the test suites:</para>
+<para>This package is known to have issues when its default
+optimization flags (including the <parameter>-march</parameter> and
+<parameter>-mcpu</parameter> options) are changed. If any environment
+variables that override default optimizations have been defined, such
+as <envar>CFLAGS</envar> and <envar>CXXFLAGS</envar>,
+unset them when building Binutils.</para>
+
+<para>Verify that the PTYs are working properly inside the chroot
+environment. Check that everything is set up correctly by performing a
+simple test:</para>
 
 <screen><userinput>expect -c "spawn ls"</userinput></screen>
 
-<para>Create the build directory:</para>
+<para>If the following message shows up, the chroot environment is not
+set up for proper PTY operation:</para>
+
+<screen><computeroutput>The system has no more ptys.  
+Ask your system administrator to create more.</computeroutput></screen>
+
+<para>This issue needs to be resolved before running the test suites
+for Binutils and GCC.</para>
+
+<para>The Binutils documentation recommends building Binutils outside of the
+source directory in a dedicated build directory:</para>
 
 <screen><userinput>mkdir ../binutils-build
 cd ../binutils-build</userinput></screen>
 
-<para>Now prepare Binutils for compilation:</para>
+<para>Prepare Binutils for compilation:</para>
 
 <screen><userinput>../binutils-&binutils-version;/configure --prefix=/usr \
     --enable-shared</userinput></screen>
@@ -40,19 +66,33 @@ cd ../binutils-build</userinput></screen>
 
 <screen><userinput>make tooldir=/usr</userinput></screen>
 
+<para>Normally, the tooldir (the directory where the executables will
+ultimately be located) is set to <filename
+class="directory">$(exec_prefix)/$(target_alias)</filename>, which
+expands into <phrase condition="html"><filename
+class="directory">/usr/i686-pc-linux-gnu</filename></phrase><phrase
+condition="pdf"><filename class="directory">/usr/i686-pc-
+linux-gnu</filename></phrase>. Because this is a custom system, this
+target-specific directory in <filename
+class="directory">/usr</filename> is not required. This setup would be
+used if the system was used to cross-compile (for example, compiling a
+package on an Intel machine that generates code that can be executed
+on PowerPC machines).</para>
+
+<important><para>The test suite for Binutils in this section is
+considered critical. Do not skip it under any
+circumstances.</para></important>
+
 <para>Test the results:</para>
 
-<!--NEW-->
-<screen><userinput>make -k check</userinput></screen>
-
-<para>The test suite notes from <xref linkend="ch-tools-binutils-pass2"/> are still
-very much appropriate here..</para>
+<screen><userinput>make check</userinput></screen>
 
 <para>Install the package:</para>
 
 <screen><userinput>make tooldir=/usr install</userinput></screen>
 
-<para>Install the <filename class="headerfile">libiberty</filename> header file:</para>
+<para>Install the <filename class="headerfile">libiberty</filename> header file that is needed by
+some packages:</para>
 
 <screen><userinput>cp ../binutils-&binutils-version;/include/libiberty.h /usr/include</userinput></screen>
 
@@ -61,8 +101,176 @@ very much appropriate here..</para>
 
 <sect2 id="contents-binutils" role="content"><title>Contents of Binutils</title>
 
-<para>See testing</para>
+<segmentedlist>
+<segtitle>Installed programs</segtitle>
+<segtitle>Installed libraries</segtitle>
+<seglistitem><seg>addr2line, ar, as, c++filt, gprof, ld, nm, objcopy, objdump, 
+ranlib, readelf, size, strings, and strip</seg>
+<seg>libiberty.a, libbfd.[a,so], and libopcodes.[a,so]</seg></seglistitem>
+</segmentedlist>
+
+<variablelist><bridgehead renderas="sect3">Short Descriptions</bridgehead>
+<?dbfo list-presentation="list"?>
+
+<varlistentry id="addr2line">
+<term><command>addr2line</command></term>
+<listitem>
+<para>Translates program addresses to file names and line numbers;
+given an address and the name of an executable, it uses the debugging
+information in the executable to determine which source file and line
+number are associated with the address</para>
+<indexterm zone="ch-system-binutils addr2line"><primary sortas="b-addr2line">addr2line</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="ar">
+<term><command>ar</command></term>
+<listitem>
+<para>Creates, modifies, and extracts from archives</para>
+<indexterm zone="ch-system-binutils ar"><primary sortas="b-ar">ar</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="as">
+<term><command>as</command></term>
+<listitem>
+<para>An assembler that assembles the output of <command>gcc</command>
+into object files</para>
+<indexterm zone="ch-system-binutils as"><primary sortas="b-as">as</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="c-filt">
+<term><command>c++filt</command></term>
+<listitem>
+<para>Used by the linker to de-mangle C++ and Java symbols and to keep
+overloaded functions from clashing</para>
+<indexterm zone="ch-system-binutils c-filt"><primary sortas="b-c++filt">c++filt</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="gprof">
+<term><command>gprof</command></term>
+<listitem>
+<para>Displays call graph profile data</para>
+<indexterm zone="ch-system-binutils gprof"><primary sortas="b-gprof">gprof</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="ld">
+<term><command>ld</command></term>
+<listitem>
+<para>A linker that combines a number of object and archive files into a single file, 
+relocating their data and tying up symbol references</para>
+<indexterm zone="ch-system-binutils ld"><primary sortas="b-ld">ld</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="nm">
+<term><command>nm</command></term>
+<listitem>
+<para>Lists the symbols occurring in a given object file</para>
+<indexterm zone="ch-system-binutils nm"><primary sortas="b-nm">nm</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="objcopy">
+<term><command>objcopy</command></term>
+<listitem>
+<para>Translates one type of object file into another</para>
+<indexterm zone="ch-system-binutils objcopy"><primary sortas="b-objcopy">objcopy</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="objdump">
+<term><command>objdump</command></term>
+<listitem>
+<para>Displays information about the given object file, with options
+controlling the particular information to display; the information
+shown is useful to programmers who are working on the compilation
+tools</para>
+<indexterm zone="ch-system-binutils objdump"><primary sortas="b-objdump">objdump</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="ranlib">
+<term><command>ranlib</command></term>
+<listitem>
+<para>Generates an index of the contents of an archive and stores it
+in the archive; the index lists all of the symbols defined by archive
+members that are relocatable object files</para>
+<indexterm zone="ch-system-binutils ranlib"><primary sortas="b-ranlib">ranlib</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="readelf">
+<term><command>readelf</command></term>
+<listitem>
+<para>Displays information about ELF type binaries</para>
+<indexterm zone="ch-system-binutils readelf"><primary sortas="b-readelf">readelf</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="size">
+<term><command>size</command></term>
+<listitem>
+<para>Lists the section sizes and the total size for the given object files</para>
+<indexterm zone="ch-system-binutils size"><primary sortas="b-size">size</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="strings">
+<term><command>strings</command></term>
+<listitem>
+<para>Outputs, for each given file, the sequences of printable
+characters that are of at least the specified length (defaulting to
+four); for object files, it prints, by default, only the strings from
+the initializing and loading sections while for other types of files, it
+scans the entire file</para>
+<indexterm zone="ch-system-binutils strings"><primary sortas="b-strings">strings</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="strip">
+<term><command>strip</command></term>
+<listitem>
+<para>Discards symbols from object files</para>
+<indexterm zone="ch-system-binutils strip"><primary sortas="b-strip">strip</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="libiberty">
+<term><filename class="libraryfile">libiberty</filename></term>
+<listitem>
+<para>Contains routines used by various GNU programs, including
+<command>getopt</command>, <command>obstack</command>,
+<command>strerror</command>, <command>strtol</command>, and
+<command>strtoul</command></para>
+<indexterm zone="ch-system-binutils libiberty"><primary sortas="c-libiberty">libiberty</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="libbfd">
+<term><filename class="libraryfile">libbfd</filename></term>
+<listitem>
+<para>The Binary File Descriptor library</para>
+<indexterm zone="ch-system-binutils libbfd"><primary sortas="c-libbfd">libbfd</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="libopcodes">
+<term><filename class="libraryfile">libopcodes</filename></term>
+<listitem>
+<para>A library for dealing with opcodes&mdash;the <quote>readable
+text</quote> versions of instructions for the processor;
+it is used for building utilities like
+<command>objdump</command>.</para>
+<indexterm zone="ch-system-binutils libopcodes"><primary sortas="c-libopcodes">libopcodes</primary></indexterm>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
 
 </sect1>
+

@@ -3,13 +3,15 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-system-sysvinit" xreflabel="Sysvinit" role="wrap">
+<sect1 id="ch-system-sysvinit" role="wrap">
 <title>Sysvinit-&sysvinit-version;</title>
 <?dbhtml filename="sysvinit.html"?>
 
 <indexterm zone="ch-system-sysvinit"><primary sortas="a-Sysvinit">Sysvinit</primary></indexterm>
 
 <sect2 role="package"><title/>
+<para>The Sysvinit package contains programs for controlling the startup,
+running, and shutdown of the system.</para>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -17,21 +19,34 @@
 <seglistitem><seg>0.1 SBU</seg><seg> 0.9 MB</seg></seglistitem>
 </segmentedlist>
 
+<segmentedlist>
+<segtitle>Sysvinit installation depends on</segtitle>
+<seglistitem><seg>Binutils, Coreutils, GCC, Glibc, and Make</seg></seglistitem>
+</segmentedlist>
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of Sysvinit</title>
 
-<para>Issue a sed sustitution:</para>
+<para>When run-levels are changed (for example, when halting the
+system), <command>init</command> sends termination signals to those
+processes that <command>init</command> itself started and that should
+not be running in the new run-level.  While doing this,
+<command>init</command> outputs messages like <quote>Sending processes
+the TERM signal</quote> which seem to imply that it is sending these
+signals to all currently running processes. To avoid this
+misinterpretation, modify the source so that these messages read like
+<quote>Sending processes started by init the TERM signal</quote>
+instead:</para>
 
 <screen><userinput>sed -i 's@Sending processes@&amp; started by init@g' \
     src/init.c</userinput></screen>
 
-<para>Compile Sysvinit:</para>
+<para>Compile the package:</para>
 
 <screen><userinput>make -C src</userinput></screen>
 
-<para>Then install it:</para>
+<para>Install the package:</para>
 
 <screen><userinput>make -C src install</userinput></screen>
 
@@ -39,8 +54,14 @@
 
 
 <sect2 id="conf-sysvinit" role="configuration"><title>Configuring Sysvinit</title>
+<indexterm zone="conf-sysvinit">
+<primary sortas="a-Sysvinit">Sysvinit</primary>
+<secondary>configuring</secondary></indexterm>
 
-<para>Create a <filename>/etc/inittab</filename> file:</para>
+<indexterm zone="conf-sysvinit"><primary sortas="e-/etc/inittab">/etc/inittab</primary></indexterm>
+
+<para>Create a new file <filename>/etc/inittab</filename> by running the
+following:</para>
 
 <screen><userinput>cat &gt; /etc/inittab &lt;&lt; "EOF"
 <literal># Begin /etc/inittab
@@ -71,14 +92,90 @@ su:S016:once:/sbin/sulogin
 # End /etc/inittab</literal>
 EOF</userinput></screen>
 
+<para>The <parameter>-I '\033(K'</parameter> option tells
+<command>agetty</command> to send this escape sequence to the terminal
+before doing anything else. This escape sequence switches the console
+character set to a user-defined one, which can be modified by running
+the <command>setfont</command> program. The <command>console</command>
+initscript from the LFS-Bootscripts package calls the <command>setfont</command>
+program during system startup. Sending this escape sequence is
+necessary for people who use non-ISO 8859-1 screen fonts, but it does
+not effect native English speakers.</para>
+
 </sect2>
 
 
 <sect2 id="contents-sysvinit" role="content"><title>Contents of Sysvinit</title>
 
-<para>See testing</para>
+<segmentedlist>
+<segtitle>Installed programs</segtitle>
+<seglistitem><seg>halt, init, killall5, last, lastb (link to last), mesg, pidof (link to 
+killall5), poweroff (link to halt), reboot (link to halt), runlevel, shutdown, sulogin, telinit 
+(link to init), utmpdump, and wall</seg></seglistitem>
+</segmentedlist>
 
-<!-- This should be added to testing:
+<variablelist><bridgehead renderas="sect3">Short Descriptions</bridgehead>
+<?dbfo list-presentation="list"?>
+
+<varlistentry id="halt">
+<term><command>halt</command></term>
+<listitem>
+<para>Normally invokes <command>shutdown</command> with the
+<parameter>-h</parameter> option, except when already in run-level 0,
+then it tells the kernel to halt the system; it notes in the
+file <filename>/var/log/wtmp</filename> that the system is being
+brought down</para>
+<indexterm zone="ch-system-sysvinit halt"><primary sortas="b-halt">halt</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="init">
+<term><command>init</command></term>
+<listitem>
+<para>The first process to be started when the kernel has initialized
+the hardware which takes over the boot process and 
+starts all the proceses it is instructed to</para>
+<indexterm zone="ch-system-sysvinit init"><primary sortas="b-init">init</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="killall5">
+<term><command>killall5</command></term>
+<listitem>
+<para>Sends a signal to all processes, except the processes in its own
+session so it will not kill the shell running the script that called
+it</para>
+<indexterm zone="ch-system-sysvinit killall5"><primary sortas="b-killall5">killall5</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="last">
+<term><command>last</command></term>
+<listitem>
+<para>Shows which users last logged in (and out),
+searching back through the <filename>/var/log/wtmp</filename> file; it
+also shows system boots, shutdowns, and run-level changes</para>
+<indexterm zone="ch-system-sysvinit last"><primary sortas="b-last">last</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="lastb">
+<term><command>lastb</command></term>
+<listitem>
+<para>Shows the failed login attempts, as logged in
+<filename>/var/log/btmp</filename></para>
+<indexterm zone="ch-system-sysvinit lastb"><primary sortas="b-lastb">lastb</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="mesg">
+<term><command>mesg</command></term>
+<listitem>
+<para>Controls whether other users can send messages to the current
+user's terminal</para>
+<indexterm zone="ch-system-sysvinit mesg"><primary sortas="b-mesg">mesg</primary></indexterm>
+</listitem>
+</varlistentry>
 
 <varlistentry id="mountpoint">
 <term><command>mountpoint</command></term>
@@ -88,8 +185,86 @@ EOF</userinput></screen>
 </listitem>
 </varlistentry>
 
--->
+<varlistentry id="pidof">
+<term><command>pidof</command></term>
+<listitem>
+<para>Reports the PIDs of the given programs</para>
+<indexterm zone="ch-system-sysvinit pidof"><primary sortas="b-pidof">pidof</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="poweroff">
+<term><command>poweroff</command></term>
+<listitem>
+<para>Tells the kernel to halt the system and switch off the computer
+(see <command>halt</command>)</para>
+<indexterm zone="ch-system-sysvinit poweroff"><primary sortas="b-poweroff">poweroff</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="reboot">
+<term><command>reboot</command></term>
+<listitem>
+<para>Tells the kernel to reboot the system (see
+<command>halt</command>)</para>
+<indexterm zone="ch-system-sysvinit reboot"><primary sortas="b-reboot">reboot</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="runlevel">
+<term><command>runlevel</command></term>
+<listitem>
+<para>Reports the previous and the current run-level, as noted in the last run-level 
+record in <filename>/var/run/utmp</filename></para>
+<indexterm zone="ch-system-sysvinit runlevel"><primary sortas="b-runlevel">runlevel</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="shutdown">
+<term><command>shutdown</command></term>
+<listitem>
+<para>Brings the system down in a secure way, signaling all processes
+and notifying all logged-in users</para>
+<indexterm zone="ch-system-sysvinit shutdown"><primary sortas="b-shutdown">shutdown</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="sulogin">
+<term><command>sulogin</command></term>
+<listitem>
+<para>Allows <emphasis>root</emphasis> to log in; it is
+normally invoked by <command>init</command> when the system goes into single user mode</para>
+<indexterm zone="ch-system-sysvinit sulogin"><primary sortas="b-sulogin">sulogin</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="telinit">
+<term><command>telinit</command></term>
+<listitem>
+<para>Tells <command>init</command> which run-level to change to</para>
+<indexterm zone="ch-system-sysvinit telinit"><primary sortas="b-telinit">telinit</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="utmpdump">
+<term><command>utmpdump</command></term>
+<listitem>
+<para>Displays the content of the given login file in a more
+user-friendly format</para>
+<indexterm zone="ch-system-sysvinit utmpdump"><primary sortas="b-utmpdump">utmpdump</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="wall">
+<term><command>wall</command></term>
+<listitem>
+<para>Writes a message to all logged-in users</para>
+<indexterm zone="ch-system-sysvinit wall"><primary sortas="b-wall">wall</primary></indexterm>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
 
 </sect1>
+

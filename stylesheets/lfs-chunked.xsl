@@ -24,7 +24,7 @@
 
     Voila! (Man I hope we can do this better in XSLT 2.0)  -->
 
-  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/chunk-code.xsl"/>
+  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/profile-chunk-code.xsl"/>
 
     <!-- Including our others customized chunks templates -->
   <xsl:include href="xhtml/lfs-legalnotice.xsl"/>

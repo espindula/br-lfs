@@ -7,31 +7,99 @@
 <title>Re-adjusting the Toolchain</title>
 <?dbhtml filename="readjusting.html"?>
 
-<para>Install the adjusted linker by running the following from within the
-<filename class="directory">binutils-build</filename> directory:</para>
+<para>Now that the new and final C libraries have been installed, it
+is time to adjust the toolchain again. The toolchain will be adjusted
+so that it will link any newly compiled program against these new
+libraries. This is the same process used in the
+<quote>Adjusting</quote> phase in the beginning of <xref
+linkend="chapter-temporary-tools"/>, even though it looks to be
+reversed. In <xref linkend="chapter-temporary-tools"/>, the chain was
+guided from the host's <filename
+class="directory">/{,usr/}lib</filename> directories to the new
+<filename class="directory">/tools/lib</filename> directory. Now, the
+chain will be guided from that same <filename
+class="directory">/tools/lib</filename> directory to the LFS
+<filename class="directory">/{,usr/}lib</filename> directories.</para>
+
+<para>Start by adjusting the linker. The source and build directories
+from the second pass over Binutils were retained for this purpose.
+Install the adjusted linker by running the following command from
+within the <filename class="directory">binutils-build</filename>
+directory:</para>
 
 <screen><userinput>make -C ld INSTALL=/tools/bin/install install</userinput></screen>
 
-<para>Amend the GCC specs file:</para>
+<note><para>If the earlier warning to retain the Binutils source and
+build directories from the second pass in <xref
+linkend="chapter-temporary-tools"/> was missed, or if they were
+accidentally deleted or are inaccessible, ignore the above command.
+The result will be that the next package, Binutils, will link against
+the C libraries in <filename class="directory">/tools</filename>
+rather than in <filename class="directory">/{,usr/}lib</filename>.
+This is not ideal, however, testing has shown that the resulting
+Binutils program binaries should be identical.</para></note>
+
+<para>From now on, every compiled program will link only against the
+libraries in <filename class="directory">/usr/lib</filename> and
+<filename class="directory">/lib</filename>. The extra
+<parameter>INSTALL=/tools/bin/install</parameter> option is needed
+because the <filename>Makefile</filename> file created during the
+second pass still contains the reference to
+<command>/usr/bin/install</command>, which has not been installed yet.
+Some host distributions contain a <filename
+class="symlink">ginstall</filename> symbolic link which takes
+precedence in the <filename>Makefile</filename> file and can cause a
+problem. The above command takes care of this issue.</para>
+
+<para>Remove the Binutils source and build directories now.</para>
+
+<para>Next, amend the GCC specs file so that it points to the new
+dynamic linker. A perl command accomplishes this:</para>
 
 <screen><userinput>perl -pi -e 's@ /tools/lib/ld-linux.so.2@ /lib/ld-linux.so.2@g;' \
     -e 's@\*startfile_prefix_spec:\n@$_/usr/lib/ @g;' \
         `gcc --print-file specs`</userinput></screen>
 
-<caution><para>Perform a simple sanity check:</para>
+<para>It is a good idea to visually inspect the specs file to verify the intended 
+change was actually made.</para>
+
+<important><para>If working on a platform where the name of the
+dynamic linker is something other than
+<filename class="libraryfile">ld-linux.so.2</filename>, substitute
+<quote>ld-linux.so.2</quote> with the name of the platform's
+dynamic linker in the above commands. Refer back to <xref
+linkend="ch-tools-toolchaintechnotes" role=","/> if
+necessary.</para></important>
+
+<caution><para>It is imperative at this point to stop and ensure that
+the basic functions (compiling and linking) of the adjusted toolchain
+are working as expected. To do this, perform a sanity
+check:</para>
 
 <screen><userinput>echo 'main(){}' &gt; dummy.c
 cc dummy.c
 readelf -l a.out | grep ': /lib'</userinput></screen>
 
-<para>The output of the last command will be:</para>
+<para>If everything is working correctly, there should be no errors,
+and the output of the last command will be (allowing for
+platform-specific differences in dynamic linker name):</para>
 
 <screen><computeroutput>[Requesting program interpreter: /lib/ld-linux.so.2]</computeroutput></screen>
 
-<para>Once you are satisfied that all is well, clean up the test files:</para>
+<para>Note that <filename class="directory">/lib</filename> is now
+the prefix of our dynamic linker.</para>
 
-<screen><userinput>rm dummy.c a.out</userinput></screen>
-</caution>
+<para>If the output does not appear as shown above or is not received
+at all, then something is seriously wrong. Investigate and retrace the
+steps to find out where the problem is and correct it. The most likely
+reason is that something went wrong with the specs file amendment
+above. Any issues will need to be resolved before continuing on with
+the process.</para>
 
+<para>Once everything is working correctly, clean up the test
+files:</para>
+
+<screen><userinput>rm dummy.c a.out</userinput></screen></caution>
 
 </sect1>
+

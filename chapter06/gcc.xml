@@ -3,13 +3,15 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-system-gcc" xreflabel="GCC" role="wrap">
+<sect1 id="ch-system-gcc" role="wrap">
 <title>GCC-&gcc-version;</title>
 <?dbhtml filename="gcc.html"?>
 
 <indexterm zone="ch-system-gcc"><primary sortas="a-GCC">GCC</primary></indexterm>
 
 <sect2 role="package"><title/>
+<para>The GCC package contains the GNU compiler collection, which includes
+the C and C++ compilers.</para>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -17,29 +19,54 @@
 <seglistitem><seg>11.7 SBU</seg><seg>294 MB</seg></seglistitem>
 </segmentedlist>
 
+<segmentedlist>
+<segtitle>GCC installation depends on</segtitle>
+<seglistitem><seg>Bash, Binutils, Coreutils, Diffutils, Findutils,
+Gawk, Gettext, Glibc, Grep, Make, Perl, Sed, and Texinfo</seg></seglistitem>
+</segmentedlist>
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of GCC</title>
 
-<para>Apply a patch:</para>
+<para>This package is known to have issues when its default
+optimization flags (including the <parameter>-march</parameter> and
+<parameter>-mcpu</parameter> options) are changed. If any environment
+variables that override default optimizations have been defined, such
+as <envar>CFLAGS</envar> and <envar>CXXFLAGS</envar>,
+unset them when building GCC.</para>
+
+<para>Unpack both the gcc-core and the gcc-g++ tarballs&mdash;they will
+unpack into the same directory. Likewise, extract the gcc-testsuite
+package.  The full GCC package contains additional compilers.
+Instructions for building these can be found at <ulink
+url="&blfs-root;view/svn/general/gcc.html"/>.</para>
+
+<para>Apply only the No-Fixincludes patch (not the Specs patch) also
+used in the previous chapter:</para>
 
 <screen><userinput>patch -Np1 -i ../gcc-&gcc-version;-no_fixincludes-1.patch</userinput></screen>
 
-<para>Apply another patch:</para>
+<para>GCC fails to compile some packages outside of a base Linux From Scratch
+install (e.g., Mozilla and kdegraphics) when used in conjunction with newer
+versions of Binutils.  Apply the following patch to fix this issue:</para>
 
 <screen><userinput>patch -Np1 -i ../gcc-&gcc-version;-linkonce-1.patch</userinput></screen>
 
-<para>Apply a sed substitution:</para>
+<para>Apply a sed substitution that will suppress the installation of
+<filename class="libraryfile">libiberty.a</filename>. The version of
+<filename class="libraryfile">libiberty.a</filename> provided by
+Binutils will be used instead:</para>
 
 <screen><userinput>sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
 
-<para>Create a build directory:</para>
+<para>The GCC documentation recommends building GCC outside of the source
+directory in a dedicated build directory:</para>
 
 <screen><userinput>mkdir ../gcc-build
 cd ../gcc-build</userinput></screen>
 
-<para>Now prepare GCC for compilation:</para>
+<para>Prepare GCC for compilation:</para>
 
 <screen><userinput>../gcc-&gcc-version;/configure --prefix=/usr \
     --libexecdir=/usr/lib --enable-shared \
@@ -50,35 +77,140 @@ cd ../gcc-build</userinput></screen>
 
 <screen><userinput>make</userinput></screen>
 
-<para>Test the results):</para>
+<important><para>In this section, the test suite for GCC is considered
+critical. Do not skip it under any circumstance.</para></important>
+
+<para>Test the results, but do not stop at errors:</para>
 
 <screen><userinput>make -k check</userinput></screen>
 
-<para>The test suite notes from <xref linkend="ch-tools-gcc-pass2"/> are still very
-much appropriate here.</para>
+<para>Some of the errors are known issues and were noted in the
+previous chapter. The test suite notes from <xref
+linkend="ch-tools-gcc-pass2" role=","/> are still relevant here. Be sure to
+refer back to them as necessary.</para>
 
-<para>Now install the package:</para>
+<para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<para>Create this symlink:</para>
+<para>Some packages expect the C PreProcessor to be installed in the
+<filename class="directory">/lib</filename> directory.
+To support those packages, create this symlink:</para>
 
 <screen><userinput>ln -s ../usr/bin/cpp /lib</userinput></screen>
 
-<para>Create another symlink:</para>
+<para>Many packages use the name <command>cc</command> to call the C
+compiler. To satisfy those packages, create a symlink:</para>
 
 <screen><userinput>ln -s gcc /usr/bin/cc</userinput></screen>
 
-<note><para>Refer back to <xref linkend="ch-system-readjusting"/> 
-and repeat the check.</para></note>
+<note><para>At this point, it is strongly recommended to repeat the
+sanity check performed earlier in this chapter. Refer back to <xref
+linkend="ch-system-readjusting" role=","/> and repeat the check. If the results
+are in error, then the most likely reason is that the GCC Specs patch
+from <xref linkend="chapter-temporary-tools"/> was erroneously applied
+here.</para></note>
 
 </sect2>
 
 
 <sect2 id="contents-gcc" role="content"><title>Contents of GCC</title>
 
-<para>See testing</para>
+<segmentedlist>
+<segtitle>Installed programs</segtitle>
+<segtitle>Installed libraries</segtitle>
+<seglistitem><seg>c++, cc (link to gcc), cpp, g++, gcc, gccbug, and
+gcov</seg>
+<seg>libgcc.a, libgcc_eh.a, libgcc_s.so, libstdc++.[a,so], and libsupc++.a</seg></seglistitem>
+</segmentedlist>
+
+<variablelist><bridgehead renderas="sect3">Short Descriptions</bridgehead>
+<?dbfo list-presentation="list"?>
+
+<varlistentry id="cc">
+<term><command>cc</command></term>
+<listitem>
+<para>The C compiler</para>
+<indexterm zone="ch-system-gcc cc"><primary sortas="b-cc">cc</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="cpp">
+<term><command>cpp</command></term>
+<listitem>
+<para>The C preprocessor; it is used by the compiler to expand the
+#include, #define, and similar statements in the source files</para>
+<indexterm zone="ch-system-gcc cpp"><primary sortas="b-cpp">cpp</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="c">
+<term><command>c++</command></term>
+<listitem>
+<para>The C++ compiler</para>
+<indexterm zone="ch-system-gcc c"><primary sortas="b-c++">c++</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="g">
+<term><command>g++</command></term>
+<listitem>
+<para>The C++ compiler</para>
+<indexterm zone="ch-system-gcc g"><primary sortas="b-g++">g++</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="gcc">
+<term><command>gcc</command></term>
+<listitem>
+<para>The C compiler</para>
+<indexterm zone="ch-system-gcc gcc"><primary sortas="b-gcc">gcc</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="gccbug">
+<term><command>gccbug</command></term>
+<listitem>
+<para>A shell script used to help create useful bug reports</para>
+<indexterm zone="ch-system-gcc gccbug"><primary sortas="b-gccbug">gccbug</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="gcov">
+<term><command>gcov</command></term>
+<listitem>
+<para>A coverage testing tool; it is used to analyze programs to
+determine where optimizations will have the most effect</para>
+<indexterm zone="ch-system-gcc gcov"><primary sortas="b-gcov">gcov</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="libgcc">
+<term><filename class="libraryfile">libgcc</filename></term>
+<listitem>
+<para>Contains run-time support for <command>gcc</command></para>
+<indexterm zone="ch-system-gcc libgcc"><primary sortas="c-libgcc*">libgcc*</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="libstdc">
+<term><filename class="libraryfile">libstdc++</filename></term>
+<listitem>
+<para>The standard C++ library</para>
+<indexterm zone="ch-system-gcc libstdc"><primary sortas="c-libstdc++">libstdc++</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="libsupc">
+<term><filename class="libraryfile">libsupc++</filename></term>
+<listitem>
+<para>Provides supporting routines for the C++ programming language</para>
+<indexterm zone="ch-system-gcc libsupc"><primary sortas="c-libsupc++">libsupc++</primary></indexterm>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
 
 </sect1>
+
