@@ -1,0 +1,96 @@
+<sect2>
+<title>Configurer <application>rsync</application></title>
+
+<sect3><title>Fichiers de configuration</title>
+
+<para><filename>/etc/rsyncd.conf</filename></para>
+<para>C'est un simple fichier de configuration en téléchargement seul. Voir la page
+man de rsyncd pour les options supplémentaires (authentification de l'utilisateur).
+</para>
+
+<para><screen><userinput><command>cat &gt; /etc/rsyncd.conf &lt;&lt; "EOF"</command>
+# C'est un fichier de configuration basique pour rsync
+# Il exporte un seul module sans l'authentification utilisateur.
+
+motd file = /home/rsync/welcome.msg
+use chroot = yes
+
+[localhost]
+	path = /home/rsync
+	comment = Module rsync par défaut
+	read only = yes
+	list = yes
+	uid = rsyncd
+	gid = rsyncd
+
+<command>EOF</command></userinput></screen></para>
+</sect3>
+
+<sect3><title>Script de démarrage rsyncd</title>
+
+<para>Notez que vous ne voulez lancer le serveur rsync que si vous disposez d'une
+archive rsync sur la machine. Le client rsync n'a pas besoin de ce script pour
+fonctionner. Ceci dit, si vous voulez lancer le démon rsync, le script de démarrage
+rsyncd peut être créé avec les commandes suivantes:</para>
+
+<para><screen><userinput><command>cat &gt; /etc/rc.d/init.d/rsyncd &lt;&lt; "EOF"</command>
+#!/bin/sh
+# Début $rc_base/init.d/rsyncd
+
+# Basé sur le script sysklogd à partir de LFS-3.1 et précédent.
+# Réécrit par Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+	start)
+		echo "Starting RSYNC Server..."
+		loadproc /usr/bin/rsync --daemon --compress
+		;;
+
+	stop)
+		echo "Stopping RSYNC Server..."
+		killproc /usr/bin/rsync
+		;;
+
+	reload)
+		echo "Reloading RSYNC Server..."
+		reloadproc /usr/bin/rsync
+		;;
+            
+	restart)
+		$0 stop
+		sleep 1
+		$0 start
+		;;
+
+	status)
+		statusproc /usr/bin/rsync
+		;;
+
+	*)
+		echo "Usage: $0 {start|stop|reload|restart|status}"
+		exit 1
+		;;
+esac
+
+# Fin $rc_base/init.d/rsyncd
+<command>EOF
+chmod 755 /etc/rc.d/init.d/rsyncd</command></userinput></screen></para>
+
+<para>Créez les liens symboliques pour ce fichier dans les répertoires
+<filename class="directory">rc.d</filename> adéquates avec les commandes suivantes:
+<screen><userinput><command>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/rsyncd ../rc0.d/K30rsyncd &amp;&amp;
+ln -sf ../init.d/rsyncd ../rc1.d/K30rsyncd &amp;&amp;
+ln -sf ../init.d/rsyncd ../rc2.d/K30rsyncd &amp;&amp;
+ln -sf ../init.d/rsyncd ../rc3.d/S30rsyncd &amp;&amp;
+ln -sf ../init.d/rsyncd ../rc4.d/S30rsyncd &amp;&amp;
+ln -sf ../init.d/rsyncd ../rc5.d/S30rsyncd &amp;&amp;
+ln -sf ../init.d/rsyncd ../rc6.d/K30rsyncd</command></userinput></screen></para>
+
+</sect3>
+
+</sect2>
+
