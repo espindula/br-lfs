@@ -10,7 +10,6 @@
 <indexterm zone="ch-bootable-kernel"><primary sortas="a-Linux">Linux</primary></indexterm>
 
 <sect2 role="package"><title/>
-<para>The Linux package contains the kernel and the header files.</para>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -19,29 +18,14 @@
 <seg>All default options: 181 MB</seg></seglistitem>
 </segmentedlist>
 
-<segmentedlist>
-<segtitle>Linux installation depends on</segtitle>
-<seglistitem><seg>Bash, Binutils, Coreutils, Findutils,
-GCC, Glibc, Grep, Gzip, Make, Modutils, Perl, Sed</seg></seglistitem>
-</segmentedlist>
 </sect2>
 
 <sect2 role="installation">
 <title>Installation of the kernel</title>
 
-<para>Building the kernel involves a few steps: configuration, compilation, and
-installation. If you don't like the way this book configures the kernel, view
-the <filename>README</filename> file in the kernel source tree for alternative
-methods.</para>
-
 <para>Prepare for compilation by running the following command:</para>
 
 <screen><userinput>make mrproper</userinput></screen>
-
-<para>This ensures that the kernel tree is absolutely clean. The kernel team
-recommends that this command be issued prior to <emphasis>each</emphasis>
-kernel compilation. You shouldn't rely on the source tree being clean after
-un-tarring.</para>
 
 <para>Also, ensure that the kernel does not attempt to pass hotplugging events
 to userspace until userspace specifies that it is ready:</para>
@@ -54,110 +38,26 @@ to compile the keymap into the kernel, issue the command below:</para>
 <screen><userinput>loadkeys -m /usr/share/kbd/keymaps/<replaceable>[path to  keymap]</replaceable> &gt; \
     <replaceable>[unpacked sources dir]</replaceable>/linux-&linux-version;/drivers/char/defkeymap.c</userinput></screen>
 
-<para>For example, if you have a Dutch keyboard, you would use
-<filename>/usr/share/kbd/keymaps/i386/qwerty/nl.map.gz</filename>.</para>
-
 <para>Configure the kernel via a menu-driven interface:</para>
 
 <screen><userinput>make menuconfig</userinput></screen>
-
-<para><command>make oldconfig</command> may be more appropriate in some
-situations. See the <filename>README</filename> file for more
-information.</para>
-
-<para>If you wish, you may skip kernel configuration by simply copying the
-kernel config file, <filename>.config</filename>, from your host system
-(assuming it is available) to the unpacked <filename class="directory">linux-&linux-version;</filename>
-directory. However, we
-don't recommend this option. You're much better off exploring all the
-configuration menus and creating your own kernel configuration from
-scratch.</para>
-
-<para>For POSIX shared memory support, ensure that the kernel config option
-<quote>Virtual memory file system support</quote> is enabled. It resides within
-the <quote>File systems</quote> menu and is normally enabled by default.</para>
-
-<para>LFS bootscripts make the assumption that you either compile
-both <quote>Support for Host-side USB</quote> and
-<quote>USB device filesystem</quote> directly into the kernel, or don't compile them at
-all. Bootscripts will not work properly if it is a module (<filename>usbcore.ko</filename>).</para>
-
-<note><para>NPTL requires the kernel to be compiled with GCC 3.x, in this case
-&gcc-version;. Compiling with 2.95.x is known to cause failures in the glibc
-testsuite, so do <emphasis>not</emphasis> compile the kernel with gcc 2.95.x
-unless you know what you're getting yourself into.</para></note>
 
 <para>Compile the kernel image and modules:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<para>If you intend to use kernel modules, you may need an
-<filename>/etc/modprobe.conf</filename> file. Information pertaining
-to modules and to kernel configuration in general may be found in the
-kernel documentation, which is found in the
-<filename class="directory">linux-&linux-version;/Documentation</filename> directory.
-The modprobe.conf man page
-<!-- removed for review from tldp.org
-and the kernel HOWTO at
-<ulink url="http://www.tldp.org/HOWTO/Kernel-HOWTO.html"/> -->
-may also be of interest to you.</para>
-
-<para>Be very suspicious while reading other documentation, because it
-usually applies to 2.4.x kernels only. As far as the editors know, kernel
-configuration issues specific to Hotplug and Udev
-are documented nowhere. The problem is that Udev will create a device node
-only if Hotplug or a user-written script inserts the corresponding module
-into the kernel, and not all modules are detectable by Hotplug. Note
-that statements like
-<screen>alias char-major-XXX some-module</screen>
-in <filename>/etc/modprobe.conf</filename> file don't work with
-Udev, and other aliases are often unnecessary with Hotplug.</para>
-
-<para>Because of all those compilcations with Hotplug, Udev and modules, we
-strongly recommend you to start with a completely non-modular kernel
-configuration, especially if this is the first time you use Udev.</para>
-
 <para>Install the modules, if your kernel configuration uses them:</para>
 
 <screen><userinput>make modules_install</userinput></screen>
-
-<para>If you have a lot of modules and very little space, you may want to
-consider stripping and compressing the modules. For most people such compression
-isn't worth the trouble, but if you're really pressed for space, then have a look at
-<ulink url="http://www.linux-mips.org/archives/linux-mips/2002-04/msg00031.html"/>.</para>
-
-<para>Kernel compilation has finished but more steps are required to complete
-the installation. Some files need to be copied to the <filename class="directory">/boot</filename>
-directory.</para>
 
 <para>The path to the kernel image may vary depending on the platform you're
 using. Issue the following command to install the kernel:</para>
 
 <screen><userinput>cp arch/i386/boot/bzImage /boot/lfskernel-&linux-version;</userinput></screen>
 
-<para><filename>System.map</filename> is a symbol file for the kernel. It maps
-the function entry points of every function in the kernel API (Application Programming Interface), as well as the
-addresses of the kernel data structures for the running kernel. Issue the
-following command to install the map file:</para>
-
 <screen><userinput>cp System.map /boot/System.map-&linux-version;</userinput></screen>
 
-<para><filename>.config</filename> is the kernel configuration file that was
-produced by the <command>make menuconfig</command> step above. It contains all
-the config selections for the kernel that was just compiled. It's a good idea
-to keep this file for future reference:</para>
-
 <screen><userinput>cp .config /boot/config-&linux-version;</userinput></screen>
-
-<para>It is important to note that the files in the kernel source directory are
-not owned by <emphasis>root</emphasis>. Whenever you unpack a package as user
-<emphasis>root</emphasis> (like we did here inside chroot), the files end up
-having the user and group IDs of whatever they were on the packager's computer.
-This is usually not a problem for any other package you install because you
-remove the source tree after the installation. But the Linux source tree is
-often kept around for a long time, so there's a chance that whatever user ID
-the packager used will be assigned to somebody on your machine and then that
-person would have write access to the kernel source.</para>
 
 <para>If you are going to keep the kernel source tree around, you may want to
 run <command>chown -R 0:0</command> on the
@@ -169,48 +69,7 @@ owned by user <emphasis>root</emphasis>.</para>
 
 <sect2 id="contents-kernel" role="content"><title>Contents of Linux</title>
 
-<segmentedlist>
-<segtitle>Installed files</segtitle>
-<seglistitem><seg>the kernel, the kernel headers,
-and the System.map</seg></seglistitem>
-</segmentedlist>
-
-<variablelist><title>Short descriptions</title>
-
-<varlistentry id="kernel">
-<term>The <emphasis>kernel</emphasis></term>
-<listitem>
-<indexterm zone="ch-bootable-kernel kernel"><primary sortas="b-kernel">kernel</primary></indexterm>
-<para>is the engine of your Linux system.
-When switching on your box, the kernel is the first part of your operating
-system that gets loaded. It detects and initializes all the components of your
-computer's hardware, then makes these components available as a tree of files
-to the software, and turns a single CPU into a multi-tasking machine capable
-of running scores of programs seemingly at the same time.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="kernel-headers">
-<term>The <emphasis>kernel headers</emphasis></term>
-<listitem>
-<indexterm zone="ch-bootable-kernel kernel-headers"><primary sortas="e-kernel-headers">kernel headers</primary></indexterm>
-<para>define the interface to the
-services that the kernel provides. The headers in your system's
-<filename class="directory">include</filename> directory should <emphasis>always</emphasis> be
-the ones against which Glibc was compiled and should therefore
-<emphasis>not</emphasis> be replaced when upgrading the kernel.</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="System.map">
-<term><filename>System.map</filename></term>
-<listitem>
-<indexterm zone="ch-bootable-kernel System.map"><primary sortas="e-/boot/System.map">/boot/System.map</primary></indexterm>
-<para>is a list of addresses and symbols. It maps the entry points and addresses 
-of all the functions and data structures in the kernel.</para>
-</listitem>
-</varlistentry>
-</variablelist>
+<para>See testing</para>
 
 </sect2>
 
