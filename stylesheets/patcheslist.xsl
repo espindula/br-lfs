@@ -8,7 +8,7 @@
   <xsl:output method="text"/>
 
   <xsl:param name="links.directory">lfs/cvs/unstable/</xsl:param>
-  <xsl:param name="deep.to.dowloads">../../../</xsl:param>
+  <xsl:param name="deep.to.downloads">../../../</xsl:param>
 
   <xsl:template match="/">
     <xsl:text>#! /bin/bash
@@ -27,13 +27,13 @@
 
   <xsl:template match="//ulink">
     <xsl:if test="contains(@url, '.patch') and contains(@url, 'linuxfromscratch')">
-      <xsl:text>  ln -s </xsl:text>
-      <xsl:value-of select="$deep.to.dowloads"/>
-      <xsl:text>dowloads/</xsl:text>
+      <xsl:text>  cp </xsl:text>
+      <xsl:value-of select="$deep.to.downloads"/>
+      <xsl:text>downloads/</xsl:text>
       <xsl:value-of select="substring-before (substring-after(@url, $links.directory), '-')"/>
       <xsl:text>/</xsl:text>
       <xsl:value-of select="substring-after(@url, $links.directory)"/>
-      <xsl:text> &amp;&amp;&#x0a;</xsl:text>
+      <xsl:text> . &amp;&amp;&#x0a;</xsl:text>
     </xsl:if>
   </xsl:template>
 
