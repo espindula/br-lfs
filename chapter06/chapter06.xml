@@ -2,21 +2,385 @@
 <title>Installing basic system software</title>
 <?dbhtml filename="chapter06.html" dir="chapter06"?>
 
-&c6-introduction;
-&c6-aboutdebug;
-&c6-chroot;
-&c6-changingowner;
-&c6-creatingdirs;
+
+<sect1 id="ch06-introduction">
+<title>Introduction</title>
+<?dbhtml filename="introduction.html" dir="chapter06"?>
+
+<para>In this chapter we enter the building site, and start
+constructing our LFS system in earnest. That is, we chroot into
+our temporary mini Linux system, create some auxiliary things,
+and then start installing all the packages, one by one.</para>
+ 
+<para>The installation of all this software is pretty straightforward,
+and you will probably think it would be much shorter to give here
+the generic installation instructions and explain in full only the
+installation of those packages that require an alternate method.
+Although we agree with that, we nevertheless choose to give the 
+full instructions for each and every package, simply to minimize
+the possibilities for mistakes.</para>
+
+<para>If you plan to use compiler optimizations in this chapter, take a look at
+the optimization hint at <ulink url="&hints-root;optimization.txt"/>. Compiler
+optimizations can make a program run slightly faster, but they may also cause
+compilation difficulties and even problems when running the program. If a
+package refuses to compile when using optimization, try to compile it without
+optimization and see if the problem goes away. Even if the package does compile
+when using optimization, there is the risk it may have been compiled incorrectly
+due to complex interactions between the code and build tools. In short, the
+small potential gains achieved in using compiler optimization are generally
+outweighed by the risk. First time builders of LFS are encouraged to build
+without custom optimizations. Your system will still be very fast and very
+stable at the same time.</para>
+
+<para>The order in which packages are installed in this chapter has
+to be strictly followed, to ensure that no program gets a path referring
+to <filename class="directory">/tools</filename> hard-wired into it.
+For the same reason, <emphasis>do not </emphasis> compile packages
+in parallel. Compiling in parallel may save you some time (especially on
+dual-CPU machines), but it could result in a program containing a
+hard-wired path to <filename class="directory">/tools</filename>,
+which will cause the program to stop working when that directory
+is removed.</para>
+
+</sect1>
+
+
+<sect1 id="ch06-chroot">
+<title>Entering the chroot environment</title>
+<?dbhtml filename="chroot.html" dir="chapter06"?>
+
+<para>It is time to enter the chroot environment in order to begin installing
+the packages we need. Before you can chroot, however, you need to become
+<emphasis>root</emphasis>, since only <emphasis>root</emphasis>
+can execute the <userinput>chroot</userinput> command.</para>
+
+<para>Just like earlier, ensure the LFS environment variable is set up properly
+by running <userinput>echo $LFS</userinput> and ensuring it shows the path to
+your LFS partition's mount point, which is
+<filename class="directory">/mnt/lfs</filename> if you followed our
+example.</para>
+
+<para>Become <emphasis>root</emphasis> and run the following command
+to enter the chroot environment:</para>
+
+<screen><userinput>chroot $LFS /tools/bin/env -i \
+&nbsp;&nbsp;&nbsp;&nbsp;HOME=/root TERM=$TERM PS1='\u:\w\$ ' \
+&nbsp;&nbsp;&nbsp;&nbsp;PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin \
+&nbsp;&nbsp;&nbsp;&nbsp;/tools/bin/bash --login</userinput></screen>
+
+<para>The <userinput>-i</userinput> option given to the
+<userinput>env</userinput> command will clear all variables of the chroot
+environment. After that, only the HOME, TERM, PS1 and PATH variables are
+set again. The TERM=$TERM construct will set the TERM variable inside chroot
+to the same value as outside chroot; this variable is needed for programs
+like <userinput>vim</userinput> and <userinput>less</userinput> to operate
+properly. If you need other variables present, such as CFLAGS or CXXFLAGS,
+this is a good place to set them again.</para>
+
+<para>From this point on there's no need to use the LFS variable anymore,
+because everything you do will be restricted to the LFS file system -- since
+what the shell thinks is <filename class="directory">/</filename> is actually
+the value of <filename class="directory">$LFS</filename>, which was passed to
+the chroot command.</para>
+
+<para>Notice that <filename class="directory">/tools/bin</filename> comes
+last in the PATH. This means that a temporary tool will not be used any more
+as soon as its final version is installed.  Well, at least when the shell
+doesn't remember the locations of executed binaries -- for this reason hashing
+is switched off a bit further on.</para>
+
+<para>You have to make sure all the commands in the rest of this chapter and
+in the following chapters are run from within the chroot environment.
+If you ever leave this environment for any reason (rebooting for example),
+you must remember to again enter chroot and mount the proc and devpts
+filesystems (discussed later) before continuing with the installations.</para>
+
+<para>Note that the bash prompt will say "I have no name!" This is
+normal, as the <filename>/etc/passwd</filename> file has not been
+created yet.</para>
+
+</sect1>
+
+
+<sect1 id="ch06-changingowner">
+<title>Changing ownership</title>
+<?dbhtml filename="changingowner.html" dir="chapter06"?>
+
+<para>Right now the <filename class="directory">/tools</filename> directory
+is owned by the user <emphasis>lfs</emphasis>, a user that exists only on your
+host system. Although you will probably want to delete the
+<filename class="directory">/tools</filename> directory once you have
+finished your LFS system, you may want to keep it around, for example to
+build more LFS systems. But if you keep the
+<filename class="directory">/tools</filename> directory as it is, you end up
+with files owned by a user ID without a corresponding account. This is
+dangerous because a user account created later on could get this same user ID
+and would suddenly own the <filename class="directory">/tools</filename>
+directory and all the files therein, thus exposing these files to possible
+malicious manipulation.</para>
+
+<para>To avoid this issue, you could add the <emphasis>lfs</emphasis> user to
+your new LFS system later on when creating the <filename>/etc/passwd</filename>
+file, taking care to assign it the same user and group IDs as on your host
+system. Alternatively, you can (and the book assumes you do) assign the
+contents of the <filename class="directory">/tools</filename> directory to
+user <emphasis>root</emphasis> by running the following command:</para>
+
+<screen><userinput>chown -R 0:0 /tools</userinput></screen>
+
+<para>The command uses "0:0" instead of "root:root", because
+<userinput>chown</userinput> is unable to resolve the name "root" until the
+password file has been created.</para>
+
+</sect1>
+
+
+<sect1 id="ch06-creatingdirs">
+<title>Creating directories</title>
+<?dbhtml filename="creatingdirs.html" dir="chapter06"?>
+
+<para>Let's now create some structure in our LFS file system. Let's create
+a directory tree. Issuing the following commands will create a more or less
+standard tree:</para>
+ 
+<screen><userinput>mkdir -p /{bin,boot,dev/{pts,shm},etc/opt,home,lib,mnt,proc} 
+mkdir -p /{root,sbin,tmp,usr/local,var,opt}
+for dirname in /usr /usr/local
+&nbsp;&nbsp;&nbsp;&nbsp;do
+&nbsp;&nbsp;&nbsp;&nbsp;mkdir $dirname/{bin,etc,include,lib,sbin,share,src}
+&nbsp;&nbsp;&nbsp;&nbsp;ln -s share/{man,doc,info} $dirname
+&nbsp;&nbsp;&nbsp;&nbsp;mkdir $dirname/share/{dict,doc,info,locale,man}
+&nbsp;&nbsp;&nbsp;&nbsp;mkdir $dirname/share/{nls,misc,terminfo,zoneinfo}
+&nbsp;&nbsp;&nbsp;&nbsp;mkdir $dirname/share/man/man{1,2,3,4,5,6,7,8}
+done
+mkdir /var/{lock,log,mail,run,spool}
+mkdir -p /var/{tmp,opt,cache,lib/misc,local}
+mkdir /opt/{bin,doc,include,info}
+mkdir -p /opt/{lib,man/man{1,2,3,4,5,6,7,8}}</userinput></screen>
+
+<para>Directories are, by default, created with permission mode 755, but this
+isn't desirable for all directories. We will make two changes: one to the home
+directory of <emphasis>root</emphasis>, and another to the directories for
+temporary files.</para>
+
+<screen><userinput>chmod 0750 /root
+chmod 1777 /tmp /var/tmp</userinput></screen>
+
+<para>The first mode change ensures that not just anybody can enter the
+<filename class="directory">/root</filename> directory -- the same
+as a normal user would do with his or her home directory.
+The second mode change makes sure that any user can write to the
+<filename class="directory">/tmp</filename> and
+<filename class="directory">/var/tmp</filename> directories, but
+cannot remove other users' files from them. The latter is prohibited
+by the so-called "sticky bit" -- the highest bit in the 1777 bit mask.</para>
+
+<sect2>
+<title>FHS compliance note</title>
+
+<para>We have based our directory tree on the FHS standard (available at
+<ulink url="http://www.pathname.com/fhs/"/>). Besides the above created
+tree this standard stipulates the existence of
+<filename class="directory">/usr/local/games</filename> and
+<filename class="directory">/usr/share/games</filename>, but we don't
+much like these for a base system. However, feel free to make your system
+FHS-compliant. As to the structure of the
+<filename class="directory">/usr/local/share</filename> subdirectory, the FHS
+isn't precise, so we created here the directories that we think are needed.</para>
+
+</sect2>
+
+</sect1>
+
+
 &c6-mountproc;
-&c6-createfiles;
-&c6-pwdgroup;
+
+
+<sect1 id="ch06-createfiles">
+<title>Creating essential symlinks</title>
+<?dbhtml filename="createfiles.html" dir="chapter06"?>
+
+<para>Some programs hard-wire paths to programs which don't exist yet. In
+order to satisfy these programs, we create a number of symbolic links which
+will be replaced by real files throughout the course of this chapter when
+we're installing all the software.</para>
+
+<screen><userinput>ln -s /tools/bin/{bash,cat,pwd,stty} /bin
+ln -s /tools/bin/perl /usr/bin
+ln -s /tools/lib/libgcc_s.so.1 /usr/lib
+ln -s bash /bin/sh</userinput></screen>
+
+</sect1>
+
+
+<sect1 id="ch06-pwdgroup">
+<title>Creating the passwd and group files</title>
+<?dbhtml filename="pwdgroup.html" dir="chapter06"?>
+
+<para>In order for <emphasis>root</emphasis> to be able to login and for the 
+name "root" to be recognized, there need to be relevant entries in the 
+<filename>/etc/passwd</filename> and <filename>/etc/group</filename> files.</para>
+
+<para>Create the <filename>/etc/passwd</filename> file by running the following 
+command:</para>
+
+<screen><userinput>cat &gt; /etc/passwd &lt;&lt; "EOF"</userinput>
+root:x:0:0:root:/root:/bin/bash
+<userinput>EOF</userinput></screen>
+
+<para>The actual password for <emphasis>root</emphasis> (the "x" here is just a 
+placeholder) will be set later.</para>
+
+<para>Create the <filename>/etc/group</filename> file by running the following 
+command:</para>
+
+<screen><userinput>cat &gt; /etc/group &lt;&lt; "EOF"</userinput>
+root:x:0:
+bin:x:1:
+sys:x:2:
+kmem:x:3:
+tty:x:4:
+tape:x:5:
+daemon:x:6:
+floppy:x:7:
+disk:x:8:
+lp:x:9:
+dialout:x:10:
+audio:x:11:
+<userinput>EOF</userinput></screen>
+
+<para>The created groups aren't part of any standard -- they are the groups 
+that the MAKEDEV script in the next section uses. Besides the group "root", the 
+LSB (<ulink url="http://www.linuxbase.org"/>) recommends only a group "bin", 
+with a GID of 1, be present. All other group names and GIDs can be chosen 
+freely by the user, as well-written packages don't depend on GID numbers but 
+use the group's name.</para>
+
+<para>Lastly, we re-login to the chroot environment.  User name and group name
+resolution will start working immediately after the 
+<filename>/etc/passwd</filename> and <filename>/etc/group</filename> files are 
+created, because we installed a full Glibc in Chapter 5.  This will get rid of 
+the <quote>I have no name!</quote> prompt.</para>
+
+<screen><userinput>exec /tools/bin/bash --login +h</userinput></screen>
+
+<para>Note the use of the <userinput>+h</userinput> directive. This tells
+<userinput>bash</userinput> not to use its internal path hashing. Without this
+directive, <userinput>bash</userinput> would remember the paths to binaries it
+has executed. Since we want to use our newly compiled binaries as soon as
+they are installed, we turn off this function for the duration of this
+chapter.</para>
+
+</sect1>
+
+
 &c6-makedev;
 &c6-kernel;
 &c6-manpages;
 &c6-glibc;
-&c6-adjustingtoolchain;
+
+
+<sect1 id="ch06-adjustingtoolchain">
+<title>Re-adjusting the toolchain</title>
+<?dbhtml filename="adjustingtoolchain.html" dir="chapter06"?>
+
+<para>Now that the new C libraries have been installed, it's time to re-adjust
+our toolchain. We'll adjust it so that it will link any newly compiled program
+against the new C libraries. Basically, this is the reverse of what we did
+in the "locking in" stage in the beginning of the previous chapter.</para>
+
+<para>The first thing to do is to adjust the linker. For this we retained the
+source and build directories from the second pass over Binutils. Install the
+adjusted linker by running the following from within the
+<filename class="directory">binutils-build</filename> directory:</para>
+
+<screen><userinput>make -C ld INSTALL=/tools/bin/install install</userinput></screen>
+
+<note><para>If you somehow missed the earlier warning to retain the Binutils
+source and build directories from the second pass in Chapter 5 or otherwise
+accidentally deleted them or just don't have access to them, don't worry, all is
+not lost. Just ignore the above command. The result will be that the next
+package, Binutils, will link against the Glibc libraries in
+<filename class="directory">/tools</filename> rather than
+<filename class="directory">/usr</filename>. This is not ideal, however, our
+testing has shown that the resulting Binutils program binaries should be
+identical.</para></note>
+
+<para>From now on every compiled program will link <emphasis>only</emphasis>
+against the libraries in <filename>/usr/lib</filename> and
+<filename>/lib</filename>. The extra
+<userinput>INSTALL=/tools/bin/install</userinput> is needed because the Makefile
+created during the second pass still contains the reference to
+<filename>/usr/bin/install</filename>, which we obviously haven't installed yet.
+Some host distributions contain a <filename class="symlink">ginstall</filename>
+symbolic link which takes precedence in the Makefile and thus can cause a
+problem here. The above command takes care of this also.</para>
+
+<para>You can now remove the Binutils source and build directories.</para>
+
+<para>The next thing to do is to amend our GCC specs file so that it points
+to the new dynamic linker. Just like earlier on, we use a sed to accomplish
+this:</para>
+
+<!-- Ampersands are needed to allow cut and paste -->
+
+<screen><userinput>SPECFILE=/tools/lib/gcc-lib/*/*/specs &amp;&amp;
+sed -e 's@ /tools/lib/ld-linux.so.2@ /lib/ld-linux.so.2@g' \
+&nbsp;&nbsp;&nbsp;&nbsp;$SPECFILE &gt; newspecfile &amp;&amp;
+mv -f newspecfile $SPECFILE &amp;&amp;
+unset SPECFILE</userinput></screen>
+
+<para>Again, cutting and pasting the above is recommended. And just like
+before, it is a good idea to check the specs file to ensure the intended
+changes were actually made.</para>
+
+<important><para>If you are working on a platform where the name of the dynamic
+linker is something other than <filename>ld-linux.so.2</filename>, you
+<emphasis>must</emphasis> substitute <filename>ld-linux.so.2</filename> with the
+name of your platform's dynamic linker in the above commands. Refer back to
+<xref linkend="ch05-toolchaintechnotes"/> if necessary.</para></important>
+
+<!-- HACK - Force some whitespace to appease tidy -->
+<literallayout></literallayout>
+
+<caution><para>It is imperative at this point to stop and ensure that the
+basic functions (compiling and linking) of the adjusted toolchain are working
+as expected. For this we are going to perform a simple sanity check:</para>
+
+<screen><userinput>echo 'main(){}' &gt; dummy.c
+gcc dummy.c
+readelf -l a.out | grep ': /lib'</userinput></screen>
+
+<para>If everything is working correctly, there should be no errors, and the
+output of the last command will be:</para>
+
+<blockquote><screen>[Requesting program interpreter: /lib/ld-linux.so.2]</screen></blockquote>
+
+<para>If you did not receive the output as shown above, or received no output at
+all, then something is seriously wrong. You will need to investigate and retrace
+your steps to find out where the problem is and correct it. There is no point in
+continuing until this is done. Most likely something went wrong with the specs
+file amendment above. Note especially that <filename>/lib</filename> now appears
+as the prefix of our dynamic linker. Of course, if you are working on a platform
+where the name of the dynamic linker is something other than
+<filename>ld-linux.so.2</filename>, then the output will be slightly
+different.</para>
+
+<para>Once you are satisfied that all is well, clean up the test files:</para>
+
+<screen><userinput>rm dummy.c a.out</userinput></screen>
+</caution>
+
+<!-- HACK - Force some whitespace to appease tidy -->
+<literallayout></literallayout>
+
+</sect1>
+
+
 &c6-binutils;
 &c6-gcc;
+
 &c6-coreutils;
 &c6-zlib;
 &c6-lfs-utils;
@@ -61,8 +425,30 @@
 &c6-tar;
 &c6-utillinux;
 &c6-gcc-2953;
-&c6-revisedchroot;
+
+
+<sect1 id="ch06-revisedchroot">
+<title>Revised chroot command</title>
+<?dbhtml filename="revisedchroot.html" dir="chapter06"?>
+
+<para>From now on when you exit the chroot environment and wish to re-enter
+it, you should run the following modified chroot command:</para>
+
+<screen><userinput>chroot $LFS /usr/bin/env -i \
+&nbsp;&nbsp;&nbsp;&nbsp;HOME=/root TERM=$TERM PS1='\u:\w\$ ' \
+&nbsp;&nbsp;&nbsp;&nbsp;PATH=/bin:/usr/bin:/sbin:/usr/sbin \
+&nbsp;&nbsp;&nbsp;&nbsp;/bin/bash --login</userinput></screen>
+
+<para>The reason being there is no longer any need to use programs from the
+<filename class="directory">/tools</filename> directory. However, we don't
+want to remove the <filename class="directory">/tools</filename> directory
+just yet. There is still some use for it towards the end of the book.</para>
+
+</sect1>
+
+
 &c6-bootscripts;
+&c6-aboutdebug;
 
 </chapter>
 
