@@ -7,7 +7,7 @@
 
   <xsl:output method="text"/>
 
-  <xsl:param name="links.directory">lfs/cvs/testing/</xsl:param>
+  <xsl:param name="links.directory">lfs/cvs/unstable/</xsl:param>
   <xsl:param name="deep.to.downloads">../../../</xsl:param>
 
   <xsl:template match="/">
