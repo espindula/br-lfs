@@ -23,7 +23,7 @@ Since the packages compiled here are merely temporary, we don't want
 them to pollute the soon-to-be LFS system.</para>
 
 <para>The build instructions assume that you are using the
-<userinput>bash</userinput> shell. It is also expected that you have already
+<command>bash</command> shell. It is also expected that you have already
 unpacked a source package (while logged in as user <emphasis>lfs</emphasis> --
 explained shortly) and performed a <userinput>cd</userinput> into the source
 directory of a package before issuing its build commands.</para>
@@ -100,7 +100,7 @@ something completely different. You should be able to determine the name
 of your platform's dynamic linker by looking in the
 <filename class="directory">/lib</filename> directory on your host system. A
 surefire way is to inspect a random binary from your host system by running:
-<userinput>'readelf -l &lt;name of binary&gt; | grep interpreter'</userinput>
+<userinput>readelf -l &lt;name of binary&gt; | grep interpreter</userinput>
 and noting the output. The authoritative reference covering all platforms is in
 the <filename>shlib-versions</filename> file in the root of the Glibc source
 tree.</para>
@@ -118,14 +118,14 @@ into the same prefix work in cooperation and thus utilize a little GNU
 path to ensure programs are linked only against libraries we
 choose.</para></listitem>
 
-<listitem><para>Careful manipulation of <userinput>gcc</userinput>'s
+<listitem><para>Careful manipulation of <command>gcc</command>'s
 <emphasis>specs</emphasis> file to tell the compiler which target dynamic
 linker will be used.</para></listitem>
 </itemizedlist>
 
 <para>Binutils is installed first because both GCC and Glibc perform various
 feature tests on the assembler and linker during their respective runs of
-<userinput>./configure</userinput> to determine which software features to enable
+<command>./configure</command> to determine which software features to enable
 or disable. This is more important than one might first realize. An incorrectly
 configured GCC or Glibc can result in a subtly broken toolchain where the impact
 of such breakage might not show up until near the end of the build of a whole
@@ -137,43 +137,43 @@ much time is wasted.</para>
 <filename class="directory">/tools/$TARGET_TRIPLET/bin</filename>. In reality,
 the tools in one location are hard linked to the other. An important facet of
 the linker is its library search order. Detailed information can be obtained
-from <userinput>ld</userinput> by passing it the <emphasis>--verbose</emphasis>
-flag. For example: <userinput>'ld --verbose | grep SEARCH'</userinput> will
+from <command>ld</command> by passing it the <emphasis>--verbose</emphasis>
+flag. For example: <command>ld --verbose | grep SEARCH</command> will
 show you the current search paths and their order. You can see what files are
-actually linked by <userinput>ld</userinput> by compiling a dummy program and
-passing the <emphasis>--verbose</emphasis> switch. For example:
-<userinput>'gcc dummy.c -Wl,--verbose 2>&amp;1 | grep succeeded'</userinput>
-will show you all the files successfully opened during the link.</para>
+actually linked by <command>ld</command> by compiling a dummy program and
+passing the <emphasis>--verbose</emphasis> switch to the linker. For example:
+<command>gcc dummy.c -Wl,--verbose 2>&amp;1 | grep succeeded</command>
+will show you all the files successfully opened during the linking.</para>
 
 <para>The next package installed is GCC and during its run of
-<userinput>./configure</userinput> you'll see, for example:</para>
+<command>./configure</command> you'll see, for example:</para>
 
 <blockquote><screen>checking what assembler to use... /tools/i686-pc-linux-gnu/bin/as
 checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</screen></blockquote>
 
 <para>This is important for the reasons mentioned above. It also demonstrates
 that GCC's configure script does not search the $PATH directories to find which
-tools to use. However, during the actual operation of <userinput>gcc</userinput>
+tools to use. However, during the actual operation of <command>gcc</command>
 itself, the same search paths are not necessarily used. You can find out which
-standard linker <userinput>gcc</userinput> will use by running:
-<userinput>'gcc -print-prog-name=ld'</userinput>.
-Detailed information can be obtained from <userinput>gcc</userinput> by passing
+standard linker <command>gcc</command> will use by running:
+<command>gcc -print-prog-name=ld</command>.
+Detailed information can be obtained from <command>gcc</command> by passing
 it the <emphasis>-v</emphasis> flag while compiling a dummy program. For
-example: <userinput>'gcc -v dummy.c'</userinput> will show you detailed
+example: <command>gcc -v dummy.c</command> will show you detailed
 information about the preprocessor, compilation and assembly stages, including
-<userinput>gcc</userinput>'s include search paths and their order.</para>
+<command>gcc</command>'s include search paths and their order.</para>
  
 <para>The next package installed is Glibc. The most important considerations for
 building Glibc are the compiler, binary tools and kernel headers. The compiler
-is generally no problem as Glibc will always use the <userinput>gcc</userinput>
+is generally no problem as Glibc will always use the <command>gcc</command>
 found in a $PATH directory. The binary tools and kernel headers can be a little
 more troublesome. Therefore we take no risks and use the available configure
 switches to enforce the correct selections. After the run of
-<userinput>./configure</userinput> you can check the contents of the
+<command>./configure</command> you can check the contents of the
 <filename>config.make</filename> file in the
 <filename class="directory">glibc-build</filename> directory for all the
 important details. You'll note some interesting items like the use of
-<userinput>CC="gcc -B/tools/bin/"</userinput> to control which binary tools are
+<emphasis>CC="gcc -B/tools/bin/"</emphasis> to control which binary tools are
 used, and also the use of the <emphasis>-nostdinc</emphasis> and
 <emphasis>-isystem</emphasis> flags to control the compiler's include search
 path. These items help to highlight an important aspect of the Glibc package:
@@ -182,18 +182,17 @@ not rely on toolchain defaults.</para>
 
 <para>After the Glibc installation, we make some adjustments to ensure that
 searching and linking take place only within our <filename>/tools</filename>
-prefix. We install an adjusted <userinput>ld</userinput>, which has a hard-wired
+prefix. We install an adjusted <command>ld</command>, which has a hard-wired
 search path limited to <filename class="directory">/tools/lib</filename>. Then
-we amend <userinput>gcc</userinput>'s specs file to point to our new dynamic
+we amend <command>gcc</command>'s specs file to point to our new dynamic
 linker in <filename class="directory">/tools/lib</filename>. This last step is
 <emphasis>vital</emphasis> to the whole process. As mentioned above, a
 hard-wired path to a dynamic linker is embedded into every ELF shared
 executable. You can inspect this by running:
-<userinput>'readelf -l &lt;name of binary&gt; | grep interpreter'</userinput>.
-By amending <userinput>gcc</userinput>'s specs file, we are ensuring that every
-program compiled from here through the end of <xref linkend="chapter05"/> will
-use our new dynamic linker in
-<filename class="directory">/tools/lib</filename>.</para>
+<command>readelf -l &lt;name of binary&gt; | grep interpreter</command>.
+By amending <command>gcc</command>'s specs file, we are ensuring that every
+program compiled from here through the end of this chapter will use our new
+dynamic linker in <filename class="directory">/tools/lib</filename>.</para>
 
 <para>The need to use the new dynamic linker is also the reason why we apply the
 Specs patch for the second pass of GCC. Failure to do so will result in the GCC
@@ -203,7 +202,7 @@ would defeat our goal of getting away from the host.</para>
 
 <para>During the second pass of Binutils, we are able to utilize the
 <emphasis>--with-lib-path</emphasis> configure switch to control
-<userinput>ld</userinput>'s library search path. From this point onwards, the
+<command>ld</command>'s library search path. From this point onwards, the
 core toolchain is self-contained and self-hosted. The remainder of the
 <xref linkend="chapter05"/> packages all build against the new Glibc in
 <filename class="directory">/tools</filename> and all is well.</para>
@@ -213,7 +212,7 @@ first major package we install is Glibc, due to its self-sufficient nature that
 we mentioned above. Once this Glibc is installed into
 <filename class="directory">/usr</filename>, we perform a quick changeover of
 the toolchain defaults, then proceed for real in building the rest of the
-target <xref linkend="chapter06"/> LFS system.</para>
+target LFS system.</para>
 
 <sect2>
 <title>Notes on static linking</title>
@@ -288,7 +287,7 @@ partition:</para>
 
 <screen><userinput>ln -s $LFS/tools /</userinput></screen>
 
-<note><para>The above command is correct. The <userinput>ln</userinput> command
+<note><para>The above command is correct. The <command>ln</command> command
 has a few syntactic variations, so be sure to check the info page before
 reporting what you may think is an error.</para></note>
 
@@ -349,8 +348,8 @@ user command:</para>
 
 <screen><userinput>su - lfs</userinput></screen>
 
-<para>The "<userinput>-</userinput>" instructs <userinput>su</userinput> to
-start a <emphasis>login</emphasis> shell.</para>
+<para>The "<command>-</command>" instructs <command>su</command> to start a
+<emphasis>login</emphasis> shell.</para>
 
 </sect1>
 
@@ -360,7 +359,7 @@ start a <emphasis>login</emphasis> shell.</para>
 <?dbhtml filename="settingenvironment.html" dir="chapter05"?>
 
 <para>We're going to set up a good working environment by creating two new
-startup files for the <userinput>bash</userinput> shell. While logged in as
+startup files for the <command>bash</command> shell. While logged in as
 user <emphasis>lfs</emphasis>, issue the following command to create a new
 <filename>.bash_profile</filename>:</para>
 
@@ -372,7 +371,7 @@ exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
 the initial shell is a <emphasis>login</emphasis> shell which reads the
 <filename>/etc/profile</filename> of your host (probably containing some
 settings of environment variables) and then <filename>.bash_profile</filename>.
-The <userinput>exec env -i ... /bin/bash</userinput> command in the latter file
+The <command>exec env -i ... /bin/bash</command> command in the latter file
 replaces the running shell with a new one with a completely empty environment,
 except for the HOME, TERM and PS1 variables. This ensures that no unwanted and
 potentially hazardous environment variables from the host system leak into our
@@ -393,15 +392,15 @@ PATH=/tools/bin:/bin:/usr/bin
 export LFS LC_ALL PATH
 <userinput>EOF</userinput></screen>
 
-<para>The <userinput>set +h</userinput> command turns off
-<userinput>bash</userinput>'s hash function. Normally hashing is a useful
-feature: <userinput>bash</userinput> uses a hash table to remember the
+<para>The <command>set +h</command> command turns off
+<command>bash</command>'s hash function. Normally hashing is a useful
+feature: <command>bash</command> uses a hash table to remember the
 full pathnames of executable files to avoid searching the PATH time and time
 again to find the same executable. However, we'd like the new tools to be
 used as soon as they are installed. By switching off the hash function, our
-"interactive" commands (<userinput>make</userinput>,
-<userinput>patch</userinput>, <userinput>sed</userinput>,
-<userinput>cp</userinput> and so forth) will always use
+"interactive" commands (<command>make</command>,
+<command>patch</command>, <command>sed</command>,
+<command>cp</command> and so forth) will always use
 the newest available version during the build process.</para>
 
 <para>Setting the user file-creation mask to 022 ensures that newly created
@@ -519,8 +518,8 @@ appears as the prefix of our dynamic linker. If you did not receive the output
 as shown above, or received no output at all, then something is seriously wrong.
 You will need to investigate and retrace your steps to find out where the
 problem is and correct it. There is no point in continuing until this is done.
-First, redo the sanity check using <userinput>gcc</userinput> instead of
-<userinput>cc</userinput>. If this works it means the
+First, redo the sanity check using <command>gcc</command> instead of
+<command>cc</command>. If this works it means the
 <filename class="symlink">/tools/bin/cc</filename> symlink is missing. Revisit
 <xref linkend="ch-tools-gcc-pass1"/> and fix the symlink. Second, ensure your $PATH
 is correct. You can check this by running <userinput>echo $PATH</userinput> and
@@ -587,7 +586,7 @@ that it doesn't recognize their file format. Most of them are scripts instead
 of binaries.</para>
 
 <para>Take care <emphasis>not</emphasis> to use
-<userinput>--strip-unneeded</userinput> on the libraries -- they would be
+<emphasis>--strip-unneeded</emphasis> on the libraries -- they would be
 destroyed and you would have to build Glibc all over again.</para>
 
 <para>To save another couple of megabytes, you can throw away all the
