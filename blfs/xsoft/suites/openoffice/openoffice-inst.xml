@@ -1,30 +1,70 @@
 <sect2>
 <title>Installation de openoffice</title>
 
-<para>Installez openoffice en lançant les commandes suivantes:</para>
+<para>Note that openoffice has problems with <userinput>bison-1.875</userinput>. Downgrade to
+<userinput>bison-1.75</userinput> or install bison-1.75 with an alternate
+prefix (e.g. /opt/bison-1.75) and put $bison_prefix/bin as the first
+entry in the PATH.</para>
 
-<para><screen><userinput>
-mv ../gpc231/gpc.* external/gpc &amp;&amp;
-patch -Np1 -i ../openoffice-1.0.1.patch &amp;&amp;
-cd config_office/ &amp;&amp;
-autoconf &amp;&amp;
-./configure --enable-gcc3 --with-jdk-home=${JAVA_HOME} \
---with-lang=ENUS --with-x --with-stlport4-home=/usr &amp;&amp;
+<para>Apply the downloaded patches and copy gpc files.</para>
+
+<para><screen><userinput>mv ../gpc231/* external/gpc &amp;&amp;
+rm -rf ../gpc231 &amp;&amp;
+for p in ../openoffice-&openoffice-version;-*.patch
+do patch -Np1 -i $p
+done</userinput></screen></para>
+
+<para>The optimization flags need to be manually added.</para>
+
+<para><screen><userinput>cd solenv/inc &amp;&amp;
+cp unxlngi3.mk unxlngi3.mk.orig &amp;&amp;
+sed -e "s:^CFLAGSOPT=.*:CFLAGSOPT=${CFLAGS}:g" \
+unxlngi3.mk.orig &gt; unxlngi3.mk &amp;&amp;
+cp unxlngi4.mk unxlngi4.mk.orig &amp;&amp;
+sed -e "s:^CFLAGSOPT=.*:CFLAGSOPT=${CFLAGS}:g" \
+-e "s:\-mcpu=pentiumpro::" \
+unxlngi4.mk.orig &gt; unxlngi4.mk &amp;&amp;
+cd ../..</userinput></screen></para>
+
+<para>Configure openoffice using the following commands. You may add additional
+languages based on your preferences. If a particuar component is not available
+in the language of your choice, the default will be English.</para>
+
+<para><screen><userinput>cd config_office/ &amp;&amp;
+./configure --with-lang=ENUS --with-stlport4-home=/usr &amp;&amp;
 cd .. &amp;&amp;
-mkdir -p solver/641/unxlngi4.pro/inc/ &amp;&amp;
-touch solver/641/unxlngi4.pro/inc/minormkchanged.flg &amp;&amp;
-mkdir -p solver/641/unxlngi4.pro/lib/ &amp;&amp;
-cp -f /usr/lib/libstdc++.so.5* /usr/lib/libgcc_s.so* \
-solver/641/unxlngi4.pro/lib/ &amp;&amp;
-chmod +x solenv/bin/zipdep.pl &amp;&amp;
-tcsh -c "source LinuxIntelEnv.Set; ./bootstrap" &amp;&amp;
-tcsh -c "source LinuxIntelEnv.Set; dmake" &amp;&amp;
+source LinuxIntelEnv.Set.sh</userinput></screen></para>
+
+<para>Compile openoffice using the following commands.</para>
+
+<para><screen><userinput>./bootstrap &amp;&amp;
+dmake</userinput></screen></para>
+
+<para>If you have downloaded localized helpcontent zip files, you will need
+to unzip them to the appropriate directory as mentioned below and then recreate
+the installation set.</para>
+
+<para><screen><userinput>cd solver/641/unxlngi4.pro/pck &amp;&amp;
+for i in $(ls ../../../../../helpcontent_*_unix.tgz)
+do
+tar -xvzf $i
+done &amp;&amp;
+cd ../../../../instsetoo &amp;&amp;
+rm -rf unxlngi4.pro &amp;&amp;
+dmake &amp;&amp;
+cd ..</userinput></screen></para>
+
+<para>Install OpenOffice using the following commands. The following commands
+install the English language set. To install a localized version, replace the
+01 by the international telephone country code for your country. Note that when
+installing, it needs a X Display, evn though there is no visible X window. You
+can use Xvfb if you are compiling on a console.</para>
+
+<para><screen><userinput>cd instsetoo/unxlngi4.pro/01/normal &amp;&amp;
 ./install --prefix=/opt &amp;&amp;
-for appl in swriter scalc sdraw simpress smath soffice; do \
-ln -sf /opt/openoffice/program/$appl /usr/X11R6/bin/$appl; done
-
-</userinput></screen></para>
-
+for appl in swriter scalc sdraw simpress smath soffice
+do ln -sf /opt/openoffice/program/$appl /usr/bin/$appl
+done</userinput></screen></para>
 
 </sect2>
 
