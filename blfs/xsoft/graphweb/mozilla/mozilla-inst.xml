@@ -1,8 +1,7 @@
 <sect2>
 <title>Installation de mozilla</title>
 
-<para>Installez mozilla en lançant les commandes suivantes (n'oubliez pas
-d'utiliser bunzip2 pour le correctif):</para>
+<para>Installez mozilla en lançant les commandes suivantes:</para>
 
 <para><screen><userinput>export MOZILLA_OFFICIAL="1" &amp;&amp;
 export BUILD_OFFICIAL="1" &amp;&amp;
@@ -11,32 +10,51 @@ cd extensions &amp;&amp;
 rm -rf spellcheck &amp;&amp;
 tar -xjf ../../mozilla-&mozilla-version;-spellchecker.tar.bz2 &amp;&amp;
 cd .. &amp;&amp;
-patch -Np1 -i mozilla-&mozilla-version;.patch &amp;&amp;
-./configure --prefix=&mozilla-prefix; \
+for p in ../mozilla-&mozilla-version;-*.patch
+do patch -Np1 -i $p
+done</userinput></screen></para>
+
+<para>D'après les institutions financières, le correctif suivant rend votre
+navigateur non sécurisé. Vous avez été prévenu. Un grand nombre de sites utilise
+un indicatif MS-IE spécifique (autocomplete=off) pour empêcher la complétion
+automatique de fonctionner dans certaines formes. Cet indicatif est maintenant
+supporté par mozilla pour faire plaisir aux institutions financières. Quant aux
+nécessités des institutions financières, ils n'accepteront même pas une solution
+où ceci est une préférence, une option. Néanmoins, notre opinion est que ceci
+est l'affaire de l'utilisateur. Pour activer la complétion automatique et passer
+cette restriction, nous avons besoin de faire une légère modification dans le
+code.</para>
+
+<para>Ouvrez le fichier <filename>extensions/wallet/src/wallet.cpp</filename>
+à partir des sources mozilla et recherchez la ligne:
+<screen>#define WALLET_DONT_CACHE_ALL_PASSWORDS</screen>
+Alors supprimez ou mettez cette ligne en commentaire. Maintenant, si quelqu'un
+vous dit que MS-IE est facile d'utilisation, donnez cet exemple!</para>
+
+<para><screen><userinput>./configure --prefix=&mozilla-prefix; \
             --enable-default-mozilla-five-home \
+            --enable-toolkit-gtk2 --enable-default-toolkit=gtk2 \
             --with-x --with-system-zlib \
             --with-system-jpeg --with-system-png --with-system-mng \
             --enable-xft --enable-crypto \
             --enable-java-supplement \
-            --disable-jsd --disable-accessibility \
+            --disable-accessibility \
             --disable-tests --disable-debug \
-            --enable-optimize=-O3 --disable-dtd-debug \
+            --enable-optimize=-O3 \
             --disable-logging --enable-reorder \
             --enable-strip --enable-elf-dynstr-gc \
             --enable-cpp-rtti --enable-extensions=all,spellcheck \
-            --enable-svg
+            --enable-svg &amp;&amp;
 make &amp;&amp;
 make install &amp;&amp;
-install -d &mozilla-prefix;/include/mozilla-&mozilla-version;/security &amp;&amp;
-cp -Lf dist/private/security/*.h dist/public/security/*.h \
+install -d &mozilla-prefix;/include/mozilla-&mozilla-version;/nss &amp;&amp;
+cp -Lf dist/private/nss/*.h dist/public/nss/*.h \
    &mozilla-prefix;/include/mozilla-&mozilla-version;/security &amp;&amp;
 install -d &mozilla-prefix;/lib/mozilla-&mozilla-version;/openoffice &amp;&amp;
 cp -f dist/lib/libembed_base_s.a dist/lib/liblber50.a \
    dist/lib/libmozreg_s.a &mozilla-prefix;/lib/mozilla-&mozilla-version;/openoffice &amp;&amp;
 ln -nsf mozilla-&mozilla-version; &mozilla-prefix;/include/mozilla &amp;&amp;
 ln -nsf mozilla-&mozilla-version; &mozilla-prefix;/lib/mozilla &amp;&amp;
-ln -sf &mozilla-prefix;/bin/mozilla /usr/bin/mozilla &amp;&amp;
-ln -sf &mozilla-prefix;/bin/mozilla /usr/bin/netscape &amp;&amp;
 cd &mozilla-prefix;/lib/mozilla-&mozilla-version; &amp;&amp;
 export LD_LIBRARY_PATH="&mozilla-prefix;/lib/mozilla-&mozilla-version;" &amp;&amp;
 export MOZILLA_FIVE_HOME="&mozilla-prefix;/lib/mozilla-&mozilla-version;" &amp;&amp;
@@ -49,51 +67,24 @@ touch `find &mozilla-prefix;/lib/mozilla-&mozilla-version; -name *.rdf`</userinp
 <sect2>
 <title>Options supplémentaires</title>
 
-<para>Chacune de ces options peuvent être ajoutées à la ligne de configuration
-pour obtenir les effets décrits sur la compilation de mozilla.</para>
+<para>Chacune de ses options peut être ajoutée à la ligne de configure pour
+avoir l'effet décrit sur la compilation de mozilla.</para>
 
-<para><userinput>--disable-mailnews</userinput>: Désactive les clients mail et
+<para><userinput>--disable-mailnews</userinput> : Désactive les clients mail et
 news.</para>
 
-<para><userinput>--disable-ldap</userinput>: Désactive le support LDAP,
-recommandé si le mail est désactivé.</para>
+<para><userinput>--disable-ldap</userinput> : Désactive le support de LDAP,
+recommendé si le mail a été désactivé.</para>
 
-<para><userinput>--enable-calendar</userinput>: construit le client calendrier.
-Vous devez télécharger les sources du calendrier via cvs car il n'est pas
-inclus avec la version actuelle. (Attention, cette option n'est pas encore
-stable).</para>
+<para><userinput>--enable-calendar</userinput> : Construit le client pour le
+calendrier. Vous aurez besoin de télécharger les sources du calendrier via cvs
+car il n'est pas inclus avec les sources de cette version. (Attention, cette
+option n'est pas encore stable).</para>
 
-<para><userinput>--enable-xterm-updates</userinput>: Cette option active le
-titre xterm avec la commande courant lors de la compilation.</para>
+<para><userinput>--enable-xterm-updates</userinput> : Cette option active le
+titre du xterm avec la commande courante lors de la compilation.</para>
 
-<para><userinput>--enable-plaintext-editor-only</userinput>: Désactive le
-support d'édition de pages HTML.</para>
-
-<para><userinput>--enable-default-toolkit=gtk2</userinput>: En théorie,
-mozilla supporte maintenant à la fois gtk 1.2 et gtk 2.0. Pour activer le
-support de gtk2, utilisez cette option. Des gens ont néanmoins eu des
-problèmes pour obtenir une construction gtk2 stable même avec ce correctif.
-Il existe aussi un support pour d'autres boîtes à outils, mais ce support est
-reconnu comme instable. Si vous voulez en essayer un, nous vous suggérons
-de construire une version normale d'abord, puis seulement d'essayer les autres
-boîtes à outils.</para>
-
-<para>According to the financial institutions, the following hack makes your
-browser insecure. You have been warned. Many sites use an MS-IE specific tag 
-(autocomplete=off) to prevent autocomplete from working in some forms. This 
-tag is now supported in mozilla to appease the financial institutions. As per 
-the requirements of the financial institutions, they will not even accept a 
-solution where this a preference option. However our opinion is that it should 
-be in the hands of the user. To enable autocomplete to bypass
-this restriction, we need to make a slight modification in the code.</para>
-
-<para>Open the file <filename>extensions/wallet/src/wallet.cpp</filename> in
-the mozilla source tree and search for the line:
-<screen>#define WALLET_DONT_CACHE_ALL_PASSWORDS</screen>
-Then delete or comment out the line.  If anyone tells you MS-IE is user
-friendly, give them this example!  Note that unlike the patch referred to in
-the hint, the patch on the BLFS website does not contain this hack so you
-will need to enable it manually if you want it use it or download it from the
-hint site.</para>
+<para><userinput>--enable-plaintext-editor-only</userinput> : Désactive le
+support pour l'édition HTML.</para>
 
 </sect2>
