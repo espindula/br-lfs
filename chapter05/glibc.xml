@@ -13,11 +13,6 @@ Estimated required disk space:  &glibc-compsize-tools;</screen>
 <sect2>
 <title>Installation of Glibc</title>
 
-<para>Before starting to install Glibc, you must <userinput>cd</userinput>
-into the <filename>glibc-&glibc-version;</filename> directory and unpack
-Glibc-linuxthreads in that directory, not in the directory where you usually
-unpack all the sources.</para>
-
 <para>This package is known to behave badly when you have changed its
 default optimization flags (including the -march and -mcpu options).
 Therefore, if you have defined any environment variables that override
@@ -27,11 +22,6 @@ them when building Glibc.</para>
 <para>Basically, compiling Glibc in any other way than the book suggests
 is putting the stability of your system at risk.</para>
 
-<para>Glibc has a subtle problem when compiled with GCC &gcc-version;.
-Apply the following patch to fix this:</para>
-
-<screen><userinput>patch -Np1 -i ../&glibc-sscanf-patch;</userinput></screen>
-
 <para>The Glibc documentation recommends building Glibc outside of the source
 directory in a dedicated build directory:</para>
 
@@ -40,11 +30,11 @@ cd ../glibc-build</userinput></screen>
 
 <para>Next, prepare Glibc for compilation:</para>
 
-<screen><userinput>../glibc-&glibc-version;/configure --prefix=/tools \
-&nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
+<screen><userinput>../&glibc-dir;/configure --prefix=/tools \
+&nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons=linuxthreads \
 &nbsp;&nbsp;&nbsp;&nbsp;--with-headers=/tools/include \
 &nbsp;&nbsp;&nbsp;&nbsp;--with-binutils=/tools/bin \
-&nbsp;&nbsp;&nbsp;&nbsp;--without-gd</userinput></screen>
+&nbsp;&nbsp;&nbsp;&nbsp;--without-gd --without-cvs</userinput></screen>
 
 <para>The meaning of the configure options:</para>
 
@@ -53,8 +43,9 @@ cd ../glibc-build</userinput></screen>
 building of the libraries with profiling information. Omit this option if you
 plan to do profiling.</para></listitem>
 
-<listitem><para><userinput>--enable-add-ons</userinput>: This enables any
-add-ons that were installed with Glibc, in our case Linuxthreads.</para></listitem>
+<listitem><para><userinput>--enable-add-ons=linuxthreads</userinput>: This
+tells Glibc to use the Linuxthreads add-on as its threading
+library.</para></listitem>
 
 <listitem><para><userinput>--with-binutils=/tools/bin</userinput> and
 <userinput>--with-headers=/tools/include</userinput>: Strictly speaking
@@ -62,10 +53,16 @@ these switches are not required. But they ensure nothing can go wrong with
 regard to what kernel headers and Binutils programs get used during the
 Glibc build.</para></listitem>
 
-<listitem><para><userinput> --without-gd</userinput>: This switch ensures
+<listitem><para><userinput>--without-gd</userinput>: This switch ensures
 that we don't build the <userinput>memusagestat</userinput> program, which
 strangely enough insists on linking against the host's libraries (libgd,
 libpng, libz, and so forth).</para></listitem>
+
+<listitem><para><userinput>--without-cvs</userinput>: This is meant to prevent
+the Makefiles from attempting automatic CVS commits when using a CVS snapshot.
+But it's not actually needed these days. We use it because it silences an
+annoying but harmless warning about a missing <filename>autoconf</filename>
+program.</para></listitem>
 </itemizedlist>
 
 <para>During this stage you might see the following warning:</para>
@@ -158,15 +155,15 @@ command will do so:</para>
 
 <screen><userinput>make localedata/install-locales</userinput></screen>
 
-<para>An alternative to running the previous command is to install only
-those locales which you need or want. This can be achieved by using the
-<userinput>localedef</userinput> command. Information on this can be
-found in the <filename>INSTALL</filename> file in the
-<filename>glibc-&glibc-version;</filename> source. However, there are a number
-of locales that are essential for the tests of future packages to pass, in
-particular, the <emphasis>libstdc++</emphasis> tests from GCC.  The following
-instructions, instead of the install-locales target above, will install
-the minimum set of locales necessary for the tests to run successfully:</para>
+<para>An alternative to running the previous command is to install only those
+locales which you need or want. This can be achieved by using the
+<userinput>localedef</userinput> command. Information on this can be found in
+the <filename>INSTALL</filename> file in the Glibc source. However, there are
+a number of locales that are essential for the tests of future packages to
+pass, in particular, the <emphasis>libstdc++</emphasis> tests from GCC. The
+following instructions, instead of the install-locales target above, will
+install the minimum set of locales necessary for the tests to run
+successfully:</para>
 
 <screen><userinput>mkdir -p /tools/lib/locale
 localedef -i de_DE -f ISO-8859-1 de_DE
