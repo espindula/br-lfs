@@ -8,7 +8,10 @@ Based on the original lfs-chunked.xsl created by Matthew Burgess -->
                 version="1.0">
 
   	<!-- We use XHTML -->
+  <!--
   <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.65.1/xhtml/docbook.xsl"/>
+  -->
+  <xsl:import href="/usr/share/sgml/docbook/stylesheet/xsl/nwalsh/xhtml/docbook.xsl"/>
 
   <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
   <xsl:output method="html" encoding="ISO-8859-1" indent="no" />
