@@ -4,15 +4,18 @@
 <para>Les deux versions seront installées en parallèle. Vous pouvez choisir
 d'en garder une ou les deux.</para>
 
-<para>L'installation du <acronym>JDK</acronym> précompilé est facile, elle
-change le bit d'exécutable pour le fichier téléchargé, va dans le répertoire où
-vous souhaitez l'installer et exécute le fichier téléchargé.</para>
+<para>L'installation du <acronym>JDK</acronym> précompilé est facile&nbsp;: créez
+un répertoire d'installation, copiez le .bin ici et lancez les commandes
+suivantes.</para>
 
 <screen><userinput><command>VERSION=&j2sdk-bin-version; &amp;&amp;
 MV=`echo $VERSION | cut -d "_" -f 1,1` &amp;&amp;
 V=`echo ${VERSION} | sed -e "s/\./_/g"` &amp;&amp;
+sed -i "s:^PATH=.*::" j2sdk-${V}-linux-i?86.bin &amp;&amp;
 chmod +x j2sdk-${V}-linux-i?86.bin &amp;&amp;
-./j2sdk-${V}-linux-i?86.bin &amp;&amp;
+mkdir -p bin &amp;&amp;
+ln -sf /bin/true bin/more &amp;&amp;
+yes | PATH=$PWD/bin:$PATH ./j2sdk-${V}-linux-i?86.bin &amp;&amp;
 cd j2sdk${VERSION} &amp;&amp;
 install -d /opt/j2sdk/j2sdk-precompiled-${MV} &amp;&amp;
 mv * /opt/j2sdk/j2sdk-precompiled-${MV}</command></userinput></screen>
@@ -26,19 +29,22 @@ raisons de licence, passez directement à la section de configuration.</para>
 <screen><userinput>export JAVA_HOME=/opt/j2sdk/j2sdk-precompiled-${MV} &amp;&amp;
 export PATH=$PATH:${JAVA_HOME}/bin</userinput></screen>
 
-<para>Décompressez et appliquez le correctif aux sources:</para>
+<para>Décompressez les sources:</para>
 
 <screen><userinput><command>VERSION=&j2sdk-src-version; &amp;&amp;
 V=`echo $VERSION | sed -e "s/\./_/g"` &amp;&amp;
 unzip j2sdk-${V}-src-scsl.zip &amp;&amp;
 unzip j2sdk-${V}-mozilla_headers-unix.zip &amp;&amp;
-patch -Np1 -i j2sdk-${VERSION}-gcc33-1.patch &amp;&amp;
-patch -Np1 -i j2sdk-${VERSION}-fix-intl-files.patch &amp;&amp;
-patch -Np1 -i j2sdk-${VERSION}-link-missing-libs.patch &amp;&amp;
-patch -Np1 -i j2sdk-${VERSION}-remove-fixed-paths.patch &amp;&amp;
-patch -Np1 -i j2sdk-${VERSION}-syntax-fixes.patch &amp;&amp;
-patch -Np1 -i j2sdk-${VERSION}-motif-mkmsgcat.patch &amp;&amp;
-patch -Np1 -i j2sdk-${VERSION}-use-included-motif.patch</command></userinput></screen>
+unzip j2sdk-${V}-bin-scsl.zip</command></userinput></screen>
+
+<para>Appliquez tous les correctifs téléchargés ci-dessus.</para>
+
+<screen><userinput><command>for PATCH in fix-inline-asm-1 gcc33-1 motif-mkmsgcat \
+             remove-debug-image remove-fixed-paths-1 \
+             static_cxx
+do
+   patch -Np1 -i j2sdk-1.4.2-$PATCH.patch
+done</command></userinput></screen>
 
 <para>Mettez en place quelques variables qui modifieront la construction:</para>
 <screen><userinput><command>export ALT_BOOTDIR="$JAVA_HOME" &amp;&amp;
@@ -54,6 +60,10 @@ export ALT_MOZILLA_PATH=$PWD &amp;&amp;
 export INSANE=true &amp;&amp;
 export MAKE_VERBOSE=true &amp;&amp;
 export ALT_CACERTS_FILE=${ALT_BOOTDIR}/jre/lib/security/cacerts</command></userinput></screen>
+
+<warning><para>Initialiser CFLAGS/CXXFLAGS/LDFLAGS garantie l'échec de la construction.
+Si vous êtes intéressé par l'optimisation de la construction, initialisez
+OTHER_CFLAGS/OTHER_CXXFLAGS/OTHER_LDFLAGS à la place.</para></warning>
 
 <para>De plus, si vous souhaitez le faire en parallèle, ajoutez ce qui suit
 (ajustez <envar>MAKE_PARALLEL</envar> à votre appréciation):</para>
