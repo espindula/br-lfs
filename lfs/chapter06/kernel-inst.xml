@@ -18,22 +18,56 @@ longtemps, donc il existe une chance pour, quelque soit l'uid utilisé, celui-ci
 sera assigné à quelqu'un sur la machine, et cette personne disposera des droits
 d'écriture sur les sources du noyau.</para>
 
-<para>A la lumière de ceci, vous pourriez vouloir lancer <userinput>chown
-0.0</userinput> sur le répertoire linux-&kernel-version; pour vous assurer que
-tous les fichiers appartiennent bien à l'utilisateur <emphasis>root</emphasis>.
+<para>In light of this, you might want to run <userinput>chown -R 0:0</userinput>
+on the <filename>linux-&kernel-version;</filename> directory
+to ensure all files are owned by user <emphasis>root</emphasis>.</para>
+
+<para>Kernel header installation requires the <emphasis>pwd</emphasis> program.
+In the kernel source, the path to the pwd program is hard-wired as /bin/pwd.
+Create a symlink to account for that:</para>
+
+<para><screen><userinput>ln -s /static/bin/pwd /bin/pwd &amp;&amp;</userinput></screen></para>
+
+<para>Prepare for header installation:</para>
+
+<para><screen><userinput>make mrproper</userinput></screen></para>
+
+<para>This ensures that the kernel tree is absolutely clean. The kernel team
+recommends that this command be issued prior to <emphasis>each</emphasis> kernel
+compilation. You shouldn't rely on the source tree being clean after
+untarring.</para>
+
+<para>Créez le fichier <filename>include/linux/version.h</filename>:</para>
+
+<para><screen><userinput>make include/linux/version.h</userinput></screen></para>
+
+<para>Créez le lien symbolique spécifique à la plateforme
+<filename>include/asm</filename>:</para>
+
+<para><screen><userinput>make symlinks</userinput></screen></para>
+
+<para>Installez les fichiers d'entête spécifique à la plateforme:</para>
+
+<para><screen><userinput>cp -HR include/asm /usr/include &amp;&amp;
+cp -R include/asm-generic /usr/include</userinput></screen></para>
+
+<para>Installez les fichiers d'entête du noyau non spécifiques à la
+plateforme:</para>
+
+<para><screen><userinput>cp -R include/linux /usr/include</userinput></screen></para>
+
+<para>Certains fichiers d'entête du noyau font usage du fichier d'entête
+<filename>autoconf.h</filename>. Comme nous n'avons pas encore configuré le
+noyau, nous avons besoin de créer ce fichier nous-même pour éviter des erreurs
+de compilation. Créez un fichier autoconf.h vide:</para>
+
+<para><screen><userinput>touch /usr/include/linux/autoconf.h</userinput></screen></para>
+
+<para>Comme le lien symbolique <filename>/bin/pwd</filename> que nous avons
+créé précédemment était seulement temporaire, il peut maintenant être supprimé:
 </para>
 
-<para>Les entêtes du noyau sont installés en lançant les commandes suivantes:
-</para>
-
-<para><screen><userinput>ln -s /static/bin/pwd /bin/pwd &amp;&amp;
-make mrproper &amp;&amp;
-make include/linux/version.h &amp;&amp;
-make symlinks &amp;&amp;
-cp -HR include/asm /usr/include &amp;&amp;
-cp -R include/asm-generic /usr/include &amp;&amp;
-cp -R include/linux /usr/include &amp;&amp;
-touch /usr/include/linux/autoconf.h &amp;&amp;
-rm /bin/pwd</userinput></screen></para>
+<para><screen><userinput>rm /bin/pwd</userinput></screen></para>
 
 </sect2>
+
