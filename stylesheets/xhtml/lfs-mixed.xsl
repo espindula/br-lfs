@@ -25,16 +25,16 @@
   <!-- variablelist -->
   <xsl:template match="variablelist">
     <div class="{name(.)}">
-      <xsl:if test="title">
+      <xsl:if test="title | bridgehead">
         <xsl:choose>
           <xsl:when test="@role = 'materials'">
             <h2>
-              <xsl:value-of select="title"/>
+              <xsl:value-of select="title | bridgehead"/>
             </h2>
           </xsl:when>
           <xsl:otherwise>
             <h3>
-              <xsl:value-of select="title"/>
+              <xsl:value-of select="title | bridgehead"/>
             </h3>
           </xsl:otherwise>
         </xsl:choose>

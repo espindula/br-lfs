@@ -7,7 +7,7 @@
 
   <xsl:output method="text"/>
 
-  <xsl:param name="links.directory">lfs/cvs/unstable/</xsl:param>
+  <xsl:param name="links.directory">lfs/cvs/testing/</xsl:param>
   <xsl:param name="deep.to.downloads">../../../</xsl:param>
 
   <xsl:template match="/">
@@ -51,7 +51,7 @@
       </xsl:if>
       <xsl:text>/</xsl:text>
       <xsl:value-of select="substring-after(@url, $links.directory)"/>
-      <xsl:text> . &amp;&amp;&#x0a;</xsl:text>
+      <xsl:text> . &#x0a;</xsl:text>
     </xsl:if>
   </xsl:template>
 

@@ -13,7 +13,7 @@
   <xsl:include href="print/lfs-pagesetup.xsl"/>
 
     <!-- Paper size required by the publisher -->
-  <xsl:param name="paper.type" select="'Cunstommized'"/>
+  <xsl:param name="paper.type" select="'Customized'"/>
   <xsl:param name="page.width">7.25in</xsl:param>
   <xsl:param name="page.height">9.25in</xsl:param>
 
@@ -36,17 +36,21 @@
   <xsl:param name="toc.indent.width" select="18"></xsl:param>
 
     <!-- Page number in Xref-->
-  <xsl:param name="insert.xref.page.number">yes</xsl:param> 
+  <xsl:param name="insert.xref.page.number">no</xsl:param>
   <xsl:template match="*" mode="page.citation">
     <xsl:param name="id" select="'???'"/>
     <fo:inline keep-together.within-line="always">
-      <xsl:text>[p</xsl:text>
+      <!--<xsl:text>[p</xsl:text>-->
       <fo:page-number-citation ref-id="{$id}"/>
-      <xsl:text>]</xsl:text>
+      <!--<xsl:text>]</xsl:text>-->
     </fo:inline>
   </xsl:template>
 
     <!-- Prevent duplicate e-mails in the Acknowledgments pages-->
   <xsl:param name="ulink.show" select="0"/>
+
+    <!-- Sections numbering -->
+  <xsl:param name="section.autolabel" select="1"/>
+  <xsl:param name="section.label.includes.component.label" select="1"/>
 
 </xsl:stylesheet>
