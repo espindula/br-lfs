@@ -4,37 +4,42 @@
   %general-entities;
 ]>
 <sect1 id="ch-tools-adjusting">
-<title>Adjusting the toolchain</title>
+<title>Ajuster l'atelier des outils</title>
 <?dbhtml filename="adjusting.html"?>
 
-<para>Now that the temporary C libraries have been installed, we want all
-the tools compiled in the rest of this chapter to be linked against these
-libraries. To accomplish this, we need to adjust the linker and the compiler's
-specs file. Some people would say that it is <emphasis><quote>black magic juju
-below this line</quote></emphasis>, but it is really very simple.</para>
+<para>Maintenant que les bibliothèques C temporaires ont été installées, nous
+voulons que tous les outils compilés dans le reste de ce chapitre soient liés
+avec ces bibliothèques. Pour accomplir cela, nous avons besoin d'ajuster
+l'éditeur de liens et le fichier specs du compilateur. Certaines personnes
+diront que cela ressemble à de la <emphasis><quote>magie
+noire</quote></emphasis>, mais c'est vraiment très simple.</para>
 
-<para>First install the adjusted linker (adjusted at the end of the first pass
-of Binutils) by running the following command from within
-the <filename class="directory">binutils-build</filename> directory:</para>
+<para>Tout d'abord, installez l'éditeur de liens ajusté (à la fin de la
+première passe de Binutils) en lançant la commande suivante à partir du
+répertoire <filename class="directory">binutils-build</filename>&nbsp;:</para>
 
 <screen><userinput>make -C ld install</userinput></screen>
 
-<para>From this point onwards everything will link <emphasis>only</emphasis>
-against the libraries in <filename>/tools/lib</filename>.</para>
+<para>À partir de ce moment, tout sera lié
+<emphasis>uniquement</emphasis> avec les bibliothèques comprises dans
+<filename>/tools/lib</filename>.</para>
 
-<note><para>If you somehow missed the earlier warning to retain the Binutils
-source and build directories from the first pass or otherwise accidentally
-deleted them or just don't have access to them, don't worry, all is not lost.
-Just ignore the above command. The result is a small chance of the subsequent
-testing programs linking against libraries on the host. This is not ideal, but
-it's not a major problem. The situation is corrected when we install the
-second pass of Binutils a bit further on.</para></note>
+<note><para>Si vous avez manqué l'avertissement précédent de différencier les
+répertoires source et de convertion de Binutils à partir de la première passe
+ou que vous l'avez supprimé accidentellement ou encore si vous n'y avez plus
+accès, ne vous inquiétez pas, tout n'est pas perdu. Ignorez simplement la
+commande ci-dessus. Le résultat en est une petite chance de programmes de tests
+toujours liés avec les bibliothèques de l'hôte. Ce n'est pas idéal mais ce
+n'est pas un problème majeur. La situation est corrigée à l'installation de la
+deuxième passe de Binutils un peu plus tard.</para></note>
 
-<para>Now that the adjusted linker is installed, you have to
-<emphasis>remove</emphasis> the Binutils build and source directories.</para>
+<para>Maintenant que l'éditeur de liens ajusté est installé, vous devez
+<emphasis>supprimer</emphasis> les répertoires source et de construction
+de Binutils.</para>
 
-<para>The next thing to do is to amend our GCC specs file so that it points
-to the new dynamic linker. A simple sed will accomplish this:</para>
+<para>La prochaine chose à faire est de modifier le fichier specs de GCC pour
+qu'il pointe vers le nouvel éditeur de liens. Une simple commande sed devrait y
+parvenir&nbsp;:</para>
 
 <!-- Ampersands are needed to allow cut and paste -->
 
@@ -44,61 +49,69 @@ sed -e 's@ /lib/ld-linux.so.2@ /tools/lib/ld-linux.so.2@g' \
 mv -f tempspecfile $SPECFILE &amp;&amp;
 unset SPECFILE</userinput></screen>
 
-<para>We recommend that you cut-and-paste the above rather than try and type it
-all in. Or you can edit the specs file by hand if you want to: just replace the
-occurrence of <quote>/lib/ld-linux.so.2</quote> with
-<quote>/tools/lib/ld-linux.so.2</quote>. Be sure to visually inspect the specs
-file to verify the intended change was actually made.</para>
+<para>Nous recommendons que vous copiez/collez les commandes ci-dessus
+plutôt que d'essayer de les taper entièrement. Ou vous pouvez éditer le fichier
+specs manuellement si vous le voulez&nbsp;: remplacement seulement les
+occurences de <quote>/lib/ld-linux.so.2</quote> avec
+<quote>/tools/lib/ld-linux.so.2</quote>. Assurez-vous d'inspecter visuellement
+le fichier specs pour vérifier que la modification attendue a été réellement
+réalisée.</para>
 
-<important><para>If you are working on a platform where the name of the dynamic
-linker is something other than <filename>ld-linux.so.2</filename>, you
-<emphasis>must</emphasis> replace <filename>ld-linux.so.2</filename> with the
-name of your platform's dynamic linker in the above commands. Refer back to
-<xref linkend="ch-tools-toolchaintechnotes"/> if necessary.</para></important>
+<important><para>Si vous travaillez sur une platforme où le nom de l'éditeur de
+liens est quelque chose d'autre que <filename>ld-linux.so.2</filename>, vous
+<emphasis>devez</emphasis> remplacer <filename>ld-linux.so.2</filename> avec le
+nom de l'éditeur de liens de votre plateforme dans les commandes ci-dessus.
+Référez-vous à <xref linkend="ch-tools-toolchaintechnotes"/> si
+nécessaire.</para></important>
 
-<para>Lastly, there is a possibility that some include files from the host
-system have found their way into GCC's private include dir. This can happen
-because of GCC's <quote>fixincludes</quote> process which runs as part of the
-GCC build.  We'll explain more about this further on in this chapter. For now,
-run the following commands to eliminate this possibility:</para>
+<para>Enfin, il existe un risque que certains fichiers include du système hôte
+aient trouvé leur chemin vers le répertoire include privé de GCC. Ceci peut 
+arriver à cause du processus <quote>fixincludes</quote> de GCC fonctionnant en
+tant que partie de la construction GCC. Nous allons expliquer un peu plus ceci
+dans ce chapitre. Pour l'instant, lancez les commandes suivantes pour éliminer
+cette possibilité&nbsp;:</para>
 
 <screen><userinput>rm -f /tools/lib/gcc-lib/*/*/include/{pthread.h,bits/sigthread.h}</userinput></screen>
 
 
-<caution><para>It is imperative at this point to stop and ensure that the basic
-functions (compiling and linking) of the new toolchain are working as expected.
-For this we are going to perform a simple sanity check:</para>
+<caution><para>Il est impératif à ce moment de s'arrêter et de s'assurer que les
+fonctions basiques (compilation et édition des liens) du nouvel atelier
+d'outils fonctionnent comme on s'y attend. Pour cela, nous allons
+lancer une vérification de santé&nbsp;:</para>
 
 <screen><userinput>echo 'main(){}' &gt; dummy.c
 cc dummy.c
 readelf -l a.out | grep ': /tools'</userinput></screen>
 
-<para>If everything is working correctly, there should be no errors, and the
-output of the last command will be (allowing for platform specific differences
-in dynamic linker name):</para>
+<para>Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et
+la sortie de la dernière commande sera (dépendant des différences spécifiques
+aux plateformes sur le nom de l'éditeur de liens)&nbsp;:</para>
 
 <blockquote><screen>[Requesting program interpreter: /tools/lib/ld-linux.so.2]</screen></blockquote>
 
-<para>Note especially that <filename class="directory">/tools/lib</filename>
-appears as the prefix of our dynamic linker.</para>
+<para>Notez spécialement que <filename class="directory">/tools/lib</filename>
+apparaît comme préfixe de notre chargeur dynamique.</para>
 
-<para>If you did not receive the output
-as shown above, or received no output at all, then something is seriously wrong.
-You will need to investigate and retrace your steps to find out where the
-problem is and correct it. There is no point in continuing until this is done.
-First, redo the sanity check using <command>gcc</command> instead of
-<command>cc</command>. If this works it means the
-<filename class="symlink">/tools/bin/cc</filename> symlink is missing. Revisit
-<xref linkend="ch-tools-gcc-pass1"/> and fix the symlink. Second, ensure your PATH
-is correct. You can check this by running <userinput>echo $PATH</userinput> and
-verifying that <filename class="directory">/tools/bin</filename> is at the head
-of the list. If the PATH is wrong it could mean you're not logged in as user
-<emphasis>lfs</emphasis> or something went wrong back in
-<xref linkend="ch-tools-settingenviron"/>. Third, something may have gone wrong with
-the specs file amendment above. In this case redo the specs file amendment
-ensuring to cut-and-paste the commands as was recommended.</para>
+<para>Si vous n'avez pas obtenu la sortie montrée ci-dessus ou si vous n'avez
+reçu aucune sortie, alors quelque chose ne se passe pas bien. Vous allez avoir
+besoin d'investiguer et de retracer vos étapes pour trouver où se cache le
+problème et comment le corriger. Il n'y a aucune raison pour continuer tant que
+ceci n'est pas fait. Tout d'abord, relancez la vérification en utilisant
+<command>gcc</command> au lieu de <command>cc</command>. Si cela fonctionne,
+cela signifie que le lien symbolique <filename
+class="symlink">/tools/bin/cc</filename> est manquant. Revisitez <xref
+linkend="ch-tools-gcc-pass1"/> et corrigez le lien symbolique. Ensuite,
+assurez-vous que votre PATH est correct. Vous pouvez vérifier ceci en lançant
+<userinput>echo $PATH</userinput> et en vérifiant que <filename
+class="directory">/tools/bin</filename> est en tête de la liste. Si le PATH est
+mauvais, cela pourrait signifier que vous n'êtes pas connecté en tant
+qu'utilisateur <emphasis>lfs</emphasis> ou que quelque chose s'est mal passé
+dans <xref linkend="ch-tools-settingenviron"/>. Enfin, quelque chose de mal a
+pu se passer avec la correction du fichier specs ci-dessus. Dans ce cas,
+refaites la modification de ce fichier en vous assurant de copier/coller les
+lignes comme cela était recommendé.</para>
 
-<para>Once you are satisfied that all is well, clean up the test files:</para>
+<para>Une fois satisfait, nettoyez les fichiers de test&nbsp;:</para>
 
 <screen><userinput>rm dummy.c a.out</userinput></screen>
 </caution>
