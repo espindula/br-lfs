@@ -6,6 +6,7 @@
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
+		<!-- screen -->
   <xsl:template match="screen">
     <xsl:choose>
     		<!-- Temporally hack -->
@@ -16,18 +17,6 @@
           </kbd>
         </pre>
       </xsl:when>
-      <!-- This should be fixed in the XML code -->
-      <!--
-      <xsl:when test="contains(text() , 'SBU')">
-        <p class="sbu">
-          <tt>
-            <xsl:value-of select="substring-before(text() , 'R')"/>
-            <br/>
-            <xsl:value-of select="substring-after(text() , 'U')"/>
-          </tt>
-        </p>
-      </xsl:when>
-      -->
       <xsl:otherwise>
         <pre class="{name(.)}">
           <xsl:apply-templates/>
@@ -35,5 +24,23 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-
+  
+  <!-- variablelist -->
+<xsl:template match="variablelist">
+  <div class="{name(.)}">
+    <xsl:if test="title">
+    	<h3>
+      	<xsl:value-of select="title"/>
+    	</h3>
+    </xsl:if>
+    <dl>
+    	<xsl:if test="@role">
+      	<xsl:attribute name="class">
+        	<xsl:value-of select="@role"/>
+				</xsl:attribute>
+			</xsl:if>
+			<xsl:apply-templates select="varlistentry"/>
+    </dl>
+  </div>
+</xsl:template>
 </xsl:stylesheet>
