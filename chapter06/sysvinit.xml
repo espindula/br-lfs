@@ -16,15 +16,14 @@ running, and shutdown of your system.</para>
 <sect2>
 <title>Installation of Sysvinit</title>
 
-<para>When run levels are changed (for example, when halting the system),
-init sends the TERM and KILL signals to the processes which it started.
-Init prints "Sending processes the TERM signal" to the screen. This seems
-to imply that init is sending these signals to all the currently running
-processes. To avoid this confusion, the init.c file can be modified, so
-that the sentence reads "Sending processes started by init the TERM
-signal".</para>
-
-<para>Edit the halt message:</para>
+<para>When runlevels are changed (for example, when halting the system),
+<command>init</command> sends termination signals to those processes that it
+itself started and that shouldn't be running in the new runlevel. While doing
+this, <command>init</command> outputs messages like "Sending processes the TERM
+signal" which seem to imply that it is sending these signals to all currently
+running processes. To avoid this misinterpretation, you can modify the source
+so that these messages read like "Sending processes started by init the TERM
+signal" instead:</para>
 
 <screen><userinput>cp src/init.c{,.backup}
 sed 's/Sending processes/&amp; started by init/g' \
@@ -40,7 +39,43 @@ sed 's/Sending processes/&amp; started by init/g' \
 
 </sect2>
 
-&c6-cf-sysvinit;
+<sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
+
+<sect2><title>Configuring Sysvinit</title>
+
+<para>Create a new <filename>/etc/inittab</filename> file by running the
+following:</para>
+
+<screen><userinput>cat &gt; /etc/inittab &lt;&lt; "EOF"</userinput>
+# Begin /etc/inittab
+
+id:3:initdefault:
+
+si::sysinit:/etc/rc.d/init.d/rc sysinit
+
+l0:0:wait:/etc/rc.d/init.d/rc 0
+l1:S1:wait:/etc/rc.d/init.d/rc 1
+l2:2:wait:/etc/rc.d/init.d/rc 2
+l3:3:wait:/etc/rc.d/init.d/rc 3
+l4:4:wait:/etc/rc.d/init.d/rc 4
+l5:5:wait:/etc/rc.d/init.d/rc 5
+l6:6:wait:/etc/rc.d/init.d/rc 6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+su:S016:once:/sbin/sulogin
+
+1:2345:respawn:/sbin/agetty tty1 9600
+2:2345:respawn:/sbin/agetty tty2 9600
+3:2345:respawn:/sbin/agetty tty3 9600
+4:2345:respawn:/sbin/agetty tty4 9600
+5:2345:respawn:/sbin/agetty tty5 9600
+6:2345:respawn:/sbin/agetty tty6 9600
+
+# End /etc/inittab
+<userinput>EOF</userinput></screen>
+
+</sect2>
 
 &aa-sysvinit-shortdesc;
 &aa-sysvinit-desc;
