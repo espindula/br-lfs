@@ -1,9 +1,6 @@
 <sect2>
 <title>Installation of Glibc</title>
 
-<para>This package requires its patch to be applied before you can
-install it.</para>
-
 <para>Before starting to install glibc, you must cd into the
 glibc-&glibc-version; directory and unpack glibc-linuxthreads inside
 the glibc-&glibc-version; directory, not in /usr/src as you normally
@@ -19,33 +16,54 @@ been warned.</para>
 <para>Basically, compiling Glibc in any other way than the book suggests
 is putting your system at very high risk.</para>
 
-<para>Install Glibc by running the following commands:</para>
+<para>We'll start by applying a patch to Glibc that fixes a few
+things:</para>
 
-<para><screen><userinput>patch -Np1 -i ../glibc-&glibc-patch-version;.patch &amp;&amp;
-touch /etc/ld.so.conf &amp;&amp;
-mkdir ../glibc-build &amp;&amp;
-cd ../glibc-build &amp;&amp;
-../glibc-&glibc-version;/configure --prefix=/usr --disable-profile \
-&nbsp;&nbsp;&nbsp;&nbsp;--enable-add-ons --libexecdir=/usr/bin &amp;&amp;
-echo "cross-compiling = no" &gt; configparms &amp;&amp;
-make &amp;&amp;
-make install &amp;&amp;
-make localedata/install-locales &amp;&amp;
-exec /static/bin/bash --login</userinput></screen></para>
+<itemizedlist>
+<listitem><para>It converts all occurrences of <emphasis>$(PERL)</emphasis>
+to <emphasis>/usr/bin/perl</emphasis> in the
+<filename>malloc/Makefile</filename> file. This is done because Glibc
+can't autodetect the location of perl because the Perl package hasn't been
+installed yet.</para></listitem>
 
-<para>An alternative to running <userinput>make
-localedata/install-locales</userinput> is to only install those locales
-which you need or want. This can be achieved using the localedef
-command. Information on this can be found in the INSTALL
-file in the glibc-&glibc-version; tree. One thing to note is that the
-<userinput>localedef</userinput> program assumes that the <filename
-class="directory">/usr/lib/locale</filename> directory exists, so you need
-to create it first.</para>
+<listitem><para>It replaces all occurrences of <emphasis>root</emphasis>
+with <emphasis>0</emphasis> in the <filename>login/Makefile</filename>
+file. This is done because Glibc itself isn't installed yet and therefore
+username to userid resolving isn't working yet, so a
+<userinput>chown root file</userinput> will fail, however it'll work fine
+if you use the numeric IDs (such as <userinput>chown 0
+file</userinput>).</para></listitem>
 
-<para>The Linux Threads man pages are not going to be installed at this
-point because it requires a working Perl installation. We'll install Perl
-later on in this chapter, and the man pages will be installed when Glibc is
-installed for the second time at the end of this chapter.</para>
+<listitem><para>Lastly, the patch also fixes a problem that causes
+statically linked binaries to crash that were linked against Glibc-2.2
+libraries. This patch is only needed temporarily because we have static
+programs in <filename class="directory">/static/bin</filename> that might
+be linked against an older Glibc version (the one from the host
+distribution). We will install Glibc again at the end of this chapter to
+remove this patch so you'll have a pristine Glibc as the developers
+intended it.</para></listitem>
+</itemizedlist>
+
+<para><screen><userinput>patch -Np1 -i ../glibc-&glibc-patch-version;.patch</userinput></screen></para>
+
+<para>Glibc will check for the <filename>/etc/ld.so.conf</filename> file
+and abort with an error if the file is missing, so we create it.</para>
+
+<para><screen><userinput>touch /etc/ld.so.conf</userinput></screen></para>
+
+<para>It is recommended by the Glibc installation documentation to build
+Glibc outside of the source directory in a dedicated directory. Let's
+create such a directory and make it our CWD (Current Working
+Directory).</para>
+
+<para><screen><userinput>mkdir ../glibc-build &amp;&amp;
+cd ../glibc-build &amp;&amp;</userinput></screen></para>
+
+<para>Next, configure Glibc.</para>
+
+<para><screen><userinput>../glibc-&glibc-version;/configure --prefix=/usr \
+&nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
+&nbsp;&nbsp;&nbsp;&nbsp;--libexecdir=/usr/bin</userinput></screen></para>
 
 <para>During the configure stage you will see the following warning:</para>
 
@@ -62,6 +80,58 @@ generated for you, there is no need for msgfmt. You'd only need msgfmt if
 you change the translation source files (the <filename>*.po</filename>
 files in the <filename class="directory">po</filename> subdirectory) which
 would require you to re-generate the binary files.</para>
+
+<para>The meaning of the configure switches are:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--disable-profile:</userinput> This disables the
+building of libraries with profiling information. This command may be
+omitted if you plan to do profiling.</para></listitem>
+
+<listitem><para><userinput>--enable-add-ons:</userinput> This enables the
+add-on that we install with Glibc, linuxthreads</para></listitem>
+
+<listitem><para><userinput>--libexecdir=/usr/bin:</userinput> This will
+cause the pt_chown program to be installed in the /usr/bin
+directory.</para></listitem>
+</itemizedlist>
+
+<para>Because Glibc hasn't been installed yet, one of the tests that was
+run by the configure script failed. This test is supposed to test gcc to
+determine whether or not a cross-compiler is installed. However, Glibc
+needs to be installed already to run this test. Since the test failed, the
+configure script automatically assumed we do have a cross-compiler. So,
+we have to override that assumption by explicitly telling Glibc we're not
+cross-compiling.</para>
+
+<para><screen><userinput>echo "cross-compiling = no" &gt; configparms</userinput></screen></para>
+
+<para>We'll continue with compiling and installing Glibc. The Linuxthreads man
+pages are not going to be installed at this point because it requires a
+working Perl installation. We'll install Perl later on in this chapter,
+and the man pages will be installed when Glibc is installed for the second
+time at the end of this chapter.</para>
+
+<para><screen><userinput>make &amp;&amp;
+make install</userinput></screen></para>
+
+<para>Locales aren't installed by default so we install them now. Locales
+are used by Glibc to make your Linux system talk in a different language
+such as your native tongue.</para>
+
+<para><screen><userinput>make localedata/install-locales</userinput></screen></para>
+
+<para>An alternative to running <userinput>make
+localedata/install-locales</userinput> is to only install those locales
+which you need or want. This can be achieved using the localedef
+command. Information on this can be found in the INSTALL
+file in the glibc-&glibc-version; tree.</para>
+
+<para>To finish off the installation we'll reload Bash so it uses the new
+libnss files. This will get rid of the <emphasis>I have no name!</emphasis>
+message in the command prompt.</para>
+
+<para><screen><userinput>exec /static/bin/bash --login</userinput></screen></para>
 
 </sect2>
 
