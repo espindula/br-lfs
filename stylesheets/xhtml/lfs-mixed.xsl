@@ -34,7 +34,7 @@
   </xsl:template>
 
   
-  <!-- variablelist -->
+  <!-- variablelist 
   <xsl:template match="variablelist">
     <div class="{name(.)}">
       <xsl:if test="title | bridgehead">
@@ -60,7 +60,7 @@
         <xsl:apply-templates select="varlistentry"/>
       </dl>
     </div>
-  </xsl:template>
+  </xsl:template>-->
 
     <!-- segementedlist -->
   <xsl:template match="seg">
