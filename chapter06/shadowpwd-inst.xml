@@ -9,11 +9,13 @@ regarding passwords, such as how to enable the more secure MD5 passwords
 and how to get the most out of this Shadow package. The Shadow hint can
 be found at <ulink url="&hints-root;shadowpasswd_plus.txt"/>.</para>
 
-<para>Programs like login, shutdown, uptime, and others want to read
-from and to the /var/run/utmp, /var/log/btmp and /var/log/wtmp. These
-files contain information about who is currently logged in. They also
-contain information about when the conmputer was last booted and
-shutdown and a record of bas login attempts.</para>
+<para>The <userinput>login</userinput>, <userinput>getty</userinput> and
+<userinput>init</userinput> programs (and some others) maintain a number
+of logfiles to record who are and who were logged in to the system.  These
+programs, however, don't create these logfiles when they don't exist, so if
+you want this logging to occur you will have to create the files yourself.
+To let the Shadow package (that is installed next) detect these files in their
+proper place, create them now, with their proper permissions:</para>
 
 <para>Create these files with their proper permissions by running the
 following commands:</para>
@@ -21,77 +23,80 @@ following commands:</para>
 <para><screen><userinput>touch /var/run/utmp /var/log/{btmp,lastlog,wtmp}
 chmod 644 /var/run/utmp /var/log/{btmp,lastlog,wtmp}</userinput></screen></para>
 
-<para>Shadow hard-codes the path to the passwd binary within itself, but
-it does it the wrong way. If no passwd binary is present before
-installing Shadow, it (wrongly) assumes that it will be at /bin/passwd,
-but then installs its own in /usr/bin/passwd. This will lead to strange
-errors about not finding /bin/passwd. To fix workaround this bug in
-Shadow, we'll create a dummy passwd file so that it gets hardcoded in
-the right place:</para>
+<para>The <filename>/var/run/utmp</filename> file lists the users that are
+currently logged in, the <filename>/var/log/wtmp</filename> file who
+<emphasis>were</emphasis> logged in and when.
+The <filename>/var/log/lastlog</filename> file shows for each user when he
+or she last logged in, and the <filename>/var/log/btmp</filename> lists the
+bad login attempts.</para>
+
+<para>Shadow hard-wires the path to the <userinput>passwd</userinput> binary
+within the binary itself, but does this the wrong way. If before installing
+Shadow no <userinput>passwd</userinput> binary is present , the package wrongly
+assumes it is going to be located at <filename>/bin/passwd</filename>,
+but then installs it in <filename>/usr/bin/passwd</filename>. This will lead
+to weird errors about not finding <filename>/bin/passwd</filename>. To work
+around this bug, create a dummy <filename>passwd</filename> file,
+so that it gets hard-wired properly:</para>
 
 <para><screen><userinput>touch /usr/bin/passwd</userinput></screen></para>
 
-<para>Prepare Shadow to be compiled:</para>
+<para>Now prepare Shadow for compilation:</para>
 
-<para><screen><userinput>./configure --prefix=/usr --libdir=/usr/lib \
-&nbsp;&nbsp;&nbsp;&nbsp;--enable-shared</userinput></screen></para>
+<para><screen><userinput>./configure --prefix=/usr --libdir=/usr/lib --enable-shared</userinput></screen></para>
 
-<para>Continue with compiling the package:</para>
+<para>Compile the package:</para>
 
 <para><screen><userinput>make</userinput></screen></para>
 
-<para>Install the package:</para>
+<para>And install it:</para>
 
 <para><screen><userinput>make install</userinput></screen></para>
 
-<para>Shadow uses two files to configure authentication settings for
-the system. Install those config files:</para>
+<para>Shadow uses two files to configure authentication settings for the
+system. Install these two config files:</para>
 
 <para><screen><userinput>cp etc/{limits,login.access} /etc</userinput></screen></para>
 
-<para><filename class="directory">/var/spool/mail</filename> is the
-old location of the user mailboxes. The location that is used nowadays
-is /var/mail. Issue the following command to modify the mailbox
-location:</para>
+<para>In the old days <filename class="directory">/var/spool/mail</filename>
+was the location for the user mailboxes, but nowadays <filename
+class="directory">/var/mail</filename> is used. Change the default mailbox
+location in the relevant configuration file while copying it to its
+destination:</para>
 
 <para><screen><userinput>sed 's%/var/spool/mail%/var/mail%' \
 &nbsp;&nbsp;&nbsp;&nbsp;etc/login.defs.linux &gt; /etc/login.defs</userinput></screen></para>
 
-<para>According to the manpage of <userinput>vipw</userinput>,
-a <userinput>vigr</userinput> symlink should exist. Because the
-shadow installation procedure doesn't create this symlink, it
-must be created manually:</para>
+<para>According to the man page of <userinput>vipw</userinput>, a
+<userinput>vigr</userinput> program should exist too. Since the installation
+procedure doesn't create this program, create a symlink manually:</para>
 
 <para><screen><userinput>ln -s vipw /usr/sbin/vigr</userinput></screen></para>
 
-<para>The <filename>vipw</filename> link is currently pointing
-to a non-existing file. Since this file isn't needed here, remove
-it:</para>
+<para>As the <filename>/bin/vipw</filename> symlink is redundant (and even
+pointing to a non-existent file), remove it:</para>
 
 <para><screen><userinput>rm /bin/vipw</userinput></screen></para>
 
-<para>Move the <userinput>sg</userinput> program to the
-<filename class="directory">/usr/bin</filename> directory:</para>
+<para>Now move the <userinput>sg</userinput> program to its proper place:</para>
 
 <para><screen><userinput>mv /bin/sg /usr/bin</userinput></screen></para>
 
-<para>Move Shadow's dynamic libraries to a more appropriate location:</para>
+<para>And move Shadow's dynamic libraries to a more appropriate location:</para>
 
 <para><screen><userinput>mv /usr/lib/lib{shadow,misc}.so.0* /lib</userinput></screen></para>
 
-<para>The libraries have been moved, but some packages expect to
-find them in them in the
-<filename class="directory">/usr/lib</filename> directory. To account
-for this, create the following symlinks:</para>
+<para>As some packages expect to find the just-moved libraries in
+<filename>/usr/lib</filename>, create the following symlinks:</para>
 
 <para><screen><userinput>ln -sf ../../lib/libshadow.so.0 /usr/lib/libshadow.so
 ln -sf ../../lib/libmisc.so.0 /usr/lib/libmisc.so</userinput></screen></para>
 
-<para>Sh-utils and Shadow Password Suite each install a unique
-<filename>groups</filename> program. If you wish, you may remove the
-<filename>groups</filename> program installed by the Shadow Password
-Suite:</para>
+<para>Coreutils has already installed a <userinput>groups</userinput> program
+in <filename>/usr/bin</filename>. If you wish, you can remove the one
+installed by Shadow:</para>
 
 <para><screen><userinput>rm /bin/groups</userinput></screen></para>
 
 </sect2>
+
