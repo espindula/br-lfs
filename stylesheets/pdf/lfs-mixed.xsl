@@ -106,17 +106,12 @@
     <xsl:variable name="id">
       <xsl:call-template name="object.id"/>
     </xsl:variable>
-    <xsl:variable name="graphic.width">
-      <xsl:call-template name="admon.graphic.width"/>
-    </xsl:variable>
     <fo:block id="{$id}">
-      <fo:list-block provisional-distance-between-starts="{$graphic.width} + 18pt"
-              provisional-label-separation="18pt" xsl:use-attribute-sets="list.block.spacing">
+      <fo:list-block xsl:use-attribute-sets="list.block.spacing">
         <fo:list-item>
             <fo:list-item-label end-indent="label-end()">
               <fo:block margin-left="4pt">
-                <fo:external-graphic width="auto" height="auto"
-                        content-width="{$graphic.width}" >
+                <fo:external-graphic width="auto" height="auto">
                   <xsl:attribute name="src">
                     <xsl:call-template name="admon.graphic"/>
                   </xsl:attribute>
