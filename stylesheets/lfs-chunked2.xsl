@@ -5,7 +5,7 @@
                 version="1.0">
 
     <!-- We use XHTML -->
-  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.65.1/xhtml/docbook.xsl"/>
+  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/docbook.xsl"/>
   <xsl:param name="chunker.output.encoding" select="'ISO-8859-1'"/>
 
     <!-- Including our others customized elements templates -->

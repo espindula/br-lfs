@@ -63,7 +63,7 @@
     <!-- Graphics in admonitions -->
   <xsl:param name="admon.graphics" select="1"/>
   <xsl:param name="admon.graphics.path"
-    select="'/usr/share/xml/docbook/xsl-stylesheets-1.65.1/images/'"/>
+    select="'/usr/share/xml/docbook/xsl-stylesheets-1.67.2/images/'"/>
 
     <!-- Admonition block properties -->
   <xsl:template match="important|warning|caution">
