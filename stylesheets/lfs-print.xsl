@@ -36,7 +36,8 @@
   <xsl:param name="toc.indent.width" select="18"></xsl:param>
 
     <!-- Page number in Xref-->
-  <xsl:param name="insert.xref.page.number">yes</xsl:param> <xsl:template match="*" mode="page.citation">
+  <xsl:param name="insert.xref.page.number">yes</xsl:param> 
+  <xsl:template match="*" mode="page.citation">
     <xsl:param name="id" select="'???'"/>
     <fo:inline keep-together.within-line="always">
       <xsl:text>[p</xsl:text>
