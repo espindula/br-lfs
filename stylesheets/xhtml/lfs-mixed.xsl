@@ -4,10 +4,10 @@
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-		<!-- screen -->
+    <!-- screen -->
   <xsl:template match="screen">
     <xsl:choose>
-    		<!-- Temporally hack -->
+        <!-- Temporally hack -->
       <xsl:when test="child::* = userinput">
         <pre class="{name(.)}">
           <kbd class="command">
@@ -24,21 +24,31 @@
   </xsl:template>
   
   <!-- variablelist -->
-<xsl:template match="variablelist">
-  <div class="{name(.)}">
-    <xsl:if test="title">
-    	<h3>
-      	<xsl:value-of select="title"/>
-    	</h3>
-    </xsl:if>
-    <dl>
-    	<xsl:if test="@role">
-      	<xsl:attribute name="class">
-        	<xsl:value-of select="@role"/>
-				</xsl:attribute>
-			</xsl:if>
-			<xsl:apply-templates select="varlistentry"/>
-    </dl>
-  </div>
-</xsl:template>
+  <xsl:template match="variablelist">
+    <div class="{name(.)}">
+      <xsl:if test="title">
+        <xsl:choose>
+          <xsl:when test="@role = 'materials'">
+            <h3>
+              <xsl:value-of select="title"/>
+            </h3>
+          </xsl:when>
+          <xsl:otherwise>
+            <h4>
+              <xsl:value-of select="title"/>
+            </h4>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:if>
+      <dl>
+        <xsl:if test="@role">
+          <xsl:attribute name="class">
+            <xsl:value-of select="@role"/>
+          </xsl:attribute>
+        </xsl:if>
+        <xsl:apply-templates select="varlistentry"/>
+      </dl>
+    </div>
+  </xsl:template>
+  
 </xsl:stylesheet>

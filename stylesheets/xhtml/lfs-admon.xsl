@@ -4,12 +4,12 @@
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  	<!-- Use graphics in admonitions -->
+    <!-- Use graphics in admonitions -->
   <xsl:param name="admon.graphics" select="1"/>
   <xsl:param name="admon.graphics.path">../images/</xsl:param>
   <xsl:param name="admon.graphics.extension" select="'.png'"/>
 
-  	<!-- Changing the output tagging -->
+    <!-- Changing the output tagging -->
   <xsl:template name="graphical.admonition">
     <xsl:variable name="admon.type">
       <xsl:choose>
@@ -22,7 +22,7 @@
       </xsl:choose>
     </xsl:variable>
     <div class="admonition">
-    	<div class ="admonhead">
+      <div class ="admonhead">
         <img alt="[{$admon.type}]">
           <xsl:attribute name="src">
             <xsl:call-template name="admon.graphic"/>
@@ -37,7 +37,7 @@
         </h3>
       </div>
       <div class="admonbody">
-				<xsl:apply-templates/>
+        <xsl:apply-templates/>
       </div>
     </div>
   </xsl:template>

@@ -30,7 +30,7 @@
 
   <xsl:template name="sect1.titlepage">
     <xsl:choose>
-    		<!-- I should find a better test -->
+        <!-- I should find a better test -->
       <xsl:when test="position() = 4">
         <div class="titlepage">
           <xsl:if test="@id">

@@ -1,12 +1,10 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
-<!-- Version 0.9 - Manuel Canales Esparcia <macana@lfs-es.org> -->
-
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  	<!-- Generating the page -->
+    <!-- Generating the page -->
   <xsl:template match="legalnotice" mode="titlepage.mode">
     <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
       <xsl:variable name="filename" select="concat($base.dir, 'prologue/legalnotice.html')"/>

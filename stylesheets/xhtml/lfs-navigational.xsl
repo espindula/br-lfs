@@ -1,7 +1,5 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
-<!-- Version 0.9 - Manuel Canales Esparcia <macana@lfs-es.org> -->
-
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
@@ -15,7 +13,7 @@
     </head>
   </xsl:template>
 
-  	<!-- Header Navigation-->
+    <!-- Header Navigation-->
   <xsl:template name="header.navigation">
     <xsl:param name="prev" select="/foo"/>
     <xsl:param name="next" select="/foo"/>
@@ -64,6 +62,19 @@
                 <xsl:text>Next</xsl:text>
               </a>
             </li>
+          </xsl:if>
+          <xsl:if test="count($up)&gt;0 and $up != $home">
+            <li class="up">
+              <a accesskey="u">
+                <xsl:attribute name="href">
+                  <xsl:call-template name="href.target">
+                    <xsl:with-param name="object" select="$up"/>
+                  </xsl:call-template>
+                </xsl:attribute>
+                <xsl:text>Up</xsl:text>
+              </a>
+            </li>
+          </xsl:if>
           <li class="home">
             <a accesskey="h">
               <xsl:attribute name="href">
@@ -74,13 +85,12 @@
               <xsl:text>Home</xsl:text>
             </a>
           </li>
-          </xsl:if>
         </ul>
       </div>
     </xsl:if>
   </xsl:template>
 
-  	<!-- Footer Navigation-->
+    <!-- Footer Navigation-->
   <xsl:template name="footer.navigation">
     <xsl:param name="prev" select="/foo"/>
     <xsl:param name="next" select="/foo"/>
@@ -103,7 +113,7 @@
                 <xsl:text>Prev</xsl:text>
               </a>
               <p>
-              	<xsl:apply-templates select="$prev" mode="object.title.markup"/>
+                <xsl:apply-templates select="$prev" mode="object.title.markup"/>
               </p>
             </li>
           </xsl:if>
@@ -118,7 +128,7 @@
                 <xsl:text>Next</xsl:text>
               </a>
               <p>
-              	<xsl:apply-templates select="$next" mode="object.title.markup"/>
+                <xsl:apply-templates select="$next" mode="object.title.markup"/>
               </p>
             </li>
           </xsl:if>
