@@ -35,16 +35,16 @@
                   <xsl:text>Packages</xsl:text>
               </xsl:when>
               <xsl:when test="$divtitle = 'B'">
-                  <xsl:text>Programs</xsl:text>
+                  <xsl:text>Programmes</xsl:text>
               </xsl:when>
               <xsl:when test="$divtitle = 'C'">
-                  <xsl:text>Libraries</xsl:text>
+                  <xsl:text>Bibliothèques</xsl:text>
               </xsl:when>
               <xsl:when test="$divtitle = 'D'">
                   <xsl:text>Scripts</xsl:text>
               </xsl:when>
               <xsl:when test="$divtitle = 'E'">
-                  <xsl:text>Others</xsl:text>
+                  <xsl:text>Autres</xsl:text>
               </xsl:when>
               <xsl:otherwise>
                 <xsl:value-of select="$divtitle"/>
