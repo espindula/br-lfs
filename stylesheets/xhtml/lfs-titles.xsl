@@ -59,9 +59,9 @@
           <xsl:if test="@id">
             <a id="{@id}" name="{@id}"/>
           </xsl:if>
-          <h3 class="{name(.)}">
+          <h2 class="{name(.)}">
             <xsl:value-of select="title"/>
-          </h3>
+          </h2>
         </div>
       </xsl:otherwise>
     </xsl:choose>

@@ -29,14 +29,14 @@
       <xsl:if test="title">
         <xsl:choose>
           <xsl:when test="@role = 'materials'">
+            <h2>
+              <xsl:value-of select="title"/>
+            </h2>
+          </xsl:when>
+          <xsl:otherwise>
             <h3>
               <xsl:value-of select="title"/>
             </h3>
-          </xsl:when>
-          <xsl:otherwise>
-            <h4>
-              <xsl:value-of select="title"/>
-            </h4>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:if>
