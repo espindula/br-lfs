@@ -1,5 +1,5 @@
 <sect1 id="postlfs-config-compressdoc" xreflabel="compressdoc">
-<?dbhtml filename="compressdoc.html" dir="postlfs"?>
+<?dbhtml filename="compressdoc.html"?>
 <title>Compresser les pages man et info</title>
 
 <para>Les programmes de lecture de pages man et peuvent traiter de manière
@@ -12,9 +12,9 @@ récursif de <command>gzip</command>. Une meilleur façon de faire est d'utiliser
 le script ci-dessous.
 </para>
 
-<screen><userinput><command>cat &gt; /usr/bin/compressdoc &lt;&lt; "EOF"</command>
+<screen><userinput><command>cat &gt; /usr/sbin/compressdoc &lt;&lt; "EOF"</command>
 #!/bin/bash
-# VERSION: 20031029.0025
+# VERSION: 20040320.0026
 #
 # Compresse (avec bzip2 ou gzip) toutes les pages man dans un ensemble de
 # répertoires et met à jour les liens symboliques - Par Marc Heerdink &lt;marc @ koelkast.net&gt;
@@ -28,6 +28,9 @@ le script ci-dessous.
 # symboliques, pour spécifier le niveau de compression, pour analyser man.conf
 # pour toutes les occurrences de MANPATH, pour permettre une sauvegarde, pour
 # autoriser la conservation de la version la plus récente d'une page.
+# Modifié 20040330 par Tushar Teredesai pour remplacer $0 par le nom du script.
+#   (Note: il est supposé que le script se trouve dans le chemin (PATH) de l'utilisateur)
+#
 #
 # TODO:
 #        - choisir une méthode de compression par défaut suivant la
@@ -49,7 +52,7 @@ function help ()
   if [ -n "$1" ]; then
     echo "Option inconnue : $1"
   fi
-  ( echo "Usage: $0 &lt;méthode_compression&gt; [options] [dirs]" &amp;&amp; \
+  ( echo "Usage: $MY_NAME &lt;méthode_compression&gt; [options] [dirs]" &amp;&amp; \
   cat &lt;&lt; EOT
 Où méthode_compression est :
   --gzip, --gz, -g
@@ -144,11 +147,11 @@ function check_unique ()
   DIR=$1
   BASENAME=`basename "${2}" .bz2`
   BASENAME=`basename "${BASENAME}" .gz`
-  GZ_FILE="$BASENAME".bz2
+  GZ_FILE="$BASENAME".gz
   BZ_FILE="$BASENAME".bz2
 
   # Recherche, et conserve, le plus récent
-  LATEST=`(cd "$DIR"; ls -1rt "${BASENAME}" "${GZ_FILE}" "${BZ_FILE}" 2&gt;/dev/null | tail -1)`
+  LATEST=`(cd "$DIR"; ls -1rt "${BASENAME}" "${GZ_FILE}" "${BZ_FILE}" 2&gt;/dev/null | tail -n 1)`
   for i in "${BASENAME}" "${GZ_FILE}" "${BZ_FILE}"; do
     [ "$LATEST" != "$i" ] &amp;&amp; rm -f "$DIR"/"$i"
   done
@@ -158,6 +161,9 @@ function check_unique ()
   # Si le fichier n'est pas le dernier, renvoit 1
   return 1
 }
+
+# Nom du script
+MY_NAME=`basename $0`
 
 # OK, analyse les arguments de la ligne de commande et initialise à un état
 # particulier : ne pas modifier les liens, analyser /etc/man.conf, être le plus
@@ -354,7 +360,7 @@ for DIR in $MAN_DIR; do
       echo "-&gt; Entering ${DIR}/${FILE}..." &gt; $DEST_FD0
       # Je ne dois pas passé --conf, car je spécifie le répertoire de travail
       # Mais je dois sortir en cas d'erreur
-      "$0" ${COMP_METHOD} ${COMP_LVL} ${LN_OPT} ${VERBOSE_OPT} ${FORCE_OPT} "${DIR}/${FILE}" || exit 1
+      "$MY_NAME" ${COMP_METHOD} ${COMP_LVL} ${LN_OPT} ${VERBOSE_OPT} ${FORCE_OPT} "${DIR}/${FILE}" || exit 1
       echo "&lt;- Sortie de ${DIR}/${FILE}." &gt; $DEST_FD1
       cd "$DIR"  # Nécessaire pour la prochaine itération de la boucle
 
@@ -363,7 +369,7 @@ for DIR in $MAN_DIR; do
 
       # Vérifie si le fichier est déjà compressé avec la méthode spécifiée
       BASE_FILE=`basename "$FILE" .gz`
-      BASE_FILE=`basename "$FILE" .bz2`
+      BASE_FILE=`basename "$BASE_FILE" .bz2`
       if [ "${FILE}" = "${BASE_FILE}${COMP_SUF}" -a "foo${FORCE_OPT}" = "foo" ]; then continue; fi
 
       # Si nous avons un lien symbolique
@@ -470,16 +476,16 @@ for DIR in $MAN_DIR; do
   done # for FILE
 done # for DIR
 <command>EOF
-chmod 755 /usr/bin/compressdoc</command></userinput></screen>
+chmod 755 /usr/sbin/compressdoc</command></userinput></screen>
 
 <para>Maintenant, en tant qu'utilisateur root, vous pouvez lancer
-<command>/usr/bin/compressdoc --bz2</command> pour compresser toutes les pages
-man de votre système. Vous pouvez aussi lancer <command>/usr/bin/compressdoc
---help</command> pour obtenir une aide compréhensible sur ce que le script est
-capable de faire.</para>
+<command>compressdoc --bz2</command> pour compresser toutes les pages man de
+votre système. Vous pouvez aussi lancer <command>compressdoc --help</command>
+pour obtenir une aide compréhensible sur ce que le script est capable de faire.
+</para>
 
 <para>N'oubliez que certains programmes, comme le système <application>X</application> 
-Window, <application>XEmacs</application>, installent aussi leur
+Window et <application>XEmacs</application>, installent aussi leur
 documentation dans des emplacements non standard (tels que <filename class="directory"> 
 /usr/X11R6/man</filename>, etc...). N'oubliez pas d'ajouter ces emplacements
 dans le fichier <filename>/etc/man.conf</filename>, comme une section

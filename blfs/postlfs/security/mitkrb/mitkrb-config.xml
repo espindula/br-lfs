@@ -1,0 +1,207 @@
+<sect2>
+<title>Configuring <application><acronym>MIT</acronym> krb5</application></title>
+
+<sect3><title>Config files</title>
+<para><filename>/etc/krb5.conf</filename> and
+<filename>/var/lib/krb5kdc/kdc.conf</filename></para>
+</sect3>
+
+<sect3><title>Configuration Information</title>
+
+<sect4><title>Kerberos Configuration</title>
+
+<para>
+Create the Kerberos configuration file with the following command:
+</para>
+
+<screen><userinput><command>cat &gt; /etc/krb5.conf &lt;&lt; "EOF"</command>
+# Begin /etc/krb5.conf
+        
+[libdefaults]
+    default_realm = <replaceable>[LFS.ORG]</replaceable>
+    encrypt = true
+
+[realms]
+    <replaceable>[LFS.ORG]</replaceable> = {
+        kdc = <replaceable>[belgarath.lfs.org]</replaceable>
+        admin_server = <replaceable>[belgarath.lfs.org]</replaceable>
+    }
+
+[domain_realm]
+    .<replaceable>[lfs.org]</replaceable> = <replaceable>[LFS.ORG]</replaceable>
+
+[logging]
+    kdc = SYSLOG[:INFO[:AUTH]]
+    admin_server = SYSLOG[INFO[:AUTH]]
+    default = SYSLOG[[:SYS]]
+
+# End /etc/krb5.conf
+<command>EOF</command></userinput></screen>
+
+<para>
+You will need to substitute your domain and proper hostname for the
+occurances of the belgarath and lfs.org names.
+</para>
+
+<para>
+<userinput>default_realm</userinput> should be the name of your domain changed to ALL CAPS.
+This isn't required, but both Heimdal and <acronym>MIT</acronym>
+recommend it.
+</para>
+
+<para>
+<userinput>encrypt = true</userinput> provides encryption of all traffic between kerberized
+clients and servers. It's not necessary and can be left off. If you
+leave it off, you can encrypt all traffic from the client to the server
+using a switch on the client program instead.
+</para>
+
+<para>
+The <userinput>[realms]</userinput> parameters tell the client programs where to look for the
+<acronym>KDC</acronym> authentication services.
+</para>
+
+<para>
+The <userinput>[domain_realm]</userinput> section maps a domain to a realm.
+</para>
+
+<para>
+Create the <acronym>KDC</acronym> database:
+</para>
+
+<screen><userinput><command>kdb5_util create -r <replaceable>[LFS.ORG]</replaceable> -s </command></userinput></screen>
+
+<para>
+Now we need to populate the database with principles (users). For now,
+just use your regular login name or root. 
+</para>
+
+<screen><userinput><command>kadmin.local</command></userinput>
+<prompt>kadmin:</prompt><userinput><command>addprinc <replaceable>[loginname]</replaceable></command></userinput></screen>
+
+<para>
+The <acronym>KDC</acronym> server and any machine running kerberized
+server daemons must have a host key installed:
+</para>
+
+<screen><prompt>kadmin:</prompt><userinput><command>addprinc --randkey host/<replaceable>[belgarath.lfs.org]</replaceable></command></userinput></screen>
+
+<para>
+After choosing the defaults when prompted, you will have to export the
+data to a keytab file:
+</para>
+
+<screen><prompt>kadmin:</prompt><userinput><command>ktadd host/<replaceable>[belgarath.lfs.org]</replaceable></command></userinput></screen>
+
+<para>
+This should have created a file in
+<filename class="directory">/etc</filename> named
+<filename>krb5.keytab</filename> (Kerberos 5). This file should have 600
+(root rw only) permissions. Keeping the keytab files from public access
+is crucial to the overall security of the Kerberos installation.
+</para>
+
+<para>
+Eventually, you'll want to add server daemon principles to the database
+and extract them to the keytab file. You do this in the same way you
+created the host principles. Below is an example:
+</para>
+
+<screen><prompt>kadmin:</prompt><userinput><command>addprinc --randkey ftp/<replaceable>[belgarath.lfs.org]</replaceable></command></userinput>
+<prompt>kadmin:</prompt><userinput><command>ktadd ftp/<replaceable>[belgarath.lfs.org]</replaceable></command></userinput></screen>
+
+<para>
+Exit the <command>kadmin</command> program (use <command>quit</command>
+or <command>exit</command>) and return back to the shell prompt. Start
+the <acronym>KDC</acronym> daemon manually, just to test out the 
+installation:
+</para>
+
+<screen><userinput><command>/usr/sbin/krb5kdc &amp;</command></userinput></screen>
+
+<para>
+Attempt to get a ticket with the following command:
+</para>
+
+<screen><userinput><command>kinit <replaceable>[loginname]</replaceable></command></userinput></screen>
+
+<para>
+You will be prompted for the password you created. After you get your
+ticket, you can list it with the following command:
+</para>
+
+<screen><userinput><command>klist</command></userinput></screen>
+
+<para>
+Information about the ticket should be displayed on the screen.
+</para>
+
+<para>
+To test the functionality of the keytab file, issue the following
+command:
+</para>
+
+<screen><userinput><command>ktutil</command></userinput>
+<prompt>ktutil:</prompt><userinput><command>rkt /etc/krb5.keytab</command></userinput>
+<prompt>ktutil:</prompt><userinput><command>l</command></userinput></screen>
+
+<para>
+This should dump a list of the host principal, along with the encryption
+methods used to access the principal.
+</para>
+
+<para>
+At this point, if everything has been successful so far, you can feel
+fairly confident in the installation and configuration of the package.
+</para>
+
+<para>Install <filename>/etc/rc.d/init.d/kerberos</filename> init script
+included in the <xref linkend="intro-important-bootscripts"/>
+package.</para>
+
+<screen><userinput><command>make install-kerberos</command></userinput></screen>
+
+</sect4>
+
+<sect4><title>Using Kerberized Client Programs</title>
+
+<para>
+To use the kerberized client programs (<command>telnet</command>,
+<command>ftp</command>, <command>rsh</command>,
+<command>rcp</command>, <command>rlogin</command>), you first must get
+an authentication ticket. Use the <command>kinit</command> program to
+get the ticket. After you've acquired the ticket, you can use the
+kerberized programs to connect to any kerberized server on the network.
+You will not be prompted for authentication until your ticket expires
+(default is one day), unless you specify a different user as a command
+line argument to the program.
+</para>
+
+<para>
+The kerberized programs will connect to non kerberized daemons, warning
+you that authentication is not encrypted.</para></sect4>
+
+
+<sect4><title>Using Kerberized Server Programs</title>
+
+<para>Using kerberized server programs (<command>telnetd</command>,
+<command>kpropd</command>, 
+<command>klogind</command> and <command>kshd</command>) requires two additional configuration steps.
+First the <filename>/etc/services</filename> file must be updated to
+include  eklogin and krb5_prop. Second, the
+<filename>inetd.conf</filename> or <filename>xinetd.conf</filename> must
+be modified for each server that will be activated, usually replacing
+the server from <application>inetutils</application>.</para></sect4>
+
+<sect4><title>Additional Information</title>
+<para>
+For additional information consult <ulink
+url="http://web.mit.edu/kerberos/www/krb5-1.3/#documentation">Documentation
+for krb-&mitkrb-version;</ulink> on which the above instructions are based.
+</para>
+
+</sect4>
+
+</sect3>
+
+</sect2>

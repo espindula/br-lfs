@@ -1,0 +1,218 @@
+<sect2>
+<title>Configuring Heimdal</title>
+
+<sect3><title>Config files</title>
+<para><filename>/etc/heimdal/*</filename></para>
+</sect3>
+
+<sect3><title>Configuration Information</title>
+
+<sect4><title>Master KDC Server Configuration</title>
+
+<para>
+Create the Kerberos configuration file with the following command:
+</para>
+
+<screen><userinput><command>install -d /etc/heimdal &amp;&amp;
+cat &gt; /etc/heimdal/krb5.conf &lt;&lt; "EOF"</command>
+# Begin /etc/heimdal/krb5.conf
+        
+[libdefaults]
+    default_realm = <replaceable>[LFS.ORG]</replaceable>
+    encrypt = true
+
+[realms]
+    <replaceable>[LFS.ORG]</replaceable> = {
+        kdc = <replaceable>[belgarath.lfs.org]</replaceable>
+        admin_server = <replaceable>[belgarath.lfs.org]</replaceable>
+        kpasswd_server = <replaceable>[belgarath.lfs.org]</replaceable>
+    }
+
+[domain_realm]
+    .<replaceable>[lfs.org]</replaceable> = <replaceable>[LFS.ORG]</replaceable>
+
+[logging]
+    kdc = FILE:/var/log/kdc.log
+    admin_server = FILE:/var/log/kadmin.log
+    default = FILE:/var/log/krb.log
+
+# End /etc/heimdal/krb5.conf
+<command>EOF</command></userinput></screen>
+
+<para>
+You will need to substitute your domain and proper hostname for the
+occurances of the belgarath and lfs.org names.
+</para>
+
+<para>
+<userinput>default_realm</userinput> should be the name of your domain changed to ALL CAPS.
+This isn't required, but both Heimdal and <acronym>MIT</acronym>
+recommend it.
+</para>
+
+<para>
+<userinput>encrypt = true</userinput> provides encryption of all traffic between kerberized
+clients and servers. It's not necessary and can be left off. If you
+leave it off, you can encrypt all traffic from the client to the server
+using a switch on the client program instead.
+</para>
+
+<para>
+The <userinput>[realms]</userinput> parameters tell the client programs where to look for the
+<acronym>KDC</acronym> authentication services.
+</para>
+
+<para>
+The <userinput>[domain_realm]</userinput> section maps a domain to a realm.
+</para>
+
+<para>
+Store the master password in a key file using the following commands:
+</para>
+
+<screen><userinput><command>install -d -m 755 /var/lib/heimdal &amp;&amp;
+kstash</command></userinput></screen>
+
+<para>
+Create the <acronym>KDC</acronym> database:
+</para>
+
+<screen><userinput><command>kadmin -l</command></userinput></screen>
+
+<para>
+Choose the defaults for now. You can go in later and change the
+defaults, should you feel the need. At the
+<userinput>kadmin&gt;</userinput> prompt, issue the following statement:
+</para>
+
+<screen><userinput><command>init <replaceable>[LFS.ORG]</replaceable></command></userinput></screen>
+
+<para>
+Now we need to populate the database with principles (users). For now,
+just use your regular login name or root. 
+</para>
+
+<screen><userinput><command>add <replaceable>[loginname]</replaceable></command></userinput></screen>
+
+<para>
+The <acronym>KDC</acronym> server and any machine running kerberized
+server daemons must have a host key installed:
+</para>
+
+<screen><userinput><command>add --random-key host/<replaceable>[belgarath.lfs.org]</replaceable></command></userinput></screen>
+
+<para>
+After choosing the defaults when prompted, you will have to export the
+data to a keytab file:
+</para>
+
+<screen><userinput><command>ext host/<replaceable>[belgarath.lfs.org]</replaceable></command></userinput></screen>
+
+<para>
+This should have created two files in
+<filename class="directory">/etc/heimdal</filename>;
+<filename>krb5.keytab</filename> (Kerberos 5) and
+<filename>srvtab</filename> (Kerberos 4). Both files should have 600
+(root rw only) permissions. Keeping the keytab files from public access
+is crucial to the overall security of the Kerberos installation.
+</para>
+
+<para>
+Eventually, you'll want to add server daemon principles to the database
+and extract them to the keytab file. You do this in the same way you
+created the host principles. Below is an example:
+</para>
+
+<screen><userinput><command>add --random-key ftp/<replaceable>[belgarath.lfs.org]</replaceable></command></userinput></screen>
+
+<para>
+(choose the defaults)
+</para>
+
+<screen><userinput><command>ext ftp/<replaceable>[belgarath.lfs.org]</replaceable></command></userinput></screen>
+
+<para>
+Exit the <command>kadmin</command> program (use <command>quit</command>
+or <command>exit</command>) and return back to the shell prompt. Start
+the <acronym>KDC</acronym> daemon manually, just to test out the 
+installation:
+</para>
+
+<screen><userinput><command>/usr/sbin/kdc &amp;</command></userinput></screen>
+
+<para>
+Attempt to get a <acronym>TGT</acronym> (ticket granting ticket) with the 
+following command:
+</para>
+
+<screen><userinput><command>kinit <replaceable>[loginname]</replaceable></command></userinput></screen>
+
+<para>
+You will be prompted for the password you created. After you get your
+ticket, you should list it with the following command:
+</para>
+
+<screen><userinput><command>klist</command></userinput></screen>
+
+<para>
+Information about the ticket should be displayed on the screen.
+</para>
+
+<para>
+To test the functionality of the keytab file, issue the following
+command:
+</para>
+
+<screen><userinput><command>ktutil list</command></userinput></screen>
+
+<para>
+This should dump a list of the host principals, along with the encryption
+methods used to access the principals.
+</para>
+
+<para>
+At this point, if everything has been successful so far, you can feel
+fairly confident in the installation and configuration of the package.
+</para>
+
+<para>Install <filename>/etc/rc.d/init.d/heimdal</filename> init script
+included in the <xref linkend="intro-important-bootscripts"/>
+package.</para>
+
+<screen><userinput><command>make install-heimdal</command></userinput></screen>
+
+</sect4>
+
+<sect4><title>Using Kerberized Client Programs</title>
+
+<para>
+To use the kerberized client programs (<command>telnet</command>,
+<command>ftp</command>, <command>rsh</command>,
+<command>rxterm</command>, <command>rxtelnet</command>,
+<command>rcp</command>, <command>xnlock</command>), you first must get
+a <acronym>TGT</acronym>. Use the <command>kinit</command> program to
+get the ticket. After you've acquired the ticket, you can use the
+kerberized programs to connect to any kerberized server on the network.
+You will not be prompted for authentication until your ticket expires
+(default is one day), unless you specify a different user as a command
+line argument to the program.
+</para>
+
+<para>
+The kerberized programs will connect to non kerberized daemons, warning
+you that authentication is not encrypted. As mentioned earlier, only the
+<command>ftp</command> program gives any trouble connecting to non
+kerberized daemons.
+</para>
+
+<para>
+For additional information consult <ulink
+url="http://www.linuxfromscratch.org/hints/downloads/files/heimdal.txt">the
+Heimdal hint</ulink> on which the above instructions are based.
+</para>
+
+</sect4>
+
+</sect3>
+
+</sect2>
