@@ -40,35 +40,39 @@ provided by Net-tools. Prevent its installation by applying a patch:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<para>The <command>su</command> program from Coreutils wasn't installed in
-<xref linkend="chapter-temporary-tools"/> because it needed
-<emphasis>root</emphasis> privilege to do so. We're going to need it in a few
-moments for the test suite. Therefore we install it now:</para>
+<para>The test suite of Coreutils makes several assumptions about the presence
+of files and users that aren't valid yet this early in the LFS build. We will
+therefore have to set up a few things before being able to run the tests. If
+you choose not to run these tests, skip down to "Install the package".</para>
+
+<para>To be able to run the full test suite, the <command>su</command> program
+needs to be installed. We didn't bother to install this little program in
+<xref linkend="chapter-temporary-tools"/> because it requires root privileges,
+so do it now:</para>
 
 <screen><userinput>make install-root</userinput></screen>
 
-<para>The test suite of this package
-makes some assumptions with regards to the presence of non-root users and
-groups that don't apply this early into the LFS build. We therefore create
-a dummy system user and two dummy groups to allow the tests to run
-properly. Should you choose not to run the test suite, skip down to
-"Install the package". The following commands will prepare us for the test
-suite. Create two dummy groups and a dummy user name:</para>
+<para>Create a 'table of mounted filesystems' file with:</para>
 
-<screen><userinput>echo "dummy1:x:1000" >> /etc/group
-echo "dummy2:x:1001:dummy" >> /etc/group
-echo "dummy:x:1000:1000:::/bin/bash" >> /etc/passwd</userinput></screen>
+<screen><userinput>touch /etc/mtab</userinput></screen>
 
-<para>Some tests are meant to run as <emphasis>root</emphasis>:</para>
+<para>And create two dummy groups and a dummy user name:</para>
+
+<screen><userinput>echo "dummy1:x:1000" &gt;&gt; /etc/group
+echo "dummy2:x:1001:dummy" &gt;&gt; /etc/group
+echo "dummy:x:1000:1000:::/bin/bash" &gt;&gt; /etc/passwd</userinput></screen>
+
+<para>Now you're all set to run the test suite. First run the few tests that
+are meant to be run as <emphasis>root</emphasis>:</para>
 
 <screen><userinput>make check-root</userinput></screen>
 
-<para>The remainder of the tests are run as the <emphasis>dummy</emphasis>
+<para>Then run the remainder of the tests as the <emphasis>dummy</emphasis>
 user:</para>
 
 <screen><userinput>su dummy -c "make RUN_EXPENSIVE_TESTS=yes check"</userinput></screen>
 
-<para>Remove the dummy groups and user name:</para>
+<para>When you're done testing, remove the dummy user and groups:</para>
 
 <screen><userinput>sed -i.bak '/dummy/d' /etc/passwd /etc/group</userinput></screen>
 
@@ -90,7 +94,7 @@ Remove the one installed by Coreutils:</para>
 
 <screen><userinput>rm /usr/bin/kill</userinput></screen>
 
-<para>Finally, create a few necessary symlinks:</para>
+<para>Finally, create two symlinks to be FHS-compliant:</para>
 
 <screen><userinput>ln -s test /bin/[
 ln -s ../../bin/install /usr/bin</userinput></screen>
