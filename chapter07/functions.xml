@@ -36,9 +36,9 @@ FAILURE="echo -en \\033[1;31m"
 
 evaluate_retval()
 {
-        if [ $? = 0 ]
+	if [ $? = 0 ]
         then
-                print_status success
+		print_status success
         else
                 print_status failure
         fi
@@ -96,6 +96,7 @@ loadproc()
 
 #
 # If no parameters are given to the print_status function, print usage
+
 # information.
 
 #
@@ -217,6 +218,7 @@ killproc()
 # If $pid contains something from the previous for loop it means one or
 
 # more PID's were found that belongs to the processes to be killed
+
 #
         if [ -n "$pid" ]
         then
@@ -227,18 +229,26 @@ killproc()
                 if [ "$nolevel" = 1 ]
                 then
                         /bin/kill -TERM $pid
-/usr/bin/sleep 2
 #
-# If after -TERM the PID still exists we'll try killing it with -KILL
-# and wait for 2 seconds again to allow the kill to be completed
+# If after -TERM the PID still exists we'll wait 2 seconds before
+# trying to kill it with -KILL. If the PID still exist after that, wait
+# two more seconds. If the PIDs still exist by then it's safe to assume
+# that we cannot kill these PIDs.
 #
- 
-                       if ps h $pid >/dev/null 2>&1
+
+                        if /bin/ps h $pid &gt;/dev/null 2&gt;&amp;1
                         then
-                                /bin/kill -KILL $pid
-/usr/bin/sleep 2
+                                /usr/bin/sleep 2
+                                if /bin/ps h $pid &gt; /dev/null 2&gt;&amp;1
+                                then
+                                        /bin/kill -KILL $pid
+                                        if /bin/ps h $pid &gt; /dev/null 2&gt;&amp;1
+                                        then
+                                                /usr/bin/sleep 2
+                                        fi
+                                fi
                         fi
-                        /bin/ps h $pid >/dev/null 2>&1
+                        /bin/ps h $pid &gt;/dev/null 2&gt;&amp;1
                         if [ $? = 0 ]
                         then
 #
@@ -261,8 +271,11 @@ killproc()
 
 #
                         /bin/kill $killlevel $pid
-/usr/bin/sleep 2
-                        /bin/ps h $pid >/dev/null 2>&1
+                        if /bin/ps h $pid &gt; /dev/null 2&gt;&amp;1
+                        then
+                                /usr/bin/sleep 2
+                        fi
+                        /bin/ps h $pid &gt;/dev/null 2&gt;&amp;1
                         if [ $? = 0 ]
                         then
 #
@@ -293,6 +306,7 @@ killproc()
 # The reloadproc functions sends a signal to a daemon telling it to
 # reload it's configuration file. This is almost identical to the
 # killproc function with the exception that it won't try to kill it with
+
 # a -KILL signal (aka -9)
 #
 
@@ -364,6 +378,7 @@ reloadproc()
 
 #
 # If nolevel was set we will use the default reload signal SIGHUP.
+
 #
 
                 if [ "$nolevel" = 1 ]
