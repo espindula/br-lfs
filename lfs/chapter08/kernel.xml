@@ -1,12 +1,190 @@
-<sect1 id="ch08-kernel">
-<title>Installer Linux-&kernel-version;</title>
-<?dbhtml filename="kernel.html" dir="chapter08"?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+<sect1 id="ch-bootable-kernel" xreflabel="Linux">
+<title>Linux-&linux-version;</title>
+<?dbhtml filename="kernel.html"?>
 
-<screen>Temps de construction estimé:           &kernel-time;
-Espace disque nécessaire estimé:  &kernel-compsize;</screen>
+<indexterm zone="ch-bootable-kernel"><primary
+sortas="a-Linux">Linux</primary></indexterm>
 
-&aa-kernel-shortdesc;
-&aa-kernel-dep;
-&c8-kernel-inst;
+<para>Le package Linux contient le noyau et les fichiers d'en-têtes.</para>
+
+<screen>&buildtime; toutes les options par défaut&nbsp;: 4,20 SBU
+&diskspace; toutes les options par défaut&nbsp;: 181&nbsp;Mo</screen>
+
+<para>L'installation de Linux dépend de&nbsp;: Bash, Binutils,
+Coreutils, Findutils, GCC, Glibc, Grep, Gzip, Make, Modutils, Perl, Sed.</para>
+
+<sect2>
+<title>Installation du noyau</title>
+
+<para>Construire le noyau implique un certain nombre d'étapes: configuration,
+compilation et installation. Si vous n'aimez pas la façon dont ce livre
+configure le noyau, jetez un oeil sur le fichier <filename>README</filename>
+contenu dans les sources du noyau pour d'autres méthodes.</para>
+
+<para>Préparez la compilation en lançant la commande suivante:</para>
+
+<screen><userinput>make mrproper</userinput></screen>
+
+<para>Ceci nous assure que le répertoire du noyau est complètement nettoyé.
+L'équipe du noyau recommande que cette commande soit lancée avant
+<emphasis>chaque</emphasis> compilation du noyau. Vous ne devez pas penser
+que le répertoire des sources soit propre juste après avoir été déballé.</para>
+
+<para>Configurez le noyau via une interface par menu:</para>
+
+<screen><userinput>make menuconfig</userinput></screen>
+
+<para><userinput>make oldconfig</userinput> peut être plus approprié dans
+certaines situations. Voir le fichier <filename>README</filename> pour plus
+d'informations.</para>
+
+<para>Si vous le souhaitez, vous pouvez éviter la configuration du noyau en
+copiant le fichier de configuration du noyau, <filename>.config</filename>, à
+partir de votre système hôte (en supposant qu'il soit disponible) vers le
+répertoire <filename
+class="directory">$LFS/usr/src/linux-&linux-version;</filename>. Néanmoins,
+nous ne recommendons pas cette option. Vous ferez bien mieux d'explorer tous les
+menus de configuration et de créer la configuration de votre propre noyau à
+partir de rien.</para>
+
+<para>Pour le support de la mémoire partagée POSIX, assurez-vous que l'option de
+configuration du noyau <quote>Virtual memory file system support</quote> est
+activée. Elle réside dans le menu <quote>File systems</quote> et est normalement
+activée par défaut.</para>
+
+<para>Il est important de noter que pour être conforme avec les réquisitions de
+la mémoire partagée POSIX, nous devons active l'option du système de fichiers
+tmpfs et nous devons monter un système de fichiers tmpfs à partir de
+<filename>/dev/shm</filename>.</para>
+
+<para>Vérifiez les dépendances et créez les fichiers d'information sur
+dépendances:</para>
+
+<screen><userinput>make CC=/opt/gcc-2.95.3/bin/gcc dep</userinput></screen>
+
+<para>Compilez l'image du noyau:</para>
+
+<screen><userinput>make CC=/opt/gcc-2.95.3/bin/gcc bzImage</userinput></screen>
+
+<para>Compilez les pilotes qui ont été configurés comme modules:</para>
+
+<screen><userinput>make CC=/opt/gcc-2.95.3/bin/gcc modules</userinput></screen>
+
+<para>Si vous avez l'intention d'utiliser des modules du noyau, vous aurez
+besoin d'un fichier <filename>/etc/modules.conf</filename>. L'information sur
+les modules et sur la configuration du noyau sont disponibles en général dans la
+documentation du noyau, qui est stockée dans
+<filename>linux-&linux-version;/Documentation</filename>. La page man
+modules.conf et le HOWTO du noyau (<ulink
+url="http://www.tldp.org/HOWTO/Kernel-HOWTO.html"/> peuvent aussi vous
+intéresser.</para>
+
+<para>Installez les modules:</para>
+
+<screen><userinput>make CC=/opt/gcc-2.95.3/bin/gcc modules_install</userinput></screen>
+
+<para>Si vous avez beaucoup de modules et très peu d'espace, vous pourriez
+considérer l'utilisation de strip et la compression des modules. Pour la
+plupart des gens, utiliser cette compression pose trop de soucis, mais si vous
+êtes vraiment gêné par l'espace, alors jetez un &oelig;il à <ulink
+url="http://www.linux-mips.org/archives/linux-mips/2002-04/msg00031.html"/>.
+</para>
+
+<para>Comme rien n'est terminé sans documentation, construisez les pages man
+venant avec le noyau:</para>
+
+<screen><userinput>make mandocs</userinput></screen>
+
+<para>Et installez ces pages:</para>
+
+<screen><userinput>cp -a Documentation/man /usr/share/man/man9</userinput></screen>
+
+<para>La compilation du noyau est terminée mais quelques étapes
+supplémentaires sont requises pour finir l'installation. Quelques fichiers
+doivent être copiés dans le répertoire <filename>/boot</filename>.</para>
+
+<para>Le chemin vers l'image du noyau peut varier suivant la plateforme que
+vous utilisez. Lancez la commande suivante pour installer le noyau&nbsp;:</para>
+
+<screen><userinput>cp arch/i386/boot/bzImage
+/boot/lfskernel</userinput></screen>
+
+<para><filename>System.map</filename> est un fichier de symboles pour le
+noyau. Il fait correspondre les points d'entrée des fonctions à chaque fonction
+de l'API (Application Programming Interface) du noyau, ainsi que les adresses
+des structures de données du noyau pour le noyau actuel. Lancez la commande
+suivante pour installer le fichier map&nbsp;:</para>
+
+<screen><userinput>cp System.map /boot</userinput></screen>
+
+<para><filename>.config</filename> est le fichier de configuration du noyau et
+a été produit par l'étape du <command>make menuconfig</command> ci-dessus. Il
+contient toutes les sélections lors de configuration pour le noyau qui v
+ient d'être compilé. Il est intelligent de conserver ce fichier en tant
+que référence&nbsp;:</para>
+
+<screen><userinput>cp .config /boot/config-lfskernel</userinput></screen>
+
+<para>Il est important de noter que les fichiers du répertoire des sources
+du noyau n'appartiennent pas à <emphasis>root</emphasis>. À chaque fois que
+vous déballez un package en tant qu'utilisateur <emphasis>root</emphasis> (
+comme nous avons fait ici dans le chroot), les fichiers appartiennent aux
+possesseurs des identifiants d'utilisateur et de groupe enregistrés sur
+l'ordinateur de la personnes ayant généré le package. Ceci n'est habituellement
+pas un problème pour les autres packages installés parce que vous allez
+supprimer les sources après l'installation. Mais le répertoire des sources du
+noyau est souvent conservé très longtemps, donc il y a une chance pour que
+l'identifiant du packageur soit affecté à quelqu'un sur votre machine. À ce
+moment, cet utilisateur aura accès en écriture aux sources du noyau.</para>
+
+<para>Si vous comptez conserver le répertoire des sources du noyau, vous devez
+lancer <userinput>chown -R 0:0</userinput> sur le répertoire
+<filename>linux-&linux-version;</filename> pour vous assurer que tous les
+fichiers appartiennent à l'utilisateur <emphasis>root</emphasis>.</para>
+
+</sect2>
+
+
+<sect2 id="contents-kernel"><title>Contenu de Linux</title>
+
+<para><emphasis>Fichiers installés</emphasis>: le noyau, les en-têtes du
+noyau et le System.map</para>
+
+</sect2>
+
+<sect2><title>Descriptions courtes</title>
+
+<indexterm zone="ch-bootable-kernel kernel"><primary
+sortas="b-kernel">kernel</primary></indexterm>
+<para id="kernel">Le noyau (<emphasis>kernel</emphasis>) est le moteur de votre
+système GNU/Linux. En allumant votre machine, le noyau est la première partie
+de votre système d'exploitation à être chargé. Il détecte et initialise tous
+les composants matériels de votre ordinateur, rend disponible ces composants
+comme un ensemble de fichiers pour le logiciel et transforme le seul CPI en une
+machine multi-tâche capable d'exécuter des programmes apparemment en même
+temps.</para>
+
+<indexterm zone="ch-bootable-kernel kernel-headers"><primary
+sortas="e-kernel-headers">en-têtes du noyau</primary></indexterm>
+<para id="kernel-headers">Les en-têtes du noyau (<emphasis>kernel
+headers</emphasis>) définissent l'interface des services fournis par le noyau.
+Les en-têtes du répertoire <filename>include</filename> de votre système
+devraient <emphasis>toujours</emphasis> être ceux avec lesquels Glibc a été
+compilé et ne devraient <emphasis>pas</emphasis> être remplacés lors de la mise
+à jour du noyau.</para>
+
+<indexterm zone="ch-bootable-kernel System.map"><primary
+sortas="e-/boot/System.map">/boot/System.map</primary></indexterm>
+<para id="System.map">Le fichier <filename>System.map</filename> est une liste
+d'adresses et de symboles. Il fait correspondre les points d'entrées aux
+adresses de toutes les fonctions et structures de données du noyau.</para>
+
+</sect2>
 
 </sect1>

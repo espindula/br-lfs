@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+<sect1 id="ch-tools-settingenviron">
+<title>Configurer l'environnement</title>
+<?dbhtml filename="settingenvironment.html"?>
+
+<para>Nous allons maintenant configurer un bon environnement de travail en
+créant deux nouveaux fichiers de démarrage pour le shell
+<command>bash</command>. En étant connecté <emphasis>lfs</emphasis>, lancez la
+commande suivante pour créer un nouveau
+<filename>.bash_profile</filename>&nbsp;:</para>
+
+<screen><userinput>cat &gt; ~/.bash_profile &lt;&lt; "EOF"</userinput>
+exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
+<userinput>EOF</userinput></screen>
+
+<para>Normalement, lorsque vous vous connectez en tant qu'utilisateur
+<emphasis>lfs</emphasis>, le shell initial est un shell de
+<emphasis>connexion</emphasis> qui va lire le fichier
+<filename>/etc/profile</filename> de votre hôte (contenant probablemen
+t quelques configuration de variables d'environnement) puis le fichier
+<filename>.bash_profile</filename>. La commande <command>exec env -i ...
+/bin/bash</command> dans le premier fichier remplace le shell en cours
+d'exécution par ce nouveau avec un environnement complètement vide sauf en ce
+qui concernent les variables HOME, TERM et PS1. Ceci nous assure qu'aucune
+variable d'environnement non souhaitée du système hôte ne parvienne à notre
+environnement de construction. La technique utilisée ici est un peu étrange
+mais elle réalise notre but d'environnement propre.</para>
+
+<para>La nouvelle instance de shell est un shell <emphasis>sans
+connexion</emphasis>, qui ne lit pas les fichiers
+<filename>/etc/profile</filename> et/ou <filename>.bash_profile</filename> mais
+lit à la place le fichier <filename>.bashrc</filename>.Créez ce dernier fichier
+maintenant&nbsp;:</para>
+
+<screen><userinput>cat &gt; ~/.bashrc &lt;&lt; "EOF"</userinput>
+set +h
+umask 022
+LFS=/mnt/lfs
+LC_ALL=POSIX
+PATH=/tools/bin:/bin:/usr/bin
+export LFS LC_ALL PATH
+<userinput>EOF</userinput></screen>
+
+<para>La <command>set +h</command> désactive la fonction de hachage de
+<command>bash</command>. Normalement, le hachage est une fonctionnalité
+utile&nbsp;: <command>bash</command> utilise une table de hachage pour se
+rappeler les chemins complets des exécutables pour éviter d'avor à chercher à
+chaque fois dans les chemins de PATH pour trouver le même exécutable.
+Néanmoins, nous souhaitons utiliser les nouveaux outils dès leur installation.
+En désactivant la fonction de hachage, nos commandes <quote>interactives</quote>
+ommands (<command>make</command>, <command>patch</command>,
+<command>sed</command>, <command>cp</command> et ainsi de suite) utiliseront
+toujours la version la plus récente lors du processus de construction.</para>
+
+<para>Configurer le masque de création de fichier de l'utilisateur à 022 nous
+assure que les fichiers nouvellement créés sont modifiables uniquement par leur
+propriétaire mais lisible et exécutable par tout le monde.</para>
+
+<para>La variable LFS devrait bien sûr être initialisée avec le point de
+montage que vous avez choisi.</para>
+
+<para>La variable LC_ALL contrôle la traduction de certains programmes, en
+faisant que leur messages suivent les conventions du pays spécifié. Si votre
+système hôte utilise une version de Glibc plus ancienne que la 2.2.4,
+avoir LC_ALL configuré avec autre chose que <quote>POSIX</quote> ou
+<quote>C</quote> dans ce chapitre pourrait poser des problèmes si vous quittez
+l'environnement chroot et souhaitez y revenir plus tard. En initialisant 
+LC_ALL à <quote>POSIX</quote> (ou <quote>C</quote>, les deux sont équivalents),
+nous nous assurons que tout fonctionnera comme attendu dans l'environnement
+chroot.</para>
+
+<para>Nous supposons que <filename>/tools/bin</filename> est le chemin (PATH) 
+standard qui sera utilisé pendant tout le processus de construction par les
+outils que nous construisons tout au long de ce chapitre.</para>
+
+<para>Enfin, pour que notre environnement soit fin prêt à construire les outils
+temporaires, utilisez source avec le fichier profile tout juste
+créé&nbsp;:</para>
+
+<screen><userinput>source ~/.bash_profile</userinput></screen>
+
+</sect1>

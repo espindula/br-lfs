@@ -1,23 +1,36 @@
-<sect1 id="ch05-pwdgroup">
-<title>Créer les fichiers passwd et group</title>
-<?dbhtml filename="pwdgroup.html" dir="chapter05"?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+<sect1 id="ch-system-pwdgroup">
+<title>Creating the passwd, group and log files</title>
+<?dbhtml filename="pwdgroup.html"?>
 
-<para>Pour que <emphasis>root</emphasis> puisse se connecter et pour que le nom
-"root" soit reconnu, il doit exister les entrées adéquates dans les fichiers
-<filename>/etc/passwd</filename> et <filename>/etc/group</filename>.</para>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/etc/passwd">/etc/passwd</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/etc/group">/etc/group</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/var/run/utmp">/var/run/utmp</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/var/log/btmp">/var/log/btmp</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/var/log/lastlog">/var/log/lastlog</primary></indexterm>
+<indexterm zone="ch-system-pwdgroup"><primary sortas="e-/var/log/wtmp">/var/log/wtmp</primary></indexterm>
 
-<para>Créez le fichier <filename>/etc/passwd</filename> en lançant la commande
-suivante:</para>
+<para>In order for <emphasis>root</emphasis> to be able to login and for the 
+name <quote>root</quote> to be recognized, there need to be relevant entries in
+the <filename>/etc/passwd</filename> and <filename>/etc/group</filename> files.
+</para>
+
+<para>Create the <filename>/etc/passwd</filename> file by running the following
+command:</para>
 
 <screen><userinput>cat &gt; /etc/passwd &lt;&lt; "EOF"</userinput>
 root:x:0:0:root:/root:/bin/bash
 <userinput>EOF</userinput></screen>
 
-<para>Le mot de passe actuel pour <emphasis>root</emphasis> (le "x" ici sert
-juste à remplir la case) sera initialisé plus tard.</para>
+<para>The actual password for <emphasis>root</emphasis> (the <quote>x</quote>
+here is just a placeholder) will be set later.</para>
 
-<para>Créez le fichier <filename>/etc/group</filename> en lançant la commande
-suivante:</para>
+<para>Create the <filename>/etc/group</filename> file by running the following 
+command:</para>
 
 <screen><userinput>cat &gt; /etc/group &lt;&lt; "EOF"</userinput>
 root:x:0:
@@ -34,28 +47,43 @@ dialout:x:10:
 audio:x:11:
 <userinput>EOF</userinput></screen>
 
-<para>Les groupes créés ne font partie d'aucun standard -- ce sont les groupes
-que le script MAKEDEV utilise dans la section suivante. En plus du groupe
-"root", le LSB (<ulink url="http://www.linuxbase.org"/>) recommande seulement un
-groupe "bin", avec un GID de 1. Tous les autres noms de groupe et GIDs peuvent
-être choisis librement par l'utilisateur, car les packages bien écrits ne
-dépendent pas du numéro GID mais utilisent le nom du groupe.</para>
-
-<para>Enfin, nous nous reconnectons dans l'environnement chroot. La résolution
-des noms d'utilisateur et des noms de groupe commencera à fonctionner
-immédiatement après la création des fichiers <filename>/etc/passwd</filename>
-et <filename>/etc/group</filename>, parce que nous avons installé une Glibc
-complète au chapitre 5. Ceci supprimer l'invite <quote>I have no name!</quote>.
+<para>The created groups aren't part of any standard -- they are some of the
+groups that the <command>make_devices</command> script in the next section
+uses. The LSB (<ulink url="http://www.linuxbase.org/">Linux Standard
+Base</ulink>) recommends only that, beside the group <quote>root</quote> with a
+GID of 0, a group <quote>bin</quote> with a GID of 1 be present. All other group
+names and GIDs can be chosen freely by the system administrator, since
+well-written packages don't depend on GID numbers but use the group's name.
 </para>
+
+<para>To get rid of the <quote>I have no name!</quote> prompt, we will start a
+new shell.  Since we installed a full Glibc in
+<xref linkend="chapter-temporary-tools"/>, and have just created the
+<filename>/etc/passwd</filename> and <filename>/etc/group</filename> files,
+user name and group name resolution will now work.</para>
 
 <screen><userinput>exec /tools/bin/bash --login +h</userinput></screen>
 
-<para>Notez l'utilisation de la directive <userinput>+h</userinput>. Ceci
-indique à <userinput>bash</userinput> de ne pas utiliser son hachage interne du
-chemin. Sans cette directive, <userinput>bash</userinput> se rappelerait les
-chemins des binaires qu'il a exécuté. Comme nous voulons utiliser nos binaires
-nouvellement compilés aussitôt après leur installation, nous désactivons cette
-fonctionnalité pour toute la durée de ce chapitre.</para>
+<para>Note the use of the <emphasis>+h</emphasis> directive. This tells
+<command>bash</command> not to use its internal path hashing. Without this
+directive, <command>bash</command> would remember the paths to binaries it
+has executed. Since we want to use our newly compiled binaries as soon as
+they are installed, we turn off this function for the duration of this
+chapter.</para>
+
+<para>The <command>login</command>, <command>agetty</command> and
+<command>init</command> programs (and some others) use a number of log
+files to record information such as who was logged into the system and when.
+These programs, however, won't write to the log files if they don't already
+exist. Initialize the log files and give them their proper permissions:</para>
+
+<screen><userinput>touch /var/run/utmp /var/log/{btmp,lastlog,wtmp}
+chmod 644 /var/run/utmp /var/log/{btmp,lastlog,wtmp}</userinput></screen>
+
+<para>The <filename>/var/run/utmp</filename> file records the users that are
+currently logged in. The <filename>/var/log/wtmp</filename> file records all
+logins and logouts. The <filename>/var/log/lastlog</filename> file records for
+each user when he or she last logged in. The <filename>/var/log/btmp</filename>
+file records the bad login attempts.</para>
 
 </sect1>
-

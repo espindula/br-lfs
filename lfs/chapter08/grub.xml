@@ -1,13 +1,23 @@
-<sect1 id="ch08-grub">
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+<sect1 id="ch-bootable-grub">
 <title>Rendre le système LFS démarrable</title>
-<?dbhtml filename="grub.html" dir="chapter08"?>
+<?dbhtml filename="grub.html"?>
+
+<indexterm zone="ch-bootable-grub">
+<primary sortas="a-Grub">Grub</primary>
+<secondary>configuring</secondary></indexterm>
 
 <para>Votre nouveau système LFS est pratiquement fini. Une des dernières choses
 à faire est de vous assurer que vous pouvez le démarrer. Les instructions
 ci-dessous s'appliquent seulement aux ordinateurs de l'architecture IA-32,
-c'est-à-dire les PC standards. Des informations sur le "chargement au démarrage"
-pour les autres architectures devraient être disponibles aux emplacements
-habituelles des ressources pour ces architectures.</para>
+c'est-à-dire les PC standards. Des informations sur le <quote>chargement au
+démarrage</quote> pour les autres architectures devraient être disponibles aux
+emplacements habituelles des ressources pour ces architectures.</para>
 
 <para>Le chargement au démarrage est un domaine complexe. Tout d'abord, quelques
 mots de mise en garde. Vous devez vraiment connaitre votre chargeur actuel et
@@ -41,9 +51,11 @@ donc si vous avez un CD sur <filename>hdb</filename>, par exemple, et un second
 disque dur sur <filename>hdc</filename>, ce dernier disque sera malgré tout
 (hd1).</para>
 
-<para>Utilisant les informations ci-dessus, déterminez la désignation appropriée
-pour votre partition root. Pour l'exemple suivant, nous supposerons que votre
-partition root est <filename>hda4</filename>.</para>
+<para>En utilisant les informations ci-dessus, déterminez la désignation
+appropriée pour votre partition root (ou votre partition de démarrage si celle
+que vous utilisez est séparée). Pour l'exemple suivant, nous supposerons que
+votre partition root (ou votre partition séparée) est
+<filename>hda4</filename>.</para>
 
 <para>Tout d'abord, indiquez à Grub où chercher ses fichiers
 <filename>stage{1,2}</filename> -- vous pouvez utiliser la touche tabulation
@@ -51,21 +63,19 @@ partout pour que Grub vous affiche les alternatives&nbsp;:</para>
 
 <screen><userinput>root (hd0,3)</userinput></screen>
 
-<!-- HACK - Force some whitespace to appease tidy -->
 <literallayout></literallayout>
 
 <warning><para>La commande suivante écrasera votre chargeur de démarrage actuel.
 Ne lancez pas cette commande si ce n'est pas ce que vous voulez. Par exemple,
 vous pourriez utiliser un gestionnaire de démarrage autre pour gérer votre MBR
-(Master Boot Record). Dans ce cas, il serait probablement plus sensé d'installer
-Grub dans le secteur de boot de la partition LFS, auquel cas la commande
-deviendrait&nbsp;:
+(Master Boot Record). Dans ce cas, il serait probablement plus sensé
+d'installer Grub dans le <quote>secteur de boot</quote> de la partition LFS,
+auquel cas cette prochaine commande deviendrait&nbsp;:
 <userinput>setup (hd0,3)</userinput>.</para></warning>
 
-<!-- HACK - Force some whitespace to appease tidy -->
 <literallayout></literallayout>
 
-<para>Ensuite, indiquez-lui de s'installer dans le MBR de
+<para>Ensuite, indiquez à Grub de s'installer dans le MBR de
 <filename>hda</filename>&nbsp;:</para>
 
 <screen><userinput>setup (hd0)</userinput></screen>
@@ -75,8 +85,8 @@ deviendrait&nbsp;:
 
 <screen><userinput>quit</userinput></screen>
 
-<para>Maintenant, nous avons besoin de créer un fichier "liste de menus"
-définissant le menu de démarrage de Grub&nbsp;:</para>
+<para>Maintenant, nous avons besoin de créer un fichier <quote>liste de
+menus</quote> définissant le menu de démarrage de Grub&nbsp;:</para>
 
 <screen><userinput>cat &gt; /boot/grub/menu.lst &lt;&lt; "EOF"</userinput>
 # Debut de /boot/grub/menu.lst
@@ -93,8 +103,15 @@ color green/black light-green/black
 # La premiere entree concerne LFS.
 title LFS &milestone;
 root (hd0,3)
-kernel /boot/lfskernel root=/dev/hda4 ro
+kernel --no-mem-option /boot/lfskernel root=/dev/hda4
 <userinput>EOF</userinput></screen>
+
+<note><para>Par défaut, Grub passera automatiquement un argument
+<quote>mem=xxx</quote> au noyau. Néanmoins, Grub obtient occasionellement une
+mauvaise taille mémoire, ce qui peut causer des problèmes dans certaines
+circonstances. Il est préférable de désactiver cette fonctionnalité et de
+laisser le noyau déterminer la taille mémoire lui-même, d'où l'utilisation de
+<emphasis>--no-mem-option</emphasis> ci-dessus.</para></note>
 
 <para>Vous pouvez souhaiter ajouter une entrée pour votre distribution hôte.
 Cela pourrait ressembler à ceci&nbsp;:</para>
@@ -102,7 +119,7 @@ Cela pourrait ressembler à ceci&nbsp;:</para>
 <screen><userinput>cat &gt;&gt; /boot/grub/menu.lst &lt;&lt; "EOF"</userinput>
 title Red Hat
 root (hd0,2)
-kernel /boot/kernel-2.4.20 root=/dev/hda3 ro
+kernel /boot/kernel-2.4.20 root=/dev/hda3
 initrd /boot/initrd-2.4.20
 <userinput>EOF</userinput></screen>
 
@@ -115,10 +132,10 @@ rootnoverify (hd0,0)
 chainloader +1
 <userinput>EOF</userinput></screen>
 
-<para>Si <userinput>info grub</userinput> ne vous dit pas tout ce que vous
+<para>Si <command>info grub</command> ne vous dit pas tout ce que vous
 souhaitez savoir, vous pouvez trouver plus d'informations concernant Grub sur
 son site web, situé sur
-<ulink url="http://www.gnu.org/software/grub"/>.</para>
+<ulink url="http://www.gnu.org/software/grub/"/>.</para>
 
 </sect1>
 
