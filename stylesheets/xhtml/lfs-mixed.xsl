@@ -33,35 +33,6 @@
     </xsl:choose>
   </xsl:template>
 
-  
-  <!-- variablelist 
-  <xsl:template match="variablelist">
-    <div class="{name(.)}">
-      <xsl:if test="title | bridgehead">
-        <xsl:choose>
-          <xsl:when test="@role = 'materials'">
-            <h2>
-              <xsl:value-of select="title | bridgehead"/>
-            </h2>
-          </xsl:when>
-          <xsl:otherwise>
-            <h3>
-              <xsl:value-of select="title | bridgehead"/>
-            </h3>
-          </xsl:otherwise>
-        </xsl:choose>
-      </xsl:if>
-      <dl>
-        <xsl:if test="@role">
-          <xsl:attribute name="class">
-            <xsl:value-of select="@role"/>
-          </xsl:attribute>
-        </xsl:if>
-        <xsl:apply-templates select="varlistentry"/>
-      </dl>
-    </div>
-  </xsl:template>-->
-
     <!-- segementedlist -->
   <xsl:template match="seg">
     <xsl:variable name="segnum" select="count(preceding-sibling::seg)+1"/>
