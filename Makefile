@@ -1,7 +1,6 @@
 BASEDIR=~/lfs-book
 CHUNK_QUIET=0
 PDF_OUTPUT=LFS-BOOK.pdf
-PRINT_OUTPUT=LFS-BOOK-PRINTABLE.pdf
 NOCHUNKS_OUTPUT=LFS-BOOK.html
 XSLROOTDIR=/usr/share/xml/docbook/xsl-stylesheets-current
 
@@ -43,11 +42,11 @@ lfs:
 pdf:
 	xsltproc --xinclude --nonet --stringparam profile.condition print \
 		--output $(BASEDIR)/lfs-print.xml stylesheets/lfs-profile.xsl index-print.xml
-	xsltproc --nonet --output $(BASEDIR)/lfs-print.fo stylesheets/lfs-print.xsl \
-		$(BASEDIR)/lfs-print.xml
-	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-print.fo
-	fop.sh $(BASEDIR)/lfs-print.fo $(BASEDIR)/$(PRINT_OUTPUT)
-	rm $(BASEDIR)/lfs-print.xml $(BASEDIR)/lfs-print.fo
+	xsltproc --nonet --output $(BASEDIR)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
+		$(BASEDIR)/lfs-pdf.xml
+	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo
+	fop.sh $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+	rm $(BASEDIR)/lfs-pdf.xml $(BASEDIR)/lfs-pdf.fo
 
 nochunks:
 	xsltproc --xinclude --nonet --output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
