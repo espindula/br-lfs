@@ -5,7 +5,7 @@
                 version="1.0">
 
     <!-- We use XHTML -->
-  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.66.1/xhtml/docbook.xsl"/>
+  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/docbook.xsl"/>
 
   <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
   <xsl:output method="html" encoding="ISO-8859-1" indent="no" />

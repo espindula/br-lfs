@@ -52,7 +52,7 @@
       <xsl:call-template name="object.id"/>
     </xsl:variable>
     <xsl:variable name="graphic.width">
-      <xsl:call-template name="admon.graphic.width"/>
+     <xsl:apply-templates select="." mode="admon.graphic.width"/>
     </xsl:variable>
     <fo:block id="{$id}">
       <fo:list-block provisional-distance-between-starts="{$graphic.width} + 18pt"
