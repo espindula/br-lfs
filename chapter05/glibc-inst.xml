@@ -77,21 +77,65 @@ libpng, libz, and so forth).</para></listitem>
 *** Check the INSTALL file for required versions.</screen></blockquote>
 
 <para>The missing or incompatible <filename>msgfmt</filename> program is
-generally harmless and shouldn't cause us any problems.</para>
+generally harmless, but it's believed it can sometimes cause problems when
+running the test suite.</para>
 
-<para>Continue with compiling the package:</para>
+<para>Compile the package:</para>
 
-<para><screen><userinput>make
-make check
-make install</userinput></screen></para>
+<para><screen><userinput>make</userinput></screen></para>
 
-<para>The glibc make check process is highly dependent on certain functions
-of your host operating system.  The most common is a host that fails to mount
-a tmpfs filesystem at /dev/shm, which may cause glibc tests to fail.</para>
+<para>Run the test suite:</para>
 
-<para>The locales (used by Glibc to make your Linux system respond in a
-different language) weren't installed when you ran the previous command,
-so we have to do that ourselves now:</para>
+<para><screen><userinput>make check</userinput></screen></para>
+
+<para>The Glibc test suite is highly dependent on certain functions of your host
+system, in particular the kernel. Additionally, here in Chapter 5, some tests
+can be adversely affected by existing tools or environmental issues on the host
+system. Of course, these won't be a problem when we run the Glibc test suite
+inside the chroot environment of Chapter 6. In general, the Glibc test suite is
+always expected to pass. However, as mentioned above, some failures are
+unavoidable in certain circumstances. Here is a list of the most common issues
+we are aware of:</para>
+
+<itemizedlist>
+<listitem><para>The math tests sometimes fail when running on systems where the 
+CPU is not a relatively new genuine Intel or genuine AMD. Certain optimization
+settings are also known to be a factor here.</para></listitem>
+
+<listitem><para>The gettext test sometimes fails due to host system issues. The
+exact reasons are not yet clear.</para></listitem>
+
+<listitem><para>The atime test sometimes fails when the LFS parition is mounted
+with the noatime option or due to other file system quirks.</para></listitem>
+
+<listitem><para>In general, when running on slower hardware, some tests might
+fail due to test timeouts being exceeded.</para></listitem>
+
+<listitem><para>The shm test might fail in the circumstances of the host system
+running the devfs file system but not having the tmpfs filesystem mounted at
+/dev/shm due to lack of support for tmpfs in the kernel.</para></listitem>
+</itemizedlist>
+
+<para>In summary, don't worry too much if you see Glibc test suite failures here
+in Chapter 5. The Glibc in Chapter 6 is the one we'll ultimately end up using so
+that is the one we would really like to pass. But please keep in mind, even in
+Chapter 6 some failures could still occur, the math tests for example. When
+experiencing a failure, note the failure then continue on by reissuing the
+<userinput>make check</userinput>. The test suite should pick up where it left
+off and continue on. You can circumvent this stop-start sequence by issuing a
+<userinput>make -k check</userinput>. But If you do that, be sure to log the
+output so that you can later on peruse the log file and examine the total number
+of failures.</para>
+
+<para>Now install the package:</para>
+
+<para><screen><userinput>make install</userinput></screen></para>
+
+<para>Different countries and cultures have varying conventions for how to
+communicate. These conventions range from very simple ones, such as the format
+for representing dates and times, to very complex ones, such as the language
+spoken. This "internationalization" works by means of locales. We'll install the
+Glibc locales now:</para>
 
 <para><screen><userinput>make localedata/install-locales</userinput></screen></para>
 
@@ -99,10 +143,10 @@ so we have to do that ourselves now:</para>
 those locales which you need or want. This can be achieved by using the
 <userinput>localedef</userinput> command. Information on this can be
 found in the <filename>INSTALL</filename> file in the
-<filename>glibc-&glibc-version;</filename> tree. However, there are a
+<filename>glibc-&glibc-version;</filename> source. However, there are a
 number of locales that are essential for the tests of future packages
 to pass correctly, in particular, the libstdc++ tests from GCC.  The following 
-instructions, in place of the install-locales command above, will install 
+instructions, instead of the install-locales command above, will install 
 the minimum set of locales necessary for the tests to run successfully:</para>
 
 <para><screen><userinput>mkdir -p /tools/lib/locale
