@@ -77,7 +77,7 @@ words, more advanced techniques could be used to build the system.</para>
 <important>
 <para>Before continuing, you really should be aware of the name of your working
 platform, often also referred to as the <emphasis>target triplet</emphasis>. For
-many folks the target triplet will be, for example:
+many folks the target triplet will probably be
 <emphasis>i686-pc-linux-gnu</emphasis>. A simple way to determine your target
 triplet is to run the <filename>config.guess</filename> script that comes with
 the source for many packages. Unpack the Binutils sources and run the script:
@@ -88,7 +88,7 @@ the source for many packages. Unpack the Binutils sources and run the script:
 <emphasis>dynamic loader</emphasis>, not to be confused with the standard linker
 <emphasis>ld</emphasis> that is part of Binutils. The dynamic linker is provided
 by Glibc and has the job of finding and loading the shared libraries needed by a
-program, preparing the program to run and then running it. For most folks, the
+program, preparing the program to run and then running it. For most folks the
 name of the dynamic linker will be <emphasis>ld-linux.so.2</emphasis>. On
 platforms that are less prevalent, the name might be
 <emphasis>ld.so.1</emphasis> and newer 64 bit platforms might even have
@@ -266,12 +266,13 @@ programs compiled in the next chapter. The programs compiled here are only
 temporary tools and won't be a part of the final LFS system and by keeping them
 in a separate directory, we can later easily throw them away.</para>
 
-<para>If later you wish to search through the binaries of your system to see
-what files they make use of or link against, then to make this searching easier
-you may want to choose a unique name. Instead of the simple "tools" you could
-use something like "tools-for-lfs". However, you'll need to be careful to
-adjust all references to "tools" throughout the book including those in any
-patches, the most notable being the GCC Specs Patch.</para>
+<para>Later on you might wish to search through the binaries of your system to
+see what files they make use of or link against. To make this searching easier
+you may want to choose a unique name for the directory in which the temporary
+tools are stored. Instead of the simple "tools" you could use something like
+"tools-for-lfs". However, you'll need to be careful to adjust all references to
+"tools" throughout the book -- including those in any patches, notably the
+GCC Specs Patch.</para>
 
 <para>Create the required directory by running the following:</para>
 
@@ -283,16 +284,15 @@ partition:</para>
 
 <screen><userinput>ln -s $LFS/tools /</userinput></screen>
 
-<para>This symlink enables us to compile our toolchain so that it always
+<note><para>The above command is correct. The <userinput>ln</userinput> command
+has a few syntactic variations, so be sure to check the info page before
+reporting what you may think is an error.</para></note>
+
+<para>The created symlink enables us to compile our toolchain so that it always
 refers to <filename>/tools</filename>, meaning that the compiler, assembler
 and linker will work both in this chapter (when we are still using some tools
 from the host) <emphasis>and</emphasis> in the next (when we are chrooted to
 the LFS partition).</para>
-
-<note><para>Study the above command closely. It can be confusing at first
-glance. The <userinput>ln</userinput> command has several syntax variations,
-so be sure to check the ln man page before reporting what you may think is an
-error.</para></note>
 
 </sect1>
 
@@ -330,7 +330,7 @@ user command:</para>
 <screen><userinput>su - lfs</userinput></screen>
 
 <para>The "<userinput>-</userinput>" instructs <userinput>su</userinput> to
-start a new, clean shell.</para>
+start a <emphasis>login</emphasis> shell.</para>
 
 </sect1>
 
@@ -340,27 +340,29 @@ start a new, clean shell.</para>
 <?dbhtml filename="settingenvironment.html" dir="chapter05"?>
 
 <para>We're going to set up a good working environment by creating two new
-startup files for the Bash shell. While logged in as user
-<emphasis>lfs</emphasis>, issue the following commands to create a new
+startup files for the <userinput>bash</userinput> shell. While logged in as
+user <emphasis>lfs</emphasis>, issue the following command to create a new
 <filename>.bash_profile</filename>:</para>
 
 <screen><userinput>cat &gt; ~/.bash_profile &lt;&lt; "EOF"</userinput>
 exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
 <userinput>EOF</userinput></screen>
 
-<para>The
-<userinput>exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash</userinput>
-command creates a new instance of Bash with a completely empty environment,
-except for the HOME, TERM and PS1 variables. This is needed to ensure that no
-unwanted and potentially hazardous environment variables from the host system
-leak into our build environment. The technique used here is a little
-non-standard but it achieves the goal of enforcing a clean environment. By way
-of explanation, the initial shell is a <emphasis>login</emphasis> shell which
-reads the <filename>.bash_profile</filename>. The new shell instance is a
-<emphasis>non-login</emphasis> shell which reads the
-<filename>.bashrc</filename> (created next).</para>
+<para>Normally, when you log on as user <emphasis>lfs</emphasis>,
+the initial shell is a <emphasis>login</emphasis> shell which reads the
+<filename>/etc/profile</filename> of your host (probably containing some
+settings of environment variables) and then <filename>.bash_profile</filename>.
+The <userinput>exec env -i ... /bin/bash</userinput> command in the latter file
+replaces the running shell with a new one with a completely empty environment,
+except for the HOME, TERM and PS1 variables. This ensures that no unwanted and
+potentially hazardous environment variables from the host system leak into our
+build environment. The technique used here is a little strange, but it achieves
+the goal of enforcing a clean environment.</para>
 
-<para>Now create a new <filename>.bashrc</filename>:</para>
+<para>The new instance of the shell is a <emphasis>non-login</emphasis> shell,
+which doesn't read the <filename>/etc/profile</filename> or
+<filename>.bash_profile</filename> files, but reads the
+<filename>.bashrc</filename> file instead. Create this latter file now:</para>
 
 <screen><userinput>cat &gt; ~/.bashrc &lt;&lt; "EOF"</userinput>
 set +h
@@ -401,8 +403,8 @@ everything will work as expected in the chroot environment.</para>
 that, as we move along through this chapter, the tools we build will get used
 during the rest of the building process.</para>
 
-<para>Finally, source the just-created profile so that we're all set to begin
-building the temporary tools that will support us in later chapters.</para>
+<para>Finally, to have our environment fully prepared for building the
+temporary tools, source the just-created profile:</para>
 
 <screen><userinput>source ~/.bash_profile</userinput></screen>
 
@@ -436,10 +438,10 @@ pass of Binutils. From this point onwards everything will link <emphasis>only
 <note><para>If you somehow missed the earlier warning to retain the Binutils
 source and build directories from the first pass or otherwise accidentally
 deleted them or just don't have access to them, don't worry, all is not lost.
-Just ignore the above command. The result is a small chance of subsequent
-programs linking against libraries on the host. This is not ideal, however,
+Just ignore the above command. The result is a small chance of the subsequent
+testing programs linking against libraries on the host. This is not ideal, but
 it's not a major problem. The situation is corrected when we install the
-second pass of Binutils later on.</para></note>
+second pass of Binutils a bit further on.</para></note>
 
 <para>Now that the adjusted linker is installed, you have to remove the
 Binutils build and source directories.</para>
