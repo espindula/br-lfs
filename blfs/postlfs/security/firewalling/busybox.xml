@@ -22,14 +22,14 @@ internet eux-même, c'est assez simple et cela devrait encore être acceptable
 d'un point de vue de la sécurité. Ajoutez seulement les lignes suivantes
 <emphasis>avant</emphasis> les règles de traces (logging-rules) dans le script.
 
-<screen>iptables -A INPUT	-i ! ppp+				-j ACCEPT
-iptables -A OUTPUT	-o ! ppp+				-j ACCEPT</screen></para>
+<screen>iptables -A INPUT -i ! ppp+ -j ACCEPT
+iptables -A OUTPUT -o ! ppp+ -j ACCEPT</screen></para>
 
 <para>Si vos démons doivent accéder au web eux-mêmes, comme squid, vous pouvez
 ouvrir la sortie (OUTPUT) et restreindre l'entrée (INPUT).
 
-<screen>iptables -A INPUT	-m state --state ESTABLISHED,RELATED	-j ACCEPT
-iptables -A OUTPUT						-j ACCEPT</screen></para>
+<screen>iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -j ACCEPT</screen></para>
 
 <para>Néanmoins, il n'est pas conseillé de laisser la sortie sans restriction:
 vous perdez tout contrôle sur des chevaux de troie qui aimeraient "appeler chez
@@ -41,25 +41,24 @@ et la sortie sur tous les ports sauf ceux qui sont absolument nécessaires.
 Quels ports vous ouvrez dépend de vos besoins: la plupart deu temps, vous les
 trouverez en regardant dans les accès refusés de vos fichiers de traces.</para>
 
-<orderedlist numeration="arabic" spacing="compact">
+<itemizedlist spacing="compact">
+<!-- <orderedlist numeration="arabic" spacing="compact"> -->
 <title>Jetez un oeil sur les exemples suivants:</title>
 
-<listitem><para>Squid fait un cache du web:</para>
-<para><screen>iptables -A OUTPUT	-p tcp --dport 80			-j ACCEPT
-iptables -A INPUT	-p tcp --sport 80	-m state --state ESTABLISHED \
-&nbsp;&nbsp;&nbsp;-j ACCEPT</screen></para></listitem>
+<listitem><para>Squid fait un cache du web:
+<screen>iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --sport 80 -m state --state ESTABLISHED -j ACCEPT</screen></para></listitem>
 
 <listitem><para>Votre cache-serveur de noms (par exemple, dnscache) fait ses
-recherches via udp:</para>
-<para><screen>iptables -A OUTPUT	-p udp --dport 53			-j ACCEPT
-iptables -A INPUT	-p udp --sport 53	-m state --state ESTABLISHED \
-&nbsp;&nbsp;&nbsp;-j ACCEPT</screen></para></listitem>
+recherches via udp:
+<screen>iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -p udp --sport 53 -m state --state ESTABLISHED -j ACCEPT</screen></para></listitem>
 
 <listitem><para>Autrement, si vous voulez être capable de 'ping'uer votre
-machine pour vous assurez qu'elle fonctionne toujours:</para>
-<para><screen>iptables -A INPUT	-p icmp	-m icmp --icmp-type echo-request	\
+machine pour vous assurez qu'elle fonctionne toujours:
+<screen>iptables -A INPUT -p icmp -m icmp --icmp-type echo-request -j ACCEPT
 &nbsp;&nbsp;&nbsp;-j ACCEPT
-iptables -A OUTPUT	-p icmp	-m icmp --icmp-type echo-reply	-j ACCEPT</screen></para></listitem>
+iptables -A OUTPUT -p icmp -m icmp --icmp-type echo-reply  -j ACCEPT</screen></para></listitem>
 
 <listitem><para><anchor id='postlfs-security-fw-BB-4' xreflabel="example no. 4"/>
 Si vous accédez fréquemment à des serveurs ftp ou que vous appréciez faire du
@@ -69,45 +68,44 @@ identd sur votre machine pour votre nom d'utilisateur lors de la connexion.
 Bien qu'il n'y ait pas de mal à ça, avoir identd lancé n'est pas recommandé
 parce que certaines implémentations sont connues comme étant vulnérable.</para>
 
-<para>Pour éviter ces délais, vous devez rejeter ces requêtes à un 'tcp-reset':</para>
-
-<para><screen>iptables -A INPUT	-p tcp --dport 113			-j REJECT \
-&nbsp;&nbsp;&nbsp;--reject-with tcp-reset
-iptables -A OUTPUT	-p tcp --sport 113	-m state --state RELATED \
-&nbsp;&nbsp;&nbsp;-j ACCEPT</screen></para></listitem>
+<para>Pour éviter ces délais, vous devez rejeter ces requêtes à un 'tcp-reset':
+<screen>iptables -A INPUT -p tcp --dport 113 -j REJECT --reject-with tcp-reset
+iptables -A OUTPUT -p tcp --sport 113 -m state --state RELATED -j ACCEPT</screen></para></listitem>
 
 <listitem><para>Pour tracer et 'drop'er les paquets invalides, beaucoup de
 paquets inoffensifs arrivant après le dépassement du délai de netfilter sont
-scannés:</para>
+scannés:
 
-<para><screen>iptables -I INPUT 1	-p tcp	-m state --state INVALID	-j LOG \ 
-&nbsp;&nbsp;&nbsp;--log-prefix "FIREWALL:INVALID"
-iptables -I INPUT 2	-p tcp	-m state --state INVALID	-j DROP</screen></para></listitem>
+<screen>iptables -I INPUT 1 -p tcp -m state --state INVALID -j LOG --log-prefix \
+"FIREWALL:INVALID"
+iptables -I INPUT 2 -p tcp -m state --state INVALID -j DROP</screen></para></listitem>
 
 <listitem><para>Tout ce qui vient de l'extérieur ne devrait pas avoir d'adresses
-privées, c'est une attaque commune appelée IP-spoofing:</para>
+privées, c'est une attaque commune appelée IP-spoofing:
 
-<para><screen>iptables -t nat -A PREROUTING	-i ppp+	-s 10.0.0.0/8		-j DROP
-iptables -t nat -A PREROUTING	-i ppp+	-s 172.16.0.0/12	-j DROP
-iptables -t nat -A PREROUTING	-i ppp+	-s 192.168.0.0/16	-j DROP</screen></para></listitem>
+<screen>iptables -t nat -A PREROUTING -i ppp+ -s 10.0.0.0/8 -j DROP
+iptables -t nat -A PREROUTING -i ppp+ -s 172.16.0.0/12 -j DROP
+iptables -t nat -A PREROUTING -i ppp+ -s 192.168.0.0/16 -j DROP</screen></para></listitem>
 
 <listitem><para>Pour simplifier le débuggage et être gentil avec tous ceux qui
 aimeraient accéder à un service que vous avez désactivé, volontairement ou par
 erreur, vous devez rejeter (REJECT) les pacquets en question.</para>
 
 <para>Evidemment, ceci doit être fait tout de suite après les avoir enregistré
-(loggué):</para>
+(loggué):
 
-<para><screen>iptables -A INPUT						-j REJECT
-iptables -A OUTPUT		-p icmp --icmp-type 3		-j ACCEPT</screen></para></listitem>
+<screen>iptables -A INPUT -j REJECT
+iptables -A OUTPUT -p icmp --icmp-type 3 -j ACCEPT</screen></para></listitem>
 
-</orderedlist>
+</itemizedlist>
+
+<!--</orderedlist>-->
 
 <para>Ce sont seulement des exemples pour vous montrer les capacités du
 nouveau code pare-feu dans le noyau Linux 2.4. Regardez la page man de iptables.
 Vous y trouverez bien plus de choses. Les numéros de ports dont vous avez besoin
-pour ceci se trouvent dans /etc/services, au cas où vous ne les trouveriez pas
-en essayant dans vos fichiers de traces.</para>
+pour ceci se trouvent dans <filename>/etc/services</filename>, au cas où vous
+ne les trouveriez pas en essayant dans vos fichiers de traces.</para>
 
 <para>Si vous ajoutez un service tel que ci-dessus, peut-être même en FORWARD
 ou pour des communications intranet, et supprimez les clauses générales, vous
