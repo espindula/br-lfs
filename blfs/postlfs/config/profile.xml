@@ -1,8 +1,194 @@
 <sect1 id="postlfs-config-profile">
 <?dbhtml filename="profile.html" dir="postlfs"?>
-<title>/etc/profile et ~/.bash_*</title>
+<title>Les fichiers de démarrage du shell Bash</title>
 
-<para>NOUVELLE PAGE A ECRIRE</para>
+<para>Le programme shell <filename>/bin/bash</filename> (que l'on nommera
+simplement "le shell" à partir de maintenant) utilise une collection de fichiers
+de démarrage pour aider à la création d'un environnement de travail. Chaque
+fichier a une utilisation spécifique et peut affecter différemment la connexion
+et les environnements interactifs.</para>
+
+<para>Un shell interactif de connexion est lancé après une identification
+positive avec <filename>/bin/login</filename> en lisant le fichier /etc/passwd.
+Un shell interactif, sans login, est lancé à la ligne de commande (c'est-à-dire
+[prompt]$<userinput>/bin/bash</userinput>).  Un shell non-interactif est
+présent habituellement lorsqu'un script shell tourne. Il est non interactif
+parce qu'il exécute un script et n'attends pas d'entrée utilisateur entre les
+commandes.</para>
+
+<para>Pour plus d'informations, voir <filename>info bash</filename> -- Noeud:
+Bash Startup Files and Interactive Shells.</para>
+
+<para>Les fichiers suivants sont nécessaires pour s'assurer que l'environnement
+correct est lu pour chacune des façons dont le shell peut être appelé:
+<filename>/etc/profile</filename>, <filename>/etc/bashrc</filename>,
+<filename>~/.bash_profile</filename> et <filename>~/.bashrc</filename>. Le
+fichier <filename>~/.bash_logout</filename> n'est pas utilisé pour une
+invocation du shell. Il est lu par le shell quand un utilisateur se
+déconnecte du système. Les fichiers <filename>/etc/profile</filename> et
+<filename>~/.bash_profile</filename> sont lus quand le shell est invoqué comme
+shell interactif de connexion. Le fichier <filename>~/.bashrc</filename> est lu
+quand le shell est invoqué comme shell interactif sans fonction de connexion.
+</para> 
+
+<para>Voici la base d'un <filename>/etc/profile</filename>.</para>
+
+<para><screen># Begin /etc/profile
+# Written for Beyond Linux From Scratch
+# by James Robertson &lt;jameswrobertson@earthlink.net&gt;
+
+# System wide environment variables and startup programs.
+
+# System wide aliases and functions should go in /etc/bashrc.  Personal
+# environment variables and startup programs should go into
+# ~/.bash_profile.  Personal aliases and functions should go into
+# ~/.bashrc.
+
+# Function to help us manage paths
+pathman () {
+	if ! echo $PATH | /bin/egrep -q "(^|:)$1($|:)" ; then
+		if [ "$2" = "last" ] ; then
+			PATH=$PATH:$1
+		else
+			PATH=$1:$PATH
+		fi
+	fi
+}
+
+# Add to the standard path.
+if [ $(id -u) = 0 ] ; then
+	if [ -d "/usr/local/sbin" ] ; then
+		pathman /usr/local/sbin last
+	fi
+fi
+
+if [ $(id -u) != 0 ] ; then
+	if [ -d "/usr/local/bin" ] ; then
+		pathman /usr/local/bin last
+	fi
+fi
+
+if [ -d "/usr/X11R6/bin" ] ; then
+	pathman /usr/X11R6/bin last
+fi
+
+# Setup some environment variables.
+HISTSIZE=1000
+PS1="[\u@\h \w]\\$ "
+
+# Setup the INPUTRC environment variable.
+if [ -z "$INPUTRC" -a ! -f "$HOME/.inputrc" ] ; then
+	INPUTRC=/etc/inputrc
+fi
+
+# Setup for /bin/ls to support color, the alias is in /etc/bashrc.
+if [ -f "/etc/dircolors" ] ; then
+	eval $(dircolors -b /etc/dircolors)
+
+	if [ -f "$HOME/.dircolors" ] ; then
+		eval $(dircolors -b $HOME/.dircolors)
+	fi
+fi
+
+export PATH HISTSIZE PS1 LS_COLORS INPUTRC
+
+# End /etc/profile</screen></para>
+
+
+<para>Voici la base d'un <filename>/etc/bashrc</filename>. Les commentaires
+dans le fichier devraient expliquer tout ce dont vous avez besoin.</para>
+
+<para><screen># Begin /etc/bashrc 
+# Written for Beyond Linux From Scratch 
+# by James Robertson &lt;jameswrobertson@earthlink.net&gt;
+
+# System wide aliases and functions.
+
+# System wide environment variables and startup programs should go into
+# /etc/profile.  Personal environment variables and startup programs
+# should go into ~/.bash_profile.  Personal aliases and functions should
+# go into ~/.bashrc
+
+# By default we want the umask to get set.
+# Even for non-interactive and non-login shells.
+if [ "$(id -gn)" = "$(id -un)" -a $(id -u) -gt 99 ] ; then
+	umask 002
+else
+	umask 022
+fi
+
+# Provides a colored /bin/ls command.  Used in conjunction with code in
+# /etc/profile.
+alias ls='ls --color=auto'
+
+# End /etc/bashrc</screen></para>
+
+<para>Voici la base d'un <filename>~/.bash_profile</filename>. Les commentaires
+dans le fichier devraient expliquer tout ce dont vous avez besoin.</para>
+
+<para><screen># Begin ~/.bash_profile
+# Written for Beyond Linux From Scratch
+# by James Robertson &lt;jameswrobertson@earthlink.net&gt;
+
+# Personal envrionment variables and startup programs.
+
+# Personal aliases and functions should go in ~/.bashrc.  System wide
+# environment variables and startup programs are in /etc/profile.
+# System wide aliases and functions are in /etc/bashrc.
+
+if [ -f "$HOME/.bashrc" ] ; then
+	. $HOME/.bashrc
+fi
+
+if [ -d "$HOME/bin" ] ; then
+	pathman $HOME/bin last
+fi
+
+export PATH 
+
+# End ~/.bash_profile</screen></para>
+
+<para>Voici la base d'un <filename>~/.bashrc</filename>. Les commentaires
+dans le fichier devraient expliquer tout ce dont vous avez besoin.</para>
+
+<para><screen># Begin ~/.bashrc
+# Written for Beyond Linux From Scratch
+# by James Robertson &lt;jameswrobertson@earthlink.net&gt;
+
+# Personal aliases and functions.
+
+# Personal environment variables and startup programs should go in
+# ~/.bash_profile.  System wide environment variables and starup
+# programs are in /etc/profile.  System wide aliases and functions are
+# in /etc/bashrc. 
+
+if [ -f "/etc/bashrc" ] ; then
+	. /etc/bashrc
+fi
+
+# End ~/.bashrc</screen></para>
+
+<para>Voici la base d'un <filename>~/.bash_logout</filename>. Les commentaires
+dans le fichier devraient expliquer tout ce dont vous avez besoin.</para>
+
+<para><screen># Begin ~/.bash_logout
+# Written for Beyond Linux From Scratch
+# by James Robertson &lt;jameswrobertson@earthlink.net&gt;
+
+# Personal items to perform on logout.
+
+# End ~/.bash_logout</screen></para>
+
+<para>Si vous voulez utiliser les fichiers <filename>/etc/dircolors</filename>
+ou <filename>~/.dircolors</filename> appelés à partir de
+<filename>/etc/profile</filename>, alors lancez respectivement ceci:
+<userinput>/bin/dircolors -p > /etc/dircolors</userinput> ou ceci:
+<userinput>/bin/dircolors -p > ~/.dircolors</userinput>.
+Le fichier dans le répertoire <filename>/etc</filename> devrait être utilisé
+pour des configurations globales et si un existe dans votre répertoire principal
+alors il surpassera les configurations globales. Il pourrait être une bonne idée
+de créer un fichier de base <filename>.dircolors</filename> et de le placer
+dans le répertoire <filename>/etc/skel</filename> pour les nouveaux
+utilisateurs.</para>
 
 </sect1>
-
