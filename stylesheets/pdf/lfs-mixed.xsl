@@ -4,6 +4,50 @@
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version="1.0">
 
+    <!-- Split URLs -->
+  <xsl:template name="hyphenate-url">
+    <xsl:param name="url" select="''"/>
+    <xsl:choose>
+      <xsl:when test="ancestor::varlistentry">
+        <xsl:choose>
+          <xsl:when test="string-length($url) > 88">
+            <xsl:value-of select="substring($url, 1, 50)"/>
+            <xsl:param name="rest" select="substring($url, 51)"/>
+            <xsl:value-of select="substring-before($rest, '/')"/>
+            <xsl:text> /</xsl:text>
+            <xsl:value-of select="substring-after($rest, '/')"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="$url"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="substring-before($url, '//')"/>
+        <xsl:text>// </xsl:text>
+        <xsl:call-template name="split-url">
+          <xsl:with-param name="url2" select="substring-after($url, '//')"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="split-url">
+    <xsl:choose>
+      <xsl:when test="contains($url2, '/')">
+      <xsl:param name="url2" select="''"/>
+      <xsl:value-of select="substring-before($url2, '/')"/>
+      <xsl:text> /</xsl:text>
+      <xsl:call-template name="split-url">
+        <xsl:with-param name="url2" select="substring-after($url2, '/')"/>
+      </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$url2"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
     <!-- Shade screen -->
   <xsl:param name="shade.verbatim" select="1"/>
 
@@ -45,7 +89,7 @@
   
     <!-- Admonitions text properties -->
   <xsl:attribute-set name="admonition.properties">
-    <xsl:attribute name="margin-right">12pt</xsl:attribute>
+    <xsl:attribute name="margin-right">6pt</xsl:attribute>
   </xsl:attribute-set>
 
     <!-- Adding left space to the graphics and color to the titles -->

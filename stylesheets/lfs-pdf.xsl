@@ -25,8 +25,8 @@
   <xsl:param name="alignment">justify</xsl:param>
 
     <!-- Font size -->
-  <xsl:param name="body.font.master">6</xsl:param>
-  <xsl:param name="body.font.size">8pt</xsl:param>
+  <xsl:param name="body.font.master">10</xsl:param>
+  <xsl:param name="body.font.size">12pt</xsl:param>
 
     <!-- TOC stuff -->
   <xsl:param name="generate.toc">
