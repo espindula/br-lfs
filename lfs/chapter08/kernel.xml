@@ -4,27 +4,35 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-bootable-kernel" xreflabel="Linux">
+<sect1 id="ch-bootable-kernel" role="wrap">
 <title>Linux-&linux-version;</title>
 <?dbhtml filename="kernel.html"?>
 
 <indexterm zone="ch-bootable-kernel"><primary
 sortas="a-Linux">Linux</primary></indexterm>
 
+<sect2 role="package"><title/>
 <para>Le paquet Linux contient le noyau et les fichiers d'en-têtes.</para>
 
-<screen>&buildtime; toutes les options par défaut&nbsp;: 4,20 SBU
-&diskspace; toutes les options par défaut&nbsp;: 181&nbsp;Mo</screen>
+<segmentedlist>
+<segtitle>&buildtime;</segtitle>
+<segtitle>&diskspace;</segtitle>
+<seglistitem><seg>4,20&nbsp;SBU</seg>
+<seg>181&nbsp;Mo</seg></seglistitem>
+</segmentedlist>
 
-<para>L'installation de Linux dépend de Bash, Binutils,
-Coreutils, Findutils, GCC, Glibc, Grep, Gzip, Make, Modutils, Perl, Sed.</para>
+<segmentedlist>
+<segtitle>L'installation de Linux dépend de</segtitle>
+<seglistitem><seg>Bash, Binutils, Coreutils, Findutils,
+GCC, Glibc, Grep, Gzip, Make, Modutils, Perl et Sed</seg></seglistitem>
+</segmentedlist>
+</sect2>
 
-<sect2>
+<sect2 role="installation">
 <title>Installation du noyau</title>
 
 <para>Construire le noyau implique un certain nombre d'étapes&nbsp;:
-configuration, compilation et installation. Si vous n'aimez pas la façon dont ce
-livre configure le noyau, jetez un &oelig;il sur le fichier
+configuration, compilation et installation. Lisez le fichier
 <filename>README</filename> contenu dans les sources du noyau pour d'autres
 méthodes.</para>
 
@@ -33,157 +41,195 @@ méthodes.</para>
 <screen><userinput>make mrproper</userinput></screen>
 
 <para>Ceci nous assure que le répertoire du noyau est complètement nettoyé.
-L'équipe du noyau recommande que cette commande soit lancée avant
-<emphasis>chaque</emphasis> compilation du noyau. Vous ne devez pas penser
-que le répertoire des sources soit propre juste après avoir été déballé.</para>
+L'équipe du noyau recommande que cette commande soit lancée avant chaque
+compilation du noyau. Vous ne devez pas penser que le répertoire des sources
+soit propre juste après avoir été déballé.</para>
+
+<para>De plus, assurez-vous que le noyau n'essaie pas de passer les événements
+de montage à chaud dans l'espace utilisateur jusqu'à ce que ce dernier spécifie
+qu'il est prêt&nbsp;:</para>
+
+<screen><userinput>sed -i 's@/sbin/hotplug@/bin/true@' kernel/kmod.c</userinput></screen>
+
+<para>Si il a été décidé dans <xref linkend="ch-scripts-console" role=","/> de
+compiler le plan de codage dans le noyau, lancez la commande ci-dessous&nbsp;:</para>
+
+<screen><userinput>loadkeys -m /usr/share/kbd/keymaps/<replaceable>[path to  keymap]</replaceable> &gt; \
+    drivers/char/defkeymap.c</userinput></screen>
+
+<para>Par exemple, pour utiliser un clavier hollandais, utilisez
+<phrase
+condition="html"><filename>/usr/share/kbd/keymaps/i386/qwerty/nl.map.gz</filename></phrase><phrase
+condition="pdf"><filename>/usr/share/kbd/keymaps/i386/
+qwerty/nl.map.gz</filename></phrase>.</para>
 
 <para>Configurez le noyau via une interface par menu&nbsp;:</para>
 
 <screen><userinput>make menuconfig</userinput></screen>
 
-<para><userinput>make oldconfig</userinput> peut être plus approprié dans
+<para>Sinon, <command>make oldconfig</command> peut être plus approprié dans
 certaines situations. Voir le fichier <filename>README</filename> pour plus
 d'informations.</para>
 
-<para>Si vous le souhaitez, vous pouvez éviter la configuration du noyau en
-copiant le fichier de configuration du noyau, <filename>.config</filename>, à
-partir de votre système hôte (en supposant qu'il soit disponible) vers le
-répertoire <filename
-class="directory">$LFS/usr/src/linux-&linux-version;</filename>. Néanmoins,
-nous ne recommandons pas cette option. Vous ferez bien mieux d'explorer tous les
-menus de configuration et de créer la configuration de votre propre noyau à
-partir de rien.</para>
+<para>Sinon, <command>make oldconfig</command> pourrait être plus approprié
+dans certaines situations. Voir le fichier <filename>README</filename> pour
+plus d'informations.</para>
 
-<para>Pour le support de la mémoire partagée POSIX, assurez-vous que l'option de
-configuration du noyau <quote>Virtual memory file system support</quote> est
-activée. Elle réside dans le menu <quote>File systems</quote> et est normalement
-activée par défaut.</para>
+<note><para>Lors de la configuration du noyau, assurez-vous d'activer l'option
+<quote>Support for hot-pluggable devices</quote> dans le menu
+<quote>General Setup</quote>. Ceci active les événements de montage à chaud qui
+sont utilisés par <command>udev</command> pour peupler le répertoire <filename
+class="directory">/dev</filename> avec les n&oelig;uds de périphériques.
+</para></note>
 
-<para>Il est important de noter que pour être conforme avec les réquisitions de
-la mémoire partagée POSIX, nous devons activé l'option du système de fichiers
-tmpfs et nous devons monter un système de fichiers tmpfs à partir de
-<filename>/dev/shm</filename>.</para>
+<para>Si désiré, passez la configuration du noyau en copiant le fichier de
+configuration, <filename>.config</filename>, à partir du système hôte
+(en supposant qu'il est disponible) dans le répertoire <filename
+class="directory">linux-&linux-version;</filename> tout juste déballé.
+Néanmoins, nous ne recommandons pas cette option. Il est souvent mieux
+d'explorer tous les menus de configuration et de créer la configuration du
+noyau à partir de rien.</para>
 
-<para>Vérifiez les dépendances et créez les fichiers d'information sur
-dépendances&nbsp;:</para>
+<para>Pour le support de la mémoire partagée POSIX, assurez-vous que l'option
+de configuration du noyau <quote>Virtual memory file system support</quote>
+est activée. Elle réside dans le menu <quote>File systems</quote> et est
+normalement activée par défaut.</para>
 
-<screen><userinput>make CC=/opt/gcc-2.95.3/bin/gcc dep</userinput></screen>
+<para>Les scripts de démarrage LFS supposent que soit <quote>Support for
+Host-side USB</quote> et <quote>USB device filesystem</quote> ont été compilées
+directement dans le noyau soit aucune des deux ne l'a été. Les scripts de
+démarrage ne fonctionnent pas correctement s'il s'agit d'un module (usbcore.ko).</para>
 
-<para>Compilez l'image du noyau&nbsp;:</para>
+<note><para>NPTL requiert que le noyau soit compilé avec GCC 3.x, dans ce cas
+&gcc-version;. Compiler avec 2.95.x est connu pour causer des échecs dans la
+suite de tests de glibc, donc il n'est pas recommandé de compiler le noyau avec
+gcc 2.95.x.</para></note>
 
-<screen><userinput>make CC=/opt/gcc-2.95.3/bin/gcc bzImage</userinput></screen>
+<para>Compilez l'image du noyau et les modules&nbsp;:</para>
 
-<para>Compilez les pilotes qui ont été configurés comme modules:</para>
+<screen><userinput>make</userinput></screen>
 
-<screen><userinput>make CC=/opt/gcc-2.95.3/bin/gcc modules</userinput></screen>
+<para>Si vous utilisez des modules avec le noyau, un fichier
+<filename>/etc/modprobe.conf</filename> pourrait être nécessaire. Les
+Informations concernant les modules et la configuration du noyau sont situées
+dans la documentation du noyau disponible dans le répertoire <filename
+class="directory">linux-&linux-version;/Documentation</filename>.
+La page man <emphasis>modprobe.conf</emphasis> pourrait aussi avoir de
+l'intérêt.</para>
 
-<para>Si vous avez l'intention d'utiliser des modules du noyau, vous aurez
-besoin d'un fichier <filename>/etc/modules.conf</filename>. L'information sur
-les modules et sur la configuration du noyau sont disponibles en général dans la
-documentation du noyau qui est stockée dans
-<filename>linux-&linux-version;/Documentation</filename>. La page man
-modules.conf et le guide pratique du noyau (<ulink
-url="http://www.tldp.org/HOWTO/Kernel-HOWTO.html"/>) peuvent aussi vous
-intéresser.</para>
+<para>Faites attention lors de la lecture d'autres documentations parce qu'elle
+s'applique généralement seulement aux noyaux 2.4.x. D'après nos connaissances,
+les problèmes spécifiques de configuration du noyau pour Hotplug (le montage à
+chaud) et Udev se sont pas documentés. Le problème est que Udev créera un
+n&oelig;ud de périphérique seulement si Hotplug ou un script écrit par
+l'utilisateur insère le module correspondant dans le noyau et tous les modules
+ne sont pas détectables par Hotplug. Notez que les instructions comme celle
+ci-dessous, compris dans le fichier <filename>/etc/modprobe.conf</filename>, ne
+fonctionnent pas avec Udev&nbsp;:</para>
 
-<para>Installez les modules:</para>
+<para><screen>alias char-major-XXX some-module</screen></para>
 
-<screen><userinput>make CC=/opt/gcc-2.95.3/bin/gcc modules_install</userinput></screen>
+<para>À cause des complications avec Hotplug, Udev et les modules, nous
+recommandons fortement de commencer avec une configuration complètement non
+modulaire du noyau, spécialement si c'est la première fois que vous utilisez
+Udev.</para>
 
-<para>Si vous avez beaucoup de modules et très peu d'espace, vous pourriez
-considérer l'utilisation de strip et la compression des modules. Pour la
-plupart des gens, utiliser cette compression pose trop de soucis, mais si vous
-êtes vraiment gêné par l'espace, alors jetez un &oelig;il à <ulink
-url="http://www.linux-mips.org/archives/linux-mips/2002-04/msg00031.html"/>.
-</para>
+<para>Installez les modules si la configuration du noyau les utilise&nbsp;:</para>
 
-<para>Comme rien n'est terminé sans documentation, construisez les pages man
-venant avec le noyau&nbsp;:</para>
+<screen><userinput>make modules_install</userinput></screen>
 
-<screen><userinput>make mandocs</userinput></screen>
+<para>S'il y a beaucoup de modules et peu de place, considérez la possibilité
+de réduire leur taille et de compresser les modules. Pour la plupart des
+utilisateurs, une telle compression n'est pas utile mais si le système dispose
+de vraiment peu d'espaces, jetez un &oelig;il à <ulink
+url="http://www.linux-mips.org/archives/linux-mips/2002-04/msg00031.html"/>.</para>
 
-<para>Et installez ces pages&nbsp;:</para>
+<para>Une fois la compilation du noyau terminée, des étapes supplémentaires
+sont requises pour terminer l'installation. Certains fichiers ont besoin d'être
+copiés dans le répertoire <filename class="directory">/boot</filename>.</para>
 
-<screen><userinput>cp -a Documentation/man /usr/share/man/man9</userinput></screen>
+<para>Le chemin vers l'image du noyau pourrait varier suivant la plateforme
+d'utilisation. Lancez la commande suivante pour installer le noyau&nbsp;:</para>
 
-<para>La compilation du noyau est terminée mais quelques étapes
-supplémentaires sont requises pour finir l'installation. Quelques fichiers
-doivent être copiés dans le répertoire <filename>/boot</filename>.</para>
+<screen><userinput>cp arch/i386/boot/bzImage /boot/lfskernel-&linux-version;</userinput></screen>
 
-<para>Le chemin vers l'image du noyau peut varier suivant la plateforme que
-vous utilisez. Lancez la commande suivante pour installer le noyau&nbsp;:</para>
+<para><filename>System.map</filename> est un fichier de symboles pour le noyau.
+Il cartographie les points d'entrées de chaque fonction dans l'API du noyau,
+ainsi que les adresses des structures de données du noyau pour le noyau en cours
+d'exécution. Lancez la commande suivante pour installer le fichier carte&nbsp;:</para>
 
-<screen><userinput>cp arch/i386/boot/bzImage /boot/lfskernel</userinput></screen>
+<screen><userinput>cp System.map /boot/System.map-&linux-version;</userinput></screen>
 
-<para><filename>System.map</filename> est un fichier de symboles pour le
-noyau. Il fait correspondre les points d'entrée des fonctions à chaque fonction
-de l'API (Application Programming Interface) du noyau ainsi que les adresses
-des structures de données du noyau pour le noyau actuel. Lancez la commande
-suivante pour installer le fichier map&nbsp;:</para>
+<para>Le fichier de configuration du noyau <filename>.config</filename> produit
+à l'étape <command>make menuconfig</command> ci-dessus contient toutes les
+sélections de configuration pour le noyau tout juste compilé. Conserver ce fichier
+est une bonne idée pour pouvoir s'y référer plus tard&nbsp;:</para>
 
-<screen><userinput>cp System.map /boot</userinput></screen>
+<screen><userinput>cp .config /boot/config-&linux-version;</userinput></screen>
 
-<para><filename>.config</filename> est le fichier de configuration du noyau et
-a été produit par l'étape du <command>make menuconfig</command> ci-dessus. Il
-contient toutes les sélections lors de configuration pour le noyau qui v
-ient d'être compilé. Il est intelligent de conserver ce fichier en tant
-que référence&nbsp;:</para>
+<para>Il est important de noter que les fichiers du répertoire des sources du
+noyau n'appartiennent pas à <emphasis>root</emphasis>. À chaque fois qu'un
+paquet est déballé par l'utilisateur <emphasis>root</emphasis> (comme nous
+l'avons fait à l'intérieur du chroot), les fichiers conservent les identifiants
+utilisateur et groupe de celui qui a préparé le paquet. Ceci n'est habituellement
+pas un problème pour tout autre paquet installé car le répertoire des sources
+est supprimé après installation. Néanmoins, le répertoire des sources de Linux
+est souvent conservé assez lontemps. À cause de cela, il existe une chance pour
+que l'identifiant utilisateur soit affecté à quelqu'un sur la machine. Cette
+personne aurait alors les droits d'écriture sur les sources du noyau.</para>
 
-<screen><userinput>cp .config /boot/config-lfskernel</userinput></screen>
-
-<para>Il est important de noter que les fichiers du répertoire des sources
-du noyau n'appartiennent pas à <emphasis>root</emphasis>. À chaque fois que
-vous déballez un paquet en tant qu'utilisateur <emphasis>root</emphasis>
-(comme nous avons fait ici dans le chroot), les fichiers appartiennent aux
-possesseurs des identifiants d'utilisateur et de groupe enregistrés sur
-l'ordinateur de la personnes ayant généré le paquet. Ceci n'est habituellement
-pas un problème pour les autres paquets installés parce que vous allez
-supprimer les sources après l'installation. Mais le répertoire des sources du
-noyau est souvent conservé très longtemps, donc il y a une chance pour que
-l'identifiant du mainteneur soit affecté à quelqu'un sur votre machine. À ce
-moment, cet utilisateur aura accès en écriture aux sources du noyau.</para>
-
-<para>Si vous comptez conserver le répertoire des sources du noyau, vous devez
-lancer <userinput>chown -R 0:0</userinput> sur le répertoire
-<filename>linux-&linux-version;</filename> pour vous assurer que tous les
-fichiers appartiennent à l'utilisateur <emphasis>root</emphasis>.</para>
-
+<para>Si le répertoire des sources du noyau est conservé, lancez
+<command>chown -R 0:0</command> sur le répertoire <filename
+class="directory">linux-&linux-version;</filename> pour vous assurez que tous
+les fichiers sont bien possédés par l'utilisateur <emphasis>root</emphasis>.</para>
 </sect2>
 
 
-<sect2 id="contents-kernel"><title>Contenu de Linux</title>
+<sect2 id="contents-kernel" role="content"><title>Contenu de Linux</title>
 
-<para><emphasis>Fichiers installés</emphasis>&nbsp;: le noyau, les en-têtes du
-noyau et le System.map</para>
+<segmentedlist>
+<segtitle>Fichiers installés</segtitle>
+<seglistitem><seg>noyau, en-têtes du noyau et System.map</seg></seglistitem>
+</segmentedlist>
 
-</sect2>
+<variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+<?dbfo list-presentation="list"?>
 
-<sect2><title>Descriptions courtes</title>
+<varlistentry id="kernel">
+<term><filename>noyau</filename></term>
+<listitem>
+<para>Le moteur du système Linux. Au démarrage de l'ordinateur, le noyau est la
+première partie du système d'exploitation à être chargée. Il détecte et
+initialise tous composants matériels de l'ordinateur, puis rend disponibles ces
+composants par un ensemble de fichiers pour les logiciels qui en ont besoin, et
+transforme un CPU unique en une machine multitâches capable 'exécuter des bouts
+de programmes quasiment au même moment.</para>
+<indexterm zone="ch-bootable-kernel kernel"><primary sortas="b-kernel">noyau</primary></indexterm>
+</listitem>
+</varlistentry>
 
-<indexterm zone="ch-bootable-kernel kernel"><primary
-sortas="b-kernel">kernel</primary></indexterm>
-<para id="kernel">Le noyau (<emphasis>kernel</emphasis>) est le moteur de votre
-système GNU/Linux. En allumant votre machine, le noyau est la première partie
-de votre système d'exploitation à être chargé. Il détecte et initialise tous
-les composants matériels de votre ordinateur, rend disponible ces composants
-comme un ensemble de fichiers pour le logiciel et transforme le seul CPI en une
-machine multi-tâche capable d'exécuter des programmes apparemment en même
-temps.</para>
-
-<indexterm zone="ch-bootable-kernel kernel-headers"><primary
-sortas="e-kernel-headers">en-têtes du noyau</primary></indexterm>
-<para id="kernel-headers">Les en-têtes du noyau (<emphasis>kernel
-headers</emphasis>) définissent l'interface des services fournis par le noyau.
-Les en-têtes du répertoire <filename>include</filename> de votre système
-devraient <emphasis>toujours</emphasis> être ceux avec lesquels Glibc a été
-compilé et ne devraient <emphasis>pas</emphasis> être remplacés lors de la mise
+<varlistentry id="kernel-headers">
+<term><filename>En-têtes du noyau</filename></term>
+<listitem>
+<para>Définit l'interface des services que fournit le noyau. Les en-têtes du
+répertoire <filename class="directory">include</filename> du système devraient
+<emphasis>toujours</emphasis> être ceux avec lesquels Glibc a été compilé et,
+du coup, ne devraient <emphasis>pas</emphasis> être remplacées lors de la mise
 à jour du noyau.</para>
+<indexterm zone="ch-bootable-kernel kernel-headers"><primary sortas="e-kernel-headers">en-têtes du noyau</primary></indexterm>
+</listitem>
+</varlistentry>
 
-<indexterm zone="ch-bootable-kernel System.map"><primary
-sortas="e-/boot/System.map">/boot/System.map</primary></indexterm>
-<para id="System.map">Le fichier <filename>System.map</filename> est une liste
-d'adresses et de symboles. Il fait correspondre les points d'entrées aux
-adresses de toutes les fonctions et structures de données du noyau.</para>
+<varlistentry id="System.map">
+<term><filename>System.map</filename></term>
+<listitem>
+<para>Une liste d'adresses et de symboles&nbsp;; il fait correspondre les points
+d'entrées et les adresses de toutes les fonctions et structures de données dans
+le noyau</para>
+<indexterm zone="ch-bootable-kernel System.map"><primary sortas="e-/boot/System.map">/boot/System.map</primary></indexterm>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
 
