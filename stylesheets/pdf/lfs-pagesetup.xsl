@@ -112,4 +112,7 @@
   	<!-- Dropping a blank page -->
 	<xsl:template name="book.titlepage.separator"/>
 
+  	<!-- How render a variablelist -->
+	<xsl:param name="variablelist.as.blocks" select="1"/>
+
 </xsl:stylesheet>
