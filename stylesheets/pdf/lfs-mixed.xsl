@@ -23,16 +23,17 @@
         </xsl:choose>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:value-of select="substring-before($url, '//')"/>
+        <xsl:value-of select="$url"/>
+      <!--  <xsl:value-of select="substring-before($url, '//')"/>
         <xsl:text>// </xsl:text>
         <xsl:call-template name="split-url">
           <xsl:with-param name="url2" select="substring-after($url, '//')"/>
-        </xsl:call-template>
+        </xsl:call-template>-->
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template name="split-url">
+  <!--<xsl:template name="split-url">
     <xsl:choose>
       <xsl:when test="contains($url2, '/')">
       <xsl:param name="url2" select="''"/>
@@ -46,7 +47,7 @@
         <xsl:value-of select="$url2"/>
       </xsl:otherwise>
     </xsl:choose>
-  </xsl:template>
+  </xsl:template>-->
 
     <!-- Shade screen -->
   <xsl:param name="shade.verbatim" select="1"/>
@@ -140,6 +141,7 @@
 
     <!-- How is rendered by default a variablelist -->
   <xsl:param name="variablelist.as.blocks" select="1"/>
+  <xsl:param name="variablelist.max.termlength">32</xsl:param>
 
     <!-- Adding space before segmentedlist -->
   <xsl:template match="segmentedlist">
