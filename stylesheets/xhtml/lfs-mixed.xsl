@@ -62,6 +62,27 @@
     </div>
   </xsl:template>
 
+    <!-- segementedlist -->
+  <xsl:template match="seg">
+    <xsl:variable name="segnum" select="count(preceding-sibling::seg)+1"/>
+    <xsl:variable name="seglist" select="ancestor::segmentedlist"/>
+    <xsl:variable name="segtitles" select="$seglist/segtitle"/>
+      <!-- Note: segtitle is only going to be the right thing in a well formed
+      SegmentedList.  If there are too many Segs or too few SegTitles,
+      you'll get something odd...maybe an error -->
+      <div class="seg">
+      <strong>
+        <span class="segtitle">
+          <xsl:apply-templates select="$segtitles[$segnum=position()]" mode="segtitle-in-seg"/>
+          <xsl:text>: </xsl:text>
+        </span>
+      </strong>
+      <span class="seg">
+        <xsl:apply-templates/>
+      </span>
+    </div>
+  </xsl:template>
+
     <!-- Body attributes -->
   <xsl:template name="body.attributes">
     <xsl:attribute name="id">
