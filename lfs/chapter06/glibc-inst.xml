@@ -1,153 +1,159 @@
 <sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
 
 <sect2>
-<title>Glibc installation</title>
+<title>Installation de Glibc</title>
 
-<para>Before starting to install glibc, you must cd into the
-glibc-&glibc-version; directory and unpack glibc-linuxthreads inside
-the glibc-&glibc-version; directory, not in /usr/src as you normally
-would do.</para>
+<para>Avant de commencer l'installation de glibc, vous devez entrer (cd) dans le
+répertoire glibc-&glibc-version; et déballer glibc-linuxthreads à l'intérieur
+du répertoire glibc-&glibc-version;, et non pas dans /usr/src comme vous le
+feriez normalement.</para>
 
-<para>This package is known to behave badly when you have changed its
-default optimization flags (including the -march and -mcpu options). Glibc
-is best left alone. Therefore, if you have defined any environment variables
-that override default optimizations, such as CFLAGS and CXXFLAGS, we
-recommend unsetting or modifying them when building Glibc.</para>
+<para>Ce package est connu pour mal se comporter si vous changez ses options
+d'optimisation par défaut (ceci inclut les options -march et -mcpu). Il est
+préférable de ne pas s'en servir. Donc, si vous avez défini des variables
+d'environnement, telles que CFLAGS et CXXFLAGS, qui annulent les optimisations
+par défaut, nous vous recommendons de les supprimer ou de les modifier pour
+la copnstruction de GCC.</para>
 
-<para>Basically, compiling Glibc in any other way than the book suggests
-is putting your system at a very high risk.</para>
+<para>Habituellement, compiler Glibc d'une toute autre façon que ce que le livre
+suggère fait courir un gros risque à votre système.</para>
 
-<para>We'll start by applying a patch to Glibc that fixes the following:</para>
+<para>Nous commencerons à appliquer ce correctif, corrigeant ce qui suit:</para>
 
 <itemizedlist>
-<listitem><para>It converts all occurrences of <emphasis>$(PERL)</emphasis>
-to <emphasis>/usr/bin/perl</emphasis> in the
-<filename>malloc/Makefile</filename> file. This is done because Glibc
-can't autodetect the location of perl because the Perl package hasn't been
-installed yet. And if Glibc thinks Perl isn't installed, the
-<userinput>mtrace</userinput> perl program won't be installed
-either.</para></listitem>
+<listitem><para>Il convertit toutes les occurrences de
+<emphasis>$(PERL)</emphasis> en <emphasis>/usr/bin/perl</emphasis> dans le
+fichier <filename>malloc/Makefile</filename>. Ceci est fait parce que Glibc ne
+peut pas détecter automatiquement l'emplacement de perl, car le paackage Perl
+n'a pas encore été installé. Et si Glibc pense que Perl n'est pas installé, le
+programme perl <userinput>mtrace</userinput> ne sera pas non plus installé.
+</para></listitem>
 
-<listitem><para>It replaces all occurrences of <emphasis>root</emphasis>
-with <emphasis>0</emphasis> in the <filename>login/Makefile</filename>
-file. This is done because Glibc itself isn't installed yet and therefore
-username to userid resolving isn't working yet, so a
-<userinput>chown root file</userinput> will fail, however it'll work fine
-if you use the numeric IDs (such as <userinput>chown 0
+<listitem><para>Il remplace toutes les occurrences de <emphasis>root</emphasis>
+avec <emphasis>0</emphasis> dans le fichier <filename>login/Makefile</filename>.
+Ceci est fait parce que Glibc lui-même n'est pas encore installé et donc la
+résolution du nom de l'utilisateur en identifiant ne fonctionne pas encore, donc
+un <userinput>chown root file</userinput> échouera, néanmoins ceci fonctionnera
+bien si vous utilisez les identifiants numériques (tel que <userinput>chown 0
 file</userinput>).</para></listitem>
 
 </itemizedlist>
 
 <para><screen><userinput>patch -Np1 -i ../glibc-&glibc-rootperl-patch-version;-root-perl.patch</userinput></screen></para>
 
-<para>There is a potential problem that causes statically linked binaries
-to crash that were linked against Glibc-2.2 or older libraries. Even though
-static binaries have all the necessary parts of Glibc built-in, they still
-rely on one external library set: Glibc's NSS libraries. These libraries,
-among other things, tell programs where the system's password database is
-(/etc/password, or NIS, or whatever other scheme has been
-configured).</para>
+<para>Il existe un problème potentiel qui fait que des binaires liés
+statiquement se "plantent" avec la Glibc-2.2 et précédentes. Même si les
+binaires statiques ont toutes les parties nécessaires de la Glibc intégrée, ils
+sont toujours liés à un ensemble externe de bibliothèques: les bibliothèques
+NSS de Glibc. Ces bibliothèques, en plus d'autres choses, indiquent que les
+programmes où la base de données de mots de passe du système est /etc/password,
+ou NIS ou sur tout autre schéma qui a été configuré.</para>
 
-<para>Glibc has undergone some changes since version 2.2.x and the new NSS
-code is incompatible with the old one. So when Glibc is installed, it will
-install its new NSS libraries and static programs will load these new NSS
-libraries and start to abort with <emphasis>segmentation fault</emphasis>
-error. This patch undoes a few of the changes to overcome the problem.</para>
+<para>Glibc a réalisé quelques changements depuis la version 2.2.x et le nouveau
+code NSS est incompatible avec l'ancien. Donc lorsque Glibc est installé, il
+installera ses nouvelles bibliothèques NSS et les programmes statiques
+chargeront leurs nouvelles bibliothèques NSS et commencera à planter avec des
+erreurs de <emphasis>segmentation fault</emphasis>. Ce correctif défait un
+certain nombre de changements pour arranger ce problème.</para>
 
-<para>If you started chapter 5 with a host system that uses Glibc-2.2.x
-or older, you must apply the following patch. We will install Glibc again at
-the end of this chapter to remove this patch so you'll have a pristine Glibc
-as the developers intended it.</para>
+<para>Si vous commencez le chapitre 5 avec un système hôte utilisant Glibc-2.2.x
+ou plus ancien, vous devez appliquer le correctif suivant. Nous installerons
+encore Glibc à la fin de ce chapitre pour supprimer ce correctif, donc vous
+aurez une Glibc comme les développeurs le souhaitent.</para>
 
 <para><screen><userinput>patch -Np1 -i ../glibc-&glibc-libnss-patch-version;-libnss.patch</userinput></screen></para>
 
-<para>Glibc will check for the <filename>/etc/ld.so.conf</filename> file
-and abort with an error if the file is missing, so we must create it:</para>
+<para>Glibc cherchera le fichier <filename>/etc/ld.so.conf</filename> et
+finira avec une erreur si le ficher est manquant, donc nous devons le créer:
+</para>
 
 <para><screen><userinput>touch /etc/ld.so.conf</userinput></screen></para>
 
-<para>It is recommended by the Glibc installation documentation to build
-Glibc outside of the source directory in a dedicated directory:</para>
+<para>Il est recommendé par la documentation d'installation de Glibc de
+construire Glibc, en dehors du répertoire des sources, dans un répertoire dédié:
+</para>
 
 <para><screen><userinput>mkdir ../glibc-build &amp;&amp;
 cd ../glibc-build</userinput></screen></para>
 
-<para>Next, prepare Glibc to be compiled:</para>
+<para>Ensuite, préparez la compilation de Glibc:</para>
 
 <para><screen><userinput>../glibc-&glibc-version;/configure --prefix=/usr \
 &nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
 &nbsp;&nbsp;&nbsp;&nbsp;--libexecdir=/usr/bin</userinput></screen></para>
 
-<para>The meaning of the configure options are:</para>
+<para>La signification des options de configure est:</para>
 
 <itemizedlist>
-<listitem><para><userinput>--disable-profile:</userinput> This disables the
-building of libraries with profiling information. This command may be
-omitted if you plan to do profiling.</para></listitem>
+<listitem><para><userinput>--disable-profile:</userinput> Ceci désactive la
+construction des biliothèques avec des informations de profilage. Cette commande
+peut être omise si vous plannifiez de faire du profiling.
+</para></listitem>
 
-<listitem><para><userinput>--enable-add-ons:</userinput> This enables the
-add-on that we install with Glibc, linuxthreads</para></listitem>
+<listitem><para><userinput>--enable-add-ons:</userinput> Ceci active le module
+supplémentaire que nous installons avec Glibc, linuxthreads</para></listitem>
 
-<listitem><para><userinput>--libexecdir=/usr/bin:</userinput> This will
-cause the pt_chown program to be installed in the /usr/bin
-directory.</para></listitem>
+<listitem><para><userinput>--libexecdir=/usr/bin:</userinput> Ceci fera que le
+programme pt_chown sera installé dans le répertoire /usr/bin.</para></listitem>
 </itemizedlist>
 
-<para>During this stage you will see the following warning:</para>
+<para>Durant cette étape, vous verrez le message d'avertissement suivant:</para>
 
 <blockquote><screen>configure: warning:
 *** These auxiliary programs are missing or too old: msgfmt
 *** some features will be disabled.
 *** Check the INSTALL file for required versions.</screen></blockquote>
 
-<para>The missing msgfmt (from the gettext package which we will install
-later in this chapter) won't cause any problems. msgfmt is used to generate
-the binary translation files that are used to make your system talk in a
-different language. Because these translation files have already been
-generated for you, there is no need for msgfmt. You'd only need msgfmt if
-you change the translation source files (the <filename>*.po</filename>
-files in the <filename class="directory">po</filename> subdirectory) which
-would require you to re-generate the binary files.</para>
+<para>Le msgfmt manquant (du package gettext que nous installerons plus tard
+dans ce chapitre) ne causera pas de problèmes. msgfmt permet de générer les
+fichiers binaires de traduction qui sont utilisés pour que votre système parle
+une autre langue. Comme les fichiers de traduction ont déjà été générés pour
+vous, il n'y a pas besoin de msgfmt. Vous aurez besoin de msgfmt uniquement si
+vous devez changer les fichiers source de traduction (les fichiers
+<filename>*.po</filename> dans le sous-répertoire <filename
+class="directory">po</filename>) ce qui vous réclamera de regénérer les fichiers
+binaires.</para>
 
-<para>Because Glibc hasn't been installed yet, one of the tests that was
-run by the configure script failed. This test is supposed to test gcc to
-determine whether or not a cross-compiler is installed. However, Glibc
-needs to be installed already to run this test. Since the test failed, the
-configure script automatically assumed we do have a cross-compiler. We have
-to override that assumption by explicitly telling Glibc we're not
-cross-compiling. Not doing this has a couple of unintended side effects,
-such as the timezone files not being installed.</para>
+<para>Comme Glibc n'a pas encore été installé, un des tests, qui ont été lancé
+par le script configure, a échoué. Ce test est supposé tester gcc pour
+déterminer si, oui ou non, un cross-compilateur est installé. Néanmoins, Glibc
+a besoin d'être déjà installé pour lancer ce test. Comme le test échoue, le
+script configure suppose automatiquement que nous avons un cross-compilateur.
+Nous devons laisser cette information et dire explicitement à Glibc que nous ne
+faisons pas de cross-compilation. Ne pas faire cela impose un certain nombre
+d'effets de bord non voulus, tel que ne pas installer les fichiers timezone.
+</para>
 
 <para><screen><userinput>echo "cross-compiling = no" &gt; configparms</userinput></screen></para>
 
-<para>Continue with compiling the package:</para>
+<para>Continuez avec la compilation du package:</para>
 
 <para><screen><userinput>make</userinput></screen></para>
 
-<para>We'll continue with installing the package. The Linuxthreads man
-pages are not going to be installed at this point because it requires a
-working Perl installation. We'll install Perl later on in this chapter,
-and the man pages will be installed when Glibc is installed for the second
-time at the end of this chapter.</para>
+<para>Nous continuerons avec l'installation du package. Les pages man de
+Linuxthreads ne vont pas être installés à ce moment parce qu'il nécessite une
+installation fonctionnelle de Perl. Nous installerons Perl plus tard sur ce
+chapitre, et les pages man seront installées lorsque Glibc sera installé pour la
+deuxième fois à la fin de ce chapitre.</para>
 
 <para><screen><userinput>make install</userinput></screen></para>
 
-<para>Locales aren't installed when you ran
-<userinput>make install</userinput>, so we have to do that ourselves now.
-Locales are used by Glibc to make your Linux system talk in a different
-language:</para>
+<para>Les locales ne sont pas installés lorsque vous lancez
+<userinput>make install</userinput>, donc nous devons le faire nous-même. Les
+locales sont utilisées par Glibc pour que votre système Linux parle une autre
+langue:</para>
 
 <para><screen><userinput>make localedata/install-locales</userinput></screen></para>
 
-<para>An alternative to running <userinput>make
-localedata/install-locales</userinput> is to only install those locales
-which you need or want. This can be achieved using the localedef
-command. Information on this can be found in the INSTALL
-file in the glibc-&glibc-version; tree.</para>
+<para>Une alternative au lancement de <userinput>make
+localedata/install-locales</userinput> est d'installer seulement ces locales
+dont vous aurez besoin. On peut y arriver en utilisant la commande localedef.
+Les informations là-dessus sont disponibles dans le fichier INSTALL, du
+répertoire glibc-&glibc-version;.</para>
 
-<para>To finish off the installation we'll reload Bash so it uses the
-libnss files. This will also get rid of the
-<emphasis>I have no name!</emphasis> message in the command prompt:</para>
+<para>Pour finir l'installation, nous relancerons Bash pour qu'il utilise les
+fichiers libnss. Ceci nous débarrasse du message <emphasis>I have no
+name!</emphasis> ("Je n'ai pas de nom!") à l'invite:</para>
 
 <para><screen><userinput>exec /static/bin/bash --login</userinput></screen></para>
 
