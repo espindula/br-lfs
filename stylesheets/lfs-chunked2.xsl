@@ -16,6 +16,9 @@
 
     <!-- The CSS Stylesheet -->
   <xsl:param name="html.stylesheet" select="'../stylesheets/lfs.css'"/>
+  <xsl:template name='user.head.content'>
+     <link rel="stylesheet" href="../stylesheets/lfs-print.css" type="text/css" media="print"/>
+  </xsl:template>
 
     <!-- Dropping some unwanted style attributes -->
   <xsl:param name="ulink.target" select="''"></xsl:param>
