@@ -12,11 +12,10 @@ would do.</para>
 default optimization flags (including the -march and -mcpu options). Glibc
 is best left alone. Therefore, if you have defined any environment variables
 that override default optimizations, such as CFLAGS and CXXFLAGS, we
-recommend unsetting or modifying them when building Glibc. You have
-been warned.</para>
+recommend unsetting or modifying them when building Glibc.</para>
 
 <para>Basically, compiling Glibc in any other way than the book suggests
-is putting your system at very high risk.</para>
+is putting your system at a very high risk.</para>
 
 <para>We'll start by applying a patch to Glibc that fixes the following:</para>
 
@@ -25,7 +24,9 @@ is putting your system at very high risk.</para>
 to <emphasis>/usr/bin/perl</emphasis> in the
 <filename>malloc/Makefile</filename> file. This is done because Glibc
 can't autodetect the location of perl because the Perl package hasn't been
-installed yet.</para></listitem>
+installed yet. And if Glibc thinks Perl isn't installed, the
+<userinput>mtrace</userinput> perl program won't be installed
+either.</para></listitem>
 
 <listitem><para>It replaces all occurrences of <emphasis>root</emphasis>
 with <emphasis>0</emphasis> in the <filename>login/Makefile</filename>
@@ -42,18 +43,18 @@ file</userinput>).</para></listitem>
 <para>There is a potential problem that causes statically linked binaries
 to crash that were linked against Glibc-2.2 or older libraries. Even though
 static binaries have all the necessary parts of Glibc built-in, they still
-rely on one external library: Glibc's NSS libraries. These libraries, among
-other things, tell programs where the system's password database is
+rely on one external library set: Glibc's NSS libraries. These libraries,
+among other things, tell programs where the system's password database is
 (/etc/password, or NIS, or whatever other scheme has been
 configured).</para>
 
 <para>Glibc has undergone some changes since version 2.2.x and the new NSS
 code is incompatible with the old one. So when Glibc is installed, it will
 install its new NSS libraries and static programs will load these new NSS
-libraries and start to abort with <emphasis>segmentation faults</emphasis>.
-This patch undoes a few of the changes to overcome the problem.</para>
+libraries and start to abort with <emphasis>segmentation fault</emphasis>
+error. This patch undoes a few of the changes to overcome the problem.</para>
 
-<para>So, if you started chapter 5 with a host system that uses Glibc-2.2.x
+<para>If you started chapter 5 with a host system that uses Glibc-2.2.x
 or older, you must apply the following patch. We will install Glibc again at
 the end of this chapter to remove this patch so you'll have a pristine Glibc
 as the developers intended it.</para>
@@ -61,21 +62,36 @@ as the developers intended it.</para>
 <para><screen><userinput>patch -Np1 -i ../glibc-&glibc-libnss-patch-version;-libnss.patch</userinput></screen></para>
 
 <para>Glibc will check for the <filename>/etc/ld.so.conf</filename> file
-and abort with an error if the file is missing, so we must create it.</para>
+and abort with an error if the file is missing, so we must create it:</para>
 
 <para><screen><userinput>touch /etc/ld.so.conf</userinput></screen></para>
 
 <para>It is recommended by the Glibc installation documentation to build
-Glibc outside of the source directory in a dedicated directory.</para>
+Glibc outside of the source directory in a dedicated directory:</para>
 
 <para><screen><userinput>mkdir ../glibc-build &amp;&amp;
 cd ../glibc-build</userinput></screen></para>
 
-<para>Next, prepare Glibc to be compiled.</para>
+<para>Next, prepare Glibc to be compiled:</para>
 
 <para><screen><userinput>../glibc-&glibc-version;/configure --prefix=/usr \
 &nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
 &nbsp;&nbsp;&nbsp;&nbsp;--libexecdir=/usr/bin</userinput></screen></para>
+
+<para>The meaning of the configure options are:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--disable-profile:</userinput> This disables the
+building of libraries with profiling information. This command may be
+omitted if you plan to do profiling.</para></listitem>
+
+<listitem><para><userinput>--enable-add-ons:</userinput> This enables the
+add-on that we install with Glibc, linuxthreads</para></listitem>
+
+<listitem><para><userinput>--libexecdir=/usr/bin:</userinput> This will
+cause the pt_chown program to be installed in the /usr/bin
+directory.</para></listitem>
+</itemizedlist>
 
 <para>During this stage you will see the following warning:</para>
 
@@ -93,44 +109,33 @@ you change the translation source files (the <filename>*.po</filename>
 files in the <filename class="directory">po</filename> subdirectory) which
 would require you to re-generate the binary files.</para>
 
-<para>The meaning of the configure options are:</para>
-
-<itemizedlist>
-<listitem><para><userinput>--disable-profile:</userinput> This disables the
-building of libraries with profiling information. This command may be
-omitted if you plan to do profiling.</para></listitem>
-
-<listitem><para><userinput>--enable-add-ons:</userinput> This enables the
-add-on that we install with Glibc, linuxthreads</para></listitem>
-
-<listitem><para><userinput>--libexecdir=/usr/bin:</userinput> This will
-cause the pt_chown program to be installed in the /usr/bin
-directory.</para></listitem>
-</itemizedlist>
-
 <para>Because Glibc hasn't been installed yet, one of the tests that was
 run by the configure script failed. This test is supposed to test gcc to
 determine whether or not a cross-compiler is installed. However, Glibc
 needs to be installed already to run this test. Since the test failed, the
-configure script automatically assumed we do have a cross-compiler. So,
-we have to override that assumption by explicitly telling Glibc we're not
-cross-compiling.</para>
+configure script automatically assumed we do have a cross-compiler. We have
+to override that assumption by explicitly telling Glibc we're not
+cross-compiling. Not doing this has a couple of unintended side effects,
+such as the timezone files not being installed.</para>
 
 <para><screen><userinput>echo "cross-compiling = no" &gt; configparms</userinput></screen></para>
 
-<para>We'll continue with compiling and installing Glibc. The Linuxthreads man
+<para>Continue with compiling the package:</para>
+
+<para><screen><userinput>make</userinput></screen></para>
+
+<para>We'll continue with installing the package. The Linuxthreads man
 pages are not going to be installed at this point because it requires a
 working Perl installation. We'll install Perl later on in this chapter,
 and the man pages will be installed when Glibc is installed for the second
 time at the end of this chapter.</para>
 
-<para><screen><userinput>make &amp;&amp;
-make install</userinput></screen></para>
+<para><screen><userinput>make install</userinput></screen></para>
 
 <para>Locales aren't installed when you ran
 <userinput>make install</userinput>, so we have to do that ourselves now.
 Locales are used by Glibc to make your Linux system talk in a different
-language.</para>
+language:</para>
 
 <para><screen><userinput>make localedata/install-locales</userinput></screen></para>
 
@@ -142,7 +147,7 @@ file in the glibc-&glibc-version; tree.</para>
 
 <para>To finish off the installation we'll reload Bash so it uses the
 libnss files. This will also get rid of the
-<emphasis>I have no name!</emphasis> message in the command prompt.</para>
+<emphasis>I have no name!</emphasis> message in the command prompt:</para>
 
 <para><screen><userinput>exec /static/bin/bash --login</userinput></screen></para>
 
