@@ -4,22 +4,92 @@
   %general-entities;
 ]>
 <sect1 id="ch-scripts-console">
-<title>Do I need the console script?</title>
+<title>Configuring the Linux console</title>
 <?dbhtml filename="console.html"?>
 
 <indexterm zone="ch-scripts-console">
 <primary sortas="d-console">console</primary>
 <secondary>configuring</secondary></indexterm>
 
-<para>If you plan to compile the keymap directly in the kernel during <xref
-linkend="chapter-bootable"/> (see <xref linkend="ch-system-kbd"/>), then strictly
-speaking you don't need to run this loadkeys script, since the kernel will set
-up the keymap for you. If you wish, you can still run the script, it isn't going
-to hurt you. Keeping it could even be beneficial, in case you run a lot of
-different kernels and can't be sure that the keymap is compiled into every one
-of them.</para>
+<para>In this section we will configure the <command>console</command>
+initscript that sets up the keyboard
+map and the console font. If you are a native English speaker so that you
+don't need to use any non-ASCII characters, and your keyboard is a US one,
+skip this section. Without the configuration file,
+the <command>console</command> initscript will do nothing.</para>
 
-<para>If you decided you don't need or don't want to use the console script,
-remove the <filename class="symlink">/etc/rc.d/rcsysinit.d/S70console</filename> symlink.</para>
+<para>The <command>console</command> script uses the
+<filename>/etc/sysconfig/console</filename>
+as a configuration file. You need to decide which keymap and screen font you
+will use. The language-specific HOWTO can help you.
+In the future releases of LFS-Bootscripts, there will be a pre-made
+<filename>/etc/sysconfig/console</filename> file with known
+good settings for several countries, and you will just have to uncomment
+the relevant section.
+If still in doubt,
+look into <filename class="directory">/usr/share/kbd</filename>
+for valid keymaps and screen fonts. Then read the <command>loadkeys</command>
+and <command>setfont</command> manual pages and figure out the correct
+arguments for these programs.
+Once you decided, create the
+configuration file with the following command:</para>
+
+<screen><userinput>cat &gt;/etc/sysconfig/console &lt;&lt;"EOF"</userinput>
+KEYMAP="<emphasis>arguments for loadkeys</emphasis>"
+FONT="<emphasis>arguments for setfont</emphasis>"
+<userinput>EOF</userinput></screen>
+
+<para>E.g., for Spanish users who also want to use the Euro character
+(accessible by pressing Alt+E),
+the following settings are correct:</para>
+
+<screen><userinput>cat &gt;/etc/sysconfig/console &lt;&lt;"EOF"</userinput>
+KEYMAP="es euro"
+FONT="lat9-16 -u iso01"
+<userinput>EOF</userinput></screen>
+
+<para>If the KEYMAP or FONT variable is not set, the console initscript
+will not run the corresponding program.</para>
+
+<para>In some keymaps, the Backspace and Delete keys send characters
+different form ones in the default keymap built into the kernel.
+This confuses some applications, e.g. <application>Emacs</application>
+displays its help (instead of erasing the character before the cursor)
+when you press Backspace. To check if your keymap is affected (this works
+only for i386 keymaps):</para>
+
+<screen><userinput>zgrep '\W14\W' <emphasis>/path/to/your/keymap</emphasis></userinput></screen>
+
+<para>If you see that keycode 14 is Backspace and not Delete,
+create the following keymap snippet to fix this issue:</para>
+
+<screen><userinput>mkdir -p /etc/kbd &amp; &amp; cat &gt;/etc/kbd/bs-sends-del &lt;&lt;"EOF"</userinput>
+                keycode 14 =    Delete  Delete          Delete  Delete
+        alt     keycode 14 =    Meta_Delete
+altgr   alt     keycode 14 =    Meta_Delete
+                keycode 111 =   Remove
+altgr   control keycode 111 =   Boot
+control alt     keycode 111 =   Boot
+altgr   control alt keycode 111 = Boot
+<userinput>EOF</userinput></screen>
+
+<para>Then tell the <command>console</command> script to load this snippet
+after the main keymap:</para>
+
+<screen><userinput>cat &gt;&gt;/etc/sysconfig/console &lt;&lt;EOF</userinput>
+KEYMAP_CORRECTION="/etc/kbd/bs-sends-del"
+<userinput>EOF</userinput></screen>
+
+<para>If back in <xref linkend="chapter-building-system"/> you decided to go
+compile your keymap directly into the kernel (later on in <xref
+linkend="chapter-bootable"/>), then strictly speaking you don't need to run the
+loadkeys program, since the kernel will set up the keymap for you,
+and thus you may omit the KEYMAP variable from the
+<filename>/etc/sysconfig/console</filename>
+configuration file. If you wish,
+you can still have it, this isn't going to hurt you. Keeping it could even
+be beneficial, in case you run a lot of different kernels and can't be sure
+that the keymap is compiled into every one of them.</para>
 
 </sect1>
+
