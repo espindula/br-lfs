@@ -3,19 +3,25 @@
 <sect2>
 <title>Glibc installation</title>
 
+<para>The Glibc build system is very well self-contained and will install
+perfectly, even though our compiler specs file and linker scripts are still
+pointing at <filename>/stage1</filename>. We cannot adjust the specs and
+ldscripts before the Glibc install, because the Glibc autoconf tests would then
+give bogus results and thus defeat our goal of achieving a clean build.</para>
+
 <para>The documentation that comes with Glibc recommends to build the package
 not in the source directory but in a separate, dedicated directory:</para>
 
 <para><screen><userinput>mkdir ../glibc-build
 cd ../glibc-build</userinput></screen></para>
 
-<para>Next, prepare Glibc to be compiled:</para>
+<para>Now prepare Glibc for compilation:</para>
 
 <para><screen><userinput>../glibc-&glibc-version;/configure --prefix=/usr \
 &nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
 &nbsp;&nbsp;&nbsp;&nbsp;--libexecdir=/usr/bin --with-headers=/usr/include</userinput></screen></para>
 
-<para>The meaning of the configure options are:</para>
+<para>The meaning of the configure options:</para>
 
 <itemizedlist>
 <listitem><para><userinput>--disable-profile</userinput>: This disables the
@@ -28,38 +34,44 @@ add-ons that we installed with Glibc, in our case Linuxthreads.</para></listitem
 <listitem><para><userinput>--libexecdir=/usr/bin</userinput>: This will
 cause the <filename>pt_chown</filename> program to be installed in the
 <filename>/usr/bin</filename> directory.</para></listitem>
+
+<listitem><para><userinput>--with-headers=/usr/include</userinput>: This
+ensures that the kernel headers in <filename>/usr/include</filename> are used
+for this build. If you don't pass this switch then the headers from
+<filename>/stage1/include</filename> are used which of course is not ideal
+(although they should be identical). Using the switch has the advantage
+that you will be informed immediately should you have forgotten to install the
+kernel headers into <filename>/usr/include</filename>.</para></listitem>
 </itemizedlist>
 
-<para>Continue with compiling the package:</para>
+<para>Compile the package:</para>
 
 <para><screen><userinput>make</userinput></screen></para>
 
-<para>We'll continue with installing the package. The Linuxthreads man
-pages are not going to be installed at this point because it requires a
-working Perl installation. We'll install Perl later on in this chapter,
-and the man pages will be installed when Glibc is installed for the second
-time at the end of this chapter.</para>
+<para>Check the results:</para>
 
 <para><screen><userinput>make check</userinput></screen></para>
 
+<para>And install the package:</para>
+
 <para><screen><userinput>make install</userinput></screen></para>
 
-<para>The locales (used by Glibc to make your Linux system talk in a different
-language) weren't installed when you ran the previous command, so we have to
-do that ourselves now:</para>
+<para>The locales that can make your system respond in a different language
+weren't installed by the above command. Do it with this:</para>
 
 <para><screen><userinput>make localedata/install-locales</userinput></screen></para>
 
 <para>An alternative to running the previous command is to install only those
-locales which you need or want. This can be achieved using the localedef
-command. Information on this can be found in the <filename>INSTALL</filename>
-file in the <filename>glibc-&glibc-version;</filename> tree.</para>
+locales which you need or want. This can be achieved using the
+<userinput>localedef</userinput> command. Information on this can be found in
+the <filename>INSTALL</filename> file in the
+<filename>glibc-&glibc-version;</filename> tree.</para>
 
-<para>Build the linuxthreads man pages:</para>
+<para>Finally, build the linuxthreads man pages:</para>
 
 <para><screen><userinput>make -C ../glibc-2.3.2/linuxthreads/man</userinput></screen></para>
 
-<para>Install the man pages:</para>
+<para>And install these pages:</para>
 
 <para><screen><userinput>make -C ../glibc-2.3.2/linuxthreads/man install</userinput></screen></para>
 
