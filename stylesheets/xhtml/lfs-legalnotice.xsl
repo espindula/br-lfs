@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
+<!-- Version 0.9 - Manuel Canales Esparcia <macana@lfs-es.org> -->
+
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
@@ -26,10 +28,9 @@
             <div class="{local-name(.)}">
               <xsl:apply-templates mode="titlepage.mode"/>
             </div>
-            <hr/>
             <div class="navfooter">
               <ul class="footerlinks">
-                <li>
+                <li class="home">
                   <a accesskey="h">
                     <xsl:attribute name="href">
                       <xsl:text>../index.html</xsl:text>
