@@ -13,14 +13,15 @@
 
 <para>Il y a de nombreux fichiers de configuration par défaut
 disponible dans <filename class="directory">/usr/share/mysql</filename> que
-vous pouvez utiliser.</para>
+vous pouvez utiliser. Créez <filename>/etc/my.cnf</filename> en utilisant la
+commande suivante&nbsp;:</para>
 
 <screen><userinput><command>cp /usr/share/mysql/my-medium.cnf /etc/my.cnf</command></userinput></screen>
 
-<para>Maintenant, nous pouvons installer la base de données et changer
+<para>Maintenant, vous pouvez installer la base de données et changer
 le propriétaire en un utilisateur et groupe non privilégié.</para>
 
-<screen><userinput><command>mysql_install_db
+<screen><userinput><command>mysql_install_db &amp;&amp;
 chown -R mysql:mysql /var/lib/mysql</command></userinput></screen>
 
 <para>Une configuration plus avancée requiert que le serveur mysql soit
@@ -28,9 +29,13 @@ lancé:</para>
 
 <screen><userinput><command>mysqld_safe --user=mysql 2&gt;&amp;1 &gt;/dev/null &amp;</command></userinput></screen>
 
+
 <para>Une installation par défaut n'attribue pas de mot de passe pour
-l'administrateur. Donc, nous allons nous connecter et en ajouter un. Nous
-vous suggérons fortement de changer 'new-password' par le votre.</para>
+l'administrateur. Donc, utilisez la commande suivante pour en ajouter un.
+Remplacez <replaceable>[nouveau_motdepasse]</replaceable> par le votre.
+</para>
+
+<!--
 
 <screen><userinput><command>mysql -uroot mysql</command></userinput>
 Welcome to the MySQL monitor.  Commands end with ; or \g.
@@ -38,7 +43,7 @@ Your MySQL connexion id is 2 to server version: 3.23.51-log
 
 Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
 
-<prompt>mysql&gt;</prompt> <userinput><command>UPDATE user SET password=password('<replaceable>new-password</replaceable>') WHERE user='root';</command></userinput>
+<prompt>mysql&gt;</prompt> <userinput><command>UPDATE user SET password=password('<replaceable>nouveau_motdepasse</replaceable>') WHERE user='root';</command></userinput>
 Query OK, 2 rows affected (0.00 sec)
 Rows matched: 2  Changed: 2  Warnings: 0
 
@@ -49,74 +54,19 @@ Query OK, 0 rows affected (0.00 sec)
 bye
 </screen>
 
-<para>Maintenant que nous avons terminé la configuration du serveur,
-nous devons l'arrêter.</para>
+-->
 
-<screen><userinput><command>kill `pidof -x mysqld_safe mysqld`</command></userinput></screen>
+<screen><userinput><command>mysqladmin -u root password <replaceable>[nouveau_motdepasse]</replaceable></command></userinput></screen>
 
-<sect4>
-<title>Script init.d pour <application>My<acronym>SQL</acronym></application></title>
+<para>La configuration du serveur est maintenant terminée. Arrêtez le serveur
+en utilisant la commande suivante&nbsp;:</para>
 
-<para>Pour automatiser le lancement de
-<application>My<acronym>SQL</acronym></application>, utilisez la commande
-suivante pour créer le script init.d:</para>
+<screen><userinput><command>mysqladmin -p shutdown</command></userinput></screen>
 
-<screen><userinput><command>cat &gt; /etc/rc.d/init.d/mysql &lt;&lt; "EOF"</command>
-#!/bin/bash
-# Début $rc_base/init.d/
+<para>Installez le script d'initialisation <filename>/etc/rc.d/init.d/mysql</filename>
+inclus dans le paquetage <xref linkend="intro-important-bootscripts"/>.</para>
 
-# Basé sur le script sysklogd de LFS-3.1 et précédent.
-# Réécrit par Gerard Beekmans  - gerard@linuxfromscratch.org
-
-source /etc/sysconfig/rc
-source $rc_functions
-
-case "$1" in
-        start)
-                echo "Starting MySQL daemon..."
-                /usr/bin/mysqld_safe --user=mysql 2&gt;&amp;1 &gt;/dev/null &amp;
-                evaluate_retval
-                ;;
-
-        stop)
-                echo "Stopping MySQL daemon..."
-                killproc mysqld
-                ;;
-
-        restart)
-                $0 stop
-                sleep 1
-                $0 start
-                ;;
-
-        status)
-                statusproc /usr/sbin/mysqld
-                ;;
-
-        *)
-                echo "Usage: $0 {start|stop|restart|status}"
-                exit 1
-                ;;
-esac
-
-# End $rc_base/init.d/
-<command>EOF
-chmod 755 /etc/rc.d/init.d/mysql</command></userinput></screen>
-
-<para>Créez les liens symboliques vers ce fichier dans le répertoire
-<filename class="directory">rc.d</filename> adéquat avec les commandes
-suivantes:</para>
-
-<screen><userinput><command>cd /etc/rc.d/init.d &amp;&amp;
-ln -sf ../init.d/mysql ../rc0.d/K26mysql &amp;&amp;
-ln -sf ../init.d/mysql ../rc1.d/K26mysql &amp;&amp;
-ln -sf ../init.d/mysql ../rc2.d/K26mysql &amp;&amp;
-ln -sf ../init.d/mysql ../rc3.d/S34mysql &amp;&amp;
-ln -sf ../init.d/mysql ../rc4.d/S34mysql &amp;&amp;
-ln -sf ../init.d/mysql ../rc5.d/S34mysql &amp;&amp;
-ln -sf ../init.d/mysql ../rc6.d/K26mysql</command></userinput></screen>
-
-</sect4>
+<screen><userinput><command>make install-mysql</command></userinput></screen>
 
 </sect3>
 
