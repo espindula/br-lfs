@@ -13,11 +13,29 @@ Pour ceci, nous retenons les répertoires des sources et de construction de la
 deuxième passe pour Binutils. Installez l'éditeur de liens ajusté à partir du
 répertoire <filename class="directory">binutils-build</filename>:</para>
 
-<para><screen><userinput>make -C ld install</userinput></screen></para>
+<screen><userinput>make -C ld INSTALL=/tools/bin/install install</userinput></screen>
+
+<note><para>Si vous avez oublié le message d'avertissement précédent pour
+conserver les répertoires des sources et de construction de Binutils à partir de
+la seconde passe du chapitre 5 ou si vous les avez supprimé accidentellement ou
+si vous avez perdu accès à ceux-ci, ne vous inquiétez pas, tout n'est pas perdu.
+Simplement, ignorez la commande ci-dessus. Cela résultera dans le fait que le
+prochain package, Binutils, sera lié avec les bibliothèques Glibc de
+<filename class="directory">/tools</filename> au lieu de
+<filename class="directory">/usr</filename>. Ce n'est pas idéal. Néanmoins, nos
+tests ont montré que les binaires Binutils devaient être identique.
+</para></note>
 
 <para>A partir de maintenant, tout programme compilé sera
 <emphasis>uniquement</emphasis> lié avec les bibliothèques contenues dans
-<filename>/usr/lib</filename> et <filename>/lib</filename>.</para>
+<filename>/usr/lib</filename> et <filename>/lib</filename>.
+<userinput>INSTALL=/tools/bin/install</userinput> est nécessaire parce que le
+Makefile créé durant la seconde passe contient toujours la référence à
+<filename>/usr/bin/install</filename>, que nous n'avons pas encore installé.
+Certaines distributions hôtes contiennent un lien symbolique
+<filename class="symlink">ginstall</filename> qui a la préférence dans le
+Makefile et donc pourrait proposer un problème ici. La commande ci-dessus s'en
+occupe aussi.</para>
 
 <para>Vous pouvez maintenant supprimer les répertoires des sources et de
 construction de Binutils.</para>
@@ -26,39 +44,49 @@ construction de Binutils.</para>
 façon à ce qu'il pointe vers le nouvel éditeur de liens. Comme précédemment,
 nous utilisons une commande sed pour accomplir ceci:</para>
 
-<para><screen><userinput>SPECFILE=/tools/lib/gcc-lib/*/*/specs
-sed -e 's@/tools/lib/ld.so.1@/lib/ld.so.1@g' \
-&nbsp;&nbsp;&nbsp;&nbsp;-e 's@/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' \
-&nbsp;&nbsp;&nbsp;&nbsp;$SPECFILE > newspecfile
-mv newspecfile $SPECFILE
-unset SPECFILE</userinput></screen></para>
+<!-- Ampersands are needed to allow cut and paste -->
+
+<screen><userinput>SPECFILE=/tools/lib/gcc-lib/*/*/specs &amp;&amp;
+sed -e 's@ /tools/lib/ld-linux.so.2@ /lib/ld-linux.so.2@g' \
+&nbsp;&nbsp;&nbsp;&nbsp;$SPECFILE &gt; newspecfile &amp;&amp;
+mv -f newspecfile $SPECFILE &amp;&amp;
+unset SPECFILE</userinput></screen>
 
 <para>Encore une fois, un copier/coller de ce qui se trouve ci-dessus est
 recommendé. Et comme précédemment, ce serait une bonne idée de vérifier le
 fichier specs pour s'assurer que les changements souhaités ont réellement eu
 lieu.</para>
 
+<important><para>Si vous travaillez sur une plateforme où le nom de l'éditeur de
+liens dynamiques est autre que <filename>ld-linux.so.2</filename>, vous
+<emphasis>devez</emphasis> substituer <filename>ld-linux.so.2</filename> avec le
+nom de l'éditeur de liens dynamiques de votre plateforme. Référez-vous à
+<xref linkend="ch05-toolchaintechnotes"/> si nécessaire.</para></important>
+
+<!-- HACK - Force some whitespace to appease tidy -->
+<literallayout></literallayout>
+
 <caution><para>Il est impératif à ce point de s'arrêter et de s'assurer que les
 fonctionnalités de base fonctionnent comme prévu. Nous allons effectuer une
 simple vérification:</para>
 
-<para><screen><userinput>echo 'main(){}' > dummy.c
+<screen><userinput>echo 'main(){}' &gt; dummy.c
 gcc dummy.c
-readelf -l a.out | grep ': /lib'</userinput></screen></para>
+readelf -l a.out | grep ': /lib'</userinput></screen>
 
 <para>Si tout a fonctionné correctement, la sortie de la dernière commande sera:
 </para>
 
 <blockquote><screen>[Requesting program interpreter: /lib/ld-linux.so.2]</screen></blockquote>
 
-<para>Si vous n'obtenez pas une sortie comme celle montrée ci-dessus, alors
-quelque chose va très mal. Vous devrez enquêter là-dessus et reprendre chaque
-étape pour trouver où est situé le problème et le corriger. Il ne sert à rien de
-continuer jusqu'à ce que ce soit corrigé. Il est probable que quelque chose
-s'est mal passé avec le fichier specs ci-dessus. Notez particulièrement que
-<filename>/lib</filename> apparaît maintenant comme le préfixe de notre éditeur de
-liens dynamiques. Bien sûr, si vous travaillez sur une plateforme où le nom de
-l'éditeur de liens est quelque chose d'autre que
+<para>Si vous n'obtenez pas une sortie comme celle montrée ci-dessus, ou aucune
+sortie du tout, alors quelque chose va très mal. Vous devrez enquêter là-dessus
+et reprendre chaque étape pour trouver où est situé le problème et le corriger.
+Il ne sert à rien de continuer jusqu'à ce que ce soit corrigé. Il est probable
+que quelque chose s'est mal passé avec le fichier specs ci-dessus. Notez
+particulièrement que <filename>/lib</filename> apparaît maintenant comme le
+préfixe de notre éditeur de liens dynamiques. Bien sûr, si vous travaillez sur
+une plateforme où le nom de l'éditeur de liens est quelque chose d'autre que
 <filename>ld-linux.so.2</filename>, alors la sortie sera un peu différente.
 </para>
 
@@ -66,5 +94,8 @@ l'éditeur de liens est quelque chose d'autre que
 
 <para><screen><userinput>rm dummy.c a.out</userinput></screen></para>
 </caution>
+
+<!-- HACK - Force some whitespace to appease tidy -->
+<literallayout></literallayout>
 
 </sect1>

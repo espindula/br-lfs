@@ -2,76 +2,123 @@
 <title>Rendre le système LFS démarrable</title>
 <?dbhtml filename="grub.html" dir="chapter08"?>
 
-<para>Maintenant que notre nouveau système Linux From Scratch est terminé, nous
-devons nous assurer qu'il puisse se lancer. Pour cela, nous allons lancer le
-programme <userinput>grub</userinput>.</para>
+<para>Votre nouveau système LFS est pratiquement fini. Une des dernières choses
+à faire est de vous assurer que vous pouvez le démarrer. Les instructions
+ci-dessous s'appliquent seulement aux ordinateurs de l'architecture IA-32,
+c'est-à-dire les PC standards. Des informations sur le "chargement au démarrage"
+pour les autres architectures devraient être disponibles aux emplacements
+habituelles des ressources pour ces architectures.</para>
 
-<para><screen><userinput>grub</userinput></screen></para>
+<para>Le chargement au démarrage est un domaine complexe. Tout d'abord, quelques
+mots de mise en garde. Vous devez vraiment connaitre votre chargeur actuel et
+tout autre système d'exploitation présent sur votre disque dur que vous
+souhaitez pouvoir lancer. Assurez-vous d'avoir une disquette de démarrage de
+façon à pouvoir réparer votre ordinateur si, par malheur, votre ordinateur
+devenait inutilisable (non démarrable).</para>
 
-<para>Grub utilise sa propre structure de nommage des lecteurs, sous la forme
-hd(n,m), où n est le numéro du disque dur et m le numéro de la partition, les
-deux commençant à partir de zéro. Donc, la partition hda1 serait (hd0,0) pour
-grub et hdb2 serait hd(1,1). De même, Grub ne prêt pas du tout attention aux
-lecteurs de CDROM, donc si, par exemple, vous avez un CD sur hdb et un deuxième
-disque dur sur hdc, les partitions du deuxième disque dur seront toujours
-(hd1,m).</para>
+<para>Plus tôt, nous avons compilé et installé le chargeur de démarrage Grub
+pour cette étape. La procédure implique l'écriture de quelques fichiers spéciaux
+de Grub en des endroits spécifiques sur le disque dur. Avant d'en arriver là,
+nous vous recommendons fortement de créer une disquette de démarrage Grub au cas
+où. Insérez une disquette de démarrage vierge et lancez les commandes
+suivantes&nbsp;:</para>
 
-<para>Donc, en utilisant l'information ci-dessus, sélectionnez la bonne
-désignation pour votre partition racine. Dans ce contexte, nous supposerons
-(hd0,3) comme étant votre partition racine. Tout d'abord, indiquons à grub où
-il peut trouver ses fichiers:</para>
+<screen><userinput>dd if=/boot/grub/stage1 of=/dev/fd0 bs=512 count=1
+dd if=/boot/grub/stage2 of=/dev/fd0 bs=512 seek=1</userinput></screen>
 
-<para><screen><userinput>root (hd0,3)
-setup (hd0)
-quit</userinput></screen></para>
+<para>Enlevez la disquette et rangez-la dans un endroit sûr. Maintenant, nous
+allons lancer le shell <userinput>grub</userinput>:</para>
 
-<para>Ceci indique à Grub de rechercher ses fichiers sur hda4 (hd0,3) et de
-s'installer sur le MBR (Master Boot Record) de hda.</para>
+<screen><userinput>grub</userinput></screen>
 
-<para>De même, nous aurons besoin de créer le fichier <filename>menu.lst</filename>
-que Grub utilise pour désigner son menu de démarrage:</para>
+<para>Grub utilise sa propre structure de nommage des disques et partitions, de
+la forme (hdn,m), où <emphasis>n</emphasis> est le numéro du disque dur et
+<emphasis>m</emphasis> le numéro de la partition, tout deux commençant à zéro.
+Ceci signifie, par exemple, que la partition <filename>hda1</filename> est
+(hd0,0) pour Grub alors que <filename>hdb2</filename> est (hd1,1). Contrairement
+à Linux, Grub ne considère pas les lecteurs de CDRoms comme des disques durs,
+donc si vous avez un CD sur <filename>hdb</filename>, par exemple, et un second
+disque dur sur <filename>hdc</filename>, ce dernier disque sera malgré tout
+(hd1).</para>
 
-<para><screen><userinput>cat &gt; /boot/grub/menu.lst &lt;&lt; "EOF"
-# Début /boot/grub/menu.lst
+<para>Utilisant les informations ci-dessus, déterminez la désignation appropriée
+pour votre partition root. Pour l'exemple suivant, nous supposerons que votre
+partition root est <filename>hda4</filename>.</para>
 
-# Par défaut, la première entrée
+<para>Tout d'abord, indiquez à Grub où chercher ses fichiers
+<filename>stage{1,2}</filename> -- vous pouvez utiliser la touche tabulation
+partout pour que Grub vous affiche les alternatives&nbsp;:</para>
+
+<screen><userinput>root (hd0,3)</userinput></screen>
+
+<!-- HACK - Force some whitespace to appease tidy -->
+<literallayout></literallayout>
+
+<warning><para>La commande suivante écrasera votre chargeur de démarrage actuel.
+Ne lancez pas cette commande si ce n'est pas ce que vous voulez. Par exemple,
+vous pourriez utiliser un gestionnaire de démarrage autre pour gérer votre MBR
+(Master Boot Record). Dans ce cas, il serait probablement plus sensé d'installer
+Grub dans le secteur de boot de la partition LFS, auquel cas la commande
+deviendrait&nbsp;:
+<userinput>setup (hd0,3)</userinput>.</para></warning>
+
+<!-- HACK - Force some whitespace to appease tidy -->
+<literallayout></literallayout>
+
+<para>Ensuite, indiquez-lui de s'installer dans le MBR de
+<filename>hda</filename>&nbsp;:</para>
+
+<screen><userinput>setup (hd0)</userinput></screen>
+
+<para>Si tout va bien, Grub indiquera avoir trouvé ses fichiers dans
+<filename>/boot/grub</filename>. C'est tout ce qu'il y a à faire &nbsp;:</para>
+
+<screen><userinput>quit</userinput></screen>
+
+<para>Maintenant, nous avons besoin de créer un fichier "liste de menus"
+définissant le menu de démarrage de Grub&nbsp;:</para>
+
+<screen><userinput>cat &gt; /boot/grub/menu.lst &lt;&lt; "EOF"</userinput>
+# Debut de /boot/grub/menu.lst
+
+# Par defaut, lance la premiere entree du menu.
 default 0
 
-# Autorise 30 secondes avant de démarrer suivant la valeur par défaut
+# Attends 30 secondes avant de lancer le defaut.
 timeout 30
 
-# Utilise de plus jolies couleurs
+# Utilise de jolis couleurs.
 color green/black light-green/black
 
-# Entrée par défaut pour LFS
-title LFS 5.0
+# La premiere entree concerne LFS.
+title LFS &milestone;
 root (hd0,3)
 kernel /boot/lfskernel root=/dev/hda4 ro
-EOF</userinput></screen></para>
+<userinput>EOF</userinput></screen>
 
-<para>Vous pourriez aussi vouloir ajouter une entrée pour votre distribution
-hôte. Cela devrait ressembler à ceci:</para>
+<para>Vous pouvez souhaiter ajouter une entrée pour votre distribution hôte.
+Cela pourrait ressembler à ceci&nbsp;:</para>
 
-<para><screen><userinput>cat &gt;&gt; /boot/grub/menu.lst &lt;&lt; "EOF"
-# Redhat Linux
-title Redhat
+<screen><userinput>cat &gt;&gt; /boot/grub/menu.lst &lt;&lt; "EOF"</userinput>
+title Red Hat
 root (hd0,2)
 kernel /boot/kernel-2.4.20 root=/dev/hda3 ro
 initrd /boot/initrd-2.4.20
-EOF</userinput></screen></para>
+<userinput>EOF</userinput></screen>
 
-<para>De même, si vous utilisez aussi Windows sur cette machine, l'entrée
-suivante devrait vous permettre de le lancer:</para>
+<para>De même, s'il vous arrive de lancer Windows, l'entrée suivante devrait le
+permettre&nbsp;:</para>
 
-<para><screen><userinput>cat &gt;&gt; /boot/grub/menu.lst &lt;&lt; "EOF"
-# Windows
+<screen><userinput>cat &gt;&gt; /boot/grub/menu.lst &lt;&lt; "EOF"</userinput>
 title Windows
 rootnoverify (hd0,0)
 chainloader +1
-EOF</userinput></screen></para>
+<userinput>EOF</userinput></screen>
 
-<para>Vous pouvez trouver plus d'informations concernant Grub sur son site web
-situé sur <ulink url="http://www.gnu.org/software/grub"/>.</para>
+<para>Si <userinput>info grub</userinput> ne vous dit pas tout ce que vous
+souhaitez savoir, vous pouvez trouver plus d'informations concernant Grub sur
+son site web, situé sur
+<ulink url="http://www.gnu.org/software/grub"/>.</para>
 
 </sect1>
 

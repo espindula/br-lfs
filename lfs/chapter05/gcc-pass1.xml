@@ -2,12 +2,105 @@
 <title>Installer GCC-&gcc-version; - Pass 1</title>
 <?dbhtml filename="gcc-pass1.html" dir="chapter05"?>
 
-<screen>Estimation du temps de construction:   &gcc-time-pass1-stage1;
-Estimation de l'espace disque requis:  &gcc-compsize-pass1-stage1;</screen>
+<screen>Estimation du temps de construction:   &gcc-time-tools-pass1;
+Estimation de l'espace disque requis:  &gcc-compsize-tools-pass1;</screen>
 
 &aa-gcc-shortdesc;
 &aa-gcc-dep;
-&c5-gcc-pass1-inst;
+
+<sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
+
+<sect2>
+<title>Installation de GCC</title>
+
+<para>Déballez seulement l'archive tar GCC-core, car nous n'allons pas avoir
+besoin d'un compilateur C++ pour l'instant.</para>
+
+<note><para>Même si GCC est un package important de l'ensemble des outils, nous
+n'allons pas lancer la suite de tests aussi tôt. Tout d'abord, les éléments de
+la suite de tests ne sont pas encore en place. Ensuite, les programmes de la
+première passe seront bientôt écrasés par ceux de la seconde passe.
+</para></note>
+
+<para>Ce package est connu pour mal se comporter si vous changez les options
+d'optimisation par défaut (en incluant les options -march et -mcpu). Donc, si
+vous avez défini des variables d'environnement qui surchargent les optimisations
+pas défaut, telles que CFLAGS et CXXFLAGS, nous vous recommandons de supprimer
+cette initialisation lors de la construction de GCC.</para>
+
+<para>La documentation de GCC recommande de ne pas construire GCC dans le
+répertoire des sources mais dans un répertoire de construction dédié&nbsp;:
+</para>
+
+<screen><userinput>mkdir ../gcc-build
+cd ../gcc-build</userinput></screen>
+
+<para>Préparez la compilation de GCC&nbsp;:</para>
+
+<screen><userinput>../gcc-&gcc-version;/configure --prefix=/tools \
+&nbsp;&nbsp;&nbsp;&nbsp;--with-local-prefix=/tools \
+&nbsp;&nbsp;&nbsp;&nbsp;--disable-nls --enable-shared \
+&nbsp;&nbsp;&nbsp;&nbsp;--enable-languages=c</userinput></screen>
+
+<para>La signification des options de configure est&nbsp;:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--with-local-prefix=/tools</userinput>:  Le but de
+cette option est de supprimer <filename>/usr/local/include</filename> du chemin
+de recherche des fichiers include de <userinput>gcc</userinput>. Ce n'est pas
+absolument essentiel&nbsp;; néanmoins, vous voulons minimiser l'influence du
+système hôte, et ceci nous semble un point intéressant à faire dans ce but.
+</para></listitem>
+
+<listitem><para><userinput>--enable-shared</userinput>: Cette option peut ne pas
+sembler intuitive au début. Mais en l'utilisant, elle permet la construction de
+<filename>libgcc_s.so.1</filename> et <filename>libgcc_eh.a</filename>, et
+disposer de <filename>libgcc_eh.a</filename> nous assure que le script configure
+de Glibc (le prochain package à compiler) produira de bons résultats. Notez que
+les binaires <userinput>gcc</userinput> seront toujours liés statiquement, car
+ceci est contrôlé par la valeur <userinput>-static</userinput> de BOOT_LDFLAGS.
+</para></listitem>
+
+<listitem><para><userinput>--enable-languages=c</userinput>: Cette option nous
+assure que seul le compilateur C sera construit. Cette option n'est nécessaire
+que si vous avez téléchargé et déballé l'archive tar GCC complète.
+</para></listitem>
+</itemizedlist>
+
+<para>Continue avec la compilation du package&nbsp;:</para>
+
+<screen><userinput>make BOOT_LDFLAGS="-static" bootstrap</userinput></screen>
+
+<para>La signification des paramètres de make est&nbsp;:</para>
+
+<itemizedlist>
+<listitem><para><userinput>BOOT_LDFLAGS="-static"</userinput>: Ceci indique à
+GCC de lier ses programmes statiquement.</para></listitem>
+
+<listitem><para><userinput>bootstrap</userinput>: Cette cible ne compile pas GCC
+une seule fois mais plusieurs fois. Il utilise les programmes compilés dans le
+premier tour pour se compiler une deuxième fois, puis une troisième fois. Il
+compare alors les deuxième et troisième compilation pour s'assurer qu'il arrive
+à se reproduire lui-même sans fautes, ce qui semble vouloir dire qu'il a été
+compilé correctement.</para></listitem>
+</itemizedlist>
+
+<para>Enfin, installez le package&nbsp;:</para>
+
+<screen><userinput>make install</userinput></screen>
+
+<para>En touche finale, nous créons le lien symbolique <filename
+class="symlink">/tools/bin/cc</filename>. Beaucoup de programmes et de scripts
+lancent <userinput>cc</userinput> au lieu de <userinput>gcc</userinput>, ceci
+pour conserver des programmes génériques et donc utilisables sur tout type de
+système Unix. Tout le monde n'a pas le compilateur GNU C installé. En lançant
+Utiliser <userinput>cc</userinput> permet de libérer l'administrateur système
+dans son choix du compilateur C à installer, tant qu'un lien symbolique est
+créé&nbsp;:</para>
+
+<screen><userinput>ln -sf gcc /tools/bin/cc</userinput></screen>
+
+</sect2>
 
 </sect1>
 

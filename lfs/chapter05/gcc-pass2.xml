@@ -2,10 +2,182 @@
 <title>Installer GCC-&gcc-version; - Pass 2</title>
 <?dbhtml filename="gcc-pass2.html" dir="chapter05"?>
 
-<screen>Estimation du temps de construction:   &gcc-time-pass2-stage1;
-Estimation de l'espace disque requis:  &gcc-compsize-pass2-stage1;</screen>
+<screen>Estimation du temps de construction:   &gcc-time-tools-pass2;
+Estimation de l'espace disque requis:  &gcc-compsize-tools-pass2;</screen>
 
-&c5-gcc-pass2-inst;
+<sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
+
+<sect2>
+<title>Re-installation de GCC</title>
+
+<para>Les outils requis pour tester GCC et Binutils sont maintenant installés (Tcl,
+Expect et DejaGnu). Nous pouvons continuer en reconstruisant GCC et Binutils, en
+les liant avec la nouvelle Glibc et en les testant correctement. Une chose à
+noter, néanmoins, est que ces suites de tests dépendent énormément de pseudos
+terminaux (PTY) fonctionnels fournis par votre distribution hôte. Ces jours, les
+PTY sont plus souvent implémentés via le système de fichiers
+<emphasis>devpts</emphasis>. Vous pouvez rapidement vérifier si votre système
+hôte est correctement configuré en cela en réalisant un simple test&nbsp;:</para>
+
+<screen><userinput>expect -c "spawn ls"</userinput></screen>
+
+<para>Si vous obtenez le message&nbsp;:</para>
+
+<blockquote><screen>The system has no more ptys.  Ask your system administrator to create more.</screen></blockquote>
+
+<para>Votre distribution hôte n'est pas correctement configurée pour les PTY.
+Dans ce cas, il ne sert à rien de lancer les suites de tests de GCC et Binutils
+jusqu'à la correction de ce problème. Vous pouvez consulter le Wiki LFS sur
+<ulink url="http://wiki.linuxfromscratch.org/"/> pour plus d'informations pour
+faire fonctionner les PTY.</para>
+
+<para>Déballez les trois archives tar de GCC (-core, -g++ et -testsuite) dans un
+seul répertoire. Elles se placeront dans un seul sous-répertoire
+<filename>gcc-&gcc-version;/</filename>.</para>
+
+<para>Tout d'abord, corrigez un problème et faites un ajustement essentiel&nbsp;:
+</para>
+
+<screen><userinput>patch -Np1 -i ../&gcc-nofixincludes-patch;
+patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
+
+<para>Le premier correctif désactive le script GCC "fixincludes". Nous l'avions
+mentionné brièvement mais une explication plus en détail de fixincludes est
+apportée ici. Sous des circonstances normales, le script GCC fixincludes
+parcourt votre système pour trouver les fichiers d'en-tête qui ont besoin d'être
+corrigé. Il pourrait trouver que certains des fichiers d'en-têtes de Glibc sur
+votre système devraient être corrigés, les corriger et les placer dans le
+répertoire des en-têtes privés de GCC. Plus tard dans le <xref
+linkend="chapter06"/>, après avoir installé la nouvelle Glibc, ce répertoire
+serait recherché avant le répertoire include du système, faisant que GCC trouve
+les en-têtes corrigés du système hôte qui ne correspondra certainement pas à la
+version de Glibc actuellement utilisée pour le système LFS.</para>
+
+<para>Le dernier correctif modifie l'emplacement par défaut de l'éditeur de
+liens dynamiques de GCC (généralement <filename>ld-linux.so.2</filename>). il
+supprime aussi <filename class="directory">/usr/include</filename> du chemin de
+recherche des includes de GCC. Corriger maintenant plutôt qu'ajuster le fichier
+specs après l'installation nous assure que notre éditeur de liens dynamiques
+sera utilisé lors de la construction de GCC. C'est-à-dire, tous les binaires
+finaux (et temporaires) créés lors de la construction seront liés à la nouvelle
+Glibc.</para>
+
+<important><para>Ces correctifs sont <emphasis>critiques</emphasis> pour
+s'assurer une construction avec succès. Ne pas oublier de les appliquer.
+</para></important>
+
+<para>Créez un répertoire de construction séparé de nouveau&nbsp;:</para>
+
+<screen><userinput>mkdir ../gcc-build
+cd ../gcc-build</userinput></screen>
+
+<para>Avant de commencer la construction de GCC, rappelez de désinitialiser
+toute variable d'environnement pour surcharger les options d'optimisation par
+défaut.</para>
+
+<para>Maintenant, préparez la compilation de GCC&nbsp;:</para>
+
+<screen><userinput>../gcc-&gcc-version;/configure --prefix=/tools \
+&nbsp;&nbsp;&nbsp;&nbsp;--with-local-prefix=/tools \
+&nbsp;&nbsp;&nbsp;&nbsp;--enable-clocale=gnu --enable-shared \
+&nbsp;&nbsp;&nbsp;&nbsp;--enable-threads=posix --enable-__cxa_atexit \
+&nbsp;&nbsp;&nbsp;&nbsp;--enable-languages=c,c++</userinput></screen>
+
+<para>La signification des nouvelles options de configure est&nbsp;:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--enable-threads=posix</userinput>: Ceci active la
+gestion des exceptions C++ pour le code multi-threadé.</para></listitem>
+
+<listitem><para><userinput>--enable-__cxa_atexit</userinput>: Cette option
+autorise l'utilisation de __cxa_atexit, plutôt que atexit, pour enregistrer les
+destructeurs C++ destructors des objets statiques locales et globales et est
+essentiel pour la gestion des destructeurs en compatibilité complète avec les
+standards. Il affecte aussi l'ABI C++ et donc résulte en des bibliothèques
+partagées et des programmes C++ interopérables avec les autres distributions
+Linux.</para></listitem>
+
+<listitem><para><userinput>--enable-clocale=gnu</userinput>: Cette option nous
+assure que le bon modèle de locale est sélectionné pour les bibliothèques C++
+sous toutes les circonstances. Si le script configure trouve la locale
+<emphasis>de_DE</emphasis> installée, il sélectionnera le bon modèle de
+<emphasis>gnu</emphasis>. Néanmoins, les personnes qui n'installent pas la
+locale <emphasis>de_DE</emphasis> courent le risque de construire les
+bibliothèques C++ incompatibles avec ABI dû au mauvais modèle de locale,
+<emphasis>generic</emphasis>, sélectionné.</para></listitem>
+
+<listitem><para><userinput>--enable-languages=c,c++</userinput>: Cette option
+est nécessaire pour s'assurer que les compilateurs C et C++ sont construits.
+</para></listitem>
+</itemizedlist>
+
+<para>Compilez le package&nbsp;:</para>
+
+<screen><userinput>make</userinput></screen>
+
+<para>Il n'est pas nécessaire d'utiliser la cible
+<userinput>bootstrap</userinput> maintenant car le compilateur que nous
+utilisons pour compiler ce GCC a été construit avec exactement la même version
+des sources de GCC utilisées précédemment.</para>
+
+<note><para>Il est important de noter que lancer la suite de tests de GCC
+maintenant n'est pas considéré aussi important que de la lancer dans le
+<xref linkend="chapter06"/>.</para></note>
+
+<para>Testez le résultat&nbsp;:</para>
+
+<screen><userinput>make -k check</userinput></screen>
+
+<para>L'option <userinput>-k</userinput> est utilisée pour faire en sorte que
+toute la suite de tests est exécutée et ne s'arrête pas au premier échec. La
+suite de tests GCC est très complète et il est pratiquement garantie que
+certaines erreurs apparaîtront. Pour obtenir un résumé des résultats de la suite
+de tests, lancez ceci&nbsp;:</para>
+
+<screen><userinput>../gcc-&gcc-version;/contrib/test_summary | more</userinput></screen>
+
+<para>Vous pouvez comparer vos résultats avec ceux postés sur la liste de
+diffusion gcc-testresults pour des configurations similaires à la vôtre. Pour un
+exemple concernant la version actuelle GCC-&gcc-version; sur un
+i686-pc-linux-gnu, voir
+<ulink url="http://gcc.gnu.org/ml/gcc-testresults/2003-08/msg01612.html"/>.</para>
+
+<para>Notez que les résultats contiennent&nbsp;:</para>
+
+<screen>* 1 XPASS (unexpected pass) for g++
+* 1 FAIL (unexpected failure) for g++
+* 2 FAIL for gcc
+* 26 XPASS's for libstdc++</screen>
+ 
+<para>La partie échouée ("unexpected pass") pour g++ est dûe à l'utilisation de
+<userinput>--enable-__cxa_atexit</userinput>. Apparemment, toutes les
+plateformes supportées par GCC ne disposent pas du support de "__cxa_atexit"
+dans leur bibliothèques C, donc il est probable que ce test ne réussira pas.
+</para>
+
+<para>Les 26 parties échouées pour libstdc++ sont dûes à l'utilisation de
+<userinput>--enable-clocale=gnu</userinput>, qui est le choix correcte pour des
+systèmes basées sur Glibc, versions 2.2.5 et supérieurs. Le support de la locale
+dans la bibliothèque GNU C est supérieurà l'autre modèle sélectionné ("generic")
+qui pourrait être applicable si par exemple vous utilisiez Newlibc, Sun-libc
+ou tout autre libc). La suite de tests libstdc++ attend apparemment le modèle
+"generic", donc ces tests ne passent pas obligatoirement.</para>
+
+<para>Des échecs inattendues ne peuvent souvent pas être évités. Les
+développeurs GCC sont habituellement au courant mais n'ont pas encore réussi à
+les corriger. En bref, sauf si vos résultats sont grandement différents de ceux
+présents sur l'URL ci-dessus, il est sain de continuer.</para>
+
+<para>Et finalement, installez le package&nbsp;:</para>                                              
+<screen><userinput>make install</userinput></screen>
+
+<note><para>A ce moment, il est fortement recommendé de répéter la vérification
+que nous avions réalisé dans ce chapitre. Référez-vous au
+<xref linkend="ch05-locking-glibc"/> et répétez la vérification. Si les
+résultats sont mauvais, alors vous avez probablement oublié d'appliquer le
+correctif "GCC Specs" mentionné ci-dessus.</para></note>
+
+</sect2>
 
 </sect1>
 

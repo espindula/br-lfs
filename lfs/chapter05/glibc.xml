@@ -2,12 +2,186 @@
 <title>Installer Glibc-&glibc-version;</title>
 <?dbhtml filename="glibc.html" dir="chapter05"?>
 
-<screen>Estimation du temps de construction:   &glibc-time;
-Estimation de l'espace disque requis:  &glibc-compsize;</screen>
+<screen>Estimation du temps de construction:   &glibc-time-tools;
+Estimation de l'espace disque requis:  &glibc-compsize-tools;</screen>
 
 &aa-glibc-shortdesc;
 &aa-glibc-dep;
-&c5-glibc-inst;
+
+<sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
+
+<sect2>
+<title>Installation de Glibc</title>
+
+<para>Avant de commencer l'installation de la Glibc, vous devez entrer
+(<userinput>cd</userinput>) dans le répertoire
+<filename>glibc-&glibc-version;</filename> et déballer Glibc-linuxthreads dans
+ce répertoire, et non pas dans le répertoire où vous déballez habituellement
+tous les sources.</para>
+
+<note><para>Nous allons lancer la suite de tests pour Glibc dans ce chapitre.
+Néanmoins, il est important de noter que lancer la suite de tests Glibc ici
+n'est pas considéré comme étant aussi important que dans le
+<xref linkend="chapter06"/>.</para></note>
+
+<para>Ce package est connu pour mal se comporter si vous changez les options
+d'optimisation par défaut (en incluant les options -march et -mcpu). Donc, si
+vous avez défini des variables d'environnement qui surchargent les optimisations
+pas défaut, telles que CFLAGS et CXXFLAGS, nous vous recommandons de supprimer
+cette initialisation lors de la construction de Glibc.</para>
+
+<para>Basiquement, compiler Glibc de tout autre façon que celle proposée par le
+livre compromet la stabilité de votre système.</para>
+
+<para>Bien qu'il s'agisse d'un message sans gravité, l'étape d'installation de
+Glibc se plaindra de l'absence de <filename>/tools/etc/ld.so.conf</filename>.
+Corrigez ce petit message ennuyant avec&nbsp;:</para>
+
+<screen><userinput>mkdir /tools/etc
+touch /tools/etc/ld.so.conf</userinput></screen>
+
+<para>De même, Glibc a un problème subtile s'il est compilé avec GCC
+&gcc-version;. Appliquez le correctif suivant pour corriger ceci&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&glibc-sscanf-patch;</userinput></screen>
+
+<para>La documentation de Glibc recommande de construire Glibc en dehors du
+répertoire des sources, c'est-à-dire dans un répertoire dédié&nbsp;:</para>
+
+<screen><userinput>mkdir ../glibc-build
+cd ../glibc-build</userinput></screen>
+
+<para>Ensuite, préparez la compilation de Glibc&nbsp;:</para>
+
+<screen><userinput>../glibc-&glibc-version;/configure --prefix=/tools \
+&nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
+&nbsp;&nbsp;&nbsp;&nbsp;--with-headers=/tools/include \
+&nbsp;&nbsp;&nbsp;&nbsp;--with-binutils=/tools/bin \
+&nbsp;&nbsp;&nbsp;&nbsp;--without-gd</userinput></screen>
+
+<para>La signification des options de configure est&nbsp;:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--disable-profile</userinput>: Ceci désactive la
+construction des bibliothèques avec les informations de profilage. Enlevez cette
+option si vous pensez faire du profilage.</para></listitem>
+
+<listitem><para><userinput>--enable-add-ons</userinput>: Ceci active tous les
+composants supplémentaires (<foreignphrase>add-ons</foreignphrase>)
+installés avec Glibc, dans notre cas Linuxthreads.</para></listitem>
+
+<listitem><para><userinput>--with-binutils=/tools/bin</userinput> et
+<userinput>--with-headers=/tools/include</userinput>: Ces options ne sont
+réellement pas nécessaires. Mais elles nous assurent que rien de mauvais ne peux
+arriver en ce qui concerne les en-têtes du noyau et que les programmes Binutils
+sont utilisés lors de la construction de Glibc.</para></listitem>
+
+<listitem><para><userinput> --without-gd</userinput>: Cette option nous assure
+que le programme <userinput>memusagestat</userinput> ne sera pas construit, car
+de façon assez étrange celui-ci insiste pour être lié avec les bibliothèques de
+l'hôte (libgd, libpng, libz et ainsi de suite).</para></listitem>
+</itemizedlist>
+
+<para>Lors de cette étape, vous rencontrerez peut-être le message suivant&nbsp;:</para>
+
+<blockquote><screen>configure: WARNING:
+*** These auxiliary programs are missing or incompatible versions: msgfmt
+*** some features will be disabled.
+*** Check the INSTALL file for required versions.</screen></blockquote>
+
+<para>Le programme <filename>msgfmt</filename>, manquant ou incompatible, ne
+pose généralement pas de problème mais certaines personnes pensent qu'il peut
+poser problème lors de l'exécution de la suite de tests.</para>
+
+<para>Compilez le package&nbsp;:</para>
+
+<screen><userinput>make</userinput></screen>
+
+<para>Lancez la suite de tests&nbsp;:</para>
+
+<screen><userinput>make check</userinput></screen>
+
+<para>La suite de tests de Glibc est grandement dépendante de certaines
+fonctionnalités de votre système hôte, en particulier du noyau. De plus, dans ce
+chapitre, certains tests peuvent être affecter durement par les outils existants
+ainsi que par des problèmes d'environnement sur le système hôte. Bien sûr, ceci
+ne sera plus un problème lorsque nous lançerons la suite de tests de Glibc dans
+l'environnement chroot au cours du <xref linkend="chapter06"/>. En général, la
+suite de tests de Glibc réussit habituellement. Néanmoins, comme mentionné
+ci-dessus, quelques échecs sont inévitables sous certaines circonstances. Voici
+une liste des problèmes les plus communs que nous connaissons&nbsp;:</para>
+
+<itemizedlist>
+<listitem><para>Le test <emphasis>math</emphasis> échoue parfois lorsqu'il est
+exécuté sur des systèmes où le processeur n'est pas un nouveau Intel ou AMD.
+Certains paramètrages d'optimisation sont aussi connus pour être la source de ce
+type de problèmes.</para></listitem>
+
+<listitem><para>Le test <emphasis>gettext</emphasis> échoue quelque fois à cause
+de problèmes sur le système hôte. Les raisons exactes ne sont pas encore
+claires.</para></listitem>
+
+<listitem><para>Le test <emphasis>atime</emphasis> échoue quelque fois lorsque
+la partition LFS est montée avec l'option <emphasis>noatime</emphasis> ou à
+cause d'autres spécificités des autres systèmes de fichiers.</para></listitem>
+
+<listitem><para>Le test <emphasis>shm</emphasis> pourrait échouer si le système
+hôte utilise le système de fichiers devfs mais ne dispose pas du système de
+fichiers tmpfs monté sur <filename>/dev/shm</filename> à cause d'un manque de
+support de tmpfs dans le noyau.</para></listitem>
+
+<listitem><para>En cas d'exécution sur d'anciens matériels (lents), certains
+tests pourraient échouer à cause de limite de temps dépassée.</para></listitem>
+</itemizedlist>
+
+<para>En résumé, ne vous inquiétez pas trop si vous voyez des échecs lors des
+tests de la Glibc dans ce chapitre. La Glibc au <xref linkend="chapter06"/> est
+celle avec qui nous allons rester, donc c'est celle-ci pour qui les tests
+doivent réussir. Mais gardez en tête, y compris au <xref linkend="chapter06"/>
+que certains erreurs peuvent arriver, les tests de <emphasis>math</emphasis> par
+exemple. Si vous essuyez un échec, notez-le puis essayez de relancer
+<userinput>make check</userinput>. La suite de tests devrait reprendre là où
+elle s'était arrêtée. Vous pouvez passer cette séquence arrêt-relancement en
+lançant un <userinput>make -k check</userinput>. Mais en faisant cela,
+assurez-vous de sauvegarder la sortie pour que vous puissiez examiner les traces
+plus tard et savoir ainsi le nombre total d'échecs.</para>
+
+<para>Maintenant, installez le package&nbsp;:</para>
+
+<screen><userinput>make install</userinput></screen>
+
+<para>Différents pays et cultures ont des conventions variables sur la façon de
+communiquer. Ces conventions vont du très simple, telle que la représentation de
+la date et de l'heure à du très compliqué, telle que le langage parlé.
+L'internationalisation des programmes GNU fonctionne en utilisant les
+<emphasis>locales</emphasis>. Nous installons les locales Glibc maintenant&nbsp;:</para>
+
+<screen><userinput>make localedata/install-locales</userinput></screen>
+
+<para>Une alternative au lancement de la commande précédente est d'installer
+uniquement les locales dont vous avez besoin ou que vous souhaitez. Ceci est
+possible en utilisant la commande <userinput>localedef</userinput>. Des
+informations sur cette commande sont disponibles dans le fichier
+<filename>INSTALL</filename> des sources
+<filename>glibc-&glibc-version;</filename>. Néanmoins, il existe un certain
+nombre de locales essentielles pour réussir les tests des futurs packages, en
+particulier les tests de <emphasis>libstdc++</emphasis> provenant de GCC. Les
+instructions suivantes, au lieu de la cible install-locales comme ci-dessus,
+installent l'ensemble minimum de locales nécessaires à la bonne réussite des
+tests&nbsp;:</para>
+
+<screen><userinput>mkdir -p /tools/lib/locale
+localedef -i de_DE -f ISO-8859-1 de_DE
+localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
+localedef -i en_HK -f ISO-8859-1 en_HK
+localedef -i en_PH -f ISO-8859-1 en_PH
+localedef -i en_US -f ISO-8859-1 en_US
+localedef -i es_MX -f ISO-8859-1 es_MX
+localedef -i fr_FR -f ISO-8859-1 fr_FR
+localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
+localedef -i it_IT -f ISO-8859-1 it_IT
+localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
+
+</sect2>
 
 </sect1>
-

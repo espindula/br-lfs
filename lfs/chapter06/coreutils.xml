@@ -7,7 +7,88 @@ Estimation de l'espace disque requis:  &coreutils-compsize;</screen>
 
 &aa-coreutils-shortdesc;
 &aa-coreutils-dep;
-&c6-coreutils-inst;
+
+<sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
+
+<sect2>
+<title>Installation de Coreutils</title>
+
+<para>Normalement, la fonctionnalité de <userinput>uname</userinput> est quelque
+peu cassée, dans le fait que le paramètre <userinput>-p</userinput> renvoie
+toujours "unknown". Le correctif suivant corrige ce comportement pour les
+architectures Intel&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&coreutils-uname-patch;</userinput></screen>
+
+<para>Nous ne voulons que Coreutils installe sa version du programme
+<userinput>hostname</userinput> parce qu'il est inférieur à la version fournie
+par Net-tools. Empêchez cette installation en appliquant un correctif&nbsp;:
+</para>
+
+<screen><userinput>patch -Np1 -i ../&coreutils-hostname-patch;</userinput></screen>
+
+<para>Maintenant, préparez la compilation de Coreutils&nbsp;:</para>
+
+<screen><userinput>./configure --prefix=/usr</userinput></screen>
+
+<para>Compilez le package&nbsp;:</para>
+
+<screen><userinput>make</userinput></screen>
+
+<para>Le programme <userinput>su</userinput> de Coreutils n'était pas installé
+parce qu'il avait besoin des privilèges de <emphasis>root</emphasis> pour le
+faire. Nous en avons besoin quelques instants pour la suite de tests. Donc, nous
+contournons le problème en l'installant maintenant&nbsp;:</para>
+
+<screen><userinput>make install-root</userinput></screen>
+
+<para>Ce package dispose d'une suite de tests réalisant un ensemble de
+vérifications pour s'assurer que tout est construit correctement. Néanmoins,
+cette suite de tests particuliers fait quelques suppositions sur la présence
+d'utilisateurs et de groupes non root qui ne s'appliquent pas aussi tôt dans la
+construction de LFS. Nous créons donc un utilisateur système dummy et deux
+groupes dummy pour permettre aux tests de s'exécuter correctement. Si vous
+décidez de ne pas lancer cette suite de tests, passez directement à la section
+"Installez le package". Les commandes suivantes nous prépareront la suite de
+tests. Créez l'utilisateur et les deux groupes&nbsp;:</para>
+
+<screen><userinput>echo "dummy1:x:1000" >> /etc/group
+echo "dummy2:x:1001:dummy" >> /etc/group
+echo "dummy:x:1000:1000:::/bin/bash" >> /etc/passwd</userinput></screen>
+
+<para>Certains tests doivent être lancés en tant que
+<emphasis>root</emphasis>&nbsp;:</para>
+
+<screen><userinput>make check-root</userinput></screen>
+
+<para>Le reste des tests est lancé en tant qu'utilisateur
+<emphasis>dummy</emphasis>&nbsp;:</para>
+
+<screen><userinput>su dummy -c "make RUN_EXPENSIVE_TESTS=yes check"</userinput></screen>
+
+<para>Supprimez les noms d'utilisateur et de groupe dummy&nbsp;:</para>
+
+<screen><userinput>sed -i.bak '/dummy/d' /etc/passwd /etc/group</userinput></screen>
+
+<para>Installez le package&nbsp;:</para>
+
+<screen><userinput>make install</userinput></screen>
+
+<para>Et déplacez quelques programmes vers leur bon emplacement&nbsp;:</para>
+
+<screen><userinput>mv /usr/bin/{basename,cat,chgrp,chmod,chown,cp,dd,df} /bin
+mv /usr/bin/{dir,dircolors,du,date,echo,false,head} /bin
+mv /usr/bin/{install,ln,ls,mkdir,mkfifo,mknod,mv,pwd} /bin
+mv /usr/bin/{rm,rmdir,shred,sync,sleep,stty,su,test} /bin
+mv /usr/bin/{touch,true,uname,vdir} /bin
+mv /usr/bin/chroot /usr/sbin</userinput></screen>
+
+<para>Finalement, créez quelques liens symboliques nécessaires&nbsp;:</para>
+
+<screen><userinput>ln -s test /bin/[
+ln -s ../../bin/install /usr/bin</userinput></screen>
+
+</sect2>
 
 </sect1>
 

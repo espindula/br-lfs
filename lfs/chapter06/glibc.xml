@@ -7,7 +7,123 @@ Estimation de l'espace disque requis:  &glibc-compsize;</screen>
 
 &aa-glibc-shortdesc;
 &aa-glibc-dep;
-&c6-glibc-inst;
+
+<sect2><title>&nbsp;</title><para>&nbsp;</para></sect2>
+
+<sect2>
+<title>Installation de Glibc</title>
+
+<para>Le système de construction de Glibc est très solide et réalisera
+l'installation parfaitement même si notre fichier compilateur specs et l'éditeur
+de liens pointent toujours vers <filename>/tools</filename>. Nous ne pouvons pas
+ajuster le specs et l'éditeur de liens avant l'installation de Glibc parce que
+les tests autoconf de Glibc donneraient alors des résultats erronés et feraient
+ainsi échouer notre but d'arriver à une construction propre.</para>
+
+<note><para>La suite de tests pour Glibc dans cette section est considérée
+<emphasis>critique</emphasis>. Notre conseil est de la réaliser à tout prix.
+</para></note>
+
+<para>Avant de commencer la construction de Glibc, rappelez-vous de déballer
+Glibc-linuxthreads de nouveau dans le répertoire
+<filename>glibc-&glibc-version;</filename> et de supprimer les initialisations
+de toute variable d'environnement qui surchargerait une option d'optimisation
+par défaut.</para>
+
+<para>Bien qu'il s'agisse d'un message sans gravité, la phase d'installation de
+Glibc se plaindra de l'absence de <filename>/etc/ld.so.conf</filename>. Corrigez
+cet ennuyant petit message avec&nbsp;:</para>
+
+<screen><userinput>touch /etc/ld.so.conf</userinput></screen>
+
+<para>Ensuite, appliquez le même correctif que celui utilisé précédemment&nbsp;:
+</para>
+                                                                                
+<screen><userinput>patch -Np1 -i ../&glibc-sscanf-patch;</userinput></screen>
+
+<para>La documentation de Glibc recommande de construire Glibc en dehors du
+répertoire des sources, c'est-à-dire dans un répertoire dédié à la
+construction&nbsp;:</para>
+
+<screen><userinput>mkdir ../glibc-build
+cd ../glibc-build</userinput></screen>
+
+<para>Maintenant, préparez la compilation de Glibc&nbsp;:</para>
+
+<screen><userinput>../glibc-&glibc-version;/configure --prefix=/usr \
+&nbsp;&nbsp;&nbsp;&nbsp;--disable-profile --enable-add-ons \
+&nbsp;&nbsp;&nbsp;&nbsp;--libexecdir=/usr/bin --with-headers=/usr/include</userinput></screen>
+
+<para>La signification des nouvelles options de configure est&nbsp;:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--libexecdir=/usr/bin</userinput>: Ceci fait que le
+programme <filename>pt_chown</filename> sera installé dans le répertoire
+<filename>/usr/bin</filename>.</para></listitem>
+
+<listitem><para><userinput>--with-headers=/usr/include</userinput>: Ceci nous
+assure que les en-têtes du noyau compris dans <filename>/usr/include</filename>
+sont utilisées pour cette construction. Si vous ne passez pas cette option,
+alors les en-têtes de <filename>/tools/include</filename> sont utilisées, ce qui
+n'est évidemment pas idéal (bien qu'ils devraient être identiques). Utiliser
+cette option a l'avantage que vous serez informé immédiatement si vous avez
+d'installer les en-têtes dans <filename>/usr/include</filename>.</para></listitem>
+</itemizedlist>
+
+<para>Compilez le package&nbsp;:</para>
+
+<screen><userinput>make</userinput></screen>
+
+<para>Testez le résultat&nbsp;:</para>
+
+<screen><userinput>make check</userinput></screen>
+
+<para>Les notes de la suite de tests disponibles dans <xref
+linkend="ch05-glibc"/> sont toujours appropriées ici. Assurez-vous de vous y
+référer en cas de doute.</para>
+
+<para>Enfin, installez le package&nbsp;:</para>
+
+<screen><userinput>make install</userinput></screen>
+
+<para>Les locales qui peuvent permettre à votre système de parler une autre
+langue, n'ont pas été installées avec la commande ci-dessus. Faites-le
+ainsi&nbsp;:</para>
+
+<screen><userinput>make localedata/install-locales</userinput></screen>
+
+<para>Une alternative au lancement de la commande précédente est d'installer
+uniquement les locales dont vous avez besoin ou que vous voulez. Ceci est
+faisable avec la commande <userinput>localedef</userinput>. Une information
+là-dessus est disponible dans le fichier <filename>INSTALL</filename> du
+répertoire <filename>glibc-&glibc-version;</filename>. Néanmoins, il existe un
+certain nombre de locales essentielles pour passer les tests des futurs packages
+correctement. Les instructions suivantes, remplaçant la commandes
+install-locales ci-dessus, installeront l'ensemble minimum de locales
+nécessaires pour exécuter les tests correctement&nbsp;:</para>
+
+<screen><userinput>mkdir -p /usr/lib/locale
+localedef -i de_DE -f ISO-8859-1 de_DE
+localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
+localedef -i en_HK -f ISO-8859-1 en_HK
+localedef -i en_PH -f ISO-8859-1 en_PH
+localedef -i en_US -f ISO-8859-1 en_US
+localedef -i es_MX -f ISO-8859-1 es_MX
+localedef -i fr_FR -f ISO-8859-1 fr_FR
+localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
+localedef -i it_IT -f ISO-8859-1 it_IT
+localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
+
+<para>Puis, construisez les pages man de linuxthreads&nbsp;:</para>
+
+<screen><userinput>make -C ../&glibc-dir;/linuxthreads/man</userinput></screen>
+
+<para>Et installez-les&nbsp;:</para>
+
+<screen><userinput>make -C ../&glibc-dir;/linuxthreads/man install</userinput></screen>
+
+</sect2>
+
 &c6-cf-glibc;
 
 </sect1>
