@@ -5,104 +5,101 @@
   %general-entities;
 ]>
 <sect1 id="ch-system-readjusting">
-<title>Ré-ajuster l'ensemble de nos outils</title>
+<title>Ré-ajustement de l'ensemble d'outils</title>
 <?dbhtml filename="readjusting.html"?>
 
 <para>Maintenant que les nouvelles et finales bibliothèques C ont été
-installées, il est temps d'ajuster de nouveau notre ensemble d'outils. Nous
-allons l'ajuster de façon à ce qu'il soit lié avec les nouvelles bibliothèques.
-C'est en fait la même chose que ce que nous avons fait dans la phase
-d'<quote>ajustement</quote> au début du précédent chapitre, même si cela
-semble être l'inverse&nbsp;: auparavant nous avons guidé l'ensemble des
-répertoires <filename class="directory">/{,usr/}lib</filename> de l'hôte vers
-<filename class="directory">/tools/lib</filename>, maintenant nous le guidons
-du même <filename class="directory">/tools/lib</filename> vers les <filename
-class="directory">/{,usr/}lib</filename> de LFS.</para>
+installées, il est temps d'ajuster de nouveau l'ensemble d'outils. L'ensemble
+d'outils sera ajusté de façon à ce qu'il lie tout programme nouvellement
+compilé avec ces nouvelles bibliothèques. C'est le même processus que celui
+utilisé dans la phase <quote>Ajustement</quote> au début du <xref
+linkend="chapter-temporary-tools"/>, même s'il semble être inversé. Dans <xref
+linkend="chapter-temporary-tools"/>, l'ensemble était passé des répertoires
+<filename class="directory">/{,usr/}lib</filename> de l'hôte dans le nouveau
+répertoire <filename class="directory">/tools/lib</filename>. Maintenant,
+l'ensemble sera guidé du même répertoire <filename
+class="directory">/tools/lib</filename> vers les répertoires
+<filename class="directory">/{,usr/}lib</filename> de LFS.</para>
 
-<para>Tout d'abord, nous ajustons l'éditeur de liens.
-Pour ceci, nous retenons les répertoires des sources et de construction de la
-deuxième passe pour Binutils. Installez l'éditeur de liens ajusté à partir du
-répertoire <filename class="directory">binutils-build</filename>:</para>
+<para>Commencez en ajustant l'éditeur de liens. Les répertoires des sources et
+de construction de la duxième passe de Binutils ont été conservés dans ce 
+but. Installez l'éditeur de liens ajusté en exécutant la commande suivante à
+partir du répertoire <filename
+class="directory">binutils-build</filename>&nbsp;:</para>
 
-<screen><userinput>make -C ld INSTALL=/tools/bin/install install</userinput></screen>
+<screen><userinput>make -C ld INSTALL=/tools/bin/install
+install</userinput></screen>
 
-<note><para>Si vous avez oublié le message d'avertissement précédent pour
-conserver les répertoires des sources et de construction de Binutils à partir de
-la seconde passe du <xref linkend="chapter-temporary-tools"/> ou si vous les
-avez supprimé accidentellement ou si vous avez perdu accès à ceux-ci, ne vous
-inquiétez pas, tout n'est pas perdu. Simplement, ignorez la commande ci-dessus.
-Cela résultera dans le fait que le prochain paquet, Binutils, sera lié avec les
-bibliothèques C de <filename class="directory">/tools</filename> au lieu de
-<filename class="directory">/{,usr/}lib</filename>. Ce n'est pas idéal.
-Néanmoins, nos
-tests ont montré que les binaires Binutils devaient être identique.
-</para></note>
+<note><para>Si le précédent avertissement pour conserver les répertoires des
+sources et de construction de Binutils lors de la deuxième passe dans <xref
+linkend="chapter-temporary-tools"/> a été oublié, ou s'ils ont été
+accidentellement supprimés ou rendus inaccessubles, ignorez la commande
+ci-dessus. Le résultat en sera que le prochain paquet, Binutils, sera lié aux
+bibliothèques C dans <filename class="directory">/tools</filename> plutôt que
+dans <filename class="directory">/{,usr/}lib</filename>. Ceci n'est pas idéal.
+Néanmoins, les tests ont montrés que les binaires Binutils résultants devraient
+être identiques.</para></note>
 
-<para>À partir de maintenant, tout programme compilé sera
-<emphasis>uniquement</emphasis> lié avec les bibliothèques contenues dans
-<filename>/usr/lib</filename> et <filename>/lib</filename>.
-<emphasis>INSTALL=/tools/bin/install</emphasis> est nécessaire parce que le
-Makefile créé durant la seconde passe contient toujours la référence à
-<filename>/usr/bin/install</filename>, que nous n'avons pas encore installé.
-Certaines distributions hôtes contiennent un lien symbolique
-<filename class="symlink">ginstall</filename> qui a la préférence dans le
-Makefile et donc pourrait proposer un problème ici. La commande ci-dessus s'en
-occupe aussi.</para>
+<para>À partir de maintenant, chaque programme compilé sera lié avec les
+bibliothèques de <filename class="directory">/usr/lib</filename> et de
+<filename class="directory">/lib</filename>. L'option supplémentaire
+<parameter>INSTALL=/tools/bin/install</parameter> est nécessaire car le fichier
+<filename>Makefile</filename> créé lors de la seconde passe contient toujours
+la référence à <command>/usr/bin/install</command>, qui n'a pas encore été
+installé. Quelques distributions hôtes contiennent un lien symbolique <filename
+class="symlink">ginstall</filename> qui est prioritaure dans le fichier
+<filename>Makefile</filename> et peut cause un problème. La commande ci-dessus
+tient compte de ce problème.</para>
 
-<para>Vous pouvez maintenant supprimer les répertoires des sources et de
-construction de Binutils.</para>
+<para>Supprimez les répertoires des sources et de construction de Binutils
+maintenant.</para>
 
-<para>La prochaine chose à faire est de modifier le fichier specs de GCC de
-façon à ce qu'il pointe vers le nouvel éditeur de liens. Comme précédemment,
-nous utilisons une commande sed pour accomplir ceci:</para>
+<para>Ensuite, modifiez le fichier specs de GCC pour qu'il pointe sur le nouvel
+éditeur de liens. Une commande sed accomplit ceci&nbsp;:</para>
 
-<!-- Ampersands are needed to allow cut and paste -->
+<screen><userinput>sed -i 's@ /tools/lib/ld-linux.so.2@ /lib/ld-linux.so.2@g' \
+    `gcc --print-file specs`</userinput></screen>
 
-<screen><userinput>SPECFILE=/tools/lib/gcc-lib/*/*/specs &amp;&amp;
-sed -e 's@ /tools/lib/ld-linux.so.2@ /lib/ld-linux.so.2@g' \
-    $SPECFILE &gt; newspecfile &amp;&amp;
-mv -f newspecfile $SPECFILE &amp;&amp;
-unset SPECFILE</userinput></screen>
+<para>C'est une bonne idée d'inspecter visuellement le fichier specs pour
+vérifier que les modifications attendues ont réellement été effectuées.</para>
 
-<para>Encore une fois, un copier/coller de ce qui se trouve ci-dessus est
-recommandé. Et comme précédemment, ce serait une bonne idée d'inspecter
-visuellement le fichier specs pour s'assurer que les changements souhaités ont
-réellement eu
-lieu.</para>
+<important><para>En travaillant sur une plateforme où le nom de l'éditeur de
+liens est quelque chose d'autres que <filename
+class="libraryfile">ld-linux.so.2</filename>, substituez
+<quote>ld-linux.so.2</quote> par le nom de l'éditeur de liens dans les
+commandes suivantes. Référez-vous à <xref
+linkend="ch-tools-toolchaintechnotes" role=","/> si
+nécessaire.</para></important>
 
-<important><para>Si vous travaillez sur une plateforme où le nom de l'éditeur de
-liens dynamiques est autre que <filename>ld-linux.so.2</filename>, vous
-<emphasis>devez</emphasis> substituer <filename>ld-linux.so.2</filename> avec le
-nom de l'éditeur de liens dynamiques de votre plateforme. Référez-vous à
-<xref linkend="ch-tools-toolchaintechnotes"/> si nécessaire.</para></important>
-
-<caution><para>Il est impératif à ce point de s'arrêter et de s'assurer que les
-fonctionnalités de base fonctionnent comme prévu. Nous allons effectuer une
-simple vérification&nbsp;:</para>
+<caution><para>It is impératif à ce moment d'arrêter et de vous assurer que le
+s fonctions basiques (compilation et édition des liens) de l'ensemble des
+outils ajusté fonctionnent comme attendu. Pour cela, réalisez une petite
+vérification&nbsp;:</para>
 
 <screen><userinput>echo 'main(){}' &gt; dummy.c
 cc dummy.c
 readelf -l a.out | grep ': /lib'</userinput></screen>
 
-<para>Si tout a fonctionné correctement, la sortie de la dernière commande sera
-(avec des différences spécifiques à la plateforme dans le nom de
-l'éditeur de liens)&nbsp;:
-</para>
+<para>Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et
+la sortie de la commande sera (avec des différences spécifiques aux plateformes
+dans le nom de l'éditeur de liens)&nbsp;:</para>
 
-<blockquote><screen>[Requesting program interpreter: /lib/ld-linux.so.2]</screen></blockquote>
+<screen><computeroutput>[Requesting program interpreter:
+/lib/ld-linux.so.2]</computeroutput></screen>
 
-<para>Notez particulièrement que <filename>/lib</filename> est maintenant
-le préfixe de notre éditeur de liens dynamiques.</para>
+<para>Notez que <filename class="directory">/lib</filename> est maintenant le
+préfixe de notre éditeur de liens.</para>
 
-<para>Si vous n'obtenez pas une sortie comme celle montrée ci-dessus, ou aucune
-sortie du tout, alors quelque chose va très mal. Vous devrez enquêter là-dessus
-et reprendre chaque étape pour trouver où est situé le problème et le corriger.
-Il ne sert à rien de continuer jusqu'à ce que ce soit corrigé. Il est probable
-que quelque chose s'est mal passé avec le fichier specs ci-dessus.</para>
+<para>Si la sortie n'apparaît pas comme ce qui est montré ci-dessus ou si
+aucune sortie n'est renvoyée, alors quelque chose s'est mal passé. Investiguez
+et retracez les étapes pour savoir d'où vient le problème et comment le
+corriger. La raison la plus probable est que quelque chose s'est mal passé lors
+de la modification du fichier specs ci-dessus. Tout probl_me devra être résolu
+avant de continuer le processus.</para>
 
-<para>Une fois satisfait, nettoyez les fichiers de test&nbsp;:</para>
+<para>Une fois que tout fonctionne correctement, nettoyez les fichiers
+tests&nbsp;:</para>
 
-<para><screen><userinput>rm dummy.c a.out</userinput></screen></para>
-</caution>
+<screen><userinput>rm dummy.c a.out</userinput></screen></caution>
 
 </sect1>

@@ -3,25 +3,36 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-system-sysvinit" xreflabel="Sysvinit">
+<sect1 id="ch-system-sysvinit" role="wrap">
 <title>Sysvinit-&sysvinit-version;</title>
 <?dbhtml filename="sysvinit.html"?>
 
 <indexterm zone="ch-system-sysvinit"><primary sortas="a-Sysvinit">Sysvinit</primary></indexterm>
 
+<sect2 role="package"><title/>
 <para>Le paquet Sysvinit contient des programmes de contrôle du démarrage, de
 l'exécution et de l'arrêt de votre système.</para>
 
-<screen>&buildtime; 0,1&nbsp;SBU
-&diskspace; 0,9&nbsp;Mo</screen>
+<segmentedlist>
+<segtitle>&buildtime;</segtitle>
+<segtitle>&diskspace;</segtitle>
+<seglistitem><seg>0,1&nbsp;SBU</seg><seg>0,9&nbsp;Mo</seg></seglistitem>
+</segmentedlist>
 
-<para>L'installation de Sysvinit dépend de Binutils, Coreutils, GCC, Glibc,
-Make.</para>
+<segmentedlist>
+<segtitle>L'installation de Sysvinit dépend de</segtitle>
+<seglistitem><seg>Binutils, Coreutils, GCC, Glibc et Make</seg></seglistitem>
+</segmentedlist>
+</sect2>
 
-
-
-<sect2>
+<sect2 role="installation">
 <title>Installation de Sysvinit</title>
+
+<para>Sysvinit-&sysvinit-version; contient un bogue de <quote>dépassement de
+tampon</quote>. Dans certaines conditions, il modifie les valeurs des variables
+d'environnement. Corrigez ceci avec&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../sysvinit-&sysvinit-version;-proclen-1.patch</userinput></screen>
 
 <para>Lorsque les niveaux d'exécution changent (par exemple, lors de l'arrêt du
 système), <command>init</command> envoit des signaux de fin aux processus
@@ -30,27 +41,27 @@ s'exécuter dans le nouveau niveau d'exécution. En faisant ceci,
 <command>init</command> affiche des messages comme <quote>Sending processes the
 TERM signal</quote> (NdT&nbsp;: Envoi du signal TERM aux processus) ce qui
 semble impliquer qu'il envoie ce signal à tous les processus en cours
-d'exécution. Pour éviter cette mauvaise interprétation, vous pouvez modifier
-les sources pour que ce message soit remplacé par <quote>Sending processes
+d'exécution. Pour éviter cette mauvaise interprétation, modifiez les sources pour
+que ce message soit remplacé par <quote>Sending processes
 started by init the TERM signal</quote> (NdT&nbsp;: Envoi du signal TERM aux
 processus lancés par init)&nbsp;:</para>
 
-<screen><userinput>cp src/init.c{,.backup}
-sed 's/Sending processes/&amp; started by init/g' \
-    src/init.c.backup &gt; src/init.c</userinput></screen>
+<screen><userinput>sed -i 's@Sending processes@&amp; started by init@g' \
+    src/init.c</userinput></screen>
 
-<para>Compilez Sysvinit&nbsp;:</para>
+<para>Compilez le paquet&nbsp;:</para>
 
 <screen><userinput>make -C src</userinput></screen>
 
-<para>Puis, installez-le&nbsp;:</para>
+<para>Puis, installez le paquet&nbsp;:</para>
 
 <screen><userinput>make -C src install</userinput></screen>
 
+<beginpage/>
 </sect2>
 
-
-<sect2 id="conf-sysvinit"><title>Configurer Sysvinit</title>
+<sect2 id="conf-sysvinit" role="configuration">
+<title>Configurer Sysvinit</title>
 <indexterm zone="conf-sysvinit">
 <primary sortas="a-Sysvinit">Sysvinit</primary>
 <secondary>configuration</secondary></indexterm>
@@ -60,8 +71,8 @@ sed 's/Sending processes/&amp; started by init/g' \
 <para>Créez un nouveau fichier <filename>/etc/inittab</filename> en lançant ce
 qui suit&nbsp;:</para>
 
-<screen><userinput>cat &gt; /etc/inittab &lt;&lt; "EOF"</userinput>
-# Début /etc/inittab
+<screen><userinput>cat &gt; /etc/inittab &lt;&lt; "EOF"
+<literal># Début /etc/inittab
 
 id:3:initdefault:
 
@@ -79,102 +90,181 @@ ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
 
 su:S016:once:/sbin/sulogin
 
-1:2345:respawn:/sbin/agetty tty1 9600
-2:2345:respawn:/sbin/agetty tty2 9600
-3:2345:respawn:/sbin/agetty tty3 9600
-4:2345:respawn:/sbin/agetty tty4 9600
-5:2345:respawn:/sbin/agetty tty5 9600
-6:2345:respawn:/sbin/agetty tty6 9600
+1:2345:respawn:/sbin/agetty -I '\033(K' tty1 9600
+2:2345:respawn:/sbin/agetty -I '\033(K' tty2 9600
+3:2345:respawn:/sbin/agetty -I '\033(K' tty3 9600
+4:2345:respawn:/sbin/agetty -I '\033(K' tty4 9600
+5:2345:respawn:/sbin/agetty -I '\033(K' tty5 9600
+6:2345:respawn:/sbin/agetty -I '\033(K' tty6 9600
 
-# Fin   /etc/inittab
-<userinput>EOF</userinput></screen>
+# Fin /etc/inittab</literal>
+EOF</userinput></screen>
 
+<para>L'option <parameter>-I '\033(K'</parameter> indique à
+<command>agetty</command> d'envoyer cette séquence d'échappement au terminal
+avant de faire quoi que ce soit d'autres. Cette séquence d'échappement bascule
+l'ensemble de caractères de la console sur un défini par l'utilisateur, qui
+peut être modifié en exécutant le programme <command>setfont</command>. L
+script de démarrage <command>console</command> du paquet LFS-Bootscripts appelle
+le programme <command>setfont</command> au lancement du système. L'envoi de
+cette séquence d'échappement est nécessaire pour les personnes utilisant des
+polices autres qu'ISO 8859-1 mais n'a aucun effet sur les personnes de
+langue anglaise.</para>
+
+<beginpage/>
 </sect2>
 
+<sect2 id="contents-sysvinit" role="content"><title>Contenu de Sysvinit</title>
 
-<sect2 id="contents-sysvinit"><title>Contenu de Sysvinit</title>
+<segmentedlist>
+<segtitle>Programmes installés</segtitle>
+<seglistitem><seg>halt, init, killall5, last, lastb (lien vers last), mesg,
+pidof (lien vers killall5), poweroff (lien vers halt), reboot (lien vers halt),
+runlevel, shutdown, sulogin, telinit (lien vers init), utmpdump et wall</seg></seglistitem>
+</segmentedlist>
 
-<para><emphasis>Programmes installés</emphasis>&nbsp;: halt, init, killall5,
-last, lastb (lien vers last), mesg, pidof (lien vers killall5), poweroff (lien
-vers halt), reboot (lien vers halt), runlevel, shutdown, sulogin, telinit (lien
-vers init), utmpdump et wall</para>
+<variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+<?dbfo list-presentation="list"?>
 
-</sect2>
-
-
-<sect2><title>Courtes descriptions</title>
-
+<varlistentry id="halt">
+<term><command>halt</command></term>
+<listitem>
+<para>Lance normalement <command>shutdown</command> avec l'option
+<parameter>-h</parameter>, sauf s'il est déjà au niveau d'exécution 0, puis il
+demande au noyau d'arrêter le système. Mais, tout d'abord, il note dans le
+fichier <filename>/var/log/wtmp</filename> que le système est en cours d'arrêt
+</para>
 <indexterm zone="ch-system-sysvinit halt"><primary sortas="b-halt">halt</primary></indexterm>
-<para id="halt"><command>halt</command> lance normalement shutdown avec l'option
--h, sauf s'il est déjà en niveau d'exécution 0, puis il demande au noyau
-d'arrêter le système. Mais, tout d'abord, il note dans le fichier
-<filename>/var/log/wtmp</filename> que le système est en cours d'arrêt.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="init">
+<term><command>init</command></term>
+<listitem>
+<para>Le premier processus à être exécuté lorsque le noyau a initialisé le
+matériel et qui prend la main sur le processus de démarrage et démarre tous les processus qui lui ont été indiqués</para>
 <indexterm zone="ch-system-sysvinit init"><primary sortas="b-init">init</primary></indexterm>
-<para id="init"><command>init</command> est le père de tous les processus. Il
-lit ses commandes à partir de<filename>/etc/inittab</filename>, ce qui lui
-indique les scripts à lancer pour tel niveau d'exécution et combien de getty
-à lancer.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="killall5">
+<term><command>killall5</command></term>
+<listitem>
+<para>Envoie un signal à tous les processus sauf les processus de sa propre
+session, de façon à ne pas tuer le shell ayant lancé le script qui l'a appelé
+</para>
 <indexterm zone="ch-system-sysvinit killall5"><primary sortas="b-killall5">killall5</primary></indexterm>
-<para id="killall5"><command>killall5</command> envoie un signal à tous les
-processus sauf les processus de sa propre session, de façon à ne pas tuer le
-shell ayant lancé le script qui l'a appelé.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="last">
+<term><command>last</command></term>
+<listitem>
+<para>Affiche le dernier utilisateur connecté (et déconnecté) en cherchant dans
+le fichier <filename>/var/log/wtmp</filename>. Il peut aussi afficher les démarrages et arrêts du système ainsi que les changements de niveaux d'exécution
+</para>
 <indexterm zone="ch-system-sysvinit last"><primary sortas="b-last">last</primary></indexterm>
-<para id="last"><command>last</command> affiche le dernier utilisateur connecté
-(et déconnecté) en cherchant dans le fichier <filename>/var/log/wtmp</filename>.
-Il peut aussi afficher les démarrages et arrêts du système ainsi que les
-changements de niveaux d'exécution.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="lastb">
+<term><command>lastb</command></term>
+<listitem>
+<para>Affiche les tentatives échouées de connexions tracées dans
+<filename>/var/log/btmp</filename></para>
 <indexterm zone="ch-system-sysvinit lastb"><primary sortas="b-lastb">lastb</primary></indexterm>
-<para id="lastb"><command>lastb</command> affiche les tentatives échouées de
-connexions tracées dans <filename>/var/log/btmp</filename>.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="mesg">
+<term><command>mesg</command></term>
+<listitem>
+<para>Contrôle si les autres utilisateurs peuvent envoyer des messages au
+terminal de l'utilisateur courant</para>
 <indexterm zone="ch-system-sysvinit mesg"><primary sortas="b-mesg">mesg</primary></indexterm>
-<para id="mesg"><command>mesg</command> contrôle si les autres utilisateurs
-peuvent envoyer des messages au terminal de l'utilisateur courant.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="pidof">
+<term><command>pidof</command></term>
+<listitem>
+<para>Indique le PID des programmes précisés</para>
 <indexterm zone="ch-system-sysvinit pidof"><primary sortas="b-pidof">pidof</primary></indexterm>
-<para id="pidof"><command>pidof</command> indique le PID des programmes
-précisés.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="poweroff">
+<term><command>poweroff</command></term>
+<listitem>
+<para>Indique au noyau d'arrêter le système et de couper l'ordinateur (voir
+<command>halt</command>)</para>
 <indexterm zone="ch-system-sysvinit poweroff"><primary sortas="b-poweroff">poweroff</primary></indexterm>
-<para id="poweroff"><command>poweroff</command> indique au noyau d'arrêter le
-système et de couper l'ordinateur. Mais, voir halt.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="reboot">
+<term><command>reboot</command></term>
+<listitem>
+<para>Indique au noyau de redémarrer le système (voir <command>halt</command>)</para>
 <indexterm zone="ch-system-sysvinit reboot"><primary sortas="b-reboot">reboot</primary></indexterm>
-<para id="reboot"><command>reboot</command> indique au noyau de redémarrer le
-système. Mais, voir halt.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="runlevel">
+<term><command>runlevel</command></term>
+<listitem>
+<para>Indique le niveau d'exécution actuel et précédent comme précisé dans
+l'enregistrement du dernier niveau d'exécution dans
+<filename>/var/run/utmp</filename></para>
 <indexterm zone="ch-system-sysvinit runlevel"><primary sortas="b-runlevel">runlevel</primary></indexterm>
-<para id="runlevel"><command>runlevel</command> indique le niveau d'exécution
-actuel et précédent comme indiqué dans l'enregistrement du dernier niveau
-d'exécution (dans <filename>/var/run/utmp</filename>).</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="shutdown">
+<term><command>shutdown</command></term>
+<listitem>
+<para>Arrête proprement le système en le signalant à tous les processus et à
+tous les utilisateur connectés</para>
 <indexterm zone="ch-system-sysvinit shutdown"><primary sortas="b-shutdown">shutdown</primary></indexterm>
-<para id="shutdown"><command>shutdown</command> arrête proprement le système en
-le signalant à tous les processus et aux utilisateur connectés.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="sulogin">
+<term><command>sulogin</command></term>
+<listitem>
+<para>Permet la connexion du superutilisateur. Il est normalement appelé par
+<command>init</command> lorsque le système passe en mono-utilisateur</para>
 <indexterm zone="ch-system-sysvinit sulogin"><primary sortas="b-sulogin">sulogin</primary></indexterm>
-<para id="sulogin"><command>sulogin</command> permet la connexion du
-superutilisateur. Il est normalement appelé par init lorsque le système passe
-en mono-utilisateur.</para>
+<beginpage/></listitem>
+</varlistentry>
 
+<varlistentry id="telinit">
+<term><command>telinit</command></term>
+<listitem>
+<para>indique à <command>init</command> dans quel niveau d'exécution
+entrer</para>
 <indexterm zone="ch-system-sysvinit telinit"><primary sortas="b-telinit">telinit</primary></indexterm>
-<para id="telinit"><command>telinit</command> indique à init dans quel niveau
-d'exécution entrer.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="utmpdump">
+<term><command>utmpdump</command></term>
+<listitem>
+<para>Affiche le contenu du fichier de connexion donné dans un format plus
+agréable</para>
 <indexterm zone="ch-system-sysvinit utmpdump"><primary sortas="b-utmpdump">utmpdump</primary></indexterm>
-<para id="utmpdump"><command>utmpdump</command> affiche le contenu du fichier
-de connexion donné dans un format plus agréable.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="wall">
+<term><command>wall</command></term>
+<listitem>
+<para>Écrit un message à l'intention de tous les utilisateurs connectés</para>
 <indexterm zone="ch-system-sysvinit wall"><primary sortas="b-wall">wall</primary></indexterm>
-<para id="wall"><command>wall</command> écrit un message à l'intention de tous
-les utilisateurs connectés.</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
-
-
 
 </sect1>

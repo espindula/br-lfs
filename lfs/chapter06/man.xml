@@ -3,130 +3,178 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-system-man" xreflabel="Man">
+<sect1 id="ch-system-man" role="wrap">
 <title>Man-&man-version;</title>
 <?dbhtml filename="man.html"?>
 
 <indexterm zone="ch-system-man"><primary sortas="a-Man">Man</primary></indexterm>
 
+<sect2 role="package"><title/>
 <para>Le paquet Man contient des programmes de recherche et de visualisation
 de pages man.</para>
 
-<screen>&buildtime; 0,1&nbsp;SBU
-&diskspace; 1,9&nbsp;Mo</screen>
+<segmentedlist>
+<segtitle>&buildtime;</segtitle>
+<segtitle>&diskspace;</segtitle>
+<seglistitem><seg>0,1&nbsp;SBU</seg><seg>1,9&nbsp;Mo</seg></seglistitem>
+</segmentedlist>
 
-<para>L'installation de Man dépend de Bash, Binutils, Coreutils, Gawk, GCC,
-Glibc, Grep, Make, Sed.</para>
+<segmentedlist>
+<segtitle>L'installation de Man dépend de</segtitle>
+<seglistitem><seg>Bash, Binutils, Coreutils, Gawk, GCC,
+Glibc, Grep, Make et Sed</seg></seglistitem>
+</segmentedlist>
+</sect2>
 
-
-
-<sect2>
+<sect2 role="installation">
 <title>Installation de Man</title>
 
-<para>Nous allons faire trois ajustements des sources de Man.</para>
+<para>Trois ajustements doivent être effectués sur les sources de Man.</para>
 
 <para>Le premier est un correctif qui permet à Man de mieux fonctionner avec
 les nouvelles versions de Groff. En particulier, les pages man s'afficheront
 maintenant sur la largeur complète du terminal au lieu d'être limité à 80
 caractères&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../man-&man-version;-80cols.patch</userinput></screen>
+<screen><userinput>patch -Np1 -i ../man-&man-version;-80cols-1.patch</userinput></screen>
 
 <para>Le second est une substitution sed pour ajouter l'option
-<emphasis>-R</emphasis> à la variable <emphasis>PAGER</emphasis> de façon à ce
-que les séquences d'échappement soient correctement gérées par
-Less&nbsp;:</para>
+<parameter>-R</parameter> à la variable <envar>PAGER</envar> de façon à ce que
+les séquences d'échappement soient correctement gérées par Less&nbsp;:</para>
 
-<screen><userinput>sed -i 's/-is/&amp;R/' configure</userinput></screen>
+<screen><userinput>sed -i 's@-is@&amp;R@g' configure</userinput></screen>
 
 <para>Le troisième est aussi une substitution sed décommentant la ligne
 <quote>MANPATH /usr/man</quote> dans le fichier <filename>man.conf</filename>
 pour supprimer les résultats redondants lors de l'utilisation de programmes
 comme <command>whatis</command>&nbsp;:</para>
 
-<screen><userinput>sed -i 's%MANPATH./usr/man%#&amp;%' src/man.conf.in</userinput></screen>
+<screen><userinput>sed -i 's@MANPATH./usr/man@#&amp;@g' src/man.conf.in</userinput></screen>
  
-<para>Maintenant, préparez la compilation Man de&nbsp;:</para>
+<para>Préparez la compilation de Man&nbsp;:</para>
 
-<screen><userinput>./configure -default -confdir=/etc</userinput></screen>
+<screen><userinput>./configure -confdir=/etc</userinput></screen>
 
 <para>Voici la signification des options de configure&nbsp;:</para>
 
-<itemizedlist>
-<listitem><para><userinput>-default</userinput>&nbsp;: ceci précise au script
-configure de sélectionner un ensemble cohérent d'options par défaut. Par
-exemple&nbsp;: seulement les pages man anglaises, pas de catalogues de
-messages, pas de suid pour man, activer la compression des pages man, activer
-la compression des pages cat, créer les pages cat lorsque le répertoire
-correspondant existe, suivre FHS en plaçant les pages cat sous /var/cache/man
-(si tant est que ce répertoire existe).</para></listitem>
-
-<listitem><para><userinput>-confdir=/etc</userinput>&nbsp;: ceci indique au
-programme <command>man</command> de rechercher le fichier de configuration
-<filename>man.conf</filename> dans le répertoire <filename>/etc</filename>.
-</para></listitem>
-</itemizedlist>
+<variablelist>
+<varlistentry>
+<term><parameter>-confdir=/etc</parameter></term>
+<listitem><para>Ceci indique au programme <command>man</command> de rechercher
+le fichier de configuration <filename>man.conf</filename> dans le répertoire
+<filename class="directory">/etc</filename>.</para></listitem>
+</varlistentry>
+</variablelist>
 
 <para>Compilez le paquet&nbsp;:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<para>Enfin, installez-le&nbsp;:</para>
+<para>Installez-le&nbsp;:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<note><para>Si vous souhaitez désactiver les séquences d'échappement SGR
-(<foreignphrase>Select Graphic Rendition</foreignphrase>), vous devez éditer le
-fichier <filename>man.conf</filename> et ajouter l'option
-<emphasis>-c</emphasis> pour NROFF.</para></note>
+<note><para>Pour désactiver les séquences d'échappement SGR
+(<foreignphrase>Select Graphic Rendition</foreignphrase>), éditez le fichier
+<filename>man.conf</filename> et ajoutez l'option <emphasis>-c</emphasis> à la
+variable <envar>NROFF</envar>.</para></note>
 
-<para>Vous pouvez aussi jeter un &oelig;il à la page BLFS sur
-<ulink url="&blfs-root;view/cvs/postlfs/compressdoc.html"/> car elle s'occupe
-des problèmes de formattage et de compression des pages man.</para>
+<para>Si l'ensemble de caractères utilise des caractères sur 8 bits, recherchez
+la ligne commençant par <quote>NROFF</quote> dans
+<filename>/etc/man.conf</filename> et vérifiez qu'elle ressemble à ce qui
+suit&nbsp;:</para>
 
+<screen>NROFF  /usr/bin/nroff -Tlatin1 -mandoc</screen>
+
+<para>Notez que <quote>latin1</quote> devrait être utilisé même s'il ne s'agit
+pas de l'ensemble de caractères de la locale. La raison en est que, suivant
+la spécification, <command>groff</command> n'a aucun moyen de présenter les
+caractères en dehors de l'ISO 8859-1 sans quelques codes d'échappement étranges.
+En formatant les pages man, <command>groff</command> pense qu'elles sont dans le 
+codage ISO 8859-1 et le commutateur <parameter>-Tlatin1</parameter> indique à
+<command>groff</command> d'utiliser le même codage pour la sortie. Comme
+<command>groff</command> ne recode pas les caractères en entrée, le résultat
+formaté est réellement dans le même codage qu'en entrée et est, du coup,
+utilisable en entrée par un paginateur.</para>
+
+<para>Ceci ne résout pas le problème du programme bogué
+<command>man2dvi</command> pour les pages man localisés dans des locales autres
+que ISO 8859-1. De plus, cela ne fonctionne pas avec des ensembles de caractères
+multi-octets. Le premier problème n'a pas de solution. Le second n'a pas
+d'importance car l'installation LFS ne supporte pas les ensembles de caractères
+multi-octets.</para>
+
+<para>Des informations supplémentaires concernant la compression des pages man
+et info sont disponibles dans le livre BLFS sur <ulink
+url="&blfs-root;view/cvs/postlfs/compressdoc.html"><phrase
+condition="pdf">http://www.linuxfromscratch.org/blfs/view/cvs/postlfs/
+compressdoc.html</phrase></ulink>.</para>
+
+<beginpage/>
 </sect2>
 
+<sect2 id="contents-man" role="content"><title>Contenu de Man</title>
 
-<sect2 id="contents-man"><title>Contenu de Man</title>
+<segmentedlist>
+<segtitle>Programmes installés</segtitle>
+<seglistitem><seg>apropos, makewhatis, man,
+man2dvi, man2html et whatis</seg></seglistitem>
+</segmentedlist>
 
-<para><emphasis>Programmes installés</emphasis>&nbsp;: apropos, makewhatis, man,
-man2dvi, man2html et whatis</para>
+<variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+<?dbfo list-presentation="list"?>
 
-</sect2>
-
-
-<sect2><title>Courtes descriptions</title>
-
+<varlistentry id="apropos">
+<term><command>apropos</command></term>
+<listitem>
+<para>Cherche dans la base de données whatis et affiche les descriptions
+courtes des commandes systèmes contenant une chaîne donnée</para>
 <indexterm zone="ch-system-man apropos"><primary sortas="b-apropos">apropos</primary></indexterm>
-<para id="apropos"><command>apropos</command> cherche dans la base de données
-whatis et affiche les descriptions courtes des commandes systèmes contenant
-une chaîne donnée.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="makewhatis">
+<term><command>makewhatis</command></term>
+<listitem>
+<para>Construit la base de données whatis&nbsp;; elle lit toutes les pages man comprises dans manpath et, pour chaque page, écrit le nom et une courte description dans la base de données whatis</para>
 <indexterm zone="ch-system-man makewhatis"><primary sortas="b-makewhatis">makewhatis</primary></indexterm>
-<para id="makewhatis"><command>makewhatis</command> construit la base de données
-whatis. Il lit toutes les pages man comprises dans manpath et, pour chaque
-page, écrit le nom et une courte description dans la base de données whatis.
-</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="man">
+<term><command>man</command></term>
+<listitem>
+<para>Formate et affiche la page man demandée en ligne</para>
 <indexterm zone="ch-system-man man"><primary sortas="b-man">man</primary></indexterm>
-<para id="man"><command>man</command> formate et affiche la page man demandée
-en ligne.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="man2dvi">
+<term><command>man2dvi</command></term>
+<listitem>
+<para>Convertit une page man au format dvi</para>
 <indexterm zone="ch-system-man man2dvi"><primary sortas="b-man2dvi">man2dvi</primary></indexterm>
-<para id="man2dvi"><command>man2dvi</command> convertit une page man au format 
-dvi.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="man2html">
+<term><command>man2html</command></term>
+<listitem>
+<para>Convertit une page man au format HTML</para>
 <indexterm zone="ch-system-man man2html"><primary sortas="b-man2html">man2html</primary></indexterm>
-<para id="man2html"><command>man2html</command> convertit une page man en
-html.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="whatis">
+<term><command>whatis</command></term>
+<listitem>
+<para>Recherche dans la base de données whatis et affiche les descriptions courtes des commandes
+système contenant un mot clé donné comme un mot séparé</para>
 <indexterm zone="ch-system-man whatis"><primary sortas="b-whatis">whatis</primary></indexterm>
-<para id="whatis"><command>whatis</command> recherche dans la base de données
-whatis et affiche les descriptions courtes des commandes système contenant un
-mot clé donné comme un mot séparé.</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
-
-
 
 </sect1>

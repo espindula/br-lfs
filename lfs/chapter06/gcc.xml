@@ -3,155 +3,215 @@
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
-<sect1 id="ch-system-gcc" xreflabel="GCC">
+<sect1 id="ch-system-gcc" role="wrap">
 <title>GCC-&gcc-version;</title>
 <?dbhtml filename="gcc.html"?>
 
 <indexterm zone="ch-system-gcc"><primary sortas="a-GCC">GCC</primary></indexterm>
 
+<sect2 role="package"><title/>
 <para>Le paquet GCC contient la collection de compilateurs GNU, qui inclut les
 compilateurs C et C++.</para>
 
-<screen>&buildtime; 11,7&nbsp;SBU
-&diskspace; 294&nbsp;Mo</screen>
+<segmentedlist>
+<segtitle>&buildtime;</segtitle>
+<segtitle>&diskspace;</segtitle>
+<seglistitem><seg>11,7&nbsp;SBU</seg><seg>294&nbsp;Mo</seg></seglistitem>
+</segmentedlist>
 
-<para>L'installation de GCC dépend de Bash, Binutils, Coreutils, Diffutils,
-Findutils, Gawk, Gettext, Glibc, Grep, Make, Perl, Sed, Texinfo.</para>
+<segmentedlist>
+<segtitle>L'installation de GCC dépend de</segtitle>
+<seglistitem><seg>Bash, Binutils, Coreutils, Diffutils, Findutils,
+Gawk, Gettext, Glibc, Grep, Make, Perl, Sed et Texinfo</seg></seglistitem>
+</segmentedlist>
+</sect2>
 
-
-
-<sect2>
+<sect2 role="installation">
 <title>Installation de GCC</title>
 
-<para>Ce paquet est connu pour mal se comporter si vous changez les options
-d'optimisation par défaut (en incluant les options <emphasis>-march</emphasis>
-et <emphasis>-mcpu</emphasis>). Donc, si vous avez défini des variables
-d'environnement qui surchargent les optimisations par défaut, telles que CFLAGS
-et CXXFLAGS, nous vous recommandons de supprimer cette initialisation lors de la
-construction de GCC.</para>
+<para>Ce paquet est connu pour avoir des soucis quand les options d'optimisation
+par défaut (en incluant les options <parameter>-march</parameter> et
+<parameter>-mcpu</parameter>) sont modifiées. Donc, si des variables d'environnement
+qui surchargent les optimisations par défaut, telles que <envar>CFLAGS</envar>
+et <envar>CXXFLAGS</envar>, ont été définies, supprimez cette initialisation
+pour la construction de GCC.</para>
 
-<para>Déballez l'archive tar GCC-core <emphasis>et</emphasis> GCC-g++. Ils
-atterriront dans le même répertoire. Vous devez extraire le paquet
-GCC-testsuite. Le paquet GCC complet contient encore plus de compilateurs. Les
-instructions pour leur construction sont disponibles sur
-<ulink url="&blfs-root;view/stable/general/gcc.html"/>.</para>
+<para>Déballez les archives tar gcc-core et gcc-g++. Elles atterriront dans le
+même répertoire. Extrayez le paquet gcc-testsuite. Le paquet GCC complet
+contient des compilateurs supplémentaires. Les instructions pour leur
+construction sont disponibles sur <ulink
+url="&blfs-root;view/svn/general/gcc.html"/>.</para>
 
-<para>Tout d'abord, appliquez seulement le correctif No-Fixincludes (et
-<emphasis>pas</emphasis> Specs ) utilisé aussi dans le chapitre précédent&nbsp;:
-</para>
+<para>Appliquez seulement le correctif No-Fixincludes (et pas Specs) utilisé
+aussi dans le chapitre précédent&nbsp;:</para>
 
 <screen><userinput>patch -Np1 -i ../gcc-&gcc-version;-no_fixincludes-1.patch</userinput></screen>
 
-<para>Maintenant, appliquez une substitution sed qui supprimera l'installation
-de <filename>libiberty.a</filename>. Nous voulons utiliser la version de
-<filename>libiberty.a</filename> fournie par Binutils&nbsp;:</para>
+<para>La compilation de GCC échoue pour certains paquets en dehors d'une
+installation LFS de base (par exemple, Mozilla et kdegraphics) si GCC est utilisé
+avec les dernières versions de Binutils. Appliquez le correctif suivant pour
+corriger ce problème&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../gcc-&gcc-version;-linkonce-1.patch</userinput></screen>
+
+<para>Appliquez une substitution sed qui supprimera l'installation de
+<filename class="libraryfile">libiberty.a</filename>. À la place, la version de
+<filename class="libraryfile">libiberty.a</filename> fournie par Binutils sera
+utilisée&nbsp;:</para>
 
 <screen><userinput>sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
 
+<beginpage/>
 <para>La documentation de GCC recommande de construire GCC en dehors du
 répertoire source, c'est-à-dire dans un répertoire dédié&nbsp;:</para>
 
 <screen><userinput>mkdir ../gcc-build
 cd ../gcc-build</userinput></screen>
 
-<para>Maintenant, préparez la compilation de GCC&nbsp;:</para>
+<para>Préparez la compilation de GCC&nbsp;:</para>
 
 <screen><userinput>../gcc-&gcc-version;/configure --prefix=/usr \
-    --enable-shared --enable-threads=posix \
-    --enable-__cxa_atexit --enable-clocale=gnu \
-    --enable-languages=c,c++</userinput></screen>
+    --libexecdir=/usr/lib --enable-shared \
+    --enable-threads=posix --enable-__cxa_atexit \
+    --enable-clocale=gnu --enable-languages=c,c++</userinput></screen>
 
 <para>Compilez le paquet&nbsp;:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<important><para>La suite de tests pour GCC dans cette section est considérée
-<emphasis>critique</emphasis>. Notre conseil est de ne pas la laisser passer
-quelque soient les circonstances.</para></important>
+<important><para>Dans cette section, la suite de tests pour GCC est considérée
+critique. Ne pas la laisser passer quelque soient les circonstances.</para></important>
 
-<para>Testez les résultats mais ne vous arrêtez pas aux erreurs (vous vous
-rappellerez des quelques-unes connues)&nbsp;:</para>
+<para>Testez les résultats mais ne vous arrêtez pas aux erreurs&nbsp;:</para>
 
 <screen><userinput>make -k check</userinput></screen>
 
-<para>Les notes de la suite de tests sur <xref linkend="ch-tools-gcc-pass2"/>
-sont toujours très appropriées ici. Assurez-vous de vous y référer si vous avez
-un doute.</para>
+<para>Quelques erreurs sont connues et ont été indiquées dans le chapitre
+précédent. Les notes de la suite de tests sur <xref
+linkend="ch-tools-gcc-pass2"/> sont toujours très appropriées ici. Assurez-vous
+de vous y référer si nécessaire.</para>
 
-<para>Maintenant, installez le paquet&nbsp;:</para>
+<para>Installez le paquet&nbsp;:</para>
 
 <screen><userinput>make install</userinput></screen>
 
 <para>Quelques paquets s'attendent à ce que le préprocesseur C soit installé
-dans le répertoire <filename>/lib</filename>. Pour supporter ces paquets,
-créez ce lien symbolique&nbsp;:</para>
+dans le répertoire <filename class="directory">/lib</filename>. Pour supporter
+ces paquets, créez ce lien symbolique&nbsp;:</para>
 
 <screen><userinput>ln -s ../usr/bin/cpp /lib</userinput></screen>
 
+<beginpage/>
 <para>Beaucoup de paquets utilisent le nom <command>cc</command> pour appeller
 le compilateur C. Pour satisfaire ces paquets, créez un lien
 symbolique&nbsp;:</para>
 
 <screen><userinput>ln -s gcc /usr/bin/cc</userinput></screen>
 
-<note><para>À ce moment, il est fortement recommandé de répéter les
-vérifications que nous avons réalisé plus tôt dans ce chapitre. Référez-vous à
-<xref linkend="ch-system-readjusting"/> et répétez la vérification. Si les
-résultats sont mauvais, alors il y a des chances pour que vous ayez mal appliqué
-le correctif GCC Specs à partir de <xref
-linkend="chapter-temporary-tools"/>.</para></note>
+<note><para>À ce moment, il est fortement recommandé de répéter les vérifications
+réalisées plus tôt dans ce chapitre. Référez-vous à <xref
+linkend="ch-system-readjusting"/> et répétez la vérification. Si les résultats
+sont mauvais, alors il y a des chances pour que le correctif GCC Specs ait été
+mal appliqué à partir de <xref linkend="chapter-temporary-tools"/>.</para></note>
 
 </sect2>
 
+<sect2 id="contents-gcc" role="content"><title>Contenu de GCC</title>
 
-<sect2 id="contents-gcc"><title>Contenu de GCC</title>
+<segmentedlist>
+<segtitle>Programmes installés</segtitle>
+<segtitle>Bibliothèques installées</segtitle>
+<seglistitem><seg>c++, cc (lien vers gcc), cpp, g++, gcc, gccbug et gcov</seg>
+<seg>libgcc.a, libgcc_eh.a, libgcc_s.so, libstdc++.[a,so] et libsupc++.a</seg></seglistitem>
+</segmentedlist>
 
-<para><emphasis>Programmes installés</emphasis>&nbsp;: c++, cc (lien vers gcc),
-cc1, cc1plus, collect2, cpp, g++, gcc, gccbug et gcov</para>
+<variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+<?dbfo list-presentation="list"?>
 
-<para><emphasis>Bibliothèques installées</emphasis>&nbsp;: libgcc.a,
-libgcc_eh.a, libgcc_s.so, libstdc++.[a,so] et libsupc++.a</para>
+<varlistentry id="cc">
+<term><command>cc</command></term>
+<listitem>
+<para>Le compilateur C</para>
+<indexterm zone="ch-system-gcc cc"><primary sortas="b-cc">cc</primary></indexterm>
+</listitem>
+</varlistentry>
 
-</sect2>
-
-
-<sect2><title>Courtes descriptions</title>
-
+<varlistentry id="cpp">
+<term><command>cpp</command></term>
+<listitem>
+<para>Le préprocesseur C&nbsp;; il est utilisé par le compilateur pour
+l'extension des instructions #include, #define et d'autres instructions similaires
+dans les fichiers sources</para>
 <indexterm zone="ch-system-gcc cpp"><primary sortas="b-cpp">cpp</primary></indexterm>
-<para id="cpp"><command>cpp</command> est le préprocesseur C. Il est utilisé
-par le compilateur pour l'extension des instructions #include et #define dans
-les fichiers sources.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="c">
+<term><command>c++</command></term>
+<listitem>
+<para>Le compilateur C++</para>
+<indexterm zone="ch-system-gcc c"><primary sortas="b-c++">c++</primary></indexterm>
+</listitem>
+</varlistentry>
+
+<varlistentry id="g">
+<term><command>g++</command></term>
+<listitem>
+<para>Le compilateur C++</para>
 <indexterm zone="ch-system-gcc g"><primary sortas="b-g++">g++</primary></indexterm>
-<para id="g"><command>g++</command> est le compilateur C++.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="gcc">
+<term><command>gcc</command></term>
+<listitem>
+<para>Le compilateur C</para>
 <indexterm zone="ch-system-gcc gcc"><primary sortas="b-gcc">gcc</primary></indexterm>
-<para id="gcc"><command>gcc</command> est le compilateur C. Il est utilisé pour
-traduire le code source d'un programme en code assembleur.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="gccbug">
+<term><command>gccbug</command></term>
+<listitem>
+<para>Un script shell utilisé pour aider à la création de bons rapports de bogues</para>
 <indexterm zone="ch-system-gcc gccbug"><primary sortas="b-gccbug">gccbug</primary></indexterm>
-<para id="gccbug"><command>gccbug</command> est un script shell utilisé pour
-aider à la création de bons rapports de bogues.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="gcov">
+<term><command>gcov</command></term>
+<listitem>
+<para>Un outil de tests&nbsp;; il est utilisé pour analyser les programmes et
+savoir où des optimisations seraient suivies du plus d'effet</para>
 <indexterm zone="ch-system-gcc gcov"><primary sortas="b-gcov">gcov</primary></indexterm>
-<para id="gcov"><command>gcov</command> est un outil de tests. Il est utilisé
-pour analyser les programmes et savoir où des optimisations seraient
-suivies du plus d'effet.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="libgcc">
+<term><filename class="libraryfile">libgcc</filename></term>
+<listitem>
+<para>contient un support en exécution pour <command>gcc</command></para>
 <indexterm zone="ch-system-gcc libgcc"><primary sortas="c-libgcc*">libgcc*</primary></indexterm>
-<para id="libgcc"><command>libgcc*</command> contient un support en exécution
-pour gcc.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="libstdc">
+<term><filename class="libraryfile">libstdc++</filename></term>
+<listitem>
+<para>La bibliothèque C++ standard</para>
 <indexterm zone="ch-system-gcc libstdc"><primary sortas="c-libstdc++">libstdc++</primary></indexterm>
-<para id="libstdc"><command>libstdc++</command> est la bibliothèque standard
-C++. Elle contient les fonctions les plus fréquemment utilisées.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry id="libsupc">
+<term><filename class="libraryfile">libsupc++</filename></term>
+<listitem>
+<para>Fournit des routines de support pour le langage de programmation C++</para>
 <indexterm zone="ch-system-gcc libsupc"><primary sortas="c-libsupc++">libsupc++</primary></indexterm>
-<para id="libsupc"><command>libsupc++</command> fournit des routines de support
-pour le langage de programmation C++.</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </sect2>
-
-
 
 </sect1>
