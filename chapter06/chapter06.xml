@@ -1,569 +1,202 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
 <chapter id="chapter-building-system" xreflabel="Chapter 6">
+<?dbhtml dir="chapter06"?>
 <title>Installing basic system software</title>
-<?dbhtml filename="chapter06.html" dir="chapter06"?>
-
-
-<sect1 id="ch-system-introduction">
-<title>Introduction</title>
-<?dbhtml filename="introduction.html" dir="chapter06"?>
-
-<para>In this chapter we enter the building site, and start
-constructing our LFS system in earnest. That is, we chroot into
-our temporary mini Linux system, create some auxiliary things,
-and then start installing all the packages, one by one.</para>
- 
-<para>The installation of all this software is pretty straightforward,
-and you will probably think it would be much shorter to give here
-the generic installation instructions and explain in full only the
-installation of those packages that require an alternate method.
-Although we agree with that, we nevertheless choose to give the 
-full instructions for each and every package, simply to minimize
-the possibilities for mistakes.</para>
-
-<para>The key to learning what makes a Linux system work is to know
-what each package is used for and why the user (or the system) needs it.
-For this purpose for every installed package a summary of its content is
-given followed by concise descriptions of each program and library it
-installed.</para>
-
-<para>If you plan to use compiler optimizations in this chapter, take a look at
-the optimization hint at <ulink url="&hints-root;optimization.txt"/>. Compiler
-optimizations can make a program run slightly faster, but they may also cause
-compilation difficulties and even problems when running the program. If a
-package refuses to compile when using optimization, try to compile it without
-optimization and see if the problem goes away. Even if the package does compile
-when using optimization, there is the risk it may have been compiled incorrectly
-due to complex interactions between the code and build tools. In short, the
-small potential gains achieved in using compiler optimization are generally
-outweighed by the risk. First time builders of LFS are encouraged to build
-without custom optimizations. Your system will still be very fast and very
-stable at the same time.</para>
-
-<para>The order in which packages are installed in this chapter has
-to be strictly followed, to ensure that no program gets a path referring
-to <filename class="directory">/tools</filename> hard-wired into it.
-For the same reason, <emphasis>do not </emphasis> compile packages
-in parallel. Compiling in parallel may save you some time (especially on
-dual-CPU machines), but it could result in a program containing a
-hard-wired path to <filename class="directory">/tools</filename>,
-which will cause the program to stop working when that directory
-is removed.</para>
-
-<para>Before the installation instructions each installation page gives some
-information about the package: a concise description of what it contains, how
-long it will approximately take to build it, how much disk space it needs
-during this building process, the official download location of the package
-(in case you just want to update a few of them), and which other packages it
-needs in order to be built successfully. After the installation instructions
-follows a list of programs and libraries that the package installs, together
-with a series of short descriptions of these.</para>
-
-<para>If you wish to keep track of which package installs what files, you may
-want to use a package manager. For a general overview of package managers have
-a look at <ulink url="&blfs-root;view/cvs/introduction/pkgmgt.html"/>. And for
-a package management method specifically geared towards LFS see
-<ulink url="&hints-root;more_control_and_pkg_man.txt"/>.</para>
-
-</sect1>
-
-
-<sect1 id="ch-system-proc">
-<title>Mounting the proc and devpts file systems</title>
-<?dbhtml filename="proc.html" dir="chapter06"?>
-
-<para>In order for certain programs to function properly, the
-<emphasis>proc</emphasis> and <emphasis>devpts</emphasis> file systems must be
-available within the chroot environment. The proc file system is the process
-information pseudo file system through which the kernel provides information
-about the status of the system. And the devpts file system is nowadays the most
-common way pseudo terminals (PTYs) are implemented. Since kernel version 2.4, a
-file system can be mounted as many times and in as many places as you like,
-thus it's not a problem that these file systems are already mounted on your
-host system, especially so because they are virtual file systems.</para>
-
-<para>First become <emphasis>root</emphasis>, as only <emphasis>root</emphasis>
-can mount file systems in unusual places. Then check again that the LFS
-environment variable is set correctly by running <userinput>echo
-$LFS</userinput> and making sure it shows the path to your LFS partition's
-mount point, which is <filename class="directory">/mnt/lfs</filename> if you
-followed our example.</para>
-
-<para>Now make the mount points for these filesystems:</para>
-
-<screen><userinput>mkdir -p $LFS/{proc,dev/pts}</userinput></screen>
-
-<para>Mount the <emphasis>proc</emphasis> file system with:</para>
-
-<screen><userinput>mount proc $LFS/proc -t proc</userinput></screen>
-
-<para>And mount the <emphasis>devpts</emphasis> file system with:</para>
-
-<screen><userinput>mount devpts $LFS/dev/pts -t devpts</userinput></screen>
-
-<para>This last command might fail with an error like:</para>
-
-<blockquote><screen>filesystem devpts not supported by kernel</screen></blockquote>
-
-<para>The most likely cause for this is that your host system's kernel was
-compiled without support for the devpts file system (you can check which file
-systems your kernel supports with <command>cat /proc/filesystems</command>,
-for example). A few PTYs are needed to be able to run the suites for Binutils
-and GCC later on. If your kernel does not support devpts, do not worry, there
-is another way to get them working inside the chroot environment. We'll cover
-this shortly in the <xref linkend="ch-system-MAKEDEV"/> section.</para>
-
-<para>Remember that if for any reason you stop working on your LFS, and start
-again later, it's important to check that these file systems are mounted again
-before entering the chroot environment, otherwise problems could occur.</para>
-
-</sect1>
-
-
-<sect1 id="ch-system-chroot">
-<title>Entering the chroot environment</title>
-<?dbhtml filename="chroot.html" dir="chapter06"?>
-
-<para>It is time to enter the chroot environment in order to begin building
-and installing your final LFS system. Still as <emphasis>root</emphasis> run
-the following command to enter the small world that is, at the moment,
-populated with only the temporary tools:</para>
-
-<screen><userinput>chroot $LFS /tools/bin/env -i \
-&nbsp;&nbsp;&nbsp;&nbsp;HOME=/root  TERM=$TERM  PS1='\u:\w\$ ' \
-&nbsp;&nbsp;&nbsp;&nbsp;PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin \
-&nbsp;&nbsp;&nbsp;&nbsp;/tools/bin/bash +h</userinput></screen>
-
-<para>The <emphasis>-i</emphasis> option passed to the <command>env</command>
-command will clear all variables of the chroot environment. After that, only
-the HOME, TERM, PS1 and PATH variables are set again. The HOME variable is set
-mainly to prevent several small warnings during the configure runs of
-Diffutils, Grep and Grub. The TERM variable is set to make programs such as
-<command>less</command> and <command>vim</command>, that make use of the
-Ncurses package, operate properly -- the TERM=$TERM construct sets the TERM
-variable inside chroot to the same value as outside chroot. The main prompt
-(PS1) is set to "username:working-dir# " (since the "\$" becomes "#" for root).
-If you need other variables present, such as CFLAGS, CXXFLAGS or LDFLAGS, this
-is a good place to set them.</para>
-
-<para>From this point on there's no need to use the LFS variable anymore,
-because everything you do will be restricted to the LFS file system -- since
-what the shell thinks is <filename class="directory">/</filename> is actually
-the value of <filename class="directory">$LFS</filename>, which was passed to
-the chroot command.</para>
-
-<para>Notice that <filename class="directory">/tools/bin</filename> comes
-last in the PATH. This means that a temporary tool will not be used any more
-as soon as its final version is installed. Well, at least when the shell
-doesn't remember the locations of executed binaries -- for this reason hashing
-is switched off by passing the <emphasis>+h</emphasis> option to
-<command>bash</command>.</para>
-
-<para>You have to make sure all the commands in the rest of this chapter and
-in the following chapters are run from within the chroot environment.
-If you ever leave this environment for any reason (rebooting for example),
-you must remember to first mount the proc and devpts file systems (discussed
-in the previous section) <emphasis>and</emphasis> enter chroot again before
-continuing with the installations.</para>
-
-<para>Note that the bash prompt will say "I have no name!" This is normal, as
-the <filename>/etc/passwd</filename> file has not been created yet.</para>
-
-</sect1>
-
-
-<sect1 id="ch-system-changingowner">
-<title>Changing ownership</title>
-<?dbhtml filename="changingowner.html" dir="chapter06"?>
-
-<para>Right now the <filename class="directory">/tools</filename> directory
-is owned by the user <emphasis>lfs</emphasis>, a user that exists only on your
-host system. Although you will probably want to delete the
-<filename class="directory">/tools</filename> directory once you have
-finished your LFS system, you may want to keep it around, for example to
-build more LFS systems. But if you keep the
-<filename class="directory">/tools</filename> directory as it is, you end up
-with files owned by a user ID without a corresponding account. This is
-dangerous because a user account created later on could get this same user ID
-and would suddenly own the <filename class="directory">/tools</filename>
-directory and all the files therein, thus exposing these files to possible
-malicious manipulation.</para>
-
-<para>To avoid this issue, you could add the <emphasis>lfs</emphasis> user to
-your new LFS system later on when creating the <filename>/etc/passwd</filename>
-file, taking care to assign it the same user and group IDs as on your host
-system. Alternatively, you can (and the book assumes you do) assign the
-contents of the <filename class="directory">/tools</filename> directory to
-user <emphasis>root</emphasis> by running the following command:</para>
-
-<screen><userinput>chown -R 0:0 /tools</userinput></screen>
-
-<para>The command uses "0:0" instead of "root:root", because
-<userinput>chown</userinput> is unable to resolve the name "root" until the
-password file has been created.</para>
-
-</sect1>
-
-
-<sect1 id="ch-system-creatingdirs">
-<title>Creating directories</title>
-<?dbhtml filename="creatingdirs.html" dir="chapter06"?>
-
-<para>Let's now create some structure in our LFS file system. Let's create
-a directory tree. Issuing the following commands will create a more or less
-standard tree:</para>
- 
-<screen><userinput>mkdir -p /{bin,boot,dev/{pts,shm},etc/opt,home,lib,mnt,proc}
-mkdir -p /{root,sbin,tmp,usr/local,var,opt}
-mkdir /usr/{bin,include,lib,sbin,share,src}
-ln -s share/{man,doc,info} /usr
-mkdir /usr/share/{doc,info,locale,man}
-mkdir /usr/share/{misc,terminfo,zoneinfo}
-mkdir /usr/share/man/man{1,2,3,4,5,6,7,8}
-mkdir /usr/local/{bin,etc,include,lib,sbin,share,src}
-ln -s share/{man,doc,info} /usr/local
-mkdir /usr/local/share/{doc,info,locale,man}
-mkdir /usr/local/share/{misc,terminfo,zoneinfo}
-mkdir /usr/local/share/man/man{1,2,3,4,5,6,7,8}
-mkdir /var/{lock,log,mail,run,spool}
-mkdir -p /var/{tmp,opt,cache,lib/misc,local}
-mkdir /opt/{bin,doc,include,info}
-mkdir -p /opt/{lib,man/man{1,2,3,4,5,6,7,8}}</userinput></screen>
-
-<para>Directories are, by default, created with permission mode 755, but this
-isn't desirable for all directories. We will make two changes: one to the home
-directory of <emphasis>root</emphasis>, and another to the directories for
-temporary files.</para>
-
-<screen><userinput>chmod 0750 /root
-chmod 1777 /tmp /var/tmp</userinput></screen>
-
-<para>The first mode change ensures that not just anybody can enter the
-<filename class="directory">/root</filename> directory -- the same
-as a normal user would do with his or her home directory.
-The second mode change makes sure that any user can write to the
-<filename class="directory">/tmp</filename> and
-<filename class="directory">/var/tmp</filename> directories, but
-cannot remove other users' files from them. The latter is prohibited
-by the so-called "sticky bit" -- the highest bit in the 1777 bit mask.</para>
-
-<sect2>
-<title>FHS compliance note</title>
-
-<para>We have based our directory tree on the FHS standard (available at
-<ulink url="http://www.pathname.com/fhs/"/>). Besides the above created
-tree this standard stipulates the existence of
-<filename class="directory">/usr/local/games</filename> and
-<filename class="directory">/usr/share/games</filename>, but we don't
-much like these for a base system. However, feel free to make your system
-FHS-compliant. As to the structure of the
-<filename class="directory">/usr/local/share</filename> subdirectory, the FHS
-isn't precise, so we created here the directories that we think are needed.</para>
-
-</sect2>
-
-</sect1>
-
-
-<sect1 id="ch-system-createfiles">
-<title>Creating essential symlinks</title>
-<?dbhtml filename="createfiles.html" dir="chapter06"?>
-
-<para>Some programs hard-wire paths to programs which don't exist yet. In
-order to satisfy these programs, we create a number of symbolic links which
-will be replaced by real files throughout the course of this chapter when
-we're installing all the software.</para>
-
-<screen><userinput>ln -s /tools/bin/{bash,cat,pwd,stty} /bin
-ln -s /tools/bin/perl /usr/bin
-ln -s /tools/lib/libgcc_s.so.1 /usr/lib
-ln -s bash /bin/sh</userinput></screen>
-
-</sect1>
-
-
-<sect1 id="ch-system-pwdgroup">
-<title>Creating the passwd, group and log files</title>
-<?dbhtml filename="pwdgroup.html" dir="chapter06"?>
-
-<para>In order for <emphasis>root</emphasis> to be able to login and for the 
-name "root" to be recognized, there need to be relevant entries in the 
-<filename>/etc/passwd</filename> and <filename>/etc/group</filename> files.</para>
-
-<para>Create the <filename>/etc/passwd</filename> file by running the following 
-command:</para>
-
-<screen><userinput>cat &gt; /etc/passwd &lt;&lt; "EOF"</userinput>
-root:x:0:0:root:/root:/bin/bash
-<userinput>EOF</userinput></screen>
-
-<para>The actual password for <emphasis>root</emphasis> (the "x" here is just a 
-placeholder) will be set later.</para>
-
-<para>Create the <filename>/etc/group</filename> file by running the following 
-command:</para>
-
-<screen><userinput>cat &gt; /etc/group &lt;&lt; "EOF"</userinput>
-root:x:0:
-bin:x:1:
-sys:x:2:
-kmem:x:3:
-tty:x:4:
-tape:x:5:
-daemon:x:6:
-floppy:x:7:
-disk:x:8:
-lp:x:9:
-dialout:x:10:
-audio:x:11:
-<userinput>EOF</userinput></screen>
-
-<para>The created groups aren't part of any standard -- they are some of the
-groups that the <command>make_devices</command> script in the next section
-uses. The LSB (<ulink url="http://www.linuxbase.org/">Linux Standard
-Base</ulink>) recommends only that, beside the group "root" with a GID of 0, a
-group "bin" with a GID of 1 be present. All other group names and GIDs can
-be chosen freely by the system administrator, since well-written packages don't
-depend on GID numbers but use the group's name.</para>
-
-<para>To get rid of the "I have no name!" prompt, we will start a new shell.
-Since we installed a full Glibc in <xref linkend="chapter-temporary-tools"/>,
-and have just created the <filename>/etc/passwd</filename> and
-<filename>/etc/group</filename> files, user name and group name resolution
-will now work.</para>
-
-<screen><userinput>exec /tools/bin/bash +h</userinput></screen>
-
-<para>Note the use of the <emphasis>+h</emphasis> directive. This tells
-<command>bash</command> not to use its internal path hashing. Without this
-directive, <command>bash</command> would remember the paths to binaries it
-has executed. Since we want to use our newly compiled binaries as soon as
-they are installed, we turn off this function for the duration of this
-chapter.</para>
-
-<para>The <command>login</command>, <command>agetty</command> and
-<command>init</command> programs (and some others) use a number of log
-files to record information such as who was logged into the system and when.
-These programs, however, won't write to the log files if they don't already
-exist. Initialize the log files and give them their proper permissions:</para>
-
-<screen><userinput>touch /var/run/utmp /var/log/{btmp,lastlog,wtmp}
-chmod 644 /var/run/utmp /var/log/{btmp,lastlog,wtmp}</userinput></screen>
-
-<para>The <filename>/var/run/utmp</filename> file records the users that are
-currently logged in. The <filename>/var/log/wtmp</filename> file records all
-logins and logouts. The <filename>/var/log/lastlog</filename> file records for
-each user when he or she last logged in. The <filename>/var/log/btmp</filename>
-file records the bad login attempts.</para>
-
-</sect1>
-
-
-&c6-makedev;
-&c6-kernel-headers;
-&c6-manpages;
-&c6-glibc;
-
-
-<sect1 id="ch-system-readjusting">
-<title>Re-adjusting the toolchain</title>
-<?dbhtml filename="readjusting.html" dir="chapter06"?>
-
-<para>Now that the new and final C libraries have been installed, it's time to
-adjust our toolchain again. We'll adjust it so that it will link any newly
-compiled program against these new libraries. This is in fact the same thing we
-did in the "Adjusting" phase in the beginning of the previous chapter, even
-though it looks like the reverse: then we guided the chain from the host's
-<filename class="directory">/{,usr/}lib</filename> to the new
-<filename class="directory">/tools/lib</filename>, now we guide it from that
-same <filename class="directory">/tools/lib</filename>
-to the LFS's <filename class="directory">/{,usr/}lib</filename>.</para>
-
-<para>First we adjust the linker. For this we retained the
-source and build directories from the second pass over Binutils. Install the
-adjusted linker by running the following from within the
-<filename class="directory">binutils-build</filename> directory:</para>
-
-<screen><userinput>make -C ld INSTALL=/tools/bin/install install</userinput></screen>
-
-<note><para>If you somehow missed the earlier warning to retain the Binutils
-source and build directories from the second pass in
-<xref linkend="chapter-temporary-tools"/>, or otherwise accidentally deleted them or just
-don't have access to them, don't worry, all is not lost. Just ignore the above
-command. The result will be that the next package, Binutils, will link against
-the C libraries in <filename class="directory">/tools</filename> rather
-than in <filename class="directory">/{,usr/}lib</filename>. This is not ideal,
-however, our testing has shown that the resulting Binutils program binaries
-should be identical.</para></note>
-
-<para>From now on every compiled program will link <emphasis>only</emphasis>
-against the libraries in <filename>/usr/lib</filename> and
-<filename>/lib</filename>. The extra
-<emphasis>INSTALL=/tools/bin/install</emphasis> is needed because the Makefile
-created during the second pass still contains the reference to
-<filename>/usr/bin/install</filename>, which we obviously haven't installed yet.
-Some host distributions contain a <filename class="symlink">ginstall</filename>
-symbolic link which takes precedence in the Makefile and thus can cause a
-problem here. The above command takes care of this also.</para>
-
-<para>You must now remove the Binutils source and build directories. (This is
-important, as you should start the next section with a fresh untarring of the
-package.)</para>
-
-<para>The next thing to do is to amend our GCC specs file so that it points
-to the new dynamic linker. Just like earlier on, we use a sed to accomplish
-this:</para>
-
-<!-- Ampersands are needed to allow cut and paste -->
-
-<screen><userinput>SPECFILE=/tools/lib/gcc-lib/*/*/specs &amp;&amp;
-sed -e 's@ /tools/lib/ld-linux.so.2@ /lib/ld-linux.so.2@g' \
-&nbsp;&nbsp;&nbsp;&nbsp;$SPECFILE &gt; newspecfile &amp;&amp;
-mv -f newspecfile $SPECFILE &amp;&amp;
-unset SPECFILE</userinput></screen>
-
-<para>Again, cutting and pasting the above is recommended. And just like
-before, it is a good idea to visually inspect the specs file to verify the
-intended change was actually made.</para>
-
-<important><para>If you are working on a platform where the name of the dynamic
-linker is something other than <filename>ld-linux.so.2</filename>, you
-<emphasis>must</emphasis> substitute <filename>ld-linux.so.2</filename> with the
-name of your platform's dynamic linker in the above commands. Refer back to
-<xref linkend="tools-technicalnotes"/> if necessary.</para></important>
-
-<!-- HACK - Force some whitespace to appease tidy -->
-<literallayout></literallayout>
-
-<caution><para>It is imperative at this point to stop and ensure that the
-basic functions (compiling and linking) of the adjusted toolchain are working
-as expected. For this we are going to perform a simple sanity check:</para>
-
-<screen><userinput>echo 'main(){}' &gt; dummy.c
-cc dummy.c
-readelf -l a.out | grep ': /lib'</userinput></screen>
-
-<para>If everything is working correctly, there should be no errors, and the
-output of the last command will be (allowing for platform specific differences
-in dynamic linker name):</para>
-
-<blockquote><screen>[Requesting program interpreter: /lib/ld-linux.so.2]</screen></blockquote>
-
-<para>Note especially that <filename class="directory">/lib</filename> is now
-the prefix of our dynamic linker.</para>
-
-<para> If you did not receive the output
-as shown above, or received no output at all, then something is seriously wrong.
-You will need to investigate and retrace your steps to find out where the
-problem is and correct it. There is no point in continuing until this is done.
-Most likely something went wrong with the specs file amendment above.</para>
-
-<para>Once you are satisfied that all is well, clean up the test files:</para>
-
-<screen><userinput>rm dummy.c a.out</userinput></screen>
-</caution>
-
-<!-- HACK - Force some whitespace to appease tidy -->
-<literallayout></literallayout>
-
-</sect1>
-
-
-&c6-binutils;
-&c6-gcc;
-
-&c6-coreutils;
-&c6-zlib;
-&c6-lfs-utils;
-&c6-findutils;
-&c6-gawk;
-&c6-ncurses;
-&c6-vim;
-&c6-m4;
-&c6-bison;
-&c6-less;
-&c6-groff;
-&c6-sed;
-&c6-flex;
-&c6-gettext;
-&c6-nettools;
-&c6-inetutils;
-&c6-perl;
-&c6-texinfo;
-&c6-autoconf;
-&c6-automake;
-&c6-bash;
-&c6-file;
-&c6-libtool;
-&c6-bzip2;
-&c6-diffutils;
-&c6-ed;
-&c6-kbd;
-&c6-e2fsprogs;
-&c6-grep;
-&c6-grub;
-&c6-gzip;
-&c6-man;
-&c6-make;
-&c6-modutils;
-&c6-patch;
-&c6-procinfo;
-&c6-procps;
-&c6-psmisc;
-&c6-shadow;
-&c6-sysklogd;
-&c6-sysvinit;
-&c6-tar;
-&c6-utillinux;
-&c6-gcc-2953;
-
-
-<sect1 id="ch-system-aboutdebug">
-<title>About debugging symbols</title>
-<?dbhtml filename="aboutdebug.html" dir="chapter06"?>
-
-<para>Most programs and libraries are, by default, compiled with debugging
-symbols included (with <command>gcc</command>'s <emphasis>-g</emphasis>
-option). This means that, when debugging a program or library that was compiled
-with debugging information included, the debugger can give you not only memory
-addresses but also the names of the routines and variables.</para>
- 
-<para>The inclusion of these debugging symbols, however, enlarges a program or
-library significantly. To get an idea of the amount of space these symbols
-occupy, have a look at the following:</para>
-
-<itemizedlist>
-
-<listitem><para>a bash binary 
-with debugging symbols: 1200 KB</para></listitem>
-
-<listitem><para>a bash binary
-without debugging symbols: 480 KB</para></listitem>
-
-<listitem><para>Glibc and GCC files (/lib and /usr/lib)
-with debugging symbols: 87 MB</para></listitem>
-
-<listitem><para>Glibc and GCC files
-without debugging symbols: 16 MB</para></listitem>
-
-</itemizedlist>
-
-<para>Sizes may vary somewhat, depending on which compiler was used and which C
-library, but when comparing programs with and without debugging symbols the
-difference will generally be a factor between 2 and 5.</para>
-
-<para>As most people will probably never use a debugger on their system
-software, a lot of disk space can be regained by removing these symbols. For
-your convenience, the next section shows how to strip all debugging symbols
-from all programs and libraries. Information on other ways of optimizing your
-system can be found in the hint at <ulink
-url="&hints-root;optimization.txt"/>.</para>
-
-</sect1>
+<?dbhtml filename="chapter06.html"?>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="introduction.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="proc.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="chroot.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="changingowner.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="creatingdirs.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="createfiles.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="pwdgroup.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="makedev.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="kernel-headers.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="man-pages.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="glibc.xml"/>
+
+
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="readjusting.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="binutils.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="gcc.xml"/>
+
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="coreutils.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="zlib.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="mktemp.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="iana-etc.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="findutils.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="gawk.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="ncurses.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="vim.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="m4.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="bison.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="less.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="groff.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="sed.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="flex.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="gettext.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="net-tools.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="inetutils.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="perl.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="texinfo.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="autoconf.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="automake.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="bash.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="file.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="libtool.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="bzip2.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="diffutils.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="ed.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="kbd.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="e2fsprogs.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="grep.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="grub.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="gzip.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="man.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="make.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="modutils.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="patch.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="procinfo.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="procps.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="psmisc.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="shadow.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="sysklogd.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="sysvinit.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="tar.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="util-linux.xml"/>
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="gcc-2953.xml"/>
+
+
+
+
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="aboutdebug.xml"/>
 
 
 <sect1 id="ch-system-strippingagain">
 <title>Stripping again</title>
-<?dbhtml filename="strippingagain.html" dir="chapter06"?>
+<?dbhtml filename="strippingagain.html"?>
 
 <para>If you are not a programmer and don't plan to do any debugging on your
 system software, you can shrink your system by about 200 MB by removing the
@@ -585,14 +218,14 @@ If you're not sure whether you entered chroot with the command given in
 <para>Then reenter it with:</para>
 
 <screen><userinput>chroot $LFS /tools/bin/env -i \
-&nbsp;&nbsp;&nbsp;&nbsp;HOME=/root  TERM=$TERM  PS1='\u:\w\$ ' \
-&nbsp;&nbsp;&nbsp;&nbsp;PATH=/bin:/usr/bin:/sbin:/usr/sbin \
-&nbsp;&nbsp;&nbsp;&nbsp;/tools/bin/bash</userinput></screen>
+    HOME=/root TERM=$TERM PS1='\u:\w\$ ' \
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin \
+    /tools/bin/bash --login</userinput></screen>
 
 <para>Now you can safely strip the binaries and libraries:</para>
 
 <screen><userinput>/tools/bin/find /{,usr/}{bin,lib,sbin} -type f \
-&nbsp;&nbsp;&nbsp;-exec /tools/bin/strip --strip-debug '{}' ';'</userinput></screen>
+   -exec /tools/bin/strip --strip-debug '{}' ';'</userinput></screen>
 
 <para>A large number of files will be reported as having their file format not
 recognized. These warnings can be safely ignored, they just mean that those
@@ -607,42 +240,6 @@ destroyed.</para>
 </sect1>
 
 
-<sect1 id="ch-system-revisedchroot">
-<title>Cleaning up</title>
-<?dbhtml filename="revisedchroot.html" dir="chapter06"?>
-
-<para>From now on, when you exit the chroot environment and wish to reenter
-it, you should use the following modified chroot command:</para>
-
-<screen><userinput>chroot $LFS /usr/bin/env -i \
-&nbsp;&nbsp;&nbsp;&nbsp;HOME=/root  TERM=$TERM  PS1='\u:\w\$ ' \
-&nbsp;&nbsp;&nbsp;&nbsp;PATH=/bin:/usr/bin:/sbin:/usr/sbin \
-&nbsp;&nbsp;&nbsp;&nbsp;/bin/bash</userinput></screen>
-
-<para>The reason for this is that, since the programs in <filename
-class="directory">/tools</filename> are no longer needed, you may want to
-delete the whole directory and regain the space. Before actually deleting the
-directory, exit from chroot and reenter it with the above command. Also, before
-removing <filename class="directory">/tools</filename>, you may want to tar it
-up and store it in a safe place, in case you want to build another LFS system
-soon.</para>
-
-<note><para>Removing <filename class="directory">/tools</filename> will also
-remove the temporary copies of Tcl, Expect and DejaGnu, which were used for
-running the toolchain tests. If you want to use these programs later on, you
-will need to recompile and re-install them. The installation instructions are
-the same as in <xref linkend="chapter-temporary-tools"/>, apart from changing
-the prefix from <emphasis>/tools</emphasis> to <emphasis>/usr</emphasis>. The
-BLFS book discusses a slightly different approach to installing Tcl, see <ulink
-url="&blfs-root;"/>.</para></note>
-
-<para>You may also want to move the packages and patches stored in <filename
-class="directory">/sources</filename> to a more usual location, such as
-<filename class="directory">/usr/src/packages</filename>, and remove the
-directory -- or simply delete the whole directory if you've burned its contents
-on a CD).</para>
-
-</sect1>
+<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="revisedchroot.xml"/>
 
 </chapter>
-
