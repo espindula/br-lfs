@@ -1,12 +1,12 @@
 <sect2>
-<title>Configuring BIND</title>
-<para>We will configure BIND to run in a chroot jail as an unprivileged
-user(named).  This configuration is more secure in that a DNS
-compromise can only affect a few files in the named user's $HOME
-directory </para> 
+<title>Configurer BIND</title>
+<para>Nous configurerons BIND de lancer dans une prison chroot en tant
+qu'utilisateur non privilégié (named). Cette configuration est plus sécurisé
+qu'une compromission dûe à DNS peut affecter seulement quelques fichiers dans
+le répertoire $HOME de l'utilisateur named.</para> 
 
-<para>First we set up some files and directories needed by
-BIND:</para>
+<para>Tout d'abord, nous mettons en place quelques fichiers et répertoires
+nécessaires à BIND:</para>
 <para><screen><userinput>
 groupadd -g 200 named &amp;&amp;
 useradd -m -g named -u 200 -s /bin/false named &amp;&amp;
@@ -19,11 +19,11 @@ mkdir /home/named/etc/namedb/pz &amp;&amp;
 cp /etc/localtime /home/named/etc
 </userinput></screen></para>
 
-<sect3><title>Config files</title>
+<sect3><title>Fichiers de configuration</title>
 <para><userinput>named.conf, root.hints, 127.0.0, rndc.conf
 </userinput></para>
 
-<para>Create the named.conf file with the following commands:</para>
+<para>Créez le fichier named.conf avec les commandes suivantes:</para>
 <para><screen><userinput>
 cat > /home/named/etc/named.conf << "EOF"
  options {
@@ -49,7 +49,7 @@ cat > /home/named/etc/named.conf << "EOF"
  };
 EOF
 </userinput></screen></para>
-<para>Create a zone file with the following contents: </para>
+<para>Créez un fichier zone avec le contenu suivant: </para>
 <para><screen><userinput>
 cat &gt; /home/named/etc/namedb/pz/127.0.0 &lt;&lt "EOF"
 $TTL 3D
@@ -64,9 +64,9 @@ $TTL 3D
 EOF
 </userinput></screen></para>
 
-<para>Create the root.hints file with the following commands: </para>
-<note><para>Caution must be used to insure no leading spaces in this
-file.</para></note>
+<para>Créez le fichier root.hints avec les commandes suivantes:</para>
+<note><para>Faites attention et assurez-vous qu'il n'existe aucun espace final
+dans ce fichier.</para></note>
 <para><screen><userinput>
 cat > /home/named/etc/namedb/root.hints << "EOF"
 .                       6D  IN      NS      A.ROOT-SERVERS.NET.
@@ -98,7 +98,7 @@ M.ROOT-SERVERS.NET.     6D  IN      A       202.12.27.33
 EOF
 </userinput></screen></para>
 
-<para>Create the rndc.conf with the following commands:</para>
+<para>Créez rndc.conf avec les commandes suivantes:</para>
 <para><screen><userinput>
 cat > /etc/rndc.conf << "EOF"
 key rndc_key {
@@ -113,10 +113,10 @@ options {
 EOF
 </userinput></screen></para>
 
-<para>Create or modify resolv.conf to use the new nameserver with the
-following commands: </para>
-<note><para>Replace yourdomain.com with your own valid domain
-name.</para></note>
+<para>Créez ou modifiez resolv.conf pour utiliser un nouveau serveur de noms
+avec les commandes suivantes:</para>
+<note><para>Remplacez yourdomain.com avec votre propre nom de domaine valide.
+</para></note>
 
 <para><screen><userinput>
 cp /etc/resolv.conf /etc/resolv.conf.bak
@@ -126,19 +126,19 @@ nameserver 127.0.0.1
 EOF
 </userinput></screen></para>
 
-<para>Set permissions on the chroot jail with the following
-command:</para>
+<para>Indiquez les permissions sur la prison chroot avec la commande suivante:
+</para>
 <para><screen><userinput>
 chown -R named.named /home/named
 </userinput></screen></para>
 
-<para>Create the BIND boot script:</para>
+<para>Créez le script de démarrage BIND:</para>
 <para><screen><userinput>
 cat &gt; /etc/rc.d/init.d/bind &lt;&lt; "EOF"
 #!/bin/bash
-# Begin $rc_base/init.d/bind
-# Based on sysklogd script from LFS-3.1 and earlier.
-# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+# Début $rc_base/init.d/bind
+# Basé sur le script sysklogd de LFS-3.1 et précédents.
+# Réécrit par Gerard Beekmans  - gerard@linuxfromscratch.org
 source /etc/sysconfig/rc
 source $rc_functions
 case "$1" in
@@ -169,11 +169,11 @@ case "$1" in
 		exit 1
 		;;
 esac
-# End $rc_base/init.d/bind
+# Fin $rc_base/init.d/bind
 EOF
 </userinput></screen></para>
 
-<para>Add the run level symlinks:</para>
+<para>Ajoutez les liens symboliques des niveaux d'exécution:</para>
 <para><screen><userinput>
 chmod 754 /etc/rc.d/init.d/bind &&
 ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc0.d/K90bind &&
@@ -185,27 +185,27 @@ ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc5.d/S90bind &&
 ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc6.d/K90bind
 </userinput></screen></para>
 
-<para>Now start BIND with the new boot script: </para>
+<para>Alors, lancez BIND avec le nouveau script de démarrage: </para>
 <para><screen><userinput>
 /etc/rc.d/init.d/bind start
 </userinput></screen></para></sect3>
 
-<sect3><title>Testing BIND</title>
-<para>Test out the new BIND 9 installation.  First query the local
-host address with dig:</para>
+<sect3><title>Tester BIND</title>
+<para>Testez la nouvelle installation de BIND 9. Tout d'abord, recherchez
+l'adresse locale de l'hote avec dig:</para>
 <para><screen><userinput>
 dig -x 127.0.0.1
 </userinput></screen></para>
-<para>Now try an external name lookup, taking note of the speed
-difference in repeated lookups due to the caching.  Run the dig
-command twice on the same address:</para>
+<para>Maintenant, essayez la recherche de noms externes, en prenant note de la
+différence de vitesse dans des recherches répétées grace au cache. Lancez la
+commande dig deux fois sur la meme adresse:</para>
 <para><screen><userinput>
 dig beyond.linuxfromscratch.org &amp;&amp;
 dig beyond.linuxfromscratch.org
 </userinput></screen>
-You can see almost instantaneous results with the named caching
-lookups.  Consult bind-&bind-version;/doc/arm/Bv9ARM.html, the BIND
-Administrator Reference Manual for further configuration options.
+Vous pouvez voir des résultats pratiquement instantanés avec des recherches
+cachées de named. Consultez bind-&bind-version;/doc/arm/Bv9ARM.html, le manuel
+de référence de l'administrateur de BIND pour plus d'options de configurations.
 </para></sect3>
 </sect2>
 
