@@ -93,6 +93,86 @@
       </i>
     </a>
   </xsl:template>
+  
+    <!-- The <code> xhtml tag have look issues in some browsers, like Konqueror and.
+      isn't semantically correct (a filename isn't a code fragment) We will use <tt> for now. -->
+  <xsl:template name="inline.monoseq">
+    <xsl:param name="content">
+      <xsl:call-template name="anchor"/>
+      <xsl:call-template name="simple.xlink">
+        <xsl:with-param name="content">
+          <xsl:apply-templates/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:param>
+    <tt class="{local-name(.)}">
+      <xsl:if test="@dir">
+        <xsl:attribute name="dir">
+          <xsl:value-of select="@dir"/>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:copy-of select="$content"/>
+    </tt>
+  </xsl:template>
+  
+  <xsl:template name="inline.boldmonoseq">
+    <xsl:param name="content">
+      <xsl:call-template name="anchor"/>
+      <xsl:call-template name="simple.xlink">
+        <xsl:with-param name="content">
+          <xsl:apply-templates/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:param>
+    <!-- don't put <strong> inside figure, example, or table titles -->
+    <!-- or other titles that may already be represented with <strong>'s. -->
+    <xsl:choose>
+      <xsl:when test="local-name(..) = 'title' and (local-name(../..) = 'figure' 
+              or local-name(../..) = 'example' or local-name(../..) = 'table' or local-name(../..) = 'formalpara')">
+        <tt class="{local-name(.)}">
+          <xsl:if test="@dir">
+            <xsl:attribute name="dir">
+              <xsl:value-of select="@dir"/>
+            </xsl:attribute>
+          </xsl:if>
+          <xsl:copy-of select="$content"/>
+        </tt>
+      </xsl:when>
+      <xsl:otherwise>
+        <strong class="{local-name(.)}">
+          <tt>
+            <xsl:if test="@dir">
+              <xsl:attribute name="dir">
+                <xsl:value-of select="@dir"/>
+              </xsl:attribute>
+            </xsl:if>
+            <xsl:copy-of select="$content"/>
+          </tt>
+        </strong>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  
+  <xsl:template name="inline.italicmonoseq">
+    <xsl:param name="content">
+      <xsl:call-template name="anchor"/>
+      <xsl:call-template name="simple.xlink">
+        <xsl:with-param name="content">
+          <xsl:apply-templates/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:param>
+    <em class="{local-name(.)}">
+      <tt>
+        <xsl:if test="@dir">
+          <xsl:attribute name="dir">
+            <xsl:value-of select="@dir"/>
+          </xsl:attribute>
+        </xsl:if>
+        <xsl:copy-of select="$content"/>
+      </tt>
+    </em>
+  </xsl:template>
 
 
 </xsl:stylesheet>
