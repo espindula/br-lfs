@@ -27,23 +27,33 @@ lfs:
 
 	sh goTidy $(BASEDIR)/
 
-pdf:
-	xsltproc --xinclude --nonet --output lfs.fo stylesheets/lfs-pdf.xsl \
-	  index.xml
-	sed -i -e "s/inherit/all/" lfs.fo
-	fop.sh lfs.fo $(PDF_OUTPUT)
+#
+# This is the old "pdf" target. The old "print" target below has been
+# renamed to "pdf" and will be used. This commented out previous_pdf
+# target can be removed eventually. It'll remain here for a bit for
+# historical reasons
+#
+#previous_pdf:
+#	xsltproc --xinclude --nonet --output $(BASEDIR)/lfs.fo stylesheets/lfs-pdf.xsl \
+#	  index.xml
+#	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs.fo
+#	fop.sh $(BASEDIR)/lfs.fo $(BASEDIR)/$(PDF_OUTPUT)
+#	rm lfs.fo
 
-print:
-	xsltproc --xinclude --nonet --stringparam profile.condition print --output lfs-print.xml \
-	  stylesheets/lfs-profile.xsl index.xml
-	xsltproc --nonet --output lfs-print.fo stylesheets/lfs-print.xsl lfs-print.xml
-	sed -i -e "s/inherit/all/" lfs-print.fo
-	fop.sh lfs-print.fo $(PRINT_OUTPUT)
+pdf:
+	xsltproc --xinclude --nonet --stringparam profile.condition print \
+		--output $(BASEDIR)/lfs-print.xml stylesheets/lfs-profile.xsl index-print.xml
+	xsltproc --nonet --output $(BASEDIR)/lfs-print.fo stylesheets/lfs-print.xsl \
+		$(BASEDIR)/lfs-print.xml
+	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-print.fo
+	fop.sh $(BASEDIR)/lfs-print.fo $(BASEDIR)/$(PRINT_OUTPUT)
+	rm $(BASEDIR)/lfs-print.xml $(BASEDIR)/lfs-print.fo
 
 nochunks:
-	xsltproc --xinclude --nonet --output $(NOCHUNKS_OUTPUT) \
+	xsltproc --xinclude --nonet --output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
 	  stylesheets/lfs-nochunks.xsl index.xml
-	tidy -config tidy.conf $(NOCHUNKS_OUTPUT) || true
+	tidy -config tidy.conf $(BASEDIR)/$(NOCHUNKS_OUTPUT) || true
 
 validate:
 	xmllint --noout --nonet --xinclude --postvalid index.xml
+
