@@ -6,13 +6,11 @@
 <!ENTITY scope 'count(ancestor::node()|$scope) = count(ancestor::node())'>
 ]>
 
-<!-- Version 0.8.0 - Manuel Canales Esparcia <macana@lfs-es.org> -->
+<!-- Version 0.9 - Manuel Canales Esparcia <macana@lfs-es.org> -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
-
-	<!--Index Stuff-->
 
     <!--Filename-->
   <xsl:template match="index" mode="recursive-chunk-filename">
@@ -20,10 +18,19 @@
   </xsl:template>
 
     <!--Title-->
+  <xsl:param name="index-title">Index of packages and important installed files</xsl:param>
+  
   <xsl:template match="index" mode="title.markup">
-  	<xsl:param name="allow-anchors" select="0"/>
-    <xsl:text>Index of packages and important installed files</xsl:text>
+    <xsl:value-of select="$index-title"/>
 	</xsl:template>
+  
+  <xsl:template name="index.titlepage">
+    <div class="titlepage">
+    	<h1 class="index">
+    		<xsl:value-of select="$index-title"/>
+			</h1>
+    </div>
+  </xsl:template>
 
   	<!--Divisions-->
   <xsl:template match="indexterm" mode="index-div">
@@ -109,6 +116,7 @@
     	</xsl:if>
     </li>
   </xsl:template>
+
   <xsl:template match="indexterm" mode="index-secondary">
     <xsl:param name="scope" select="."/>
     <xsl:variable name="key" select="concat(&primary;, &#34; &#34;,
@@ -173,5 +181,8 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+  
+    <!-- Dropping unneeded anchors -->
+  <xsl:template match="indexterm"/>
 
 </xsl:stylesheet>
