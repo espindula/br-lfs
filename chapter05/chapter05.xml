@@ -462,8 +462,10 @@ mv -f tempspecfile $SPECFILE &amp;&amp;
 unset SPECFILE</userinput></screen>
 
 <para>We recommend that you cut-and-paste the above rather than try and type it
-all in. Or you can edit the specs file by hand if you want to: just replace any
-occurrence of "/lib/ld-linux.so.2" with "/tools/lib/ld-linux.so.2".</para>
+all in. Or you can edit the specs file by hand if you want to: just replace the
+occurrence of "/lib/ld-linux.so.2" with "/tools/lib/ld-linux.so.2". Be sure to
+visually inspect the specs file to verify the intended change was actually
+made.</para>
 
 <important><para>If you are working on a platform where the name of the dynamic
 linker is something other than <filename>ld-linux.so.2</filename>, you
@@ -487,7 +489,7 @@ functions (compiling and linking) of the new toolchain are working as expected.
 For this we are going to perform a simple sanity check:</para>
 
 <screen><userinput>echo 'main(){}' &gt; dummy.c
-gcc dummy.c
+cc dummy.c
 readelf -l a.out | grep ': /tools'</userinput></screen>
 
 <para>If everything is working correctly, there should be no errors, and the
@@ -495,15 +497,23 @@ output of the last command will be:</para>
 
 <blockquote><screen>[Requesting program interpreter: /tools/lib/ld-linux.so.2]</screen></blockquote>
 
-<para>If you did not receive the output as shown above, or received no output at
-all, then something is seriously wrong. You will need to investigate and retrace
-your steps to find out where the problem is and correct it. There is no point in
-continuing until this is done. Most likely something went wrong with the specs
-file amendment above. Note especially that <filename>/tools/lib</filename>
-appears as the prefix of our dynamic linker. Of course, if you are working on a
-platform where the name of the dynamic linker is something other than
-<filename>ld-linux.so.2</filename>, then the output will be slightly
-different.</para>
+<para>(Of course allowing for platform specific differences in dynamic linker
+name). Note especially that <filename class="directory">/tools/lib</filename>
+appears as the prefix of our dynamic linker. If you did not receive the output
+as shown above, or received no output at all, then something is seriously wrong.
+You will need to investigate and retrace your steps to find out where the
+problem is and correct it. There is no point in continuing until this is done.
+First, redo the sanity check using <userinput>gcc</userinput> instead of
+<userinput>cc</userinput>. If this works it means the
+<filename class="symlink">/tools/bin/cc</filename> symlink is missing. Revisit
+<xref linkend="ch05-gcc-pass1"/> and fix the symlink. Second, ensure your $PATH
+is correct. You can check this by running <userinput>echo $PATH</userinput> and
+verifying that <filename class="directory">/tools/bin</filename> is at the head
+of the list. If the $PATH is wrong it could mean you're not logged in as user
+<emphasis>lfs</emphasis> or something went wrong back in
+<xref linkend="ch05-settingenviron"/>. Third, something may have gone wrong with
+the specs file amendment above. In this case redo the specs file amendment
+ensuring to cut-and-paste the commands as was recommended.</para>
 
 <para>Once you are satisfied that all is well, clean up the test files:</para>
 
