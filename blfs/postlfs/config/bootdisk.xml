@@ -1,43 +1,48 @@
 <sect1 id="postlfs-config-bootdisk">
 <?dbhtml filename="bootdisk.html" dir="postlfs"?>
-<title>Creating a custom bootdisk</title>
+<title>Créer un disque de démarrage personnalisé</title>
 
-<para>How to create a decent bootdisk</para>
-<para>The intent here is to create a "rescue bootdisk" that will load
-enough 'linux' to enable you to do rescue operations.  With what is presented here 
-you will be able to do file manipulation, mounting and unmounting, and other tasks.
-This however is not the limit.  The minimal disk is described here, and you can 
-add anything you can fit on the floppy.</para>
-<para>
-Boot disk/Rescue Disk
-</para>
-<para>
-First we will create a loopback file to build our rescue disk image on, next
-we'll make a file system on the image file, then we'll use 'mount' to mount 
-the file as a regular disk, allowing us to read and write files from the loopback file.
-The following commands will build us a 4 MB image.
-</para>
+<para>Comment créer un disque de démarrage décent</para>
+
+<para>Le but ici est de créer un "disque de démarrage de dépannage" qui
+chargera assez 'linux' pour vous permettre de faire des opérations de dépannage.
+Avec ce qui est présenté ici, vous serez capable de faire des manipulations de
+fichiers, de monter et démonter, ainsi que d'autres tâches. Ceci n'est pas
+néanmoins une limite. Le disque minimal est décrit ici, et vous pouvez ajouter
+tout ce qui pourra tenir dans la disquette.</para>
+
+<para>Disque de démarrage/Disque de dépannage</para>
+
+<para>Tout d'abord, nous allons créer un fichier loopback pour construire une
+image du disque de dépannage, puis nous créerons un système de fichiers sur le
+fichier image, ensuite nous utiliserons 'mount' pour monter le fichier comme
+un disque standard, nous permettant de lire et écrire des fichiers sur le
+fichier loopback. Les commandes suivantes construisent une image de 4Mo.</para>
 <screen><userinput>dd if=/dev/zero of=/tmp/rfloppy bs=1k count=4096 &&
 mke2fs -m 0 -N 2000 /tmp/rfloppy &&
 mount -o loop /tmp/rfloppy /mnt/loop1 &&
 rmdir /mnt/loop1/lost+found/</userinput></screen>
 
+<para>Maintenant que nous avons un fichier monté et utilisable, nous allons le
+remplir de matériaux utiles. Comme ce n'est qu'une disquette de dépannage, nous
+aurons seulement besoin de mettre en place les répertoires minimums.</para>
 
-<para>
-Now that we have a file mounted and useable, let's prepare it to be 
-filled with useful material.  Since this is only a rescue floppy we'll 
-only need to set up the minimum directories.</para>
 <para><screen><userinput>mkdir /mnt/loop1/{dev,proc,etc,sbin,bin,lib,mnt,usr,var}</userinput></screen></para>
-<para>Next, we will set up the device files.  I use devfs on my system, so 
-the following command works well, as I only have the devices I use
-anyway.  If you used MAKEDEV to create your devices, you'll want to
-trim the /mnt/loop1/dev directory to reclaim the inode space wasted 
-by all of the devices in the dev directory you don't use.</para>
+
+<para>Ensuite, nous allons mettre en place les fichiers périphériques. J'utilise
+devfs sur mon système, donc la commande suivante fonctionne bien, car je dispose
+seulement des périphériques que j'utilise. Si vous avez utilisé MAKEDEV pour
+créer vos fichiers périphériques, vous devrez 'trim'er le répertoire
+/mnt/loop1/dev pour réclamer les inodes perdues par tous les périphériques du
+répertoire dev que vous n'utilisez pas.</para>
+
 <para><screen><userinput>cp -dpR /dev/* /mnt/loop1/dev</userinput></screen></para>
-<para>Now to tend to the /etc directory.  To start, all we will do is use 
-the passwd and group file that worked for our static chroot environment 
-when we built LFS.  We'll also copy the startup scripts over and a few other files 
-that serve well as starting points.</para>
+
+<para>Maintenant pour le répertoire /etc. Pour commencer, tout ce que nous
+ferons est d'utiliser les fichiers passwd et group, qui fonctionnaient, dans un
+environnement statique chroot lors de la construction de LFS. Nous copierons
+aussi les scripts de démarrage et quelques autres fichiers qui servent bien
+comme point d'entrée.</para>
 <para><screen><userinput>cp -ax /etc/rc* /mnt/loop1/etc
 cp -ax /etc/fstab /mnt/loop1/etc
 echo "root:x:0:0:root:/root:/bin/bash" > /mnt/loop1/etc/passwd
@@ -56,16 +61,19 @@ dialout:x:10:
 audio:x:11:
 EOF</userinput></screen>
 </para>
-<para>
 
-To prevent automatic mounting of hard drive partitions, 
-make sure to add the noauto option in their fstab entry.  Also, add the 
-following entries to the /mnt/loop1/etc/fstab to assist with mounting our 
-floppy and the ram image</para>
+<para>Pour empêcher le montage automatique des partitions des disques durs,
+assurez-vous d'ajouter l'option noauto dans les entrées fstab. Ajoutez aussi les
+entrées suivantes dans /mnt/loop1/etc/fstab pour vous aider à monter notre
+disquette et l'image ram.</para>
 <para><screen>/dev/ram0       /               ext2    defaults
 /dev/fd0        /               ext2    defaults</screen></para>
 
-<para>Next, we will install <ulink url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox</ulink> onto the image.  Busybox incorporates many of the *nix functions into a single small executable file.</para>
+<para>Ensuite, nous installerons <ulink
+url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox</ulink>
+sur l'image. Busybox intègre un grand nombre des fonctions *nix dans un seul
+petit exécutable.</para>
+
 <screen><userinput>
 tar -xzvf busybox-0.60.4.tar.gz
 cd busybox-0.60.4
@@ -73,20 +81,19 @@ make &&
 make PREFIX=/mnt/loop1 install
 </userinput></screen>
 
-
 <screen><userinput>
 cp -ax /var/utmp /mnt/loop1/var
 mkdir /mnt/loop1/var/log
 </userinput></screen>
-<para>
-Also, keeping in mind your space limitations, copy any other binaries and libraries you 
-need to the image.  Use the <userinput>ldd</userinput> command to 
-see which libraries you will need to copy over for any executables.
-</para>
-<para>
-Now, since I use devfs to create devices on the fly and free up precious
-inodes on the floppy, we'll also install devfsd to facilitate the
-devices that busybox expects to find.</para>
+
+<para>Conservez aussi en tête vos limitations en espace disque, copiez tous les
+autres binaires et bibliothèques, dont vous avez besoin, sur l'image. Utilisez
+la commande <userinput>ldd</userinput> sur chaque exécutable pour voir quelles
+bibliothèques devront être copiées.</para>
+
+<para>Maintenant, comme j'utilise devfs pour créer les périphériques au vol et
+libérer ainsi des précieuses inodes sur la disquettes, nous allons aussi
+installer devfsd pour les périphériques que busybox attends de trouver.</para>
 
 <screen><userinput>
 mv GNUmakefile Makefile
@@ -96,28 +103,28 @@ cp /lib/libc.so.6 /lib/ld-linux.so.2 /lib/libdl.so.2 /tmp
 strip --strip-deb /tmp/ld-linux.so.2 /tmp/libc.so.6 /tmp/libdl.so.2
 mv /tmp/ld-linux.so.2 /tmp/libc.so.6 /tmp/libdl.so.2 /mnt/loop1/lib/	
 </userinput></screen>
-<para>
-We will also need to set up an rc script to handle the devfsd startup.
-Put this in <filename>/mnt/loop1/etc/init.d/rcS</filename></para>
+<para>Nous aurons aussi besoin mettre en place un script rc pour gérer le
+lancement de devfsd. Mettre ceci dans
+<filename>/mnt/loop1/etc/init.d/rcS</filename></para>
 <screen>
 #!/bin/sh
 mount -t devfs devfs /dev
 /sbin/devfsd /dev
 </screen>
 
-<para>
-Next create your compressed root filesystem.  We use -9 with gzip to
-make the smallest possible compressed image.</para>
+<para>Ensuite, créez votre système de fichiers root compressé. Nous utilisons
+l'option -9 avec gzip pour rendre l'image compressé la plus petite possible.
+</para>
 <screen><userinput>
 umount /mnt/loop1 && dd if=/tmp/rfloppy bs=1k | gzip -v9 > rootfs.gz
 </userinput></screen>  
-<screen><userinput>ls -l rootfs.gz</userinput> to make sure it will fit on the diskette.
+<screen><userinput>ls -l rootfs.gz</userinput> pour s'assurer qu'il tient sur
+une disquette.
 </screen>
-<para>
-make a custom kernel that is optimized for size.  Include only those features
-you will need to rescue your system.  no sense in building in support for things
-like xfree86 dri, etc, as most rescues are performed from the command prompt.
-</para>
+<para>Créez un noyau personnalisé optimisé en taille. Incluez seulement les
+fonctionnalités dont vous avez besoin pour dépanner votre système. Il n'y a
+aucun intérêt à construire le support de choses comme xfree86 dri, etc..., car
+la plupart des dépannages est réalisée à la ligne de commande.</para>
 <screen><userinput>dd if=rescueimg of=/dev/floppy/0 bs=1k</userinput>
         429+1 records in
         429+1 records out
@@ -125,14 +132,15 @@ like xfree86 dri, etc, as most rescues are performed from the command prompt.
 <userinput>rdev -R /dev/floppy/0 0</userinput>
 </screen>
 
-<para>In this example the rescueimage(KERNEL) was 429+1 blocks in size.
-We will remember this for the next command.  We now write the root file
-system right after the kernel on the floppy. by doing 16384+429+1=
-16814 </para>
+<para>Dans cet exemple, l'image de dépannage (NOYAU) est de 429+1 blocs de
+taille. Nous nous en rappelerons pour la commande suivante. Nous allons
+maintenant écrire le système de fichiers root juste après le noyau sur la
+disquette en faisant 16384+429+1=16814 </para>
 <screen><userinput>rdev -r /dev/floppy/0 16738</userinput></screen>
 
 
 <screen><userinput>dd if=rootfs.gz of=/dev/floppy/0 bs=1k seek=430</userinput></screen>
-<para>In this command we use seek to find the end of the kernel  (429+1) and write the root file system to the floppy.
-</para>
+
+<para>Dans cette commande, nous utilisons seek pour rechercher la fin du noyau
+(429+1) et écrire le système de fichiers root sur la disquette.</para>
 </sect1>	
