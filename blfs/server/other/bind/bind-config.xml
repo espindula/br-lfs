@@ -16,8 +16,8 @@ répertoire <envar>HOME</envar> de l'utilisateur named.</para>
 
 <para>Tout d'abord, nous créons l'utilisateur et le groupe non privilégiés named:</para>
 
-<screen><userinput><command>groupadd -g 200 named &amp;&amp;
-useradd -m -g named -u 200 -s /bin/false named</command></userinput></screen>
+<screen><userinput><command>groupadd named &amp;&amp;
+useradd -m -g named -s /bin/false named</command></userinput></screen>
 
 <para>Ensuite nous configurons quelques fichiers, répertoires et périphériques
 nécessaires à <application><acronym>BIND</acronym></application>:</para>
@@ -46,7 +46,7 @@ lira l'emplacement des fichiers de zone, les serveurs de nom racines et les clés
  };
  key "rndc_key" {
      algorithm hmac-md5;
-     secret "c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K";
+     secret "<replaceable>[c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K]</replaceable>";
  };
  zone "." {
      type hint;
@@ -108,8 +108,9 @@ M.ROOT-SERVERS.NET.     6D  IN      A       202.12.27.33
 
 <para>Le fichier <filename>root.hints</filename> est une liste des serveurs de
 nom racines. Ce fichier doit être mis à jour périodiquement avec l'outil
-<command>dig</command>. Consultez le manuel de référence de l'administrateur
-<application><acronym>BIND</acronym></application> 9 pour plus de détails.
+<command>dig</command>. Consultez le <ulink
+url="http://www.bind9.net/Bv9ARM.html">manuel de référence de l'administrateur
+<application><acronym>BIND</acronym></application> 9</ulink> pour plus de détails.
 </para>
 
 <para>Créez <filename>rndc.conf</filename> avec les commandes suivantes:</para>
@@ -118,7 +119,7 @@ nom racines. Ce fichier doit être mis à jour périodiquement avec l'outil
 key rndc_key {
 algorithm "hmac-md5";
     secret
-    "c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K";
+    "<replaceable>[c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K]</replaceable>";
     };
 options {
     default-server localhost;
@@ -135,66 +136,21 @@ contrôler les opérations de named avec l'outil <command>rndc</command>.
 
 <screen><userinput><command>cp /etc/resolv.conf /etc/resolv.conf.bak &amp;&amp;
 cat &gt; /etc/resolv.conf &lt;&lt; "EOF"</command>
-search yourdomain.com
+search <replaceable>[yourdomain.com]</replaceable>
 nameserver 127.0.0.1
 <command>EOF</command></userinput></screen>
 
-<para>Indiquez les permissions sur la prison chroot avec la commande suivante:
+<para>Indiquez les droits sur la prison chroot avec la commande suivante:
 </para>
 <screen><userinput><command>chown -R named.named /home/named</command></userinput></screen>
 
-<para>Créez le script de démarrage <command>bind</command>:</para>
+<para>Pour lancer le serveur DNS au démarrage, installez le script d'initialisation <filename>/etc/rc.d/init.d/bind</filename> inclus dans le paquetage
+<xref linkend="intro-important-bootscripts"/>.</para>
 
-<screen><userinput><command>cat &gt; /etc/rc.d/init.d/bind &lt;&lt; "EOF"</command>
-#!/bin/bash
-# Début $rc_base/init.d/bind
-# Basé sur le script sysklogd de LFS-3.1 et précédents.
-# Réécrit par Gerard Beekmans  - gerard@linuxfromscratch.org
-source /etc/sysconfig/rc
-source $rc_functions
-case "$1" in
-	start)
-		echo "Starting named..."
-		loadproc /usr/sbin/named -u named -t /home/named -c \
-		        /etc/named.conf
-		;;
-	stop)
-		echo "Stopping named..."
-		killproc /usr/sbin/named
-		;;
-	restart)
-		$0 stop
-		sleep 1
-		$0 start
-		;;
-   reload)
-                echo "Reloading named..."
-                /usr/sbin/rndc -c /etc/rndc.conf reload
-                ;;
-			       		
-	status)
-		statusproc /usr/sbin/named
-		;;
-	*)
-		echo "Usage: $0 {start|stop|restart|status}"
-		exit 1
-		;;
-esac
-# Fin $rc_base/init.d/bind
-<command>EOF</command></userinput></screen>
+<screen><userinput><command>make install-bind</command></userinput></screen>
 
-<para>Ajoutez les liens symboliques des niveaux d'exécution:</para>
-
-<para><screen><userinput>chmod 754 /etc/rc.d/init.d/bind &amp;&amp;
-ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc0.d/K90bind &amp;&amp;
-ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc1.d/K90bind &amp;&amp;
-ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc2.d/K90bind &amp;&amp;
-ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc3.d/S90bind &amp;&amp;
-ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc4.d/S90bind &amp;&amp;
-ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc5.d/S90bind &amp;&amp;
-ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc6.d/K90bind</userinput></screen></para>
-
-<para>Alors, lancez <application><acronym>BIND</acronym></application> avec le nouveau script de démarrage: </para>
+<para>Maintenant, lancez <application><acronym>BIND</acronym></application> avec
+le nouveau script de démarrage:</para>
 
 <screen><userinput><command>/etc/rc.d/init.d/bind start</command></userinput></screen>
 
@@ -202,14 +158,15 @@ ln -s  /etc/rc.d/init.d/bind /etc/rc.d/rc6.d/K90bind</userinput></screen></para>
 
 <sect3><title>Tester <application><acronym>BIND</acronym></application></title>
 
-<para>Testez la nouvelle installation de BIND 9. Tout d'abord, recherchez
-l'adresse locale de l'hote avec <command>dig</command>:</para>
+<para>Testez la nouvelle installation de
+<application><acronym>BIND</acronym></application> 9. Tout d'abord, recherchez
+l'adresse locale de l'hôte avec <command>dig</command>:</para>
 
 <screen><userinput><command>dig -x 127.0.0.1</command></userinput></screen>
 
 <para>Maintenant, essayez la recherche de noms externes, en prenant note de la
 différence de vitesse dans des recherches répétées grace au cache. Lancez la
-commande dig deux fois sur la meme adresse:</para>
+commande dig deux fois sur la même adresse&nbsp;:</para>
 
 <screen><userinput><command>dig beyond.linuxfromscratch.org &amp;&amp;
 dig beyond.linuxfromscratch.org</command></userinput></screen>
@@ -217,7 +174,8 @@ dig beyond.linuxfromscratch.org</command></userinput></screen>
 <para>Vous pouvez voir des résultats pratiquement instantanés avec des recherches
 cachées de named. Consultez
 <filename>bind-&bind-version;/doc/arm/Bv9ARM.html</filename>, le manuel
-de référence de l'administrateur de BIND pour plus d'options de configurations.
+de référence de l'administrateur de <application><acronym>BIND</acronym></application>
+pour plus d'options de configurations.
 </para></sect3>
 </sect2>
 

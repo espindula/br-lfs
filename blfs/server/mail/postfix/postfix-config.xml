@@ -9,7 +9,7 @@
 
 <sect3><title>Informations de configuration</title>
 
-<screen><userinput><command>cat &gt; /etc/aliases &lt;&lt; "EOF"</command>
+<screen><userinput><command>cat &gt;&gt; /etc/aliases &lt;&lt; "EOF"</command>
 # Début /etc/aliases
 
 MAILER-DAEMON:    postmaster
@@ -19,7 +19,12 @@ root:             LOGIN
 # Fin /etc/aliases
 <command>EOF</command></userinput></screen>
 
-<para>Le fichier <filename>/etc/aliases</filename> qui vient juste d'être créé,
+<note><para>Pour protéger le fichier <filename>/etc/aliases</filename> s'il
+existe, nous allons lui ajouter nos alias s'il existe. Ce fichier devra être
+vérifié et les alias dupliqués devront être supprimés.</para></note>
+
+<para>Le fichier <filename>/etc/aliases</filename> qui vient juste d'être créé
+ou à qui nous venons d'ajouter des informations,
 le <filename>main.cf</filename> et le <filename>master.cf</filename> doivent
 être personnalisés pour votre système. Le fichier <filename>aliases</filename> a
 besoin de connaître l'identité de votre login non-root pour que les messages
@@ -32,75 +37,23 @@ qualifié par <replaceable>[localhost.localdomain]</replaceable>. Vous trouverez
 le fichier <filename>main.cf</filename> auto-documenté, donc chargez-le à partir
 de votre éditeur pour réaliser les changements dont vous avez besoin.</para>
 
-<screen><userinput><command>cp /etc/aliases /etc/aliases.bak
-cp /etc/postfix/main.cf /etc/postfix/main.cf.bak
-cp /etc/postfix/master.cf /etc/postfix/master.cf.bak
-sed "s/LOGIN/<replaceable>[user]</replaceable>/" /etc/aliases.bak > /etc/aliases
+<screen><userinput><command>cp /etc/aliases /etc/aliases.bak &amp;&amp;
+cp /etc/postfix/main.cf /etc/postfix/main.cf.bak &amp;&amp;
+sed "s/LOGIN/<replaceable>[user]</replaceable>/" /etc/aliases.bak > /etc/aliases &amp;&amp;
 sed "s/#myhostname = host.domain.tld/myhostname = \ 
 	<replaceable>[localhost.localdomain]</replaceable>/" \
-	/etc/postfix/main.cf.bak > /etc/postfix/main.cf
-/usr/bin/newaliases
+	/etc/postfix/main.cf.bak > /etc/postfix/main.cf &amp;&amp;
+/usr/bin/newaliases &amp;&amp;
 /usr/sbin/postfix start</command></userinput></screen></sect3>
 
 <sect3><title>Script de démarrage Postfix</title>
 
-<para>Pour automatiser le lancement de Postfix, utilisez les commandes suivantes
-pour créer le script <filename>init.d</filename>:</para>
+<para>Pour automatiser le lancement de Postfix au démarrage, installez le script
+d'initialisation <filename>/etc/rc.d/init.d/postfix</filename> inclus dans le
+paquetage <xref linkend="intro-important-bootscripts"/>.</para>
 
-<screen><userinput><command>cat &gt; /etc/rc.d/init.d/postfix &lt;&lt; "EOF"</command>
-#!/bin/sh
-# Début $rc_base/init.d/postfix
+<screen><userinput><command>make install-postfix</command></userinput></screen>
 
-# Basé sur le script sysklogd de LFS-3.1 et précédents.
-# Réécrit par Gerard Beekmans  - gerard@linuxfromscratch.org
-
-source /etc/sysconfig/rc
-source $rc_functions
-
-case "$1" in
-
-        start)
-        echo "Starting Postfix..."
-        loadproc postfix start
-        ;;
-
-        stop)
-        echo "Stopping Postfix..."
-        loadproc postfix stop
-        ;;
-		
-        reload)
-        echo "Reloading Postfix..."
-        loadproc postfix reload
-        ;;
-
-        restart)
-        $0 stop
-        sleep 1
-        $0 start
-        ;;
-
-        *)
-        echo "Usage: $0 {start|stop|reload|restart}"
-        exit 1
-        ;;
-esac
-
-# Fin $rc_base/init.d/postfix
-<command>EOF
-chmod 755 /etc/rc.d/init.d/postfix</command></userinput></screen>
-
-<para>Créez les liens symboliques vers ce fichier dans le répertoire rc.d avec
-les commandes suivantes:</para>
-
-<screen><userinput><command>cd /etc/rc.d/init.d &amp;&amp;
-ln -sf ../init.d/postfix ../rc0.d/K25postfix &amp;&amp;
-ln -sf ../init.d/postfix ../rc1.d/K25postfix &amp;&amp;
-ln -sf ../init.d/postfix ../rc2.d/K25postfix &amp;&amp;
-ln -sf ../init.d/postfix ../rc3.d/S35postfix &amp;&amp;
-ln -sf ../init.d/postfix ../rc4.d/S35postfix &amp;&amp;
-ln -sf ../init.d/postfix ../rc5.d/S35postfix &amp;&amp;
-ln -sf ../init.d/postfix ../rc6.d/K25postfix</command></userinput></screen>
 </sect3>
 
 </sect2>
