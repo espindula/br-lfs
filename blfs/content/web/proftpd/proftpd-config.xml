@@ -1,0 +1,128 @@
+<sect2>
+<title>Configuring <application>ProFTPD</application></title>
+
+<sect3><title>Config files</title>
+
+<para><filename>/etc/proftpd.conf</filename></para>
+<para>This is a simple, download-only sample configuration. See the ProFTPD
+documentation in <filename class="directory">/usr/share/doc/proftpd</filename>
+and consult the website at <ulink url="http://www.proftpd.net/"/>
+ for example configurations.</para>
+
+<para><screen><userinput><command>cat &gt; /etc/proftpd.conf &lt;&lt; "EOF"</command>
+# This is a basic ProFTPD configuration file
+# It establishes a single server and a single anonymous login.
+
+ServerName			"ProFTPD Default Installation"
+ServerType			standalone
+DefaultServer			on
+
+# Port 21 is the standard FTP port.
+Port				21
+# Umask 022 is a good standard umask to prevent new dirs and files
+# from being group and world writable.
+Umask				022
+
+# To prevent DoS attacks, set the maximum number of child processes
+# to 30.  If you need to allow more than 30 concurrent connections
+# at once, simply increase this value.  Note that this ONLY works
+# in standalone mode, in inetd mode you should use an inetd server
+# that allows you to limit maximum number of processes per service
+# (such as xinetd)
+MaxInstances			30
+
+# Set the user and group that the server normally runs at.
+User				proftpd
+Group				proftpd
+
+# Normally, we want files to be overwriteable.
+&lt;Directory /*&gt;
+  AllowOverwrite		on
+&lt;/Directory&gt;
+
+# A basic anonymous configuration, no upload directories.
+&lt;Anonymous ~proftpd&gt;
+  User				proftpd
+  Group				proftpd
+  # We want clients to be able to login with "anonymous" as well as "proftpd"
+  UserAlias			anonymous proftpd
+
+  # Limit the maximum number of anonymous logins
+  MaxClients			10
+
+  # We want 'welcome.msg' displayed at login, and '.message' displayed
+  # in each newly chdired directory.
+  DisplayLogin			welcome.msg
+  DisplayFirstChdir		.message
+
+  # Limit WRITE everywhere in the anonymous chroot
+  &lt;Limit WRITE&gt;
+    DenyAll
+  &lt;/Limit&gt;
+&lt;/Anonymous&gt;
+<command>EOF</command></userinput></screen></para></sect3>
+
+
+<sect3><title>proftpd init.d script</title>
+
+<para><screen><userinput><command>cat &gt; /etc/rc.d/init.d/proftp &lt;&lt; "EOF"</command>
+#!/bin/sh
+# Begin $rc_base/init.d/sshd
+
+# Based on sysklogd script from LFS-3.1 and earlier.
+# Rewritten by Gerard Beekmans  - gerard@linuxfromscratch.org
+
+source /etc/sysconfig/rc
+source $rc_functions
+
+case "$1" in
+        start)
+	        echo "Starting FTP Server..."
+	        loadproc /usr/sbin/proftpd
+	        ;;
+
+	stop)
+	        echo "Stopping FTP Server..."
+	        killproc /usr/sbin/proftpd
+	        ;;
+
+	reload)
+	        echo "Reloading FTP Server..."
+	        reloadproc /usr/sbin/proftpd
+	        ;;
+	     
+	restart)
+	        $0 stop
+	        sleep 1
+	        $0 start
+	        ;;
+
+	status)
+	        statusproc /usr/sbin/proftpd
+	        ;;
+
+	*)
+	        echo "Usage: $0 {start|stop|reload|restart|status}"
+	        exit 1
+	        ;;
+esac
+
+# End $rc_base/init.d/sshd
+<command>EOF
+chmod 755 /etc/rc.d/init.d/proftpd</command></userinput></screen></para>
+
+<para>Create the symbolic links to this file in the relevant <filename
+class="directory">rc.d</filename> directories with the following commands:
+<screen><userinput><command>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/proftpd ../rc0.d/K50proftpd &amp;&amp;
+ln -sf ../init.d/proftpd ../rc1.d/K50proftpd &amp;&amp;
+ln -sf ../init.d/proftpd ../rc2.d/K50proftpd &amp;&amp;
+ln -sf ../init.d/proftpd ../rc3.d/S50proftpd &amp;&amp;
+ln -sf ../init.d/proftpd ../rc4.d/S50proftpd &amp;&amp;
+ln -sf ../init.d/proftpd ../rc5.d/S50proftpd &amp;&amp;
+ln -sf ../init.d/proftpd ../rc6.d/K50proftpd</command></userinput></screen></para>
+
+</sect3>
+
+</sect2>
+
