@@ -2,14 +2,53 @@
 <title>Ajuster l'ensemble des outils</title>
 <?dbhtml filename="adjustingtoolchain.html" dir="chapter06"?>
 
-<para><screen><userinput>cd binutils-build
-make -C ld INSTALL=/stage1/bin/install install-data-local
+<para>Maintenant que nous avons compilé tous les outils nécessaires, il est
+temps de réajuster cet ensemble. Nous allons le configurer de façon à ce qu'il
+lie n'importe quel nouveau programme compilé avec la nouvelle Glibc, qui est
+la première chose à compiler au prochain chapitre. De façon basique, ceci est le
+contraire de ce que nous avions fait à l'étape de "verrouillage" au début de ce
+chapitre.</para>
 
-SPECFILE=/stage1/lib/gcc-lib/*/*/specs
+<para>La première chose à faire est d'ajuster les scripts de l'éditeur de liens.
+Pour ceci, nous retenons le répertoire <filename>binutils-build</filename> de la
+seconde passe pour Binutils. Faites ce qui suit:</para>
+
+<para><screen><userinput>cd binutils-build
+make -C ld INSTALL=/stage1/bin/install install-data-local</userinput></screen></para>
+
+<para>Ceci installe les scripts ajustés de l'éditeur de liens. Ceux-ci
+ne contiennent maintenant aucune mention de <filename>/stage1/lib</filename>.
+A partir de maintenant, tout programme compilé sera
+<emphasis>uniquement</emphasis> lié avec les bibliothèques dans
+<filename>/usr/lib</filename> et <filename>/lib</filename>. Le supplémentaire
+<userinput>INSTALL=/stage1/bin/install</userinput> est nécessaire parce que le
+Makefile créé lors de la deuxième passe contient toujours la référence à
+<filename>/usr/bin/install</filename>, que nous n'avons de toute évidence pas
+encore installé.</para>
+
+<para>Vous pouvez maintenant supprimer les répertoires des sources et de
+construction de Binutils.</para>
+
+<para>La prochaine chose à faire est de modifier le fichier specs de GCC de
+façon à ce qu'il pointe vers le nouvel éditeur de liens. Comme précédemment,
+nous utilisons une commande sed pour accomplir ceci:</para>
+
+<para><screen><userinput>CURRENTSPECFILE=/stage1/lib/gcc-lib/*/*/specs
 sed -e 's@/stage1/lib/ld.so.1@/lib/ld.so.1@g' \
-&nbsp;&nbsp;&nbsp;&nbsp;-e 's@/stage1/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' $SPECFILE > XX
-mv XX $SPECFILE
-unset SPECFILE</userinput></screen></para>
+&nbsp;&nbsp;&nbsp;&nbsp;-e 's@/stage1/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' \
+&nbsp;&nbsp;&nbsp;&nbsp;$CURRENTSPECFILE > newspecfile
+mv newspecfile $CURRENTSPECFILE
+unset CURRENTSPECFILE</userinput></screen></para>
+
+<para>Encore une fois, un copier/coller de ce qui se trouve ci-dessus est
+recommendé. Et comme précédemment, ce serait une bonne idée de vérifier les
+scripts de l'éditeur de liens et le fichier specs pour s'assurer que les
+changements souhaités ont réellement eu lieu.</para>
+
+<para>Notez que les scripts de l'éditeur de liens contiendront toujours une
+référence à <filename>/stage1/i686-pc-linux-gnu/lib</filename>. Ceci est
+inévitable mais, heureusement, cela n'est pas un problème. Il n'existe pas de
+bibliothèque à cet endroit comme toutes les bibliothèques temporaires de stage1
+sont situées dans <filename>/stage1/lib</filename>.</para>
 
 </sect1>
-
