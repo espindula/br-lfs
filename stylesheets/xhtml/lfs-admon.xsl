@@ -21,14 +21,14 @@
         <xsl:otherwise>Note</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    <div class="admonition">
+    <div class="{name(.)}">
       <div class ="admonhead">
         <img alt="[{$admon.type}]">
           <xsl:attribute name="src">
             <xsl:call-template name="admon.graphic"/>
           </xsl:attribute>
         </img>
-        <h3 class="{name(.)}">
+        <h3 class="admontitle">
           <xsl:value-of select="$admon.type"/>
           <xsl:if test="title">
             <xsl:text>: </xsl:text>
