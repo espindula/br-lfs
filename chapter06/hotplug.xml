@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+<sect1 id="ch-system-hotplug" role="wrap">
+<title>Hotplug-&hotplug-version;</title>
+<?dbhtml filename="hotplug.html"?>
+
+<indexterm zone="ch-system-hotplug"><primary sortas="a-Hotplug">Hotplug</primary></indexterm>
+
+<sect2 role="package"><title/>
+
+<para>The Hotplug package contains scripts that react upon various changes
+in the kernel state, in particular, addition and removal of hardware. This
+package also detects existing hardware during boot and inserts the relevant
+modules into the running kernel.
+</para>
+<segmentedlist>
+<segtitle>&buildtime;</segtitle>
+<segtitle>&diskspace;</segtitle>
+<seglistitem><seg>0.01 SBU</seg><seg>0.1 MB</seg></seglistitem>
+</segmentedlist>
+
+</sect2>
+
+<sect2 role="installation">
+<title>Installation of Hotplug</title>
+
+<para>
+By default, Hotplug does not output anything in its initscript and places it
+into
+<filename class="directory">/etc/init.d</filename>,
+whereas the place for initscripts in LFS is
+<filename class="directory">/etc/rc.d/init.d</filename>. Apply the patch
+that makes the output of hotplug initscript more verbose and places this
+initscript into the proper directory:
+</para>
+
+<screen><userinput>patch -Np1 -i ../hotplug-&hotplug-version;-cosmetic-2.patch
+</userinput></screen>
+
+<para>
+Apply the patch that avoids bogus dependencies of the hotplug initscript
+upon <application>which</application> and
+<application>usbutils</application> packages:
+</para>
+
+<screen><userinput>patch -Np1 -i ../hotplug-&hotplug-version;-bogus-deps-1.patch
+</userinput></screen>
+
+<para>
+USB coldplugging is somewhat broken in Hotplug by default. Fix this with the
+following patch:
+</para>
+
+<screen><userinput>patch -Np1 -i ../hotplug-&hotplug-version;-device-2.patch
+</userinput></screen>
+
+<para>
+At last, there is an optional patch that adds ISAPNP hardware detection
+capabilities to hotplug. It is not well tested. If you chose to apply it,
+run the following command:
+</para>
+
+<screen><userinput>patch -Np1 -i ../hotplug-&hotplug-version;-isapnp-2.patch
+</userinput></screen>
+
+
+<para>And finally install the hotplug package:</para>
+
+<screen><userinput>make install</userinput></screen>
+
+<para>Make a symbolic link that tells the lfs-bootscripts package to run the
+hotplug initscript after mounting and cleaning filesystems:</para>
+
+<screen><userinput>ln -sf ../init.d/hotplug /etc/rc.d/init.d/S55hotplug</userinput></screen>
+
+<para>
+If you have applied the ISAPNP patch, add some required entries to
+<filename>/etc/modprobe.conf</filename>:</para>
+
+<screen><userinput>cat &gt;&gt;/etc/modprobe.conf &lt;&lt;"EOF"</userinput>
+# Begin /etc/modprobe.conf entries for ISAPNP hardware detection script
+# by Marco d'Itri
+alias pnp:dPNP0511 irtty-sir
+alias pnp:dPNP0700 floppy
+alias pnp:dPNP0800 pcspkr
+alias pnp:dPNP0B00 rtc
+alias pnp:dPNP0303 atkbd
+alias pnp:dPNP0F13 psmouse
+alias pnp:dPNPB02F analog
+# End /etc/modprobe.conf entries for ISAPNP hardware detection script
+<userinput>EOF</userinput></screen>
+
+<para>These entries may become unneded for newer versions of Linux kernel,
+since Marco d'Itri will try to convince developers to put them into the
+corresponding modules themselves.</para>
+
+</sect2>
+
+
+<sect2 id="contents-hotplug" role="content"><title>Contents of Hotplug</title>
+<para></para>
+</sect2>
+
+<variablelist>
+<varlistentry>
+<term id="hotplug"><command>/sbin/hotplug</command></term>
+<listitem>
+<indexterm zone="ch-system-hotplug hotplug"><primary
+sortas="b-hotplug">hotplug</primary></indexterm>
+<para>This script is called by default by Linux kernel when something
+changes in its internal state (e.g. a new device is added or removed).</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term id="hotplug-initscript"><command>hotplug</command> initscript</term>
+<listitem>
+<indexterm zone="ch-system-hotplug hotplug-initscript"><primary
+sortas="d-hotplug-initscript">hotplug</primary></indexterm>
+<para>This script just runs all
+<filename>/etc/hotplug/*.rc</filename> scripts in turn during system
+startup.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term id="hotplug-rc"><command>*.rc</command> files in
+<filename class="directory">/etc/hotplug</filename> directory</term>
+<listitem>
+<para>These scripts are used for cold plugging, i.e. detection and other
+specific actions upon hardware already present during system startup. These
+scripts try to find kernel modules corresponding to your hardware and insert
+them into the running kernel.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term id="hotplug-agent"><command>*.agent</command> files in
+<filename class="directory">/etc/hotplug</filename> directory</term>
+<listitem>
+<para>These scripts are called by <command>/sbin/hotplug</command>
+in response to different types of hotplug events generated by the kernel.
+Their action is to insert corresponding kernel modules and call user-provided
+scripts, if any.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term id="hotplug-functions"><filename>/etc/hotplug/hotplug.functions</filename></term>
+<listitem>
+<para>This file contains common functions used by other scripts in hotplug
+package.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term id="hotplug-blacklist"><filename>/etc/hotplug/blacklist</filename></term>
+<listitem>
+<indexterm zone="ch-system-hotplug hotplug-blacklist"><primary
+sortas="e-/etc/hotplug/blacklist">/etc/hotplug/blacklist</primary></indexterm>
+<para>This file contains the list of modules that should never be
+inserted into the kernel by hotplug scripts.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term id="hotplug-subdirs"><filename class="directory">/etc/hotplug/{pci,usb}</filename></term>
+<listitem>
+<para>These directories are supposed to contain user-written handlers for
+hotplug events.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term id="hotplug-usb.usermap"><filename>/etc/hotplug/usb.usermap</filename></term>
+<listitem>
+<indexterm zone="ch-system-hotplug hotplug-usb.usermap"><primary
+sortas="e-/etc/hotplug/usb.usermap">/etc/hotplug/usb.usermap</primary></indexterm>
+<para>This file contains rules that determine which user-defined handlers to
+call for each USB device, based on its vendor, id and other attributes.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term id="hotplug-hotplug.d"><filename class="directory">/etc/hotplug.d</filename></term>
+<listitem>
+<para>This directory contains programs (or symlinks to them)
+that are interested in receiving all hotplug events. E.g.,
+<application>udev</application> puts its symlink here during installation.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</sect1>
