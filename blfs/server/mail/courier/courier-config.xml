@@ -1,0 +1,290 @@
+<sect2>
+<title>Configurer <application>Courier</application></title>
+
+<sect3><title>Fichier de configuration</title>
+<para><filename>/etc/courier/authmysqlrc</filename></para>
+</sect3>
+
+<sect3><title>Informations de configuration</title>
+
+<para>Faites les modifications suivantes dans ce fichier si vous utilisez
+<application>My<acronym>SQL</acronym></application>:</para>
+<screen><userinput>MYSQL_SERVER            localhost
+MYSQL_USERNAME          courier
+MYSQL_PASSWORD          (your choice) 
+MYSQL_SOCKET            /tmp/mysql.sock
+MYSQL_PORT              3306
+MYSQL_DATABASE          courier-mail
+MYSQL_USER_TABLE        users
+MYSQL_CLEAR_PWFIELD     clear
+DEFAULT DOMAIN          (your domain)
+MYSQL_QUOTA_FIELD       quota</userinput></screen>
+
+
+<para>Si vous utilisez <application>PAM</application>:</para>
+<screen><userinput><command>cat &gt; /etc/pam.d/esmtp &lt;&lt; "EOF</command>
+# Début /etc/pam.d/esmtp
+
+auth            required                pam_unix.so try_first_pass
+account         required                pam_unix.so
+session         required                pam_unix.so
+
+# Fin /etc/pam.d/esmtp
+<command>EOF
+cat &gt; /etc/pam.d/pop3 &lt;&lt; "EOF</command>
+# Début /etc/pam.d/pop3
+
+auth            required                pam_unix.so try_first_pass
+account         required                pam_unix.so
+session         required                pam_unix.so
+
+# Fin /etc/pam.d/pop3
+<command>EOF
+cat &gt; /etc/pam.d/imap &lt;&lt; "EOF</command>
+# Début /etc/pam.d/imap
+
+auth            required                pam_unix.so try_first_pass
+account         required                pam_unix.so
+session         required                pam_unix.so
+
+# Fin /etc/pam.d/imap
+<command>EOF
+cat &gt; /etc/pam.d/webmail &lt;&lt; "EOF</command>
+# Début /etc/pam.d/webmail
+
+auth            required                pam_unix.so try_first_pass
+account         required                pam_unix.so
+session         required                pam_unix.so
+
+# Fin /etc/pam.d/webmail
+<command>EOF</command></userinput></screen>
+
+<para>Cette commande crée la base de données mysql d'authentication:</para>
+
+<screen><userinput><command>mysqladmin -uroot -p<replaceable>[password]</replaceable> create courier-mail</command></userinput></screen>
+
+<para>Cette commande initialise la table users pour la base de données courier-mail:</para>
+
+<screen><userinput><command>mysql -uroot -p<replaceable>[password]</replaceable> courier-mail
+
+        CREATE TABLE users (
+        id                    char(128) DEFAULT '' NOT NULL,
+        crypt                 char(128) DEFAULT '' NOT NULL,
+        clear                 char(128) DEFAULT '' NOT NULL,
+        name                  char(128) DEFAULT '' NOT NULL,
+        uid                   int(10) unsigned DEFAULT '65534' NOT NULL,
+        gid                   int(10) unsigned DEFAULT '65534' NOT NULL,
+        home                  char(255) DEFAULT '' NOT NULL,
+        quota                 char(255) DEFAULT '' NOT NULL,
+        KEY id (id(128))
+        );</command></userinput></screen>
+
+<para>Ceci ajoutera l'utilisateur courier que nous avons spécifié précédemment
+dans le fichier authmysql:</para>
+
+<screen><userinput><command>mysql -uroot -p<replaceable>[password]</replaceable> mysql
+
+grant all privileges on *.* to courier@localhost identified by '<replaceable>[password]</replaceable>' with grant option;</command></userinput></screen>
+
+
+<para><emphasis>Configuration générale pour le courrier</emphasis></para>
+
+<para>Vous aurez besoin de créer les fichiers suivants avec le contenu
+spécifié.</para>
+
+<para><filename>/etc/courier/defaultdomain</filename></para>
+
+<screen><userinput><command>cat &gt; /etc/courier/defaultdomain &lt;&lt; "EOF"</command>
+<replaceable>[votre_domaine]</replaceable>
+<command>EOF</command></userinput></screen>
+
+<para><filename>/etc/courier/me</filename></para>
+
+<screen><userinput><command>cat &gt; /etc/courier/me &lt;&lt; "EOF"</command>
+<replaceable>[servername.votre_domaine]</replaceable>
+<command>EOF</command></userinput></screen>
+
+<para><filename>/etc/courier/locals</filename></para>
+
+<screen><userinput><command>cat &gt; /etc/courier/locals &lt;&lt; "EOF"</command>
+localhost
+<replaceable>[votre_domaine]</replaceable>
+<command>EOF</command></userinput></screen>
+
+<para><filename>/etc/courier/esmtpacceptmailfor.dir/system</filename></para>
+
+<screen><userinput><command>cat &gt;/etc/courier/esmtpacceptmailfor.dir/system &lt;&lt; "EOF"</command>
+localhost
+<replaceable>[votre_domaine]</replaceable>
+<command>EOF</command></userinput></screen>
+
+<para>Vous aurez besoin d'éditer le fichier aliases et de modifier l'entrée
+suivante.</para>
+
+<para><filename>/etc/courier/aliases/system</filename></para>
+
+<screen><userinput>postmaster: <replaceable>[your administrator email]</replaceable></userinput></screen>
+
+<para>Si vous voulez empêcher l'accès à quelques hôtes pour envoyer des
+courriers, vous devrez éditer <filename>/etc/courier/smtpaccess/default</filename>.</para>
+
+<para>Après avoir terminé les étapes ci-dessus, vous devrez lancer les commandes
+suivantes:</para>
+
+<screen><userinput><command>makesmtpaccess
+makehosteddomains
+makealiases</command></userinput></screen>
+
+<para><emphasis>Configuration <acronym>SMTP</acronym>/<acronym>SMTMP</acronym>-<acronym>SSL
+</acronym></emphasis></para>
+
+<para>Cette section activera le serveur <acronym>SMTP</acronym> de Courier</para>
+
+<para><filename>/etc/courier/esmtpd</filename></para>
+
+<screen><userinput>ESMTPDSTART=YES</userinput></screen>
+
+<para><filename>/etc/courier/esmtpd-ssl</filename></para>
+
+<screen><userinput>ESMTPDSSLSTART=YES</userinput></screen>
+
+<para><emphasis>Configuration<acronym>POP</acronym>3/<acronym>POP</acronym>3-<acronym>SSL
+</acronym></emphasis></para>
+
+<para>Cette section activera le serveur <acronym>POP</acronym>3 de Courier</para>
+
+
+<para><filename>/etc/courier/pop3d</filename></para>
+
+<screen><userinput>POP3DSTART=YES</userinput></screen>
+
+<para><filename>/etc/courier/pop3d-ssl</filename></para>
+
+<screen><userinput>POP3DSLLSTART=YES</userinput></screen>
+
+<para><emphasis>Configuration <acronym>IMAP</acronym>/<acronym>IMAP</acronym>-<acronym>SSL
+</acronym></emphasis></para>
+
+<para>Cette section activera le serveur <acronym>IMAP</acronym> de Courier</para>
+
+<para><filename>/etc/courier/imapd</filename></para>
+
+
+<screen><userinput>IMAPDSTART=YES</userinput></screen>
+
+<para><filename>/etc/courierd/imapd-ssl</filename></para>
+
+<screen><userinput>IMAPDSSLSTART=YES</userinput></screen>
+
+<para><emphasis>Création des répertoires de courrier des utilisateurs système</emphasis></para>
+
+
+<para>Cette section expliquera comment créer les répertoires MailDirs de vos
+utilisateurs système.</para>
+
+<screen><userinput><command>cd /home/<replaceable>[username]</replaceable>
+maildirmake Maildir
+chown <replaceable>[username]</replaceable>.<replaceable>[username]</replaceable> Maildir -R</command></userinput></screen>
+
+<para><emphasis>Configuration pour les utilisateurs virtuels</emphasis></para>
+
+<para>Cette section expliquera comment configurer Maildir pour vos utilisateurs
+virtuels.</para>
+
+<screen><userinput><command>echo "vmailman:x:9000:9000:Virtual Mailman:/home/vmailman:/bin/bash" &gt;&gt; /etc/passwd
+echo "vmailman:x:9000:" &gt;&gt; /etc/group</command></userinput></screen>
+
+<para>Maintenant, configurons maildir pour ces utilisateurs virtuels.</para>
+
+<screen><userinput><command>cd /home/vmailman
+mkdir <replaceable>[virtual_user]</replaceable>
+cd <replaceable>[virtual_user]</replaceable>
+maildirmake Maildir
+chown vmailman.vmailman Maildir -R</command></userinput></screen>
+
+<para>Ajoutez l'utilisateur virtuel dans la base de données
+<application>My<acronym>SQL</acronym></application>. Vous devez entrer au
+moins une version du mot de passe soit en clair soit crypté.</para>
+
+<screen><userinput><command>mysql -ucourier -p<replaceable>[password]</replaceable> courier-mail
+
+insert into users values('<replaceable>[virtual_users]</replaceable>@<replaceable>[domain.com]</replaceable>,
+'<replaceable>[encrypted password or blank]</replaceable>','<replaceable>[clear text password or blank]</replaceable>',
+'<replaceable>[User's Name]</replaceable>',9000,9000,'<replaceable>[location of Maildir]</replaceable>','<replaceable>[Quota in Bytes']</replaceable>);</command></userinput></screen>
+
+<para>exemple</para>
+
+<screen><userinput>insert into users values ('blfsuser@linuxfromscratch.org','
+','password','BLFS User',9000,9000,'/home/vmailman/blfsuser','');</userinput></screen>
+
+<para><emphasis>Configuration pour le Webmail</emphasis></para>
+
+<para>Cette section expliquera comment configurer le système webmail de Courier.
+</para>
+
+<para>Vous avez besoin de copier le fichier webmail de
+<filename>/usr/sbin/courier/webmail/webmail</filename> dans le répertoire
+<filename>cgi-bin</filename> de votre serveur <application>Apache</application>.
+</para>
+
+<screen><userinput><command>cp -a /usr/sbin/courier/webmail/webmail /var/www/cgi-bin</command></userinput></screen>
+
+<para>Vous aurez ensuite besoin de copier les images dans un sous-répertoire du
+répertoire <filename>htdocs</filename> de votre serveur
+<application>Apache</application>. Le répertoire nécessite d'être nommé
+<filename>webmail</filename> ou vous avez besoin de le spécifier lors de la
+phase du configure avec <command>--enable-imageurl=/url</command>.</para>
+
+<screen><userinput><command>cp -a /usr/share/courier/sqwebmail/images /var/www/htdocs/webmail</command></userinput></screen>
+<para><emphasis>Configuration du webmail</emphasis></para>
+
+<para>Cette section expliquera comment installer le système d'administration web
+de Courier.</para>
+
+<para>Vous avez besoin de copier le fichier <filename>webadmin</filename> de
+<filename class="directory">/usr/sbin/courier/webmail/webmin</filename>
+dans le répertoire <filename class="directory">cgi-bin</filename> de votre
+serveur <application>Apache</application>.</para>
+
+<screen><userinput><command>cp -a /usr/sbin/courier/webmail/webadmin /var/www/cgi-bin</command></userinput></screen>
+
+<para><filename>/etc/courier/webadmin/password</filename></para>
+
+<screen><userinput><command>cat &gt; /etc/courier/webadmin/password &lt;&lt; "EOF"</command>
+<replaceable>[password]</replaceable>
+<command>EOF</command></userinput></screen>
+
+<para>Si vous n'utilisez pas <acronym>SSL</acronym> sur votre serveur
+<application>Apache</application>, vous aurez besoin d'ajouter
+<filename>/etc/courier/webadmin/unsecureok</filename>, de façon à
+pouvoir utiliser l'outil d'administration web.</para>
+
+<screen><userinput><command>touch /etc/courier/webadmin/unsecureok</command></userinput></screen>
+</sect3>
+
+<sect3><title>Script de démarrage Courier</title>
+
+<para>Le script de démarrage de <application>Courier</application> est le plus
+facile à utiliser. Il créera automatiquement les fichiers de données manquants
+et les certificats <acronym>SSL</acronym> s'ils n'existent pas. Pour installer
+le fichier init.d pour <application>Courier</application>, vous aurez besoin
+d'utiliser les commandes suivantes:</para>
+
+<screen><userinput><command>cp /usr/src/courier-&courier-version;/courier.sysvinit /etc/rc.d/init.d/courier &amp;&amp;
+chmod 755 /etc/rc.d/init.d/courier</command></userinput></screen>
+
+<para>Créez les liens symboliques vers ce fichier dans les répertoires
+<filename>rc.d</filename> adéquats avec les commandes suivantes:</para>
+
+<screen><userinput><command>cd /etc/rc.d/init.d &amp;&amp;
+ln -sf ../init.d/courier ../rc0.d/K25courier &amp;&amp;
+ln -sf ../init.d/courier ../rc1.d/K25courier &amp;&amp;
+ln -sf ../init.d/courier ../rc2.d/K25courier &amp;&amp;
+ln -sf ../init.d/courier ../rc3.d/S35courier &amp;&amp;
+ln -sf ../init.d/courier ../rc4.d/S35courier &amp;&amp;
+ln -sf ../init.d/courier ../rc5.d/S35courier &amp;&amp;
+ln -sf ../init.d/courier ../rc6.d/K25courier</command></userinput></screen>
+
+</sect3>
+</sect2>
+
