@@ -30,10 +30,9 @@ Corrigez cette petite erreur ennuyante:</para>
 <para><screen><userinput>mkdir /tools/etc
 touch /tools/etc/ld.so.conf</userinput></screen></para>
 
-<para>De même, Glibc a un problème subtile lorsqu'il est compilé avec GCC 3.3.1.
+<para>De même, Glibc a un problème subtil lorsqu'il est compilé avec GCC 3.3.1.
 Appliquez le correctif suivant pour corriger cela:</para>
-<para><screen><userinput>patch -Np1 -i ../glibc-2.3.2-sscanf-1.patch
-</userinput></screen></para>
+<para><screen><userinput>patch -Np1 -i ../glibc-&glibc-sscanf-patch-version;.patch</userinput></screen></para>
 
 <para>La documentation de Glibc recommende de construire le package en dehors
 du répertoire des sources, dans un répertoire séparé et dédié à cela:</para>
@@ -73,31 +72,79 @@ assez bizarrement insiste pour lier de nouveau les bibliothèques de l'hôte
 (libgd, libpng, libz, et ainsi de suite).</para></listitem>
 </itemizedlist>
 
-<para>Durant cette étape, vous verrez le message d'avertissement suivant:</para>
+<para>Durant cette étape, vous pourrez apercevoir le message d'avertissement
+suivant:</para>
 
 <blockquote><screen>configure: WARNING:
-*** These auxiliary programs are missing or incompatible versions: autoconf
+*** These auxiliary programs are missing or incompatible versions: msgfmt
 *** some features will be disabled.
 *** Check the INSTALL file for required versions.</screen></blockquote>
 
-<para>Le programme <filename>autoconf</filename> manquant ou incompatible est
-sans risque et ne cause pas de soucis.</para>
+<para>Le programme <filename>msgfmt</filename>, manquant ou incompatible, est
+généralement sans risque, mais beaucoup de personnes croient qu'il peut être la
+cause de problèmes lors de l'exécution de la suite de tests.</para>
 
-<para>Continuez avec la compilation du package:</para>
+<para>Compilez le package:</para>
 
-<para><screen><userinput>make
-make check
-make install</userinput></screen></para>
+<para><screen><userinput>make</userinput></screen></para>
 
-<para>Le processus make check de glibc est hautement dépendant de certaines
-fonctions sur votre système d'exploitation hôte. La plus commune est un hôte qui
-échoue lors du montage d'un système de fichiers tmpfs sur /dev/shm, qui fera
-que plusieurs tests de glibc pourraient échouer.</para>
+<para>Lancez la suite de tests:</para>
 
-<para>Les <quote>locales</quote> (utilisées par Glibc pour que votre système
-Linux puisse parler une autre langue) n'ont pas été installées lorsque vous
-avez lancé la commande précédente, donc vous devez le faire vous-même
-maintenant:</para>
+<para><screen><userinput>make check</userinput></screen></para>
+
+<para>La suite de tests de Glibc dépend grandement de certaines fonctions de
+votre système hôte. De plus, dans le chapitre 5, quelques tests peuvent être
+affectés de mauvaise façon par des outils existants ou des problèmes
+d'environnement du système hôte. Bien sûr, cela ne sera pas un problème lorsque
+nous lancerons la suite de tests à partir de l'environnement chroot du chapitre
+6. En général, la suite de tests de Glibc devrait toujours passer. Néanmoins,
+comme indiqué ci-dessus, certains problèmes sont inévitables sous certaines
+conditions. Voici une liste des problèmes les plus communs dont nous sommes au
+courant:</para>
+
+<itemizedlist>
+<listitem><para>Les tests math échouent parfois lorsqu'ils sont lancés sur un
+système dont le processeur n'est pas une version réelle Intel ou AMD. Certaines
+optimisations sont connues pour être un facteur important dans ce cas.
+</para></listitem>
+
+<listitem><para>Le test gettext échoue parfois dû à des problèmes avec le
+système hôte. Les raisons exactes ne sont pas encore claires.</para></listitem>
+
+<listitem><para>Le test atime échoue parfois lorsque la partition LFS est montée
+avec l'option noatime ou à cause d'autres soucis avec les systèmes de fichiers.
+</para></listitem>
+
+<listitem><para>En général, lors d'une exécution sur du matériel lent, certains
+tests pourraient échouer à cause de délais de temps d'exécution écoulés.
+</para></listitem>
+
+<listitem><para>Le test shm pourrait échouer sous certaines circonstances où le
+système hôte ferait fonctionner le système de fichiers devfs mais sans avoir le
+système de fichiers tmpfs monté sur /dev/shm, ceci à cause d'un manque de
+support de tmpfs dans le noyau.</para></listitem>
+</itemizedlist>
+
+<para>En résumé, ne vous inquiétez pas trop si vous voyez des échecs de la suite
+de tests de Glibc au chapitre 5. Glibc au chapitre 6 est celui que nous
+utiliserons à la fin, donc cela doit être celui qui réussit les tests. Mais,
+s'il-vous-plaît, gardez en tête que même lors du chapitre 6 peut survenir des
+échecs, lors du test mathématique par exemple. Si cela arrive, notez l'échec et
+continuer en relançant <userinput>make check</userinput>. La suite de tests
+devrait recommencer là où elle s'était arrêtée. Vous pouvez empêcher cette
+séquence en lançant <userinput>make -k check</userinput>. Mais en faisant cela,
+assurez-vous de tracer la sortie de façon à pouvoir examiner le fichier de
+traces et trouver ainsi le nombre d'échecs.</para>
+
+<para>Maintenant, installez le package:</para>
+
+<para><screen><userinput>make install</userinput></screen></para>
+
+<para>Différents pays et cultures ont différentes conventions sur la façon de
+communiquer. Ces conventions vont des plus simples, telles que le format
+de représentation des dates et heures, aux plus complexes, telles que le langage
+parlé. Cette "internationalisation" fonctionne au moyen des locales. Nous
+installerons les locales Glibc maintenant:</para>
 
 <para><screen><userinput>make localedata/install-locales</userinput></screen></para>
 

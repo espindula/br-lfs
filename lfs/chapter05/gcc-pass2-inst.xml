@@ -16,7 +16,7 @@ hôte est configuré correctement en réalisant un simple test.</para>
 
 <para>Si vous récupérez le message:</para>
 
-<para><screen>The system has no more ptys.  Ask your system administrator to create more.</screen></para>
+<blockquote><screen>The system has no more ptys.  Ask your system administrator to create more.</screen></blockquote>
 
 <para>Votre distribution hôte n'est pas configuré avec des PTY opérationnels.
 Dans ce cas, il ne sert à rien de lancer les suites de tests pour GCC et
@@ -35,20 +35,21 @@ dans un seul et même répertoire. Ils construiront un seul sous-répertoire
 <para>Tout d'abord, corrigez un problème et faites un ajustement essentiel:
 </para>
 
-<para><screen><userinput>patch -Np1 -i ../gcc-&gcc-version;-no_fixincludes-2.patch
-patch -Np1 -i ../gcc-&gcc-specs-version;.patch</userinput></screen></para>
+<para><screen><userinput>patch -Np1 -i ../gcc-&gcc-nofixincludes-patch-version;.patch
+patch -Np1 -i ../gcc-&gcc-specs-patch-version;.patch</userinput></screen></para>
 
 <para>Le premier correctif désactive le script "fixincludes" de GCC. Nous avions
 mentionné ceci brièvement précédemment, mais une explication un peu plus
 complète de la procédure fixincludes est apportée ici. Dans des circonstances
 normales le script fixincludes de GCC scanne votre système pour les fichiers
-d'entête devant être corrigés. Il pourrait trouver que les fichiers d'entête de
-Glibc su votre système hôte ont besoin d'être corrigés, les corriger et les
-placer dans le répertoire include privé du GCC. Puis, plus tard lors du
-chapitre 6, après avoir installé la nouvelle Glibc, ce répertoire include
-privé sera recherché avant le répertoire système include, ce qui aboutirait à
-ce que GCC trouve les entêtes corrigés du système hôte, qui ne correspondraient
-certainement pas à la version de Glibc utilisée dans le système LFS.</para>
+d'entête devant être corrigés. Il pourrait trouver que certains fichiers
+d'entête de Glibc su votre système hôte ont besoin d'être corrigés, les
+corriger et les placer dans le répertoire include privé du GCC. Puis, plus tard
+lors du chapitre 6, après avoir installé la nouvelle Glibc, ce répertoire
+include privé sera recherché avant le répertoire système include, ce qui
+aboutirait à ce que GCC trouve les entêtes corrigés du système hôte, qui ne
+correspondraient certainement pas à la version de Glibc utilisée dans le
+système LFS.</para>
 
 <para>Le dernier correctif modifie l'emplacement par défaut de l'éditeur de
 liens de GCC (ld).  Corriger maintenant plutôt qu'ajuster le fichier specs
@@ -72,6 +73,35 @@ défaut.</para>
 &nbsp;&nbsp;&nbsp;&nbsp;--enable-clocale=gnu --enable-shared \
 &nbsp;&nbsp;&nbsp;&nbsp;--enable-threads=posix --enable-__cxa_atexit \
 &nbsp;&nbsp;&nbsp;&nbsp;--enable-languages=c,c++</userinput></screen></para>
+
+<para>La signification des nouvelles options de configure sont:</para>
+
+<itemizedlist>
+<listitem><para><userinput>--enable-threads=posix</userinput>: Ceci
+active la gestion des exceptions en C++ pour le code "multi-threadé".
+</para></listitem>
+
+<listitem><para><userinput>--enable-__cxa_atexit</userinput>: Cette option
+active l'utilisation de __cxa_atexit, plutôt que atexit, pour enregistrer les
+destructeurs C++ des variables statiques locales et des objets globaux, et est
+essentiel pour se conformer complètement aux standards des destructeurs. Il
+affecte aussi l'API C++ et donc résulte en des bibliothèques partagées et
+programmes C++ interopérables avec les autres distributions Linux.
+</para></listitem>
+
+<listitem><para><userinput>--enable-clocale=gnu</userinput>: Cette option nous
+assure que le modèle correct de locale est sélectionné pour les bibliothèques
+C++ dans toutes les circonstances. Si le script configure trouve la locale
+<emphasis>de_DE</emphasis> installée, il sélectionnera le bon modèle de
+<emphasis>gnu</emphasis>. Néanmoins, les personnes qui n'installent pas la
+locale <emphasis>de_DE</emphasis> prennent le risque de construire des
+bibliothèques C++ incompatible avec ABO à cause du mauvais modèle de locale pour
+le modèle <emphasis>générique</emphasis> sélectionné.</para></listitem>
+
+<listitem><para><userinput>--enable-languages=c,c++</userinput>: Cette option
+est nécessaire pour s'assurer que les deux compilateurs, C et C++, seront
+construit.</para></listitem>
+</itemizedlist>
 
 <para>Compilez le package:</para>
 

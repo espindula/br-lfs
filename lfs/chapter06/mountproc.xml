@@ -3,37 +3,21 @@
 <?dbhtml filename="proc.html" dir="chapter06"?>
 
 <para>Pour que certans programmes fonctionnent correctement, les systèmes
-de fichiers proc et devfs doit être monté et disponible aussi depuis
-l'environnement chrooté. Un système de fichiers peut être monté autant de fois
-et à autant d'emplacements différents que vous le souhaitez. Donc, ce n'est pas
-un problème que ces systèmes de fichiers proc soientt déjà montés sur votre
-système hôte, surtout parce que ce sont des systèmes de fichiers virtuels.
-</para>
+de fichiers <emphasis>proc</emphasis> et <emphasis>devpts</emphasis> doivent
+être disponibles depuis l'environnement chrooté. Un système de fichiers peut
+être monté autant de fois et à autant d'emplacements différents que vous le
+souhaitez. Donc, ce n'est pas un problème que ces systèmes de fichiers proc
+soient déjà montés sur votre système hôte -- surtout parce que ce sont des
+systèmes de fichiers virtuels.</para>
+
+<para>Le système de fichiers <emphasis>proc</emphasis> est le pseudo système de
+fichiers d'informations sur les processus que le noyau utilise pour donner des
+informations sur l'état du système.</para>
 
 <para>Le système de fichiers proc est monté sous <filename class="directory">
 /proc</filename> en lançant la commande suivante.</para>
 
 <para><screen><userinput>mount proc /proc -t proc</userinput></screen></para>
-
-<para>Le système de fichiers devpts est monté sur <filename
-class="directory">/dev/pts</filename> en lançant:</para>
-
-<para><screen><userinput>mount devpts /dev/pts -t devpts</userinput></screen>
-</para>
-
-<para>Si cette commande devait échouer avec une erreur du style:</para>
-
-<blockquote><screen>filesystem devpts not supported by kernel</screen></blockquote>
-
-<para>Cela signifie que votre système hôte ne dispose pas du support de devfs.
-Vous avez deux options à ce moment. Vous pouvez ne pas vous en soucier, dans ce
-cas certains des tests lancés plus tard échoueront, ou vous pouvez utiliser
-la commande suivante à partir d'un terminal ne se trouvant pas dans le chroot
-pour placer le système pts de votre hôte dans votre nouveau système de fichiers
-LFS:</para>
-
-<para><screen><userinput>mount --bind /dev/pts $LFS/dev/pts</userinput></screen>
-</para>
 
 <para>Vous pouvez obtenir des messages d'avertissement de la commande mount,
 tels que:</para>
@@ -46,10 +30,33 @@ installé complètement et que quelques fichiers manquent. Le montage lui-même
 sera fait avec succès et c'est tout ce dont nous avons besoin à ce moment.
 </para>
 
-<para>La dernière erreur ("not enough memory", c'est-à-dire pas assez de
-mémoire) ne se montre pas toujours. Elle dépends de la configuration de votre
-système (telle que la version de Glibc du système hôte, utilisé pour compiler
-le programme mount).</para>
+<para>Le système de fichiers <emphasis>devpts</emphasis> a été mentionné plus
+tôt et est maintenant la façon la plus commune d'implémenter les
+pseudos-terminaux(PTY).</para>
+
+<para>Le système de fichiers devpts est monté sur
+<filename class="directory">/dev/pts</filename> en lançant:</para>
+
+<para><screen><userinput>mount devpts /dev/pts -t devpts</userinput></screen></para>
+
+<para>Si cette commande devait échouer avec une erreur du genre:</para>
+
+<blockquote><screen>filesystem devpts not supported by kernel</screen></blockquote>
+
+<para>La cause probable de ceci est que le noyau de votre système hôte a été
+compilé sans le support du système de fichiers devpts. Vous pouvez vérifier
+quels sont systèmes de fichiers que votre noyau supporte en fouillant dans ses
+entrailles avec une commande telle que
+<userinput>cat /proc/filesystems</userinput>. Si, pour quelque raison que ce
+soit, devpts est affiché ici mais que la commande mount ne fonctionne toujours
+pas, vérifiez une autre variété de systèmes de fichiers appelée
+<emphasis>devfs</emphasis>. Si devfs est affiché, alors nous serons capable de
+contourner le problème en montant le système de fichiers devfs de l'hôte
+au-dessus de la nouvelle structure <filename>/dev</filename> que nous créerons
+plus tar dans la section "Créer les périphériques (Makedev)". Si devfs n'est pas
+affiché, ne vous inquiétez pas car il existe une troisième façon de faire
+fonctionner les PTY dans l'environnement chroot. Nous allons en parler
+brièvement dans la section Makedev.</para>
 
 <para>Rappelez-vous, si pour quelques raisons que ce soit, vous arrêtez de
 travailler sur votre LFS et que vous recommenciez plus tard, il est important
