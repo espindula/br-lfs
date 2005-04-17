@@ -5,8 +5,8 @@
                 version="1.0">
 
   <xsl:import href="lfs-chunked2.xsl"/>
-  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/chunk-common.xsl"/>
-  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/manifest.xsl"/>
+  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.68.1/xhtml/chunk-common.xsl"/>
+  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.68.1/xhtml/manifest.xsl"/>
 
     <!--  From the original chunk.xsl file:
 
@@ -24,7 +24,7 @@
 
     Voila! (Man I hope we can do this better in XSLT 2.0)  -->
 
-  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.67.2/xhtml/profile-chunk-code.xsl"/>
+  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.68.1/xhtml/profile-chunk-code.xsl"/>
 
     <!-- Including our others customized chunks templates -->
   <xsl:include href="xhtml/lfs-legalnotice.xsl"/>

@@ -4,7 +4,7 @@
                 version="1.0">
 
   <!-- Include common profiling stylesheet -->
-  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.67.2/profiling/profile-mode.xsl"/>
+  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.68.1/profiling/profile-mode.xsl"/>
   
   <!-- Generate DocBook instance with correct DOCTYPE -->
   <xsl:output method="xml" 

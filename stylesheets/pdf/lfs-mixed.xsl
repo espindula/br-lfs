@@ -227,7 +227,7 @@
         <xsl:text>&#x2022;   </xsl:text>
         <xsl:apply-templates select="term"/>
       </fo:block>
-      <fo:block margin-left="0.1in" text-align="left">
+      <fo:block margin-left="1.4pc" text-align="left">
         <xsl:apply-templates select="listitem"/>
       </fo:block>
     </xsl:when>

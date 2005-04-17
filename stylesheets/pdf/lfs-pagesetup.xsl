@@ -76,7 +76,7 @@
     <!-- Margins -->
   <xsl:param name="page.margin.inner">0.5in</xsl:param>
   <xsl:param name="page.margin.outer">0.375in</xsl:param>
-  <xsl:param name="title.margin.left">-0.7pc</xsl:param>
+  <xsl:param name="body.start.indent" select="'0.7pc'"/>
   <xsl:attribute-set name="normal.para.spacing">
     <xsl:attribute name="space-before.optimum">0.6em</xsl:attribute>
     <xsl:attribute name="space-before.minimum">0.4em</xsl:attribute>

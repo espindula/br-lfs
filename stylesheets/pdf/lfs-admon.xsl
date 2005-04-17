@@ -59,7 +59,7 @@
               provisional-label-separation="18pt" xsl:use-attribute-sets="list.block.spacing">
         <fo:list-item>
             <fo:list-item-label end-indent="label-end()">
-              <fo:block margin-left="4pt">
+              <fo:block margin-left="18pt">
                 <fo:external-graphic width="auto" height="auto"
                         content-width="{$graphic.width}" >
                   <xsl:attribute name="src">
