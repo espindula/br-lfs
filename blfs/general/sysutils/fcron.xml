@@ -1,13 +1,228 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<sect1 id="fcron" xreflabel="fcron-&fcron-version;">
-<?dbhtml filename="fcron.html"?>
-<title>fcron-&fcron-version;</title>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
 
-&fcron-intro;
-&fcron-inst;
-&fcron-exp;
-&fcron-config;
-&fcron-desc;
+<!ENTITY fcron-download-http "http://fcron.free.fr/archives/fcron-&fcron-version;.src.tar.gz">
+<!ENTITY fcron-download-ftp "ftp://ftp.seul.org/pub/fcron/fcron-&fcron-version;.src.tar.gz">
+<!ENTITY fcron-md5sum "bf39dcef6d0c452f167f5a31a1231e4e">
+<!ENTITY fcron-size "390 KB">
+<!ENTITY fcron-buildsize "3.4 MB">
+<!ENTITY fcron-time "0.10 SBU">
+]>
+
+<sect1 id="fcron" xreflabel="Fcron-&fcron-version;">
+<sect1info>
+<othername>$LastChangedBy: dj $</othername>
+<date>$Date: 2005-06-16 05:57:01 $</date>
+</sect1info>
+<?dbhtml filename="fcron.html"?>
+<title><application>Fcron</application>-&fcron-version;</title>
+<indexterm zone="fcron">
+<primary sortas="a-fcron">fcron</primary></indexterm>
+
+<sect2>
+<title>Introduction to <application>Fcron</application></title>
+
+<para>The <application>Fcron</application> package contains a periodical
+command scheduler which aims at replacing <application>Vixie
+Cron</application>.</para>
+
+<sect3><title>Package information</title>
+<itemizedlist spacing='compact'>
+<listitem><para>Download (HTTP): 
+<ulink url="&fcron-download-http;"/></para></listitem>
+<listitem><para>Download (FTP): 
+<ulink url="&fcron-download-ftp;"/></para></listitem>
+<listitem><para>Download MD5 sum: &fcron-md5sum;</para></listitem>
+<listitem><para>Download size: &fcron-size;</para></listitem>
+<listitem><para>Estimated disk space required: 
+&fcron-buildsize;</para></listitem>
+<listitem><para>Estimated build time: 
+&fcron-time;</para></listitem></itemizedlist>
+</sect3>
+
+<sect3><title><application>Fcron</application> dependencies</title>
+<sect4><title>Optional</title>
+<para><ulink url="../server/mail.html">MTA</ulink>, 
+<xref linkend="Linux_PAM"/>,
+<ulink url="http://www.nsa.gov/selinux/">SELinux</ulink>,
+<xref linkend="docbook-utils"/> and
+<ulink url="../postlfs/editors.html">a text editor</ulink> (default is
+<xref linkend="vim"/>)</para>
+</sect4>
+</sect3>
+
+</sect2>
+
+<sect2>
+<title>Installation of <application>Fcron</application></title>
+
+<para id="fcron-syslog"><application>Fcron</application> uses the cron facility 
+of <command>syslog</command> to log all messages. Since <acronym>LFS</acronym> 
+does not set up this facility in <filename>/etc/syslog.conf</filename>, it 
+needs to be done prior to installing <application>Fcron</application>. This 
+command will append the necessary line to the current 
+<filename>/etc/syslog.conf</filename>:</para>
+<indexterm zone="fcron fcron-syslog">
+<primary sortas="e-etc-syslog.conf">/etc/syslog.conf</primary></indexterm>
+
+<screen><userinput><command>cat &gt;&gt; /etc/syslog.conf &lt;&lt; "EOF"
+# Begin fcron addition to /etc/syslog.conf
+
+cron.* -/var/log/cron.log
+
+# End fcron addition
+EOF</command></userinput></screen>
+
+<para>The configuration file has been modified, so reloading the
+<command>sysklogd</command> daemon will activate the changes.</para>
+
+<screen><userinput><command>/etc/rc.d/init.d/sysklogd reload</command></userinput></screen>
+
+<para>For security reasons, an unprivileged user and group for 
+<application>Fcron</application> should be created:</para>
+
+<screen><userinput><command>groupadd fcron &amp;&amp;
+useradd -d /dev/null -c "Fcron User" -g fcron -s /bin/false fcron</command></userinput></screen>
+
+<para>Install <application>Fcron</application> by running the following 
+commands:</para>
+
+<screen><userinput><command>./configure --without-sendmail --with-answer-all=no &amp;&amp;
+make</command></userinput></screen>
+
+<para>Now, as the root user:</para>
+
+<screen><userinput role='root'><command>make install</command></userinput></screen>
+
+</sect2>
+
+<sect2>
+<title>Command explanations</title>
+
+<para><parameter>--without-sendmail</parameter>: 
+<application>Fcron</application> will use an installed <acronym>MTA</acronym> 
+to email you the results of the <command>fcron</command> script. Omit the 
+switch and use 
+<parameter>--with-sendmail=<replaceable>[/path/to/MTA]</replaceable></parameter> 
+if you wish to utilize this feature.</para>
+
+<para><parameter>--with-answer-all=no</parameter>: After the files are
+installed, the <command>make install</command> script enters into a
+configuration routine.  The first test will be whether to install a boot 
+script in the <filename class="directory">/etc/rc.d/init.d</filename> 
+directory with the appropriate symbolic links in run levels 2, 3, 4, and 5. 
+The second is to stop any current <command>fcron</command> processes and start 
+a new one. Since this is probably your first install and a boot script based 
+upon the <acronym>BLFS</acronym> template is desired, answer 'n' to both 
+tests.</para>
+
+</sect2>
+
+<sect2>
+<title>Configuring <application>Fcron</application></title>
+
+<sect3 id="fcron-config"><title>Config files</title>
+<para><filename>/etc/fcron.conf</filename>,
+<filename>/etc/fcron.allow</filename> and 
+<filename>/etc/fcron.deny</filename></para>
+<indexterm zone="fcron fcron-config">
+<primary sortas="e-etc-fcron.conf">/etc/fcron.conf</primary></indexterm>
+<indexterm zone="fcron fcron-config">
+<primary sortas="e-etc-fcron.allow">/etc/fcron.allow</primary></indexterm>
+<indexterm zone="fcron fcron-config">
+<primary sortas="e-etc-fcron.deny">/etc/fcron.deny</primary></indexterm>
+</sect3>
+
+<sect3><title>Configuration Information</title>
+<para>There are no required changes in any of the config files.
+Configuration information can be found in the man page for
+<filename>fcron.conf</filename>.</para>
+
+<para><command>fcron</command> scripts are written using 
+<command>fcrontab</command>. Refer to the <command>fcrontab</command> man 
+page for proper parameters to address your situation.</para>
+
+<para id="fcron-init">Install the <filename>/etc/rc.d/init.d/fcron</filename> 
+init script from the <xref linkend="intro-important-bootscripts"/> 
+package.</para>
+<indexterm zone="fcron fcron-init">
+<primary sortas="f-fcron">fcron</primary></indexterm>
+
+<screen><userinput><command>make install-fcron</command></userinput></screen>
+
+<para id="fcron-pam">If <application>Linux-<acronym>PAM</acronym></application> 
+is installed, two <acronym>PAM</acronym> configuration files are installed in 
+<filename class='directory'>/etc/pam.d</filename>. Alternatively if 
+<filename class='directory'>/etc/pam.d</filename> is not used, the installation 
+will append two configuration sections to the existing 
+<filename>/etc/pam.conf</filename> file. You should ensure the files match your 
+preferences. Modify them as required to suit your needs.</para>
+<indexterm zone="fcron fcron-pam">
+<primary sortas="e-etc-pam.d">/etc/pam.d/*</primary></indexterm>
+<indexterm zone="fcron fcron-pam">
+<primary sortas="e-etc-pam.conf">/etc/pam.conf</primary></indexterm>
+</sect3>
+
+</sect2>
+
+<sect2>
+<title>Contents</title>
+
+<segmentedlist>
+<segtitle>Installed Programs</segtitle>
+<segtitle>Installed Libraries</segtitle>
+<segtitle>Installed Directories</segtitle>
+
+<seglistitem>
+<seg>fcron, fcrondyn, fcronsighup and fcrontab</seg>
+<seg>None</seg>
+<seg>/usr/share/doc/fcron-&fcron-version; and /var/spool/fcron</seg>
+</seglistitem>
+</segmentedlist>
+
+<variablelist>
+<bridgehead renderas="sect3">Short Descriptions</bridgehead>
+<?dbfo list-presentation="list"?>
+
+<varlistentry id="fcron-prog">
+<term><command>fcron</command></term>
+<listitem><para>is the scheduling daemon.</para>
+<indexterm zone="fcron fcron-prog">
+<primary sortas="b-fcron">fcron</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="fcrondyn">
+<term><command>fcrondyn</command></term>
+<listitem><para>is a user tool intended to interact with a running 
+<command>fcron</command> daemon.</para>
+<indexterm zone="fcron fcrondyn">
+<primary sortas="b-fcrondyn">fcrondyn</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="fcronsighup">
+<term><command>fcronsighup</command></term>
+<listitem><para>instructs <command>fcron</command> to reread the 
+<application>Fcron</application> tables.</para>
+<indexterm zone="fcron fcronsighup">
+<primary sortas="b-fcronsighup">fcronsighup</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="fcrontab">
+<term><command>fcrontab</command></term>
+<listitem><para>is a program used to install, edit, list and remove the 
+tables used by <command>fcron</command>.</para>
+<indexterm zone="fcron fcrontab">
+<primary sortas="b-fcrontab">fcrontab</primary>
+</indexterm></listitem>
+</varlistentry>
+</variablelist>
+
+</sect2>
 
 </sect1>
-
