@@ -1,11 +1,176 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<sect1 id="cvsserver" xreflabel="cvsserver">
-<?dbhtml filename="cvsserver.html"?>
-<title>Exécuter un serveur CVS</title>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
 
-&cvsserver-intro;
-&cvsserver-inst;
-&cvsserver-exp;
+]>
+
+<sect1 id="cvsserver" xreflabel="Running a CVS Server">
+<sect1info>
+<othername>$LastChangedBy: igor $</othername>
+<date>$Date: 2005-06-16 06:11:50 $</date>
+</sect1info>
+<?dbhtml filename="cvsserver.html"?>
+<title>Administrer un serveur CVS</title>
+
+<sect2>
+<title>Administrer un serveur <acronym>CVS</acronym></title>
+
+<para>Cette section décrira comment configurer, administrer et sécuriser un
+serveur <acronym>CVS</acronym>.</para>
+
+<sect3><title>Dépendances du <application>serveur CVS</application></title>
+<sect4><title>Requis</title>
+<para><xref linkend="cvs"/> et <xref linkend="openssh"/></para></sect4>
+</sect3>
+
+</sect2>
+
+<sect2>
+<title>Configurer un serveur <acronym>CVS</acronym>.</title>
+
+<para>Un serveur <acronym>CVS</acronym> sera configuré en utilisant OpenSSH comme
+méthode d'accès distant. Les autres méthodes d'accès, incluant :pserver: et
+:server: ne seront pas utilisées pour les accès en écriture sur le dépôt
+<acronym>CVS</acronym>. La méthode :pserver: envoit les mots de passe en texte
+clair sur le réseau et la méthode :server: n'est pas acceptée dans tous les ports
+<acronym>CVS</acronym>. Des instructions pour un accès anonyme, en lecture seule,
+du <acronym>CVS</acronym> utilisant :pserver: est disponible à la fin de cette
+section.</para>
+
+<para>La configuration du serveur <acronym>CVS</acronym> se fait en quatre
+étapes&nbsp;:</para>
+
+<sect3><title>1. Créez un dépôt.</title>
+<para>Créez un nouveau dépôt <acronym>CVS</acronym> avec les commandes
+suivantes&nbsp;:</para>
+<screen><userinput><command>mkdir /srv/cvsroot &amp;&amp;
+chmod 1777 /srv/cvsroot &amp;&amp;
+export CVSROOT=/srv/cvsroot &amp;&amp;
+cvs init</command></userinput></screen></sect3>
+
+<sect3><title>2. Importez le code source dans le dépôt.</title>
+<para>Importez un module source dans le dépôt en suivant les commandes suivantes,
+lancées à partir d'un compte utilisateur sur la même machine que le dépôt
+<acronym>CVS</acronym>&nbsp;:</para>
+
+<screen><userinput><command>cd <replaceable>[sourcedir]</replaceable> &amp;&amp;
+cvs import -m "<replaceable>[repository test]</replaceable>" <replaceable>[cvstest]</replaceable> <replaceable>[vendortag]</replaceable> <replaceable>[releasetag]</replaceable></command></userinput></screen></sect3>
+
+<sect3><title>3. Vérifiez l'accès local au dépôt.</title>
+<para>Testez l'accès au dépôt <acronym>CVS</acronym> à partir du même compte
+utilisateur avec la commande suivante&nbsp;:</para>
+
+<screen><userinput><command>cvs co cvstest</command></userinput></screen></sect3>
+
+<sect3><title>4. Vérifiez l'accès distant au dépôt.</title>
+<para>Testez l'accès au dépôt <acronym>CVS</acronym> à partir d'une machine
+distante en utilisant un compte utilisateur qui a un accès
+<command>ssh</command> au serveur <acronym>CVS</acronym> avec les commandes
+suivantes&nbsp;:</para>
+<note><para>Remplacez <replaceable>[nomserveur]</replaceable> avec l'adresse
+<acronym>IP</acronym> ou le nom de l'hôte de la machine contenant le dépôt
+<acronym>CVS</acronym>. Le mot de passe shell de l'utilisateur vous sera démandé
+avant que la récupération du <acronym>CVS</acronym> ne se poursuive.</para></note>
+
+
+<screen><userinput><command>export CVS_RSH=/usr/bin/ssh &amp;&amp;
+cvs -d:ext:<replaceable>[nomserveur]</replaceable>:/srv/cvsroot co cvstest</command></userinput></screen></sect3>
+</sect2>
+<sect2>
+<title>Configurer <acronym>CVS</acronym> pour un accès anonyme en lecture seule.</title>
+
+<para><acronym>CVS</acronym> peut être configuré pour accepter un accès anonyme
+en lecture seule en utilisant la méthode :pserver: et en se connectant en tant
+que root après avoir exécuté les commandes suivantes&nbsp;:</para> 
+
+<screen><userinput><command>(grep anonymous /etc/passwd || useradd anonymous -s /bin/false) &amp;&amp;
+echo anonymous: &gt; /srv/cvsroot/CVSROOT/passwd &amp;&amp;
+echo anonymous &gt; /srv/cvsroot/CVSROOT/readers</command></userinput></screen>
+
+<para>Si vous utilisez <command>inetd</command>, la commande suivante ajoutera
+l'entrée dans <filename>/etc/inetd.conf</filename>&nbsp;:</para>
+
+<screen><userinput><command>echo "2401  stream  tcp  nowait  root  /usr/bin/cvs cvs -f \
+    --allow-root=/srv/cvsroot pserver" &gt;&gt; /etc/inetd.conf</command></userinput></screen>
+
+<para>Lancez un <command>killall -HUP inetd</command> pour relire le fichier
+<filename>inetd.conf</filename> modifié.</para>
+
+<para>Si vous utilisez <command>xinetd</command>, la commande suivante ajoutera
+l'entrée pserver dans <filename>/etc/xinetd.conf</filename>&nbsp;:</para>
+
+<screen><userinput><command>cat &gt;&gt; /etc/xinetd.conf &lt;&lt; "EOF"</command>
+     service cvspserver
+     {
+          port        = 2401
+          socket_type = stream
+          protocol    = tcp
+          wait        = no
+          user        = root
+          passenv     = PATH
+          server      = /usr/bin/cvs
+          server_args = -f --allow-root=/srv/cvsroot pserver
+     }
+<command>EOF</command></userinput></screen>
+<para>Lancez un <command>/etc/rc.d/init.d/xinetd reload</command> pour relire
+le fichier <filename>xinetd.conf</filename> modifié.</para>
+
+<para>Tester l'accès anonyme vers le nouveau dépôt requiert un compte sur une
+autre machine pouvant atteindre le serveur <acronym>CVS</acronym> via le réseau.
+Aucun compte sur le dépôt <acronym>CVS</acronym> n'est nécessaire. Pour tester
+l'accès anonyme au dépôt <acronym>CVS</acronym>, connectez-vous sur une autre
+machine en tant qu'utilisateur non privilégié et exécutez la commande
+suivante&nbsp;:
+</para>
+
+<screen><userinput><command>cvs -d:pserver:anonymous@<replaceable>[nomserveur]</replaceable>:/srv/cvsroot co cvstest</command></userinput></screen>
+<note><para>Replace <replaceable>[nomserveur]</replaceable> with the
+<acronym>IP</acronym> address or hostname of the
+<acronym>CVS</acronym> server.</para></note>
+
+</sect2>
+
+<sect2>
+<title>Explications des commandes</title>
+
+<para><command>mkdir /srv/cvsroot</command>&nbsp;: crée le répertoire du dépôt
+<acronym>CVS</acronym>.</para>
+
+<para><command>chmod 1777 /srv/cvsroot</command>&nbsp;: configure les droits
+stiky bit pour <envar>CVSROOT</envar>.</para>
+
+<para><command>export CVSROOT=/srv/cvsroot</command>&nbsp;: spécifie le nouveau
+<envar>CVSROOT</envar> pour toutes les commandes <command>cvs</command>.</para>
+
+<para><command>cvs init</command>&nbsp;: initialise le nouveau dépôt
+<acronym>CVS</acronym>.</para>
+
+<para><command>cvs import -m "repository test" cvstest vendortag
+releasetag</command>&nbsp;: tous les modules de code source doivent être importés
+dans le dépôt <acronym>CVS</acronym> avant utilisation, avec la commande
+<command>cvs import</command>. Le commutateur <userinput>-m</userinput> 
+spécifie une description pour le nouveau module. Le paramètre "cvstest" est le
+nom utilisé pour le module dans toutes les commandes <command>cvs</command> qui
+suivent. Les paramètres "vendortag" et "releasetag" sont utilisés pour mieux
+identifier chaque module <acronym>CVS</acronym> et sont nécessaires qu'ils soient
+utilisés ou non.</para>
+
+<para><command>(grep anonymous /etc/passwd || useradd anonymous -s
+/bin/false)</command>&nbsp;: vérifie l'existence d'un utilisateur anonymous et
+le crée s'il n'en trouve pas.</para>
+
+<para><command>echo anonymous: &gt; /srv/cvsroot/CVSROOT/passwd
+</command>&nbsp;: ajoute l'utilisateur anonymous au fichier des mots de passe
+de <acronym>CVS</acronym>, qui est plus utilisé dans tout le reste de cette
+configuration.</para>
+
+<para><command>echo anonymous &gt; /srv/cvsroot/CVSROOT/readers</command>&nbsp;:
+ajoute l'utilisateur anonymous dans le fichier des lecteurs
+<acronym>CVS</acronym>, qui est une liste des utilisateurs ayant un accès au
+dépôt en lecture seule.</para>
+
+</sect2>
 
 </sect1>
-

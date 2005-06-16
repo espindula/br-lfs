@@ -1,13 +1,434 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<sect1 id="exim" xreflabel="Exim-&exim-version;">
-<?dbhtml filename="exim.html"?>
-<title>Exim-&exim-version;</title>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
 
-&exim-intro;
-&exim-inst;
-&exim-exp;
-&exim-config;
-&exim-desc;
+<!ENTITY exim-download-http "http://www.exim.org/ftp/exim4/exim-&exim-version;.tar.bz2">
+<!ENTITY exim-download-ftp "ftp://ftp.exim.org/pub/exim/exim4/exim-&exim-version;.tar.bz2">
+<!ENTITY exim-md5sum "f8f646d4920660cb5579becd9265a3bf">
+<!ENTITY exim-size "1.4 MB">
+<!ENTITY exim-buildsize "14.9 MB">
+<!ENTITY exim-time "0.14 SBU">
+]>
+
+<sect1 id="exim" xreflabel="Exim-&exim-version;">
+<sect1info>
+<othername>$LastChangedBy: randy $</othername>
+<date>$Date: 2005-06-16 06:11:49 $</date>
+</sect1info>
+<?dbhtml filename="exim.html"?>
+<title><application>Exim</application>-&exim-version;</title>
+<indexterm zone="exim">
+<primary sortas="a-Exim">Exim</primary></indexterm>
+
+<sect2>
+<title>Introduction to <application>Exim</application></title>
+
+<para>The <application>Exim</application> package contains a Mail Transport 
+Agent written by the University of Cambridge, released under the 
+<acronym>GNU</acronym> Public License.</para>
+
+<sect3><title>Package information</title>
+<itemizedlist spacing='compact'>
+<listitem><para>Download (HTTP): 
+<ulink url="&exim-download-http;"/></para></listitem>
+<listitem><para>Download (FTP): 
+<ulink url="&exim-download-ftp;"/></para></listitem>
+<listitem><para>Download MD5 sum: 
+&exim-md5sum;</para></listitem>
+<listitem><para>Download size: 
+&exim-size;</para></listitem>
+<listitem><para>Estimated disk space required: 
+&exim-buildsize;</para></listitem>
+<listitem><para>Estimated build time: 
+&exim-time;</para></listitem></itemizedlist>
+</sect3>
+
+<sect3><title>Additional downloads</title>
+<itemizedlist spacing="compact">
+<listitem><para>Required patch for Berkeley DB: <ulink 
+url="&patch-root;/exim-&exim-version;-db43-1.patch"/></para>
+</listitem></itemizedlist>
+</sect3>
+
+<sect3><title><application>Exim</application> dependencies</title>
+<sect4><title>Required</title>
+<para><xref linkend="db"/> or 
+<xref linkend="gdbm"/> or 
+<ulink url="http://sourceforge.net/projects/tdb">TDB</ulink></para>
+</sect4>
+
+<sect4><title>Optional</title>
+<para>X (<xref linkend="xfree86"/> or <xref linkend="xorg"/>), 
+<xref linkend="openldap"/>, 
+<xref linkend="openssl"/> or 
+<ulink url="http://www.gnu.org/software/gnutls/">GnuTLS</ulink>, 
+<xref linkend="cyrus-sasl"/>, 
+<xref linkend="mysql"/>, 
+<xref linkend="postgresql"/>, 
+<xref linkend="tcpwrappers"/> and 
+<xref linkend="Linux_PAM"/></para>
+</sect4>
+</sect3>
+
+</sect2>
+
+<sect2>
+<title>Installation of <application>Exim</application></title>
+
+<para>Before building <application>Exim</application>, as the root user you 
+should create the group and user exim which will run the 
+<command>exim</command> daemon:</para>
+
+<screen><userinput><command>groupadd exim &amp;&amp;
+useradd -d /dev/null -c "Exim Daemon" -g exim -s /bin/false exim</command></userinput></screen>
+
+<para>If you have <application>Berkeley <acronym>DB</acronym></application> 
+installed, apply the following patch:</para>
+
+<screen><userinput><command>patch -Np1 -i ../exim-&exim-version;-db43-1.patch</command></userinput></screen>
+
+<para>Install <application>Exim</application> with the following 
+commands:</para>
+
+<screen><userinput><command>sed -e 's,^BIN_DIR.*$,BIN_DIRECTORY=/usr/sbin,' src/EDITME | \
+  sed -e 's,^CONF.*$,CONFIGURE_FILE=/etc/exim.conf,' | \
+  sed -e 's,^EXIM_USER.*$,EXIM_USER=exim,' | \
+  sed -e 's,^EXIM_MONITOR,#EXIM_MONITOR,' > Local/Makefile &amp;&amp;
+make</command></userinput></screen>
+
+<para>Now, as the root user:</para>
+
+<screen><userinput role='root'><command>make install &amp;&amp;
+install -v -m644 doc/exim.8 /usr/share/man/man8 &amp;&amp;
+install -v -d -m755 /usr/share/doc/exim-&exim-version; &amp;&amp;
+install -v -m644 doc/* /usr/share/doc/exim-&exim-version; &amp;&amp;
+ln -sv exim /usr/sbin/sendmail</command></userinput></screen>
+
+</sect2>
+
+<sect2>
+<title>Command explanations</title>
+
+<para><command>sed -e ... > Local/Makefile</command>: Most of 
+<application>Exim</application>'s configuration options are compiled in using 
+the directives in <filename>Local/Makefile</filename> which is created from 
+the <filename>src/EDITME</filename> file. This command specifies the minimum 
+set of options. Descriptions for the options are listed below.</para>
+
+<para><parameter>BIN_DIRECTORY=/usr/sbin</parameter>: This installs all of 
+<application>Exim</application>'s binaries and scripts in 
+<filename class='directory'>/usr/sbin</filename>.</para>
+
+<para><parameter>CONFIGURE_FILE=/etc/exim.conf</parameter>: This installs 
+<application>Exim</application>'s main configuration file in 
+<filename class='directory'>/etc</filename>.</para>
+
+<para><parameter>EXIM_USER=exim</parameter>: This tells 
+<application>Exim</application> that after the daemon no longer needs root 
+privileges, the process hands off the daemon to the exim user.</para>
+
+<para><parameter>#EXIM_MONITOR</parameter>: This defers building the 
+<application>Exim</application> monitor program, as it requires 
+<application>X</application> Window System support, by commenting out the 
+<parameter>EXIM_MONITOR</parameter> line in the <filename>Makefile</filename>. 
+If you wish to build the monitor program, omit this <command>sed</command> 
+command and issue the following command before building the package (modify 
+<filename>Local/eximon.conf</filename>, if necessary): 
+<command>cp exim_monitor/EDITME Local/eximon.conf</command>.</para>
+
+<para><command>ln -s exim /usr/sbin/sendmail</command>: Creates a link to 
+<command>sendmail</command> for applications which need it. 
+<application>Exim</application> will accept most 
+<application>Sendmail</application> command-line options.</para>
+
+</sect2>
+
+<sect2>
+<title>Adding additional functionality</title>
+
+<para>To utilize some or all of the dependency packages, you'll need to modify 
+<filename>Local/Makefile</filename> to include the appropriate directives and 
+parameters to link additional libraries before you build 
+<application>Exim</application>. <filename>Local/Makefile</filename> is 
+heavily commented with instructions on how to do this. Listed below is 
+additional information to help you link these dependency packages.</para>
+
+<para>To use a backend database other than <application>Berkelely 
+DB</application>, see the instructions at <ulink 
+url="http://www.exim.org/exim-html-4.40/doc/html/spec_4.html#SECT4.3"/>.</para>
+
+<para>For <acronym>SSL</acronym> functionality, see the instructions at <ulink 
+url="http://www.exim.org/exim-html-4.40/doc/html/spec_4.html#SECT4.6"/> and 
+<ulink 
+url="http://www.exim.org/exim-html-4.40/doc/html/spec_37.html#CHAP37"/>.</para>
+
+<para>For <application>tcpwrappers</application> functionality, see the 
+instructions at <ulink 
+url="http://www.exim.org/exim-html-4.40/doc/html/spec_4.html#SECT4.7"/>.</para>
+
+<para>For information about adding authentication mechanisms to the 
+build, see the instructions at <ulink 
+url="http://www.exim.org/exim-html-4.40/doc/html/spec_34.html#SECT34.4"/> For 
+specific information about using <application>Cyrus-SASL</application>, see 
+section 10 of the <filename>doc/NewStuff</filename> file located in the source 
+tree.</para>
+
+<para>For information about linking <application>Linux-PAM</application>, see 
+the instuctions at <ulink 
+url="http://www.exim.org/exim-html-4.40/doc/html/spec_11.html#IX935"/>.</para>
+
+<para>For information about linking database engine libraries used for 
+<application>Exim</application> name lookups, see the instuctions at <ulink 
+url="http://www.exim.org/exim-html-4.40/doc/html/spec_9.html#CHAP9"/>.</para> 
+
+<para>If you wish to add <application>Readline</application> support to 
+<application>Exim</application> when invoked in <quote>test expansion</quote> 
+(-bv) mode, see the information in section 8 of the 
+<filename>doc/NewStuff</filename> file located in the source tree.</para>
+
+<para>You may wish to modify the default configuration and send log files to 
+syslog instead of the default 
+<filename class='directory'>/var/spool/exim/log</filename> directory. See the 
+information at <ulink 
+url="http://www.exim.org/exim-html-4.40/doc/html/spec_45.html#CHAP45"/>.</para>
+
+</sect2>
+
+<sect2>
+<title>Configuring Exim</title>
+
+<sect3 id="exim-config"><title>Config files</title>
+
+<para><filename>/etc/exim.conf</filename> and 
+<filename>/etc/aliases</filename></para>
+<indexterm zone="exim exim-config">
+<primary sortas="e-etc-exim.conf">/etc/exim.conf</primary></indexterm>
+<indexterm zone="exim exim-config">
+<primary sortas="e-etc-aliases">/etc/aliases</primary></indexterm>
+
+</sect3>
+
+<sect3><title>Configuration Information</title>
+
+<para>A default (nothing but comments) <filename>/etc/aliases</filename> file 
+is installed during the package installation if this file did not exist on 
+your system. Create the necessary aliases and start the 
+<application>Exim</application> daemon using the following commands:</para>
+
+<screen><userinput><command>cat &gt;&gt; /etc/aliases &lt;&lt; "EOF"</command>
+postmaster: root
+MAILER-DAEMON: root
+<command>EOF
+exim -v -bi &amp;&amp;
+/usr/sbin/exim -bd -q15m</command></userinput></screen>
+
+<note><para>To protect an existing <filename>/etc/aliases</filename> file, 
+the command above appends these aliases to it. This file should be checked and 
+duplicate aliases removed, if present.</para></note>
+
+<para>The <command>/usr/sbin/exim -bd -q15m</command> command starts the 
+<application>Exim</application> daemon with a 15 minute interval in processing 
+the mail queue. Adjust this parameter to suit your desires.</para>
+
+<para id="exim-init">To automate the running of <command>exim</command> at 
+startup, install the <filename>/etc/rc.d/init.d/exim</filename> init script 
+included in the <xref linkend="intro-important-bootscripts"/> package.</para>
+<indexterm zone="exim exim-init">
+<primary sortas="f-exim">exim</primary></indexterm>
+
+<screen><userinput><command>make install-exim</command></userinput></screen>
+
+<para>The bootscript also starts the <application>Exim</application> daemon 
+and dispatches a queue runner process every 15 minutes. Modify the 
+<parameter>-q<replaceable>[time interval]</replaceable></parameter> parameter 
+in <filename>/etc/rc.d/init.d/exim</filename>, if necessary for your 
+installation.</para>
+</sect3>
+
+</sect2>
+
+<sect2>
+<title>Contents</title>
+
+<segmentedlist>
+<segtitle>Installed Programs</segtitle>
+<segtitle>Installed Libraries</segtitle>
+<segtitle>Installed Directories</segtitle>
+
+<seglistitem>
+<seg>exicyclog, exigrep, exim, exim-4.43-2, exim_checkaccess, exim_dbmbuild, 
+exim_dumpdb, exim_fixdb, exim_lock, exim_tidydb, eximstats, exinext, exipick, 
+exiqgrep, exiqsumm, exiwhat and optionally, eximon and eximon.bin</seg>
+<seg>None</seg>
+<seg>/usr/share/doc/exim-&exim-version; and /var/spool/exim</seg>
+</seglistitem>
+</segmentedlist>
+
+<variablelist>
+<bridgehead renderas="sect3">Short Descriptions</bridgehead>
+<?dbfo list-presentation="list"?>
+
+<varlistentry id="exicyclog">
+<term><command>exicyclog</command></term>
+<listitem><para>cycles <application>Exim</application> log files.</para>
+<indexterm zone="exim exicyclog">
+<primary sortas="b-exicyclog">exicyclog</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exigrep">
+<term><command>exigrep</command></term>
+<listitem><para>searches <application>Exim</application> log files.</para>
+<indexterm zone="exim exigrep">
+<primary sortas="b-exigrep">exigrep</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exim-prog">
+<term><command>exim</command></term>
+<listitem><para>is a symlink to the <command>exim-4.43-2</command> 
+<acronym>MTA</acronym> daemon.</para>
+<indexterm zone="exim exim-prog">
+<primary sortas="g-exim">exim</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exim-4.43-2">
+<term><command>exim-4.43-2</command></term>
+<listitem><para>is the <application>Exim</application> mail transport 
+agent daemon.</para>
+<indexterm zone="exim exim-4.43-2">
+<primary sortas="b-exim-4.43-2">exim-4.43-2</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exim_checkaccess">
+<term><command>exim_checkaccess</command></term>
+<listitem><para>states whether a given recipient address from a given host is 
+acceptable or not.</para>
+<indexterm zone="exim exim_checkaccess">
+<primary sortas="b-exim_checkaccess">exim_checkaccess</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exim_dbmbuild">
+<term><command>exim_dbmbuild</command></term>
+<listitem><para> creates and rebuilds <application>Exim</application> 
+databases.</para>
+<indexterm zone="exim exim_dbmbuild">
+<primary sortas="b-exim_dbmbuild">exim_dbmbuild</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exim_dumpdb">
+<term><command>exim_dumpdb</command></term>
+<listitem><para> writes the contents of <application>Exim</application> 
+databases to the standard output.</para>
+<indexterm zone="exim exim_dumpdb">
+<primary sortas="b-exim_dumpdb">exim_dumpdb</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exim_fixdb">
+<term><command>exim_fixdb</command></term>
+<listitem><para>modifies data in <application>Exim</application> 
+databases.</para>
+<indexterm zone="exim exim_fixdb">
+<primary sortas="b-exim_fixdb">exim_fixdb</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exim_lock">
+<term><command>exim_lock</command></term>
+<listitem><para>locks a mailbox file.</para>
+<indexterm zone="exim exim_lock">
+<primary sortas="b-exim_lock">exim_lock</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exim_tidydb">
+<term><command>exim_tidydb</command></term>
+<listitem><para>removes old records from <application>Exim</application> 
+databases.</para>
+<indexterm zone="exim exim_tidydb">
+<primary sortas="b-exim_tidydb">exim_tidydb</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="eximstats">
+<term><command>eximstats</command></term>
+<listitem><para>generates mail statistics from <application>Exim</application> 
+log files.</para>
+<indexterm zone="exim eximstats">
+<primary sortas="b-eximstats">eximstats</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exinext">
+<term><command>exinext</command></term>
+<listitem><para>queries remote host retry times.</para>
+<indexterm zone="exim exinext">
+<primary sortas="b-exinext">exinext</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exipick">
+<term><command>exipick</command></term>
+<listitem><para>selects messages based on various criteria.</para>
+<indexterm zone="exim exipick">
+<primary sortas="b-exipick">exipick</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exiqgrep">
+<term><command>exiqgrep</command></term>
+<listitem><para>is a utility for selective queue listing.</para>
+<indexterm zone="exim exiqgrep">
+<primary sortas="b-exiqgrep">exiqgrep</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exiqsumm">
+<term><command>exiqsumm</command></term>
+<listitem><para>produces a summary of the messages in the mail queue.</para>
+<indexterm zone="exim exiqsumm">
+<primary sortas="b-exiqsumm">exiqsumm</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="exiwhat">
+<term><command>exiwhat</command></term>
+<listitem><para>queries running <application>Exim</application> 
+processes.</para>
+<indexterm zone="exim exiwhat">
+<primary sortas="b-exiwhat">exiwhat</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="eximon">
+<term><command>eximon</command></term>
+<listitem><para>is a start-up shell script for <command>eximon.bin</command> 
+used to set the required environment variables before running the 
+program.</para>
+<indexterm zone="exim eximon">
+<primary sortas="b-eximon">eximon</primary>
+</indexterm></listitem>
+</varlistentry>
+
+<varlistentry id="eximon.bin">
+<term><command>eximon.bin</command></term>
+<listitem><para>is a monitor program which displays current information in an 
+<application>X</application> window, and also contains a menu interface to 
+<application>Exim</application>'s command line administration options.</para>
+<indexterm zone="exim eximon.bin">
+<primary sortas="b-eximon.bin">eximon.bin</primary>
+</indexterm></listitem>
+</varlistentry>
+</variablelist>
+
+</sect2>
 
 </sect1>
 

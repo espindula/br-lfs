@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="svnserver" xreflabel="Running a Subversion Server">
+<sect1info>
+<othername>$LastChangedBy: randy $</othername>
+<date>$Date: 2005-06-16 06:11:50 $</date>
+</sect1info>
+<?dbhtml filename="svnserver.html"?>
+<title>Administrer un serveur Subversion</title>
+
+<sect2>
+<title>Administrer un serveur Subversion</title>
+<para>Cette section décrira comment configurer, administrer et sécuriser un
+serveur <application>Subversion</application>.</para>
+
+<sect3><title>Dépendances de <application>Subversion server</application></title>
+<sect4><title>Requis</title>
+<para><xref linkend="subversion"/> et <xref linkend="openssh"/></para>
+</sect4>
+</sect3>
+
+</sect2>
+
+<sect2>
+<title>Configurer un serveur <application>Subversion</application>.</title>
+
+<para>Les instructions suivantes installeront un serveur
+<application>Subversion</application>, qui sera configuré pour utiliser
+<application>OpenSSH</application> comme moyen d'accès distant sécurisé, avec
+<command>svnserve</command> pour un accès anonyme.</para>
+
+<para>La configuration du serveur <application>Subversion</application> consiste
+aux étapes suiavntes&nbsp;:</para>
+
+<sect3><title>1. Configuration des utilisateurs, groupes et droits</title>
+<para>Vous aurez besoin d'être l'utilisateur root pour la première partie de la
+configuration. Créez l'utilisateur et le groupe svn avec les commandes
+suivantes&nbsp;:</para>
+
+<screen><userinput><command>groupadd svn &amp;&amp;
+useradd -c "SVN Owner" -d /home/svn -m -g svn -s /bin/false svn</command></userinput></screen>
+
+<para>Si vous planifiez d'avoir plusieurs dépôts, vous devriez avoir un groupe
+dédié pour chaque dépôt pour faciliter l'administration. Créez le groupe svntest
+pour le dépôt test et ajoutez l'utilisateur svn à ce groupe avec les commandes
+suivantes&nbsp;:</para>
+
+<screen><userinput><command>groupadd svntest &amp;&amp;
+usermod -G svntest svn</command></userinput></screen>
+
+<para>De plus, vous pourriez configurer un <command>umask 002</command> en
+travaillant sur un dépôt pour que tous les nouveaux fichiers soient modifiables
+par le propriétaire et le groupe. Ceci est rendu nécessaire par la création
+d'un script d'emballage pour <command>svn</command> et
+<command>svnserve</command>&nbsp;:</para>
+
+<screen><userinput><command>mv /usr/bin/svn /usr/bin/svn.orig &amp;&amp;
+mv /usr/bin/svnserve /usr/bin/svnserve.orig &amp;&amp;
+cat &gt;&gt; /usr/bin/svn &lt;&lt; "EOF"</command>
+#!/bin/sh
+umask 002
+/usr/bin/svn.orig "$@"
+<command>EOF
+cat &gt;&gt; /usr/bin/svnserve &lt;&lt; "EOF"</command>
+#!/bin/sh
+umask 002
+/usr/bin/svnserve.orig "$@"
+<command>EOF
+chmod 0755 /usr/bin/svn{,serve}</command></userinput></screen>
+
+<note><para>Si vous utilisez <application>Apache</application> pour travailler
+avec le dépôt sur <acronym>HTTP</acronym>, même pour un accès anonyme, vous
+devez emballer <command>/usr/sbin/httpd</command> dans un script similaire.
+</para></note>
+
+</sect3>
+
+<sect3><title>2. Créez un dépôt <application>Subversion</application>.</title>
+
+<para>Avec subversion-1.1.0 et ultérieur, un nouveau type de stockage de données
+pour le dépôt est disponible, <acronym>FSFS</acronym>. C'est un compromis pour
+la rapidité du nouveau serveur, néanmoins, le dépôt peut maintenant être placé
+sur un montage réseau et toute corruption ne requiert pas un administrateur
+pour récupérer le dépôt. Pour plus d'informations et de comparaisons entre
+<acronym>FSFS</acronym> et <acronym>BDB</acronym>, merci de lire
+<ulink url="http://svnbook.red-bean.com/svnbook-1.1/ch05.html#svn-ch-5-sect-1.2.A"/>.
+En option, vous pouvez passer <parameter>bdb</parameter> à la place de
+<parameter>fsfs</parameter> dans la commande suivante pour créer un stockage de
+données BerkelyDB.</para>
+
+<para>Créez un nouveau dépôt <application>Subversion</application> avec les
+commandes suivantes&nbsp;:</para>
+
+<screen><userinput><command>install -d -m0755 /srv &amp;&amp;
+install -d -m0755 -o svn -g svn /srv/svn/repositories &amp;&amp;
+svnadmin create --fs-type fsfs /srv/svn/repositories/svntest</command></userinput></screen>
+
+<para>Maintenant que le dépôt est créé, nous avons besoin de le remplir avec
+quelque chose d'utile. Vous aurez besoin d'avoir une configuration de répertoires
+prédéfinis de la façon que vous pensez que votre dépôt doit avoir l'air. Par
+exemple, voici une configuration simple de BLFS en exemple avec une racine
+<filename>svntest/</filename>. Vous aurez besoin de configurer une hiérarchie
+de répertoires similaire à ce qui suit&nbsp;:</para>
+
+<screen>          svntest/            # Le nom du dépôt
+             trunk/           # Contient le source
+                BOOK/
+                bootscripts/
+                edguide/
+                patches/
+                scripts/
+             branches/        # Nécessaire pour les branches supplémentaires
+             tags/            # Nécessaire pour les points de version</screen>
+
+<para>Une fois que vous avez créé votre hiérarchie de répertoires comme indiquée
+ci-dessus, vous êtes prêt pour l'import initial&nbsp;:</para>
+
+<screen><userinput><command>svn import -m "Initial import." \
+    <replaceable>[/path/to/source/tree]</replaceable> \
+    file:///srv/svn/repositories/svntest</command></userinput></screen>
+
+<para>Maintenant, continuez en modifiant les informations sur le propriétaire
+et le groupe sur le dépôt, et ajoutez votre utilisateur habituel aux groupes
+svn et svntest&nbsp;:</para>
+
+<screen><userinput><command>chown -R svn:svntest /srv/svn/repositories/svntest &amp;&amp;
+chmod -R g+w /srv/svn/repositories/svntest &amp;&amp;
+chmod g+s /srv/svn/repositories/svntest/db &amp;&amp;
+usermod -G svn,svntest,<replaceable>[insert existing groups]</replaceable> <replaceable>[username]</replaceable></command></userinput></screen>
+
+<para>svntest est le groupe affecté au dépôt svntest. Comem mentionné plus tôt,
+ceci facilite l'administration de plusieurs dépôts lors de l'utilisation
+d'<application>OpenSSH</application> pour l'authentification. En allant plus
+loin, vous aurez besoin d'ajouter votre utilisateur habituel, et peut-être
+d'autres utilisateurs si vous souhaitez qu'ils aient accès en écriture au dépôt,
+aux groupes svn et svntest.</para>
+
+<para>De plus, vous noterez que le répertoire <filename>db</filename> du nouveau
+dépôt dispose du bit SGID. Au cas où la raison n'en serait pas claire
+immédiatement, lors de l'utilisation d'une méthode d'authentification externe
+(comme <command>ssh</command>), le <quote>sticky bit</quote> est configuré de
+façon à ce que tous les nouveaux fichiers soient la propriété de l'utilisateur
+qui les a créés mais aussi pour qu'ils aient comme groupe svntest. Toute personne
+du groupe svntest peut créer des fichiers mais donne toujours le droit d'écriture
+de groupe à ces fichiers. Ceci évite de verrouiller d'autres utilisateurs à
+partir du dépôt.</para>
+
+<para>Maintenant, continuez en retournant à votre compte utilisateur normal et
+jetez un &oelig;il à votre nouveau dépôt en utilisant
+<command>svnlook</command>&nbsp;:</para>
+
+<screen><userinput><command>svnlook tree /srv/svn/repositories/svntest/</command></userinput></screen>
+
+<note><para>Vous pourriez avoir besoin de vous déconnecter puis de vous reconnecter
+pour rafraichir votre appartenance aux groupes. '<command>su
+<replaceable>[nomutilisateur]</replaceable></command>'  devrait aussi contourner
+ce problème.</para></note>
+
+</sect3>
+
+<sect3><title>3. Configurer le serveur</title>
+
+<para>Comme mentionné précédemment, ces instructions configureront le serveur
+pour utiliser seulement <command>ssh</command> lors des accès en écriture au
+dépôt et pour fournir un accès anonyme en utilisant <command>svnserve</command>.
+Il existe d'autres moyens de fournir un accès au dépôt. Ces configurations
+supplémentaires sont mieux expliquées sur
+<ulink url="http://svnbook.red-bean.com/"/>.</para>
+
+<para>La configuration de l'accès doit se faire pour chaque dépôt. Créez le
+fichier <filename>svnserve.conf</filename> pour le dépôt svntest en utilisant
+les commandes suivantes&nbsp;:</para>
+
+<screen><userinput><command>cp /srv/svn/repositories/svntest/conf/svnserve.conf \
+    /srv/svn/repositories/svntest/conf/svnserve.conf.default &amp;&amp;
+cat &gt; /srv/svn/repositories/svntest/conf/svnserve.conf &lt;&lt; "EOF"</command>
+[general]
+anon-access = read
+auth-access = write
+<command>EOF</command></userinput></screen>
+
+<para>Il n'y a pas grand chose dans le fichier de configuration. Vous remarquerez
+que seule la section générale est requise. Jetez un &oelig;il au fichier
+<filename>svnserve.conf.default</filename> pour des informations sur
+l'utilisation de la méthode d'authentification intégrée,
+<command>svnserve</command>.</para>
+
+</sect3>
+
+<sect3><title>4. Exécuter le serveur</title>
+
+<para>Il existe plusieurs façons de démarrer <command>svnserve</command>. La
+façon la plus commune est de le lancer comme un processus
+<command>inetd</command> ou <command>xinetd</command>. Autrement, vous pouvez
+utiliser un script de démarrage pour lancer le serveur au démarrage de la
+machine.</para>
+
+<note><para>Si vous ne souhaitez pas fournir d'accès anonyme aux dépôts svn ou
+si vous ne souhaitez pas utiliser l'authentification intégrée à
+<command>svnserve</command>, vous n'avez pas besoin d'exécuter
+<command>svnserve</command>.</para></note>
+
+<para>Si vous utilisez <command>inetd</command>, ajoutez une ligne à
+<filename>/etc/inetd.conf</filename> en utilisant les commandes suivantes&nbsp;:</para>
+
+<screen><userinput><command>cat &gt;&gt; /etc/inetd.conf &lt;&lt; "EOF"</command>
+svn stream tcp nowait svn /usr/bin/svnserve svnserve -i
+<command>EOF</command></userinput></screen>
+
+<para>Si vous utilisez <command>xinetd</command>, ajoutez les lignes suivantes
+dans votre fichier <filename>/etc/xinetd.conf</filename>&nbsp;:</para>
+
+<screen><userinput><command>cat &gt;&gt; /etc/xinetd.conf &lt;&lt; "EOF"</command>
+service svn
+{
+        port                    = 3690
+        socket_type             = stream
+        protocol                = tcp
+        wait                    = no
+        user                    = svn
+        server                  = /usr/bin/svnserve
+        server_args             = -i -r /srv/svn/repositories
+}
+<command>EOF</command></userinput></screen>
+
+<para>Enfin, si vous souhaitez simplement exécuter le serveur au démarrage,
+installez le script de démarrage svn inclus dans le paquetage
+<xref linkend="intro-important-bootscripts"/>.</para>
+
+<screen><userinput><command>make install-svn</command></userinput></screen>
+
+</sect3>
+
+</sect2>
+
+</sect1>
+
