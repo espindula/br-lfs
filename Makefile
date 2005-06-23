@@ -1,4 +1,4 @@
-BASEDIR=~/public_html/lfs-book-trunk
+BASEDIR=~/lfs-book
 CHUNK_QUIET=0
 PDF_OUTPUT=LFS-BOOK.pdf
 NOCHUNKS_OUTPUT=LFS-BOOK.html
