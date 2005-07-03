@@ -61,14 +61,6 @@ nochunks:
 	sed -i -e "s@text/html@application/xhtml+xml@g"  \
 	  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 
-	if [ ! -e $(BASEDIR)/images ]; then \
-		mkdir -p $(BASEDIR)/images; \
-	fi;
-	cp $(XSLROOTDIR)/images/*.png \
-	  $(BASEDIR)/images
-	cd $(BASEDIR)/; sed -i -e "s@../images@images@g" \
-	  *.html
-
 validate:
 	xmllint --noout --nonet --xinclude --postvalid index.xml
 

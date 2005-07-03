@@ -7,11 +7,10 @@
     <!-- We use XHTML -->
   <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.68.1/xhtml/profile-docbook.xsl"/>
 
-  <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
+    <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
   <xsl:output method="html" encoding="ISO-8859-1" indent="no" />
-  
+
    <!-- Including our others customized templates -->
-  <xsl:include href="xhtml/lfs-admon.xsl"/>
   <xsl:include href="xhtml/lfs-index.xsl"/>
   <xsl:include href="xhtml/lfs-mixed.xsl"/>
   <xsl:include href="xhtml/lfs-sections.xsl"/>
@@ -24,6 +23,23 @@
     <!-- Dropping some unwanted style attributes -->
   <xsl:param name="ulink.target" select="''"></xsl:param>
   <xsl:param name="css.decoration" select="0"></xsl:param>
+
+    <!-- Don't use graphics in admonitions -->
+  <xsl:param name="admon.graphics" select="0"/>
+
+    <!-- Changing the admonitions output tagging -->
+  <xsl:template name="nongraphical.admonition">
+    <div class="{name(.)}">
+      <div class ="admonhead">
+        <h3 class="admontitle">
+          <xsl:apply-templates select="." mode="object.title.markup"/>
+        </h3>
+      </div>
+      <div class="admonbody">
+        <xsl:apply-templates/>
+      </div>
+    </div>
+  </xsl:template>
 
     <!-- To drop the remainig dot when title is empty (from lfs-titles.xsl)-->
   <xsl:template name="sect2.titlepage">
@@ -148,10 +164,6 @@ div.important, div.warning, div.caution {
 
 div.important h3, div.warning h3, div.caution h3 {
   color: #900;
-}
-
-div.admonhead img {
-  display: none;
 }
 
 h3.admontitle {
