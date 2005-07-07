@@ -29,7 +29,8 @@
     -->
     
     <!-- Printing Style -->
-  <xsl:param name="double.sided" select="1"/>
+    <!-- Change "double.sided" to "1" for published versions -->
+  <xsl:param name="double.sided" select="0"/>
   <xsl:param name="hyphenate">false</xsl:param>
   <xsl:param name="alignment">justify</xsl:param>
 
