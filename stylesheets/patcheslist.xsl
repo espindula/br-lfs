@@ -16,8 +16,9 @@
 
   <xsl:template match="/">
     <xsl:text>#! /bin/bash&#x0a;&#x0a;</xsl:text>
+    <xsl:text>  umask 002&#x0a;&#x0a;</xsl:text>
       <!-- Create dest.dir if it don't exist -->
-    <xsl:text>  mkdir -p </xsl:text>
+    <xsl:text>  install -d -m 775 -g lfswww </xsl:text>
     <xsl:value-of select="$dest.dir"/>
     <xsl:text> &amp;&amp;&#x0a;</xsl:text>
     <xsl:text>  cd </xsl:text>
