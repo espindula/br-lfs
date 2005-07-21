@@ -21,11 +21,11 @@ ainsi de suite.</para>
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
 <segtitle>&diskspace;</segtitle>
-<seglistitem><seg>12,3&nbsp;SBU</seg><seg>784&nbsp;Mo</seg></seglistitem>
+<seglistitem><seg>12,3&nbsp;SBU</seg><seg>476&nbsp;Mo</seg></seglistitem>
 </segmentedlist>
 
 <segmentedlist>
-<segtitle>L'installation de Glibc dépend de</segtitle>
+<segtitle>&dependencies;</segtitle>
 <seglistitem><seg>Bash, Binutils, Coreutils, Diffutils, Gawk, GCC, Gettext,
 Grep, Make, Perl, Sed et Texinfo</seg></seglistitem>
 </segmentedlist>
@@ -49,6 +49,18 @@ la Glibc parce que les tests d'autoconf de Glibc donneraient alors des
 résultats faussés, défaussant ainsi notre but d'achever une construction
 propre.</para>
 
+<para>L'archive tar linuxthreads contient les pages man pour les bibliothèques
+de threading installées par Glibc. Déballez l'archive tar à l'intérieur du
+répertoire source Glibc&nbsp;:</para>
+
+<screen><userinput>tar -xjvf /sources/glibc-linuxthreads-&glibc-version;.tar.bz2</userinput></screen>
+
+<para>Glibc contient deux tests qui échoueront si le noyau en cours d'exécution
+est un 2.6.11.x. Le problème se situe sur les tests eux-même, pas avec la libc
+ou le noyau. Ce correctif corrige le problème&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../glibc-&glibc-version;-fix_test-1.patch</userinput></screen>
+
 <para>La documentation de Glibc recommande de construire Glibc en dehors du
 répertoire des sources dans un répertoire de construction dédié&nbsp;:</para>
 
@@ -58,10 +70,8 @@ cd ../glibc-build</userinput></screen>
 <para>Préparez la compilation de Glibc&nbsp;:</para>
 
 <screen><userinput>../glibc-&glibc-version;/configure --prefix=/usr \
-    --disable-profile --enable-add-ons=nptl --with-tls \
-    --with-__thread --enable-kernel=2.6.0 --without-cvs \
-    --libexecdir=/usr/lib/glibc \
-    --with-headers=/tools/glibc-kernheaders</userinput></screen>
+    --disable-profile --enable-add-ons \
+    --enable-kernel=2.6.0 --libexecdir=/usr/lib/glibc</userinput></screen>
 
 <para>Voici la signification des options de configure&nbsp;:</para>
 
@@ -74,6 +84,8 @@ class="directory">/usr/libexec</filename>, par <filename
 class="directory">/usr/lib/glibc</filename>.</para></listitem>
 </varlistentry>
 </variablelist>
+
+<beginpage/>
 
 <para>Compilez le paquet&nbsp;:</para>
 
@@ -103,17 +115,10 @@ pour ce type de problèmes.</para></listitem>
 cause de problèmes sur le système hôte, les raisons exactes n'étant pas encore
 claires.</para></listitem>
 
-<listitem><para>Le test <emphasis>atime</emphasis> échoue parfois lorsque la
-partition LFS est montée avec l'option
-<parameter>noatime</parameter>.</para></listitem>
-
-<listitem><para>Le test <emphasis>shm</emphasis> peut échouer quand le système
-hôte utilise le système de fichiers <systemitem
-class="filesystem">devfs</systemitem> mais n'a pas monté le système de fichiers
-<systemitem class="filesystem">tmpfs</systemitem> sur <filename
-class="directory">/dev/shm</filename>. Ceci survient à cause d'un manque de
-support de <systemitem class="filesystem">tmpfs</systemitem> dans le
-noyau.</para></listitem>
+<listitem><para>Si vous avez monté la partition LFS avec l'option
+<parameter>noatime</parameter>, le test <emphasis>atime</emphasis> échouera.
+Comme mentionné dans <xref linkend="space-mounting"/>, n'utilisez pas l'option
+<parameter>noatime</parameter> lors de la construction de LFS.</para></listitem>
 
 <listitem><para>Lors d'une exécution sur un matériel ancien et lent, quelques
 tests peuvent échouer à cause de délais excédés.</para></listitem>
@@ -160,21 +165,21 @@ localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
 localedef -i it_IT -f ISO-8859-1 it_IT
 localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
 
-<para>Some locales installed by the <command>make
-localedata/install-locales</command> command above are not properly
-supported by some applications that are in the LFS and BLFS books.
-Because of the various problems that arise due to application
-programmers making assumptions that break in such locales, LFS should
-not be used in locales that utilize multibyte character sets
-(including UTF-8) or right-to-left writing order.  Numerous unofficial
-and unstable patches are required to fix these problems, and it has
-been decided by the LFS developers not to support such complex locales.  This
-applies to the
-ja_JP and fa_IR locales as well&mdash;they have been installed only for
-GCC and Gettext tests to pass, and the <command>watch</command> program
-(part of the Procps package) does not work properly in them. Various
-attempts to circumvent these restrictions are documented in
-internationalization-related hints.</para>
+<para>Certaines locales installées par la commande <command>make
+localedata/install-locales</command> ci-dessus ne sont pas supportées
+correctement par certaines applications comprises dans les livres LFS et BLFS.
+À cause des différents problèmes survenus parce que les développeurs des
+applications ont fait dex choix qui ont cassé ces locales, LFS ne devrait pas
+être utilisé avec des locales qui utilisent des ensembles de caractères à
+plusieurs octets (ceci incluant UTF-8) ou l'ordre d'écriture de droite à gauche.
+De nombreux correctifs officieux et instables sont requis pour corriger
+ces problèmes et il a été décidé par les développeurs de LFS que ces locales
+complexes ne seraient pas supportées. Ceci s'applique aussi aux locales
+ja_JP et fa_IR&mdash;elles ont été installés seulement pour que les tests de
+GCC et Gettext réussissent bien que le programme <command>watch</command>
+(un composant du paquetage Procps) ne fonctionne pas correctement avec elles.
+Différents essais pour contourner ces restrictions sont documentés dans les
+astuces relatives à l'internationalisation.</para>
 
 <para>Construisez les pages man de linuxthreads qui sont une
 grande référence à l'API des threads (applicable aussi à NPTL)&nbsp;:</para>
@@ -198,7 +203,8 @@ sortas="e-/etc/localtime">/etc/localtime</primary></indexterm>
 <para>Le fichier <filename>/etc/nsswitch.conf</filename> doit être créé
 parce que, bien que Glibc en fournisse un par défaut lorsque ce fichier est
 manquant ou corrompu, les valeurs par défaut de Glibc ne fonctionnent pas bien
-avec le réseau. De plus, le fuseau horaire a besoin d'être configuré.</para>
+dans un environnement en réseau. De plus, le fuseau horaire a besoin d'être
+configuré.</para>
 
 <para>Créez un nouveau fichier <filename>/etc/nsswitch.conf</filename> en
 lançant ce qui suit&nbsp;:</para>
@@ -285,7 +291,6 @@ ce qui suit&nbsp;:</para>
 # Fin /etc/ld.so.conf</literal>
 EOF</userinput></screen>
 
-<beginpage/>
 </sect2>
 
 <sect2 id="contents-glibc" role="content"><title>Contenu de Glibc</title>
@@ -306,8 +311,11 @@ libpthread.[a,so], libresolv.[a,so], librpcsvc.a, librt.[a,so],
 libthread_db.so et libutil.[a,so]</seg></seglistitem>
 </segmentedlist>
 
+<beginpage/>
+
 <variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
 <?dbfo list-presentation="list"?>
+<?dbhtml list-presentation="table"?>
 
 <varlistentry id="catchsegv">
 <term><command>catchsegv</command></term>

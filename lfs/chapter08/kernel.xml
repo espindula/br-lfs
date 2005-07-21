@@ -12,7 +12,7 @@
 sortas="a-Linux">Linux</primary></indexterm>
 
 <sect2 role="package"><title/>
-<para>Le paquet Linux contient le noyau et les fichiers d'en-têtes.</para>
+<para>Le paquet Linux contient le noyau Linux.</para>
 
 <segmentedlist>
 <segtitle>&buildtime;</segtitle>
@@ -22,7 +22,7 @@ sortas="a-Linux">Linux</primary></indexterm>
 </segmentedlist>
 
 <segmentedlist>
-<segtitle>L'installation de Linux dépend de</segtitle>
+<segtitle>&dependencies;</segtitle>
 <seglistitem><seg>Bash, Binutils, Coreutils, Findutils,
 GCC, Glibc, Grep, Gzip, Make, Modutils, Perl et Sed</seg></seglistitem>
 </segmentedlist>
@@ -45,25 +45,20 @@ L'équipe du noyau recommande que cette commande soit lancée avant chaque
 compilation du noyau. Vous ne devez pas penser que le répertoire des sources
 soit propre juste après avoir été déballé.</para>
 
-<para>De plus, assurez-vous que le noyau n'essaie pas de passer les événements
-de montage à chaud dans l'espace utilisateur jusqu'à ce que ce dernier spécifie
-qu'il est prêt&nbsp;:</para>
-
-<screen><userinput>sed -i 's@/sbin/hotplug@/bin/true@' kernel/kmod.c</userinput></screen>
-
-<para>Si il a été décidé dans <xref linkend="ch-scripts-console" role=","/> de
+<para>S'il a été décidé dans <xref linkend="ch-scripts-console" role=","/> de
 compiler le plan de codage dans le noyau, lancez la commande ci-dessous&nbsp;:</para>
 
 <screen><userinput>loadkeys -m /usr/share/kbd/keymaps/<replaceable>[path to  keymap]</replaceable> &gt; \
     drivers/char/defkeymap.c</userinput></screen>
 
 <para>Par exemple, pour utiliser un clavier hollandais, utilisez
-<phrase
-condition="html"><filename>/usr/share/kbd/keymaps/i386/qwerty/nl.map.gz</filename></phrase><phrase
-condition="pdf"><filename>/usr/share/kbd/keymaps/i386/
-qwerty/nl.map.gz</filename></phrase>.</para>
+<filename>/usr/share/kbd/keymaps/i386/qwerty/nl.map.gz</filename>.</para>
 
-<para>Configurez le noyau via une interface par menu&nbsp;:</para>
+<para>Configurez le noyau via une interface par menu. BLFS a quelques
+informations concernant les besoins particuliers du noyau en terme de
+configuration pour les paquetages en dehors de LFS sur <ulink
+url="&blfs-root;view/svn/longindex.html#kernel-config-index"><phrase
+condition="pdf">&blfs-root;view/svn/longindex.html#kernel-config-index</phrase></ulink>&nbsp;:</para>
 
 <screen><userinput>make menuconfig</userinput></screen>
 
@@ -75,13 +70,6 @@ d'informations.</para>
 dans certaines situations. Voir le fichier <filename>README</filename> pour
 plus d'informations.</para>
 
-<note><para>Lors de la configuration du noyau, assurez-vous d'activer l'option
-<quote>Support for hot-pluggable devices</quote> dans le menu
-<quote>General Setup</quote>. Ceci active les événements de montage à chaud qui
-sont utilisés par <command>udev</command> pour peupler le répertoire <filename
-class="directory">/dev</filename> avec les n&oelig;uds de périphériques.
-</para></note>
-
 <para>Si désiré, passez la configuration du noyau en copiant le fichier de
 configuration, <filename>.config</filename>, à partir du système hôte
 (en supposant qu'il est disponible) dans le répertoire <filename
@@ -90,20 +78,12 @@ Néanmoins, nous ne recommandons pas cette option. Il est souvent mieux
 d'explorer tous les menus de configuration et de créer la configuration du
 noyau à partir de rien.</para>
 
-<para>Pour le support de la mémoire partagée POSIX, assurez-vous que l'option
-de configuration du noyau <quote>Virtual memory file system support</quote>
-est activée. Elle réside dans le menu <quote>File systems</quote> et est
-normalement activée par défaut.</para>
-
-<para>Les scripts de démarrage LFS supposent que soit <quote>Support for
-Host-side USB</quote> et <quote>USB device filesystem</quote> ont été compilées
-directement dans le noyau soit aucune des deux ne l'a été. Les scripts de
-démarrage ne fonctionnent pas correctement s'il s'agit d'un module (usbcore.ko).</para>
-
 <note><para>NPTL requiert que le noyau soit compilé avec GCC 3.x, dans ce cas
-&gcc-version;. Compiler avec 2.95.x est connu pour causer des échecs dans la
-suite de tests de glibc, donc il n'est pas recommandé de compiler le noyau avec
-gcc 2.95.x.</para></note>
+&gcc-version;. Il n'est pas recommandé de compiler le noyau avec GCC-2.95.x car
+ceci est la cause d'échec dans la suite de tests de Glibc. Normalement, ceci ne
+devrait pas être mentionné car LFS ne construit pas GCC-2.95.x. Malheureusement,
+la documentation du noyau est obsolète et indique toujours que GCC-2.95.3 est
+le compilateur recommandé.</para></note>
 
 <para>Compilez l'image du noyau et les modules&nbsp;:</para>
 
@@ -113,19 +93,19 @@ gcc 2.95.x.</para></note>
 <filename>/etc/modprobe.conf</filename> pourrait être nécessaire. Les
 Informations concernant les modules et la configuration du noyau sont situées
 dans la documentation du noyau disponible dans le répertoire <filename
-class="directory">linux-&linux-version;/Documentation</filename>.
-La page man <emphasis>modprobe.conf</emphasis> pourrait aussi avoir de
+class="directory">linux-&linux-version;/Documentation</filename>. De plus,
+la page man <filename>modprobe.conf(5)</filename> pourrait aussi avoir de
 l'intérêt.</para>
 
-<para>Faites attention lors de la lecture d'autres documentations parce qu'elle
-s'applique généralement seulement aux noyaux 2.4.x. D'après nos connaissances,
-les problèmes spécifiques de configuration du noyau pour Hotplug (le montage à
-chaud) et Udev se sont pas documentés. Le problème est que Udev créera un
-n&oelig;ud de périphérique seulement si Hotplug ou un script écrit par
-l'utilisateur insère le module correspondant dans le noyau et tous les modules
-ne sont pas détectables par Hotplug. Notez que les instructions comme celle
-ci-dessous, compris dans le fichier <filename>/etc/modprobe.conf</filename>, ne
-fonctionnent pas avec Udev&nbsp;:</para>
+<para>Faites attention lors de la lecture d'autres documentations relatives aux
+modules du noyau parce qu'elles s'appliquent généralement seulement aux noyaux
+2.4.x. D'après nos connaissances, les problèmes spécifiques de configuration
+du noyau pour Hotplug (le montage à chaud) et Udev se sont pas documentés. Le
+problème est que Udev créera un n&oelig;ud de périphérique seulement si Hotplug
+ou un script écrit par l'utilisateur insère le module correspondant dans le
+noyau et tous les modules ne sont pas détectables par Hotplug. Notez que les
+instructions comme celle ci-dessous, compris dans le fichier
+<filename>/etc/modprobe.conf</filename>, ne fonctionnent pas avec Udev&nbsp;:</para>
 
 <para><screen>alias char-major-XXX some-module</screen></para>
 
@@ -138,18 +118,13 @@ Udev.</para>
 
 <screen><userinput>make modules_install</userinput></screen>
 
-<para>S'il y a beaucoup de modules et peu de place, considérez la possibilité
-de réduire leur taille et de compresser les modules. Pour la plupart des
-utilisateurs, une telle compression n'est pas utile mais si le système dispose
-de vraiment peu d'espaces, jetez un &oelig;il à <ulink
-url="http://www.linux-mips.org/archives/linux-mips/2002-04/msg00031.html"/>.</para>
-
 <para>Une fois la compilation du noyau terminée, des étapes supplémentaires
 sont requises pour terminer l'installation. Certains fichiers ont besoin d'être
 copiés dans le répertoire <filename class="directory">/boot</filename>.</para>
 
 <para>Le chemin vers l'image du noyau pourrait varier suivant la plateforme
-d'utilisation. Lancez la commande suivante pour installer le noyau&nbsp;:</para>
+d'utilisation. La commande suivante suppose qu'elle se trouve sur une
+architecture x86&nbsp;:</para>
 
 <screen><userinput>cp arch/i386/boot/bzImage /boot/lfskernel-&linux-version;</userinput></screen>
 
@@ -167,6 +142,8 @@ est une bonne idée pour pouvoir s'y référer plus tard&nbsp;:</para>
 
 <screen><userinput>cp .config /boot/config-&linux-version;</userinput></screen>
 
+<beginpage/>
+
 <para>Il est important de noter que les fichiers du répertoire des sources du
 noyau n'appartiennent pas à <emphasis>root</emphasis>. À chaque fois qu'un
 paquet est déballé par l'utilisateur <emphasis>root</emphasis> (comme nous
@@ -182,18 +159,41 @@ personne aurait alors les droits d'écriture sur les sources du noyau.</para>
 <command>chown -R 0:0</command> sur le répertoire <filename
 class="directory">linux-&linux-version;</filename> pour vous assurez que tous
 les fichiers sont bien possédés par l'utilisateur <emphasis>root</emphasis>.</para>
-</sect2>
 
+<warning><para>Certaines documentation du noyau recommandent de créer un lien
+symbolique à partir de <filename class="symlink">/usr/src/linux</filename> vers
+le répertoire des sources du noyau. Ceci est spécifique aux noyaux antérieurs
+à la série 2.6 et <emphasis>ne doit pas</emphasis> être réalisé sur un système
+LFS car il peut poser des problèmes pour les paquetages que vous souhaitez
+construire une fois que votre système LFS de base est complet.</para>
+
+<para>De plus, les en-têtes compris dans le répertoire système
+<filename class="directory">include</filename> devraient
+<emphasis>toujours</emphasis> être ceux avec lesquels Glibc a été compilé et,
+du coup, ne devraient <emphasis>jamais</emphasis> être remplacés par les
+en-têtes du noyau.</para></warning>
+
+</sect2>
 
 <sect2 id="contents-kernel" role="content"><title>Contenu de Linux</title>
 
 <segmentedlist>
 <segtitle>Fichiers installés</segtitle>
-<seglistitem><seg>noyau, en-têtes du noyau et System.map</seg></seglistitem>
+<seglistitem><seg>config-&linux-version;, lfskernel-&linux-version;,
+et System.map-&linux-version;</seg></seglistitem>
 </segmentedlist>
 
 <variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
 <?dbfo list-presentation="list"?>
+<?dbhtml list-presentation="table"?>
+
+<varlistentry id="config">
+<term><filename>config-&linux-version;</filename></term>
+<listitem>
+<para>Contient toutes les sélections de la configuration pour le noyau</para>
+<indexterm zone="ch-bootable-kernel config"><primary sortas="e-/boot/config">/boot/config-&linux-version;</primary></indexterm>
+</listitem>
+</varlistentry>
 
 <varlistentry id="kernel">
 <term><filename>noyau</filename></term>
@@ -208,25 +208,13 @@ de programmes quasiment au même moment.</para>
 </listitem>
 </varlistentry>
 
-<varlistentry id="kernel-headers">
-<term><filename>En-têtes du noyau</filename></term>
-<listitem>
-<para>Définit l'interface des services que fournit le noyau. Les en-têtes du
-répertoire <filename class="directory">include</filename> du système devraient
-<emphasis>toujours</emphasis> être ceux avec lesquels Glibc a été compilé et,
-du coup, ne devraient <emphasis>pas</emphasis> être remplacées lors de la mise
-à jour du noyau.</para>
-<indexterm zone="ch-bootable-kernel kernel-headers"><primary sortas="e-kernel-headers">en-têtes du noyau</primary></indexterm>
-</listitem>
-</varlistentry>
-
 <varlistentry id="System.map">
-<term><filename>System.map</filename></term>
+<term><filename>System.map-&linux-version;</filename></term>
 <listitem>
 <para>Une liste d'adresses et de symboles&nbsp;; il fait correspondre les points
 d'entrées et les adresses de toutes les fonctions et structures de données dans
 le noyau</para>
-<indexterm zone="ch-bootable-kernel System.map"><primary sortas="e-/boot/System.map">/boot/System.map</primary></indexterm>
+<indexterm zone="ch-bootable-kernel System.map"><primary sortas="e-/boot/System.map">/boot/System.map-&linux-version;</primary></indexterm>
 </listitem>
 </varlistentry>
 </variablelist>
