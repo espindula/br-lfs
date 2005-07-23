@@ -16,7 +16,7 @@ paquet Udev. Avant d'aller dans les détails concernant son fonctionnement, un
 bref historique des méthodes précédentes de gestion des périphériques est
 nécessaire.</para>
 
-<para>Les systèmes Linux en général utilisent traditionellement une méthode
+<para>Les systèmes Linux en général utilisent traditionnellement une méthode
 de création de périphériques statiques avec laquelle un grand nombre de
 n&oelig;uds périphériques est créé sous <filename
 class="directory">/dev</filename> (quelque fois des milliers de n&oelig;uds
@@ -28,10 +28,9 @@ dans le monde. En utilisant la méthode udev, seuls les périphériques
 détectés par le noyau obtiennent des n&oelig;uds périphériques créés pour
 eux. Comme ces n&oelig;uds périphériques seront créés à chaque lancement du
 système, ils seront stockés dans un <systemitem
-class="filesystem">ramfs</systemitem> (un système de fichiers qui réside
-entièrement en mémoire et ne prend pas d'espace disque). Les n&oelig;uds
-périphériques ne requièrent pas beaucoup d'espace disque, donc la mémoire
-utilisée est négligable.</para>
+class="filesystem">tmpfs</systemitem> (un système de fichiers qui réside
+entièrement en mémoire). Les n&oelig;uds périphériques ne requièrent pas
+beaucoup d'espace disque, donc la mémoire utilisée est négligeable.</para>
 
 <sect2>
 <title>Historique</title>
@@ -59,11 +58,11 @@ manque de maintenance.</para>
 série 2.6 des noyaux stables, un nouveau système de fichiers virtuel appelé
 <systemitem class="filesystem">sysfs</systemitem> est arrivé. Le travail de
 <systemitem class="filesystem">sysfs</systemitem> est d'exporter une vue de la
-struture du système des processus en espace utilisateur. Avec cette
-représentation visible de l'espace utilisateur, la possibilité de voir une
-remplacement de l'espace utilisateur pour <systemitem
+configuration matérielle du système pour les processus en espace utilisateur.
+Avec cette représentation visible de l'espace utilisateur, la possibilité de
+voir une remplacement de l'espace utilisateur pour <systemitem
 class="filesystem">devfs</systemitem> est devenu beaucoup plus réaliste.</para>
-<beginpage/>
+
 </sect2>
 
 <sect2>
@@ -71,22 +70,22 @@ class="filesystem">devfs</systemitem> est devenu beaucoup plus réaliste.</para>
 
 <para>Le système de fichiers <systemitem class="filesystem">sysfs</systemitem>
 a été brièvement mentionné ci-dessus. On pourrait se demander comment
-<systemitem class="filesystem">sysfs</systemitem> connait les périphériques
+<systemitem class="filesystem">sysfs</systemitem> connaît les périphériques
 présents sur un système et quels numéros de périphériques devraient être
 utilisés. Les pilotes qui ont été compilés directement dans le noyau
 enregistrent leur objet avec <systemitem class="filesystem">sysfs</systemitem>
 quand ils sont détectés par le noyau. Pour les pilotes compilés en tant que
-modules, ceci surviendra quand le module sera chargé. Une fois que le système
-de fichiers <systemitem class="filesystem">sysfs</systemitem> est monté (sur
-<filename class="directory">/sys</filename>), les données enregistrées par les
-pilotes internes avec <systemitem class="filesystem">sysfs</systemitem> sont
-disponibles pour les processus en espace utilisateur ainsi qu'à
+modules, cet enregistrement surviendra quand le module sera chargé. Une fois que
+le système de fichiers <systemitem class="filesystem">sysfs</systemitem> est
+monté (sur <filename class="directory">/sys</filename>), les données enregistrées
+par les pilotes internes avec <systemitem class="filesystem">sysfs</systemitem>
+sont disponibles pour les processus en espace utilisateur ainsi qu'à
 <command>udev</command> pour la création des n&oelig;uds périphériques.</para>
 
 <para>Le script de démarrage <command>S10udev</command> fait attention à créer
 les n&oelig;uds périphériques au lancement de Linux. Ce script commence 
-en enregistrant <command>/sbin/udev</command> comme gestionnaire d'événements
-de montage à chaud. Ces événements (discutés plus bas) ne devraient pas être
+en enregistrant <command>/sbin/udevsend</command> comme gestionnaire d'événements
+de montage à chaud. Ces événements (discutés plus bas) ne sont généralement pas
 générés lors de cette étape mais <command>udev</command> est enregistré juste
 au cas où cela se passerait quand même. Le programme
 <command>udevstart</command> parcourt le système de fichiers <systemitem
@@ -95,31 +94,28 @@ class="directory">/dev</filename> correspondant à ces descriptions. Par
 exemple, <filename>/sys/class/tty/vcs/dev</filename> contient la chaîne
 <quote>7:0</quote>. Cette chaîne est utilisée par <command>udevstart</command>
 pour créer <filename>/dev/vcs</filename> avec le nombre majeur
-<emphasis>7</emphasis> et le nombre mineur <emphasis>0</emphasis>. Les droits
-de chaque périphérique que <command>udevstart</command> crée sont initialisés
-en utilisant les fichiers du répertoire <filename
-class="directory">/etc/udev.d/permissions.d/</filename>. Ils sont numérotés
-de la même façon que les scripts de démarrage LFS. Si <command>udev</command>
-ne trouve pas un fichier de droits pour le périphérique en cours de
-création, il utilise les droits par défaut, <emphasis>600</emphasis>, et donne
-l'appartenance du périphérique à <emphasis>root:root</emphasis>. Les noms des
-n&oelig;uds créés sous le répertoire <filename
-class="directory">/dev</filename> sont configurés en respectant les
-règles spécifiées dans les fichiers à l'intérieur du répertoire <filename
-class="directory">/etc/udev/rules.d/</filename>.</para>
+<emphasis>7</emphasis> et le nombre mineur <emphasis>0</emphasis>. Les noms et
+droits des n&oelig;uds créés sous le répertoire <filename
+class="directory">/dev</filename> sont configurés suivant les règles spécifiées
+dans les fichiers du répertoire <filename
+class="directory">/etc/udev/rules.d/</filename>. Ils sont numérotés d'une façon
+similaire au paquetage LFS-Bootscripts. Si <command>udev</command> ne peut as
+trouver une règle pour le périphérique en cours de création, celui-ci aura les
+droits par défaut (<emphasis>660</emphasis>) et son propriétaire sera
+<emphasis>root:root</emphasis>.</para>
 
 <para>Une fois l'étape ci-dessus terminée, tous les périphériques qui étaient
 déjà présents et ont des pilotes intégrés au noyau seront disponibles pour
-utilisation. Qu'en est-il des périphériques qui ont des pilotes sous
-forme de modules&nbsp;?</para>
+utilisation. Ceci nous amène aux périphériques qui ont des pilotes sous
+forme de modules.</para>
 
 <para>Plus tôt, nous avons mentionné le concept d'un <quote>gestionnaire
 d'événements de montage à chaud</quote>. Quand la connexion d'un nouveau
-périphérique est détectée par le noyau, le noyau génèrera un événement de
+périphérique est détectée par le noyau, le noyau générera un événement de
 montage à chaud et regardera dans le fichier
 <filename>/proc/sys/kernel/hotplug</filename> pour trouver le programme en
 espace utilisateur qui gère la connexion du périphérique. Le script de démarrage
-<command>udev</command> a enregistré <command>udev</command> comme
+<command>udev</command> a enregistré <command>udevsend</command> comme
 gestionnaire. Quand ces événements sont générés, le noyau indiquera à
 <command>udev</command> de vérifier le système de fichiers <filename
 class="directory">/sys</filename> pour des informations sur le nouveau
@@ -136,11 +132,10 @@ périphérique implique le chargement du module du noyau. Avec
 périphérique n'existe pas tant que le module n'est pas chargé. Pour résoudre
 ceci, le script de démarrage <command>S05modules</command> a été ajouté au
 paquet lfs-bootscripts, avec le fichier
-<filename>/etc/sysconfig/modules</filename>. En
-<beginpage/> ajoutant les noms de modules au fichier
-<filename>modules</filename>, ces modules seront chargés lorsque l'ordinateur
-démarrera. Ceci permet à <command>udev</command> de détecter les périphériques
-et de créer les n&oelig;uds périphériques appropriés.</para>
+<filename>/etc/sysconfig/modules</filename>. En ajoutant les noms de modules
+au fichier <filename>modules</filename>, ces modules seront chargés lorsque
+l'ordinateur démarrera. Ceci permet à <command>udev</command> de détecter les
+périphériques et de créer les n&oelig;uds périphériques appropriés.</para>
 
 <para>Notez que sur les machines lentes ou pour les pilotes qui créent un
 grand nombre de n&oelig;uds périphériques, le processus de création des
@@ -159,22 +154,13 @@ noyau reconnaît que le périphérique est maintenant connecté et génère un
 démarrage <command>S05modules</command>), <command>udev</command> sera appelé
 pour créer le(s) n&oelig;ud(s) périphérique correspondant suivant les données de
 <systemitem class="filesystem">sysfs</systemitem> disponibles dans
-<filename class="directory">/sys</filename>. Si le pilote du périphérique tout
-juste connecté est disponible comme module mais actuellement non chargé, alors
-connecter le périphérique au système fera que le pilote du bus du noyau
-génèrera un événement de montage à chaque notifiant l'espace utilisateur de la
-connexion du nouveau périphérique et le fait qu'il n'est pas rattaché à un
-pilote. En fait, rien ne se passe et le périphérique lui-même n'est pas encore
-utilisable.</para>
+<filename class="directory">/sys</filename>.</para>
 
-<para>Si vous avez construit un système qui comprend beaucoup de pilotes
-compilés en tant que modules plutôt que directement intégrés au noyau,
-utiliser <command>S05modules</command> pourrait ne pas être pratique. Le paquet
-Hotplug (voir <ulink url="http://linux-hotplug.sourceforge.net/"/>) peut être
-bénéfique dans ces cas. Lorsque le paquet Hotplug package est installé, il
-répondra aux événements de montage à chaud du pilote du bus du noyau. Le paquet
-Hotplug chargera le module approprié et rendra ce périphérique disponible en
-créant le(s) n&oelig;ud(s) pour lui.</para>
+<para>Si le pilote du périphérique tout juste connecté est disponible comme
+module mais actuellement non chargé, le paquetage Hotplug chargera les modules
+appropriés et rendra ce périphérique disponible en créant le(s) n&oelig;ud(s)
+périphérique(s) qui le concernent.</para>
+
 </sect2>
 
 <sect2>
@@ -187,14 +173,13 @@ des n&oelig;uds périphériques&nbsp;:</para>
 <systemitem class="filesystem">sysfs</systemitem>.</para>
    
 <para>Ceci est plus fréquent avec les pilotes de tierces parties, à
-l'extérieur du noyau. Ces pilotes n'auront pas leur n&oelig;uds créés. Utilisez
-le fichier de configuration <filename>/etc/sysconfig/createfiles</filename>
-pour créer manuellement les périphériques. Consultez le fichier
-<filename>devices.txt</filename> à l'intérieur de la documentation du noyau ou
-la documentation venant avec ce pilote pour trouver les bons nombres majeurs et
-mineurs.</para>
+l'extérieur du noyau. Udev ne sera pas capable de créer automatiquement les
+n&oelig;uds périphériques pour de tels pilotes. Utilisez le fichier de
+configuration <filename>/etc/sysconfig/createfiles</filename> pour créer
+manuellement les périphériques. Consultez le fichier <filename>devices.txt</filename>
+dans la documentation du noyau ou la documentation pour trouver les bons numéros
+majeurs et mineurs pour ce périphérique.</para>
 
-<beginpage/>
 <para>2) Un périphérique non matériel est requis. Ceci est plus fréquent avec
 le module de compatibilité OSS (acronyme de Open Sound System) du projet ALSA
 (Advanced Linux Sound Architecture). Ces types de périphériques peuvent être
@@ -203,7 +188,7 @@ gérés de deux façons différentes&nbsp;:</para>
 <itemizedlist>
 
 <listitem><para>Ajouter les noms des modules à
-<filename>/etc/sysconfig/modules</filename></para></listitem>
+<filename>/etc/sysconfig/modules</filename></para><beginpage/></listitem>
 <listitem><para>Utiliser une ligne <quote>install</quote> dans
 <filename>/etc/modprobe.conf</filename>. Ceci indique à la commande
 <command>modprobe</command> <quote>au chargement du module, de charger aussi
@@ -226,20 +211,17 @@ requête est faite pour charger le pilote
 suivants&nbsp;:</para>
 
 <itemizedlist>
-<listitem><para remap="verbatim">A Userspace Implementation of devfs
-<ulink url="http://www.kroah.com/linux/talks/ols_2003_udev_paper/Reprint-Kroah-Hartman-OLS2003.pdf"><phrase
-condition="pdf">http://www.kroah.com/linux/talks/ols_2003_udev_paper/
-Reprint-Kroah-Hartman-OLS2003.pdf</phrase></ulink> (NdT&nbsp;:
-Une implémentation en espace utilisateur de devfs)</para></listitem>
+<listitem><para remap="verbatim">A Userspace Implementation of
+<systemitem class="filesystem">devfs</systemitem> <ulink
+url="http://www.kroah.com/linux/talks/ols_2003_udev_paper/Reprint-Kroah-Hartman-OLS2003.pdf"/>
+(NdT&nbsp;: Une implémentation en espace utilisateur de devfs)</para></listitem>
 
 <listitem><para remap="verbatim">FAQ udev
 <ulink url="http://www.kernel.org/pub/linux/utils/kernel/hotplug/udev-FAQ"/></para></listitem>
 
-<listitem><para remap="verbatim">The Linux Kernel Driver Model
-<ulink url="http://public.planetmirror.com/pub/lca/2003/proceedings/papers/Patrick_Mochel/Patrick_Mochel.pdf"><phrase  
-condition="pdf">http://public.planetmirror.com/pub/lca/2003/proceedings/papers/
-Patrick_Mochel/Patrick_Mochel.pdf</phrase></ulink> (NdT&nbsp;:
-le modèle des pilotes du noyau Linux)</para></listitem>
+<listitem><para remap="verbatim">The Linux Kernel Driver Model <ulink
+url="http://public.planetmirror.com/pub/lca/2003/proceedings/papers/Patrick_Mochel/Patrick_Mochel.pdf"/>
+(NdT&nbsp;: Le modèle du pilote pour le noyau Linux)</para></listitem>
 </itemizedlist>
 </sect2>
 
