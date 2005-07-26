@@ -25,12 +25,12 @@ lfs:
 	  *.html
 
 	for filename in `find $(BASEDIR) -name "*.html"`; do \
-	  sh obfuscate.sh $$filename; \
+	  tidy -config tidy.conf $$filename; \
+	  true; \
 	done;
 
 	for filename in `find $(BASEDIR) -name "*.html"`; do \
-	  tidy -config tidy.conf $$filename; \
-	  true; \
+	  sh obfuscate.sh $$filename; \
 	done;
 
 	for filename in `find $(BASEDIR) -name "*.html"`; do \
