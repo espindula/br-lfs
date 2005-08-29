@@ -27,13 +27,7 @@ lfs:
 	for filename in `find $(BASEDIR) -name "*.html"`; do \
 	  tidy -config tidy.conf $$filename; \
 	  true; \
-	done;
-
-	for filename in `find $(BASEDIR) -name "*.html"`; do \
 	  sh obfuscate.sh $$filename; \
-	done;
-
-	for filename in `find $(BASEDIR) -name "*.html"`; do \
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
 
@@ -60,9 +54,9 @@ nochunks:
 	--output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
 	  stylesheets/lfs-nochunks.xsl index.xml
 
-	sh obfuscate.sh $(BASEDIR)/$(NOCHUNKS_OUTPUT)
-
 	tidy -config tidy.conf $(BASEDIR)/$(NOCHUNKS_OUTPUT) || true
+
+	sh obfuscate.sh $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 
 	sed -i -e "s@text/html@application/xhtml+xml@g"  \
 	  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
