@@ -1,4 +1,5 @@
 BASEDIR=~/lfs-book
+DUMPDIR=~/lfs-commands
 CHUNK_QUIET=0
 PDF_OUTPUT=LFS-BOOK.pdf
 NOCHUNKS_OUTPUT=LFS-BOOK.html
@@ -60,6 +61,10 @@ nochunks:
 
 	sed -i -e "s@text/html@application/xhtml+xml@g"  \
 	  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+
+dump-commands:
+	xsltproc --xinclude --nonet --output $(DUMPDIR)/ \
+	   stylesheets/dump-commands.xsl index.xml
 
 validate:
 	xmllint --noout --nonet --xinclude --postvalid index.xml
