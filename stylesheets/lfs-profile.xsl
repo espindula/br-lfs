@@ -4,13 +4,13 @@
                 version="1.0">
 
   <!-- Include common profiling stylesheet -->
-  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.68.1/profiling/profile-mode.xsl"/>
-  
+  <xsl:include href="http://docbook.sourceforge.net/release/xsl/1.69.1/profiling/profile-mode.xsl"/>
+
   <!-- Generate DocBook instance with correct DOCTYPE -->
-  <xsl:output method="xml" 
+  <xsl:output method="xml"
               doctype-public="-//OASIS//DTD DocBook XML V4.4//EN"
               doctype-system="http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"/>
-  
+
   <!-- Profiling parameters -->
   <xsl:param name="profile.arch" select="''"/>
   <xsl:param name="profile.condition" select="''"/>
@@ -26,7 +26,7 @@
   <xsl:param name="profile.attribute" select="''"/>
   <xsl:param name="profile.value" select="''"/>
   <xsl:param name="profile.separator" select="';'"/>
-  
+
   <!-- Call common profiling mode -->
   <xsl:template match="/">
     <xsl:apply-templates select="." mode="profile"/>
