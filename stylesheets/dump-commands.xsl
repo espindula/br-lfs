@@ -46,7 +46,6 @@
   <xsl:template match="screen">
     <xsl:if test="child::* = userinput">
       <xsl:choose>
-        <xsl:when test="@role = 'nodump'"/>
         <xsl:when test="@role = 'root'">
           <xsl:text>&#xA;</xsl:text>
           <xsl:text># Run this as root</xsl:text>
