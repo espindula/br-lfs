@@ -69,17 +69,19 @@
   for the desired language (e.g., <quote>en</quote>) and
   <replaceable>[CC]</replaceable> with the two-letter code for the appropriate
   country (e.g., <quote>GB</quote>). <replaceable>[charmap]</replaceable> should
-  be replaced with the canonical charmap for your chosen locale.</para>
+  be replaced with the canonical charmap for your chosen locale. Optional
+  modifiers such as <quote>@euro</quote> may also be present.</para>
 
   <para>The list of all locales supported by Glibc can be obtained by running
   the following command:</para>
 
 <screen role="nodump"><userinput>locale -a</userinput></screen>
 
-  <para>Locales can have a number of synonyms, e.g. <quote>ISO-8859-1</quote>
+  <para>Charmaps can have a number of aliases, e.g. <quote>ISO-8859-1</quote>
   is also referred to as <quote>iso8859-1</quote> and <quote>iso88591</quote>.
-  Some applications cannot handle the various synonyms correctly, so it is
-  safest to choose the canonical name for a particular locale. To determine
+  Some applications cannot handle the various synonyms correctly (e.g. require
+  that "UTF-8" is written as "UTF-8", not "utf8"), so it is safest in most
+  cases to choose the canonical name for a particular locale. To determine
   the canonical name, run the following command, where <replaceable>[locale
   name]</replaceable> is the output given by <command>locale -a</command> for
   your preferred locale (<quote>en_GB.iso88591</quote> in our example).</para>
@@ -115,6 +117,7 @@ LC_ALL=[locale name] locale int_prefix</userinput></screen>
   Further instructions assume that there are no such error messages from
   Glibc.</para>
 
+  <!-- FIXME: the xlib example will became obsolete real soon -->
   <para>Some packages beyond LFS may also lack support for your chosen locale. One
   example is the X library (part of the X Window System), which outputs the
   following error message:</para>
@@ -139,23 +142,43 @@ LC_ALL=[locale name] locale int_prefix</userinput></screen>
 <screen><userinput>cat &gt; /etc/profile &lt;&lt; "EOF"
 <literal># Begin /etc/profile
 
-export LANG=<replaceable>[ll]</replaceable>_<replaceable>[CC]</replaceable>.<replaceable>[charmap]</replaceable>
+export LANG=<replaceable>[ll]</replaceable>_<replaceable>[CC]</replaceable>.<replaceable>[charmap]</replaceable><replaceable>[@modifiers]</replaceable>
 export INPUTRC=/etc/inputrc
 
 # End /etc/profile</literal>
 EOF</userinput></screen>
 
-  <note>
-    <para>The <quote>C</quote> (default) and <quote>en_US</quote> (the
-    recommended one for United States English users) locales are different.</para>
-  </note>
+  <para>The <quote>C</quote> (default) and <quote>en_US</quote> (the recommended
+  one for United States English users) locales are different. <quote>C</quote>
+  uses the US-ASCII 7-bit character set, and treats bytes with the high bit set
+  as invalid characters. That's why, e.g., the <command>ls</command> command
+  substitutes them with question marks in that locale. Also, an attempt to send
+  mail with such characters from Mutt or Pine results in non-RFC-conforming
+  messages being set (the charset in the outgoing mail is indicatsed as "unknown
+  8-bit"). So you can use the <quote>C</quote> locale only if you are sure that
+  you will never need 8-bit characters.</para>
 
-  <para>Setting the keyboard layout, screen font, and locale-related environment
-  variables are the only internationalization steps needed to support locales
-  that use ordinary single-byte encodings and left-to-right writing direction.
-  More complex cases (including UTF-8 based locales) require additional steps
-  and additional patches because many applications tend to not work properly
-  under such conditions. These steps and patches are not included in the LFS
-  book and such locales are not yet supported by LFS.</para>
+  <para>UTF-8 based locales are not supported well by many programs. E.g., the
+  <command>watch</command> program displays only ASCII characters in UTF-8
+  locales and has no such restriction in traditional 8-bit locales like en_US.
+  Without patches and/or installing software beyond BLFS, in UTF-8 based locales
+  you will not be able to do such basic tasks as printing plain-text files from
+  the command line, recording Windows-readable CDs with filenames containing
+  non-ASCII characters, viewing ID3v1 tags in MP3 files and so on. It is also
+  impossible (without damaging non-ASCII characters) to connect using ssh from
+  the system using a UTF-8 based locale to a host that still uses a traditional
+  8-bit locale, and vice versa. In short, use UTF-8 only if you are going to
+  use KDE or GNOME and never open the terminal, or if you are going to tolerate
+  bugs.</para>
+  <!-- All abovementioned problems except "watch" have a known fix beyond BLFS -->
+
+  <note>
+    <para>Bug reports reproducible only in UTF-8 locales and for which there
+    is no patch or other fix mentioned in the report, will be closed immediately,
+    without investigation, with the "WONTFIX" resolution and a "don't use this
+    program or revert to non-UTF-8 locale" comment. Patches that have ill
+    effects in non-UTF-8 locales (other than replacement of translated program
+    messages with English ones) will be rejected.</para>
+  </note>
 
 </sect1>

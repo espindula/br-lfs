@@ -17,96 +17,207 @@
 
   <para>This section discusses how to configure the <command>console</command>
   bootscript that sets up the keyboard map and the console font. If non-ASCII
-  characters (e.g., the British pound sign and Euro character) will not be used
-  and the keyboard is a U.S. one, skip this section. Without the configuration
-  file, the <command>console</command> bootscript will do nothing.</para>
+  characters (e.g., the copyright sign, the British pound sign and Euro symbol)
+  will not be used and the keyboard is a U.S. one, skip this section. Without
+  the configuration file, the <command>console</command> bootscript will do
+  nothing.</para>
 
   <para>The <command>console</command> script reads the
   <filename>/etc/sysconfig/console</filename> file for configuration information.
   Decide which keymap and screen font will be used. Various language-specific
-  HOWTO's can also help with this (see <ulink
-  url="http://www.tldp.org/HOWTO/HOWTO-INDEX/other-lang.html"/>. A pre-made
-  <filename>/etc/sysconfig/console</filename> file with known settings for several
-  countries was installed with the LFS-Bootscripts package, so the relevant
-  section can be uncommented if the country is supported. If still in doubt, look
-  in the <filename class="directory">/usr/share/kbd</filename> directory for valid
-  keymaps and screen fonts. Read <filename>loadkeys(1)</filename> and
-  <filename>setfont(8)</filename> to determine the correct arguments for
-  these programs. Once decided, create the configuration file with the following
-  command:</para>
+  HOWTO's can also help with this, see <ulink
+  url="http://www.tldp.org/HOWTO/HOWTO-INDEX/other-lang.html"/>. If still in
+  doubt, look in the <filename class="directory">/usr/share/kbd</filename>
+  directory for valid keymaps and screen fonts. Read
+  <filename>loadkeys(1)</filename> and <filename>setfont(8)</filename> manual
+  pages to determine the correct arguments for these programs.</para>
 
-<screen><userinput>cat &gt;/etc/sysconfig/console &lt;&lt;"EOF"
-<literal>KEYMAP="<replaceable>[arguments for loadkeys]</replaceable>"
-FONT="<replaceable>[arguments for setfont]</replaceable>"</literal>
+  <para>The <filename>/etc/sysconfig/console</filename> file should contain lines
+  of the form: VARIABLE="value". The following variables are recognized:</para>
+
+  <variablelist>
+
+    <varlistentry>
+      <term>KEYMAP</term>
+      <listitem>
+        <para>This variable specifies the arguments for the
+        <command>loadkeys</command> program, typically, the name of keymap
+        to load, e.g. "es". If this variable is not set, the bootscript will
+        not run the <command>loadkeys</command> program, and the default kernel
+        keymap will be used.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>KEYMAP_CORRECTIONS</term>
+      <listitem>
+        <para>This (rarely used) variable
+        specifies the arguments for the second call to the
+        <command>loadkeys</command> program. This is useful if the stock keymap
+        is not completely satisfactory and a small adjustment has to be made. E.g.,
+        to include the Euro sign into a keymap that normally doesn't have it,
+        set this variable to "euro2".</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>FONT</term>
+      <listitem>
+        <para>This variable specifies the arguments for the
+        <command>setfont</command> program. Typically, this includes the font
+        name, "-m", and the name of the application character map to load.
+        E.g., in order to load the "lat1-16" font together with the "8859-1"
+        application character map, set this variable to "lat1-16 -m 8859-1".
+        If this variable is not set, the bootscript will not run the
+        <command>setfont</command> program, and the default VGA font will be
+        used together with the default application character map.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>UNICODE</term>
+      <listitem>
+        <para>Set this variable to "1", "yes" or "true" in order to put the
+        console into UTF-8 mode. This is useful in UTF-8 based locales and
+        harmful otherwise.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>LEGACY_CHARSET</term>
+      <listitem>
+        <para>For many keyboard layouts, there is no stock Unicode keymap in
+        the Kbd package. The <command>console</command> bootscript will
+        convert an available keymap to UTF-8 on the fly if this variable is
+        set to the encoding of the available non-UTF-8 keymap. Note, however,
+        that dead keys and composing will not work in UTF-8 mode without the
+        special kernel patch.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>BROKEN_COMPOSE</term>
+      <listitem>
+        <para>Set this to "0" if you are going to apply that kernel patch in
+        Chapter 8. Note that you also have to add the character set expected
+        by composition rules in your keymap to the FONT variable after the
+        "-m" switch.</para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
+
+  <para>Support for compiling the keymap directly into the kernel has been
+  removed because there were reports that it leads to incorrect results.</para>
+
+  <para>Some examples:</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>For a non-Unicode setup, only the KEYMAP and FONT variables are
+      generally needed. E.g., for a Polish setup, one would use:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Begin /etc/sysconfig/console
+
+KEYMAP="pl2"
+FONT="lat2a-16 -m 8859-2"
+
+# End /etc/sysconfig/console</literal>
 EOF</userinput></screen>
+    </listitem>
 
-  <para>For example, for Spanish users who also want to use the Euro
-  character (accessible by pressing AltGr+E), the following settings are
-  correct:</para>
+    <listitem>
+      <para>As mentioned above, it is sometimes necessary to adjust a
+      stock keymap slightly. The following example adds the Euro symbol to the
+      German keymap:</para>
 
-<screen role="nodump"><userinput>cat &gt;/etc/sysconfig/console &lt;&lt;"EOF"
-<literal>KEYMAP="es euro2"
-FONT="lat9-16 -u iso01"</literal>
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Begin /etc/sysconfig/console
+
+KEYMAP="de-latin1"
+KEYMAP_CORRECTIONS="euro2"
+FONT="lat0-16 -m 8859-15"
+
+# End /etc/sysconfig/console</literal>
 EOF</userinput></screen>
+    </listitem>
 
+    <listitem>
+      <para>Here is a Unicode-enabled example for Bulgarian, where a stock
+      UTF-8 keymap exists and defines no dead keys or composition rules:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Begin /etc/sysconfig/console
+
+UNICODE="1"
+KEYMAP="bg_bds-utf8"
+FONT="LatArCyrHeb-16"
+
+# End /etc/sysconfig/console</literal>
+EOF</userinput></screen>
+    </listitem>
+
+    <listitem>
+      <para>Due to the use of a 512-glyph LatArCyrHeb-16 font in the previous
+      example, bright colors are no longer available on the Linux console unless
+      a framebuffer is used. If one wants to have bright colors without
+      framebuffer and can live without characters not belonging to his language,
+      it is still possible to use a language-specific 256-glyph font, as
+      illustrated below. This would, however, also break single quotes in manual
+      pages.</para>
+
+      <!-- And even with the LatArCyrHeb-16 font, copying-and-pasting produces
+      non-ASCII variants of opening and closing single quote instead of ` and '.
+      Maybe another sed has to be added to groff instructions that will remove
+      both issues. -->
+
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Begin /etc/sysconfig/console
+
+UNICODE="1"
+KEYMAP="bg_bds-utf8"
+FONT="cyr-sun16"
+
+# End /etc/sysconfig/console</literal>
+EOF</userinput></screen>
+    </listitem>
+
+    <listitem>
+      <para>The following example illustrates keymap autoconversion from
+      ISO-8859-15 to UTF-8 and enabling dead keys in Unicode mode:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Begin /etc/sysconfig/console
+
+UNICODE="1"
+KEYMAP="de-latin1"
+KEYMAP_CORRECTIONS="euro2"
+LEGACY_CHARSET="iso-8859-15"
+BROKEN_COMPOSE="0"
+FONT="LatArCyrHeb-16 -m 8859-15"
+
+# End /etc/sysconfig/console</literal>
+EOF</userinput></screen>
+    </listitem>
+
+    <listitem>
+      <para>For Chinese, Japanese, Korean and some other languages, the Linux
+      console cannot be configured to display the needed characters. Users
+      who need such languages should install the X Window System, fonts that
+      cover the necessary character ranges, and the proper input Method (e.g.
+      SCIM, it supports a wide variety of languages).</para>
+    </listitem>
+
+  </itemizedlist>
+
+  <!-- Added because folks keep posting their console file with X questions
+  to blfs-support list -->
   <note>
-    <para>The <envar>FONT</envar> line above is correct only for the ISO 8859-15
-    character set. If using ISO 8859-1 and, therefore, a pound sign
-    instead of Euro, the correct <envar>FONT</envar> line would be:</para>
-
-<screen role="nodump"><userinput>FONT="lat1-16"</userinput></screen>
+    <para>The <filename>/etc/sysconfig/console</filename> file only controls
+    Linux text console localization. It has nothing to do with setting the proper
+    keyboard layout and terminal fonts in X Window System.</para>
   </note>
-
-  <para>If the <envar>KEYMAP</envar> or <envar>FONT</envar> variable is not set,
-  the <command>console</command> initscript will not run the corresponding
-  program.</para>
-
-  <para>In some keymaps, the Backspace and Delete keys send characters different
-  from ones in the default keymap built into the kernel. This confuses some
-  applications. For example, Emacs displays its help (instead of erasing the
-  character before the cursor) when Backspace is pressed. To check if the keymap
-  in use is affected (this works only for i386 keymaps):</para>
-
-<screen role="nodump"><userinput>zgrep '\W14\W' <replaceable>[/path/to/your/keymap]</replaceable></userinput></screen>
-
-  <para>If the keycode 14 is Backspace instead of Delete, create the
-  following keymap snippet to fix this issue:</para>
-
-<screen role="nodump"><userinput>mkdir -pv /etc/kbd &amp;&amp; cat &gt; /etc/kbd/bs-sends-del &lt;&lt;"EOF"
-<literal>                  keycode  14 = Delete Delete Delete Delete
-              alt keycode  14 = Meta_Delete
-        altgr alt keycode  14 = Meta_Delete
-                  keycode 111 = Remove
-    altgr control keycode 111 = Boot
-      control alt keycode 111 = Boot
-altgr control alt keycode 111 = Boot</literal>
-EOF</userinput></screen>
-
-  <para>Tell the <command>console</command> script to load this
-  snippet after the main keymap:</para>
-
-<screen role="nodump"><userinput>cat &gt;&gt;/etc/sysconfig/console &lt;&lt;"EOF"
-<literal>KEYMAP_CORRECTIONS="/etc/kbd/bs-sends-del"</literal>
-EOF</userinput></screen>
-
-  <para>To compile the keymap directly into the kernel instead of
-  setting it every time from the <command>console</command> bootscript,
-  follow the instructions given in <xref linkend="ch-bootable-kernel" role="."/>
-  Doing this ensures that the keyboard will always work as expected,
-  even when booting into maintenance mode (by passing
-  <parameter>init=/bin/sh</parameter> to the kernel), because the
-  <command>console</command> bootscript will not be run in that
-  situation. Additionally, the kernel will not set the screen font
-  automatically. This should not pose many problems because ASCII characters
-  will be handled correctly, and it is unlikely that a user would need
-  to rely on non-ASCII characters while in maintenance mode.</para>
-
-  <para>Since the kernel will set up the keymap, it is possible to omit
-  the <envar>KEYMAP</envar> variable from the
-  <filename>/etc/sysconfig/console</filename> configuration file. It can
-  also be left in place, if desired, without consequence.  Keeping it
-  could be beneficial if running several different kernels where it is
-  difficult to ensure that the keymap is compiled into every one of
-  them.</para>
 
 </sect1>

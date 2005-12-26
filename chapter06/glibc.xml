@@ -47,6 +47,21 @@ and linker cannot be adjusted before the Glibc install because the
 Glibc autoconf tests would give false results and defeat the goal
 of achieving a clean build.</para>
 
+<para>The glibc-libidn tarball adds support for internationalized
+domain names (IDN) to Glibc. Note that many programs that
+support IDN require the full libidn library from
+<ulink url="http://josefsson.org/libidn/releases/"/>, not this add-on.
+Unpack the tarball from within the Glibc source
+directory:</para>
+
+<screen><userinput>tar jxf ../glibc-libidn-&glibc-version;.tar.bz2</userinput></screen>
+
+<para>In the vi_VN.TCVN locale, bash enters infinite loop at startup. It is
+unknown whether this is a bash bug or a glibc problem. Disable installation
+of this locale in order to avoid the problem:</para>
+
+<screen><userinput>sed -i '/vi_VN.TCVN/d' localedata/SUPPORTED</userinput></screen>
+
 <para>The Glibc documentation recommends building Glibc outside of the source
 directory in a dedicated build directory:</para>
 
@@ -56,7 +71,7 @@ cd ../glibc-build</userinput></screen>
 <para>Prepare Glibc for compilation:</para>
 
 <screen><userinput>../glibc-&glibc-version;/configure --prefix=/usr \
-    --disable-profile --enable-add-ons \
+    --disable-profile --enable-add-ons=nptl,libidn \
     --enable-kernel=2.6.0 --libexecdir=/usr/lib/glibc</userinput></screen>
 
 <para>The meaning of the new configure options:</para>
@@ -129,6 +144,11 @@ with:</para>
 
 <screen><userinput>make localedata/install-locales</userinput></screen>
 
+<note><para>It is possible to create and install additional locales such as
+ru_RU.CP1251 by means of the <command>localedef</command> command, as
+explained in the <filename>INSTALL</filename> file in the Glibc source.</para></note>
+<!-- The Live CD patches the localedata/SUPPORTED file instead of running localedef -->
+
 <para>To save time, an alternative to running the
 previous command (which generates and installs every locale listed in the
 glibc-&glibc-version;/localedata/SUPPORTED file) is to install only those
@@ -142,6 +162,7 @@ instructions, instead of the <parameter>install-locales</parameter>
 target used above, will install the minimum set of locales necessary
 for the tests to run successfully:</para>
 
+<!-- FIXME: recheck that "make localedata/install_locales" actually does the same -->
 <screen role="nodump"><userinput>mkdir -pv /usr/lib/locale
 localedef -i de_DE -f ISO-8859-1 de_DE
 localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
@@ -152,24 +173,16 @@ localedef -i es_MX -f ISO-8859-1 es_MX
 localedef -i fa_IR -f UTF-8 fa_IR
 localedef -i fr_FR -f ISO-8859-1 fr_FR
 localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
+localedef -i fr_FR.UTF-8 -f UTF-8 fr_FR
 localedef -i it_IT -f ISO-8859-1 it_IT
 localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
 
-<para>Some locales installed by the <command>make
-localedata/install-locales</command> command above are not properly
-supported by some applications that are in the LFS and BLFS books.
-Because of the various problems that arise due to application
-programmers making assumptions that break in such locales, LFS should
-not be used in locales that utilize multibyte character sets
-(including UTF-8) or right-to-left writing order.  Numerous unofficial
-and unstable patches are required to fix these problems, and it has
-been decided by the LFS developers not to support such complex locales at this
-time.  This applies to the ja_JP and fa_IR locales as well&mdash;they have been
-installed only for GCC and Gettext tests to pass, and the
-<command>watch</command> program (part of the Procps package) does not work
-properly in them. Various attempts to circumvent these restrictions are
-documented in internationalization-related hints.</para>
-
+<para>The first <command>localedef</command> above combines the
+<filename>/usr/share/i18n/locales/de_DE</filename> charset-independent
+locale definition with the
+<filename>/usr/share/i18n/charmaps/ISO-8859-1.gz</filename> charmap definition
+and appends the result to the
+<filename>/usr/lib/locale/locale-archive</filename> file.</para>
 </sect2>
 
 <sect2 id="conf-glibc" role="configuration"><title>Configuring Glibc</title>
