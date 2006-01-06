@@ -47,6 +47,23 @@ and linker cannot be adjusted before the Glibc install because the
 Glibc autoconf tests would give false results and defeat the goal
 of achieving a clean build.</para>
 
+<para>The glibc-libidn tarball adds support for internationalized
+domain names (IDN) to Glibc. Many programs that
+support IDN require the full libidn library (see
+<ulink url="&blfs-root;view/svn/general/libidn.html"/>),
+not this add-on.
+Unpack the tarball from within the Glibc source
+directory:</para>
+
+<screen><userinput>tar jxf ../glibc-libidn-&glibc-version;.tar.bz2</userinput></screen>
+
+<para>In the vi_VN.TCVN locale, <command>bash</command> enters an infinite loop
+at startup. It is unknown whether this is a <command>bash</command> bug or a
+Glibc problem. Disable installation of this locale in order to avoid the
+problem:</para>
+
+<screen><userinput>sed -i '/vi_VN.TCVN/d' localedata/SUPPORTED</userinput></screen>
+
 <para>The Glibc documentation recommends building Glibc outside of the source
 directory in a dedicated build directory:</para>
 
@@ -121,26 +138,36 @@ Prevent this warning with:</para>
 
 <para>Install the package:</para>
 
-<screen><userinput>make install</userinput></screen>
+<screen><userinput>make install_root=/ install</userinput></screen>
+
+<para>The meaning of the make option:</para>
+
+<variablelist>
+<varlistentry>
+<term><parameter>install_root=/</parameter></term>
+<listitem><para>This causes the Glibc Makefile not to run the
+<filename>scripts/test-installation.pl</filename> script at the end
+of Glibc installation. Since the toolchain has not been adjusted yet for
+the new Glibc, this script would test Glibc installed in
+<filename class="directory">/tools</filename> and fail because the
+libidn add-on has not been installed there.</para></listitem>
+</varlistentry>
+</variablelist>
 
 <para>The locales that can make the system respond in a different
-language were not installed by the above command. Install this
-with:</para>
+language were not installed by the above command. None of the
+locales are required, but, if some of them are misssing, testuites of the
+future packages would skip important testcases.</para>
 
-<screen><userinput>make localedata/install-locales</userinput></screen>
-
-<para>To save time, an alternative to running the
-previous command (which generates and installs every locale listed in the
-glibc-&glibc-version;/localedata/SUPPORTED file) is to install only those
-locales that are wanted and needed.  This can be achieved by using the
-<command>localedef</command> command. Information on this command is located in
-the <filename>INSTALL</filename> file in the Glibc source.  However, there
-are a number of locales that are essential in order for the tests of
-future packages to pass, in particular, the
-<emphasis>libstdc++</emphasis> tests from GCC. The following
-instructions, instead of the <parameter>install-locales</parameter>
-target used above, will install the minimum set of locales necessary
-for the tests to run successfully:</para>
+<para>Individual locales can be installed using the <command>localedef</command>
+program. E.g., the first <command>localedef</command> command below combines
+the <filename>/usr/share/i18n/locales/de_DE</filename> charset-independent
+locale definition with the
+<filename>/usr/share/i18n/charmaps/ISO-8859-1.gz</filename> charmap definition
+and appends the result to the
+<filename>/usr/lib/locale/locale-archive</filename> file. The following
+instructions will install the minimum set of locales necessary
+for the optimal coverage of tests:</para>
 
 <screen role="nodump"><userinput>mkdir -pv /usr/lib/locale
 localedef -i de_DE -f ISO-8859-1 de_DE
@@ -152,23 +179,26 @@ localedef -i es_MX -f ISO-8859-1 es_MX
 localedef -i fa_IR -f UTF-8 fa_IR
 localedef -i fr_FR -f ISO-8859-1 fr_FR
 localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
+localedef -i fr_FR.UTF-8 -f UTF-8 fr_FR
 localedef -i it_IT -f ISO-8859-1 it_IT
 localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
 
-<para>Some locales installed by the <command>make
-localedata/install-locales</command> command above are not properly
-supported by some applications that are in the LFS and BLFS books.
-Because of the various problems that arise due to application
-programmers making assumptions that break in such locales, LFS should
-not be used in locales that utilize multibyte character sets
-(including UTF-8) or right-to-left writing order.  Numerous unofficial
-and unstable patches are required to fix these problems, and it has
-been decided by the LFS developers not to support such complex locales at this
-time.  This applies to the ja_JP and fa_IR locales as well&mdash;they have been
-installed only for GCC and Gettext tests to pass, and the
-<command>watch</command> program (part of the Procps package) does not work
-properly in them. Various attempts to circumvent these restrictions are
-documented in internationalization-related hints.</para>
+<para>In addition, install the locale for your own country, language and
+character set.</para>
+
+<para>Alternatively, install all locales
+listed in the <filename>glibc-&glibc-version;/localedata/SUPPORTED</filename>
+file (it includes every locale listed above and many more)
+at once with the following time-consuming command:</para>
+
+<screen><userinput>make localedata/install-locales</userinput></screen>
+
+<para>Then use the <command>localedef</command> command to create and
+install locales not listed in the
+<filename>glibc-&glibc-version;/localedata/SUPPORTED</filename> file
+in the unlikely case if you need them.</para>
+<!-- The Live CD patches the localedata/SUPPORTED file instead of
+running localedef, the results are equivalent -->
 
 </sect2>
 
@@ -277,7 +307,7 @@ getent, iconv, iconvconfig, ldconfig, ldd, lddlibc4, locale,
 localedef, mtrace, nscd, nscd_nischeck, pcprofiledump, pt_chown, rpcgen,
 rpcinfo, sln, sprof, tzselect, xtrace, zdump, and zic</seg>
 <seg>ld.so, libBrokenLocale.[a,so],
-libSegFault.so, libanl.[a,so], libbsd-compat.a, libc.[a,so],
+libSegFault.so, libanl.[a,so], libbsd-compat.a, libc.[a,so], libcidn.so,
 libcrypt.[a,so], libdl.[a,so], libg.a, libieee.a, libm.[a,so], libmcheck.a,
 libmemusage.so, libnsl.a, libnss_compat.so, libnss_dns.so, libnss_files.so,
 libnss_hesiod.so, libnss_nis.so, libnss_nisplus.so, libpcprofile.so,
@@ -366,8 +396,7 @@ by each given program or shared library</para>
 <varlistentry id="locale">
 <term><command>locale</command></term>
 <listitem>
-<para>Tells the compiler to enable or disable the use of POSIX locales
-for built-in operations</para>
+<para>Prints various information about the current locale</para>
 <indexterm zone="ch-system-glibc locale"><primary sortas="b-locale">locale</primary></indexterm>
 </listitem>
 </varlistentry>
@@ -499,7 +528,10 @@ printing the currently executed function</para>
 <varlistentry id="libBrokenLocale">
 <term><filename class="libraryfile">libBrokenLocale</filename></term>
 <listitem>
-<para>Used by programs, such as Mozilla, to solve broken locales</para>
+<para>Used internally by Glibc as a gross hack to get broken programs 
+(e.g., some Motif applications) running. See comments in
+<filename>glibc-&glibc-version;/locale/broken_cur_max.c</filename> for more
+information</para>
 <indexterm zone="ch-system-glibc libBrokenLocale"><primary sortas="c-libBrokenLocale">libBrokenLocale</primary></indexterm>
 </listitem>
 </varlistentry>
@@ -507,7 +539,8 @@ printing the currently executed function</para>
 <varlistentry id="libSegFault">
 <term><filename class="libraryfile">libSegFault</filename></term>
 <listitem>
-<para>The segmentation fault signal handler</para>
+<para>The segmentation fault signal handler, used by
+<command>catchsegv</command></para>
 <indexterm zone="ch-system-glibc libSegFault"><primary sortas="c-libSegFault">libSegFault</primary></indexterm>
 </listitem>
 </varlistentry>
@@ -537,6 +570,15 @@ in order to run certain Berkey Software Distribution (BSD) programs under Linux<
 </listitem>
 </varlistentry>
 
+<varlistentry id="libcidn">
+<term><filename class="libraryfile">libcidn</filename></term>
+<listitem>
+<para>Used internally by Glibc for handling internationalized domain names in
+the <function>getaddrinfo()</function> function</para>
+<indexterm zone="ch-system-glibc libcrypt"><primary sortas="c-libcrypt">libcrypt</primary></indexterm>
+</listitem>
+</varlistentry>
+
 <varlistentry id="libcrypt">
 <term><filename class="libraryfile">libcrypt</filename></term>
 <listitem>
@@ -556,7 +598,8 @@ in order to run certain Berkey Software Distribution (BSD) programs under Linux<
 <varlistentry id="libg">
 <term><filename class="libraryfile">libg</filename></term>
 <listitem>
-<para>A runtime library for <command>g++</command></para>
+<para>Dummy library containing no functions. Previously was a runtime library
+for <command>g++</command></para>
 <indexterm zone="ch-system-glibc libg"><primary sortas="c-libg">libg</primary></indexterm>
 </listitem>
 </varlistentry>
@@ -564,7 +607,9 @@ in order to run certain Berkey Software Distribution (BSD) programs under Linux<
 <varlistentry id="libieee">
 <term><filename class="libraryfile">libieee</filename></term>
 <listitem>
-<para>The Institute of Electrical and Electronic Engineers (IEEE) floating point library</para>
+<para>Linking in this module forces error handling rules for math functions as
+defined by the Institute of Electrical and Electronic Engineers (IEEE).
+The default is POSIX.1 error handling</para>
 <indexterm zone="ch-system-glibc libieee"><primary sortas="c-libieee">libieee</primary></indexterm>
 </listitem>
 </varlistentry>
@@ -580,7 +625,7 @@ in order to run certain Berkey Software Distribution (BSD) programs under Linux<
 <varlistentry id="libmcheck">
 <term><filename class="libraryfile">libmcheck</filename></term>
 <listitem>
-<para>Contains code run at boot</para>
+<para>Turns on memory allocation checking when linked to</para>
 <indexterm zone="ch-system-glibc libmcheck"><primary sortas="c-libmcheck">libmcheck</primary></indexterm>
 </listitem>
 </varlistentry>
