@@ -3,11 +3,11 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
-                
+
     <!-- General settings -->
   <xsl:param name="generate.toc">
     appendix  nop
-    book      toc,title,figure,table,example,equation
+    book      toc,title
     chapter   nop
     part      toc
     preface   nop
@@ -26,7 +26,7 @@
   <xsl:param name="toc.section.depth">1</xsl:param>
 
   <xsl:param name="toc.max.depth">3</xsl:param>
-  
+
     <!-- Making the TOC -->
   <xsl:template name="make.toc">
     <xsl:param name="toc-context" select="."/>
@@ -46,7 +46,7 @@
       </div>
     </xsl:if>
   </xsl:template>
-  
+
     <!-- Making the subtocs -->
   <xsl:template name="subtoc">
     <xsl:param name="toc-context" select="."/>
@@ -70,7 +70,7 @@
       <xsl:call-template name="toc.line">
         <xsl:with-param name="toc-context" select="$toc-context"/>
       </xsl:call-template>
-      <xsl:if test="$toc.section.depth &gt; $depth and count($nodes)&gt;0 
+      <xsl:if test="$toc.section.depth &gt; $depth and count($nodes)&gt;0
               and $toc.max.depth &gt; $depth.from.context">
         <xsl:copy-of select="$subtoc"/>
       </xsl:if>
