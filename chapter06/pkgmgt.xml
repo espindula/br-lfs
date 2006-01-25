@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-pkgmgt">
+  <title>Package Management</title>
+  <?dbhtml filename="pkgmgt.html"?>
+
+  <para>Package Management is an often requested addition to the LFS Book. A
+  Package Manager allows tracking the installation of files making it easy to
+  remove and upgrade packages. Before you begin to wonder, NO&mdash;this section
+  will not talk about nor recommend any particular package manager. What it
+  provides is a roundup of the more popular techniques and how they work. The
+  perfect package manager for you may be among these techniques or may be a
+  combination of two or more of these techniques. This section briefly mentions
+  issues that may arise when upgrading packages.</para>
+
+  <para>Some reasons why no package manager is mentioned in LFS or BLFS include:  </para>
+
+  <itemizedlist>
+    <listitem>
+      <para>Dealing with package management takes the focus away from the goals
+      of these books&mdash;teaching how a Linux system is built.</para>
+    </listitem>
+
+    <listitem>
+      <para>There are multiple solutions for package management, each having
+      its strengths and drawbacks.  Including one that satisfies all audiences
+      is difficult.</para>
+    </listitem>
+  </itemizedlist>
+
+  <para>There are some hints written on the topic of package management. Visit
+  the <ulink url="&hints-root;">Hints subproject</ulink> and see if one of them
+  fits your need.</para>
+
+  <note><para>As no particular package management technique is mentioned in LFS,
+  the commands in the remainder of this book must be performed while logged in
+  as user <emphasis>root</emphasis> and no longer as user
+  <emphasis>lfs</emphasis>. Also, double check that <envar>$LFS</envar> is set.
+  </para></note>
+
+  <sect2>
+    <title>Upgrade Issues</title>
+
+    <para>A Package Manager makes it easy to upgrade to newer versions when they
+    are released. Generally the instructions in the LFS and BLFS Book can be
+    used to upgrade to the newer versions. Here are some points that you should
+    be aware of when upgrading packages, especially on a running system.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>If one of the toolchain packages
+        (<application>Glibc</application>, <application>GCC</application> or
+        <application>Binutils</application>) needs to be upgraded to a newer
+        minor version, it is safer to rebuild LFS. Though you
+        <emphasis>may</emphasis> be able to get by rebuilding all the packages
+        in their dependency order, we do not recommend it. For example, if
+        glibc-2.2.x needs to be updated to glibc-2.3.x, it is safer to rebuild.
+        For micro version updates, a simple reinstallation usually works, but
+        is not guaranteed. For example, upgrading from glibc-2.3.4 to
+        glibc-2.3.5 will not usually cause any problems.</para>
+      </listitem>
+
+      <listitem>
+        <para>If a package containing a shared library is updated, and if the
+        name of the library changes, then all the packages dynamically linked
+        to the library need to be recompiled to link against the newer library.
+        (Note that there is no correlation between the package version and the
+        name of the library.) For example, consider a package foo-1.2.3 that
+        installs a shared library with name
+        <filename class='libraryfile'>libfoo.so.1</filename>. Say you upgrade
+        the package to a newer version foo-1.2.4 that installs a shared library
+        with name <filename class='libraryfile'>libfoo.so.2</filename>. In this
+        case, all packages that are dynamically linked to
+        <filename class='libraryfile'>libfoo.so.1</filename> need to be
+        recompiled to link against
+        <filename class='libraryfile'>libfoo.so.2</filename>. Note that you
+        should not remove the previous libraries until the dependent packages
+        are recompiled.</para>
+      </listitem>
+
+      <listitem>
+        <para>If you are upgrading a running system, be on the lookout for
+        packages that use <command>cp</command> instead of
+        <command>install</command> to install files. The latter command is
+        usually safer if the executable or library is already loaded in memory.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>Package Management Techniques</title>
+
+    <para>The following are some common package management techniques. Before
+    making a decision on a package manager, do some research on the various
+    techniques, particularly the drawbacks of the particular scheme.</para>
+
+    <sect3>
+      <title>It is All in My Head!</title>
+
+      <para>Yes, this is a package management technique. Some folks do not find
+      the need for a package manager because they know the packages intimately
+      and know what files are installed by each package. Some users also do not
+      need any package management because they plan on rebuilding the entire
+      system when a package is changed.</para>
+    </sect3>
+
+    <sect3>
+      <title>Install in Separate Directories</title>
+
+      <para>This is a simplistic package management that does not need any extra
+      package to manage the installations. Each package is installed in a
+      separate directory. For example, package foo-1.1 is installed in
+      <filename class='directory'>/usr/pkg/foo-1.1</filename>
+      and a symlink is made from <filename>/usr/pkg/foo</filename> to
+      <filename class='directory'>/usr/pkg/foo-1.1</filename>. When installing
+      a new version foo-1.2, it is installed in
+      <filename class='directory'>/usr/pkg/foo-1.2</filename> and the previous
+      symlink is replaced by a symlink to the new version.</para>
+
+      <para>Environment variables such as <envar>PATH</envar>,
+      <envar>LD_LIBRARY_PATH</envar>, <envar>MANPATH</envar>,
+      <envar>INFOPATH</envar> and <envar>CPPFLAGS</envar> need to be expanded to
+      include <filename>/usr/pkg/foo</filename>. For more than a few packages,
+      this scheme becomes unmanageable.</para>
+    </sect3>
+
+    <sect3>
+      <title>Symlink Style Package Management</title>
+
+      <para>This is a variation of the previous package management technique.
+      Each package is installed similar to the previous scheme. But instead of
+      making the symlink, each file is symlinked into the
+      <filename class='directory'>/usr</filename> hierarchy. This removes the
+      need to expand the environment variables. Though the symlinks can be
+      created by the user to automate the creation, many package managers have
+      been written using this approach. A few of the popular ones include Stow,
+      Epkg, Graft, and Depot.</para>
+
+      <para>The installation needs to be faked, so that the package thinks that
+      it is installed in <filename class="directory">/usr</filename> though in
+      reality it is installed in the
+      <filename class="directory">/usr/pkg</filename> hierarchy. Installing in
+      this manner is not usually a trivial task. For example, consider that you
+      are installing a package libfoo-1.1. The following instructions may
+      not install the package properly:</para>
+
+<screen><userinput>./configure --prefix=/usr/pkg/libfoo/1.1
+make
+make install</userinput></screen>
+
+      <para>The installation will work, but the dependent packages may not link
+      to libfoo as you would expect. If you compile a package that links against
+      libfoo, you may notice that it is linked to
+      <filename class='libraryfile'>/usr/pkg/libfoo/1.1/lib/libfoo.so.1</filename>
+      instead of <filename class='libraryfile'>/usr/lib/libfoo.so.1</filename>
+      as you would expect. The correct approach is to use the
+      <envar>DESTDIR</envar> strategy to fake installation of the package. This
+      approach works as follows:</para>
+
+<screen><userinput>./configure --prefix=/usr
+make
+make DESTDIR=/usr/pkg/libfoo/1.1 install</userinput></screen>
+
+      <para>Most packages support this approach, but there are some which do
+      not. For the non-compliant packages, you may either need to manually
+      install the package, or you may find that it is easier to install some
+      problematic packages into <filename class='directory'>/opt</filename>.
+      </para>
+    </sect3>
+
+    <sect3>
+      <title>Timestamp Based</title>
+
+      <para>In this technique, a file is timestamped before the installation of
+      the package. After the installation, a simple use of the
+      <command>find</command> command with the appropriate options can generate
+      a log of all the files installed after the timestamp file was created. A
+      package manager written with this approach is install-log.</para>
+
+      <para>Though this scheme has the advantage of being simple, it has two
+      drawbacks. If, during installation, the files are installed with any
+      timestamp other than the current time, those files will not be tracked by
+      the package manager. Also, this scheme can only be used when one package
+      is installed at a time. The logs are not reliable if two packages are
+      being installed on two different consoles.</para>
+    </sect3>
+
+    <sect3>
+      <title>LD_PRELOAD Based</title>
+
+      <para>In this approach, a library is preloaded before installation. During
+      installation, this library tracks the packages that are being installed by
+      attaching itself to various executables such as <command>cp</command>,
+      <command>install</command>, <command>mv</command> and tracking the system
+      calls that modify the filesystem. For this approach to work, all the
+      executables need to be dynamically linked without the suid or sgid bit.
+      Preloading the library may cause some unwanted side-effects during
+      installation. Therefore, it is advised that one performs some tests to
+      ensure that the package manager does not break anything and logs all the
+      appropriate files.</para>
+    </sect3>
+
+    <sect3>
+      <title>Creating Package Archives</title>
+
+      <para>In this scheme, the package installation is faked into a separate
+      tree as described in the Symlink style package management. After the
+      installation, a package archive is created using the installed files.
+      This archive is then used to install the package either on the local
+      machine or can even be used to install the package on other machines.
+      </para>
+
+      <para>This approach is used by most of the package managers found in the
+      commercial distributions. Examples of package managers that follow this
+      approach are RPM (which, incidentally, is required by the <ulink
+      url="http://lsbbook.gforge.freestandards.org/package.html#RPM">Linux
+      Standard Base Specification</ulink>), pkg-utils, Debian's apt, and
+      Gentoo's Portage system.  A hint describing how to adopt this style of
+      package management for LFS systems is located at <ulink
+      url="&hints-root;/fakeroot.txt"/>.</para>
+    </sect3>
+
+    <sect3>
+      <title>User Based Management</title>
+
+      <para>This scheme, unique to LFS, was devised by Matthias Benkmann, and is
+      available from the <ulink url="&hints-root;">Hints Project</ulink>. In
+      this scheme, each package is installed as a separate user into the
+      standard locations. Files belonging to a package are easily identified by
+      checking the user ID. The features and shortcomings of this approach are
+      too complex to describe in this section. For the details please see the
+      hint at <ulink
+      url="&hints-root;/more_control_and_pkg_man.txt"/>.</para>
+    </sect3>
+
+  </sect2>
+
+</sect1>
