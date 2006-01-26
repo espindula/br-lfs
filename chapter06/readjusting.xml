@@ -19,12 +19,17 @@ be guided from that same <filename class="directory">/tools/lib</filename>
 directory to the LFS <filename class="directory">/{,usr/}lib</filename>
 directories.</para>
 
-<para>First, amend the GCC specs file so that it points to the new
+<para>First, create a symlink to the adjusted linker we created in chapter 5.</para>
+
+<screen><userinput>ln -sv /tools/bin/ld-new /usr/bin/ld</userinput></screen>
+
+<para>Next, amend the GCC specs file so that it points to the new
 dynamic linker. A <command>sed</command> command accomplishes this:</para>
 
 <screen><userinput>SPECFILE=`dirname $(gcc -print-libgcc-file-name)`/specs &amp;&amp;
 gcc -dumpspecs > $SPECFILE &amp;&amp;
-sed -i 's@^/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' $SPECFILE &amp;&amp;
+sed -i -e '/^\*link:$/{n;s,$, -L/usr/lib,}' \
+       -e 's@^/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' $SPECFILE &amp;&amp;
 unset SPECFILE</userinput></screen>
 
 <para>It is a good idea to visually inspect the specs file to verify the intended 
@@ -38,20 +43,16 @@ dynamic linker in the above commands. Refer back to <xref
 linkend="ch-tools-toolchaintechnotes" role=","/> if
 necessary.</para></important>
 
-<para>Now create temporary wrapper scripts for <filename>gcc</filename> and
-<filename>ld</filename>. These scripts will point to their real counterparts
+<para>Now create a temporary wrapper script for <filename>gcc</filename>.
+This script will point to the real <filename>gcc</filename>
 in <filename class="directory">/tools</filename> but with adjusted parameters
 to ensure that GCC in the next section links to our newly installed Glibc.</para>
 
 <screen><userinput>cat &gt; /usr/bin/gcc &lt;&lt; "EOF"
 #!/bin/bash
-/tools/bin/gcc -B/usr/lib $@
+/tools/bin/gcc -B/usr/lib/ -B/usr/bin/ $@
 EOF
-cat &gt; /usr/bin/ld &lt;&lt; "EOF"
-#!/bin/bash
-/tools/bin/ld -nostdlib -L/usr/lib -L/lib $@
-EOF
-chmod 755 /usr/bin/{ld,gcc}
+chmod 755 /usr/bin/gcc
 ln -s gcc /usr/bin/cc</userinput></screen>
 
 <caution><para>It is imperative at this point to stop and ensure that
@@ -60,7 +61,7 @@ are working as expected. To do this, perform a sanity
 check:</para>
 
 <screen><userinput>echo 'main(){}' &gt; dummy.c
-cc dummy.c
+cc dummy.c -Wl,--verbose &amp;&gt; dummy.log
 readelf -l a.out | grep ': /lib'</userinput></screen>
 
 <para>If everything is working correctly, there should be no errors,
@@ -72,6 +73,36 @@ platform-specific differences in dynamic linker name):</para>
 <para>Note that <filename class="directory">/lib</filename> is now
 the prefix of our dynamic linker.</para>
 
+<para>Now make sure that we're setup to use the correct start files:</para>
+
+<screen><userinput>grep "/usr/lib/crt.* " dummy.log</userinput></screen>
+
+<para>If everything is working correctly, there should be no errors,
+and the output of the last command will be:</para>
+
+<screen><computeroutput>attempt to open /usr/lib/crt1.o succeeded
+attempt to open /usr/lib/crti.o succeeded
+attempt to open /usr/lib/crtn.o succeeded</computeroutput></screen>
+
+<para>Next make sure that we're using the correct libc:</para>
+
+<screen><userinput>grep "/lib/libc.so.6 " dummy.log</userinput></screen>
+
+<para>If everything is working correctly, there should be no errors,
+and the output of the last command will be:</para>
+
+<screen><computeroutput>attempt to open /lib/libc.so.6 succeeded</computeroutput></screen>
+
+<para>Lastly, make sure GCC is using the correct dynamic linker:</para>
+
+<screen><userinput>grep found dummy.log</userinput></screen>
+
+<para>If everything is working correctly, there should be no errors,
+and the output of the last command will be (allowing for
+platform-specific differences in dynamic linker name):</para>
+
+<screen><computeroutput>found ld-linux.so.2 at /lib/ld-linux.so.2</computeroutput></screen>
+
 <para>If the output does not appear as shown above or is not received
 at all, then something is seriously wrong. Investigate and retrace the
 steps to find out where the problem is and correct it. The most likely
@@ -82,7 +113,7 @@ the process.</para>
 <para>Once everything is working correctly, clean up the test
 files:</para>
 
-<screen><userinput>rm -v dummy.c a.out</userinput></screen></caution>
+<screen><userinput>rm -v dummy.c a.out dummy.log</userinput></screen></caution>
 
 </sect1>
 
