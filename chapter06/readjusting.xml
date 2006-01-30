@@ -19,18 +19,24 @@ be guided from that same <filename class="directory">/tools/lib</filename>
 directory to the LFS <filename class="directory">/{,usr/}lib</filename>
 directories.</para>
 
-<para>First, create a symlink to the adjusted linker we created in chapter 5.</para>
+<para>First, backup the <filename class="directory">/tools</filename> linker, and
+replace it with the adjusted linker we made in chapter 5. We'll also create a 
+link to its counterpart in <filename class="directory">/tools/$MACHTYPE/bin</filename></para>
 
-<screen><userinput>ln -sv /tools/bin/ld-new /usr/bin/ld</userinput></screen>
+<screen><userinput>mv -v /tools/bin/{ld,ld-old}
+mv -v /tools/$MACHTYPE/bin/{ld,ld-old}
+mv -v /tools/bin/{ld-new,ld}
+ln -sv /tools/bin/ld /tools/$MACHTYPE/bin/ld</userinput></screen>
 
 <para>Next, amend the GCC specs file so that it points to the new
-dynamic linker. A <command>sed</command> command accomplishes this:</para>
+dynamic linker, and so that GCC knows where to find its start files.
+A <command>perl</command> command accomplishes this:</para>
 
-<screen><userinput>SPECFILE=`dirname $(gcc -print-libgcc-file-name)`/specs &amp;&amp;
-gcc -dumpspecs > $SPECFILE &amp;&amp;
-sed -i -e '/^\*link:$/{n;s,$, -L/usr/lib,}' \
-       -e 's@^/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' $SPECFILE &amp;&amp;
-unset SPECFILE</userinput></screen>
+<screen><userinput>gcc -dumpspecs | \
+perl -pi -e 's@/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g;' \
+     -e 's@\*startfile_prefix_spec:\n@$_/usr/lib/ @g;' &gt; \
+     `dirname $(gcc --print-libgcc-file-name)`/specs
+</userinput></screen>
 
 <para>It is a good idea to visually inspect the specs file to verify the intended 
 change was actually made.</para>
@@ -42,18 +48,6 @@ dynamic linker is something other than
 dynamic linker in the above commands. Refer back to <xref
 linkend="ch-tools-toolchaintechnotes" role=","/> if
 necessary.</para></important>
-
-<para>Now create a temporary wrapper script for <filename>gcc</filename>.
-This script will point to the real <filename>gcc</filename>
-in <filename class="directory">/tools</filename> but with adjusted parameters
-to ensure that GCC in the next section links to our newly installed Glibc.</para>
-
-<screen><userinput>cat &gt; /usr/bin/gcc &lt;&lt; "EOF"
-#!/bin/bash
-/tools/bin/gcc -B/usr/lib/ -B/usr/bin/ $@
-EOF
-chmod 755 /usr/bin/gcc
-ln -s gcc /usr/bin/cc</userinput></screen>
 
 <caution><para>It is imperative at this point to stop and ensure that
 the basic functions (compiling and linking) of the adjusted toolchain
