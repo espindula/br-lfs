@@ -1,217 +1,261 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+  "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
+
 <sect1 id="ch-system-gcc" role="wrap">
-<title>GCC-&gcc-version;</title>
-<?dbhtml filename="gcc.html"?>
+  <?dbhtml filename="gcc.html"?>
 
-<indexterm zone="ch-system-gcc"><primary sortas="a-GCC">GCC</primary></indexterm>
+  <title>GCC-&gcc-version;</title>
 
-<sect2 role="package"><title/>
-<para>The GCC package contains the GNU compiler collection, which includes
-the C and C++ compilers.</para>
+  <indexterm zone="ch-system-gcc">
+    <primary sortas="a-GCC">GCC</primary>
+  </indexterm>
 
-<segmentedlist>
-<segtitle>&buildtime;</segtitle>
-<segtitle>&diskspace;</segtitle>
-<seglistitem><seg>11.7 SBU</seg><seg>451 MB</seg></seglistitem>
-</segmentedlist>
+  <sect2 role="package">
+    <title/>
 
-<segmentedlist>
-<segtitle>&dependencies;</segtitle>
-<seglistitem><seg>Bash, Binutils, Coreutils, Diffutils, Findutils,
-Gawk, Gettext, Glibc, Grep, Make, Perl, Sed, and Texinfo</seg></seglistitem>
-</segmentedlist>
-</sect2>
+    <para>The GCC package contains the GNU compiler collection, which includes
+    the C and C++ compilers.</para>
 
-<sect2 role="installation">
-<title>Installation of GCC</title>
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
 
-<para>Apply a <command>sed</command> substitution that will suppress the
-installation of <filename class="libraryfile">libiberty.a</filename>. The
-version of <filename class="libraryfile">libiberty.a</filename> provided by
-Binutils will be used instead:</para>
+      <seglistitem>
+        <seg>11.7 SBU</seg>
+        <seg>451 MB</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <segmentedlist>
+      <segtitle>&dependencies;</segtitle>
+
+      <seglistitem>
+        <seg>Bash, Binutils, Coreutils, Diffutils, Findutils, Gawk, Gettext,
+        Glibc, Grep, Make, Perl, Sed, and Texinfo</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation of GCC</title>
+
+    <para>Apply a <command>sed</command> substitution that will suppress the
+    installation of <filename class="libraryfile">libiberty.a</filename>. The
+    version of <filename class="libraryfile">libiberty.a</filename> provided by
+    Binutils will be used instead:</para>
 
 <screen><userinput>sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
 
-<para>The bootstrap build performed in <xref linkend="ch-tools-gcc-pass1"/>
-built GCC with the <option>-fomit-frame-pointer</option> compiler flag.
-Non-bootstrap builds omit this flag by default, so apply the following
-<command>sed</command> to use it in order to ensure consistent compiler builds.
-</para>
+    <para>The bootstrap build performed in <xref linkend="ch-tools-gcc-pass1"/>
+    built GCC with the <option>-fomit-frame-pointer</option> compiler flag.
+    Non-bootstrap builds omit this flag by default, so apply the following
+    <command>sed</command> to use it in order to ensure consistent compiler
+    builds.</para>
 
 <screen><userinput>sed -i 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in</userinput></screen>
 
-<para>The <command>fixincludes</command> script is known to occasionally
-erroneously attempt to &quot;fix&quot; the system headers installed so far.  As
-the headers installed by GCC-&gcc-version; and Glibc-&glibc-version; are known
-to not require fixing, issue the following command to prevent the
-<command>fixincludes</command> script from running:</para>
+    <para>The <command>fixincludes</command> script is known to occasionally
+    erroneously attempt to &quot;fix&quot; the system headers installed so far. As
+    the headers installed by GCC-&gcc-version; and Glibc-&glibc-version; are known
+    to not require fixing, issue the following command to prevent the
+    <command>fixincludes</command> script from running:</para>
 
 <screen><userinput>sed -i 's@\./fixinc\.sh@-c true@' gcc/Makefile.in</userinput></screen>
 
-<para>GCC provides a <command>gccbug</command> script which detects at
-compile time whether mktemp is present, and hardcodes the result in a test.
-This will cause the script to fall back to using less random names for
-temporary files.  We will be installing mktemp later, so the following sed
-will simulate its presence.</para>
+    <para>GCC provides a <command>gccbug</command> script which detects at
+    compile time whether mktemp is present, and hardcodes the result in a test.
+    This will cause the script to fall back to using less random names for
+    temporary files.  We will be installing mktemp later, so the following sed
+    will simulate its presence.</para>
 
 <screen>sed -i 's/@have_mktemp_command@/yes/' gcc/gccbug.in</screen>
 
-<para>The GCC documentation recommends building GCC outside of the source
-directory in a dedicated build directory:</para>
+    <para>The GCC documentation recommends building GCC outside of the source
+    directory in a dedicated build directory:</para>
 
 <screen><userinput>mkdir -v ../gcc-build
 cd ../gcc-build</userinput></screen>
 
-<para>Prepare GCC for compilation:</para>
+    <para>Prepare GCC for compilation:</para>
 
 <screen><userinput>../gcc-&gcc-version;/configure --prefix=/usr \
     --libexecdir=/usr/lib --enable-shared \
     --enable-threads=posix --enable-__cxa_atexit \
     --enable-clocale=gnu --enable-languages=c,c++</userinput></screen>
 
-<para>Compile the package:</para>
+    <para>Compile the package:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<important><para>In this section, the test suite for GCC is considered
-critical. Do not skip it under any circumstance.</para></important>
+    <important>
+      <para>In this section, the test suite for GCC is considered
+      critical. Do not skip it under any circumstance.</para>
+    </important>
 
-<para>Test the results, but do not stop at errors:</para>
+    <para>Test the results, but do not stop at errors:</para>
 
 <screen><userinput>make -k check</userinput></screen>
 
-<para>Some of the errors are known issues and were noted in the
-previous chapter. The test suite notes from <xref
-linkend="ch-tools-gcc-pass2" role=","/> are still relevant here. Be sure to
-refer back to them as necessary.</para>
+    <para>Some of the errors are known issues and were noted in the
+    previous chapter. The test suite notes from <xref
+    linkend="ch-tools-gcc-pass2" role=","/> are still relevant here. Be sure to
+    refer back to them as necessary.</para>
 
-<para>Install the package:</para>
+    <para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
 
-<para>Some packages expect the C preprocessor to be installed in the
-<filename class="directory">/lib</filename> directory.
-To support those packages, create this symlink:</para>
+    <para>Some packages expect the C preprocessor to be installed in the
+    <filename class="directory">/lib</filename> directory.
+    To support those packages, create this symlink:</para>
 
 <screen><userinput>ln -sv ../usr/bin/cpp /lib</userinput></screen>
 
-<para>Many packages use the name <command>cc</command> to call the C
-compiler. To satisfy those packages, create a symlink:</para>
+    <para>Many packages use the name <command>cc</command> to call the C
+    compiler. To satisfy those packages, create a symlink:</para>
 
 <screen><userinput>ln -sv gcc /usr/bin/cc</userinput></screen>
 
-<note><para>At this point, it is strongly recommended to repeat the
-sanity check performed earlier in this chapter. Refer back to <xref
-linkend="ch-system-readjusting" role=","/> and repeat the check. If the results
-are in error, then the most likely reason is that the GCC Specs patch
-from <xref linkend="chapter-temporary-tools"/> was erroneously applied
-here.</para></note>
+    <note>
+      <para>At this point, it is strongly recommended to repeat the sanity
+      check performed earlier in this chapter. Refer back to <xref
+      linkend="ch-system-readjusting" role=","/> and repeat the check. If
+      the results are in error, then the most likely reason is that the GCC
+      Specs patch from <xref linkend="chapter-temporary-tools"/> was
+      erroneously applied here.</para>
+    </note>
 
-</sect2>
+  </sect2>
 
+  <sect2 id="contents-gcc" role="content">
+    <title>Contents of GCC</title>
 
-<sect2 id="contents-gcc" role="content"><title>Contents of GCC</title>
+    <segmentedlist>
+      <segtitle>Installed programs</segtitle>
+      <segtitle>Installed libraries</segtitle>
 
-<segmentedlist>
-<segtitle>Installed programs</segtitle>
-<segtitle>Installed libraries</segtitle>
-<seglistitem><seg>c++, cc (link to gcc), cpp, g++, gcc, gccbug, and
-gcov</seg>
-<seg>libgcc.a, libgcc_eh.a, libgcc_s.so, libstdc++.[a,so], and libsupc++.a</seg></seglistitem>
-</segmentedlist>
+      <seglistitem>
+        <seg>c++, cc (link to gcc), cpp, g++, gcc, gccbug, and gcov</seg>
+        <seg>libgcc.a, libgcc_eh.a, libgcc_s.so, libstdc++.[a,so], and
+        libsupc++.a</seg>
+      </seglistitem>
+    </segmentedlist>
 
-<variablelist><bridgehead renderas="sect3">Short Descriptions</bridgehead>
-<?dbfo list-presentation="list"?>
-<?dbhtml list-presentation="table"?>
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
 
-<varlistentry id="cc">
-<term><command>cc</command></term>
-<listitem>
-<para>The C compiler</para>
-<indexterm zone="ch-system-gcc cc"><primary sortas="b-cc">cc</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="cc">
+        <term><command>cc</command></term>
+        <listitem>
+          <para>The C compiler</para>
+          <indexterm zone="ch-system-gcc cc">
+            <primary sortas="b-cc">cc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="cpp">
-<term><command>cpp</command></term>
-<listitem>
-<para>The C preprocessor; it is used by the compiler to expand the
-#include, #define, and similar statements in the source files</para>
-<indexterm zone="ch-system-gcc cpp"><primary sortas="b-cpp">cpp</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="cpp">
+        <term><command>cpp</command></term>
+        <listitem>
+          <para>The C preprocessor; it is used by the compiler to expand the
+          #include, #define, and similar statements in the source files</para>
+          <indexterm zone="ch-system-gcc cpp">
+            <primary sortas="b-cpp">cpp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="c">
-<term><command>c++</command></term>
-<listitem>
-<para>The C++ compiler</para>
-<indexterm zone="ch-system-gcc c"><primary sortas="b-c++">c++</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="c">
+        <term><command>c++</command></term>
+        <listitem>
+          <para>The C++ compiler</para>
+          <indexterm zone="ch-system-gcc c">
+            <primary sortas="b-c++">c++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="g">
-<term><command>g++</command></term>
-<listitem>
-<para>The C++ compiler</para>
-<indexterm zone="ch-system-gcc g"><primary sortas="b-g++">g++</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="g">
+        <term><command>g++</command></term>
+        <listitem>
+          <para>The C++ compiler</para>
+          <indexterm zone="ch-system-gcc g">
+            <primary sortas="b-g++">g++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="gcc">
-<term><command>gcc</command></term>
-<listitem>
-<para>The C compiler</para>
-<indexterm zone="ch-system-gcc gcc"><primary sortas="b-gcc">gcc</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="gcc">
+        <term><command>gcc</command></term>
+        <listitem>
+          <para>The C compiler</para>
+          <indexterm zone="ch-system-gcc gcc">
+            <primary sortas="b-gcc">gcc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="gccbug">
-<term><command>gccbug</command></term>
-<listitem>
-<para>A shell script used to help create useful bug reports</para>
-<indexterm zone="ch-system-gcc gccbug"><primary sortas="b-gccbug">gccbug</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="gccbug">
+        <term><command>gccbug</command></term>
+        <listitem>
+          <para>A shell script used to help create useful bug reports</para>
+          <indexterm zone="ch-system-gcc gccbug">
+            <primary sortas="b-gccbug">gccbug</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="gcov">
-<term><command>gcov</command></term>
-<listitem>
-<para>A coverage testing tool; it is used to analyze programs to
-determine where optimizations will have the most effect</para>
-<indexterm zone="ch-system-gcc gcov"><primary sortas="b-gcov">gcov</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="gcov">
+        <term><command>gcov</command></term>
+        <listitem>
+          <para>A coverage testing tool; it is used to analyze programs to
+          determine where optimizations will have the most effect</para>
+          <indexterm zone="ch-system-gcc gcov">
+            <primary sortas="b-gcov">gcov</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="libgcc">
-<term><filename class="libraryfile">libgcc</filename></term>
-<listitem>
-<para>Contains run-time support for <command>gcc</command></para>
-<indexterm zone="ch-system-gcc libgcc"><primary sortas="c-libgcc*">libgcc*</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="libgcc">
+        <term><filename class="libraryfile">libgcc</filename></term>
+        <listitem>
+          <para>Contains run-time support for <command>gcc</command></para>
+          <indexterm zone="ch-system-gcc libgcc">
+            <primary sortas="c-libgcc*">libgcc*</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="libstdc">
-<term><filename class="libraryfile">libstdc++</filename></term>
-<listitem>
-<para>The standard C++ library</para>
-<indexterm zone="ch-system-gcc libstdc"><primary sortas="c-libstdc++">libstdc++</primary></indexterm>
-</listitem>
-</varlistentry>
+      <varlistentry id="libstdc">
+        <term><filename class="libraryfile">libstdc++</filename></term>
+        <listitem>
+          <para>The standard C++ library</para>
+          <indexterm zone="ch-system-gcc libstdc">
+            <primary sortas="c-libstdc++">libstdc++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="libsupc">
-<term><filename class="libraryfile">libsupc++</filename></term>
-<listitem>
-<para>Provides supporting routines for the C++ programming language</para>
-<indexterm zone="ch-system-gcc libsupc"><primary sortas="c-libsupc++">libsupc++</primary></indexterm>
-</listitem>
-</varlistentry>
-</variablelist>
+      <varlistentry id="libsupc">
+        <term><filename class="libraryfile">libsupc++</filename></term>
+        <listitem>
+          <para>Provides supporting routines for the C++ programming
+          language</para>
+          <indexterm zone="ch-system-gcc libsupc">
+            <primary sortas="c-libsupc++">libsupc++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
-</sect2>
+    </variablelist>
+
+  </sect2>
 
 </sect1>
-
