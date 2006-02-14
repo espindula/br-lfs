@@ -15,21 +15,33 @@
   </xsl:param>
 
   <xsl:template match="/">
-    <xsl:text>#! /bin/bash&#x0a;&#x0a;</xsl:text>
-    <xsl:text>  umask 002&#x0a;&#x0a;</xsl:text>
+    <xsl:text>#! /bin/bash
+
+function copy
+{
+  cp $1 $2 >>copyerrs 2>&amp;1
+}
+
+umask 002 &#x0a;&#x0a;</xsl:text>
+               
       <!-- Create dest.dir if it don't exist -->
-    <xsl:text>  install -d -m 775 -g lfswww </xsl:text>
+    <xsl:text>install -d -m 775 -g lfswww </xsl:text>
     <xsl:value-of select="$dest.dir"/>
     <xsl:text> &amp;&amp;&#x0a;</xsl:text>
-    <xsl:text>  cd </xsl:text>
+    <xsl:text>cd </xsl:text>
     <xsl:value-of select="$dest.dir"/>
     <xsl:text> &amp;&amp;&#x0a;&#x0a;</xsl:text>
-      <!-- Touch a dummy patch to prevent fails if dest dir is empty, then remove old patches -->
-    <xsl:text>  touch dummy.patch &amp;&amp;&#x0a;  rm -f *.patch &amp;&amp;&#x0a;&#x0a;</xsl:text>
+      <!-- Remove old patches -->
+    <xsl:text>rm -f *.patch copyerrs &amp;&amp; &#x0a;&#x0a;</xsl:text>
     <xsl:apply-templates/>
       <!-- Ensure correct owneship -->
-    <xsl:text>&#x0a;  chgrp lfswww *.patch &amp;&amp;&#x0a;</xsl:text>
-    <xsl:text>&#x0a;  exit&#x0a;</xsl:text>
+    <xsl:text>&#x0a;chgrp lfswww *.patch &amp;&amp;&#x0a;</xsl:text>
+    <xsl:text>
+if [ `wc -l copyerrs | sed 's/ *//' | cut -f1 -d' '` -gt 0 ]; then
+  mail -s "Missing LFS patches" lfs-book@linuxfromscratch.org &lt; copyerrs
+fi&#x0a;&#x0a;</xsl:text>
+          
+    <xsl:text>exit&#x0a;</xsl:text>
   </xsl:template>
 
   <xsl:template match="//text()"/>
@@ -46,7 +58,7 @@
         <xsl:text>-</xsl:text>
         <xsl:value-of select="$cut"/>
       </xsl:variable>
-      <xsl:text>  cp /home/httpd/www.linuxfromscratch.org/patches/downloads/</xsl:text>
+      <xsl:text>copy /home/httpd/www.linuxfromscratch.org/patches/downloads/</xsl:text>
           <xsl:value-of select="substring-before($patch.name2, '-0')"/>
       <xsl:text>/</xsl:text>
       <xsl:value-of select="$patch.name"/>
