@@ -25,8 +25,8 @@
       <segtitle>&diskspace;</segtitle>
 
       <seglistitem>
-        <seg>0.1 SBU</seg>
-        <seg>1.1 MB</seg>
+        <seg>0.2 SBU</seg>
+        <seg>9.0 MB</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -115,6 +115,30 @@ EOF</userinput></screen>
     <para>Install the package:</para>
 
 <screen><userinput>make install</userinput></screen>
+
+    <para>Some packages provide UTF-8 man pages which this version of
+    <command>man</command> is unable to display.  The following script will
+    allow some of these to be converted into the expected encodings shown in
+    the table below. It will not help if you are using a UTF-8 locale.
+    Because this script  is intended for limited use during the system build,
+    for public data, we will not bother with error checking, nor use a
+    non-predictable temporary file name.</para>
+
+<screen><userinput>cat &gt;&gt;convert-mans &lt;&lt;"EOF"
+<literal>#!/bin/sh -e
+FROM="$1"
+TO="$2"
+shift ; shift
+while [ $# -gt 0 ]
+do
+        FILE="$1"
+        shift
+        iconv -f "$FROM" -t "$TO" "$FILE" >.tmp.iconv
+        mv .tmp.iconv "$FILE"
+done
+</literal>
+EOF
+install -m755 convert-mans  /usr/bin</userinput></screen>
 
     <para>Additional information regarding the compression of
     man and info pages can be found in the BLFS book at
@@ -274,16 +298,14 @@ cp -rv man? /usr/share/man/fr</userinput></screen>
     <para>If upstream distributes manual pages in UTF-8 (i.e., <quote>for
     RedHat</quote>) instead of the encoding listed in the table above, they
     have to be converted from UTF-8 to the encoding listed in the table before
-    installation. E.g., Spanish manual pages (<ulink
-    url="http://ditec.um.es/~piernas/manpages-es/man-pages-es-1.55.tar.bz2"/>)
+    installation. This can be achieved with convert-mans, e.g., Spanish manual
+    pages (<ulink url="http://ditec.um.es/~piernas/manpages-es/man-pages-es-1.55.tar.bz2"/>)
     can be installed with the following commands:</para>
 
-<screen role="nodump"><userinput>mkdir -p /usr/share/man/es &amp;&amp;
-find man? -type f | grep -v 'man7/iso_8859-7.7' | \
-while read F ; do
-  iconv -f UTF-8 -t ISO-8859-1 $F >tmp ; mv tmp $F
-done &amp;&amp;
-cp -rv man? /usr/share/man/es</userinput></screen>
+<screen role="nodump"><userinput>mv man7/iso_8859-7.7{,X}
+convert-mans UTF-8 ISO-8859-1 man?/*.? 
+mv man7/iso_8859-7.7{X,}
+make install</userinput></screen>
 
     <note>
       <para>The need to exclude the <filename>man7/iso_8859-7.7</filename> file
@@ -301,8 +323,8 @@ cp -rv man? /usr/share/man/es</userinput></screen>
       <segtitle>Installed programs</segtitle>
 
       <seglistitem>
-        <seg>accessdb, apropos, catman, lexgrog, man, mandb, manpath,
-        and whatis</seg>
+        <seg>accessdb, apropos, catman, convert-mans,lexgrog, man, mandb,
+        manpath, and whatis</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -340,6 +362,16 @@ cp -rv man? /usr/share/man/es</userinput></screen>
           <para>Creates or updates the pre-formatted manual pages</para>
           <indexterm zone="ch-system-man-db catman">
             <primary sortas="b-catman">catman</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="convert-mans">
+        <term><command>convert-mans</command></term>
+        <listitem>
+          <para>Reformat man pages so that Man-DB can display them</para>
+          <indexterm zone="ch-system-man-db convert-mans">
+            <primary sortas="b-convert-mans">convert-mans</primary>
           </indexterm>
         </listitem>
       </varlistentry>
