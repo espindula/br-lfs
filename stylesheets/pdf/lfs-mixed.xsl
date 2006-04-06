@@ -5,14 +5,15 @@
                 version="1.0">
 
 
-    <!-- This is a hack and isn't correct semantically. Theoretically, the beginpage 
-      tags should be placed in the XML source only to render the PDF output and 
+    <!-- This is a hack and isn't correct semantically. Theoretically, the beginpage
+      tags should be placed in the XML source only to render the PDF output and
       should be removed after it. But there is no a better way and we need this.-->
   <xsl:template match="beginpage">
     <fo:block break-after="page"/>
   </xsl:template>
-  
-    <!-- Allow forced line breaks inside paragraphs emulating literallayout. -->
+
+    <!-- Allow forced line breaks inside paragraphs emulating literallayout
+    and to remove vertical space in pachages and patches pages. -->
  <xsl:template match="para">
     <xsl:choose>
       <xsl:when test="./@remap='verbatim'">
@@ -21,6 +22,15 @@
                     white-space-treatment="preserve"
                     text-align="start"
                     linefeed-treatment="preserve">
+          <xsl:call-template name="anchor"/>
+          <xsl:apply-templates/>
+        </fo:block>
+      </xsl:when>
+      <xsl:when test="ancestor::variablelist/@role = 'materials'">
+        <fo:block>
+          <xsl:attribute name="space-before.optimum">0.1em</xsl:attribute>
+          <xsl:attribute name="space-before.minimum">0em</xsl:attribute>
+          <xsl:attribute name="space-before.maximum">0.2em</xsl:attribute>
           <xsl:call-template name="anchor"/>
           <xsl:apply-templates/>
         </fo:block>
@@ -217,31 +227,31 @@
 
     <!-- Addibg a bullet, and left alignament, for packages and paches list. -->
 
-<xsl:template match="varlistentry" mode="vl.as.blocks">
-  <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
-  <xsl:choose>
-    <xsl:when test="ancestor::variablelist/@role = 'materials'">
-      <fo:block id="{$id}" xsl:use-attribute-sets="list.item.spacing"
-          keep-together.within-column="always"
-          keep-with-next.within-column="always" text-align="left">
-        <xsl:text>&#x2022;   </xsl:text>
-        <xsl:apply-templates select="term"/>
-      </fo:block>
-      <fo:block margin-left="1.4pc" text-align="left">
-        <xsl:apply-templates select="listitem"/>
-      </fo:block>
-    </xsl:when>
-    <xsl:otherwise>
-      <fo:block id="{$id}" xsl:use-attribute-sets="list.item.spacing"
-          keep-together.within-column="always"
-          keep-with-next.within-column="always">
-        <xsl:apply-templates select="term"/>
-      </fo:block>
-      <fo:block margin-left="0.25in">
-        <xsl:apply-templates select="listitem"/>
-      </fo:block>
-    </xsl:otherwise>
-  </xsl:choose>
-</xsl:template>
+  <xsl:template match="varlistentry" mode="vl.as.blocks">
+    <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
+    <xsl:choose>
+      <xsl:when test="ancestor::variablelist/@role = 'materials'">
+        <fo:block id="{$id}" xsl:use-attribute-sets="list.item.spacing"
+            keep-together.within-column="always"
+            keep-with-next.within-column="always" text-align="left">
+          <xsl:text>&#x2022;   </xsl:text>
+          <xsl:apply-templates select="term"/>
+        </fo:block>
+        <fo:block margin-left="1.4pc" text-align="left">
+          <xsl:apply-templates select="listitem"/>
+        </fo:block>
+      </xsl:when>
+      <xsl:otherwise>
+        <fo:block id="{$id}" xsl:use-attribute-sets="list.item.spacing"
+            keep-together.within-column="always"
+            keep-with-next.within-column="always">
+          <xsl:apply-templates select="term"/>
+        </fo:block>
+        <fo:block margin-left="0.25in">
+          <xsl:apply-templates select="listitem"/>
+        </fo:block>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
 
 </xsl:stylesheet>
