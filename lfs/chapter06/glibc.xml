@@ -34,6 +34,15 @@ Grep, Make, Perl, Sed et Texinfo</seg></seglistitem>
 <sect2 role="installation">
 <title>Installation de Glibc</title>
 
+<note><para>Certains paquets non compris dans LFS suggèrent d'installer GNU
+libiconv pour traduire les données d'un codage en un autre. La page d'accueil
+du projet (<ulink url="http://www.gnu.org/software/libiconv/"/>) précise
+<quote>Cette bibliothèque fournit une implémentation de
+<function>iconv()</function>, à utiliser sur les systèmes qui n'en disposent
+pas ou dont l'implémentation ne convertit pas l'Unicode.</quote> Glibc fournit
+une implémentation d'<function>iconv()</function> et peut convertir de
+l'Unicode, du coup libiconv n'est pas requis sur un système LFS.</para></note>
+
 <para>Ce paquet est connu pour avoir des soucis quand les options
 d'optimisation par défaut (en incluant les options
 <parameter>-march</parameter> et <parameter>-mcpu</parameter>) sont modifiées.
@@ -53,18 +62,30 @@ propre.</para>
 de threading installées par Glibc. Déballez l'archive tar à l'intérieur du
 répertoire source Glibc&nbsp;:</para>
 
-<screen><userinput>tar -xjvf /sources/glibc-linuxthreads-&glibc-version;.tar.bz2</userinput></screen>
+<screen><userinput>tar -xjvf ../glibc-linuxthreads-&glibc-version;.tar.bz2</userinput></screen>
+
+<para>Dans de rares circonstances, Glibc peut générer une erreur de segmentation
+quand aucun répertoire de recherche standard n'existe. Le correctif suivant
+s'occupe de ce problème&nbsp;:</para> 
+
+<screen><userinput>patch -Np1 -i ../&glibc-rtld-patch;</userinput></screen>
 
 <para>Glibc contient deux tests qui échoueront si le noyau en cours d'exécution
 est un 2.6.11.x. Le problème se situe sur les tests eux-même, pas avec la libc
 ou le noyau. Ce correctif corrige le problème&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../glibc-&glibc-version;-fix_test-1.patch</userinput></screen>
+<screen><userinput>patch -Np1 -i ../&glibc-testfix-patch;</userinput></screen>
+
+<para>Appliquez le correctif suivant pour corriger un bogue dans Glibc qui peut
+empêcher certains programmes (comme OpenOffice.org) de fonctionner
+correctement&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&glibc-tls_assert-patch;</userinput></screen>
 
 <para>La documentation de Glibc recommande de construire Glibc en dehors du
 répertoire des sources dans un répertoire de construction dédié&nbsp;:</para>
 
-<screen><userinput>mkdir ../glibc-build
+<screen><userinput>mkdir -v ../glibc-build
 cd ../glibc-build</userinput></screen>
 
 <para>Préparez la compilation de Glibc&nbsp;:</para>
@@ -85,8 +106,6 @@ class="directory">/usr/lib/glibc</filename>.</para></listitem>
 </varlistentry>
 </variablelist>
 
-<beginpage/>
-
 <para>Compilez le paquet&nbsp;:</para>
 
 <screen><userinput>make</userinput></screen>
@@ -97,7 +116,8 @@ circonstances.</para></important>
 
 <para>Testez les résultats&nbsp;:</para>
 
-<screen><userinput>make check</userinput></screen>
+<screen><userinput>make -k check &gt;glibc-check-log 2&gt;&amp;1
+grep Error glibc-check-log</userinput></screen>
 
 <para>La suite de tests Glibc est grandement dépendante de certaines fonctions
 de l'hôte système, en particulier le noyau. En général, la suite de tests Glibc
@@ -141,7 +161,8 @@ avec ceci&nbsp;:</para>
 <screen><userinput>make localedata/install-locales</userinput></screen>
 
 <para>Pour gagner du temps, une alternative à la commande précédente (qui
-génère et installe toutes les locales qu'il connaît) est d'installer uniquement
+génère et installe toutes les locales qu'il trouve dans le fichier
+glibc-&glibc-version;/localedata/SUPPORTED) est d'installer uniquement
 les locales que vous souhaitez et dont vous avez besoin. Ceci se fait en
 utilisant la commande <command>localedef</command>. Des informations sur cette
 commande sont disponibles dans le fichier <filename>INSTALL</filename> des
@@ -152,7 +173,7 @@ contrairement à la cible <parameter>install-locales</parameter> ci-dessus,
 installeront l'ensemble minimal des locales nécessaires pour que les tests se
 passent dans de bonnes conditions&nbsp;:</para>
 
-<screen><userinput>mkdir -p /usr/lib/locale
+<screen role="nodump"><userinput>mkdir -pv /usr/lib/locale
 localedef -i de_DE -f ISO-8859-1 de_DE
 localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
 localedef -i en_HK -f ISO-8859-1 en_HK
@@ -174,9 +195,9 @@ applications ont fait dex choix qui ont cassé ces locales, LFS ne devrait pas
 plusieurs octets (ceci incluant UTF-8) ou l'ordre d'écriture de droite à gauche.
 De nombreux correctifs officieux et instables sont requis pour corriger
 ces problèmes et il a été décidé par les développeurs de LFS que ces locales
-complexes ne seraient pas supportées. Ceci s'applique aussi aux locales
-ja_JP et fa_IR&mdash;elles ont été installés seulement pour que les tests de
-GCC et Gettext réussissent bien que le programme <command>watch</command>
+complexes ne seraient pas supportées en ce moment. Ceci s'applique aussi aux
+locales ja_JP et fa_IR&mdash;elles ont été installés seulement pour que les
+tests de GCC et Gettext réussissent bien que le programme <command>watch</command>
 (un composant du paquetage Procps) ne fonctionne pas correctement avec elles.
 Différents essais pour contourner ces restrictions sont documentés dans les
 astuces relatives à l'internationalisation.</para>
@@ -191,6 +212,8 @@ grande référence à l'API des threads (applicable aussi à NPTL)&nbsp;:</para>
 
 <screen><userinput>make -C ../glibc-&glibc-version;/linuxthreads/man
 install</userinput></screen>
+
+<beginpage/>
 
 </sect2>
 
@@ -230,14 +253,14 @@ EOF</userinput></screen>
 <para>Pour déterminer dans quel fuseau horaire vous vous situez, lancez le
 script suivant&nbsp;:</para>
 
-<screen><userinput>tzselect</userinput></screen>
+<screen role="nodump"><userinput>tzselect</userinput></screen>
 
 <para>Lorsque avoir répondu à quelques questions sur votre emplacement, le
 script affichera le nom du fuseau horaire (quelque chose comme
 <emphasis>EST5EDT</emphasis> ou <emphasis>Canada/Eastern</emphasis>). Ensuite,
 créez le fichier <filename>/etc/localtime</filename> en lançant&nbsp;:</para>
 
-<screen><userinput>cp --remove-destination
+<screen><userinput>cp -v --remove-destination
 /usr/share/zoneinfo/<replaceable>[xxx]</replaceable> \
     /etc/localtime</userinput></screen>
 
@@ -257,6 +280,8 @@ pourrait arriver, par exemple, en démarrant en mode simple
 utilisateur.</para></listitem>
 </varlistentry>
 </variablelist>
+
+<beginpage/>
 
 </sect2>
 
@@ -310,8 +335,6 @@ libnss_hesiod.so, libnss_nis.so, libnss_nisplus.so, libpcprofile.so,
 libpthread.[a,so], libresolv.[a,so], librpcsvc.a, librt.[a,so],
 libthread_db.so et libutil.[a,so]</seg></seglistitem>
 </segmentedlist>
-
-<beginpage/>
 
 <variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
 <?dbfo list-presentation="list"?>

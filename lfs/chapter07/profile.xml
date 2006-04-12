@@ -66,7 +66,7 @@ remplacé avec le charmap canonique de votre locale.</para>
 <para>La liste de toutes les locales supportées par Glibc peut être obtenue en
 exécutant la commande suivante&nbsp;:</para>
 
-<screen><userinput>locale -a</userinput></screen>
+<screen role="nodump"><userinput>locale -a</userinput></screen>
 
 <para>Les locales peuvent avoir plusieurs synonymes. Par exemple,
 <quote>ISO-8859-1</quote> est aussi appelée <quote>iso8859-1</quote> et
@@ -77,14 +77,54 @@ lancez la commande suivante, où <replaceable>[nom locale]</replaceable> est
 l'affichage donnée par <command>locale -a</command> pour votre locale
 préférée (<quote>en_GB.iso88591</quote> dans notre exemple).</para>
 
-<screen><userinput>LC_ALL=<replaceable>[nom locale]</replaceable> locale charmap</userinput></screen>
+<screen role="nodump"><userinput>LC_ALL=<replaceable>[nom locale]</replaceable> locale charmap</userinput></screen>
 
 <para>Pour la locale <quote>en_GB.iso88591</quote>, la commande ci-dessus
 affichera&nbsp;:</para>
 
 <screen>ISO-8859-1</screen>
 
-<para>Ceci résulte en un paramétrage final de locale avec <quote>en_GB.ISO-8859-1</quote>.</para>
+<para>Ceci résulte en un paramétrage final de locale avec <quote>en_GB.ISO-8859-1</quote>.
+Il est important que la locale trouvée utilisant l'heuristique ci-dessus soit
+testée avant d'être ajoutée aux fichiers de démarrage de Bash&nbsp;:</para>
+
+<screen role="nodump"><userinput>LC_ALL=[locale name] locale country
+LC_ALL=[locale name] locale language
+LC_ALL=[locale name] locale charmap
+LC_ALL=[locale name] locale int_curr_symbol
+LC_ALL=[locale name] locale int_prefix</userinput></screen>
+
+<para>Les commandes ci-dessus devraient afficher les noms du pays et de la
+langue, le codage des caractères utilisé par la locale, la monnaie et le
+préfixe à composer avant de saisir le numéro de téléphone. Si une des commandes
+ci-dessus échoue abec un message similaire à un de ceux montrés ci-dessous, cela
+signifie que votre locale n'a pas été installée dans le chapitre 6 ou qu'elle
+n'est pas supportée par l'installation par défaut de Glibc.</para>
+
+<screen><computeroutput>locale: Cannot set LC_* to default locale: No such file or directory</computeroutput></screen>
+
+<para>Si cela arrive, vous pouvez soit installer la locale désirée en utilisant
+la commande <command>localedef</command> soit considérer l'utilisation d'une
+locale différente. Les instructions suivantes supposent qu'il n'y a pas eu de
+tels messages de Glibc.</para>
+
+<para>Certains paquets en dehors de LFS pourraient aussi ne pas avoir de support
+pour la locale que vous avez choisi. Un exemple est la bibliothèque X (qui fait
+partie du système X Window), qui affiche le message d'erreur suivant&nbsp;:</para>
+
+<screen><computeroutput>Warning: locale not supported by Xlib, locale set to C</computeroutput></screen>
+
+<para>Quelque fois, il est possible de corriger ceci en supprimant la partie
+charmap de la spécification de la locale si cela ne modifie pas le
+"character map" que Glibc associe avec la locale (ceci peut être vérifié en
+exécutant la commande <command>locale charmap</command> dans les deux locales).
+Par exemple, vous pouvez changer &quot;de_DE.ISO-8859-15@euro&quot; en
+&quot;de_DE@euro&quot; pour obtenir que cette locale soit reconnue par Xlib.</para>
+
+<para>D'autres paquets peuvent aussi mal fonctionner (mais pourraient ne pas
+nécessairement afficher de messages d'erreurs) si le nom de la locale ne correspond
+pas à leur attente. Dans de tels cas, vous pouvez obtenir des informations utiles
+en cherchant comme les autres distributions Linux supportent votre locale.</para>
 
 <para>Une fois que les bons paramètres de locale ont été déterminés, créez le
 fichier <filename>/etc/profile</filename>&nbsp;:</para>
@@ -101,6 +141,8 @@ EOF</userinput></screen>
 <note><para>Les locales <quote>C</quote> (par défaut) et <quote>en_US</quote>
 (celle recommandée pour les utilisateurs de langue anglaise vivant aux
 États-Unis) sont différentes.</para></note>
+
+<beginpage/>
 
 <para>Initialiser le plan de codage du clavier, la police de la console
 et les variables d'environnement relatives à la locale sont les seules
