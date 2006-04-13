@@ -26,7 +26,7 @@
 
       <seglistitem>
         <seg>0.1 SBU</seg>
-        <seg>3.8 MB</seg>
+        <seg>4.8 MB</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -43,19 +43,31 @@
   <sect2 role="installation">
     <title>Installation of Udev</title>
 
+    <para>Create some devices and directories that Udev cannot handle due to
+    them being required very early in the boot process:</para>
+
+<screen><userinput>install -dv /lib/{firmware,udev/devices/{pts,shm}}
+mknod -m0666 /lib/udev/devices/null c 1 3
+ln -sv /proc/self/fd /lib/udev/devices/fd
+ln -sv /proc/self/fd/0 /lib/udev/devices/stdin
+ln -sv /proc/self/fd/1 /lib/udev/devices/stdout
+ln -sv /proc/self/fd/2 /lib/udev/devices/stderr
+ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
+
     <para>Compile the package:</para>
 
-<screen><userinput>make EXTRAS=extras/run_directory</userinput></screen>
+<screen><userinput>make EXTRAS="extras/ata_id extras/cdrom_id extras/edd_id \
+            extras/firmware extras/floppy extras/scsi_id \
+            extras/usb_id extras/volume_id"</userinput></screen>
 
     <variablelist>
       <title>The meaning of the make option:</title>
 
       <varlistentry>
-        <term><parameter>EXTRAS=extras/run_directory</parameter></term>
+        <term><parameter>EXTRAS=...</parameter></term>
         <listitem>
-          <para>This builds the <command>udev_run_devd</command> and
-          <command>udev_run_hotplugd</command> binaries, which are required
-          for correct handling of hotpluggable devices.</para>
+          <para>This builds several helper binaries that can aid in writing custom
+          Udev rules.</para>
         </listitem>
       </varlistentry>
 
@@ -66,7 +78,10 @@
 
     <para>Install the package:</para>
 
-<screen><userinput>make DESTDIR=/ EXTRAS=extras/run_directory install</userinput></screen>
+<screen><userinput>make DESTDIR=/ \
+    EXTRAS="extras/ata_id extras/cdrom_id extras/edd_id \
+            extras/firmware extras/floppy extras/scsi_id \
+            extras/usb_id extras/volume_id" install</userinput></screen>
 
     <variablelist>
       <title>The meaning of the make parameter:</title>
@@ -87,16 +102,78 @@
 
 <screen><userinput>cp -v ../&udev-config-file; /etc/udev/rules.d/25-lfs.rules</userinput></screen>
 
+    <para>Create some rules that work around broken sysfs attribute creation
+    timing in linux-2.6.15:</para>
+
+<screen><userinput>cat &gt;&gt; /etc/udev/rules.d/10-wait_for_sysfs.rules &lt;&lt; "EOF"
+ACTION=="add", DEVPATH=="/devices/*", ENV{PHYSDEVBUS}=="?*", WAIT_FOR_SYSFS="bus"
+ACTION=="add", SUBSYSTEM=="net", WAIT_FOR_SYSFS="address"
+EOF</userinput></screen>
+
     <para>Install the documentation that explains how to create Udev rules:</para>
 
 <screen><userinput>install -m644 -D -v docs/writing_udev_rules/index.html /usr/share/doc/udev-&udev-version;/index.html</userinput></screen>
 
-    <!-- Not for the LiveCD -->
-    <!-- Edit Me -->
-    <para>Run the <command>udevstart</command> program to create our full
-    complement of device nodes.</para>
+    <important>
 
-<screen><userinput>/sbin/udevstart</userinput></screen>
+      <para>When Udev is started by the LFS-Bootscripts, a replay of all kernel
+      device events happens. These events tell Udev what devices exist.
+      Sometimes the Udev bootscript doesn't wait long enough for
+      <command>udevd</command> to process all of the replayed events and
+      consequently the devices for those missed events are not created before the
+      script exits. Since <command>udevd</command> is still running in the
+      background, the devices will be created a few milliseconds later, but the
+      next bootscript to run may require a device to exist before it has been
+      created. To avoid such missed events, and to avoid hardcoding an overly
+      long wait time, It is recommended that you run the following commands to
+      aid the LFS development team in debugging these missed events and finding
+      an acceptable solution more quickly.</para>
+
+      <para>First, create a simple C file:</para>
+
+<screen><userinput>cat &gt; bug.c &lt;&lt; EOF
+<literal>/* Simple event recorder */
+#define _GNU_SOURCE
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;argz.h&gt;
+int main(int argc, char * argv[])
+{
+  char * envz;
+  size_t len;
+  int bug;
+  bug = open("/dev/bug", O_WRONLY | O_APPEND);
+  if (bug == -1)
+  return 0;
+  setenv("_SEPARATOR", "--------------------------------------", 1);
+  argz_create(environ, &amp;envz, &amp;len);
+  argz_stringify(envz, len, '\n');
+  envz[len-1]='\n';
+  write(bug, envz, len);
+  close(bug);
+  free(envz);
+  return 0;
+}</literal>
+EOF</userinput></screen>
+
+      <para>Now compile it:</para>
+
+<screen><userinput>gcc -o /lib/udev/bug bug.c</userinput></screen>
+
+      <para>The next step adds a simple logging rule to run this program.</para>
+
+<screen><userinput>cat &gt; /etc/udev/rules.d/90-bug.rules &lt;&lt; "EOF"
+<literal>ACTION=="add", RUN+="bug"</literal>
+EOF</userinput></screen>
+
+      <para>When booting the new LFS system, if any events are missed, a warning
+      message will appear and a <filename>/dev/bugreport</filename> file will be
+      created. The warning message will tell you where to send feedback.</para>
+
+    </important>
 
   </sect2>
 
@@ -108,8 +185,9 @@
       <segtitle>Installed directory</segtitle>
 
       <seglistitem>
-        <seg>udev, udev_run_devd, udev_run_hotplugd, udevcontrol, udevd,
-        udevinfo, udevmonitor, udevsend, udevstart, and udevtest</seg>
+        <seg>ata_id, cdrom_id, create_floppy_devices, edd_id, firmware_helper,
+        scsi_id, udevcontrol, udevd, udevinfo, udevmonitor, udevtest, usb_id
+        and vol_id</seg>
         <seg>/etc/udev</seg>
       </seglistitem>
     </segmentedlist>
@@ -119,38 +197,66 @@
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
 
-      <varlistentry id="udev">
-        <term><command>udev</command></term>
+      <varlistentry id="ata_id">
+        <term><command>ata_id</command></term>
         <listitem>
-          <para>Creates device nodes in <filename class="directory">/dev</filename>
-          or renames network interfaces (not in LFS) in response to hotplug
-          events</para>
-          <indexterm zone="ch-system-udev udev">
-            <primary sortas="b-udev">udev</primary>
+          <para>Provides Udev with a unique string and
+          additional information (uuid, label) for an ATA drive</para>
+          <indexterm zone="ch-system-udev ata_id">
+            <primary sortas="b-ata_id">ata_id</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="udev_run_devd">
-        <term><command>udev_run_devd</command></term>
+      <varlistentry id="cdrom_id">
+        <term><command>cdrom_id</command></term>
         <listitem>
-          <para>Executes programs and scripts in the <filename
-          class="directory">/etc/dev.d/</filename> directory in response to
-          hotplug events</para>
-          <indexterm zone="ch-system-udev udev_run_devd">
-            <primary sortas="b-udev_run_devd">udev_run_devd</primary>
+          <para>Provides Udev with the capabilities of a
+          CD-ROM or DVD-ROM drive</para>
+          <indexterm zone="ch-system-udev cdrom_id">
+            <primary sortas="b-cdrom_id">cdrom_id</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="udev_run_hotplugd">
-        <term><command>udev_run_hotplugd</command></term>
+      <varlistentry id="create_floppy_devices">
+        <term><command>create_floppy_devices</command></term>
         <listitem>
-          <para>Executes programs and scripts in the <filename
-          class="directory">/etc/hotplug.d/</filename> directory in response
-          to hotplug events</para>
-          <indexterm zone="ch-system-udev udev_run_hotplugd">
-            <primary sortas="b-udev_run_hotplugd">udev_run_hotplugd</primary>
+          <para>Creates all possible floppy devices based on the CMOS type</para>
+          <indexterm zone="ch-system-udev create_floppy_devices">
+            <primary sortas="b-create_floppy_devices">create_floppy_devices</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="edd_id">
+        <term><command>edd_id</command></term>
+        <listitem>
+          <para>Provides Udev with the EDD ID for a BIOS disk drive</para>
+          <indexterm zone="ch-system-udev edd_id">
+            <primary sortas="b-edd_id">edd_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="firmware_helper">
+        <term><command>firmware_helper</command></term>
+        <listitem>
+          <para>Uploads firmware to devices</para>
+          <indexterm zone="ch-system-udev firmware_helper">
+            <primary sortas="b-firmware_helper">firmware_helper</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="scsi_id">
+        <term><command>scsi_id</command></term>
+        <listitem>
+          <para>Provides Udev with a unique SCSI identifier
+          based on the data returned from sending a SCSI INQUIRY command to
+          the specified device</para>
+          <indexterm zone="ch-system-udev scsi_id">
+            <primary sortas="b-scsi_id">scsi_id</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -169,8 +275,9 @@
       <varlistentry id="udevd">
         <term><command>udevd</command></term>
         <listitem>
-          <para>A daemon that reorders hotplug events before submitting them to
-          <command>udev</command>, thus avoiding various race conditions</para>
+          <para>A daemon that listens for uevents on the netlink socket,
+          creates devices and runs the configured external programs in
+          response to these uevents</para>
           <indexterm zone="ch-system-udev udevd">
             <primary sortas="b-udevd">udevd</primary>
           </indexterm>
@@ -180,7 +287,7 @@
       <varlistentry id="udevinfo">
         <term><command>udevinfo</command></term>
         <listitem>
-          <para>Allows users to query the <command>udev</command> database for
+          <para>Allows users to query the Udev database for
           information on any device currently present on the system; it also
           provides a way to query any device in the <systemitem
           class="filesystem">sysfs</systemitem> tree to help create udev
@@ -194,35 +301,10 @@
       <varlistentry id="udevmonitor">
         <term><command>udevmonitor</command></term>
         <listitem>
-          <para>Prints the event received from the kernel and the event which
-          <command>udev</command> sends out after rule processing</para>
+          <para>Prints the event received from the kernel and the environment
+          which Udev sends out after rule processing</para>
           <indexterm zone="ch-system-udev udevmonitor">
             <primary sortas="b-udevmonitor">udevmonitor</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="udevsend">
-        <term><command>udevsend</command></term>
-        <listitem>
-          <para>Delivers hotplug events to <command>udevd</command></para>
-          <indexterm zone="ch-system-udev udevsend">
-            <primary sortas="b-udevsend">udevsend</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="udevstart">
-        <term><command>udevstart</command></term>
-        <listitem>
-          <para>Creates device nodes in <filename class="directory">/dev</filename>
-          that correspond to drivers compiled directly into the kernel; it
-          performs that task by simulating hotplug events presumably dropped by
-          the kernel before invocation of this program (e.g., because the root
-          filesystem has not been mounted) and submitting such synthetic hotplug
-          events to <command>udev</command></para>
-          <indexterm zone="ch-system-udev udevstart">
-            <primary sortas="b-udevstart">udevstart</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -230,12 +312,33 @@
       <varlistentry id="udevtest">
         <term><command>udevtest</command></term>
         <listitem>
-          <para>Simulates a <command>udev</command> run for the given device,
-          and prints out the name of the node the real <command>udev</command>
-          would have created or (not in LFS) the name of the renamed network
-          interface</para>
+          <para>Simulates a uevent for the given device, and prints out the
+          name of the node the real <command>udevd</command> would have created,
+          or the name of the renamed network interface</para>
           <indexterm zone="ch-system-udev udevtest">
             <primary sortas="b-udevtest">udevtest</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="usb_id">
+        <term><command>usb_id</command></term>
+        <listitem>
+          <para>Provides Udev with information about USB
+          devices</para>
+          <indexterm zone="ch-system-udev usb_id">
+            <primary sortas="b-usb_id">usb_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="vol_id">
+        <term><command>vol_id</command></term>
+        <listitem>
+          <para>Provides Udev with the label and uuid of a
+          filesystem</para>
+          <indexterm zone="ch-system-udev vol_id">
+            <primary sortas="b-vol_id">vol_id</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -243,7 +346,7 @@
       <varlistentry id="etc-udev">
         <term><filename class="directory">/etc/udev</filename></term>
         <listitem>
-          <para>Contains <command>udev</command> configuation files,
+          <para>Contains Udev configuation files,
           device permissions, and rules for device naming</para>
           <indexterm zone="ch-system-udev etc-udev">
             <primary sortas="e-/etc/udev">/etc/udev</primary>

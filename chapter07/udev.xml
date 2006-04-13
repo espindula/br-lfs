@@ -23,13 +23,15 @@
   <para>Linux systems in general traditionally use a static device creation
   method, whereby a great many device nodes are created under <filename
   class="directory">/dev</filename> (sometimes literally thousands of nodes),
-  regardless of whether the corresponding hardware devices actually exist. This is
-  typically done via a <command>MAKEDEV</command> script, which contains a number
-  of calls to the <command>mknod</command> program with the relevant major and
-  minor device numbers for every possible device that might exist in the world.
-  Using the Udev method, only those devices which are detected by the kernel get
-  device nodes created for them. Because these device nodes will be created each
-  time the system boots, they will be stored on a <systemitem
+  regardless of whether the corresponding hardware devices actually exist. This
+  is typically done via a <command>MAKEDEV</command> script, which contains a
+  number of calls to the <command>mknod</command> program with the relevant
+  major and minor device numbers for every possible device that might exist in
+  the world.</para>
+
+  <para>Using the Udev method, only those devices which are detected by the
+  kernel get device nodes created for them. Because these device nodes will be
+  created each time the system boots, they will be stored on a <systemitem
   class="filesystem">tmpfs</systemitem> file system (a virtual file system that
   resides entirely in system memory). Device nodes do not require much space, so
   the memory that is used is negligible.</para>
@@ -50,160 +52,278 @@
     naming, was perhaps the most critical. It is generally accepted that if
     device names are allowed to be configurable, then the device naming policy
     should be up to a system administrator, not imposed on them by any
-    particular developer(s). The <systemitem class="filesystem">devfs</systemitem>
-    file system also suffers from race conditions that are inherent in its design
-    and cannot be fixed without a substantial revision to the kernel. It has also
-    been marked as deprecated due to a lack of recent maintenance.</para>
+    particular developer(s). The <systemitem
+    class="filesystem">devfs</systemitem> file system also suffers from race
+    conditions that are inherent in its design and cannot be fixed without a
+    substantial revision to the kernel. It has also been marked as deprecated
+    due to a lack of recent maintenance.</para>
 
-    <para>With the development of the unstable 2.5 kernel tree, later released as
-    the 2.6 series of stable kernels, a new virtual filesystem called <systemitem
-    class="filesystem">sysfs</systemitem> came to be. The job of <systemitem
-    class="filesystem">sysfs</systemitem> is to export a view of the system's
-    hardrware configuration to userspace processes. With this userspace-visible
-    representation, the possibility of seeing a userspace replacement for
-    <systemitem class="filesystem">devfs</systemitem> became much more
-    realistic.</para>
+    <para>With the development of the unstable 2.5 kernel tree, later released
+    as the 2.6 series of stable kernels, a new virtual filesystem called
+    <systemitem class="filesystem">sysfs</systemitem> came to be. The job of
+    <systemitem class="filesystem">sysfs</systemitem> is to export a view of
+    the system's hardware configuration to userspace processes. With this
+    userspace-visible representation, the possibility of seeing a userspace
+    replacement for <systemitem class="filesystem">devfs</systemitem> became
+    much more realistic.</para>
 
   </sect2>
 
   <sect2>
     <title>Udev Implementation</title>
 
-    <para>The <systemitem class="filesystem">sysfs</systemitem> filesystem was
-    mentioned briefly above. One may wonder how <systemitem
-    class="filesystem">sysfs</systemitem> knows about the devices present on
-    a system and what device numbers should be used for them. Drivers that have
-    been compiled into the kernel directly register their objects with
-    <systemitem class="filesystem">sysfs</systemitem> as they are detected by
-    the kernel. For drivers compiled as modules, this registration will happen
-    when the module is loaded. Once the <systemitem
-    class="filesystem">sysfs</systemitem> filesystem is mounted (on <filename
-    class="directory">/sys</filename>), data which the built-in drivers
-    registered with <systemitem class="filesystem">sysfs</systemitem> are
-    available to userspace processes and to <command>udev</command> for device
-    node creation.</para>
+    <sect3>
+      <title>Sysfs</title>
 
-    <para>The <command>S10udev</command> initscript takes care of creating
-    these device nodes when Linux is booted. This script starts by registering
-    <command>/sbin/udevsend</command> as a hotplug event handler. Hotplug events
-    (discussed below) are not usually generated during this stage, but
-    <command>udev</command> is registered just in case they do occur. The
-    <command>udevstart</command> program then walks through the <systemitem
-    class="filesystem">/sys</systemitem> filesystem and creates devices under
-    <filename class="directory">/dev</filename> that match the descriptions.
-    For example, <filename>/sys/class/tty/vcs/dev</filename> contains the
-    string <quote>7:0</quote> This string is used by <command>udevstart</command>
-    to create <filename>/dev/vcs</filename> with major number
-    <emphasis>7</emphasis> and minor <emphasis>0</emphasis>. The names and
-    permissions of the nodes created under the <filename
-    class="directory">/dev</filename> directory are configured according to the
-    rules specified in the files within the <filename
-    class="directory">/etc/udev/rules.d/</filename> directory. These are
-    numbered in a similar fashion to the LFS-Bootscripts package. If
-    <command>udev</command> can't find a rule for the device it is creating,
-    it will default permissions to <emphasis>660</emphasis> and ownership to
-    <emphasis>root:root</emphasis>.</para>
+      <para>The <systemitem class="filesystem">sysfs</systemitem> filesystem was
+      mentioned briefly above. One may wonder how <systemitem
+      class="filesystem">sysfs</systemitem> knows about the devices present on
+      a system and what device numbers should be used for them. Drivers that
+      have been compiled into the kernel directly register their objects with
+      <systemitem class="filesystem">sysfs</systemitem> as they are detected by
+      the kernel. For drivers compiled as modules, this registration will happen
+      when the module is loaded. Once the <systemitem
+      class="filesystem">sysfs</systemitem> filesystem is mounted (on <filename
+      class="directory">/sys</filename>), data which the built-in drivers
+      registered with <systemitem class="filesystem">sysfs</systemitem> are
+      available to userspace processes and to <command>udevd</command> for device
+      node creation.</para>
 
-    <para>Once the above stage is complete, all devices that were already present
-    and have compiled-in drivers will be available for use. This leads us to the
-    devices that have modular drivers.</para>
+    </sect3>
 
-    <para>Earlier, we mentioned the concept of a <quote>hotplug event
-    handler.</quote> When a new device connection is detected by the kernel,
-    the kernel will generate a hotplug event and look at the file
-    <filename>/proc/sys/kernel/hotplug</filename> to determine the userspace
-    program that handles the device's connection. The <command>udev</command>
-    bootscript registered <command>udevsend</command> as this handler. When
-    these hotplug events are generated, the kernel will tell
-    <command>udev</command> to check the <filename
-    class="directory">/sys</filename> filesystem for the information pertaining
-    to this new device and create the <filename class="directory">/dev</filename>
-    entry for it.</para>
+    <sect3>
+      <title>Udev Bootscript</title>
 
-    <para>This brings us to one problem that exists with <command>udev</command>,
-    and likewise with <systemitem class="filesystem">devfs</systemitem> before it.
-    It is commonly referred to as the <quote>chicken and egg</quote> problem. Most
-    Linux distributions handle loading modules via entries in
-    <filename>/etc/modules.conf</filename>. Access to a device node causes the
-    appropriate kernel module to load. With <command>udev</command>, this method
-    will not work because the device node does not exist until the module is loaded.
-    To solve this, the <command>S05modules</command> bootscript was added to the
-    LFS-Bootscripts package, along with the
-    <filename>/etc/sysconfig/modules</filename> file. By adding module names to the
-    <filename>modules</filename> file, these modules will be loaded when the
-    computer starts up. This allows <command>udev</command> to detect the devices
-    and create the appropriate device nodes.</para>
+      <para>The <command>S10udev</command> initscript takes care of creating
+      device nodes when Linux is booted. The script starts by unsetting the
+      hotplug event handler from the default of <command>/sbin/hotplug</command>
+      This is done because, instead of the kernel calling out to an external
+      binary, <command>udevd</command> will listen on a netlink socket for
+      hotplug events that the kernel raises. The bootscript copies any static
+      device nodes that exist in <filename
+      class="directory">/lib/udev/devices</filename> to <filename
+      class="directory">/dev</filename>. This is necessary because some devices,
+      directories and symlinks are needed before the dynamic device handling
+      processes are available during the early stages of booting a system.
+      Creating static device nodes in
+      <filename class="directory">/lib/udev/devices</filename> also provides
+      an easy workaround for devices that are not supported by the dynamic
+      device handling infrastructure.  The bootscript then starts the Udev
+      daemon, <command>udevd</command>, which will act on any hotplug events it
+      receives. Finally, the bootscript &quot;coldplugs&quot; any devices that
+      have already been registered with the kernel by forcing them to raise
+      hotplug events which <command>udevd</command> will then handle.</para>
 
-    <para>Note that on slower machines or for drivers that create a lot of device
-    nodes, the process of creating devices may take a few seconds to complete.
-    This means that some device nodes may not be immediately accessible.</para>
+    </sect3>
+
+    <sect3>
+      <title>Device Node Creation</title>
+
+      <para>To obtain the right major and minor number for a device, Udev relies
+      on the information provided by <systemitem
+      class="filesystem">sysfs</systemitem> in <filename
+      class="directory">/sys</filename>.  For example,
+      <filename>/sys/class/tty/vcs/dev</filename> contains the string
+      <quote>7:0</quote>. This string is used by <command>udevd</command>
+      to create a device node with major number <emphasis>7</emphasis> and minor
+      <emphasis>0</emphasis>. The names and permissions of the nodes created
+      under the <filename class="directory">/dev</filename> directory are
+      determined by rules specified in the files within the <filename
+      class="directory">/etc/udev/rules.d/</filename> directory. These are
+      numbered in a similar fashion to the LFS-Bootscripts package. If
+      <command>udevd</command> can't find a rule for the device it is creating,
+      it will default permissions to <emphasis>660</emphasis> and ownership to
+      <emphasis>root:root</emphasis>. Documentation on the syntax of the Udev
+      rules configuration files are available in
+      <filename>/usr/share/doc/udev-&udev-version;/index.html</filename></para>
+
+    </sect3>
+
+    <sect3>
+      <title>Module Loading</title>
+
+      <para>Device drivers compiled as modules may have aliases built into them.
+      Aliases are visible in the output of the <command>modinfo</command>
+      program and are usually related to the bus-specific identifiers of devices
+      supported by a module. For example, the <emphasis>snd-fm801</emphasis>
+      driver supports PCI devices with vendor ID 0x1319 and device ID 0x0801,
+      and has an alias of <quote>pci:v00001319d00000801sv*sd*bc04sc01i*</quote>.
+      For most devices, the bus driver exports the alias of the driver that
+      would handle the device via <systemitem
+      class="filesystem">sysfs</systemitem>. E.g., the
+      <filename>/sys/bus/pci/devices/0000:00:0d.0/modalias</filename> file
+      might contain the string
+      <quote>pci:v00001319d00000801sv00001319sd00001319bc04sc01i00</quote>.
+      The rules that LFS installs will cause <command>udevd</command> to call
+      out to <command>/sbin/modprobe</command> with the contents of the
+      <envar>MODALIAS</envar> uevent environment variable (that should be the
+      same as the contents of the <filename>modalias</filename> file in sysfs),
+      thus loading all modules whose aliases match this string after wildcard
+      expansion.</para>
+
+      <para>In this example, this means that, in addition to
+      <emphasis>snd-fm801</emphasis>, the obsolete (and unwanted)
+      <emphasis>forte</emphasis> driver will be loaded if it is
+      available. See below for ways in which the loading of unwanted drivers can
+      be prevented.</para>
+
+      <para>The kernel itself is also able to load modules for network
+      protocols, filesystems and NLS support on demand.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Handling Hotpluggable/Dynamic Devices</title>
+
+      <para>When you plug in a device, such as a Universal Serial Bus (USB) MP3
+      player, the kernel recognizes that the device is now connected and
+      generates a hotplug event. This hotplug event is then handled by
+      <command>udevd</command> as described above.</para>
+
+    </sect3>
 
   </sect2>
 
   <sect2>
-    <title>Handling Hotpluggable/Dynamic Devices</title>
+    <title>Problems with Loading Modules and Creating Devices</title>
 
-    <para>When you plug in a device, such as a Universal Serial Bus (USB) MP3
-    player, the kernel recognizes that the device is now connected and generates
-    a hotplug event. If the driver is already loaded (either because it was
-    compiled into the kernel or because it was loaded via the
-    <command>S05modules</command> bootscript), <command>udev</command> will be
-    called upon to create the relevant device node(s) according to the
-    <systemitem class="filesystem">sysfs</systemitem> data available in
-    <filename class="directory">/sys</filename>.</para>
+    <para>There are a few possible problems when it comes to automatically
+    creating device nodes.</para>
 
-    <para>If the driver for the just plugged in device is available as a module but
-    currently unloaded, the Hotplug package will load the appropriate module
-    and make this device available by creating the device node(s) for it.</para>
+    <sect3>
+      <title>A kernel module is not loaded automatically</title>
 
-  </sect2>
+      <para>Udev will only load a module if it has a bus-specific alias and the
+      bus driver properly exports the necessary aliases to <systemitem
+      class="filesystem">sysfs</systemitem>. In other cases, one should
+      arrange module loading by other means. With Linux-&linux-version;, Udev is
+      known to load properly-written drivers for PCI, USB, SCSI, SERIO and
+      FireWire devices.</para>
 
-  <sect2>
-    <title>Problems with Creating Devices</title>
+      <!-- After linux-2.6.16, add INPUT and IDE to the list above -->
 
-    <para>There are a few known problems when it comes to automatically creating
-    device nodes:</para>
+      <para>To determine if the device driver you require has the necessary
+      support for Udev, run <command>modinfo</command> with the module name as
+      the argument.  Now try locating the device directory under
+      <filename class="directory">/sys/bus</filename> and check whether there is
+      a <filename>modalias</filename> file there.</para>
 
-    <para>1) A kernel driver may not export its data to <systemitem
-    class="filesystem">sysfs</systemitem>.</para>
+      <para>If the <filename>modalias</filename> file exists in <systemitem
+      class="filesystem">sysfs</systemitem>, the driver supports the device and
+      can talk to it directly, but doesn't have the alias, it is a bug in the
+      driver. Load the driver without the help from Udev and expect the issue
+      to be fixed later.</para>
 
-    <para>This is most common with third party drivers from outside the kernel
-    tree. Udev will be unable to automatically create device nodes for such
-    drivers. Use the <filename>/etc/sysconfig/createfiles</filename>
-    configuration file to manually create the devices. Consult the
-    <filename>devices.txt</filename> file inside the kernel documentation or
-    the documentation for that driver to find the proper major/minor
-    numbers.</para>
+      <para>If there is no <filename>modalias</filename> file in the relevant
+      directory under <filename class="directory">/sys/bus</filename>, this
+      means that the kernel developers have not yet added modalias support to
+      this bus type. With Linux-&linux-version;, this is the case with ISA and
+      IDE busses. Expect this issue to be fixed in later kernel versions.</para>
 
-    <para>2) A non-hardware device is required.  This is most common with
-    the Advanced Linux Sound Architecture (ALSA) project's Open Sound
-    System (OSS) compatibility module.  These types of devices can be
-    handled in one of two ways:</para>
+      <!-- Remove IDE from the list above after Linux-2.6.16 -->
 
-    <itemizedlist>
+      <para>Udev is not intended to load <quote>wrapper</quote> drivers such as
+      <emphasis>snd-pcm-oss</emphasis> and non-hardware drivers such as
+      <emphasis>loop</emphasis> at all.</para>
 
-      <listitem>
-        <para>Adding the module names to
-        <filename>/etc/sysconfig/modules</filename></para>
-      </listitem>
+    </sect3>
 
-      <listitem>
-        <para>Using an <quote>install</quote> line in
-        <filename>/etc/modprobe.conf</filename>. This tells the
-        <command>modprobe</command> command <quote>when loading this module,
-        also load this other module, at the same time.</quote>
-        For example:</para>
+    <sect3>
+      <title>A kernel module is not loaded automatically, and Udev is not
+      intended to load it</title>
 
-<screen role="nodump"><userinput>install snd-pcm modprobe -i snd-pcm ; modprobe \
-    snd-pcm-oss ; true</userinput></screen>
+      <para>If the <quote>wrapper</quote> module only enhances the functionality
+      provided by some other module (e.g., <emphasis>snd-pcm-oss</emphasis>
+      enhances the functionality of <emphasis>snd-pcm</emphasis> by making the
+      sound cards available to OSS applications), configure
+      <command>modprobe</command> to load the wrapper after Udev loads the
+      wrapped module. To do this, add an <quote>install</quote> line in
+      <filename>/etc/modprobe.conf</filename>. For example:</para>
 
-        <para>This will cause the system to load both the
-        <emphasis>snd-pcm</emphasis> and <emphasis>snd-pcm-oss</emphasis>
-        modules when any request is made to load the driver
-        <emphasis>snd-pcm</emphasis>.</para>
-      </listitem>
+<screen role="nodump"><literal>install snd-pcm modprobe -i snd-pcm ; modprobe \
+    snd-pcm-oss ; true</literal></screen>
 
-    </itemizedlist>
+      <para>If the module in question is not a wrapper and is useful by itself,
+      configure the <command>S05modules</command> bootscript to load this
+      module on system boot. To do this, add the module name to the
+      <filename>/etc/sysconfig/modules</filename> file on a separate line.
+      This works for wrapper modules too, but is suboptimal in that case.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Udev loads some unwanted module</title>
+
+      <para>Either don't build the module, or blacklist it in
+      <filename>/etc/modprobe.conf</filename> file as done with the
+      <emphasis>forte</emphasis> module in the example below:</para>
+
+<screen role="nodump"><literal>blacklist forte</literal></screen>
+
+      <para>Blacklisted modules can still be loaded manually with the
+      explicit <command>modprobe</command> command.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Udev creates a device incorrectly, or makes a wrong symlink</title>
+
+      <para>This usually happens if a rule unexpectedly matches a device. For
+      example, a poorly-writen rule can match by both a SCSI disk (as desired)
+      and the corresponding SCSI generic device (incorrectly) by vendor.
+      Increase the logging verbosity of Udev, find the offending rule by
+      examining the logs and make it more specific.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Udev rule works unreliably</title>
+
+      <para>This may be another manifestation of the previous problem. If not,
+      and your rule uses <systemitem class="filesystem">sysfs</systemitem>
+      attributes, it may be a kernel timing issue, to be fixed in later kernels.
+      For now, you can work around it by creating a rule that waits for the used
+      <systemitem class="filesystem">sysfs</systemitem> attribute and appending
+      it to the <filename>/etc/udev/rules.d/10-wait_for_sysfs.rules</filename>
+      file. Please notify the LFS Development list if you do so and it
+      helps.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Udev does not create a device</title>
+
+      <para>Further text assumes that the driver is built statically into the
+      kernel or already loaded as a module, and that you have already checked
+      that Udev doesn't create a misnamed device.</para>
+
+      <para>Udev has no information needed to create a device node if a kernel
+      driver does not export its data to <systemitem
+      class="filesystem">sysfs</systemitem>.
+      This is most common with third party drivers from outside the kernel
+      tree. Create a static device node in
+      <filename>/lib/udev/devices</filename> with the appropriate major/minor
+      numbers (see the file <filename>devices.txt</filename> inside the kernel
+      documentation or the documentation provided by the third party driver
+      vendor). The static device node will be copied to
+      <filename class="directory">/dev</filename> by the
+      <command>S10udev</command> bootscript.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Device naming order changes randomly after rebooting</title>
+
+      <para>This is due to the fact that Udev, by design, handles uevents and
+      loads modules in parallel, and thus in an unpredictable order. This will
+      never be <quote>fixed</quote>. You should not rely upon the kernel device
+      names being stable. Instead, create your own rules that make symlinks with
+      stable names based on some stable attributes of the device, such as a
+      serial number or the output of various *_id utilities installed by Udev.
+      See also the network interface renaming example in
+      <xref linkend="ch-scripts-network"/>.</para>
+
+    </sect3>
 
   </sect2>
 

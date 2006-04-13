@@ -24,6 +24,48 @@
   class="directory">/etc/rc.d/rc*.d</filename>).</para>
 
   <sect2>
+    <title>Creating stable names for network interfaces</title>
+
+    <para>Instructions in this section are optional if you have only one
+    network card.</para>
+
+    <para>With Udev and modular network drivers, the network interface numbering
+    is not persistent across reboots by default, because the drivers are loaded
+    in parallel and, thus, in random order. For example, on a computer having
+    two network cards made by Intel and Realtek, the network card manufactured
+    by Intel may become <filename class="devicefile">eth0</filename> and the
+    Realtek card becomes  <filename class="devicefile">eth1</filename>. In some
+    cases, after a reboot the cards get renumbered the other way around. To
+    avoid this, create Udev rules that assign stable names to network cards
+    based on their MAC addresses.</para>
+
+    <para>First, find out the MAC addresses of your network cards:</para>
+
+<screen role="nodump"><userinput>grep -H . /sys/class/net/*/address</userinput></screen>
+
+    <para>For each network card (but not for the loopback interface),
+    invent a descriptive name, such as <quote>realtek</quote>, and create
+    Udev rules similar to the following:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/26-network.rules &lt;&lt; "EOF"
+<literal>ACTION=="add", SUBSYSTEM=="net", SYSFS{address}=="<replaceable>52:54:00:12:34:56</replaceable>", NAME="<replaceable>realtek</replaceable>"
+ACTION=="add", SUBSYSTEM=="net", SYSFS{address}=="<replaceable>00:a0:c9:78:9a:bc</replaceable>", NAME="<replaceable>intel</replaceable>"</literal>
+EOF</userinput></screen>
+
+    <para>These rules will always rename the network cards to
+    <quote>realtek</quote> and <quote>intel</quote>, independently of the
+    original numbering provided by the kernel. Use these names instead of
+    <quote>eth0</quote> in the network interface configuration files created
+    below.</para>
+
+    <note>
+      <para>Persistent names must be different from the default network
+      interface names assigned by the kernel.</para>
+    </note>
+
+  </sect2>
+
+  <sect2>
     <title>Creating Network Interface Configuration Files</title>
 
     <para>Which interfaces are brought up and down by the network script

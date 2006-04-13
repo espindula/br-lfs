@@ -8,33 +8,72 @@
 <sect1 id="ch-system-kernfs">
   <?dbhtml filename="kernfs.html"?>
 
-  <title>Mounting Virtual Kernel File Systems</title>
+  <title>Preparing Virtual Kernel File Systems</title>
 
-  <para>Various file systems exported by the kernel are used to communicate to and
-  from the kernel itself. These file systems are virtual in that no disk space is
-  used for them. The content of the file systems resides in memory.</para>
+  <indexterm zone="ch-system-kernfs">
+    <primary sortas="e-/dev/">/dev/*</primary>
+  </indexterm>
 
-  <para>Begin by creating directories onto which the file systems will be
-  mounted:</para>
+    <para>Various file systems exported by the kernel are used to communicate to
+    and from the kernel itself. These file systems are virtual in that no disk
+    space is used for them. The content of the file systems resides in
+    memory.</para>
 
-<screen><userinput>mkdir -pv $LFS/{proc,sys}</userinput></screen>
+    <para>Begin by creating directories onto which the file systems will be
+    mounted:</para>
 
-  <para>Now mount the file systems:</para>
+<screen><userinput>mkdir -pv $LFS/{dev,proc,sys}</userinput></screen>
 
-<screen><userinput>mount -vt proc proc $LFS/proc
+  <sect2>
+    <title>Creating Initial Device Nodes</title>
+
+    <para>When the kernel boots the system, it requires the presence of a few
+    device nodes, in particular the <filename
+    class="devicefile">console</filename> and <filename
+    class="devicefile">null</filename> devices. The device nodes will be created
+    on the hard disk so that they are available before <command>udev</command>
+    has been started, and additionally when Linux is started in single user mode
+    (hence the restrictive permissions on <filename
+    class="devicefile">console</filename>). Create the devices by running the
+    following commands:</para>
+
+<screen><userinput>mknod -m 600 $LFS/dev/console c 5 1
+mknod -m 666 $LFS/dev/null c 1 3</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="ch-system-bindmount">
+    <title>Mounting and Populating /dev</title>
+
+      <para>The recommended method of populating the <filename
+      class="directory">/dev</filename> directory with devices is to mount a
+      virtual filesystem (such as <systemitem
+      class="filesystem">tmpfs</systemitem>) on the <filename
+      class="directory">/dev</filename> directory, and allow the devices to be
+      created dynamically on that virtual filesystem as they are detected or
+      accessed. This is generally done during the boot process by Udev. Since
+      this new system does not yet have Udev and has not yet been booted, it is
+      necessary to mount and populate <filename
+      class="directory">/dev</filename> manually. This is accomplished by bind
+      mounting the host system's <filename class="directory">/dev</filename>
+      directory. A bind mount is a special type of mount that allows you to
+      create a mirror of a directory or mount point to some other location. Use
+      the following command to achieve this:</para>
+
+<screen><userinput>mount --bind /dev $LFS/dev</userinput></screen>
+
+  </sect2>
+ 
+  <sect2 id="ch-system-kernfsmount">
+    <title>Mounting Virtual Kernel File Systems</title>
+
+      <para>Now mount the remaining virtual kernel filesystems:</para>
+
+<screen><userinput>mount -vt devpts devpts $LFS/dev/pts
+mount -vt tmpfs shm $LFS/dev/shm
+mount -vt proc proc $LFS/proc
 mount -vt sysfs sysfs $LFS/sys</userinput></screen>
 
-  <para>Remember that if for any reason you stop working on the LFS
-  system and start again later, it is important to check that these file
-  systems are mounted again before entering the chroot
-  environment.</para>
-
-  <para>Additional file systems will soon be mounted from within the
-  chroot environment. To keep the host up to date, perform a <quote>fake
-  mount</quote> for each of these now:</para>
-
-<screen><userinput>mount -vft tmpfs tmpfs $LFS/dev
-mount -vft tmpfs tmpfs $LFS/dev/shm
-mount -vft devpts -o gid=4,mode=620 devpts $LFS/dev/pts</userinput></screen>
+  </sect2>
 
 </sect1>
