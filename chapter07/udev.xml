@@ -95,24 +95,24 @@
       <title>Udev Bootscript</title>
 
       <para>The <command>S10udev</command> initscript takes care of creating
-      device nodes when Linux is booted. The script starts by unsetting the
-      hotplug event handler from the default of <command>/sbin/hotplug</command>
-      This is done because, instead of the kernel calling out to an external
-      binary, <command>udevd</command> will listen on a netlink socket for
-      hotplug events that the kernel raises. The bootscript copies any static
+      device nodes when Linux is booted. The script unsets the uevent handler
+      from the default of <command>/sbin/hotplug</command>.  This is done
+      because the kernel no longer needs to call out to an external binary.
+      Instead <command>udevd</command> will listen on a netlink socket for
+      uevents that the kernel raises. Next, the bootscript copies any static
       device nodes that exist in <filename
       class="directory">/lib/udev/devices</filename> to <filename
       class="directory">/dev</filename>. This is necessary because some devices,
-      directories and symlinks are needed before the dynamic device handling
+      directories, and symlinks are needed before the dynamic device handling
       processes are available during the early stages of booting a system.
-      Creating static device nodes in
-      <filename class="directory">/lib/udev/devices</filename> also provides
-      an easy workaround for devices that are not supported by the dynamic
-      device handling infrastructure.  The bootscript then starts the Udev
-      daemon, <command>udevd</command>, which will act on any hotplug events it
-      receives. Finally, the bootscript &quot;coldplugs&quot; any devices that
-      have already been registered with the kernel by forcing them to raise
-      hotplug events which <command>udevd</command> will then handle.</para>
+      Creating static device nodes in <filename
+      class="directory">/lib/udev/devices</filename> also provides an easy
+      workaround for devices that are not supported by the dynamic device
+      handling infrastructure. The bootscript then starts the Udev daemon,
+      <command>udevd</command>, which will act on any uevents it receives.
+      Finally, the bootscript forces the kernel to replay uevents for any
+      devices that have already been registered and then waits for
+      <command>udevd</command> to handle them.</para>
 
     </sect3>
 
@@ -177,7 +177,7 @@
 
       <para>When you plug in a device, such as a Universal Serial Bus (USB) MP3
       player, the kernel recognizes that the device is now connected and
-      generates a hotplug event. This hotplug event is then handled by
+      generates a uevent. This uevent is then handled by
       <command>udevd</command> as described above.</para>
 
     </sect3>
@@ -197,10 +197,8 @@
       bus driver properly exports the necessary aliases to <systemitem
       class="filesystem">sysfs</systemitem>. In other cases, one should
       arrange module loading by other means. With Linux-&linux-version;, Udev is
-      known to load properly-written drivers for PCI, USB, SCSI, SERIO and
-      FireWire devices.</para>
-
-      <!-- After linux-2.6.16, add INPUT and IDE to the list above -->
+      known to load properly-written drivers for INPUT, IDE, PCI, USB, SCSI,
+      SERIO and FireWire devices.</para>
 
       <para>To determine if the device driver you require has the necessary
       support for Udev, run <command>modinfo</command> with the module name as
@@ -217,10 +215,8 @@
       <para>If there is no <filename>modalias</filename> file in the relevant
       directory under <filename class="directory">/sys/bus</filename>, this
       means that the kernel developers have not yet added modalias support to
-      this bus type. With Linux-&linux-version;, this is the case with ISA and
-      IDE busses. Expect this issue to be fixed in later kernel versions.</para>
-
-      <!-- Remove IDE from the list above after Linux-2.6.16 -->
+      this bus type. With Linux-&linux-version;, this is the case with ISA
+      busses. Expect this issue to be fixed in later kernel versions.</para>
 
       <para>Udev is not intended to load <quote>wrapper</quote> drivers such as
       <emphasis>snd-pcm-oss</emphasis> and non-hardware drivers such as
@@ -269,7 +265,7 @@
       <title>Udev creates a device incorrectly, or makes a wrong symlink</title>
 
       <para>This usually happens if a rule unexpectedly matches a device. For
-      example, a poorly-writen rule can match by both a SCSI disk (as desired)
+      example, a poorly-writen rule can match both a SCSI disk (as desired)
       and the corresponding SCSI generic device (incorrectly) by vendor.
       Increase the logging verbosity of Udev, find the offending rule by
       examining the logs and make it more specific.</para>
