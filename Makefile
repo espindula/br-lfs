@@ -3,7 +3,7 @@ DUMPDIR=~/lfs-commands
 CHUNK_QUIET=0
 PDF_OUTPUT=LFS-BOOK.pdf
 NOCHUNKS_OUTPUT=LFS-BOOK.html
-XSLROOTDIR=/usr/share/xml/docbook/xsl-stylesheets-current
+XSLROOTDIR=/usr/share/xml/docbook/xsl-stylesheets-1.69.1
 
 lfs:
 	xsltproc --xinclude --nonet -stringparam profile.condition html \
