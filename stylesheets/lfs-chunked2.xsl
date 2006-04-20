@@ -32,7 +32,4 @@
     <!-- No XML declaration -->
   <xsl:param name="chunker.output.omit-xml-declaration" select="'yes'"/>
 
-    <!-- Autolabel preface using lowercase roman numbers -->
-  <xsl:param name="preface.autolabel" select="'i'"/>
-
 </xsl:stylesheet>
