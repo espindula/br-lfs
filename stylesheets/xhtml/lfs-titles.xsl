@@ -78,8 +78,10 @@
             <a id="{@id}" name="{@id}"/>
           </xsl:if>
           <h2 class="{name(.)}">
-            <xsl:apply-templates select="." mode="label.markup"/>
-            <xsl:text>. </xsl:text>
+            <xsl:if test="not(ancestor::preface)">
+              <xsl:apply-templates select="." mode="label.markup"/>
+              <xsl:text>. </xsl:text>
+            </xsl:if>
             <xsl:value-of select="title"/>
           </h2>
         </div>
