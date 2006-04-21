@@ -3,7 +3,7 @@ DUMPDIR=~/lfs-commands
 CHUNK_QUIET=0
 PDF_OUTPUT=LFS-BOOK.pdf
 NOCHUNKS_OUTPUT=LFS-BOOK.html
-XSLROOTDIR=/usr/share/xml/docbook/xsl-stylesheets-current
+XSLROOTDIR=/usr/share/xml/docbook/stylesheet/nwalsh
 
 lfs:
 	xsltproc --xinclude --nonet -stringparam profile.condition html \
@@ -39,7 +39,7 @@ pdf:
 	xsltproc --nonet --output $(BASEDIR)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
 		$(BASEDIR)/lfs-pdf.xml
 	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo
-	fop.sh $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+	fop $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
 	rm $(BASEDIR)/lfs-pdf.xml $(BASEDIR)/lfs-pdf.fo
 
 nochunks:

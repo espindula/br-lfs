@@ -1,12 +1,10 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
-<!-- Version 0.9 - Manuel Canales Esparcia <macana@lfs-es.org> -->
-
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  	<!-- Generating the page -->
+    <!-- Generating the page -->
   <xsl:template match="legalnotice" mode="titlepage.mode">
     <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
       <xsl:variable name="filename" select="concat($base.dir, 'prologue/legalnotice.html')"/>
@@ -28,15 +26,21 @@
             <div class="{local-name(.)}">
               <xsl:apply-templates mode="titlepage.mode"/>
             </div>
-            <hr/>
             <div class="navfooter">
               <ul class="footerlinks">
-                <li>
+                <li class="home">
                   <a accesskey="h">
                     <xsl:attribute name="href">
                       <xsl:text>../index.html</xsl:text>
                     </xsl:attribute>
-                    <xsl:text>Home</xsl:text>
+                    <xsl:attribute name="title">
+                      <xsl:value-of select="/book/bookinfo/title"/>
+                      <xsl:text> - </xsl:text>
+                      <xsl:value-of select="/book/bookinfo/subtitle"/>
+                    </xsl:attribute>
+                    <xsl:call-template name="navig.content">
+                      <xsl:with-param name="direction" select="'home'"/>
+                    </xsl:call-template>
                   </a>
                 </li>
               </ul>
