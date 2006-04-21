@@ -48,12 +48,50 @@
       <xsl:call-template name="process.chunk.footnotes"/>
     </div>
   </xsl:template>
-    
+
     <!-- Sections numbering -->
   <xsl:param name="section.autolabel" select="1"/>
   <xsl:param name="section.label.includes.component.label" select="1"/>
 
-    <!-- Skip numeraration for sections with empty title -->
+    <!-- Use lowercase roman numbers for sect1 in preface -->
+  <xsl:template match="sect1" mode="label.markup">
+    <!-- if the parent is a component, maybe label that too -->
+    <xsl:variable name="parent.is.component">
+      <xsl:call-template name="is.component">
+        <xsl:with-param name="node" select=".."/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:variable name="component.label">
+      <xsl:if test="$section.label.includes.component.label != 0
+                    and $parent.is.component != 0">
+        <xsl:variable name="parent.label">
+          <xsl:apply-templates select=".." mode="label.markup"/>
+        </xsl:variable>
+        <xsl:if test="$parent.label != ''">
+          <xsl:apply-templates select=".." mode="label.markup"/>
+          <xsl:apply-templates select=".." mode="intralabel.punctuation"/>
+        </xsl:if>
+      </xsl:if>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="@label">
+        <xsl:value-of select="@label"/>
+      </xsl:when>
+      <xsl:when test="$section.autolabel != 0">
+        <xsl:copy-of select="$component.label"/>
+        <xsl:choose>
+          <xsl:when test="ancestor::preface">
+            <xsl:number format="i" count="sect1"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:number format="1" count="sect1"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
+    <!-- Skip numeration for sect2 with empty title -->
   <xsl:template match="sect2|sect3|sect4|sect5" mode="label.markup">
     <xsl:if test="string-length(title) > 0">
       <!-- label the parent -->
