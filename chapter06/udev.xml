@@ -35,6 +35,11 @@
   <sect2 role="installation">
     <title>Installation of Udev</title>
 
+    <para>The udev-config tarball contains LFS-specific files used to configure
+    Udev.</para>
+
+<screen><userinput>tar xf ../&udev-config;.tar.bz2</userinput></screen>
+
     <para>Create some devices and directories that Udev cannot handle due to
     them being required very early in the boot process:</para>
 
@@ -49,8 +54,8 @@ ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
     <para>Compile the package:</para>
 
 <screen><userinput>make EXTRAS="extras/ata_id extras/cdrom_id extras/edd_id \
-            extras/firmware extras/floppy extras/scsi_id \
-            extras/usb_id extras/volume_id"</userinput></screen>
+            extras/firmware extras/floppy extras/path_id \
+            extras/scsi_id extras/usb_id extras/volume_id"</userinput></screen>
 
     <variablelist>
       <title>The meaning of the make option:</title>
@@ -72,8 +77,8 @@ ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
 
 <screen><userinput>make DESTDIR=/ \
     EXTRAS="extras/ata_id extras/cdrom_id extras/edd_id \
-            extras/firmware extras/floppy extras/scsi_id \
-            extras/usb_id extras/volume_id" install</userinput></screen>
+            extras/firmware extras/floppy extras/path_id \
+            extras/scsi_id extras/usb_id extras/volume_id" install</userinput></screen>
 
     <variablelist>
       <title>The meaning of the make parameter:</title>
@@ -92,15 +97,18 @@ ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
     <para>Udev's configuration is far from ideal by default, so install
     the configuration files here:</para>
 
-<screen><userinput>cp -v ../&udev-config-file; /etc/udev/rules.d/25-lfs.rules</userinput></screen>
+<!-- FIXME: 90-bug.rules should be removed once the book is released -->
+<screen><userinput>cp &udev-config;/05-udev-early.rules /etc/udev/rules.d/
+cp &udev-config;/25-lfs.rules /etc/udev/rules.d/
+cp &udev-config;/60-persistent-storage.rules /etc/udev/rules.d/
+cp &udev-config;/81-cdrom.rules /etc/udev/rules.d/
+cp &udev-config;/83-cdrom-symlinks.rules /etc/udev/rules.d/
+cp &udev-config;/90-bug.rules /etc/udev/rules.d/</userinput></screen>
 
-    <para>Create some rules that work around broken sysfs attribute creation
-    timing in linux-2.6.15:</para>
+    <para>Now install a helper script that is not included in the main Udev
+    tarball:</para>
 
-<screen><userinput>cat &gt; /etc/udev/rules.d/10-wait_for_sysfs.rules &lt;&lt; "EOF"
-ACTION=="add", DEVPATH=="/devices/*", ENV{PHYSDEVBUS}=="?*", WAIT_FOR_SYSFS="bus"
-ACTION=="add", SUBSYSTEM=="net", WAIT_FOR_SYSFS="address"
-EOF</userinput></screen>
+<screen><userinput>install -m 744 &udev-config;/write_cd_aliases /lib/udev/</userinput></screen>
 
     <para>Install the documentation that explains how to create Udev rules:</para>
 
@@ -155,12 +163,6 @@ EOF</userinput></screen>
 
 <screen><userinput>gcc -o /lib/udev/bug bug.c</userinput></screen>
 
-      <para>The next step adds a simple logging rule to run this program.</para>
-
-<screen><userinput>cat &gt; /etc/udev/rules.d/90-bug.rules &lt;&lt; "EOF"
-<literal>ACTION=="add", RUN+="bug"</literal>
-EOF</userinput></screen>
-
       <para>When booting the new LFS system, if any events are missed, a warning
       message will appear and a <filename>/dev/bugreport</filename> file will be
       created. The warning message will tell you where to send feedback.</para>
@@ -178,8 +180,8 @@ EOF</userinput></screen>
 
       <seglistitem>
         <seg>ata_id, cdrom_id, create_floppy_devices, edd_id, firmware_helper,
-        scsi_id, udevcontrol, udevd, udevinfo, udevmonitor, udevtest, usb_id
-        and vol_id</seg>
+        path_id, scsi_id, udevcontrol, udevd, udevinfo, udevmonitor, udevsettle,
+        udevtest, udevtrigger, usb_id, vol_id, and write_cd_aliases</seg>
         <seg>/etc/udev</seg>
       </seglistitem>
     </segmentedlist>
@@ -237,6 +239,17 @@ EOF</userinput></screen>
           <para>Uploads firmware to devices</para>
           <indexterm zone="ch-system-udev firmware_helper">
             <primary sortas="b-firmware_helper">firmware_helper</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="path_id">
+        <term><command>path_id</command></term>
+        <listitem>
+          <para>Provide the shortest possible unique hardware path to a
+          device</para>
+          <indexterm zone="ch-system-udev path_id">
+            <primary sortas="b-path_id">path_id</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -301,6 +314,17 @@ EOF</userinput></screen>
         </listitem>
       </varlistentry>
 
+      <varlistentry id="udevsettle">
+        <term><command>udevsettle</command></term>
+        <listitem>
+          <para>Watches the Udev event queue and exits if all current uevents
+          have been handled</para>
+          <indexterm zone="ch-system-udev udevsettle">
+            <primary sortas="b-udevsettle">udevsettle</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="udevtest">
         <term><command>udevtest</command></term>
         <listitem>
@@ -309,6 +333,16 @@ EOF</userinput></screen>
           or the name of the renamed network interface</para>
           <indexterm zone="ch-system-udev udevtest">
             <primary sortas="b-udevtest">udevtest</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevtrigger">
+        <term><command>udevtrigger</command></term>
+        <listitem>
+          <para>Triggers kernel device uevents to be replayed</para>
+          <indexterm zone="ch-system-udev udevtrigger">
+            <primary sortas="b-udevtrigger">udevtrigger</primary>
           </indexterm>
         </listitem>
       </varlistentry>
