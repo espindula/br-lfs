@@ -4,6 +4,31 @@
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
+    <!-- para -->
+  <xsl:template match="para">
+    <xsl:choose>
+      <xsl:when test="child::ulink[@url=' ']"/>
+      <xsl:otherwise>
+        <xsl:call-template name="paragraph">
+          <xsl:with-param name="class">
+            <xsl:if test="@role and $para.propagates.style != 0">
+              <xsl:value-of select="@role"/>
+            </xsl:if>
+          </xsl:with-param>
+          <xsl:with-param name="content">
+            <xsl:if test="position() = 1 and parent::listitem">
+              <xsl:call-template name="anchor">
+                <xsl:with-param name="node" select="parent::listitem"/>
+              </xsl:call-template>
+            </xsl:if>
+            <xsl:call-template name="anchor"/>
+            <xsl:apply-templates/>
+          </xsl:with-param>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
     <!-- screen -->
   <xsl:template match="screen">
     <xsl:choose>
@@ -19,7 +44,7 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  
+
   <xsl:template match="userinput">
     <xsl:choose>
       <xsl:when test="ancestor::screen">
@@ -54,7 +79,7 @@
     </div>
   </xsl:template>
 
-  
+
   <!-- variablelist -->
   <xsl:template match="variablelist">
     <xsl:choose>
@@ -68,7 +93,7 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  
+
 
     <!-- Body attributes -->
   <xsl:template name="body.attributes">
@@ -101,7 +126,7 @@
       </i>
     </a>
   </xsl:template>
-  
+
     <!-- The <code> xhtml tag have look issues in some browsers, like Konqueror and.
       isn't semantically correct (a filename isn't a code fragment) We will use <tt> for now. -->
   <xsl:template name="inline.monoseq">
@@ -122,7 +147,7 @@
       <xsl:copy-of select="$content"/>
     </tt>
   </xsl:template>
-  
+
   <xsl:template name="inline.boldmonoseq">
     <xsl:param name="content">
       <xsl:call-template name="anchor"/>
@@ -135,7 +160,7 @@
     <!-- don't put <strong> inside figure, example, or table titles -->
     <!-- or other titles that may already be represented with <strong>'s. -->
     <xsl:choose>
-      <xsl:when test="local-name(..) = 'title' and (local-name(../..) = 'figure' 
+      <xsl:when test="local-name(..) = 'title' and (local-name(../..) = 'figure'
               or local-name(../..) = 'example' or local-name(../..) = 'table' or local-name(../..) = 'formalpara')">
         <tt class="{local-name(.)}">
           <xsl:if test="@dir">
@@ -160,7 +185,7 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  
+
   <xsl:template name="inline.italicmonoseq">
     <xsl:param name="content">
       <xsl:call-template name="anchor"/>
@@ -180,6 +205,59 @@
         <xsl:copy-of select="$content"/>
       </tt>
     </em>
+  </xsl:template>
+
+    <!-- Total packages size calculation -->
+  <xsl:template match="returnvalue">
+    <xsl:call-template name="calculation">
+     <xsl:with-param name="scope" select="../../variablelist"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="calculation">
+    <xsl:param name="scope"/>
+    <xsl:param name="total">0</xsl:param>
+    <xsl:param name="position">1</xsl:param>
+    <xsl:variable name="tokens" select="count($scope/varlistentry)"/>
+    <xsl:variable name="token" select="$scope/varlistentry[$position]/term/token"/>
+    <xsl:variable name="size" select="substring-before($token,' KB')"/>
+    <xsl:variable name="rawsize">
+      <xsl:choose>
+        <xsl:when test="contains($size,',')">
+          <xsl:value-of select="concat(substring-before($size,','),substring-after($size,','))"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$size"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="$position &lt;= $tokens">
+        <xsl:call-template name="calculation">
+          <xsl:with-param name="scope" select="$scope"/>
+          <xsl:with-param name="position" select="$position +1"/>
+          <xsl:with-param name="total" select="$total + $rawsize"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:choose>
+          <xsl:when test="$total &lt; '1000'">
+            <xsl:value-of select="$total"/>
+            <xsl:text>  KB</xsl:text>
+          </xsl:when>
+          <xsl:when test="$total &gt; '1000' and $total &lt; '5000'">
+            <xsl:value-of select="substring($total,1,1)"/>
+            <xsl:text>,</xsl:text>
+            <xsl:value-of select="substring($total,2)"/>
+            <xsl:text>  KB</xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="round($total div 1024)"/>
+            <xsl:text>  MB</xsl:text>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
 
