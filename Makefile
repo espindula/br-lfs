@@ -7,7 +7,7 @@ XSLROOTDIR=/usr/share/xml/docbook/xsl-stylesheets-1.69.1
 
 lfs:
 	xsltproc --xinclude --nonet -stringparam profile.condition html \
-	-stringparam chunk.quietly $(CHUNK_QUIET)  -stringparam base.dir $(BASEDIR)/ \
+	-stringparam chunk.quietly $(CHUNK_QUIET) -stringparam base.dir $(BASEDIR)/ \
 	stylesheets/lfs-chunked.xsl index.xml
 
 	if [ ! -e $(BASEDIR)/stylesheets ]; then \
