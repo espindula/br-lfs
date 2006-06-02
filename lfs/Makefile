@@ -39,7 +39,7 @@ pdf:
 	xsltproc --nonet --output $(BASEDIR)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
 		$(BASEDIR)/lfs-pdf.xml
 	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo
-	fop $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+	fop.sh $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
 	rm $(BASEDIR)/lfs-pdf.xml $(BASEDIR)/lfs-pdf.fo
 
 nochunks:
