@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+  "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-scripts-symlinks">
+  <?dbhtml filename="symlinks.html"?>
+
+  <title>Creating custom symlinks to devices</title>
+
+  <sect2>
+
+    <title>CD-ROM symlinks</title>
+
+    <para>Some software that you may want to install later (e.g., various
+    media players) expect the /dev/cdrom and /dev/dvd symlinks to exist.
+    Also, it may be convenient to put references to those symlinks into
+    <filename>/etc/fstab</filename>. For each of your CD-ROM devices,
+    find the corresponding directory under
+    <filename class="directory">/sys</filename> (e.g., this can be
+    <filename class="directory">/sys/block/hdd</filename>) and
+    run a command similar to the following:</para>
+
+<screen role="nodump"><userinput>udevtest /block/hdd</userinput></screen>
+
+    <para>Look at the lines containing the output of various *_id programs.</para>
+
+    <para>There are two approaches to creating symlinks. The first one is to
+    use the model name and the serial number, the second one is based on the
+    location of the device on the bus. If you are going to use the first
+    approach, create a file similar to the following:</para>
+
+<screen role="nodump"><userinput>cat &gt;/etc/udev/rules.d/82-cdrom.rules &lt;&lt;"EOF"
+<literal>
+# Custom CD-ROM symlinks
+SUBSYSTEM=="block", ENV{ID_MODEL}=="SAMSUNG_CD-ROM_SC-148F", ENV{ID_REVISION}=="PS05", SYMLINK+="cdrom"
+SUBSYSTEM=="block", ENV{ID_MODEL}=="PHILIPS_CDD5301", ENV{ID_SERIAL}=="5VO1306DM00190", SYMLINK+="cdrom1 dvd"
+</literal>
+EOF</userinput></screen>
+
+    <para>This way, the symlinks will stay correct even if you move the drives
+    to different positions on the IDE bus, but the
+    <filename>/dev/cdrom</filename> symlink won't be created if you replace
+    the old SAMSUNG CD-ROM with a new drive.</para>
+<!-- The symlinks in the first approach survive even the transition
+     to libata for IDE drives, but that is not for the book. -->
+
+    <para>The SUBSYSTEM==&quot;block&quot; key is needed in order to avoid
+    matching SCSI generic devices. Without it, in the case with SCSI
+    CD-ROMs, the symlinks will sometimes point to the correct 
+    <filename>/dev/srX</filename> devices, and sometimes to
+    <filename>/dev/sgX</filename>, which is wrong.</para>
+ 
+    <para>The second approach yields:</para>
+
+<screen role="nodump"><userinput>cat &gt;/etc/udev/rules.d/82-cdrom.rules &lt;&lt;"EOF"
+<literal>
+# Custom CD-ROM symlinks
+SUBSYSTEM=="block", ENV{ID_TYPE}=="cd", ENV{ID_PATH}=="pci-0000:00:07.1-ide-0:1", SYMLINK+="cdrom"
+SUBSYSTEM=="block", ENV{ID_TYPE}=="cd", ENV{ID_PATH}=="pci-0000:00:07.1-ide-1:1", SYMLINK+="cdrom1 dvd"
+</literal>
+EOF</userinput></screen>
+
+    <para>This way, the symlinks will stay correct even if you replace drives
+    with different models, but place them to the old positions on the IDE
+    bus. The ENV{ID_TYPE}==&quot;cd&quot; key makes sure that the symlink
+    disappears if you put something other than a CD-ROM in that position on
+    the bus.</para>
+
+    <para>Of course, it is possible to mix the two approaches.</para>
+
+  </sect2>
+
+  <sect2>
+
+    <title>Dealing with duplicate devices</title>
+
+    <para>As explained in <xref linkend="ch-scripts-udev"/>, the order in
+    which devices with the same function appear in
+    <filename class="directory">/dev</filename> is essentially random.
+    E.g., if you have a USB web camera and a TV tuner, sometimes
+    <filename>/dev/video0</filename> refers to the camera and
+    <filename>/dev/video1</filename> refers to the tuner, and sometimes
+    after a reboot the order changes to the opposite one.
+    For all classes of hardware except sound cards and network cards, this is
+    fixable by creating udev rules for custom persistent symlinks.
+    The case of network cards is covered separately in
+    <xref linkend="ch-scripts-network"/>, and sound card configuration can
+    be found in <ulink url="&blfs-root;">BLFS</ulink>.</para>
+
+    <para>For each of your devices that is likely to have this problem
+    (even if the problem doesn't exist in your current Linux distribution),
+    find the corresponding directory under
+    <filename class="directory">/sys/class</filename> or
+    <filename class="directory">/sys/block</filename>.
+    For video devices, this may be
+    <filename
+    class="directory">/sys/class/video4linux/video<replaceable>X</replaceable></filename>.
+    Figure out the attributes that identify the device uniquely (usually,
+    vendor and product IDs and/or serial numbers work):</para>
+
+<screen role="nodump"><userinput>udevinfo -a -p /sys/class/video4linux/video0</userinput></screen>
+
+    <para>Then write rules that create the symlinks, e.g.:</para>
+
+<screen role="nodump"><userinput>cat &gt;/etc/udev/rules.d/83-duplicate_devs.rules &lt;&lt;"EOF"
+<literal>
+# Persistent symlinks for webcam and tuner
+KERNEL=="video*", SYSFS{idProduct}=="1910", SYSFS{idVendor}=="0d81", SYMLINK+="webcam"
+KERNEL=="video*", SYSFS{device}=="0x036f", SYSFS{vendor}=="0x109e", SYMLINK+="tvtuner"
+</literal>
+EOF</userinput></screen>
+
+    <para>The result is that <filename>/dev/video0</filename> and
+    <filename>/dev/video1</filename> devices still refer randomly to the tuner
+    and the web camera (and thus should never be used directly), but there are
+    symlinks <filename>/dev/tvtuner</filename> and
+    <filename>/dev/webcam</filename> that always point to the correct
+    device.</para>
+
+    <para>More information on writing Udev rules can be found in
+    <filename>/usr/share/doc/udev-&udev-version;/index.html</filename>.</para>
+
+ </sect2>
+
+</sect1>

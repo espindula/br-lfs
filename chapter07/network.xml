@@ -37,9 +37,10 @@
     Realtek card becomes  <filename class="devicefile">eth1</filename>. In some
     cases, after a reboot the cards get renumbered the other way around. To
     avoid this, create Udev rules that assign stable names to network cards
-    based on their MAC addresses.</para>
+    based on their MAC addresses or bus positions.</para>
 
-    <para>First, find out the MAC addresses of your network cards:</para>
+    <para>If you are going to use MAC addresses to identify your network
+    cards, find the addresses with the following command:</para>
 
 <screen role="nodump"><userinput>grep -H . /sys/class/net/*/address</userinput></screen>
 
@@ -48,20 +49,35 @@
     Udev rules similar to the following:</para>
 
 <screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/26-network.rules &lt;&lt; "EOF"
-<literal>ACTION=="add", SUBSYSTEM=="net", SYSFS{address}=="<replaceable>52:54:00:12:34:56</replaceable>", NAME="<replaceable>realtek</replaceable>"
-ACTION=="add", SUBSYSTEM=="net", SYSFS{address}=="<replaceable>00:a0:c9:78:9a:bc</replaceable>", NAME="<replaceable>intel</replaceable>"</literal>
+<literal>ACTION=="add", SUBSYSTEM=="net", DRIVER=="?*", SYSFS{address}=="<replaceable>00:e0:4c:12:34:56</replaceable>", NAME="<replaceable>realtek</replaceable>"
+ACTION=="add", SUBSYSTEM=="net", DRIVER=="?*", SYSFS{address}=="<replaceable>00:a0:c9:78:9a:bc</replaceable>", NAME="<replaceable>intel</replaceable>"</literal>
+EOF</userinput></screen>
+
+    <para>The DRIVER=="?*" key prevents Udev from attempting to rename 8021Q
+    VLAN interfaces (not available without the Vlan package from
+    <ulink url="http://www.candelatech.com/~greear/vlan/"/>).
+    This is necessary since VLANs have the same MAC address as
+    the real network card.</para>
+
+<!-- Yes, I know that VLANs are beyond BLFS. This is not the reason to get them
+     incorrect by default when every distro does this right. -->
+ 
+    <para>If you are going to use the bus position as a key, create
+    Udev rules similar to the following:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/26-network.rules &lt;&lt; "EOF"
+<literal>ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", ID=="<replaceable>0000:00:0c.0</replaceable>", NAME="<replaceable>realtek</replaceable>"
+ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", ID=="<replaceable>0000:00:0d.0</replaceable>", NAME="<replaceable>intel</replaceable>"</literal>
 EOF</userinput></screen>
 
     <para>These rules will always rename the network cards to
-    <quote>realtek</quote> and <quote>intel</quote>, independently of the
-    original numbering provided by the kernel. Use these names instead of
-    <quote>eth0</quote> in the network interface configuration files created
+    <quote>realtek</quote> and <quote>intel</quote>, independently
+    of the original numbering provided by the kernel (i.e.: the original
+    <quote>eth0</quote> and <quote>eth1</quote> interfaces will no longer
+    exist, unless you put such <quote>descriptive</quote> names in the NAME
+    key). Use the descriptive names from the Udev rules instead
+    of <quote>eth0</quote> in the network interface configuration files
     below.</para>
-
-    <note>
-      <para>Persistent names must be different from the default network
-      interface names assigned by the kernel.</para>
-    </note>
 
   </sect2>
 
