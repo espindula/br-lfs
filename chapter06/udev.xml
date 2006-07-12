@@ -94,86 +94,16 @@ ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
 
     </variablelist>
 
-    <para>Udev's configuration is far from ideal by default, so install
-    the configuration files here:</para>
+    <para>Udev has to be configured in order to work properly, and does
+    not come with any sort of "default" configuration. Install the
+    LFS-specific configuration files:</para>
 
-<!-- FIXME: 90-bug.rules should be removed from the tarball once the book is released -->
 <screen><userinput>cp -v &udev-config;/[0-9]* /etc/udev/rules.d/</userinput></screen>
-
-    <para>Now install a helper script that is not included in the main Udev
-    tarball:</para>
-
-<screen><userinput>install -v -m 744 &udev-config;/write_cd_aliases /lib/udev/</userinput></screen>
 
     <para>Install the documentation that explains how to create Udev rules:</para>
 
 <screen><userinput>install -m644 -D -v docs/writing_udev_rules/index.html \
     /usr/share/doc/udev-&udev-version;/index.html</userinput></screen>
-
-    <important>
-
-      <para>When Udev is started by the LFS-Bootscripts, a replay of all kernel
-      device events happens. These events tell Udev what devices exist.
-      Sometimes the Udev bootscript doesn't wait long enough for
-      <command>udevd</command> to process all of the replayed events and
-      consequently the devices for those missed events are not created before the
-      script exits. Since <command>udevd</command> is still running in the
-      background, the devices will be created a few milliseconds later, but the
-      next bootscript to run may require a device to exist before it has been
-      created. To avoid such missed events, and to avoid hardcoding an overly
-      long wait time, It is recommended that you run the following commands to
-      aid the LFS development team in debugging these missed events and finding
-      an acceptable solution more quickly.</para>
-
-      <para>First, create a simple C file:</para>
-
-<screen><userinput>cat &gt; bug.c &lt;&lt; EOF
-<literal>/* Simple event recorder */
-#define _GNU_SOURCE
-#include &lt;sys/types.h&gt;
-#include &lt;sys/stat.h&gt;
-#include &lt;fcntl.h&gt;
-#include &lt;unistd.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;argz.h&gt;
-int main(int argc, char * argv[])
-{
-  char * envar;
-  char * envz;
-  size_t len;
-  int bug;
-  bug = open("/dev/bug", O_WRONLY | O_APPEND);
-  if (bug == -1)
-    return 0;
-
-  /* Ignore everything USB-related to avoid spamming the list */
-  envar = getenv("PHYSDEVPATH");
-  if (envar &amp;&amp; strstr(envar, "usb"))
-    return 0;
-  envar = getenv("DEVPATH");
-  if (envar &amp;&amp; strstr(envar, "usb"))
-    return 0;
-
-  setenv("_SEPARATOR", "-------------------------------", 1);
-  argz_create(environ, &amp;envz, &amp;len);
-  argz_stringify(envz, len, '\n');
-  envz[len-1]='\n';
-  write(bug, envz, len);
-  close(bug);
-  free(envz);
-  return 0;
-}</literal>
-EOF</userinput></screen>
-
-      <para>Now compile it:</para>
-
-<screen><userinput>gcc -o /lib/udev/bug bug.c</userinput></screen>
-
-      <para>When booting the new LFS system, if any events are missed, a warning
-      message will appear and a <filename>/dev/bugreport</filename> file will be
-      created. The warning message will tell you where to send feedback.</para>
-
-    </important>
 
   </sect2>
 
