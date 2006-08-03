@@ -16,6 +16,7 @@
     and to remove vertical space in pachages and patches pages. -->
  <xsl:template match="para">
     <xsl:choose>
+      <xsl:when test="child::ulink[@url=' ']"/>
       <xsl:when test="./@remap='verbatim'">
         <fo:block wrap-option="no-wrap"
                     white-space-collapse="false"
@@ -250,6 +251,59 @@
         <fo:block margin-left="0.25in">
           <xsl:apply-templates select="listitem"/>
         </fo:block>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+    <!-- Total packages size calculation -->
+  <xsl:template match="returnvalue">
+    <xsl:call-template name="calculation">
+     <xsl:with-param name="scope" select="../../variablelist"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="calculation">
+    <xsl:param name="scope"/>
+    <xsl:param name="total">0</xsl:param>
+    <xsl:param name="position">1</xsl:param>
+    <xsl:variable name="tokens" select="count($scope/varlistentry)"/>
+    <xsl:variable name="token" select="$scope/varlistentry[$position]/term/token"/>
+    <xsl:variable name="size" select="substring-before($token,' KB')"/>
+    <xsl:variable name="rawsize">
+      <xsl:choose>
+        <xsl:when test="contains($size,',')">
+          <xsl:value-of select="concat(substring-before($size,','),substring-after($size,','))"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$size"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="$position &lt;= $tokens">
+        <xsl:call-template name="calculation">
+          <xsl:with-param name="scope" select="$scope"/>
+          <xsl:with-param name="position" select="$position +1"/>
+          <xsl:with-param name="total" select="$total + $rawsize"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:choose>
+          <xsl:when test="$total &lt; '1000'">
+            <xsl:value-of select="$total"/>
+            <xsl:text>  KB</xsl:text>
+          </xsl:when>
+          <xsl:when test="$total &gt; '1000' and $total &lt; '5000'">
+            <xsl:value-of select="substring($total,1,1)"/>
+            <xsl:text>,</xsl:text>
+            <xsl:value-of select="substring($total,2)"/>
+            <xsl:text>  KB</xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="round($total div 1024)"/>
+            <xsl:text>  MB</xsl:text>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

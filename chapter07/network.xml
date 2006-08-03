@@ -48,26 +48,31 @@
     invent a descriptive name, such as <quote>realtek</quote>, and create
     Udev rules similar to the following:</para>
 
-<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/26-network.rules &lt;&lt; "EOF"
-<literal>ACTION=="add", SUBSYSTEM=="net", DRIVER=="?*", SYSFS{address}=="<replaceable>00:e0:4c:12:34:56</replaceable>", NAME="<replaceable>realtek</replaceable>"
-ACTION=="add", SUBSYSTEM=="net", DRIVER=="?*", SYSFS{address}=="<replaceable>00:a0:c9:78:9a:bc</replaceable>", NAME="<replaceable>intel</replaceable>"</literal>
+<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/26-network.rules &lt;&lt; EOF
+<literal>ACTION=="add", SUBSYSTEM=="net", SYSFS{address}=="<replaceable>00:e0:4c:12:34:56</replaceable>", \
+    NAME="<replaceable>realtek</replaceable>"
+ACTION=="add", SUBSYSTEM=="net", SYSFS{address}=="<replaceable>00:a0:c9:78:9a:bc</replaceable>", \
+    NAME="<replaceable>intel</replaceable>"</literal>
 EOF</userinput></screen>
-
-    <para>The DRIVER=="?*" key prevents Udev from attempting to rename 8021Q
-    VLAN interfaces (not available without the Vlan package from
-    <ulink url="http://www.candelatech.com/~greear/vlan/"/>).
-    This is necessary since VLANs have the same MAC address as
-    the real network card.</para>
 
 <!-- Yes, I know that VLANs are beyond BLFS. This is not the reason to get them
      incorrect by default when every distro does this right. -->
- 
+
+    <note>
+      <para>Although the examples in this book work properly, be aware
+      that Udev does not recognize the backslash for line continuation.
+      If modifying Udev rules with an editor, be sure to leave each rule
+      on one physical line.</para>
+    </note>
+
     <para>If you are going to use the bus position as a key, create
     Udev rules similar to the following:</para>
 
-<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/26-network.rules &lt;&lt; "EOF"
-<literal>ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", ID=="<replaceable>0000:00:0c.0</replaceable>", NAME="<replaceable>realtek</replaceable>"
-ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", ID=="<replaceable>0000:00:0d.0</replaceable>", NAME="<replaceable>intel</replaceable>"</literal>
+<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/26-network.rules &lt;&lt; EOF
+<literal>ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", ID=="<replaceable>0000:00:0c.0</replaceable>", \
+    NAME="<replaceable>realtek</replaceable>"
+ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", ID=="<replaceable>0000:00:0d.0</replaceable>", \
+    NAME="<replaceable>intel</replaceable>"</literal>
 EOF</userinput></screen>
 
     <para>These rules will always rename the network cards to
@@ -78,6 +83,29 @@ EOF</userinput></screen>
     key). Use the descriptive names from the Udev rules instead
     of <quote>eth0</quote> in the network interface configuration files
     below.</para>
+
+    <para>Note that the rules above don't work for every setup. For example,
+    MAC-based rules break when bridges or VLANs are used, because bridges and
+    VLANs have the same MAC address as the network card. One wants to rename
+    only the network card interface, not the bridge or VLAN interface, but the
+    example rule matches both. If you use such virtual interfaces, you have two
+    potential solutions. One is to add the DRIVER=="?*" key after
+    SUBSYSTEM=="net" in MAC-based rules which will stop matching the virtual
+    interfaces.  This is known to fail with some older Ethernet cards because
+    they don't have the DRIVER variable in the uevent and thus the rule does
+    not match with such cards. Another solution is to switch to rules that use
+    the bus position as a key.</para>
+
+    <para>The second known non-working case is with wireless cards using the
+    MadWifi or HostAP drivers, because they create at least two interfaces with
+    the same MAC address and bus position. For example, the Madwifi driver
+    creates both an athX and a wifiX interface where X is a digit.  To
+    differentiate these interfaces, add an appropriate KERNEL parameter such as
+    KERNEL=="ath*" after SUBSYSTEM=="net".</para>
+
+    <para>There may be other cases where the rules above don't work. Currently,
+    bugs on this topic are still being reported to Linux distributions, and no
+    solution that covers every case is available.</para>
 
   </sect2>
 
