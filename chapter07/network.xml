@@ -71,23 +71,44 @@ EOF</userinput></screen>
       rule on one physical line.</para>
     </note>
 
-    <para>If you are going to use the bus position as a key, create
-    Udev rules similar to the following:</para>
+    <para>If you are going to use the bus position as the key, find the
+    position of each card with the following commands:</para>
+
+<screen role="nodump"><userinput>for dir in /sys/class/net/* ; do
+    [ -e $dir/device ] &amp;&amp; {
+        basename $dir ; readlink -f $dir/device
+    }
+done</userinput></screen>
+
+    <para>This will yield output similar to:</para>
+
+<screen role="nodump"><userinput><replaceable>eth0</replaceable>
+/sys/devices/pci0000:00/<replaceable>0000:00:0c.0</replaceable>
+<replaceable>eth1</replaceable>
+/sys/devices/pci0000:00/<replaceable>0000:00:0d.0</replaceable></userinput></screen>
+
+    <para>In this example, <replaceable>eth0</replaceable> has PCI bus position
+    <replaceable>0000:00:0c.0</replaceable> (domain 0000, bus 00, device 0c,
+    function 0), and <replaceable>eth1</replaceable> has PCI bus position
+    <replaceable>0000:00:0d.0</replaceable> (domain 0000, bus 00, device 0d,
+    function 0).</para>
+  
+    <para>Now create Udev rules similar to the following:</para>
 
 <screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/26-network.rules &lt;&lt; EOF
-<literal>ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", ID=="<replaceable>0000:00:0c.0</replaceable>", \
+<literal>ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", KERNELS=="<replaceable>0000:00:0c.0</replaceable>", \
     NAME="<replaceable>realtek</replaceable>"
-ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", ID=="<replaceable>0000:00:0d.0</replaceable>", \
+ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", KERNELS=="<replaceable>0000:00:0d.0</replaceable>", \
     NAME="<replaceable>intel</replaceable>"</literal>
 EOF</userinput></screen>
 
-    <para>These rules will always rename the network cards to
-    <quote>realtek</quote> and <quote>intel</quote>, independently
-    of the original numbering provided by the kernel (i.e.: the original
-    <quote>eth0</quote> and <quote>eth1</quote> interfaces will no longer
-    exist, unless you put such <quote>descriptive</quote> names in the NAME
-    key). Use the descriptive names from the Udev rules instead
-    of <quote>eth0</quote> in the network interface configuration files
+    <para>Regardless of which method you use, these rules will always rename
+    the network cards to <quote>realtek</quote> and <quote>intel</quote>,
+    independently of the original numbering provided by the kernel (i.e.: the
+    original <quote>eth0</quote> and <quote>eth1</quote> interfaces will no
+    longer exist, unless you put such <quote>descriptive</quote> names in the
+    NAME key). Use the descriptive names from the Udev rules instead of
+    <quote>eth0</quote> in the network interface configuration files
     below.</para>
 
     <para>Note that the rules above don't work for every setup. For example,
