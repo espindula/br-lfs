@@ -7,9 +7,6 @@
 
   <xsl:output method="text"/>
 
-  <!-- The FTP server used as fallback -->
-  <xsl:param name="server">ftp://ftp.osuosl.org</xsl:param>
-
   <!-- The libc model used for HLFS -->
   <xsl:param name="model" select="glibc"/>
 
