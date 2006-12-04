@@ -1,8 +1,7 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
 <!-- Create a list of upstream URLs for packages and patches to be used
-     with wget.
-     NOTE: there are several sourceforge URLs that don't work with wget. -->
+     with wget. -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     version="1.0">
@@ -20,7 +19,14 @@
     <xsl:if test="(contains(@url, '.tar.') or contains(@url, '.tgz')
                   or contains(@url, '.patch')) and
                   not(ancestor-or-self::*/@condition = 'pdf')">
-      <xsl:value-of select="@url"/>
+      <xsl:choose>
+        <xsl:when test="contains(@url,'?download')">
+          <xsl:value-of select="substring-before(@url,'?download')"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="@url"/>
+        </xsl:otherwise>
+      </xsl:choose>
       <xsl:text>&#x0a;</xsl:text>
     </xsl:if>
   </xsl:template>
