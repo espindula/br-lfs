@@ -32,11 +32,12 @@ lfs:
 	  sh obfuscate.sh $$filename; \
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
-	
+
 	$(MAKE) wget-list
 
 wget-list:
-	xsltproc --xinclude --nonet stylesheets/wget-list.xsl index.xml > $(BASEDIR)/wget-list
+	mkdir -p $(BASEDIR)
+	xsltproc --xinclude --nonet stylesheets/wget-list.xsl chapter03/chapter03.xml > $(BASEDIR)/wget-list
 
 # Uncomment this for testing and stable versions
 #pdf:
