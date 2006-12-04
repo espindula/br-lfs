@@ -5,6 +5,7 @@ PDF_OUTPUT=LFS-BOOK.pdf
 NOCHUNKS_OUTPUT=LFS-BOOK.html
 XSLROOTDIR=/usr/share/xml/docbook/xsl-stylesheets-1.69.1
 
+
 lfs:
 	xsltproc --xinclude --nonet -stringparam profile.condition html \
 	-stringparam chunk.quietly $(CHUNK_QUIET) -stringparam base.dir $(BASEDIR)/ \
@@ -31,6 +32,11 @@ lfs:
 	  sh obfuscate.sh $$filename; \
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
+	
+	$(MAKE) wget-list
+
+wget-list:
+	xsltproc --xinclude --nonet stylesheets/wget-list.xsl index.xml > $(BASEDIR)/wget-list
 
 # Uncomment this for testing and stable versions
 #pdf:
