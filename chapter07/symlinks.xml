@@ -15,84 +15,74 @@
     <title>CD-ROM symlinks</title>
 
     <para>Some software that you may want to install later (e.g., various
-    media players) expect the /dev/cdrom and /dev/dvd symlinks to exist.
-    Also, it may be convenient to put references to those symlinks into
-    <filename>/etc/fstab</filename>. For each of your CD-ROM devices,
-    find the corresponding directory under
+    media players) expect the <filename class="symlink">/dev/cdrom</filename>
+    and <filename class="symlink">/dev/dvd</filename> symlinks to exist, and
+    to point to a CD-ROM or DVD-ROM device. Also, it may be convenient to put
+    references to those symlinks into <filename>/etc/fstab</filename>. Udev
+    comes with a script that will generate rules files to create these symlinks
+    for you, depending on the capabilities of each device, but you need to
+    decide which of two modes of operation you wish to have the script use.</para>
+
+    <para>First, the script can operate in <quote>by-path</quote> mode, where
+    the rules it creates depend on the physical path to the CD or DVD device.
+    Second, it can operate in <quote>by-id</quote> mode, where the rules it
+    creates depend on identification strings stored in the CD or DVD device
+    itself. The path is determined by Udev's <command>path_id</command> script,
+    and the identification strings are read from the hardware by its
+    <command>ata_id</command> or <command>scsi_id</command> programs, depending
+    on which type of device you have.</para>
+
+    <para>There are advantages to each approach; the correct approach to use
+    will depend on what kinds of device changes may happen. If you expect the
+    physical path to the device (that is, the ports and/or slots that it plugs
+    into) to change, for example because you plan on moving the drive to a
+    different IDE port or a different USB connector, then you should use the
+    <quote>by-id</quote> mode. On the other hand, if you expect the device's
+    identification to change, for example because it may die, and you would
+    replace it with a different device with the same capabilities and which
+    is plugged into the same connectors, then you should use the
+    <quote>by-path</quote> mode.</para>
+
+    <para>If either type of change is possible with your drive, then choose a
+    mode based on the type of change you expect to happen more often.</para>
+
+<!-- If you use by-id mode, the symlinks will survive even the transition
+     to libata for IDE drives, but that is not for the book. -->
+
+    <important>External devices (for example, a USB-connected CD drive) should
+    not use by-path persistence, because each time the device is plugged into a
+    new external port, its physical path will change. All externally-connected
+    devices will have this problem if you write Udev rules to recognize them
+    by their physical path; the problem is not limited to CD and DVD drives.</important>
+
+    <para>If you wish to see the values that the Udev scripts will use, then
+    for the appropriate CD-ROM device, find the corresponding directory under
     <filename class="directory">/sys</filename> (e.g., this can be
     <filename class="directory">/sys/block/hdd</filename>) and
     run a command similar to the following:</para>
 
-<screen role="nodump"><userinput>udevtest /block/hdd</userinput></screen>
+<screen role="nodump"><userinput>udevtest /sys/block/hdd</userinput></screen>
 
-    <para>Look at the lines containing the output of various *_id programs.</para>
+    <para>Look at the lines containing the output of various *_id programs.
+    The <quote>by-id</quote> mode will use the ID_SERIAL value if it exists and
+    is not empty, otherwise it will use a combination of ID_MODEL and
+    ID_REVISION. The <quote>by-path</quote> mode will use the ID_PATH value.</para>
 
-    <para>There are two approaches to creating symlinks. The first one is to
-    use the model name and the serial number, the second one is based on the
-    location of the device on the bus. If you are going to use the first
-    approach, create a file similar to the following:</para>
+    <para>If you choose the <quote>by-path</quote> mode, then the rules files
+    installed by default with Udev will work. If you choose the <quote>by-id</quote>
+    mode, then you will have to modify the
+    <filename>/etc/udev/rules.d/75-cd-aliases-generator.rules</filename> file,
+    as follows:</para>
 
-<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/70-persistent-cd.rules &lt;&lt; EOF
-<literal>
-# Custom CD-ROM symlinks
-SUBSYSTEM=="block", ENV{ID_MODEL}=="SAMSUNG_CD-ROM_SC-148F", \
-    ENV{ID_REVISION}=="PS05", ENV{GENERATED}="1", SYMLINK+="cdrom"
-SUBSYSTEM=="block", ENV{ID_MODEL}=="PHILIPS_CDD5301", \
-    ENV{ID_SERIAL}=="5VO1306DM00190", ENV{GENERATED}="1", SYMLINK+="cdrom1 dvd"
-</literal>
-EOF</userinput></screen>
+<screen><userinput>sed -i -e 's/write_cd_aliases/&amp; by-id/' \
+    /etc/udev/rules.d/75-cd-aliases-generator.rules</userinput></screen>
 
-    <note>
-      <para>Be aware that Udev does not recognize the backslash for line
-      continuation.  The examples in this book work properly because both
-      the backslash and newline are ignored by the shell.  This makes the
-      shell send each rule to cat on only one line.  (The shell ignores
-      this sequence because the EOF string used in the here-document
-      redirection is not enclosed in either double or single quotes.  For
-      more details, see the bash(1) manpage, and search it for "Here
-      Documents".)</para>
-      <para>If modifying Udev rules with an editor, be sure to leave each
-      rule on one physical line.</para>
-    </note>
-
-    <para>This way, the symlinks will stay correct even if you move the drives
-    to different positions on the IDE bus, but the
-    <filename>/dev/cdrom</filename> symlink won't be created if you replace
-    the old SAMSUNG CD-ROM with a new drive.</para>
-<!-- The symlinks in the first approach survive even the transition
-     to libata for IDE drives, but that is not for the book. -->
-
-    <para>The SUBSYSTEM==&quot;block&quot; key is needed in order to avoid
-    matching SCSI generic devices. Without it, in the case with SCSI
-    CD-ROMs, the symlinks will sometimes point to the correct
-    <filename>/dev/srX</filename> devices, and sometimes to
-    <filename>/dev/sgX</filename>, which is wrong.</para>
-
-    <para>The ENV{GENERATED}="1" key is needed to prevent the Udev
-    75-cd-aliases-generator.rules file from overriding your custom
-    rules.</para>
-
-    <para>The second approach yields:</para>
-
-<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/70-persistent-cd.rules &lt;&lt; EOF
-<literal>
-# Custom CD-ROM symlinks
-SUBSYSTEM=="block", ENV{ID_TYPE}=="cd", \
-    ENV{ID_PATH}=="pci-0000:00:07.1-ide-0:1", \
-    ENV{GENERATED}="1", SYMLINK+="cdrom"
-SUBSYSTEM=="block", ENV{ID_TYPE}=="cd", \
-    ENV{ID_PATH}=="pci-0000:00:07.1-ide-1:1", \
-    ENV{GENERATED}="1", SYMLINK+="cdrom1 dvd"
-</literal>
-EOF</userinput></screen>
-
-    <para>This way, the symlinks will stay correct even if you replace drives
-    with different models, but place them to the old positions on the IDE
-    bus. The ENV{ID_TYPE}==&quot;cd&quot; key makes sure that the symlink
-    disappears if you put something other than a CD-ROM in that position on
-    the bus.</para>
-
-    <para>Of course, it is possible to mix the two approaches.</para>
+    <para>Note that it is not necessary to create the rules files or symlinks
+    at this time, because you have bind-mounted the host's
+    <filename class="directory">/dev</filename> directory into the LFS system,
+    and we assume the symlinks exist and are correct on the host. The rules
+    will be created, along with the symlinks, the first time you boot your LFS
+    system.</para>
 
   </sect2>
 
