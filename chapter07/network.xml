@@ -26,9 +26,6 @@
   <sect2>
     <title>Creating stable names for network interfaces</title>
 
-    <para>Instructions in this section are optional if you have only one
-    network card.</para>
-
     <para>With Udev and modular network drivers, the network interface numbering
     is not persistent across reboots by default, because the drivers are loaded
     in parallel and, thus, in random order. For example, on a computer having
@@ -36,116 +33,64 @@
     by Intel may become <filename class="devicefile">eth0</filename> and the
     Realtek card becomes  <filename class="devicefile">eth1</filename>. In some
     cases, after a reboot the cards get renumbered the other way around. To
-    avoid this, create Udev rules that assign stable names to network cards
-    based on their MAC addresses or bus positions.</para>
+    avoid this, Udev comes with a script and some rules to assign stable names
+    to network cards based on their MAC address.</para>
 
-    <para>If you are going to use MAC addresses to identify your network
-    cards, find the addresses with the following command:</para>
+    <para>Pre-generate the rules to ensure the same names get assigned to the
+    same devices at every boot, including the first:</para>
 
-<screen role="nodump"><userinput>grep -H . /sys/class/net/*/address</userinput></screen>
+<screen><userinput>/lib/udev/write_net_rules all_interfaces</userinput></screen>
 
-    <para>For each network card (but not for the loopback interface),
-    invent a descriptive name, such as <quote>realtek</quote>, and create
-    Udev rules similar to the following:</para>
+    <para>Now, inspect the <filename>/etc/udev/rules.d/70-persistent-net.rules</filename>
+    file, to find out which name was assigned to which network device:</para>
 
-<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/70-persistent-net.rules &lt;&lt; EOF
-<literal>ACTION=="add", SUBSYSTEM=="net", SYSFS{address}=="<replaceable>00:e0:4c:12:34:56</replaceable>", \
-    NAME="<replaceable>realtek</replaceable>"
-ACTION=="add", SUBSYSTEM=="net", SYSFS{address}=="<replaceable>00:a0:c9:78:9a:bc</replaceable>", \
-    NAME="<replaceable>intel</replaceable>"</literal>
-EOF</userinput></screen>
+<screen><userinput>cat /etc/udev/rules.d/70-persistent-net.rules</userinput></screen>
 
-<!-- Yes, I know that VLANs are beyond BLFS. This is not the reason to get them
-     incorrect by default when every distro does this right. -->
+    <para>Each NIC takes up two lines in the file. The first line is a
+    description of the NIC itself, showing its hardware IDs (e.g. its PCI
+    vendor and device IDs, if it's a PCI card), along with its driver in
+    parentheses, if the driver can be found. This line is a comment; neither
+    the hardware ID nor the driver is used to determine which name to give an
+    interface. The second line is the Udev rule that matches this NIC and
+    actually assigns it a name.</para>
 
-    <note>
-      <para>Be aware that Udev does not recognize the backslash for line
-      continuation.  The examples in this book work properly because both
-      the backslash and newline are ignored by the shell.  This makes the
-      shell send each rule to cat on only one line.  (The shell ignores
-      this sequence because the EOF string used in the here-document
-      redirection is not enclosed in either double or single quotes.  For
-      more details, see the bash(1) manpage, and search it for "Here
-      Documents".)</para>
-      <para>If modifying Udev rules with an editor, be sure to leave each
-      rule on one physical line.</para>
-    </note>
+    <para>All Udev rules are made up of several keys, separated by commas and
+    optional whitespace. This rule's keys and an explanations of each of them
+    are as follows:</para>
 
-    <para>If you are going to use the bus position as the key, find the
-    position of each card with the following commands:</para>
-
-<screen role="nodump"><userinput>for dir in /sys/class/net/* ; do
-    [ -e $dir/device ] &amp;&amp; {
-        basename $dir ; readlink -f $dir/device
-    }
-done</userinput></screen>
-
-    <para>This will yield output similar to:</para>
-
-<screen role="nodump"><userinput><replaceable>eth0</replaceable>
-/sys/devices/pci0000:00/<replaceable>0000:00:0c.0</replaceable>
-<replaceable>eth1</replaceable>
-/sys/devices/pci0000:00/<replaceable>0000:00:0d.0</replaceable></userinput></screen>
-
-    <para>In this example, <replaceable>eth0</replaceable> has PCI bus position
-    <replaceable>0000:00:0c.0</replaceable> (domain 0000, bus 00, device 0c,
-    function 0), and <replaceable>eth1</replaceable> has PCI bus position
-    <replaceable>0000:00:0d.0</replaceable> (domain 0000, bus 00, device 0d,
-    function 0).</para>
-  
-    <para>Now create Udev rules similar to the following:</para>
-
-<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/70-persistent-net.rules &lt;&lt; EOF
-<literal>ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", KERNELS=="<replaceable>0000:00:0c.0</replaceable>", \
-    NAME="<replaceable>realtek</replaceable>"
-ACTION=="add", SUBSYSTEM=="net", BUS=="<replaceable>pci</replaceable>", KERNELS=="<replaceable>0000:00:0d.0</replaceable>", \
-    NAME="<replaceable>intel</replaceable>"</literal>
-EOF</userinput></screen>
-
-    <para>Udev has installed a rule_generator rules file that uses MAC
-    addresses, not bus positions.  Rules generated by this file will conflict
-    with the rules you just created, so delete the file:</para>
-
-<screen role="nodump"><userinput>rm /etc/udev/rules.d/75-persistent-net-generator.rules</userinput></screen>
-
-    <note>
-      <para>You will also have to remember to create a new bus-position-based
-      rule each time you plug in an additional network card.  In a MAC address
-      based persistence scheme, the rule_generator rules file would do this
-      automatically.</para>
-    </note>
-
-    <para>Regardless of which method you use, these rules will always rename
-    the network cards to <quote>realtek</quote> and <quote>intel</quote>,
-    independently of the original numbering provided by the kernel (i.e.: the
-    original <quote>eth0</quote> and <quote>eth1</quote> interfaces will no
-    longer exist, unless you put such <quote>descriptive</quote> names in the
-    NAME key). Use the descriptive names from the Udev rules instead of
-    <quote>eth0</quote> in the network interface configuration files
-    below.</para>
-
-    <para>Note that the rules above don't work for every setup. For example,
-    MAC-based rules break when bridges or VLANs are used, because bridges and
-    VLANs have the same MAC address as the network card. One wants to rename
-    only the network card interface, not the bridge or VLAN interface, but the
-    example rule matches both. If you use such virtual interfaces, you have two
-    potential solutions. One is to add the DRIVER=="?*" key after
-    SUBSYSTEM=="net" in MAC-based rules which will stop matching the virtual
-    interfaces.  This is known to fail with some older Ethernet cards because
-    they don't have the DRIVER variable in the uevent and thus the rule does
-    not match with such cards. Another solution is to switch to rules that use
-    the bus position as a key.</para>
-
-    <para>The second known non-working case is with wireless cards using the
-    MadWifi or HostAP drivers, because they create at least two interfaces with
-    the same MAC address and bus position. For example, the Madwifi driver
-    creates both an athX and a wifiX interface where X is a digit.  To
-    differentiate these interfaces, add an appropriate KERNEL parameter such as
-    KERNEL=="ath*" after SUBSYSTEM=="net".</para>
-
-    <para>There may be other cases where the rules above don't work. Currently,
-    bugs on this topic are still being reported to Linux distributions, and no
-    solution that covers every case is available.</para>
+    <itemizedlist>
+      <listitem>
+        <para><literal>SUBSYSTEM=="net"</literal> - This tells Udev to ignore
+        devices that are not network cards.</para>
+      </listitem>
+      <listitem>
+        <para><literal>DRIVERS=="?*"</literal> - This exists so that Udev will
+        ignore VLAN or bridge sub-interfaces (because these sub-interfaces do
+        not have drivers). These sub-interfaces are skipped because the name
+        that would be assigned would collide with their parent devices.</para>
+      </listitem>
+      <listitem>
+        <para><literal>ATTRS{type}=="1"</literal> - Optional. This key will
+        only be added if this NIC is a wireless NIC whose driver creates
+        multiple virtual interfaces; it ensures the rule only matches the
+        primary interface. The secondary interfaces are not matched for the
+        same reason that VLAN and bridge sub-interfaces are not matched: there
+        would be a name collision.</para>
+      </listitem>
+      <listitem>
+        <para><literal>ATTRS{address}</literal> - The value of this key is the
+        NIC's MAC address.</para>
+      </listitem>
+      <listitem>
+        <para><literal>NAME</literal> - The value of this key is the name that
+        Udev will assign to this interface.</para>
+      </listitem>
+    </itemizedlist>
+    
+    <para>The value of <literal>NAME</literal> is the important part. Make sure
+    you know which name has been assigned to each of your network cards before
+    proceeding, and be sure to use that <literal>NAME</literal> value when
+    creating your configuration files below.</para>
 
   </sect2>
 
