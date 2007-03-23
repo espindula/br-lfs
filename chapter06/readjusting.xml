@@ -44,9 +44,10 @@ ln -sv /tools/bin/ld /tools/$(gcc -dumpmachine)/bin/ld</userinput></screen>
     linkend="ch-tools-toolchaintechnotes" role=","/> if necessary.</para>
   </important>
 
-<screen><userinput>gcc -dumpspecs | \
-perl -p -e 's@/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g;' \
-    -e 's@\*startfile_prefix_spec:\n@$_/usr/lib/ @g;' &gt; \
+<screen><userinput>gcc -dumpspecs | sed \
+    -e 's@/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' \
+    -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
+    -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' &gt; \
     `dirname $(gcc --print-libgcc-file-name)`/specs</userinput></screen>
 
   <para>It is a good idea to visually inspect the specs file to verify the
@@ -57,7 +58,7 @@ perl -p -e 's@/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g;' \
   as expected. To do this, perform the following sanity checks:</para>
 
 <screen role="nodump" os="a"><userinput>echo 'main(){}' &gt; dummy.c
-cc dummy.c -Wl,--verbose &amp;&gt; dummy.log
+cc dummy.c -v -Wl,--verbose &amp;&gt; dummy.log
 readelf -l a.out | grep ': /lib'</userinput></screen>
 
   <para os="b">If everything is working correctly, there should be no errors,
@@ -80,44 +81,54 @@ readelf -l a.out | grep ': /lib'</userinput></screen>
 /usr/lib/crti.o succeeded
 /usr/lib/crtn.o succeeded</computeroutput></screen>
 
-  <para os="g">Next, verify that the new linker is being used with the correct search paths:</para>
+  <para os="g">Verify that the compiler is searching for the correct header
+  files:</para>
 
-<screen role="nodump" os="h"><userinput>grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'</userinput></screen>
+<screen role="nodump"><userinput>grep -B1 '^ /usr/include' dummy.log</userinput></screen>
 
-  <para os="i">If everything is working correctly, there should be no errors,
+  <para os="h">This command should return successfully with the following output:</para>
+
+<screen><computeroutput>#include &lt;...&gt; search starts here:
+ /usr/include</computeroutput></screen>
+
+  <para os="i">Next, verify that the new linker is being used with the correct search paths:</para>
+
+<screen role="nodump" os="j"><userinput>grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'</userinput></screen>
+
+  <para os="k">If everything is working correctly, there should be no errors,
   and the output of the last command will be:</para>
 
 <screen><computeroutput>SEARCH_DIR("/tools/i686-pc-linux-gnu/lib")
 SEARCH_DIR("/usr/lib")
 SEARCH_DIR("/lib");</computeroutput></screen>
 
-  <para os="j">Next make sure that we're using the correct libc:</para>
+  <para os="l">Next make sure that we're using the correct libc:</para>
 
-<screen role="nodump" os="k"><userinput>grep "/lib/libc.so.6 " dummy.log</userinput></screen>
+<screen role="nodump" os="m"><userinput>grep "/lib/libc.so.6 " dummy.log</userinput></screen>
 
-  <para os="l">If everything is working correctly, there should be no errors,
+  <para os="n">If everything is working correctly, there should be no errors,
   and the output of the last command will be:</para>
 
-<screen os="m"><computeroutput>attempt to open /lib/libc.so.6 succeeded</computeroutput></screen>
+<screen os="o"><computeroutput>attempt to open /lib/libc.so.6 succeeded</computeroutput></screen>
 
-  <para os="n">Lastly, make sure GCC is using the correct dynamic linker:</para>
+  <para os="p">Lastly, make sure GCC is using the correct dynamic linker:</para>
 
-<screen role="nodump" os="o"><userinput>grep found dummy.log</userinput></screen>
+<screen role="nodump" os="q"><userinput>grep found dummy.log</userinput></screen>
 
-  <para os="p">If everything is working correctly, there should be no errors,
+  <para os="r">If everything is working correctly, there should be no errors,
   and the output of the last command will be (allowing for
   platform-specific differences in dynamic linker name):</para>
 
-<screen os="q"><computeroutput>found ld-linux.so.2 at /lib/ld-linux.so.2</computeroutput></screen>
+<screen os="s"><computeroutput>found ld-linux.so.2 at /lib/ld-linux.so.2</computeroutput></screen>
 
-  <para os="r">If the output does not appear as shown above or is not received
+  <para os="t">If the output does not appear as shown above or is not received
   at all, then something is seriously wrong. Investigate and retrace the
   steps to find out where the problem is and correct it. The most likely
   reason is that something went wrong with the specs file adjustment. Any
   issues will need to be resolved before continuing on with the process.</para>
 
-  <para os="s">Once everything is working correctly, clean up the test files:</para>
+  <para os="u">Once everything is working correctly, clean up the test files:</para>
 
-<screen role="nodump" os="t"><userinput>rm -v dummy.c a.out dummy.log</userinput></screen>
+<screen role="nodump" os="v"><userinput>rm -v dummy.c a.out dummy.log</userinput></screen>
 
 </sect1>
