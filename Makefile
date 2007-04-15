@@ -47,19 +47,12 @@ wget-list:
 #	rm $(BASEDIR)/lfs-pdf.xml $(BASEDIR)/lfs-pdf.fo
 
 # Remove this for testing and stable versions
-pdf-orig:
-	xsltproc --xinclude --nonet --output $(BASEDIR)/fop-lfs-pdf.fo \
-		stylesheets/lfs-pdf.xsl index.xml
-	sed -i -e 's/span="inherit"/span="all"/' $(BASEDIR)/fop-lfs-pdf.fo
-	fop.sh $(BASEDIR)/fop-lfs-pdf.fo $(BASEDIR)/fop-$(PDF_OUTPUT)
-#	rm $(BASEDIR)/fop-lfs-pdf.fo
-
 pdf:
-	xsltproc --xinclude --nonet --output $(BASEDIR)/fop1-lfs-pdf.fo \
+	xsltproc --xinclude --nonet --output $(BASEDIR)/lfs-pdf.fo \
 		stylesheets/lfs-pdf.xsl index.xml
-	sed -i -e 's/span="inherit"/span="all"/' $(BASEDIR)/fop1-lfs-pdf.fo
-	FOP_HOME=~/cosas/fop-0,93 && ~/cosas/fop-0.93/fop $(BASEDIR)/fop1-lfs-pdf.fo $(BASEDIR)/fop1-$(PDF_OUTPUT)
-#	rm $(BASEDIR)/fop1-lfs-pdf.fo
+	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo
+	fop.sh $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+	rm $(BASEDIR)/lfs-pdf.fo
 
 nochunks:
 	xsltproc --xinclude --nonet -stringparam profile.condition html \
