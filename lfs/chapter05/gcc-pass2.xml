@@ -27,32 +27,32 @@
 <title>Re-installation de GCC</title>
 
 <para>Ce paquet est connu pour avoir des soucis quand les options d'optimisation
-par défaut (en incluant les options <parameter>-march</parameter> et
-<parameter>-mcpu</parameter>) sont modifiées. Donc, si des variables d'environnement
-qui surchargent les optimisations par défaut, telles que <envar>CFLAGS</envar>
-et <envar>CXXFLAGS</envar>, ont été définies, supprimez cette initialisation
+par défaut (dont les options <parameter>-march</parameter> et
+<parameter>-mcpu</parameter>) sont modifiées. Si des variables d'environnement
+qui surchargent les optimisations par défaut ont été définies, telles que <envar>CFLAGS</envar>
+et <envar>CXXFLAGS</envar> ont été définies, supprimez cette initialisation
 pour la construction de GCC.</para>
 
 <para>Les outils requis pour tester GCC et Binutils (Tcl, Expect et DejaGnu)
-sont maintenant installés. GCC et Binutils peuvent maintenant être reconstruit
-en les liant avec la nouvelle Glibc et en les testant correctement (si
-vous souhaitez lancer les suites de tests dans ce chapitre). Merci de noter que
-ces suites de tests dépendent énormément de pseudos terminaux (PTY) fonctionnels
-fournis par votre distribution hôte. Les PTY sont le plus souvent implémentés
+sont maintenant installés. GCC et Binutils peuvent maintenant être reconstruits
+en les liant avec la nouvelle Glibc, et testés correctement (si
+vous souhaitez exécuter les suites de tests dans ce chapitre). Notez bien que
+ces suites de tests dépendent énormément de la présence pseudos terminaux (PTY) fonctionnels
+fournis par votre distribution hôte. Ces PTY sont le plus souvent implémentés
 via le système de fichiers <systemitem class="filesystem">devpts</systemitem>.
-Vérifiez si le système hôte est correctement configuré en réalisant un simple
+Vérifiez si le système hôte est correctement configuré en réalisant ce simple
 test&nbsp;:</para>
 
 <screen><userinput>expect -c "spawn ls"</userinput></screen>
 
-<para>Le résultat devrait être&nbsp;:</para>
+<para>Le résultat pourrait être&nbsp;:</para>
 
 <screen><computeroutput>The system has no more ptys.  
 Ask your system administrator to create more.</computeroutput></screen>
 
-<para>Si vous récupérez le message ci-dessus, la distribution hôte n'est pas
-correctement configurée pour les PTY. Dans ce cas, il ne sert à rien de lancer
-les suites de tests de GCC et Binutils jusqu'à la correction de ce problème.
+<para>Si vous lisez le message ci-dessus, les PTY ne sont pas correctement configurés
+sur la distribution hôte, et il ne sert à rien de lancer
+les suites de tests de GCC et Binutils avant de corriger ce problème.
 Merci de consulter la FAQ LFS sur <ulink url="&lfs-root;/lfs/faq.html#no-ptys"/>
 pour plus d'informations sur la façon de faire fonctionner les PTY.</para>
 
@@ -63,16 +63,16 @@ essentiel&nbsp;:</para>
 patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
 
 <para>Le premier correctif désactive le script GCC <command>fixincludes</command>.
-Ceci a déjà été mentionné brièvement mais une explication plus en détail de
-fixincludes est apportée ici. Sous des circonstances normales, le script GCC
+Ceci a déjà été mentionné brièvement mais une explication plus détaillée du fonctionnement de
+fixincludes est apportée ici. Dans des circonstances normales, le script GCC
 <command>fixincludes</command> parcourt le système pour trouver les fichiers
-d'en-tête qui ont besoin d'être corrigé. Il pourrait trouver que certains des
-fichiers d'en-têtes de Glibc sur le système devraient être corrigés, les
-corriger et les placer dans le répertoire des en-têtes privés de GCC. Dans le
-<xref linkend="chapter-building-system"/>, après avoir installé la nouvelle Glibc, ce
-répertoire serait recherché avant le répertoire include du système, faisant que
-GCC trouverait les en-têtes corrigés du système hôte qui ne correspondront
-certainement pas à la version de Glibc actuellement utilisée pour le système
+d'en-tête qui ont besoin d'être corrigés. Il pourrait considérer que certains des
+fichiers d'en-têtes de Glibc du système hôte doivent être corrigés, le
+faire et les placer dans le répertoire des en-têtes privés de GCC. Après l'installation 
+de la nouvelle Glibc dans le <xref linkend="chapter-building-system"/>, ce
+répertoire sera consulté avant le répertoire include du système, et 
+GCC y trouverait les en-têtes corrigées ne correspondant
+pas à la nouvelle version de Glibc utilisée par le système
 LFS.</para>
 
 <para>Le deuxième correctif modifie l'emplacement par défaut de l'éditeur de
@@ -86,15 +86,15 @@ temporaires) créés lors de la construction seront liés à la nouvelle Glibc.</par
 
 <beginpage/>
 
-<important><para>Les correctifs ci-dessus sont critiques pour s'assurer une
-construction avec succès. N'oubliez pas de les appliquer.</para></important>
+<important><para>Les correctifs ci-dessus sont critiques pour assurer le
+succès de la construction. N'oubliez pas de les appliquer.</para></important>
 
 <para>De nouveau, créez un répertoire de construction séparé&nbsp;:</para>
 
 <screen><userinput>mkdir -v ../gcc-build
 cd ../gcc-build</userinput></screen>
 
-<para>Avant de commencer la construction de GCC, rappelez-vous de désinitialiser
+<para>Avant de commencer la construction de GCC, rappelez-vous de supprimer
 toute variable d'environnement surchargeant les options d'optimisation par
 défaut.</para>
 
@@ -112,9 +112,9 @@ défaut.</para>
 <varlistentry>
 <term><parameter>--enable-clocale=gnu</parameter></term>
 <listitem><para>Cette option nous assure que le bon modèle de locale est
-sélectionné pour les bibliothèques C++ sous toutes les circonstances. Si le
+sélectionné pour les bibliothèques C++ dans toutes les circonstances. Si le
 script configure trouve la locale <emphasis>de_DE</emphasis> installée, il
-sélectionnera le bon modèle de locale gnu. Néanmoins, si la locale
+sélectionnera le bon modèle de locale gnu. Cependant, si la locale
 <emphasis>de_DE</emphasis> n'est pas installée, il existe un risque de
 construire des bibliothèques C++ incompatibles avec ABI à cause du choix d'un
 mauvais modèle générique de locale.</para></listitem>
@@ -122,17 +122,17 @@ mauvais modèle générique de locale.</para></listitem>
 
 <varlistentry>
 <term><parameter>--enable-threads=posix</parameter></term>
-<listitem><para>Ceci active la gestion des exceptions C++ pour le code
+<listitem><para>Ceci active la gestion des exceptions de C++ pour le code
 multi-threadé.</para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><parameter>--enable-__cxa_atexit</parameter></term>
 <listitem><para>Cette option autorise l'utilisation de
-<emphasis>__cxa_atexit</emphasis>, plutôt que <emphasis>atexit</emphasis>,
+<emphasis>__cxa_atexit</emphasis>, plutôt que de <emphasis>atexit</emphasis>,
 pour enregistrer les destructeurs C++ des objets statiques locaux et globaux.
-Cette option est essentielle pour la gestion des destructeurs en compatibilité
-complète avec les standards. Il affecte aussi l'ABI C++ et donc résulte en des
+Cette option est essentielle pour une gestion des destructeurs entièrement compatible
+avec les standards. Il affecte aussi l'ABI C++ et permet donc des
 bibliothèques partagées et des programmes C++ interopérables avec les autres
 distributions Linux.</para></listitem>
 </varlistentry>
@@ -163,20 +163,20 @@ exactement la même version des sources de GCC utilisées précédemment.</para>
 
 <para>La compilation est maintenant terminée. Comme mentionné plus tôt,
 lancer les suites de test pour les outils temporaires de ce chapitre n'est pas
-nécessaire. Néanmoins, pour exécuter la suite de tests de GCC, lancez la
+nécessaire. Néanmoins, pour exécuter la suite de tests de GCC, saisissez la
 commande suivante&nbsp;:</para>
 
 <screen><userinput>make -k check</userinput></screen>
 
-<para>L'option <parameter>-k</parameter> est utilisée pour faire en sorte que
-toute la suite de tests est exécutée et qu'elle ne s'arrête pas au premier
-échec. La suite de tests GCC est très complète et il est pratiquement garantie
+<para>L'option <parameter>-k</parameter> impose à la suite de tests de
+s'exécuter entièrement sans s'arrêter au premier échec. 
+La suite de tests GCC est très complète et il est pratiquement garanti
 que certaines erreurs apparaîtront. Pour obtenir un résumé des résultats de la
-suite de tests, lancez ceci&nbsp;:</para>
+suite de tests, entrez &nbsp;:</para>
 
 <screen><userinput>../gcc-&gcc-version;/contrib/test_summary</userinput></screen>
 
-<para>Pour un simple résumé, envoyez la sortie sur un tube suivi de
+<para>Pour un résumé plus court, envoyez la sortie dans un tube suivi de
 <userinput>grep -A7 Summ</userinput>.</para>
 
 <para>Les résultats peuvent être comparés à ceux postés sur <ulink
@@ -191,9 +191,9 @@ ci-dessus, vous pouvez continuer sans crainte.</para>
 <screen><userinput>make install</userinput></screen>
 
 <note><para>À ce moment, il est fortement recommandé de répéter la vérification
-que nous avions réalisé dans ce chapitre. Référez-vous à <xref
-linkend="ch-tools-adjusting"/> et répétez le test de compilation. Si les
-résultats sont mauvais, alors la raison probable en est l'oubli de l'application
+que nous avions réalisée dans ce chapitre. Référez-vous à <xref
+linkend="ch-tools-adjusting"/> et répétez le test de compilation. Si le
+résultat est mauvais, la raison est probablement l'oubli de l'application
 du correctif "GCC Specs" mentionné ci-dessus.</para></note>
 
 </sect2>
