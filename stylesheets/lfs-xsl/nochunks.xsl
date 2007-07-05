@@ -12,8 +12,8 @@ $Date$
    <!-- Stylesheet for non-chunked XHTML output
         Replaces {docbook-xsl}/xhtml/profile-docbook.xsl -->
 
-    <!-- Upstream XHTML profiled templates -->
-  <xsl:import href="docbook-xsl-snapshot/xhtml/profile-docbook.xsl"/>
+    <!-- Upstream XHTML templates -->
+  <xsl:import href="docbook-xsl-snapshot/xhtml/docbook.xsl"/>
 
     <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
   <xsl:output method="html" encoding="ISO-8859-1" indent="no" />
