@@ -289,11 +289,13 @@ li.chapter h4 a {
 /* Index */
 .item {
     float: left;
+    margin-right: 1em
 }
 
 .secitem {
     font-weight: normal;
     float: left;
+    margin-right: 1em
 }
 
 .indexref {
@@ -301,11 +303,11 @@ li.chapter h4 a {
 }
 
 .item + .indexref {
-    margin-left: 30em;
+    margin-left: 20em;
 }
 
 .secitem + .indexref {
-    margin-left: 31em;
+    margin-left: 19em;
 }
 
 
