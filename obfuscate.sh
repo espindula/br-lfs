@@ -3,6 +3,8 @@
 # obfuscate.sh
 # obfuscate email addresses in XML/HTML
 # Script written (and slight perl modification) by Archaic <archaic AT linuxfromscratch D0T org>
+# Modified from "sed -i" to old style "sed -e" by Manuel Canales <manuel AT linuxfromscratch D0T org>
+# to prevent hangs on very long files, like nonckunked books.
 # Original Perl expression by Anderson Lizardo <lizardo AT linuxfromscratch D0T org>
 # Released under the GNU General Public License
 #
@@ -25,11 +27,13 @@
 # Nothing like a backup plan!
 #cp "$1" "$1".bak
 
-for i in `grep -o '"mailto:.*@.*"' "$1" |sed -e 's|^"mailto:||' -e 's|"$||'`; do
+for i in `grep -o '"mailto:.*@.*"' ${1} |sed -e 's|^"mailto:||' -e 's|"$||'`; do
   link=`echo $i | perl -pe 's/[^\n]/"\\\&#".ord($&)."\;"/ge'`
   plaintext=`echo $i | sed -e 's|@| AT |' -e 's|\.| D0T |g'`
-  sed -i "s|mailto:$i|mailto:$link|" "$1"
-  sed -i "s|$i|$plaintext|" "$1"
+  cp ${1}{,.tmp}
+  sed -e "s|mailto:$i|mailto:$link|" \
+      -e "s|$i|$plaintext|" ${1}.tmp > ${1}
+  rm ${1}.tmp
 done
-
+#rm $FILE.tmp
 #exit 0
