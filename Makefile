@@ -51,6 +51,9 @@ pdf: validxml
 	$(Q)sed -i -e 's/span="inherit"/span="all"/' /tmp/lfs-pdf.fo
 
 	@echo "Generating PDF file..."
+	$(Q)if [ ! -e $(BASEDIR) ]; then \
+	  mkdir -p $(BASEDIR); \
+	fi;
 	$(Q)fop /tmp/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
 
 nochunks: validxml profile-html
