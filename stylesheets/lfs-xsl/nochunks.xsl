@@ -478,8 +478,8 @@ ul {
 }
 
 .itemizedlist li ul li p {
-  margin-top: .2em;
-  margin-bottom: .2em;
+  margin-top: .5em;
+  margin-bottom: .5em;
 }
 
 .itemizedlist li ul li:first-child p:first-child {
