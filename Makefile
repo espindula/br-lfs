@@ -1,10 +1,10 @@
-BASEDIR=~/lfs-book
-DUMPDIR=~/lfs-commands
-RENDERTMP= $(HOME)/tmp
-CHUNK_QUIET=1
-ROOT_ID=""
-PDF_OUTPUT=LFS-BOOK.pdf
-NOCHUNKS_OUTPUT=LFS-BOOK.html
+BASEDIR = ~/lfs-book
+DUMPDIR = ~/lfs-commands
+RENDERTMP = $(HOME)/tmp
+CHUNK_QUIET = 1
+ROOT_ID =
+PDF_OUTPUT = LFS-BOOK.pdf
+NOCHUNKS_OUTPUT = LFS-BOOK.html
 
 ifdef V
   Q =
@@ -15,7 +15,7 @@ endif
 lfs: validxml profile-html
 	@echo "Generating chunked XHTML files..."
 	$(Q)xsltproc --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
-	  -stringparam rootid $(ROOT_ID) -stringparam base.dir $(BASEDIR)/ \
+	  -stringparam rootid "$(ROOT_ID)" -stringparam base.dir $(BASEDIR)/ \
 	  stylesheets/lfs-chunked.xsl $(RENDERTMP)/lfs-html.xml
 
 	@echo "Copying CSS code and images..."
@@ -47,7 +47,7 @@ pdf: validxml
 	  $(RENDERTMP)/lfs-full.xml
 
 	@echo "Generating FO file..."
-	$(Q)xsltproc --nonet -stringparam rootid $(ROOT_ID) \
+	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
 	  --output $(RENDERTMP)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
 	  $(RENDERTMP)/lfs-pdf.xml
 	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/lfs-pdf.fo
@@ -60,7 +60,7 @@ pdf: validxml
 
 nochunks: validxml profile-html
 	@echo "Generating non chunked XHTML file..."
-	$(Q)xsltproc --nonet -stringparam rootid $(ROOT_ID) \
+	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
 	  --output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
 	  stylesheets/lfs-nochunks.xsl $(RENDERTMP)/lfs-html.xml
 
