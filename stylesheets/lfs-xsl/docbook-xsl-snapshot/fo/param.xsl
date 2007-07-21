@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ASCII"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:src="http://nwalsh.com/xmlns/litprog/fragment" xmlns="http://docbook.org/ns/docbook" exclude-result-prefixes="src" version="1.0">
 
 <!-- This file is generated from param.xweb -->
 

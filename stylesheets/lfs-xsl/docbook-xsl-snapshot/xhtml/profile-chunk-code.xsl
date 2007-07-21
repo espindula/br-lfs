@@ -66,7 +66,7 @@
   </xsl:variable>
 
   <xsl:variable name="dbhtml-filename">
-    <xsl:call-template name="dbhtml-filename"/>
+    <xsl:call-template name="pi.dbhtml_filename"/>
   </xsl:variable>
 
   <xsl:variable name="filename">

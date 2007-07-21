@@ -309,6 +309,7 @@
     <xsl:attribute name="href">
       <xsl:call-template name="href.target">
         <xsl:with-param name="context" select="$toc-context"/>
+        <xsl:with-param name="toc-context" select="$toc-context"/>
       </xsl:call-template>
     </xsl:attribute>
     
@@ -482,7 +483,9 @@
     <span class="refentrytitle">
       <a>
         <xsl:attribute name="href">
-          <xsl:call-template name="href.target"/>
+          <xsl:call-template name="href.target">
+            <xsl:with-param name="toc-context" select="$toc-context"/>
+          </xsl:call-template>
         </xsl:attribute>
         <xsl:copy-of select="$title"/>
       </a>
@@ -505,6 +508,7 @@
     <xsl:attribute name="href">
       <xsl:call-template name="href.target">
         <xsl:with-param name="object" select=".."/>
+        <xsl:with-param name="toc-context" select="$toc-context"/>
       </xsl:call-template>
     </xsl:attribute>
     <xsl:apply-templates/>
@@ -532,6 +536,7 @@
         <xsl:attribute name="href">
           <xsl:call-template name="href.target">
             <xsl:with-param name="object" select="$node"/>
+            <xsl:with-param name="toc-context" select="$toc-context"/>
           </xsl:call-template>
         </xsl:attribute>
         <xsl:apply-templates select="$node" mode="titleabbrev.markup"/>
@@ -602,7 +607,9 @@
     </xsl:if>
     <a>
       <xsl:attribute name="href">
-        <xsl:call-template name="href.target"/>
+        <xsl:call-template name="href.target">
+          <xsl:with-param name="toc-context" select="$toc-context"/>
+        </xsl:call-template>
       </xsl:attribute>
       <xsl:apply-templates select="." mode="titleabbrev.markup"/>
     </a>

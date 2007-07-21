@@ -2,7 +2,7 @@
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
 <!-- This file is generated from param.xweb -->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:src="http://nwalsh.com/xmlns/litprog/fragment" xmlns="http://docbook.org/ns/docbook" exclude-result-prefixes="src" version="1.0">
 
 <!-- ********************************************************************
      $Id$
@@ -65,7 +65,7 @@ div.annotation-close { position: absolute;
                        right: 2px;
                      }
 </xsl:param>
-<xsl:param name="annotation.js" select="'http://docbook.sourceforge.net/release/script/AnchorPosition.js             http://docbook.sourceforge.net/release/script/PopupWindow.js'"/>
+<xsl:param name="annotation.js" select="'http://docbook.sourceforge.net/release/script/AnchorPosition.js http://docbook.sourceforge.net/release/script/PopupWindow.js'"/>
 <xsl:param name="annotation.graphic.open" select="'http://docbook.sourceforge.net/release/images/annot-open.png'"/>
 <xsl:param name="annotation.graphic.close" select="'http://docbook.sourceforge.net/release/images/annot-close.png'"/>
 <xsl:param name="annotation.support" select="0"/>
@@ -121,7 +121,7 @@ div.annotation-close { position: absolute;
 <xsl:param name="ebnf.table.bgcolor" select="'#F5DCB3'"/>
 <xsl:param name="ebnf.table.border" select="1"/>
 <xsl:param name="ebnf.assignment">
-<code>::=</code>
+<code xmlns="http://www.w3.org/1999/xhtml">::=</code>
 </xsl:param>
 
 <xsl:param name="ebnf.statement.terminator"/>

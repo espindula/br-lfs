@@ -14,38 +14,24 @@
      See ../README or http://docbook.sf.net/release/xsl/current/ for
      copyright and other information.
 
-     This file contains general templates common to both the HTML and FO
-     versions of the DocBook stylesheets.
      ******************************************************************** -->
 
-<doc:reference xmlns="">
-<referenceinfo>
-<releaseinfo role="meta">
-$Id$
-</releaseinfo>
-<author><surname>Walsh</surname>
-<firstname>Norman</firstname></author>
-<copyright><year>1999-2007</year>
-<holder>Norman Walsh</holder>
-</copyright>
-</referenceinfo>
-<title>Common Template Reference</title>
-
-<partintro id="partintro">
-<title>Introduction</title>
-
-<para>This is technical reference documentation for the “common”
-templates in the DocBook XSL Stylesheets. The common templates are
-“common” because they are shared across output formats (that is,
-they’re not output-format-dependent).</para>
-
-<para>This documentation is not intended to be <quote>user</quote>
-documentation.  It is provided for developers writing
-customization layers for the stylesheets, and for anyone who's
-interested in <quote>how it works</quote>.</para>
-
-</partintro>
-
+<doc:reference xmlns="" xml:id="base">
+  <info>
+    <title>Common » Base Template Reference</title>
+    <releaseinfo role="meta">
+      $Id$
+    </releaseinfo>
+  </info>
+  <!-- * yes, partintro is a valid child of a reference... -->
+  <partintro xml:id="partintro">
+    <title>Introduction</title>
+    <para>This is technical reference documentation for the “base”
+      set of common templates in the DocBook XSL Stylesheets.</para>
+    <para>This is not intended to be user documentation. It is
+      provided for developers writing customization layers for the
+      stylesheets.</para>
+  </partintro>
 </doc:reference>
 
 <!-- ==================================================================== -->
@@ -183,7 +169,7 @@ manvolnum
 
 <refdescription id="section.level-desc">
 <para>This template calculates the hierarchical level of a section.
-The element <sgmltag>sect1</sgmltag> is at level 1, <sgmltag>sect2</sgmltag> is
+The element <tag>sect1</tag> is at level 1, <tag>sect2</tag> is
 at level 2, etc.</para>
 
 <para>Recursive sections are calculated down to the fifth level.</para>
@@ -1324,45 +1310,24 @@ pointed to by the link is one of the elements listed in
 
 <!-- ====================================================================== -->
 <!-- OrderedList Numeration -->
-
-<xsl:template name="orderedlist-starting-number">
-  <xsl:param name="list" select="."/>
-
-  <!-- Need a neutral dbxxx -->
-  <xsl:variable name="pi-html-start">
-    <xsl:call-template name="pi-attribute">
-      <xsl:with-param name="pis"
-                      select="$list/processing-instruction('dbhtml')"/>
-      <xsl:with-param name="attribute" select="'start'"/>
-    </xsl:call-template>
-  </xsl:variable>
-
-  <xsl:variable name="pi-fo-start">
-    <xsl:call-template name="pi-attribute">
-      <xsl:with-param name="pis"
-                      select="$list/processing-instruction('dbfo')"/>
-      <xsl:with-param name="attribute" select="'start'"/>
-    </xsl:call-template>
-  </xsl:variable>
-
+<xsl:template name="output-orderedlist-starting-number">
+  <xsl:param name="list"/>
+  <xsl:param name="pi-start"/>
   <xsl:choose>
     <xsl:when test="not($list/@continuation = 'continues')">
       <xsl:choose>
         <xsl:when test="@startingnumber">
           <xsl:value-of select="@startingnumber"/>
         </xsl:when>
-        <xsl:when test="$pi-html-start != ''">
-          <xsl:value-of select="$pi-html-start"/>
-        </xsl:when>
-        <xsl:when test="$pi-fo-start != ''">
-          <xsl:value-of select="$pi-fo-start"/>
+        <xsl:when test="$pi-start != ''">
+          <xsl:value-of select="$pi-start"/>
         </xsl:when>
         <xsl:otherwise>1</xsl:otherwise>
       </xsl:choose>
     </xsl:when>
     <xsl:otherwise>
       <xsl:variable name="prevlist"
-                    select="$list/preceding::orderedlist[1]"/>
+        select="$list/preceding::orderedlist[1]"/>
       <xsl:choose>
         <xsl:when test="count($prevlist) = 0">2</xsl:when>
         <xsl:otherwise>
@@ -1382,7 +1347,6 @@ pointed to by the link is one of the elements listed in
 <xsl:template name="orderedlist-item-number">
   <!-- context node must be a listitem in an orderedlist -->
   <xsl:param name="node" select="."/>
-
   <xsl:choose>
     <xsl:when test="$node/@override">
       <xsl:value-of select="$node/@override"/>
@@ -1903,33 +1867,28 @@ unchanged.</para>
     localized "choice" separator (for example, "and" or "or") before
     the final item in an inline list (though it could also be useful
     for generating choice separators for non-inline lists).</para>
-
     <para>It currently works by evaluating a processing instruction
     (PI) of the form &lt;?dbchoice&#xa0;choice="foo"?> :
-
     <itemizedlist>
       <listitem>
-        <simpara>if the value of the <sgmltag>choice</sgmltag>
+        <simpara>if the value of the <tag>choice</tag>
         pseudo-attribute is "and" or "or", returns a localized "and"
         or "or"</simpara>
       </listitem>
       <listitem>
         <simpara>otherwise returns the literal value of the
-        <sgmltag>choice</sgmltag> pseudo-attribute</simpara>
+        <tag>choice</tag> pseudo-attribute</simpara>
       </listitem>
     </itemizedlist>
-
     The latter is provided only as a temporary workaround because the
     locale files do not currently have translations for the word
     <wordasword>or</wordasword>. So if you want to generate a a
     logical "or" separator in French (for example), you currently need
     to do this:
-
     <literallayout>&lt;?dbchoice choice="ou"?></literallayout>
     </para>
-
     <warning>
-      <para>The <sgmltag>dbchoice</sgmltag> processing instruction is
+      <para>The <tag>dbchoice</tag> processing instruction is
       an unfortunate hack; support for it may disappear in the future
       (particularly if and when a more appropriate means for marking
       up "choice" lists becomes available in DocBook).</para>
@@ -1937,14 +1896,9 @@ unchanged.</para>
   </refdescription>
 </doc:template>
 <xsl:template name="select.choice.separator">
-  
   <xsl:variable name="choice">
-    <xsl:call-template name="pi-attribute">
-      <xsl:with-param name="pis" select="processing-instruction('dbchoice')"/>
-      <xsl:with-param name="attribute">choice</xsl:with-param>
-    </xsl:call-template>
+    <xsl:call-template name="pi.dbchoice_choice"/>
   </xsl:variable>
-  
   <xsl:choose>
     <!-- if value of $choice is "and" or "or", translate to equivalent in -->
     <!-- current locale -->
@@ -2024,5 +1978,4 @@ engine does not support it.
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-
 </xsl:stylesheet>

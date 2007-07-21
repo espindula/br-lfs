@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-
+<?xml version="1.0" encoding="ASCII"?>
 <!-- ********************************************************************
      $Id$
      ********************************************************************
@@ -11,9 +10,7 @@
      This module implements DTD-independent functions
 
      ******************************************************************** -->
-
-
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:saxon="http://icl.com/saxon" xmlns:dyn="http://exslt.org/dynamic" xmlns:src="http://nwalsh.com/xmlns/litprog/fragment" exclude-result-prefixes="src" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:saxon="http://icl.com/saxon" xmlns:ssb="http://sideshowbarker.net/ns" xmlns:dyn="http://exslt.org/dynamic" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:src="http://nwalsh.com/xmlns/litprog/fragment" xmlns="http://docbook.org/ns/docbook" exclude-result-prefixes="src" version="1.0">
 
 <xsl:template name="dot.count">
   <!-- Returns the number of "." characters in a string -->
@@ -312,63 +309,60 @@
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
-
   <xsl:template name="str.tokenize.keep.delimiters">
     <xsl:param name="string" select="''"/>
     <xsl:param name="delimiters" select="' '"/>
     <xsl:choose>
       <xsl:when test="not($string)"/>
       <xsl:when test="not($delimiters)">
-	<xsl:call-template name="str.tokenize.keep.delimiters-characters">
-	  <xsl:with-param name="string" select="$string"/>
-	</xsl:call-template>
+        <xsl:call-template name="str.tokenize.keep.delimiters-characters">
+          <xsl:with-param name="string" select="$string"/>
+        </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
-	<xsl:call-template name="str.tokenize.keep.delimiters-delimiters">
-	  <xsl:with-param name="string" select="$string"/>
-	  <xsl:with-param name="delimiters" select="$delimiters"/>
-	</xsl:call-template>
+        <xsl:call-template name="str.tokenize.keep.delimiters-delimiters">
+          <xsl:with-param name="string" select="$string"/>
+          <xsl:with-param name="delimiters" select="$delimiters"/>
+        </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  
   <xsl:template name="str.tokenize.keep.delimiters-characters">
     <xsl:param name="string"/>
     <xsl:if test="$string">
-      <token><xsl:value-of select="substring($string, 1, 1)"/></token>
+      <ssb:token><xsl:value-of select="substring($string, 1, 1)"/></ssb:token>
       <xsl:call-template name="str.tokenize.keep.delimiters-characters">
-	<xsl:with-param name="string" select="substring($string, 2)"/>
+        <xsl:with-param name="string" select="substring($string, 2)"/>
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
-  
   <xsl:template name="str.tokenize.keep.delimiters-delimiters">
     <xsl:param name="string"/>
     <xsl:param name="delimiters"/>
     <xsl:variable name="delimiter" select="substring($delimiters, 1, 1)"/>
     <xsl:choose>
       <xsl:when test="not($delimiter)">
-	<token><xsl:value-of select="$string"/></token>
+        <ssb:token><xsl:value-of select="$string"/></ssb:token>
       </xsl:when>
       <xsl:when test="contains($string, $delimiter)">
-	<xsl:if test="not(starts-with($string, $delimiter))">
-	  <xsl:call-template name="str.tokenize.keep.delimiters-delimiters">
-	    <xsl:with-param name="string" select="substring-before($string, $delimiter)"/>
-	    <xsl:with-param name="delimiters" select="substring($delimiters, 2)"/>
-	  </xsl:call-template>
-	</xsl:if>
-	<!-- output each delimiter -->
-	<xsl:value-of select="$delimiter"/>
-	<xsl:call-template name="str.tokenize.keep.delimiters-delimiters">
-	  <xsl:with-param name="string" select="substring-after($string, $delimiter)"/>
-	  <xsl:with-param name="delimiters" select="$delimiters"/>
-	</xsl:call-template>
+        <xsl:if test="not(starts-with($string, $delimiter))">
+          <xsl:call-template name="str.tokenize.keep.delimiters-delimiters">
+            <xsl:with-param name="string" select="substring-before($string, $delimiter)"/>
+            <xsl:with-param name="delimiters" select="substring($delimiters, 2)"/>
+          </xsl:call-template>
+        </xsl:if>
+        <!-- output each delimiter -->
+        <xsl:value-of select="$delimiter"/>
+        <xsl:call-template name="str.tokenize.keep.delimiters-delimiters">
+          <xsl:with-param name="string" select="substring-after($string, $delimiter)"/>
+          <xsl:with-param name="delimiters" select="$delimiters"/>
+        </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
-	<xsl:call-template name="str.tokenize.keep.delimiters-delimiters">
-	  <xsl:with-param name="string" select="$string"/>
-	  <xsl:with-param name="delimiters" select="substring($delimiters, 2)"/>
-	</xsl:call-template>
+        <xsl:call-template name="str.tokenize.keep.delimiters-delimiters">
+          <xsl:with-param name="string" select="$string"/>
+          <xsl:with-param name="delimiters" select="substring($delimiters, 2)"/>
+        </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

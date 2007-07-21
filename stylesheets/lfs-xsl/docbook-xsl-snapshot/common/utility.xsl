@@ -3,6 +3,7 @@
                 xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
                 xmlns:dyn="http://exslt.org/dynamic"
                 xmlns:saxon="http://icl.com/saxon"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
                 exclude-result-prefixes="doc dyn saxon"
                 version='1.0'>
 
@@ -15,42 +16,33 @@
      copyright and other information.
 
      ******************************************************************** -->
-
-<doc:reference xmlns="">
-<referenceinfo>
-<releaseinfo role="meta">
-$Id$
-</releaseinfo>
-<corpauthor>The DocBook Project Development Team</corpauthor>
-<copyright><year>2007</year>
-<holder>The DocBook Project</holder>
-</copyright>
-</referenceinfo>
-<title>Utility Template Reference</title>
-
-<partintro id="partintro">
-<title>Introduction</title>
-
-<para>This is technical reference documentation for the
-  miscellaneous utility templates in the DocBook XSL
-  Stylesheets.</para>
-
-<note>
-<para>These templates are defined in a separate file from the set
-  of “common” templates because some of the comment templates
-  reference DocBook XSL stylesheet parameters, requiring the
-  entire set of parameters to be imported/included in any
-  stylesheet that imports/includes the common templates.</para>
-<para>The utility templates don’t import or include any DocBook
-  XSL stylesheet parameters, so the utility templates can be used
-  without importing the whole set of parameters.</para>
-</note>
-
-<para>The following documentation is not intended to be
-  <quote>user</quote> documentation.  It is provided for developers
-  writing customization layers for the stylesheets, and for anyone
-  who's interested in <quote>how it works</quote>.</para>
-</partintro>
+<doc:reference xmlns="" xml:id="utility">
+  <info>
+    <title>Common » Utility Template Reference</title>
+    <releaseinfo role="meta">
+      $Id$
+    </releaseinfo>
+  </info>
+  <!-- * yes, partintro is a valid child of a reference... -->
+  <partintro xml:id="partintro">
+    <title>Introduction</title>
+    <para>This is technical reference documentation for the
+      miscellaneous utility templates in the DocBook XSL
+      Stylesheets.</para>
+    <note>
+      <para>These templates are defined in a separate file from the set
+        of “common” templates because some of the comment templates
+        reference DocBook XSL stylesheet parameters, requiring the
+        entire set of parameters to be imported/included in any
+        stylesheet that imports/includes the common templates.</para>
+      <para>The utility templates don’t import or include any DocBook
+        XSL stylesheet parameters, so the utility templates can be used
+        without importing the whole set of parameters.</para>
+    </note>
+    <para>This is not intended to be user documentation. It is
+      provided for developers writing customization layers for the
+      stylesheets.</para>
+  </partintro>
 </doc:reference>
 
 <!-- ====================================================================== -->
@@ -67,8 +59,7 @@ $Id$
 
   <refparameter id="log.message-params">
     <variablelist>
-      <varlistentry>
-        <term>level</term>
+      <varlistentry><term>level</term>
         <listitem>
           <para>Text to log/emit in the message-level field to
             indicate the message level
@@ -76,8 +67,7 @@ $Id$
           <literal>Warning</literal>)</para>
         </listitem>
       </varlistentry>
-      <varlistentry>
-        <term>source</term>
+      <varlistentry><term>source</term>
         <listitem>
           <para>Text to log/emit in the source field to identify the
             “source” to which the notification/warning relates.
@@ -96,15 +86,13 @@ $Id$
             XPath expression.</para>
         </listitem>
       </varlistentry>
-      <varlistentry>
-        <term>context-desc</term>
+      <varlistentry><term>context-desc</term>
         <listitem>
           <para>Text to log/emit in the context-description field to
             describe the context for the message.</para>
         </listitem>
       </varlistentry>
-      <varlistentry>
-        <term>context-desc-field-length</term>
+      <varlistentry><term>context-desc-field-length</term>
         <listitem>
           <para>Specifies length of the context-description field
             (in characters); default is 12</para>
@@ -126,14 +114,12 @@ $Id$
           parameter.</para>
         </listitem>
       </varlistentry>
-      <varlistentry>
-        <term>message</term>
+      <varlistentry><term>message</term>
         <listitem>
           <para>Text to log/emit in the actual message field</para>
         </listitem>
       </varlistentry>
-      <varlistentry>
-        <term>message-field-length</term>
+      <varlistentry><term>message-field-length</term>
         <listitem>
           <para>Specifies length of the message
             field (in characters); default is 45</para>
@@ -255,11 +241,11 @@ $Id$
       character).</para>
     <note>
       <para>This function began as a copy of Nate Austin's
-        <function>prepend-pad</function> function in the <ulink
-          url="http://www.dpawson.co.uk/xsl/sect2/padding.html" >Padding
-          Content</ulink> section of Dave Pawson's <ulink
-          url="http://www.dpawson.co.uk/xsl/index.html" >XSLT
-          FAQ</ulink>.</para>
+        <function>prepend-pad</function> function in the <link
+          xlink:href="http://www.dpawson.co.uk/xsl/sect2/padding.html" >Padding
+          Content</link> section of Dave Pawson's <link
+          xlink:href="http://www.dpawson.co.uk/xsl/index.html" >XSLT
+          FAQ</link>.</para>
     </note>
   </refdescription>
   <refreturn id="pad-string-returns">
