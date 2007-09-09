@@ -49,8 +49,11 @@
       <xsl:when test="glossdiv">
         <xsl:apply-templates select="(glossdiv[1]/preceding-sibling::*)"/>
       </xsl:when>
-      <xsl:otherwise>
+      <xsl:when test="glossentry">
         <xsl:apply-templates select="(glossentry[1]/preceding-sibling::*)"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-templates/>
       </xsl:otherwise>
     </xsl:choose>
 
@@ -58,7 +61,7 @@
       <xsl:when test="glossdiv">
         <xsl:apply-templates select="glossdiv"/>
       </xsl:when>
-      <xsl:otherwise>
+      <xsl:when test="glossentry">
         <dl>
           <xsl:choose>
             <xsl:when test="$glossary.sort != 0">
@@ -71,6 +74,9 @@
             </xsl:otherwise>
           </xsl:choose>
         </dl>
+      </xsl:when>
+      <xsl:otherwise>
+        <!-- empty glossary -->
       </xsl:otherwise>
     </xsl:choose>
 

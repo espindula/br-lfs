@@ -95,7 +95,7 @@
     <xsl:text>, but no template matches.</xsl:text>
   </xsl:message>
 
-  <span xmlns:saxon="http://icl.com/saxon" class="ERROR">
+  <span style="color: red">
     <xsl:text>&lt;</xsl:text>
     <xsl:value-of select="name(.)"/>
     <xsl:text>&gt;</xsl:text>

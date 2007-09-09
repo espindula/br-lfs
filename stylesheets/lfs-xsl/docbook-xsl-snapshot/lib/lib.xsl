@@ -10,7 +10,7 @@
      This module implements DTD-independent functions
 
      ******************************************************************** -->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:saxon="http://icl.com/saxon" xmlns:ssb="http://sideshowbarker.net/ns" xmlns:dyn="http://exslt.org/dynamic" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:src="http://nwalsh.com/xmlns/litprog/fragment" xmlns="http://docbook.org/ns/docbook" exclude-result-prefixes="src" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
 <xsl:template name="dot.count">
   <!-- Returns the number of "." characters in a string -->
@@ -330,7 +330,7 @@
   <xsl:template name="str.tokenize.keep.delimiters-characters">
     <xsl:param name="string"/>
     <xsl:if test="$string">
-      <ssb:token><xsl:value-of select="substring($string, 1, 1)"/></ssb:token>
+      <ssb:token xmlns:ssb="http://sideshowbarker.net/ns"><xsl:value-of select="substring($string, 1, 1)"/></ssb:token>
       <xsl:call-template name="str.tokenize.keep.delimiters-characters">
         <xsl:with-param name="string" select="substring($string, 2)"/>
       </xsl:call-template>
@@ -342,7 +342,7 @@
     <xsl:variable name="delimiter" select="substring($delimiters, 1, 1)"/>
     <xsl:choose>
       <xsl:when test="not($delimiter)">
-        <ssb:token><xsl:value-of select="$string"/></ssb:token>
+        <ssb:token xmlns:ssb="http://sideshowbarker.net/ns"><xsl:value-of select="$string"/></ssb:token>
       </xsl:when>
       <xsl:when test="contains($string, $delimiter)">
         <xsl:if test="not(starts-with($string, $delimiter))">
@@ -388,63 +388,7 @@
         </xsl:otherwise>
       </xsl:choose>
     </xsl:template>
-
   
-    <xsl:template name="apply-character-map">
-      <xsl:param name="content"/>
-      <xsl:param name="map.contents"/>
-      <xsl:variable name="replaced_text">
-        <xsl:call-template name="string.subst">
-          <xsl:with-param name="string" select="$content"/>
-          <xsl:with-param name="target" select="$map.contents[1]/@character"/>
-          <xsl:with-param name="replacement" select="$map.contents[1]/@string"/>
-        </xsl:call-template>
-      </xsl:variable>
-      <xsl:choose>
-        <xsl:when test="$map.contents[2]">
-          <xsl:call-template name="apply-character-map">
-            <xsl:with-param name="content" select="$replaced_text"/>
-            <xsl:with-param name="map.contents" select="$map.contents[position() &gt; 1]"/>
-          </xsl:call-template>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$replaced_text"/>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:template>
-
-  
-  <xsl:template name="read-character-map">
-    <xsl:param name="use.subset"/>
-    <xsl:param name="subset.profile"/>
-    <xsl:param name="uri"/>
-    <xsl:choose>
-      <xsl:when test="$use.subset != 0">
-        <!-- use a subset of the character map instead of the full map -->
-        <xsl:choose>
-          <!-- xsltproc and Xalan both support dyn:evaluate() -->
-          <xsl:when test="function-available('dyn:evaluate')">
-            <xsl:copy-of select="document($uri)//*[local-name()='output-character']                                  [dyn:evaluate($subset.profile)]"/>
-          </xsl:when>
-          <!-- Saxon has its own evaluate() & doesn't support dyn:evaluate() -->
-          <xsl:when test="function-available('saxon:evaluate')">
-            <xsl:copy-of select="document($uri)//*[local-name()='output-character']                                  [saxon:evaluate($subset.profile)]"/>
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:message terminate="yes">
-Error: To process character-map subsets, you must use an XSLT engine
-that supports the evaluate() XSLT extension function. Your XSLT engine
-does not support it.
-</xsl:message>
-          </xsl:otherwise>
-        </xsl:choose>
-        </xsl:when>
-        <xsl:otherwise>
-          <!-- value of $use.subset is non-zero, so use the full map -->
-        <xsl:copy-of select="document($uri)//*[local-name()='output-character']"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
 <xsl:template name="count.uri.path.depth">
   <xsl:param name="filename" select="''"/>
   <xsl:param name="count" select="0"/>

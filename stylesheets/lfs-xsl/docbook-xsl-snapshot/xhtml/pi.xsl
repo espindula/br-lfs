@@ -39,7 +39,7 @@
 <doc:pi xmlns="" name="dbhtml_background-color">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Sets background color for an image</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml background-color</tag> PI before or
+    <para>Use the <tag class="xmlpi">dbhtml background-color</tag> PI before or
       after an image (<tag>graphic</tag>, <tag>inlinegraphic</tag>,
       <tag>imagedata</tag>, or <tag>videodata</tag> element) as a
       sibling to the element, to set a background color for the
@@ -72,7 +72,7 @@
 <doc:pi xmlns="" name="dbhtml_bgcolor">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Sets background color on a table row or table cell</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml bgcolor</tag> PI as child of a table row
+    <para>Use the <tag class="xmlpi">dbhtml bgcolor</tag> PI as child of a table row
       or cell to set a background color for that table row or cell.</para>
   </refdescription>
   <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
@@ -102,7 +102,7 @@
 <doc:pi xmlns="" name="dbhtml_cellpadding">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies cellpadding in table or qandaset output</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml cellpadding</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml cellpadding</tag> PI as a child of a
       <tag>table</tag> or <tag>qandaset</tag> to specify the value
       for the HTML <literal>cellpadding</literal> attribute in the
       output HTML table.</para>
@@ -138,7 +138,7 @@
 <doc:pi xmlns="" name="dbhtml_cellspacing">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies cellspacing in table or qandaset output</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml cellspacing</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml cellspacing</tag> PI as a child of a
       <tag>table</tag> or <tag>qandaset</tag> to specify the value
       for the HTML <literal>cellspacing</literal> attribute in the
       output HTML table.</para>
@@ -174,7 +174,7 @@
 <doc:pi xmlns="" name="dbhtml_class">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Set value of the class attribute for a table row</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml class</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml class</tag> PI as a child of a
       <tag>row</tag> to specify a <literal>class</literal>
       attribute and value in the HTML output for that row.</para>
   </refdescription>
@@ -205,7 +205,7 @@
 <doc:pi xmlns="" name="dbhtml_dir">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies a directory name in which to write files</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>When chunking output, use the <tag>dbhtml dir</tag> PI
+    <para>When chunking output, use the <tag class="xmlpi">dbhtml dir</tag> PI
       as a child of a chunk source to cause the output of that
       chunk to be written to the specified directory; also, use it
       as a child of a <tag>mediaobject</tag> to specify a
@@ -242,7 +242,7 @@
 <doc:pi xmlns="" name="dbhtml_filename">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies a filename for a chunk</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>When chunking output, use the <tag>dbhtml filename</tag>
+    <para>When chunking output, use the <tag class="xmlpi">dbhtml filename</tag>
       PI as a child of a chunk source to specify a filename for
       the output file for that chunk.</para>
   </refdescription>
@@ -276,7 +276,7 @@
 <doc:pi xmlns="" name="dbhtml_funcsynopsis-style">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies presentation style for a funcsynopsis</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml funcsynopsis-style</tag> PI as a child of
+    <para>Use the <tag class="xmlpi">dbhtml funcsynopsis-style</tag> PI as a child of
       a <tag>funcprototype</tag> or anywhere within a funcprototype
       control the presentation style for the <tag>funcsynopsis</tag>
       in output.</para>
@@ -313,7 +313,7 @@
 <doc:pi xmlns="" name="dbhtml_img.src.path">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies a path to the location of an image file</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml img.src.path</tag> PI before or
+    <para>Use the <tag class="xmlpi">dbhtml img.src.path</tag> PI before or
       after an image (<tag>graphic</tag>,
       <tag>inlinegraphic</tag>, <tag>imagedata</tag>, or
       <tag>videodata</tag> element) as a sibling to the element,
@@ -352,7 +352,7 @@
 <doc:pi xmlns="" name="dbhtml_label-width">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies the label width for a qandaset</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml label-width</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml label-width</tag> PI as a child of a
       <tag>qandaset</tag> to specify the width of labels.</para>
   </refdescription>
   <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
@@ -382,7 +382,7 @@
 <doc:pi xmlns="" name="dbhtml_linenumbering.everyNth">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies interval for lines numbers in verbatims</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml linenumbering.everyNth</tag> PI as a child
+    <para>Use the <tag class="xmlpi">dbhtml linenumbering.everyNth</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
       <tag>screen</tag>, <tag>synopsis</tag> &#8212; to specify
       the interval at which lines are numbered.</para>
@@ -418,7 +418,7 @@
 <doc:pi xmlns="" name="dbhtml_linenumbering.separator">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies separator text for line numbers in verbatims</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml linenumbering.separator</tag> PI as a child
+    <para>Use the <tag class="xmlpi">dbhtml linenumbering.separator</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
       <tag>screen</tag>, <tag>synopsis</tag> &#8212; to specify
       the separator text output between the line numbers and content.</para>
@@ -453,7 +453,7 @@
 <doc:pi xmlns="" name="dbhtml_linenumbering.width">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies width for line numbers in verbatims</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml linenumbering.width</tag> PI as a child
+    <para>Use the <tag class="xmlpi">dbhtml linenumbering.width</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
       <tag>screen</tag>, <tag>synopsis</tag> &#8212; to specify
       the width set aside for line numbers.</para>
@@ -489,7 +489,7 @@
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies presentation style for a variablelist or
     segmentedlist</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml list-presentation</tag> PI as a child of
+    <para>Use the <tag class="xmlpi">dbhtml list-presentation</tag> PI as a child of
       a <tag>variablelist</tag> or <tag>segmentedlist</tag> to
       control the presentation style for the list (to cause it, for
       example, to be displayed as a table).</para>
@@ -536,7 +536,7 @@
 <doc:pi xmlns="" name="dbhtml_list-width">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies the width of a variablelist or simplelist</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml list-width</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml list-width</tag> PI as a child of a
       <tag>variablelist</tag> or a <tag>simplelist</tag> presented
       as a table, to specify the output width.</para>
   </refdescription>
@@ -567,7 +567,7 @@
 <doc:pi xmlns="" name="dbhtml_row-height">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies the height for a table row</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml row-height</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml row-height</tag> PI as a child of a
       <tag>row</tag> to specify the height of the row.</para>
   </refdescription>
   <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
@@ -633,7 +633,7 @@
 <doc:pi xmlns="" name="dbhtml_table-summary">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies summary for table, variablelist, segmentedlist, or qandaset output</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml table-summary</tag> PI as a child of
+    <para>Use the <tag class="xmlpi">dbhtml table-summary</tag> PI as a child of
       a <tag>table</tag>, <tag>variablelist</tag>,
       <tag>segmentedlist</tag>, or <tag>qandaset</tag> to specify
       the text for the HTML <literal>summary</literal> attribute
@@ -667,7 +667,7 @@
 <doc:pi xmlns="" name="dbhtml_table-width">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies the width for a table</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml table-width</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml table-width</tag> PI as a child of a
       <tag>table</tag> to specify the width of the table in
       output.</para>
   </refdescription>
@@ -701,7 +701,7 @@
 <doc:pi xmlns="" name="dbhtml_term-presentation">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Sets character formatting for terms in a variablelist</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml term-presentation</tag> PI as a child
+    <para>Use the <tag class="xmlpi">dbhtml term-presentation</tag> PI as a child
       of a <tag>variablelist</tag> to set character formatting for
       the <tag>term</tag> output of the list.</para>
   </refdescription>
@@ -742,7 +742,7 @@
 <doc:pi xmlns="" name="dbhtml_term-separator">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies separator text among terms in a varlistentry</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml term-separator</tag> PI as a child
+    <para>Use the <tag class="xmlpi">dbhtml term-separator</tag> PI as a child
       of a <tag>variablelist</tag> to specify the separator text
       among <tag>term</tag> instances.</para>
   </refdescription>
@@ -776,7 +776,7 @@
 <doc:pi xmlns="" name="dbhtml_term-width">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies the term width for a variablelist</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml term-width</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml term-width</tag> PI as a child of a
       <tag>variablelist</tag> to specify the width for
       <tag>term</tag> output.</para>
   </refdescription>
@@ -805,9 +805,9 @@
 </xsl:template>
 
 <doc:pi xmlns="" name="dbhtml_toc">
-  <refpurpose xmlns="http://www.w3.org/1999/xhtml">Species whether a TOC should be generated for a qandaset</refpurpose>
+  <refpurpose xmlns="http://www.w3.org/1999/xhtml">Specifies whether a TOC should be generated for a qandaset</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml toc</tag> PI as a child of a
+    <para>Use the <tag class="xmlpi">dbhtml toc</tag> PI as a child of a
       <tag>qandaset</tag> to specify whether a table of contents
       (TOC) is generated for the <tag>qandaset</tag>.</para>
   </refdescription>
@@ -845,12 +845,12 @@
 <doc:pi xmlns="" name="dbcmdlist">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Generates a hyperlinked list of commands</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbcmdlist</tag> PI as the child of a
-      <tag>refsynopsisdiv</tag> containing multiple
+    <para>Use the <tag class="xmlpi">dbcmdlist</tag> PI as the child of any
+      element (for example, <tag>refsynopsisdiv</tag>) containing multiple
       <tag>cmdsynopsis</tag> instances; a hyperlinked navigational
-      &#8220;command list&#8221; will be generated at the top of the
-      <tag>refsynopsisdiv</tag>, enabling users to quickly jump
-      to to each command synopsis.</para>
+      &#8220;command list&#8221; will be generated at the top of output for that
+      element, enabling users to quickly jump
+      to each command synopsis.</para>
   </refdescription>
   <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
     <synopsis><tag class="xmlpi">dbcmdlist</tag></synopsis>
@@ -875,11 +875,11 @@
 <doc:pi xmlns="" name="dbfunclist">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Generates a hyperlinked list of functions</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbfunclist</tag> PI as the child of a
-      <tag>refsynopsisdiv</tag> containing multiple
+    <para>Use the <tag class="xmlpi">dbfunclist</tag> PI as the child of any
+      element (for example, <tag>refsynopsisdiv</tag>) containing multiple
       <tag>funcsynopsis</tag> instances; a hyperlinked
       navigational &#8220;function list&#8221; will be generated at the top of
-      the <tag>refsynopsisdiv</tag>, enabling users to quickly
+      output for that element, enabling users to quickly
       jump to to each function synopsis.</para>
   </refdescription>
   <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
@@ -905,7 +905,7 @@
 <doc:pi xmlns="" name="dbhtml-include_href">
   <refpurpose xmlns="http://www.w3.org/1999/xhtml">Copies an external well-formed HTML/XML file into current doc</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
-    <para>Use the <tag>dbhtml-include href</tag> PI anywhere in a
+    <para>Use the <tag class="xmlpi">dbhtml-include href</tag> PI anywhere in a
       document to cause the contents of the file referenced by the
       <code>href</code> pseudo-attribute to be copied/inserted &#8220;as
       is&#8221; into your HTML output at the point in document order
@@ -932,7 +932,7 @@
     </note>
   </refdescription>
   <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
-    <synopsis><tag class="xmlpi">dbhtml href="<replaceable>URI</replaceable>"</tag></synopsis>
+    <synopsis><tag class="xmlpi">dbhtml-include href="<replaceable>URI</replaceable>"</tag></synopsis>
   </refsynopsisdiv>
   <refparameter xmlns="http://www.w3.org/1999/xhtml">
     <variablelist>
@@ -1148,5 +1148,35 @@
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
+
+<!-- There are two templates matching this PI in htmlhelp-common.xsl -->
+<doc:pi xmlns="" name="dbhh">
+  <refpurpose xmlns="http://www.w3.org/1999/xhtml">Sets topic name and topic id for context-sensitive HTML Help</refpurpose>
+  <refdescription xmlns="http://www.w3.org/1999/xhtml">
+    <para>Use the <tag class="xmlpi">dbhh</tag> PI as a child of components
+      that should be used as targets for context-sensitive help requests.</para>
+  </refdescription>
+  <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
+    <synopsis><tag class="xmlpi">dbhh topicname="<replaceable>name</replaceable>" topicid="<replaceable>id</replaceable>"</tag></synopsis>
+  </refsynopsisdiv>
+  <refparameter xmlns="http://www.w3.org/1999/xhtml">
+    <variablelist>
+      <varlistentry><term>topicname="<replaceable>name</replaceable>"</term>
+        <listitem>
+          <para>Specifies a unique string constant that identifies a help topic</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry><term>topicid="<replaceable>id</replaceable>"</term>
+        <listitem>
+          <para>Specifies a unique integer value for the <literal>topicname</literal> string</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refparameter>
+  <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
+    <para><link role="tcg" xlink:href="HtmlHelp.html#HHContextHelp">Context-sensitive help</link></para>
+  </refsee>
+</doc:pi>
+
 
 </xsl:stylesheet>
