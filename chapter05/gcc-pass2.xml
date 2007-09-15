@@ -90,23 +90,39 @@ sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userin
 sed 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
   &gt; gcc/Makefile.in</userinput></screen>
 
-    <para>Apply the following patch to change the location of GCC's default
-    dynamic linker (typically <filename
-    class="libraryfile">ld-linux.so.2</filename>):</para>
-
-<screen><userinput>patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
-
-    <para>The above patch also removes <filename
+    <para>The following command will change the location of GCC's default
+    dynamic linker to use the one we installed in
+    <filename class="directory">/tools</filename>. It also removes <filename
     class="directory">/usr/include</filename> from GCC's include search path.
-    Patching now rather than adjusting the specs file after installation
+    Doing this now rather than adjusting the specs file after installation
     ensures that the new dynamic linker is used during the actual build of
     GCC. That is, all of the binaries created during the build will link
-    against the new Glibc.</para>
+    against the new Glibc. Issue:</para>
 
-    <important>
-      <para>The above patch is critical in ensuring a successful overall
-      build. Do not forget to apply it.</para>
-    </important>
+<screen><userinput>for file in $(find gcc/config -name linux64.h -o -name linux.h)
+do
+  cp -uv $file{,.orig}
+  sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
+  -e 's@/usr@/tools@g' $file.orig &gt; $file
+  echo "
+#undef STANDARD_INCLUDE_DIR
+#define STANDARD_INCLUDE_DIR 0" &gt;&gt; $file
+  touch $file.orig
+done</userinput></screen>
+
+    <para>In case the above seems hard to follow, let's break it down a bit.
+    First we find all the files under the gcc/config directory that are named
+    either <filename>linux.h</filename> or <filename>linux64.h</filename>.
+    For each file found, we copy it to a file of the same name but with an added
+    suffix of <quote>.orig</quote>. Then the first sed expression prepends
+    <quote>/tools</quote> to every instance of <quote>/lib/ld</quote>,
+    <quote>/lib64/ld</quote> or <quote>/lib32/ld</quote>, while the second one
+    replaces hard-coded instances of <quote>/usr</quote>. Then we add our define
+    statements which alter the include search path to the end of the file. Finally,
+    we use <command>touch</command> to update the timestamp on the copied files.
+    When used in conjunction with <command>cp -u</command>, this prevents unexpected
+    changes to the original files in case the command is inadvertently run twice.
+    </para>
 
     <para>Create a separate build directory again:</para>
 
@@ -122,7 +138,7 @@ cd ../gcc-build</userinput></screen>
     --with-local-prefix=/tools --enable-clocale=gnu \
     --enable-shared --enable-threads=posix \
     --enable-__cxa_atexit --enable-languages=c,c++ \
-    --disable-libstdcxx-pch</userinput></screen>
+    --disable-libstdcxx-pch --disable-bootstrap</userinput></screen>
 
     <variablelist>
       <title>The meaning of the new configure options:</title>
@@ -174,6 +190,15 @@ cd ../gcc-build</userinput></screen>
           <para>Do not build the pre-compiled header (PCH) for
           <filename class="libraryfile">libstdc++</filename>. It takes up a
           lot of space, and we have no use for it.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-bootstrap</parameter></term>
+        <listitem>
+          <para>Bootstrapping the compiler is now the default for GCC. However,
+	  our build method should provide us with a solid compiler without the
+	  need to bootstrap each time.</para>
         </listitem>
       </varlistentry>
 
