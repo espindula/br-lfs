@@ -34,7 +34,7 @@ lfs: validxml profile-html
 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
 	  tidy -config tidy.conf $$filename; \
 	  true; \
-	  sh obfuscate.sh $$filename; \
+	  /bin/bash obfuscate.sh $$filename; \
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
 
