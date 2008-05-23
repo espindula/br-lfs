@@ -47,20 +47,16 @@
 <screen><userinput remap="pre">tar -xvf ../&udev-config;.tar.bz2</userinput></screen>
 
     <para>Create some devices and directories that Udev cannot handle due to
-    them being required very early in the boot process:</para>
+    them being required very early in the boot process, or by Udev itself:</para>
 
 <screen><userinput remap="install">install -dv /lib/{firmware,udev/devices/{pts,shm}}
 mknod -m0666 /lib/udev/devices/null c 1 3
+mknod -m0600 /lib/udev/devices/kmsg c 1 11
 ln -sv /proc/self/fd /lib/udev/devices/fd
 ln -sv /proc/self/fd/0 /lib/udev/devices/stdin
 ln -sv /proc/self/fd/1 /lib/udev/devices/stdout
 ln -sv /proc/self/fd/2 /lib/udev/devices/stderr
 ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
-
-    <para><command>usb_id</command> is known to segfault under certain kernel
-    configurations.  Fix the issue by applying the following patch:</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../&udev-usbid-patch;</userinput></screen>
 
     <para>Compile the package:</para>
 
@@ -104,13 +100,9 @@ ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
 
     </variablelist>
 
-    <para>Udev has to be configured in order to work properly, as it only
-    installs a few configuration files by default. First install the
-    commonly-used rules files provided by Udev:</para>
-
-<screen><userinput remap="install">cp -v etc/udev/rules.d/[0-9]* /etc/udev/rules.d/</userinput></screen>
-
-    <para>Now install the LFS-specific rules files:</para>
+    <para>Udev has to be configured in order to work properly, as its default
+    configuration does not cover all devices. Install the (LFS-specific)
+    custom rules files:</para>
 
 <screen><userinput remap="install">cd &udev-config;
 make install</userinput></screen>
@@ -129,6 +121,7 @@ make install</userinput></screen>
     rules:</para>
 
 <screen><userinput remap="install">cd ..
+install -dv /usr/share/doc/udev-&udev-version;
 install -m644 -v docs/writing_udev_rules/index.html \
     /usr/share/doc/udev-&udev-version;/index.html</userinput></screen>
 
@@ -143,10 +136,9 @@ install -m644 -v docs/writing_udev_rules/index.html \
       <segtitle>Installed directory</segtitle>
 
       <seglistitem>
-        <seg>ata_id, cdrom_id, create_floppy_devices, edd_id, firmware.sh,
-        path_id, scsi_id, udevcontrol, udevd, udevinfo, udevmonitor, udevsettle,
-        udevtest, udevtrigger, usb_id, vol_id, write_cd_rules, and
-        write_net_rules</seg>
+        <seg>ata_id, cdrom_id, collect, create_floppy_devices, edd_id,
+        firmware.sh, fstab_import, path_id, scsi_id, udevadm, udevd,
+        usb_id, vol_id, write_cd_rules, and write_net_rules</seg>
         <seg>libvolume_id</seg>
         <seg>/etc/udev</seg>
       </seglistitem>
@@ -175,6 +167,18 @@ install -m644 -v docs/writing_udev_rules/index.html \
           CD-ROM or DVD-ROM drive</para>
           <indexterm zone="ch-system-udev cdrom_id">
             <primary sortas="b-cdrom_id">cdrom_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="collect">
+        <term><command>collect</command></term>
+        <listitem>
+          <para>Given an ID for the current uevent and a list of
+          IDs (for all target uevents), registers the current ID
+          and indicates whether all target IDs have been registered</para>
+          <indexterm zone="ch-system-udev collect">
+            <primary sortas="b-collect">collect</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -209,6 +213,18 @@ install -m644 -v docs/writing_udev_rules/index.html \
         </listitem>
       </varlistentry>
 
+      <varlistentry id="fstab_import">
+        <term><command>fstab_import</command></term>
+        <listitem>
+          <para>Finds an entry in <filename>/etc/fstab</filename> that
+          matches the current device, and provides its information to
+          Udev</para>
+          <indexterm zone="ch-system-udev fstab_import">
+            <primary sortas="b-fstab_import">fstab_import</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="path_id">
         <term><command>path_id</command></term>
         <listitem>
@@ -232,13 +248,15 @@ install -m644 -v docs/writing_udev_rules/index.html \
         </listitem>
       </varlistentry>
 
-      <varlistentry id="udevcontrol">
-        <term><command>udevcontrol</command></term>
+      <varlistentry id="udevadm">
+        <term><command>udevadm</command></term>
         <listitem>
-          <para>Configures a number of options for the running
-          <command>udevd</command> daemon, such as the log level.</para>
-          <indexterm zone="ch-system-udev udevcontrol">
-            <primary sortas="b-udevcontrol">udevcontrol</primary>
+          <para>Generic udev administration tool: controls the udevd daemon,
+          provides info from the Udev database, monitors uevents, waits for
+          uevents to finish, tests Udev configuration, and triggers uevents
+          for a given device</para>
+          <indexterm zone="ch-system-udev udevadm">
+            <primary sortas="b-udevadm">udevadm</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -251,64 +269,6 @@ install -m644 -v docs/writing_udev_rules/index.html \
           response to these uevents</para>
           <indexterm zone="ch-system-udev udevd">
             <primary sortas="b-udevd">udevd</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="udevinfo">
-        <term><command>udevinfo</command></term>
-        <listitem>
-          <para>Allows users to query the Udev database for
-          information on any device currently present on the system; it also
-          provides a way to query any device in the <systemitem
-          class="filesystem">sysfs</systemitem> tree to help create udev
-          rules</para>
-          <indexterm zone="ch-system-udev udevinfo">
-            <primary sortas="b-udevinfo">udevinfo</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="udevmonitor">
-        <term><command>udevmonitor</command></term>
-        <listitem>
-          <para>Prints the event received from the kernel and the environment
-          which Udev sends out after rule processing</para>
-          <indexterm zone="ch-system-udev udevmonitor">
-            <primary sortas="b-udevmonitor">udevmonitor</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="udevsettle">
-        <term><command>udevsettle</command></term>
-        <listitem>
-          <para>Watches the Udev event queue and exits if all current uevents
-          have been handled</para>
-          <indexterm zone="ch-system-udev udevsettle">
-            <primary sortas="b-udevsettle">udevsettle</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="udevtest">
-        <term><command>udevtest</command></term>
-        <listitem>
-          <para>Simulates a uevent for the given device, and prints out the
-          name of the node the real <command>udevd</command> would have created,
-          or the name of the renamed network interface</para>
-          <indexterm zone="ch-system-udev udevtest">
-            <primary sortas="b-udevtest">udevtest</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="udevtrigger">
-        <term><command>udevtrigger</command></term>
-        <listitem>
-          <para>Triggers kernel device uevents to be replayed</para>
-          <indexterm zone="ch-system-udev udevtrigger">
-            <primary sortas="b-udevtrigger">udevtrigger</primary>
           </indexterm>
         </listitem>
       </varlistentry>

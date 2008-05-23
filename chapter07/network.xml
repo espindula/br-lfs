@@ -39,7 +39,9 @@
     <para>Pre-generate the rules to ensure the same names get assigned to the
     same devices at every boot, including the first:</para>
 
-<screen><userinput>/lib/udev/write_net_rules all_interfaces</userinput></screen>
+<screen><userinput>for NIC in /sys/class/net/* ; do
+    INTERFACE=${NIC##*/} udevadm test --action=add --subsystem=net $NIC
+done</userinput></screen>
 
     <para>Now, inspect the <filename>/etc/udev/rules.d/70-persistent-net.rules</filename>
     file, to find out which name was assigned to which network device:</para>
@@ -48,14 +50,14 @@
 
     <para>The file begins with a comment block followed by two lines for each
     NIC. The first line for each NIC is a commented description showing its
-    hardware IDs (e.g. its PC vendor and device IDs, if it's a PCI card),
+    hardware IDs (e.g. its PCI vendor and device IDs, if it's a PCI card),
     along with its driver in parentheses, if the driver can be found. Neither
     the hardware ID nor the driver is used to determine which name to give an
-    interface. The second line is the Udev rule that matches this NIC and
-    actually assigns it a name.</para>
+    interface; this information is only for reference. The second line is the
+    Udev rule that matches this NIC and actually assigns it a name.</para>
 
     <para>All Udev rules are made up of several keys, separated by commas and
-    optional whitespace. This rule's keys and an explanations of each of them
+    optional whitespace. This rule's keys and an explanation of each of them
     are as follows:</para>
 
     <itemizedlist>
@@ -64,22 +66,34 @@
         devices that are not network cards.</para>
       </listitem>
       <listitem>
+        <para><literal>ACTION=="add"</literal> - This tells Udev to ignore this
+        rule for a uevent that isn't an add ("remove" and "change" uevents also
+        happen, but don't need to rename network interfaces).</para>
+      </listitem>
+      <listitem>
         <para><literal>DRIVERS=="?*"</literal> - This exists so that Udev will
         ignore VLAN or bridge sub-interfaces (because these sub-interfaces do
         not have drivers). These sub-interfaces are skipped because the name
         that would be assigned would collide with their parent devices.</para>
       </listitem>
       <listitem>
-        <para><literal>ATTRS{type}=="1"</literal> - Optional. This key will
-        only be added if this NIC is a wireless NIC whose driver creates
-        multiple virtual interfaces; it ensures the rule only matches the
-        primary interface. The secondary interfaces are not matched for the
-        same reason that VLAN and bridge sub-interfaces are not matched: there
-        would be a name collision.</para>
+        <para><literal>ATTR{address}</literal> - The value of this key is the
+        NIC's MAC address.</para>
       </listitem>
       <listitem>
-        <para><literal>ATTRS{address}</literal> - The value of this key is the
-        NIC's MAC address.</para>
+        <para><literal>ATTR{type}=="1"</literal> - This ensures the rule only
+        matches the primary interface in the case of certain wireless drivers,
+        which create multiple virtual interfaces. The secondary interfaces are
+        skipped for the same reason that VLAN and bridge sub-interfaces are
+        skipped: there would be a name collision otherwise.</para>
+      </listitem>
+      <listitem>
+        <para><literal>KERNEL=="eth*"</literal> - This key was added to the
+        Udev rule generator to handle machines that have multiple network
+        interfaces, all with the same MAC address (the PS3 is one such
+        machine).  If the independent interfaces have different basenames,
+        this key will allow Udev to tell them apart.  This is generally not
+        necessary for most Linux From Scratch users, but does not hurt.</para>
       </listitem>
       <listitem>
         <para><literal>NAME</literal> - The value of this key is the name that
