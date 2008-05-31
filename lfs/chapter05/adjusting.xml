@@ -1,119 +1,126 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
+
 <sect1 id="ch-tools-adjusting">
-<title>Ajuster l'atelier des outils</title>
-<?dbhtml filename="adjusting.html"?>
+  <?dbhtml filename="adjusting.html"?>
 
-<para>Maintenant que les bibliothèques C temporaires ont été installées, tous
-les outils compilés dans le reste de ce chapitre doivent-y être liés. 
-Pour cela, installons le nouvel éditeur de liens et ajustons le fichier specs du
-compilateur.</para>
+  <title>Ajuster l'ensemble d'outils</title>
 
-<para>L'éditeur de liens (déjà ajusté à la fin de la première passe de Binutils)
-est installé en lançant la commande suivante depuis le répertoire <filename
-class="directory">binutils-build</filename>&nbsp;:</para>
+  <para>Maintenant que les bibliothèques C temporaires ont été installées, tous
+  les outils compilés dans le reste de ce chapitre doivent être liés avec ces
+  bibliothèques. Pour accomplir cela, l'éditeur de liens et le fichier specs du
+  compilateur doivent être ajustés.</para>
 
-<screen><userinput>make -C ld install</userinput></screen>
+  <para>L'éditeur de liens ajusté (à la fin de la première passe de Binutils)
+  est installé en lançant la commande suivante à partir du répertoire 
+  <filename class="directory">/tools/$(gcc -dumpmachine)/bin</filename>&nbsp;:</para>
 
-<para>À partir de ce moment, tout sera lié uniquement aux bibliothèques 
-présentes dans <filename class="directory">/tools/lib</filename>.</para>
+<screen><userinput>mv -v /tools/bin/{ld,ld-old}
+mv -v /tools/$(gcc -dumpmachine)/bin/{ld,ld-old}
+mv -v /tools/bin/{ld-new,ld}
+ln -sv /tools/bin/ld /tools/$(gcc -dumpmachine)/bin/ld</userinput></screen>
 
-<note><para>Si vous n'avez pas tenu compte de l'avertissement indiquant de conserver les répertoires source
-et de compilation de Binutils après la première passe,
-ignorez simplement la commande ci-dessus. Il est alors possible que certains 
-programmes de tests se lient avec les bibliothèques de l'hôte. Bien que ce ne soit pas idéal, 
-ce n'est pas un problème majeur, et la situation sera corrigée plus tard lors de
-l'installation de la deuxième passe de Binutils.</para></note>
+  <para>À partir de ce moment, tout sera lié uniquement avec les bibliothèques
+  comprises dans <filename class="directory">/tools/lib</filename>.</para>
 
-<para>Maintenant que l'éditeur de liens ajusté est en place, les répertoires
-source et de construction de Binutils peuvent être supprimés.</para>
+  <para>La prochaine tâche est de modifier le fichier specs de GCC pour qu'il
+  pointe vers le nouvel éditeur de liens. Ceci se fait en plaçant le fichier 
+  <quote>specs</quote> de GCC à un endroit où GCC va le chercher par défaut.
+  Un simple script <command>sed</command> modifie alors l'éditeur de liens
+  dynamique que GCC utilisera.</para>
 
-<para>La prochaine tâche est de modifier le fichier specs de GCC pour qu'il
-pointe vers le nouvel éditeur de liens. Un script sed simple se chargera de 
-ceci&nbsp;:</para>
+  <para>Par soucis de précision, il est recommandé que la commande
+  ci-dessus soit copiée/collée.
+  Assurez-vous  d'inspecter visuellement le fichier specs pour vérifier
+  que toutes les occurrences de <quote>/lib/ld-linux.so.2</quote> ont
+  été remplacées par <quote>/tools/lib/ld-linux.so.2</quote>&nbsp;:</para>
+
+  <important>
+    <para>Au cas où le nom de l'éditeur de liens de la plateforme de
+    travail est autre que  <filename class="libraryfile">ld-linux.so.2</filename>,
+    remplacez <quote>ld-linux.so.2</quote> par le nom de l'éditeur de liens de
+    votre plateforme dans les commandes ci-dessus. Référez-vous à 
+    <xref linkend="ch-tools-toolchaintechnotes" role=","/> si
+    nécessaire</para>
+  </important>
 
 <!-- Ampersands are needed to allow copy and paste -->
+<screen><userinput>gcc -dumpspecs | sed 's@^/lib/ld-linux.so.2@/tools&amp;@g' \
+  > `dirname $(gcc -print-libgcc-file-name)`/specs</userinput></screen>
 
-<screen><userinput>SPECFILE=`gcc --print-file specs` &amp;&amp;
-sed 's@ /lib/ld-linux.so.2@ /tools/lib/ld-linux.so.2@g' \
-    $SPECFILE &gt; tempspecfile &amp;&amp;
-mv -f tempspecfile $SPECFILE &amp;&amp;
-unset SPECFILE</userinput></screen>
+  <para>Pendant la procédure de construction, GCC exécute un script 
+  (<command>fixincludes</command>) qui parcourt le système pour déterminer les
+  fichiers d'en-tête qui pourraient nécessiter une réparation (ils pourraient
+  contenir des erreurs de syntaxe, par exemple), et qui installe les versions
+  corrigées dans un répertoire include autonome. Il se peut que, au terme de ce
+  processus, certains fichiers d'en-tête du système hôte se trouvent placés
+  dans le répertoire autonome include de GCC. Comme le reste de ce chapitre
+  n'exige que les en-têtes de GCC et de Glibc, qui ont désormais été installées,
+  toute en-tête <quote>corrigée</quote> peut être supprimée en toute sécurité. Cela
+  permet d'éviter toute pollution de l'environnement de construction par les
+  en-têtes du système hôte. Lancez les commandes suivantes pour supprimer
+  les fichiers d'en-tête dans le répertoire autonome include de GCC (il se
+  peut que vous trouviez plus facile de copier-coller les commandes plutôt que
+  de les saisir à la main, du fait de leur longueur)&nbsp;:</para>
 
-<para><phrase condition="html">Il est recommandé de copier/coller la commande ci-dessus 
-pour assurer son exactitude.</phrase>
-Autrement, vous pouvez éditer le fichier specs à la main en
-remplaçant chaque occurrence de <quote>/lib/ld-linux.so.2</quote> par
-<quote>/tools/lib/ld-linux.so.2</quote>.</para>
- 
-<para>Assurez-vous d'inspecter visuellement le fichier specs pour vérifier que
-la modification attendue a bien été réalisée.</para>
+<!-- && used to ease copy and pasting -->
+<screen><userinput>GCC_INCLUDEDIR=`dirname $(gcc -print-libgcc-file-name)`/include &amp;&amp;
+find ${GCC_INCLUDEDIR}/* -maxdepth 0 -xtype d -exec rm -rvf '{}' \; &amp;&amp;
+rm -vf `grep -l "DO NOT EDIT THIS FILE" ${GCC_INCLUDEDIR}/*` &amp;&amp;
+unset GCC_INCLUDEDIR</userinput></screen>
 
-<important><para>Au cas où le nom de l'éditeur de liens de la plateforme de
-travail est autre que <filename>ld-linux.so.2</filename>, remplacez
-<filename>ld-linux.so.2</filename> avec le nom de l'éditeur de liens de votre
-plateforme dans les commandes ci-dessus. Référez-vous à <xref
-linkend="ch-tools-toolchaintechnotes" role=","/> si
-nécessaire.</para></important>
-
-<para>Enfin, il existe un risque que certains fichiers include du système hôte
-aient été copiés dans le répertoire include privé de GCC 
-par le processus <quote>fixincludes</quote>, qui est exécuté lors 
-de la construction de GCC. Ceci est expliqué plus en détail plus tard
-dans ce chapitre. Lancez les commandes suivantes pour éliminer cette
-possibilité&nbsp;:</para>
-
-<screen><userinput>rm -vf /tools/lib/gcc/*/*/include/{pthread.h,bits/sigthread.h}</userinput></screen>
-
-<beginpage/>
-
-<caution><para>Il est impératif à ce moment de s'arrêter et de s'assurer que les
-fonctions basiques (compilation et édition des liens) du nouvel ensemble d'outils
-fonctionnent comme attendu. Pour réaliser un test rapide, entrez ces commandes&nbsp;:</para>
+  <caution>
+    <para>Il est impératif à ce moment de s'arrêter et de s'assurer que les
+    fonctions basiques (compilation et édition des liens) du nouvel ensemble
+    d'outils fonctionnent comme attendu. Pour réaliser une vérification de
+    propreté, lancez les commandes suivantes&nbsp;:</para>
 
 <screen><userinput>echo 'main(){}' &gt; dummy.c
 cc dummy.c
 readelf -l a.out | grep ': /tools'</userinput></screen>
 
-<para>Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et
-la sortie de la dernière commande sera de la forme&nbsp;:</para>
+    <para>Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et
+    la sortie de la dernière commande sera de la forme&nbsp;:</para>
 
-<screen><computeroutput>[Requesting program interpreter: 
+<screen><computeroutput>[Requesting program interpreter:
     /tools/lib/ld-linux.so.2]</computeroutput></screen>
 
-<para>Notez que <filename class="directory">/tools/lib</filename> apparaît comme
-préfixe du chargeur dynamique.</para>
+    <para>Notez que <filename class="directory">/tools/lib</filename>
+    apparaît comme préfixe de l'éditeur de liens dynamique.</para>
 
-<para>Si la sortie diffère ou s'il n'y a aucune sortie, quelque chose
-s'est mal passé. Investiguez et retracez vos étapes pour trouver où se
-cache le problème et comment le corriger. Ce problème doit absolument être corrigé avant
-de continuer. Tout d'abord, recommencez le test en utilisant
-<command>gcc</command> au lieu de <command>cc</command>. Si cela fonctionne,
-le lien symbolique <filename class="symlink">/tools/bin/cc</filename> est
-manquant. Revisitez <xref linkend="ch-tools-gcc-pass1" role=","/> et installez
-le lien symbolique. Ensuite, assurez-vous que le <envar>PATH</envar> est
-correct en lançant <userinput>echo $PATH</userinput> et en
-vérifiant que <filename class="directory">/tools/bin</filename> est en tête de
-liste. Si le <envar>PATH</envar> est mauvais, cela pourrait signifier que
-vous n'êtes pas connecté en tant qu'utilisateur <emphasis>lfs</emphasis> ou que
-quelque chose s'est mal passé dans <xref linkend="ch-tools-settingenviron"
-role="."/> Une autre possibilité est que 
-la correction du fichier specs ci-dessus ne soit pas déroulée correctement. Dans ce cas, refaites la
-modification de ce fichier<phrase condition="html"> en vous assurant de bien 
-copier/coller les lignes.</phrase>.</para>
+    <para>Si l'affichage diffère ou s'il n'y a aucun affichage, alors
+    quelque chose ne se passe pas bien. Enquêtez et tracez vos étapes pour
+    trouver où se cache le problème et comment le corriger. Ce problème doit
+    être corrigé avant de continuer. Tout d'abord, relancez la vérification
+    de propreté en utilisant
+    <command>gcc</command> au lieu de <command>cc</command>. Si cela fonctionne,
+    le lien symbolique <filename class="symlink">/tools/bin/cc</filename> est 
+    manquant. Lisez de nouveau <xref linkend="ch-tools-gcc-pass1" role=","/>  et 
+    installez le lien symbolique.
+    Ensuite, assurez-vous que le <envar>PATH</envar> est correct. Ceci se
+    vérifie en lançant <command>echo $PATH</command> et en vérifiant que
+    <filename class="directory">/tools/bin</filename> est en tête de la
+    liste. Si le <envar>PATH</envar> est mauvais, cela pourrait signifier
+    que vous n'êtes pas connecté en tant qu'utilisateur 
+    <systemitem class="username">lfs</systemitem> ou que quelque chose s'est mal passé dans 
+    <xref linkend="ch-tools-settingenviron" role="."/>. Une autre possibilité
+    est que quelque chose a pu mal se passer avec la correction du fichier specs
+    ci-dessus. Dans ce cas, refaites la modification de ce fichier en vous 
+    assurant de copier/coller les commandes.</para>
 
-<para>Une fois satisfait, supprimez les fichiers de test&nbsp;:</para>
+    <para>Une fois que tout va bien, nettoyez les fichiers de test&nbsp;::</para>
 
 <screen><userinput>rm -v dummy.c a.out</userinput></screen>
 
-<para>Construire TCL dans la prochaine section sera une vérification
-supplémentaire de la bonne mise en place de l'outil de construction. Si TCL
-échoue à la construction, c'est une indication d'un problème dans l'installation
-de Binutils, GCC ou Glibc, mais pas avec TCL lui-même.</para>
-</caution>
+  </caution>
 
+  <note><para>Construire TCL dans la prochaine section servira comme vérification
+  supplémentaire de la bonne mise en place de l'outil de construction. Si TCL
+  échoue à la construction, c'est une indication d'un problème avec l'installation
+  de Binutils, GCC ou Glibc, mais pas avec TCL lui-même.</para></note>
 
 </sect1>

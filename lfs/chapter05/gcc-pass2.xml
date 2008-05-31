@@ -1,207 +1,230 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
+
 <sect1 id="ch-tools-gcc-pass2" role="wrap">
-<title>GCC-&gcc-version; - Passe 2</title>
-<?dbhtml filename="gcc-pass2.html"?>
+  <?dbhtml filename="gcc-pass2.html"?>
 
-<indexterm zone="ch-tools-gcc-pass2">
-<primary sortas="a-GCC">GCC</primary>
-<secondary>outils, passe 2</secondary></indexterm>
+  <title>GCC-&gcc-version; - Pass 2</title>
 
-<sect2 role="package"><title/>
+  <indexterm zone="ch-tools-gcc-pass2">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>outils, passe 2</secondary>
+  </indexterm>
 
-<segmentedlist>
-<segtitle>&buildtime;</segtitle>
-<segtitle>&diskspace;</segtitle>
-<seglistitem><seg>11,0&nbsp;SBU</seg><seg>292&nbsp;Mo</seg></seglistitem>
-</segmentedlist>
+  <sect2 role="package">
+    <title/>
 
-<xi:include xmlns:xi="http://www.w3.org/2003/XInclude" href="../chapter06/gcc.xml" xpointer="xpointer(/sect1/sect2[1]/segmentedlist[2])"/>
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../chapter06/gcc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
 
-</sect2>
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
 
-<sect2 role="installation">
-<title>Re-installation de GCC</title>
+      <seglistitem>
+        <seg>&gcc-ch5p2-sbu;</seg>
+        <seg>&gcc-ch5p2-du;</seg>
+      </seglistitem>
+    </segmentedlist>
 
-<para>Ce paquet est connu pour avoir des soucis quand les options d'optimisation
-par défaut (dont les options <parameter>-march</parameter> et
-<parameter>-mcpu</parameter>) sont modifiées. Si des variables d'environnement
-qui surchargent les optimisations par défaut ont été définies, telles que <envar>CFLAGS</envar>
-et <envar>CXXFLAGS</envar> ont été définies, supprimez cette initialisation
-pour la construction de GCC.</para>
+  </sect2>
 
-<para>Les outils requis pour tester GCC et Binutils (Tcl, Expect et DejaGnu)
-sont maintenant installés. GCC et Binutils peuvent maintenant être reconstruits
-en les liant avec la nouvelle Glibc, et testés correctement (si
-vous souhaitez exécuter les suites de tests dans ce chapitre). Notez bien que
-ces suites de tests dépendent énormément de la présence pseudos terminaux (PTY) fonctionnels
-fournis par votre distribution hôte. Ces PTY sont le plus souvent implémentés
-via le système de fichiers <systemitem class="filesystem">devpts</systemitem>.
-Vérifiez si le système hôte est correctement configuré en réalisant ce simple
-test&nbsp;:</para>
+  <sect2 role="installation">
+    <title>Ré-installation de GCC</title>
+
+    <para>Les outils requis pour tester GCC et Binutils (Tcl, Expect et
+    DejaGnu) sont maintenant installés. GCC et Binutils peuvent maintenant
+    être reconstruits en les liant avec la nouvelle Glibc et en les testant
+    correctement (si vous souhaitez lancer les suites de tests dans ce
+    chapitre). Merci de noter que ces suites de tests dépendent énormément
+    de pseudos terminaux (PTY) fonctionnels fournis par votre distribution
+    hôte. Les PTY sont le plus souvent implémentés via le système de
+    fichiers
+    <systemitem class="filesystem">devpts</systemitem>. Vérifiez si
+    le système hôte est correctement configuré en réalisant un simple
+    test&nbsp;:</para>
 
 <screen><userinput>expect -c "spawn ls"</userinput></screen>
 
-<para>Le résultat pourrait être&nbsp;:</para>
+    <para>Le résultat pourrait être&nbsp;:</para>
 
-<screen><computeroutput>The system has no more ptys.  
+<screen><computeroutput>The system has no more ptys.
 Ask your system administrator to create more.</computeroutput></screen>
 
-<para>Si vous lisez le message ci-dessus, les PTY ne sont pas correctement configurés
-sur la distribution hôte, et il ne sert à rien de lancer
-les suites de tests de GCC et Binutils avant de corriger ce problème.
-Merci de consulter la FAQ LFS sur <ulink url="&lfs-root;/lfs/faq.html#no-ptys"/>
-pour plus d'informations sur la façon de faire fonctionner les PTY.</para>
+    <para>Si vous obtenez le message ci-dessus, la distribution hôte n'est
+    pas correctement configurée pour les PTY. Dans ce cas, il ne sert à rien
+    de lancer les suites de tests de GCC et Binutils jusqu'à la correction
+    de ce problème. Merci de consulter la FAQ LFS sur
+    <ulink url="&lfs-root;/lfs/faq.html#no-ptys"/>  pour plus d'informations sur la
+    façon de faire fonctionner les PTY.</para>
 
-<para>Tout d'abord, corrigez un problème connu et faites un ajustement
-essentiel&nbsp;:</para>
+    <para>Comme déjà expliqué à la section <xref linkend="ch-tools-adjusting"/>,
+    en temps normal le script GCC <command>fixincludes</command> est exécuté
+    afin de réparer des fichiers d'en-tête potentiellement cassés. Comme
+    GCC-&gcc-version; et Glibc-&glibc-version; ont désormais déjà été installés, 
+    et vu que leur fichiers d'en-têtes respectifs sont connus comme n'ayant
+    pas besoin de réparation, le script <command>fixincludes</command> n'est
+    pas utile. Comme mentionné précédemment, il se peut que le script pollue
+    l'environnement de construction en installant des en-têtes corrigées du
+    système hôte dans le répertoire autonome include de GCC. L'exécution du
+    script <command>fixincludes</command> peut être supprimée en lançant les
+    commandes suivantes&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../&gcc-no_fixincludes-patch;
-patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
+<screen><userinput>cp -v gcc/Makefile.in{,.orig}
+sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userinput></screen>
 
-<para>Le premier correctif désactive le script GCC <command>fixincludes</command>.
-Ceci a déjà été mentionné brièvement mais une explication plus détaillée du fonctionnement de
-fixincludes est apportée ici. Dans des circonstances normales, le script GCC
-<command>fixincludes</command> parcourt le système pour trouver les fichiers
-d'en-tête qui ont besoin d'être corrigés. Il pourrait considérer que certains des
-fichiers d'en-têtes de Glibc du système hôte doivent être corrigés, le
-faire et les placer dans le répertoire des en-têtes privés de GCC. Après l'installation 
-de la nouvelle Glibc dans le <xref linkend="chapter-building-system"/>, ce
-répertoire sera consulté avant le répertoire include du système, et 
-GCC y trouverait les en-têtes corrigées ne correspondant
-pas à la nouvelle version de Glibc utilisée par le système
-LFS.</para>
+    <para>La construction bootstrap effectuée à la section
+    <xref linkend="ch-tools-gcc-pass1"/>
+    a compilé GCC avec le commutateur du compilateur
+    <option>-fomit-frame-pointer</option> compiler flag. Les constructions
+    Non-bootstrap ommettent ce commutateur par défaut, donc appliquez le  
+    correctif <command>sed</command> suivant pour l'utiliser afin de 
+    les constructions des compilateurs cohérent&nbsp;:</para>
 
-<para>Le deuxième correctif modifie l'emplacement par défaut de l'éditeur de
-liens dynamiques de GCC (généralement <filename
-class="libraryfile">ld-linux.so.2</filename>). Il supprime aussi <filename
-class="directory">/usr/include</filename> du chemin de recherche des includes
-de GCC. Corriger maintenant plutôt qu'ajuster le fichier specs après
-l'installation nous assure que l'éditeur de liens dynamiques sera utilisé lors
-de la construction de GCC. C'est-à-dire, tous les binaires finaux (et
-temporaires) créés lors de la construction seront liés à la nouvelle Glibc.</para>
+<screen><userinput>cp -v gcc/Makefile.in{,.tmp}
+sed 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
+  &gt; gcc/Makefile.in</userinput></screen>
 
-<beginpage/>
+    <para>Appliquez le correctif suivant pour changer l'emplacement par défaut
+    de l'éditeur de liens dynamiques de GCC (généralement
+    <filename class="libraryfile">ld-linux.so.2</filename>)&nbsp;:</para>
 
-<important><para>Les correctifs ci-dessus sont critiques pour assurer le
-succès de la construction. N'oubliez pas de les appliquer.</para></important>
+<screen><userinput>patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
 
-<para>De nouveau, créez un répertoire de construction séparé&nbsp;:</para>
+    <para>Le  correctif ci-dessus supprime aussi
+    <filename class="directory">/usr/include</filename> du chemin de recherche
+    des en-têtes
+    de GCC. Corriger maintenant plutôt qu'ajuster le fichier specs après
+    l'installation nous assure que l'éditeur de liens dynamiques sera utilisé
+    lors de la construction de GCC. C'est-à-dire, tous les binaires finaux (et
+    temporaires) créés lors de la construction seront liés à la nouvelle Glibc.</para>
+
+    <important>
+      <para>Les correctifs ci-dessus sont critiques pour s'assurer
+      une construction avec succès. N'oubliez pas de l'appliquer..</para>
+    </important>
+
+    <para>De nouveau, créez un répertoire de construction
+    séparé&nbsp;:</para>
 
 <screen><userinput>mkdir -v ../gcc-build
 cd ../gcc-build</userinput></screen>
 
-<para>Avant de commencer la construction de GCC, rappelez-vous de supprimer
-toute variable d'environnement surchargeant les options d'optimisation par
-défaut.</para>
+    <para>Avant de commencer la construction de GCC, rappelez-vous de désinitialiser
+    toute variable d'environnement surchargeant les options d'optimisation par
+    défaut.</para>
 
-<para>Maintenant, préparez la compilation de GCC&nbsp;:</para>
+    <para>Maintenant, préparez la compilation de GCC&nbsp;:</para>
 
 <screen><userinput>../gcc-&gcc-version;/configure --prefix=/tools \
-    --libexecdir=/tools/lib --with-local-prefix=/tools \
-    --enable-clocale=gnu --enable-shared \
-    --enable-threads=posix --enable-__cxa_atexit \
-    --enable-languages=c,c++ --disable-libstdcxx-pch</userinput></screen>
+    --with-local-prefix=/tools --enable-clocale=gnu \
+    --enable-shared --enable-threads=posix \
+    --enable-__cxa_atexit --enable-languages=c,c++ \
+    --disable-libstdcxx-pch</userinput></screen>
 
-<para>Voici la signification des nouvelles options de configure&nbsp;:</para>
+    <variablelist>
+      <title>Voici la signification des nouvelles options de configure&nbsp;:</title>
 
-<variablelist>
-<varlistentry>
-<term><parameter>--enable-clocale=gnu</parameter></term>
-<listitem><para>Cette option nous assure que le bon modèle de locale est
-sélectionné pour les bibliothèques C++ dans toutes les circonstances. Si le
-script configure trouve la locale <emphasis>de_DE</emphasis> installée, il
-sélectionnera le bon modèle de locale gnu. Cependant, si la locale
-<emphasis>de_DE</emphasis> n'est pas installée, il existe un risque de
-construire des bibliothèques C++ incompatibles avec ABI à cause du choix d'un
-mauvais modèle générique de locale.</para></listitem>
-</varlistentry>
+      <varlistentry>
+        <term><parameter>--enable-clocale=gnu</parameter></term>
+        <listitem>
+          <para>Cette option nous assure que le bon modèle de locale est
+          sélectionné pour les bibliothèques C++ sous toutes les circonstances. Si le
+          script configure trouve la locale <emphasis>de_DE</emphasis> installée, il
+          sélectionnera le bon modèle de locale gnu. Néanmoins, si la locale 
+          <emphasis>de_DE</emphasis> n'est pas installée, il existe un risque de
+          construire des bibliothèques C++ incompatibles avec ABI (Application
+          Binary Interface) à cause du choix d'un
+          mauvais modèle générique de locale.</para>
+        </listitem>
+      </varlistentry>
 
-<varlistentry>
-<term><parameter>--enable-threads=posix</parameter></term>
-<listitem><para>Ceci active la gestion des exceptions de C++ pour le code
-multi-threadé.</para></listitem>
-</varlistentry>
+      <varlistentry>
+        <term><parameter>--enable-threads=posix</parameter></term>
+        <listitem>
+          <para>Ceci active la gestion des exceptions C++ pour le code
+          multi-threadé.</para>
+        </listitem>
+      </varlistentry>
 
-<varlistentry>
-<term><parameter>--enable-__cxa_atexit</parameter></term>
-<listitem><para>Cette option autorise l'utilisation de
-<emphasis>__cxa_atexit</emphasis>, plutôt que de <emphasis>atexit</emphasis>,
-pour enregistrer les destructeurs C++ des objets statiques locaux et globaux.
-Cette option est essentielle pour une gestion des destructeurs entièrement compatible
-avec les standards. Il affecte aussi l'ABI C++ et permet donc des
-bibliothèques partagées et des programmes C++ interopérables avec les autres
-distributions Linux.</para></listitem>
-</varlistentry>
+      <varlistentry>
+        <term><parameter>--enable-__cxa_atexit</parameter></term>
+        <listitem>
+          <para>Cette option autorise l'utilisation de
+          <function>__cxa_atexit</function>, plutôt que
+          <function>atexit</function>, pour enregistrer les destructeurs C++ des objets statiques locaux et globaux.
+          Cette option est essentielle pour la gestion des destructeurs en compatibilité
+          complète avec les standards. Il affecte aussi l'ABI C++ et donc résulte en des
+          bibliothèques partagées et des programmes C++ interopérables avec les autres
+          distributions Linux.</para>
+        </listitem>
+      </varlistentry>
 
-<varlistentry>
-<term><parameter>--enable-languages=c,c++</parameter></term>
-<listitem><para>Cette option est nécessaire pour s'assurer que les compilateurs
-C et C++ seront construits.</para></listitem>
-</varlistentry>
+      <varlistentry>
+        <term><parameter>--enable-languages=c,c++</parameter></term>
+        <listitem>
+          <para>Cette option garantie que les compilateurs
+          C et C++ seront construits.</para>
+        </listitem>
+      </varlistentry>
 
-<varlistentry>
-<term><parameter>--disable-libstdcxx-pch</parameter></term>
-<listitem><para>Ce commutateur empêche la construction de l'en-tête précompilé
-(PCH) de <filename class="libraryfile">libstdc++</filename>. Il prend beaucoup
-d'espace et nous n'en avons aucune utilité.</para></listitem>
-</varlistentry>
-</variablelist>
+      <varlistentry>
+        <term><parameter>--disable-libstdcxx-pch</parameter></term>
+        <listitem>
+          <para>Ce commutateur empêche la construction de l'en-tête précompilé
+          (PCH) de
+          <filename class="libraryfile">libstdc++</filename>. Il prend beaucoup
+          d'espace et nous n'en avons aucune utilité.</para>
+        </listitem>
+      </varlistentry>
 
-<para>Compilez le paquet&nbsp;:</para>
+    </variablelist>
+
+    <para>Compilez le paquet&nbsp;:</para>
 
 <screen><userinput>make</userinput></screen>
 
-<para>Il n'est pas nécessaire d'utiliser la cible <parameter>bootstrap</parameter>
-maintenant car le compilateur utilisé pour compiler ce GCC a été construit avec
-exactement la même version des sources de GCC utilisées précédemment.</para>
+    <para>Il n'est pas nécessaire d'utiliser la cible 
+    <parameter>bootstrap</parameter> maintenant car le compilateur utilisé pour
+    compiler ce GCC a été construit avec
+    exactement la même version des sources de GCC utilisées précédemment.</para>
 
-<beginpage/>
-
-<para>La compilation est maintenant terminée. Comme mentionné plus tôt,
-lancer les suites de test pour les outils temporaires de ce chapitre n'est pas
-nécessaire. Néanmoins, pour exécuter la suite de tests de GCC, saisissez la
-commande suivante&nbsp;:</para>
+    <para>La compilation est maintenant terminée. Comme mentionné plus tôt,
+    lancer les suites de test pour les outils temporaires de ce chapitre n'est pas
+    nécessaire. Néanmoins, pour exécuter la suite de tests de GCC, lancez la
+    commande suivante&nbsp;:</para>
 
 <screen><userinput>make -k check</userinput></screen>
 
-<para>L'option <parameter>-k</parameter> impose à la suite de tests de
-s'exécuter entièrement sans s'arrêter au premier échec. 
-La suite de tests GCC est très complète et il est pratiquement garanti
-que certaines erreurs apparaîtront. Pour obtenir un résumé des résultats de la
-suite de tests, entrez &nbsp;:</para>
+    <para>L'option <parameter>-k</parameter> est utilisée pour faire en
+    sorte que toute la suite de tests est exécutée et qu'elle ne s'arrête
+    pas au premier échec. La suite de tests GCC est très complète et il est
+    pratiquement garanti que certaines erreurs apparaîtront.</para>
 
-<screen><userinput>../gcc-&gcc-version;/contrib/test_summary</userinput></screen>
+    <para>Pour des précisions sur l'échec de tests qui revêtent une importance 
+    particulière, merci de lire <xref linkend="ch-system-gcc" role="."/></para>
 
-<para>Pour un résumé plus court, envoyez la sortie dans un tube suivi de
-<userinput>grep -A7 Summ</userinput>.</para>
+    <para>Installez le paquet&nbsp;:</para>
 
-<para>Les résultats peuvent être comparés à ceux postés sur <ulink
-url="&test-results;"/>.</para>
-
-<para>Quelques échecs inattendus ne peuvent souvent pas être évités. Les
-développeurs GCC sont généralement au courant mais ne les ont pas encore
-résolus. À moins que vos tests soient grandement différents de ceux de l'URL
-ci-dessus, vous pouvez continuer sans crainte.</para>
-
-<para>Installez le paquet&nbsp;:</para>                                              
 <screen><userinput>make install</userinput></screen>
 
-<note><para>À ce moment, il est fortement recommandé de répéter la vérification
-que nous avions réalisée dans ce chapitre. Référez-vous à <xref
-linkend="ch-tools-adjusting"/> et répétez le test de compilation. Si le
-résultat est mauvais, la raison est probablement l'oubli de l'application
-du correctif "GCC Specs" mentionné ci-dessus.</para></note>
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="adjusting.xml"
+    xpointer="xpointer(/sect1/caution[1])"/>
 
-</sect2>
+  </sect2>
 
-<sect2 role="content"><title/>
-<para>Les détails sur ce paquet sont situés dans <xref
-linkend="contents-gcc" role="."/></para>
-</sect2>
+  <sect2 role="content">
+    <title/>
 
+    <para>Les détails sur ce paquet sont situés dans
+    <xref linkend="contents-gcc" role="."/></para>
+
+  </sect2>
 
 </sect1>
