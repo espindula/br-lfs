@@ -1,0 +1,105 @@
+#!/bin/sh
+# Begin /etc/init.d/checkfs
+
+### BEGIN INIT INFO
+# Provides:            checkfs
+# Required-Start:      udev swap $time
+# Should-Start:        lvm
+# Required-Stop:
+# Should-Stop:
+# Default-Start:       sysinit
+# Default-Stop:
+# Short-Description:   Checks local filesystems before mounting.
+# Description:         Checks local filesystmes before mounting.
+# X-LFS-Default-Start: S30
+# X-LFS-Default-Stop:
+# X-LFS-Provided-By:   LFS
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+case "${1}" in
+    start)
+        if [ -f /fastboot ]; then
+            echo "${INFO}/fastboot found!"
+            log_success_msg "Will not perform file system checks as requested."
+            exit 0
+        fi
+
+        mount -n -o remount,ro / >/dev/null
+        if [ ${?} != 0 ]
+        then
+            log_failure_msg "Mounting root file system in read-only mode"
+            echo "${FAILURE}FAILURE:\n"
+            echo -n "${FIALURE}Cannot check root filesystem because it "
+            echo "${FAILURE}could not be mounted"
+            echo "${FAILURE}in read-only mode.\n\n"
+            echo -n "${FAILURE}After you press Enter, this system will be "
+            echo "${FAILURE}halted and powered off.\n"
+            echo "${INFO}Press enter to continue...${NORMAL}"
+            read ENTER
+            /etc/rc.d/init.d/halt stop
+        fi
+
+        if [ -f /forcefsck ]
+        then
+            echo "${INFO}/forcefsck found!"
+            log_success_msg "${INFO}Forcing file system checks as requested."
+            options="-f"
+        else
+            options=""
+        fi
+
+        # Note: -a option used to be -p; but this fails e.g.
+        # on fsck.minix
+        fsck ${options} -a -A -C -T
+        error_value=${?}
+
+        if [ "${error_value}" = 0 ]
+        then
+            log_success_msg "Checking file systems..."
+        elif [ "${error_value}" = 1 ]
+        then
+            log_warning_msg "Checking file systems..."
+            echo "${WARNING}WARNING:\n"
+            echo "${WARNING}File system errors were found and have been"
+            echo "${WARNING}corrected.  You may want to double-check that"
+            echo "${WARNING}everything was fixed properly.${NORMAL}"
+        elif [ "${error_value}" = 2 -o "${error_value}" = 3 ]; then
+            log_warning_msg "Checking file systems..."
+            echo "${WARNING}WARNING:\n"
+            echo "${WARNING}File system errors were found and have been been"
+            echo "${WARNING}corrected, but the nature of the errors require"
+            echo "${WARNING}this system to be rebooted.\n"
+            echo "After you press enter, this system will be rebooted.\n"
+            echo "${INFO}Press Enter to continue...${NORMAL}"
+            read ENTER
+            reboot -f
+        elif [ "${error_value}" -gt 3 -a "${error_value}" -lt 16 ]; then
+            log_failure_msg "Checking file systems..."
+            echo "${FAILURE}FAILURE:\n"
+            echo "${FAILURE}File system errors were encountered that could"
+            echo "${FAILURE}not be fixed automatically.  This system cannot"
+            echo "${FAILURE}continue to boot and will therefore be halted"
+            echo "${FAILURE}until those errors are fixed manually by a"
+            echo "${FAILURE}System Administrator.\n"
+            echo "${FAILURE}After you press Enter, this system will be"
+            echo "${FAILURE}halted and powered off.\n"
+            echo "${INFO}Press Enter to continue...${NORMAL}"
+            read ENTER
+            /etc/rc.d/init.d/halt stop
+        elif [ "${error_value}" -ge 16 ]; then
+            log_failure_msg "Checking file systems..."
+            echo "${FAILURE}FAILURE:\n"
+            echo "${FAILURE}Unexpected Failure running fsck.  Exited with error"
+            echo "${FAILURE}code: ${error_value}.${NORMAL}"
+            exit ${error_value}
+        fi
+        ;;
+    *)
+        echo "Usage: ${0} {start}"
+        exit 1
+        ;;
+esac
+
+# End /etc/init.d/checkfs

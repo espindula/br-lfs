@@ -1,0 +1,71 @@
+#!/bin/sh
+# Begin /etc/init.d/sysklogd
+
+### BEGIN INIT INFO
+# Provides:            $syslog
+# Required-Start:      localnet
+# Should-Start:
+# Required-Stop:       $network
+# Should-Stop:
+# Default-Start:       2 3 4 5
+# Default-Stop:        0 1 6
+# Short-Description:   Starts kernel and system log daemons.
+# Description:         Starts kernel and system log daemons.
+#                      /etc/fstab.
+# X-LFS-Default-Start: S10
+# X-LFS-Default-Stop:  K90
+# X-LFS-Provided-By:   LFS
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+case "${1}" in
+    start)
+        MESSAGE="system log daemon..."
+        start_daemon /usr/sbin/syslogd -m 0
+        evaluate_retval start
+
+        MESSAGE="kernel log daemon..."
+        start_daemon /usr/sbin/klogd
+        evaluate_retval start
+        ;;
+
+    stop)
+        MESSAGE="kernel log daemon..."
+        killproc /usr/sbin/klogd
+        evaluate_retval stop
+
+        MESSAGE="system log daemon..."
+        killproc /usr/sbin/syslogd
+        evaluate_retval stop
+        ;;
+
+    force-reload)
+        MESSAGE="system log daemon config file..."
+        killproc -HUP `/usr/sbin/syslogd`
+        evaluate_retval reload
+        ;;
+
+    restart)
+        MESSAGE="system and kernel log deamons..."
+        failed=0
+        killproc /usr/sbin/klogd || failed=1
+        killproc /usr/sbin/syslogd || failed=1
+        start_daemon /usr/sbin/syslogd -m 0 || failed=1
+        start_daemon /usr/sbin/klogd || failed=1
+        (exit ${failed})
+        evaluate_retval restart
+        ;;
+
+    status)
+        statusproc /usr/sbin/syslogd
+        statusproc /usr/sbin/klogd
+        ;;
+
+    *)
+        echo "Usage: ${0} {start|stop|force-reload|restart|status}"
+        exit 1
+        ;;
+esac
+
+# End /etc/init.d/sysklogd

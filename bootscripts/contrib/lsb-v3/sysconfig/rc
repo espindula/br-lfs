@@ -1,0 +1,52 @@
+# Begin /etc/sysconfig/rc
+
+# Author: DJ Lucas - dj@linuxfromscratch.org
+# Version: 1.0 LSB V.3.1
+
+# Global variable inherited by initscripts are in caps
+# Local variables for the rc script are in lowercase
+
+# Source site specific rc configuration
+. /etc/sysconfig/rc.site
+
+# This sets default terminal options.
+# stty sane - this has been removed as nobody recalls
+# the reason for it in the first place - if no problems arize,
+# then it will be removed completely at a later date.
+
+# Setup default values for the environment
+umask 022
+PATH="/bin:/sbin"
+
+# Find current screen size
+if [ -z "${COLUMNS}" ]; then
+        COLUMNS=$(stty size)
+        COLUMNS=${COLUMNS##* }
+fi
+
+# When using remote connections, such as a serial port, stty size returns 0
+if [ "${COLUMNS}" = "0" ]; then
+        COLUMNS=80
+fi
+
+## Measurements for positioning result messages
+COL=$((${COLUMNS} - 8))
+WCOL=$((${COL} - 2))
+
+# Set Cursur Position Commands, used via echo -e
+SET_COL="\\033[${COL}G"      # at the $COL char
+SET_WCOL="\\033[${WCOL}G"    # at the $WCOL char
+CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
+
+# Bootlogging and interactive startup require a valid tempfs mount
+# if this mount is not present, disable them
+if [ "${TEMPFS_MOUNT}" = "" -o ! -d "${TEMPFS_MOUNT}" ]; then
+    TEMPFS_MOUNT=""
+    iprompt=""
+    BOOTLOG_ENAB=""
+fi
+
+# Export the environment variables so they are inherited by the scripts
+export PATH SET_COL SET_WCOL CURS_UP TEMPFS_MOUNT BOOTLOG_ENAB RUNLEVEL
+
+# End /etc/sysconfig/rc

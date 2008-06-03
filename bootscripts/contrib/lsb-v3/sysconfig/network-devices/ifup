@@ -1,0 +1,87 @@
+#!/bin/sh
+########################################################################
+# Begin $NETWORK_DEVICES/ifup
+#
+# Description : Interface Up
+#
+# Authors     : Nathan Coulson - nathan@linuxfromscratch.org
+#               Kevin P. Fleming - kpfleming@linuxfromscratch.org
+#
+# Version     : 00.00
+#
+# Notes       : the IFCONFIG variable is passed to the scripts found
+#               in the services directory, to indicate what file the
+#               service should source to get environmental variables.
+#
+########################################################################
+
+. /lib/lsb/init-functions 
+
+# Collect a list of configuration files for our interface
+if [ -n "${2}" ]; then
+    for file in ${@#$1} # All parameters except $1
+  do
+        FILES="${FILES} ${NETWORK_DEVICES}/ifconfig.${1}/${file}"
+    done
+elif [ -d "${NETWORK_DEVICES}/ifconfig.${1}" ]; then
+    FILES=`echo ${NETWORK_DEVICES}/ifconfig.${1}/*`
+else 
+    FILES="${NETWORK_DEVICES}/ifconfig.${1}"
+fi
+
+message="Bringing up the ${1} interface..."
+
+# Process each configruation file
+for file in ${FILES}; do
+    # skip backup files
+    if [ "${file}" != "${file%""~""}" ]; then
+        continue
+    fi
+
+    if [ ! -f "${file}" ]; then
+        log_warning_msg
+        message="${file} is not a network configuration file or directory."
+        log_warning_msg
+    fi
+
+    (
+        . ${file}
+
+        # Will not process this service if started by boot, and ONBOOT
+        # is not set to yes
+        if [ "${IN_BOOT}" = "1" -a "${ONBOOT}" != "yes" ]; then
+            continue
+        fi
+        # Will not process this service if started by hotplug, and 
+        # ONHOTPLUG is not set to yes
+        if [ "${IN_HOTPLUG}" = "1" -a "${ONHOTPLUG}" != "yes" -a "${HOSTNAME}" != "(none)" ]; then
+             continue
+        fi
+
+        if [ -n "${SERVICE}" -a -x "${NETWORK_DEVICES}/services/${SERVICE}" ]; then
+            if [ -z "${CHECK_LINK}" -o "${CHECK_LINK}" = "y" -o "${CHECK_LINK}" = "yes" -o "${CHECK_LINK}" = "1" ]; then
+                if ip link show ${1} > /dev/null 2>&1; then
+                    link_status=`ip link show ${1}`
+                    if [ -n "${link_status}" ]; then
+                        if ! echo "${link_status}" | grep -q UP; then
+                            ip link set ${1} up
+                            evaluate_retval standard
+                        fi
+                    fi
+                else
+                    message="${message}Interface ${1} doesn't exist."
+                    log_warning_msg
+                fi
+            fi
+            IFCONFIG=${file} ${NETWORK_DEVICES}/services/${SERVICE} ${1} up
+        else
+            echo -e "${FAILURE}Unable to process ${file}.  Either"
+            echo -e "${FAILURE}the SERVICE variable was not set,"
+            echo -e "${FAILURE}or the specified service cannot be executed."
+            message=""
+            log_failure_msg
+        fi
+    )
+done
+
+# End $NETWORK_DEVICES/ifup
