@@ -1,11 +1,12 @@
 #!/bin/sh
 
+# Boot scripts
 for s in bootscripts/lfs/init.d/*                    \
          bootscripts/lfs/sysconfig/*                 \
          bootscripts/lfs/sysconfig/network-devices/* \
          bootscripts/lfs/sysconfig/network-devices/services/*
 do
-  script=`basename $s`
+  script=$(basename $s)
   
   # Skip directories
   [ $script == 'network-devices' ] && continue
@@ -20,3 +21,12 @@ do
        $s > appendices/${script}.script 
 done
 
+# Udev rules
+for s in udev-config/*.rules
+do
+  script=$(basename $s)
+
+  sed  -e 's/\&/\&amp\;/g' -e 's/</\&lt\;/g'   -e 's/>/\&gt\;/g' \
+       -e "s/'/\&apos\;/g" -e 's/"/\&quot\;/g' -e 's/\t/    /g'  \
+       $s > appendices/${script}.script 
+done
