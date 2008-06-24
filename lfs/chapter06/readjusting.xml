@@ -1,106 +1,143 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
-"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
+
 <sect1 id="ch-system-readjusting">
-<title>Ré-ajustement de l'ensemble d'outils</title>
-<?dbhtml filename="readjusting.html"?>
+  <?dbhtml filename="readjusting.html"?>
 
-<para>Maintenant que les bibliothèques C finales ont été
-installées, il est temps d'ajuster de nouveau l'ensemble d'outils. L'ensemble
-d'outils sera ajusté de façon à ce qu'il lie tout programme nouvellement
-compilé avec ces nouvelles bibliothèques. C'est le même processus que celui
-utilisé dans la phase <quote>Ajustement</quote> au début du <xref
-linkend="chapter-temporary-tools"/>, avec les ajustements inversés. Dans <xref
-linkend="chapter-temporary-tools"/>, l'ensemble était passé des répertoires
-<filename class="directory">/{,usr/}lib</filename> de l'hôte dans le nouveau
-répertoire <filename class="directory">/tools/lib</filename>. Maintenant,
-l'ensemble sera guidé du même répertoire <filename
-class="directory">/tools/lib</filename> vers les répertoires
-<filename class="directory">/{,usr/}lib</filename> de LFS.</para>
+  <title>Ré-ajustement de l'ensemble d'outils</title>
 
-<para>Commencez en ajustant l'éditeur de liens. Les répertoires des sources et
-de construction de la deuxième passe de Binutils ont été conservés dans ce 
-but. Installez l'éditeur de liens ajusté en exécutant la commande suivante à
-partir du répertoire <filename
-class="directory">binutils-build</filename>&nbsp;:</para>
+  <para>Maintenant que les bibliothèques C finales ont été
+  installées, il est temps d'ajuster de nouveau l'ensemble d'outils. L'ensemble
+  d'outils sera ajusté de façon à ce qu'il lie tout programme nouvellement
+  compilé avec ces nouvelles bibliothèques. C'est le même processus que celui
+  utilisé dans la phase d'<quote>ajustement</quote> au début du
+  <xref linkend="chapter-temporary-tools"/>, avec les ajustements inversés. Dans
+  <xref linkend="chapter-temporary-tools"/>, l'ensemble était passé des répertoires
+  <filename class="directory">/{,usr/}lib</filename> de l'hôte dans le nouveau
+  répertoire <filename class="directory">/tools/lib</filename>. Maintenant,
+  l'ensemble sera guidé du même répertoire <filename class="directory">/tools/lib</filename>
+   vers les répertoires <filename class="directory">/{,usr/}lib</filename>.</para>
 
-<screen><userinput>make -C ld INSTALL=/tools/bin/install install</userinput></screen>
+  <para>D'abord, sauvegardez l'éditeur de liens 
+  <filename class="directory">/tools</filename>, et remplacez-le par l'éditeur de
+  lien ajusté que nous avons fait au chapitre 5. Nous créerons aussi 
+  un lien vers son équivalent dans 
+  a <filename class="directory">/tools/$(gcc
+  -dumpmachine)/bin</filename>&nbsp;:</para>
 
-<note><para>Si le précédent avertissement pour conserver les répertoires des
-sources et de construction de Binutils lors de la deuxième passe dans <xref
-linkend="chapter-temporary-tools"/> a été oublié, ou s'ils ont été
-accidentellement supprimés ou rendus inaccessibles, ignorez la commande
-ci-dessus. Le résultat en sera que le prochain paquet, Binutils, sera lié aux
-bibliothèques C dans <filename class="directory">/tools</filename> plutôt que
-dans <filename class="directory">/{,usr/}lib</filename>. Ceci n'est pas idéal.
-Néanmoins, les tests ont montrés que les binaires Binutils résultants devraient
-être identiques.</para></note>
+<screen><userinput>mv -v /tools/bin/{ld,ld-old}
+mv -v /tools/$(gcc -dumpmachine)/bin/{ld,ld-old}
+mv -v /tools/bin/{ld-new,ld}
+ln -sv /tools/bin/ld /tools/$(gcc -dumpmachine)/bin/ld</userinput></screen>
 
-<para>À partir de maintenant, chaque programme compilé sera lié avec les
-bibliothèques de <filename class="directory">/usr/lib</filename> et de
-<filename class="directory">/lib</filename>. L'option supplémentaire
-<parameter>INSTALL=/tools/bin/install</parameter> est nécessaire car le fichier
-<filename>Makefile</filename> créé lors de la seconde passe contient toujours
-la référence à <command>/usr/bin/install</command>, qui n'a pas encore été
-installé. Quelques distributions hôtes contiennent un lien symbolique <filename
-class="symlink">ginstall</filename> qui est prioritaire dans le fichier
-<filename>Makefile</filename> et peut cause un problème. La commande ci-dessus
-tient compte de ce problème.</para>
+  <para>Puis, modifiez le fichier des specs GCC afin qu'il pointe vers 
+  le nouvel éditeur de liens dynamiques, et que GCC sache où trouver les
+  en-têtes corrects et les fichiers de démarrage de Glibc. Une commande
+  <command>sed</command> fait cela&nbsp;:</para>
 
-<para>Supprimez les répertoires des sources et de construction de Binutils
-maintenant.</para>
+  <important>
+    <para>Si vous travaillez sur une plateforme où le nom de 
+    l'éditeur de liens est différent de
+    <filename class="libraryfile">ld-linux.so.2</filename>, remplacez
+    <quote>ld-linux.so.2</quote> par le nom de l'éditeur de liens dynamiques
+    de la plateforme dans les commandes suivantes. Reportez-vous à
+    <xref linkend="ch-tools-toolchaintechnotes" role=","/> si nécessaire.</para>
+  </important>
 
-<para>Ensuite, modifiez le fichier specs de GCC pour qu'il pointe sur le nouvel
-éditeur de liens. Une commande <command>perl</command> accomplit ceci&nbsp;:</para>
+<screen><userinput>gcc -dumpspecs | sed \
+    -e 's@/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' \
+    -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
+    -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' &gt; \
+    `dirname $(gcc --print-libgcc-file-name)`/specs</userinput></screen>
 
-<screen><userinput>perl -pi -e 's@ /tools/lib/ld-linux.so.2@ /lib/ld-linux.so.2@g;' \
-    -e 's@\*startfile_prefix_spec:\n@$_/usr/lib/ @g;' \
-        `gcc --print-file specs`</userinput></screen>
+  <para>C'est une bonne idée d'examiner visuellement le fichier de specs 
+  pour vérifier que le changement voulu a bien été effectué.</para>
 
-<para>C'est une bonne idée d'inspecter visuellement le fichier specs pour
-vérifier que les modifications attendues ont réellement été effectuées.</para>
+  <para>Il est impératif à ce moment d'arrêter et de vous assurer que les
+  fonctions basiques (compilation et édition des liens) de l'ensemble des
+  outils ajusté fonctionnent comme attendu. Pour cela, réalisez une petite
+  vérification&nbsp;:</para>
 
-<important><para>En travaillant sur une plateforme où le nom de l'éditeur de
-liens est quelque chose d'autres que <filename
-class="libraryfile">ld-linux.so.2</filename>, substituez
-<quote>ld-linux.so.2</quote> par le nom de l'éditeur de liens dans les
-commandes suivantes. Référez-vous à <xref
-linkend="ch-tools-toolchaintechnotes" role=","/> si
-nécessaire.</para></important>
-
-<beginpage/>
-
-<caution><para>Il est impératif à ce moment d'arrêter et de vous assurer que le
-s fonctions basiques (compilation et édition des liens) de l'ensemble des
-outils ajusté fonctionnent comme attendu. Pour cela, réalisez une petite
-vérification&nbsp;:</para>
-
-<screen><userinput>echo 'main(){}' &gt; dummy.c
-cc dummy.c
+<screen os="a"><userinput>echo 'main(){}' &gt; dummy.c
+cc dummy.c -v -Wl,--verbose &amp;&gt; dummy.log
 readelf -l a.out | grep ': /lib'</userinput></screen>
 
-<para>Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et
-la sortie de la commande sera (avec des différences spécifiques aux plateformes
-dans le nom de l'éditeur de liens)&nbsp;:</para>
+  <para os="b">Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et
+  la sortie de la commande sera (avec des différences spécifiques aux plateformes
+  dans le nom de l'éditeur de liens)&nbsp;:</para>
 
-<screen><computeroutput>[Requesting program interpreter: /lib/ld-linux.so.2]</computeroutput></screen>
+<screen os="c"><computeroutput>[Requesting program interpreter: /lib/ld-linux.so.2]</computeroutput></screen>
 
-<para>Notez que <filename class="directory">/lib</filename> est maintenant le
-préfixe de notre éditeur de liens.</para>
+  <para>Notez que <filename class="directory">/lib</filename> est maintenant le
+  préfixe de notre éditeur de liens.</para>
 
-<para>Si la sortie n'apparaît pas comme ce qui est montré ci-dessus ou si
-aucune sortie n'est renvoyée, alors quelque chose s'est mal passé. Investiguez
-et retracez les étapes pour savoir d'où vient le problème et comment le
-corriger. La raison la plus probable est que quelque chose s'est mal passé lors
-de la modification du fichier specs ci-dessus. Tout problème devra être résolu
-avant de continuer le processus.</para>
+  <para os="d">Maintenant, assurez-vous que nous utilisons les
+  bons fichiers de démarrage&nbsp;:</para>
 
-<para>Une fois que tout fonctionne correctement, nettoyez les fichiers
-tests&nbsp;:</para>
+<screen os="e"><userinput>grep -o '/usr/lib.*/crt[1in].*succeeded' dummy.log</userinput></screen>
 
-<screen><userinput>rm -v dummy.c a.out</userinput></screen></caution>
+  <para os="f">Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs
+  et la sortie de la dernière commande sera&nbsp;:</para>
+
+<screen><computeroutput>/usr/lib/crt1.o succeeded
+/usr/lib/crti.o succeeded
+/usr/lib/crtn.o succeeded</computeroutput></screen>
+
+  <para os="g">Vérifiez que le compilateur cherche les bons fichiers
+  d'en-tête&nbsp;:</para>
+
+<screen><userinput>grep -B1 '^ /usr/include' dummy.log</userinput></screen>
+
+  <para os="h">Cette commande devrait réussir avec la sortie suivante&nbsp;:</para>
+
+<screen><computeroutput>#include &lt;...&gt; search starts here:
+ /usr/include</computeroutput></screen>
+
+  <para os="i">Puis, vérifiez que le nouvel éditeur de liens est utilisé
+  avec les bons chemins de recherche&nbsp;:</para>
+
+<screen os="j"><userinput>grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'</userinput></screen>
+
+  <para os="k">Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs
+  et la sortie de la dernière commande sera&nbsp;:</para>
+
+<screen><computeroutput>SEARCH_DIR("/tools/i686-pc-linux-gnu/lib")
+SEARCH_DIR("/usr/lib")
+SEARCH_DIR("/lib");</computeroutput></screen>
+
+  <para os="l">Ensuite, assurez-vous que nous utilisons la bonne libc&nbsp;:</para>
+
+<screen os="m"><userinput>grep "/lib/libc.so.6 " dummy.log</userinput></screen>
+
+  <para os="n">Si tout fonctionne correctement, il ne devrait pas y avoir d'erreur
+    et la sortie de la dernière commande sera&nbsp;:</para>
+
+<screen os="o"><computeroutput>attempt to open /lib/libc.so.6 succeeded</computeroutput></screen>
+
+  <para os="p">Pour finir, assurez-vous que GCC utilise le bon éditeur de liens dynamiques&nbsp;:</para>
+
+<screen os="q"><userinput>grep found dummy.log</userinput></screen>
+
+  <para os="r">Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et
+  la sortie de la commande sera (avec des différences spécifiques aux plateformes
+  dans le nom de l'éditeur de liens)&nbsp;:</para>
+
+<screen os="s"><computeroutput>found ld-linux.so.2 at /lib/ld-linux.so.2</computeroutput></screen>
+
+  <para os="t">Si la sortie n'apparaît pas comme montré ci-dessus ou 
+  qu'elle n'apparaît pas du tout, alors quelque chose ne va vraiment pas.
+  Investiguez et retracez les étapes pour savoir d'où vient le problème et comment le
+  corriger. La raison la plus probable est que quelque chose s'est mal passé lors
+  de la modification du fichier specs ci-dessus. Tout problème devra être résolu
+  avant de continuer le processus.</para>
+
+  <para os="u">Une fois que tout fonctionne correctement, nettoyez les fichiers
+  tests&nbsp;:</para>
+
+<screen os="v"><userinput>rm -v dummy.c a.out dummy.log</userinput></screen>
 
 </sect1>

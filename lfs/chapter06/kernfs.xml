@@ -1,38 +1,90 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
+
 <sect1 id="ch-system-kernfs">
-<title>Monter les systèmes de fichiers virtuels du noyau</title>
-<?dbhtml filename="kernfs.html"?>
+  <?dbhtml filename="kernfs.html"?>
 
-<para>Différents systèmes de fichiers exportés par le noyau sont utilisés pour
-communiquer avec le noyau. Ces systèmes de fichiers sont virtuels par le fait
-qu'aucun espace disque n'est utilisé pour eux. Le contenu de ces systèmes de
-fichiers réside en mémoire.</para>
+  <title>Préparer les systèmes de fichiers virtuels du noyau</title>
 
-<para>Commencez en créant les répertoires dans lesquels les systèmes de fichiers
-seront montés&nbsp;:</para>
+  <indexterm zone="ch-system-kernfs">
+    <primary sortas="e-/dev/">/dev/*</primary>
+  </indexterm>
 
-<screen><userinput>mkdir -pv $LFS/{proc,sys}</userinput></screen>
+    <para>Différents systèmes de fichiers exportés par le noyau sont
+    utilisés pour communiquer avec le noyau. Ces systèmes de fichiers
+    sont virtuels par le fait qu'aucun espace disque n'est utilisé pour
+    eux. Le contenu de ces systèmes de fichiers réside en
+    mémoire.</para>
 
-<para>Maintenant, montez les systèmes de fichiers&nbsp;:</para>
+    <para>Commencez en créant les répertoires dans lesquels les systèmes
+    de fichiers seront montés&nbsp;:</para>
 
-<screen><userinput>mount -vt proc proc $LFS/proc
+<screen><userinput>mkdir -pv $LFS/{dev,proc,sys}</userinput></screen>
+
+  <sect2>
+    <title>Création des noeuds initiaux vers les périphériques</title>
+
+    <para>Quand le noyau démarre le système, il a besoin de la présence
+    de quelques noeuds de périphériques, en particulier les périphériques
+    <filename class="devicefile">console</filename> et
+
+    <filename class="devicefile">null</filename>. Les noeuds de
+    périphériques vont être créés sur le disque dur afin d'être
+    disponible avant que <command>udevd</command> n'ait été démarré et
+    aussi quand Linux est démarré avec
+    <parameter>init=/bin/bash</parameter>. Créez les périphériques en
+    exécutant les commandes suivantes&nbsp:</para>
+
+<screen><userinput>mknod -m 600 $LFS/dev/console c 5 1
+mknod -m 666 $LFS/dev/null c 1 3</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="ch-system-bindmount">
+    <title>Monter et peupler /dev</title>
+
+    <para>La méthode recommandée pour peupler le répertoire 
+
+    <filename class="directory">/dev</filename> de périphériques est de
+    monter un système de fichiers virtuel (comme
+
+    <systemitem class="filesystem">tmpfs</systemitem>) sur le répertoire 
+
+    <filename class="directory">/dev</filename>, et d'autoriser la
+création dynamique des périphériques sur le système de fichiers virtuel
+une fois qu'ils sont détectés ou que quelque chose tente d'y accéder.
+Ceci est fait généralement lors du démarrage. Comme ce nouveau système
+n'a pas encore été démarré, il est nécessaire de
+monter et de peupler
+
+    <filename class="directory">/dev</filename> manuellement. Cela se
+    fait en montant en double le répertoire
+
+    <filename class="directory">/dev</filename> du système hôte. Le
+    montage en double est un type spécial de montage qui vous permet de
+    créer le miroir d'un répertoire ou d'un point de montage à un autre
+    endroit. Utilisez la commande suivante pour réaliser cela&nbsp;:</para>
+
+<screen><userinput>mount -v --bind /dev $LFS/dev</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="ch-system-kernfsmount"> 
+
+    <title>Monter les systèmes de fichiers virtuels du noyau</title>
+
+      <para>Maintenant montez les systèmes de fichiers virtuels du noyau
+      qui en résultent&nbsp;:</para>
+
+<screen><userinput>mount -vt devpts devpts $LFS/dev/pts
+mount -vt tmpfs shm $LFS/dev/shm
+mount -vt proc proc $LFS/proc
 mount -vt sysfs sysfs $LFS/sys</userinput></screen>
 
-<para>Rappelez-vous que si vous stoppez le système LFS et que vous le relancez,
-il est important de vérifier que ces systèmes de fichiers sont montés avant
-d'entrer dans l'environnement chroot.</para>
-
-<para>Des systèmes de fichiers supplémentaires seront bientôt montés à
-l'intérieur de l'environnement chroot. Pour garder l'hôte à jour, réalisez un
-<quote>faux montage</quote> pour chacun d'entre eux maintenant&nbsp;:</para>
-
-<screen><userinput>mount -vft tmpfs tmpfs $LFS/dev
-mount -vft tmpfs tmpfs $LFS/dev/shm
-mount -vft devpts -o gid=4,mode=620 devpts $LFS/dev/pts</userinput></screen>
+  </sect2>
 
 </sect1>
-

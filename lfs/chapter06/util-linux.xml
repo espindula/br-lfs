@@ -1,706 +1,789 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
-"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
+
 <sect1 id="ch-system-util-linux" role="wrap">
-<title>Util-linux-&util-linux-version;</title>
-<?dbhtml filename="util-linux.html"?>
+  <?dbhtml filename="util-linux.html"?>
 
-<indexterm zone="ch-system-util-linux"><primary
-sortas="a-Util-linux">Util-linux</primary></indexterm>
+  <title>Util-linux-&util-linux-version;</title>
 
-<sect2 role="package"><title/>
-<para>Le paquet Util-linux contient différents outils. Parmi eux se trouvent
-des outils de gestion des systèmes de fichiers, de consoles, de partitions et
-des messages.</para>
+  <indexterm zone="ch-system-util-linux">
+    <primary sortas="a-Util-linux">Util-linux</primary>
+  </indexterm>
 
-<segmentedlist>
-<segtitle>&buildtime;</segtitle>
-<segtitle>&diskspace;</segtitle>
-<seglistitem><seg>0,2&nbsp;SBU</seg><seg>11,6&nbsp;Mo</seg></seglistitem>
-</segmentedlist>
+  <sect2 role="package">
+    <title/>
 
-<segmentedlist>
-<segtitle>&dependencies;</segtitle>
-<seglistitem><seg>Bash, Binutils, Coreutils, Diffutils, GCC, Gettext, Glibc,
-Grep, Make, Ncurses, Sed et Zlib</seg></seglistitem>
-</segmentedlist>
-</sect2>
+    <para>Le paquet Util-linux contient différents outils. Parmi eux se
+    trouvent des outils de gestion des systèmes de fichiers, de
+    consoles, de partitions et des messages.</para>
 
-<sect2 role="installation">
-<title>Notes de compatibilité FHS</title>
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
 
-<para>Le FHS recommande d'utiliser <filename
-class="directory">/var/lib/hwclock</filename> au lieu de l'habituel
-<filename class="directory">/etc</filename> comme emplacement du fichier
-<filename>adjtime</filename>. Pour rendre <command>hwclock</command> compatible
-avec le FHS, lancez ce qui suit&nbsp;:</para>
+      <seglistitem>
+        <seg>&util-linux-ch6-sbu;</seg>
+        <seg>&util-linux-ch6-du;</seg>
+      </seglistitem>
+    </segmentedlist>
 
-<screen><userinput>sed -i 's@etc/adjtime@var/lib/hwclock/adjtime@g' \
-    hwclock/hwclock.c
-mkdir -p /var/lib/hwclock</userinput></screen>
+  </sect2>
 
-</sect2>
+  <sect2 role="installation">
+    <title>Notes de compatibilité FHS</title>
 
-<sect2 role="installation">
-<title>Installation d'Util-linux</title>
+    <para>Le FHS recommande d'utiliser le répertoire
 
-<para>Util-linux échoue lors de sa compilation avec les nouvelles versions de
-Linux-Libc-Headers. Le correctif suivant corrige proprement ce
-problème&nbsp;:</para>
+    <filename class="directory">/var/lib/hwclock</filename> au lieu de
+    l'habituel <filename class="directory">/etc</filename> comme
+    emplacement du fichier <filename>adjtime</filename>. Pour rendre 
+    <command>hwclock</command> compatible avec le FHS, lancez ce qui
+    suit&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../&util-linux-cramfs-patch;</userinput></screen>
+<screen><userinput>sed -e 's@etc/adjtime@var/lib/hwclock/adjtime@g' \
+    -i $(grep -rl '/etc/adjtime' .)
+mkdir -pv /var/lib/hwclock</userinput></screen>
 
-<para>Util-linux a une faille de sécurité qui pourrait permettre à un utilisateur
-de remonter un volume sans l'option <option>nosuid</option>. Le correctif suivant
-s'occupe de ce problème&nbsp;:</para>
+  </sect2>
 
-<screen><userinput>patch -Np1 -i ../&util-linux-umount-patch;</userinput></screen>
+  <sect2 role="installation">
+    <title>Installation de Util-linux</title>
 
-<para>Préparez la compilation d'Util-linux&nbsp;:</para>
+    <para>Util-linux échoue lors de sa compilation avec les nouvelles
+    versions des en-têtes du noyau Linux. Les correctifs suivants
+    corrigent proprement ce problème&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&util-linux-cramfs-patch;
+patch -Np1 -i ../&util-linux-lseek-patch;</userinput></screen>
+
+    <para>Préparez la compilation d'Util-linux&nbsp;:</para>
 
 <screen><userinput>./configure</userinput></screen>
 
-<para>Compilez le paquet&nbsp;:</para>
+    <para>Compilez le paquet&nbsp;:</para>
 
 <screen><userinput>make HAVE_KILL=yes HAVE_SLN=yes</userinput></screen>
 
-<para>Voici la signification des paramètres de make&nbsp;:</para>
-
-<variablelist>
-<varlistentry>
-<term><parameter>HAVE_KILL=yes</parameter></term>
-<listitem><para>Ceci empêche le programme <command>kill</command> (déjà
-installé par Procps) d'être construit et installé de nouveau.</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><parameter>HAVE_SLN=yes</parameter></term>
-<listitem><para>Ceci empêche le programme <command>sln</command> (un
-<command>ln</command> lié statiquement déjà installé par Glibc) d'être
-construit et installé de nouveau.</para></listitem>
-</varlistentry>
-</variablelist>
-
-<para>Ce paquetage ne vient pas avec une suite de tests.</para>
-
-<para>Installez le paquetage et déplacez le binaire <command>logger</command>
-dans <filename class="directory">/bin</filename> car il est nécessaire pour le
-paquetage LFS-Bootscripts&nbsp;:</para>
-
-<screen><userinput>make HAVE_KILL=yes HAVE_SLN=yes install
-mv /usr/bin/logger /bin</userinput></screen>
-
-</sect2>
-
-<sect2 id="contents-utillinux" role="content"><title>Contenu
-d'Util-linux</title>
-
-<segmentedlist>
-<segtitle>Programmes installés</segtitle>
-<seglistitem><seg>agetty, arch, blockdev, cal, cfdisk, chkdupexe, col, colcrt, 
-colrm, column, ctrlaltdel, cytune, ddate, dmesg, elvtune, fdformat, fdisk, 
-fsck.cramfs, fsck.minix, getopt, hexdump, hwclock, ipcrm, ipcs, isosize, line, 
-logger, look, losetup, mcookie, mkfs, mkfs.bfs, mkfs.cramfs, mkfs.minix,
-mkswap, more, mount, namei, pg, pivot_root, ramsize (lien vers rdev), raw,
-rdev, readprofile, rename, renice, rev, rootflags (lien vers rdev), script,
-setfdprm, setsid, setterm, sfdisk, swapdev, swapoff (lien vers swapon), swapon,
-tunelp, ul, umount, vidmode (lien vers rdev), whereis et
-write</seg></seglistitem>
-</segmentedlist>
-
-<variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
-<?dbfo list-presentation="list"?>
-<?dbhtml list-presentation="table"?>
-
-<varlistentry id="agetty">
-<term><command>agetty</command></term>
-<listitem>
-<para>Ouvre un port tty, demande un nom de connexion puis appelle le programme
-<command>login</command></para>
-<indexterm zone="ch-system-util-linux agetty"><primary
-sortas="b-agetty">agetty</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="arch">
-<term><command>arch</command></term>
-<listitem>
-<para>Affiche l'architecture de la machine</para>
-<indexterm zone="ch-system-util-linux arch"><primary
-sortas="b-arch">arch</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="blockdev">
-<term><command>blockdev</command></term>
-<listitem>
-<para>Permet aux utilisateurs d'appeler les ioctl d'un périphérique bloc à
-partir de la ligne de commande</para>
-<indexterm zone="ch-system-util-linux blockdev"><primary
-sortas="b-blockdev">blockdev</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="cal">
-<term><command>cal</command></term>
-<listitem>
-<para>Affiche un calendrier simple</para>
-<indexterm zone="ch-system-util-linux cal"><primary
-sortas="b-cal">cal</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="cfdisk">
-<term><command>cfdisk</command></term>
-<listitem>
-<para>Manipule la table des partitions du périphérique donné</para>
-<indexterm zone="ch-system-util-linux cfdisk"><primary
-sortas="b-cfdisk">cfdisk</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="chkdupexe">
-<term><command>chkdupexe</command></term>
-<listitem>
-<para>Trouve les exécutables dupliqués</para>
-<indexterm zone="ch-system-util-linux chkdupexe"><primary
-sortas="b-chkdupexe">chkdupexe</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="col">
-<term><command>col</command></term>
-<listitem>
-<para>Filtre les retours chariot inversés</para>
-<indexterm zone="ch-system-util-linux col"><primary
-sortas="b-col">col</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="colcrt">
-<term><command>colcrt</command></term>
-<listitem>
-<para>filtrer la sortie de <command>nroff</command> pour les terminaux manquant
-de capacités comme le texte barré ou les demi-lignes</para>
-<indexterm zone="ch-system-util-linux colcrt"><primary
-sortas="b-colcrt">colcrt</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="colrm">
-<term><command>colrm</command></term>
-<listitem>
-<para>Filtre les colonnes données</para>
-<indexterm zone="ch-system-util-linux colrm"><primary
-sortas="b-colrm">colrm</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="column">
-<term><command>column</command></term>
-<listitem>
-<para>Formate un fichier donné en de nombreuses colonnes</para>
-<indexterm zone="ch-system-util-linux column"><primary
-sortas="b-column">column</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ctrlaltdel">
-<term><command>ctrlaltdel</command></term>
-<listitem>
-<para>Initialise la combinaison des touches Ctrl+Alt+Del pour une
-réinitialisation matérielle ou logicielle</para>
-<indexterm zone="ch-system-util-linux ctrlaltdel"><primary
-sortas="b-ctrlaltdel">ctrlaltdel</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="cytune">
-<term><command>cytune</command></term>
-<listitem>
-<para>Est utilisé pour paramétrer finement les pilotes de lignes séries des
-cartes Cyclades</para>
-<indexterm zone="ch-system-util-linux cytune"><primary
-sortas="b-cytune">cytune</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ddate">
-<term><command>ddate</command></term>
-<listitem>
-<para>Donne la date discordienne ou convertit la date grégorienne en une date
-discordienne</para>
-<indexterm zone="ch-system-util-linux ddate"><primary
-sortas="b-ddate">ddate</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="dmesg">
-<term><command>dmesg</command></term>
-<listitem>
-<para>Affiche les messages du noyau lors du démarrage</para>
-<indexterm zone="ch-system-util-linux dmesg"><primary
-sortas="b-dmesg">dmesg</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="elvtune">
-<term><command>elvtune</command></term>
-<listitem>
-<para>Est utilisé pour configurer finement les performances et l'interactivité
-d'un périphérique bloc</para>
-<indexterm zone="ch-system-util-linux elvtune"><primary
-sortas="b-elvtune">elvtune</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="fdformat">
-<term><command>fdformat</command></term>
-<listitem>
-<para>Réalise un formatage de bas niveau sur une disquette</para>
-<indexterm zone="ch-system-util-linux fdformat"><primary
-sortas="b-fdformat">fdformat</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="fdisk">
-<term><command>fdisk</command></term>
-<listitem>
-<para>Est utilisé pour manipuler la table de partitions du périphérique
-donné</para>
-<indexterm zone="ch-system-util-linux fdisk"><primary
-sortas="b-fdisk">fdisk</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="fsck.cramfs">
-<term><command>fsck.cramfs</command></term>
-<listitem>
-<para>Réalise un test de consistance sur le système de fichiers Cramfs du
-périphérique donné</para>
-<indexterm zone="ch-system-util-linux fsck.cramfs"><primary
-sortas="b-fsck.cramfs">fsck.cramfs</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="fsck.minix">
-<term><command>fsck.minix</command></term>
-<listitem>
-<para>Réalise un test de consistence sur le système de fichiers Minix du
-périphérique donné</para>
-<indexterm zone="ch-system-util-linux fsck.minix"><primary
-sortas="b-fsck.minix">fsck.minix</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="getopt">
-<term><command>getopt</command></term>
-<listitem>
-<para>Analyse les options sur la ligne de commande donnée</para>
-<indexterm zone="ch-system-util-linux getopt"><primary
-sortas="b-getopt">getopt</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="hexdump">
-<term><command>hexdump</command></term>
-<listitem>
-<para>Affiche le fichier indiqué en hexadécimal ou dans un autre format
-donné</para>
-<indexterm zone="ch-system-util-linux hexdump"><primary
-sortas="b-hexdump">hexdump</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="hwclock">
-<term><command>hwclock</command></term>
-<listitem>
-<para>Lit ou initialise l'horloge matériel, aussi appelée horloge RTC
-(<foreignphrase>Real-Time Clock</foreignphrase>, horloge à temps réel) ou
-horloge BIOS (<foreignphrase>Basic Input-Output System</foreignphrase>)</para>
-<indexterm zone="ch-system-util-linux hwclock"><primary
-sortas="b-hwclock">hwclock</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ipcrm">
-<term><command>ipcrm</command></term>
-<listitem>
-<para>Supprime la ressource IPC donnée</para>
-<indexterm zone="ch-system-util-linux ipcrm"><primary
-sortas="b-ipcrm">ipcrm</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ipcs">
-<term><command>ipcs</command></term>
-<listitem>
-<para>Fournit l'information de statut IPC</para>
-<indexterm zone="ch-system-util-linux ipcs"><primary
-sortas="b-ipcs">ipcs</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="isosize">
-<term><command>isosize</command></term>
-<listitem>
-<para>Affiche la taille d'un système de fichiers iso9660</para>
-<indexterm zone="ch-system-util-linux isosize"><primary
-sortas="b-isosize">isosize</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="line">
-<term><command>line</command></term>
-<listitem>
-<para>Copie une simple ligne</para>
-<indexterm zone="ch-system-util-linux line"><primary
-sortas="b-line">line</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="logger">
-<term><command>logger</command></term>
-<listitem>
-<para>Enregistre le message donné dans les traces système</para>
-<indexterm zone="ch-system-util-linux logger"><primary
-sortas="b-logger">logger</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="look">
-<term><command>look</command></term>
-<listitem>
-<para>Affiche les lignes commençant avec la chaîne donnée</para>
-<indexterm zone="ch-system-util-linux look"><primary
-sortas="b-look">look</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="losetup">
-<term><command>losetup</command></term>
-<listitem>
-<para>Initialiser et contrôle les périphériques loop</para>
-<indexterm zone="ch-system-util-linux losetup"><primary
-sortas="b-losetup">losetup</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="mcookie">
-<term><command>mcookie</command></term>
-<listitem>
-<para>génère des cookies magiques, nombres hexadécimaux aléatoires sur 128
-bits, pour <command>xauth</command></para>
-<indexterm zone="ch-system-util-linux mcookie"><primary
-sortas="b-mcookie">mcookie</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="mkfs">
-<term><command>mkfs</command></term>
-<listitem>
-<para>Construit un système de fichiers sur un périphérique (habituellement une
-partition du disque dur)</para>
-<indexterm zone="ch-system-util-linux mkfs"><primary
-sortas="b-mkfs">mkfs</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="mkfs.bfs">
-<term><command>mkfs.bfs</command></term>
-<listitem>
-<para>Crée un système de fichiers bfs de SCO (Santa Cruz Operations)</para>
-<indexterm zone="ch-system-util-linux mkfs.bfs"><primary
-sortas="b-mkfs.bfs">mkfs.bfs</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="mkfs.cramfs">
-<term><command>mkfs.cramfs</command></term>
-<listitem>
-<para>Crée un système de fichiers cramfs</para>
-<indexterm zone="ch-system-util-linux mkfs.cramfs"><primary
-sortas="b-mkfs.cramfs">mkfs.cramfs</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="mkfs.minix">
-<term><command>mkfs.minix</command></term>
-<listitem>
-<para>Crée un système de fichiers Minix</para>
-<indexterm zone="ch-system-util-linux mkfs.minix"><primary
-sortas="b-mkfs.minix">mkfs.minix</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="mkswap">
-<term><command>mkswap</command></term>
-<listitem>
-<para>initialise le périphérique ou le fichier à utiliser comme swap</para>
-<indexterm zone="ch-system-util-linux mkswap"><primary
-sortas="b-mkswap">mkswap</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="more">
-<term><command>more</command></term>
-<listitem>
-<para>est un filtre pour visualiser un texte un écran à la fois</para>
-<indexterm zone="ch-system-util-linux more"><primary
-sortas="b-more">more</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="mount">
-<term><command>mount</command></term>
-<listitem>
-<para>Attache le système de fichiers du périphérique donné sur un répertoire
-spécifié dans le système de fichiers</para>
-<indexterm zone="ch-system-util-linux mount"><primary
-sortas="b-mount">mount</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="namei">
-<term><command>namei</command></term>
-<listitem>
-<para>Affiche les liens symboliques dans les chemins donnés</para>
-<indexterm zone="ch-system-util-linux namei"><primary
-sortas="b-namei">namei</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="pg">
-<term><command>pg</command></term>
-<listitem>
-<para>Affiche un fichier texte un écran à la fois</para>
-<indexterm zone="ch-system-util-linux pg"><primary
-sortas="b-pg">pg</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="pivot_root">
-<term><command>pivot_root</command></term>
-<listitem>
-<para>Fait en sorte que le système de fichiers donné soit le nouveau système de
-fichiers racine du processus actuel</para>
-<indexterm zone="ch-system-util-linux pivot_root"><primary
-sortas="b-pivot_root">pivot_root</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ramsize">
-<term><command>ramsize</command></term>
-<listitem>
-<para>Initialise la taille du disque RAM dans une image amorçable</para>
-<indexterm zone="ch-system-util-linux ramsize"><primary
-sortas="b-ramsize">ramsize</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="raw">
-<term><command>raw</command></term>
-<listitem>
-<para>Utilisé pour envoyer une requête et initialiser le périphérique racine et
-d'autres choses dans une image amorçable</para>
-<indexterm zone="ch-system-util-linux raw"><primary
-sortas="b-raw">raw</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="rdev">
-<term><command>rdev</command></term>
-<listitem>
-<para>Utilisé pour envoyer une requête et initialiser le périphérique racine et
-d'autres choses dans une image amorçable</para>
-<indexterm zone="ch-system-util-linux rdev"><primary
-sortas="b-rdev">rdev</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="readprofile">
-<term><command>readprofile</command></term>
-<listitem>
-<para>Lit les informations
- de profilage du noyau</para>
-<indexterm zone="ch-system-util-linux readprofile"><primary
-sortas="b-readprofile">readprofile</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="rename">
-<term><command>rename</command></term>
-<listitem>
-<para>Renomme les fichiers donnés, remplaçant une chaîne donnée par une
-autre</para>
-<indexterm zone="ch-system-util-linux rename"><primary
-sortas="b-rename">rename</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="renice">
-<term><command>renice</command></term>
-<listitem>
-<para>Modifie la priorité des processus exécutés</para>
-<indexterm zone="ch-system-util-linux renice"><primary
-sortas="b-renice">renice</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="rev">
-<term><command>rev</command></term>
-<listitem>
-<para>Inverse les lignes d'un fichier donné</para>
-<indexterm zone="ch-system-util-linux rev"><primary
-sortas="b-rev">rev</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="rootflags">
-<term><command>rootflags</command></term>
-<listitem>
-<para>Initialise les options racine d'une image amorçable</para>
-<indexterm zone="ch-system-util-linux rootflags"><primary
-sortas="b-rootflags">rootflags</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="script">
-<term><command>script</command></term>
-<listitem>
-<para>Crée un script à partir d'une session du terminal, de tout ce qui est
-affiché sur un terminal</para>
-<indexterm zone="ch-system-util-linux script"><primary
-sortas="b-script">script</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="setfdprm">
-<term><command>setfdprm</command></term>
-<listitem>
-<para>Initialise les paramètres de disquette fournis par l'utilisateur</para>
-<indexterm zone="ch-system-util-linux setfdprm"><primary
-sortas="b-setfdprm">setfdprm</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="setsid">
-<term><command>setsid</command></term>
-<listitem>
-<para>Lance le programme donné dans une nouvelle session</para>
-<indexterm zone="ch-system-util-linux setsid"><primary
-sortas="b-setsid">setsid</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="setterm">
-<term><command>setterm</command></term>
-<listitem>
-<para>Initialise les attributs du terminal</para>
-<indexterm zone="ch-system-util-linux setterm"><primary
-sortas="b-setterm">setterm</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="sfdisk">
-<term><command>sfdisk</command></term>
-<listitem>
-<para>Est un manipulateur de table de partitions disque</para>
-<indexterm zone="ch-system-util-linux sfdisk"><primary
-sortas="b-sfdisk">sfdisk</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="swapdev">
-<term><command>swapdev</command></term>
-<listitem>
-<para>Initialise le périphérique swap dans une image amorçable</para>
-<indexterm zone="ch-system-util-linux swapdev"><primary
-sortas="b-swapdev">swapdev</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="swapoff">
-<term><command>swapoff</command></term>
-<listitem>
-<para>Désactive les périphériques et fichiers de pagination et de swap</para>
-<indexterm zone="ch-system-util-linux swapoff"><primary
-sortas="b-swapoff">swapoff</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="swapon">
-<term><command>swapon</command></term>
-<listitem>
-<para>Active les périphériques et fichiers de pagination et de swap, et liste
-les périphériques et fichiers en cours d'utilisation.</para>
-<indexterm zone="ch-system-util-linux swapon"><primary
-sortas="b-swapon">swapon</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="tunelp">
-<term><command>tunelp</command></term>
-<listitem>
-<para>Est utilisé pour paramétrer finement une imprimante ligne</para>
-<indexterm zone="ch-system-util-linux tunelp"><primary
-sortas="b-tunelp">tunelp</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="ul">
-<term><command>ul</command></term>
-<listitem>
-<para>Un filtre pour traduire les souslignements en séquences d'échappement
-indiquant un souslignement pour le terminal utilisé</para>
-<indexterm zone="ch-system-util-linux ul"><primary
-sortas="b-ul">ul</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="umount">
-<term><command>umount</command></term>
-<listitem>
-<para>Déconnecte un système de fichiers à partir de la hiérarchie de fichiers
-du système</para>
-<indexterm zone="ch-system-util-linux umount"><primary
-sortas="b-umount">umount</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="vidmode">
-<term><command>vidmode</command></term>
-<listitem>
-<para>Initialise le mode vidéo d'une image amorçable</para>
-<indexterm zone="ch-system-util-linux vidmode"><primary
-sortas="b-vidmode">vidmode</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="whereis">
-<term><command>whereis</command></term>
-<listitem>
-<para>Affiche l'emplacement du binaire, les sources et la page de manuel de la
-commande donnée</para>
-<indexterm zone="ch-system-util-linux whereis"><primary
-sortas="b-whereis">whereis</primary></indexterm>
-</listitem>
-</varlistentry>
-
-<varlistentry id="write">
-<term><command>write</command></term>
-<listitem>
-<para>Envoie un message à l'utilisateur donné <emphasis>sauf si</emphasis>
-l'utilisateur a désactivé de tels messages</para>
-<indexterm zone="ch-system-util-linux write"><primary
-sortas="b-write">write</primary></indexterm>
-</listitem>
-</varlistentry>
-</variablelist>
-
-</sect2>
+    <variablelist>
+      <title>Voici la signification des paramètres de make&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>HAVE_KILL=yes</parameter></term>
+        <listitem>
+          <para>Ceci empêche le programme <command>kill</command> (déjà installé 
+          par Procps) d'être construit et installé de nouveau.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>HAVE_SLN=yes</parameter></term>
+        <listitem>
+          <para>Cela empêche le programme  <command>sln</command> (une version
+          de <command>ln</command> liée de façon statique déjà installée
+          par Glibc) d'être compilé et installée à nouveau.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Ce paquetage ne vient pas avec une suite de tests.</para>
+
+    <para>Installez le paquetage&nbsp;:</para>
+
+<screen><userinput>make HAVE_KILL=yes HAVE_SLN=yes install</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-utillinux" role="content">
+    <title>Contenu de Util-linux</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+
+      <seglistitem>
+        <seg>agetty, arch, blockdev, cal, cfdisk, chkdupexe, col, colcrt,
+        colrm, column, ctrlaltdel, cytune, ddate, dmesg, elvtune, fdformat,
+        fdisk, flock, fsck.cramfs, fsck.minix, getopt, hexdump, hwclock, ipcrm,
+        ipcs, isosize, line, logger, look, losetup, mcookie, mkfs, mkfs.bfs,
+        mkfs.cramfs, mkfs.minix, mkswap, more, mount, namei, pg, pivot_root,
+        ramsize (lien vers rdev), raw, rdev, readprofile, rename, renice, rev,
+        rootflags (lien vers rdev), script, setfdprm, setsid, setterm, sfdisk,
+        swapoff (lien vers swapon), swapon, tailf, tunelp, ul, umount,
+        vidmode (lien vers rdev), whereis et write</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="agetty">
+        <term><command>agetty</command></term>
+        <listitem>
+          <para>Ouvre un port tty, demande un nom de connexion puis appelle le programme
+          <command>login</command><</para>
+          <indexterm zone="ch-system-util-linux agetty">
+            <primary sortas="b-agetty">agetty</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="arch">
+        <term><command>arch</command></term>
+        <listitem>
+          <para>Affiche l'architecture de la machine</para>
+          <indexterm zone="ch-system-util-linux arch">
+            <primary sortas="b-arch">arch</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="blockdev">
+        <term><command>blockdev</command></term>
+        <listitem>
+          <para>Permet aux utilisateurs d'appeler les ioctl d'un périphérique bloc à
+          partir de la ligne de commande</para>
+          <indexterm zone="ch-system-util-linux blockdev">
+            <primary sortas="b-blockdev">blockdev</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="cal">
+        <term><command>cal</command></term>
+        <listitem>
+          <para>Affiche un calendrier simple</para>
+          <indexterm zone="ch-system-util-linux cal">
+            <primary sortas="b-cal">cal</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="cfdisk">
+        <term><command>cfdisk</command></term>
+        <listitem>
+          <para>Manipule la table des partitions du périphérique donné</para>
+          <indexterm zone="ch-system-util-linux cfdisk">
+            <primary sortas="b-cfdisk">cfdisk</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="chkdupexe">
+        <term><command>chkdupexe</command></term>
+        <listitem>
+          <para>Trouve les exécutables dupliqués</para>
+          <indexterm zone="ch-system-util-linux chkdupexe">
+            <primary sortas="b-chkdupexe">chkdupexe</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="col">
+        <term><command>col</command></term>
+        <listitem>
+          <para>Filtre les retours chariot inversés</para>
+          <indexterm zone="ch-system-util-linux col">
+            <primary sortas="b-col">col</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="colcrt">
+        <term><command>colcrt</command></term>
+        <listitem>
+          <para>Filtre la sortie de <command>nroff</command> pour les terminaux manquant
+          de capacités comme le texte barré ou les demi-lignes</para>
+          <indexterm zone="ch-system-util-linux colcrt">
+            <primary sortas="b-colcrt">colcrt</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="colrm">
+        <term><command>colrm</command></term>
+        <listitem>
+          <para>Filtre les colonnes données</para>
+          <indexterm zone="ch-system-util-linux colrm">
+            <primary sortas="b-colrm">colrm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="column">
+        <term><command>column</command></term>
+        <listitem>
+          <para>Formate un fichier donné en plusieurs colonnes</para>
+          <indexterm zone="ch-system-util-linux column">
+            <primary sortas="b-column">column</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ctrlaltdel">
+        <term><command>ctrlaltdel</command></term>
+        <listitem>
+          <para>Initialise la combinaison des touches Ctrl+Alt+Del pour une
+          réinitialisation matérielle ou logicielle</para>
+          <indexterm zone="ch-system-util-linux ctrlaltdel">
+            <primary sortas="b-ctrlaltdel">ctrlaltdel</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="cytune">
+        <term><command>cytune</command></term>
+        <listitem>
+          <para>Est utilisé pour paramétrer finement les pilotes de lignes séries des
+          cartes Cyclades</para>
+          <indexterm zone="ch-system-util-linux cytune">
+            <primary sortas="b-cytune">cytune</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ddate">
+        <term><command>ddate</command></term>
+        <listitem>
+          <para>Donne la date discordienne ou convertit la date grégorienne en une date
+          discordienne</para>
+          <indexterm zone="ch-system-util-linux ddate">
+            <primary sortas="b-ddate">ddate</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="dmesg">
+        <term><command>dmesg</command></term>
+        <listitem>
+          <para>Affiche les messages du noyau lors du démarrage</para>
+          <indexterm zone="ch-system-util-linux dmesg">
+            <primary sortas="b-dmesg">dmesg</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="elvtune">
+        <term><command>elvtune</command></term>
+        <listitem>
+          <para>Est utilisé pour configurer finement les performances et l'interactivité
+          d'un périphérique bloc</para>
+          <indexterm zone="ch-system-util-linux elvtune">
+            <primary sortas="b-elvtune">elvtune</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="fdformat">
+        <term><command>fdformat</command></term>
+        <listitem>
+          <para>Réalise un formatage de bas niveau sur un disque amovible</para>
+          <indexterm zone="ch-system-util-linux fdformat">
+            <primary sortas="b-fdformat">fdformat</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="fdisk">
+        <term><command>fdisk</command></term>
+        <listitem>
+          <para>Est utilisé pour manipuler la table de partitions du périphérique
+          donné</para>
+          <indexterm zone="ch-system-util-linux fdisk">
+            <primary sortas="b-fdisk">fdisk</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="flock">
+        <term><command>flock</command></term>
+        <listitem>
+          <para>Acquiert le verrouillage d'un fichier puis exécute 
+          une commande en maintenant le verrouillage</para>
+          <indexterm zone="ch-system-util-linux flock">
+            <primary sortas="b-flock">flock</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="fsck.cramfs">
+        <term><command>fsck.cramfs</command></term>
+        <listitem>
+          <para>Réalise un test de cohérence sur le système de fichiers Cramfs 
+          du périphérique donné</para>
+          <indexterm zone="ch-system-util-linux fsck.cramfs">
+            <primary sortas="b-fsck.cramfs">fsck.cramfs</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="fsck.minix">
+        <term><command>fsck.minix</command></term>
+        <listitem>
+          <para>Réalise un test de cohérence sur le système de fichiers Minix du
+          périphérique donné</para>
+          <indexterm zone="ch-system-util-linux fsck.minix">
+            <primary sortas="b-fsck.minix">fsck.minix</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="getopt">
+        <term><command>getopt</command></term>
+        <listitem>
+          <para>Analyse les options sur la ligne de commande donnée</para>
+          <indexterm zone="ch-system-util-linux getopt">
+            <primary sortas="b-getopt">getopt</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="hexdump">
+        <term><command>hexdump</command></term>
+        <listitem>
+          <para>Affiche le fichier indiqué en hexadécimal ou dans un autre format
+          donné</para>
+          <indexterm zone="ch-system-util-linux hexdump">
+            <primary sortas="b-hexdump">hexdump</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="hwclock">
+        <term><command>hwclock</command></term>
+        <listitem>
+          <para>Lit ou initialise l'horloge matériel, aussi appelée horloge RTC
+          (<foreignphrase>Real-Time Clock</foreignphrase>, horloge à temps réel) ou
+          horloge BIOS (<foreignphrase>Basic Input-Output System</foreignphrase>)</para>
+          <indexterm zone="ch-system-util-linux hwclock">
+            <primary sortas="b-hwclock">hwclock</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ipcrm">
+        <term><command>ipcrm</command></term>
+        <listitem>
+          <para>Supprime la ressource IPC (inter-process communication) donnée</para>
+          <indexterm zone="ch-system-util-linux ipcrm">
+            <primary sortas="b-ipcrm">ipcrm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ipcs">
+        <term><command>ipcs</command></term>
+        <listitem>
+          <para>Fournit l'information de statut IPC</para>
+          <indexterm zone="ch-system-util-linux ipcs">
+            <primary sortas="b-ipcs">ipcs</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="isosize">
+        <term><command>isosize</command></term>
+        <listitem>
+          <para>Affiche la taille d'un système de fichiers iso9660</para>
+          <indexterm zone="ch-system-util-linux isosize">
+            <primary sortas="b-isosize">isosize</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="line">
+        <term><command>line</command></term>
+        <listitem>
+          <para>Copie une simple ligne</para>
+          <indexterm zone="ch-system-util-linux line">
+            <primary sortas="b-line">line</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="logger">
+        <term><command>logger</command></term>
+        <listitem>
+          <para>Enregistre le message donné dans les traces système</para>
+          <indexterm zone="ch-system-util-linux logger">
+            <primary sortas="b-logger">logger</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="look">
+        <term><command>look</command></term>
+        <listitem>
+          <para>Affiche les lignes commençant avec la chaîne donnée</para>
+          <indexterm zone="ch-system-util-linux look">
+            <primary sortas="b-look">look</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="losetup">
+        <term><command>losetup</command></term>
+        <listitem>
+          <para>Initialise et contrôle les périphériques loop</para>
+          <indexterm zone="ch-system-util-linux losetup">
+            <primary sortas="b-losetup">losetup</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mcookie">
+        <term><command>mcookie</command></term>
+        <listitem>
+          <para>Génère des cookies magiques, nombres hexadécimaux aléatoires sur 128
+          bits, pour <command>xauth</command></para>
+          <indexterm zone="ch-system-util-linux mcookie">
+            <primary sortas="b-mcookie">mcookie</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mkfs">
+        <term><command>mkfs</command></term>
+        <listitem>
+          <para>Construit un système de fichiers sur un périphérique (habituellement une
+          partition du disque dur)</para>
+          <indexterm zone="ch-system-util-linux mkfs">
+            <primary sortas="b-mkfs">mkfs</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mkfs.bfs">
+        <term><command>mkfs.bfs</command></term>
+        <listitem>
+          <para>Crée un système de fichiers bfs de SCO (Santa Cruz Operations)</para>
+          <indexterm zone="ch-system-util-linux mkfs.bfs">
+            <primary sortas="b-mkfs.bfs">mkfs.bfs</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mkfs.cramfs">
+        <term><command>mkfs.cramfs</command></term>
+        <listitem>
+          <para>Crée un système de fichiers cramfs</para>
+          <indexterm zone="ch-system-util-linux mkfs.cramfs">
+            <primary sortas="b-mkfs.cramfs">mkfs.cramfs</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mkfs.minix">
+        <term><command>mkfs.minix</command></term>
+        <listitem>
+          <para>Crée un système de fichiers Minix</para>
+          <indexterm zone="ch-system-util-linux mkfs.minix">
+            <primary sortas="b-mkfs.minix">mkfs.minix</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mkswap">
+        <term><command>mkswap</command></term>
+        <listitem>
+          <para>Initialise le périphérique ou le fichier à utiliser comme swap</para>
+          <indexterm zone="ch-system-util-linux mkswap">
+            <primary sortas="b-mkswap">mkswap</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="more">
+        <term><command>more</command></term>
+        <listitem>
+          <para>Est un filtre pour visualiser un texte un écran à la fois</para>
+          <indexterm zone="ch-system-util-linux more">
+            <primary sortas="b-more">more</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mount">
+        <term><command>mount</command></term>
+        <listitem>
+          <para>Attache le système de fichiers du périphérique donné sur un répertoire
+          spécifié dans le système de fichiers</para>
+          <indexterm zone="ch-system-util-linux mount">
+            <primary sortas="b-mount">mount</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="namei">
+        <term><command>namei</command></term>
+        <listitem>
+          <para>Affiche les liens symboliques dans les chemins donnés</para>
+          <indexterm zone="ch-system-util-linux namei">
+            <primary sortas="b-namei">namei</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="pg">
+        <term><command>pg</command></term>
+        <listitem>
+          <para>Affiche un fichier texte un écran à la fois</para>
+          <indexterm zone="ch-system-util-linux pg">
+            <primary sortas="b-pg">pg</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="pivot_root">
+        <term><command>pivot_root</command></term>
+        <listitem>
+          <para>Fait en sorte que le système de fichiers donné soit le nouveau système de
+          fichiers racine du processus actuel</para>
+          <indexterm zone="ch-system-util-linux pivot_root">
+            <primary sortas="b-pivot_root">pivot_root</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ramsize">
+        <term><command>ramsize</command></term>
+        <listitem>
+          <para>Initialise la taille du disque RAM dans une image amorçable</para>
+          <indexterm zone="ch-system-util-linux ramsize">
+            <primary sortas="b-ramsize">ramsize</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="raw">
+        <term><command>raw</command></term>
+        <listitem>
+          <para>Utilisé pour envoyer une requête et initialiser le périphérique racine et
+          d'autres choses dans une image amorçable</para>
+          <indexterm zone="ch-system-util-linux raw">
+            <primary sortas="b-raw">raw</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="rdev">
+        <term><command>rdev</command></term>
+        <listitem>
+          <para>Utilisé pour envoyer une requête et initialiser le périphérique racine et
+          d'autres choses dans une image amorçable</para>
+          <indexterm zone="ch-system-util-linux rdev">
+            <primary sortas="b-rdev">rdev</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="readprofile">
+        <term><command>readprofile</command></term>
+        <listitem>
+          <para>>Lit les informations de profilage du noyau<</para>
+          <indexterm zone="ch-system-util-linux readprofile">
+            <primary sortas="b-readprofile">readprofile</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="rename">
+        <term><command>rename</command></term>
+        <listitem>
+          <para>Renomme les fichiers donnés, remplaçant une chaîne donnée par une
+          autre</para>
+          <indexterm zone="ch-system-util-linux rename">
+            <primary sortas="b-rename">rename</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="renice">
+        <term><command>renice</command></term>
+        <listitem>
+          <para>Modifie la priorité des processus exécutés</para>
+          <indexterm zone="ch-system-util-linux renice">
+            <primary sortas="b-renice">renice</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="rev">
+        <term><command>rev</command></term>
+        <listitem>
+          <para>Inverse les lignes d'un fichier donné</para>
+          <indexterm zone="ch-system-util-linux rev">
+            <primary sortas="b-rev">rev</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="rootflags">
+        <term><command>rootflags</command></term>
+        <listitem>
+          <para>Initialise les options racine d'une image amorçable</para>
+          <indexterm zone="ch-system-util-linux rootflags">
+            <primary sortas="b-rootflags">rootflags</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="script">
+        <term><command>script</command></term>
+        <listitem>
+          <para>Crée un script type à partir d'une session du terminal, de tout ce qui est
+          affiché sur un terminal</para>
+          <indexterm zone="ch-system-util-linux script">
+            <primary sortas="b-script">script</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="setfdprm">
+        <term><command>setfdprm</command></term>
+        <listitem>
+          <para>Initialise les paramètres de disquette fournis par l'utilisateur</para>
+          <indexterm zone="ch-system-util-linux setfdprm">
+            <primary sortas="b-setfdprm">setfdprm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="setsid">
+        <term><command>setsid</command></term>
+        <listitem>
+          <para>Lance le programme donné dans une nouvelle session</para>
+          <indexterm zone="ch-system-util-linux setsid">
+            <primary sortas="b-setsid">setsid</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="setterm">
+        <term><command>setterm</command></term>
+        <listitem>
+          <para>Initialise les attributs du terminal</para>
+          <indexterm zone="ch-system-util-linux setterm">
+            <primary sortas="b-setterm">setterm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="sfdisk">
+        <term><command>sfdisk</command></term>
+        <listitem>
+          <para>Est un manipulateur de table de partitions disque</para>
+          <indexterm zone="ch-system-util-linux sfdisk">
+            <primary sortas="b-sfdisk">sfdisk</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="swapoff">
+        <term><command>swapoff</command></term>
+        <listitem>
+          <para>Désactive les périphériques et fichiers de pagination et de 
+          swap</para>
+          <indexterm zone="ch-system-util-linux swapoff">
+            <primary sortas="b-swapoff">swapoff</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="swapon">
+        <term><command>swapon</command></term>
+        <listitem>
+          <para>Active les périphériques et fichiers de pagination et de swap, 
+          et liste les périphériques et fichiers en cours d'utilisation.</para>
+          <indexterm zone="ch-system-util-linux swapon">
+            <primary sortas="b-swapon">swapon</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="tailf">
+        <term><command>tailf</command></term>
+        <listitem>
+          <para>Observe la croissance d'un fichier journal. Affiche les 10 
+          dernières lignes d'un fichier journal, puis continue à afficher toute
+          nouvelle entrée dans le fichier journal dès qu'elle est créée</para>
+          <indexterm zone="ch-system-util-linux tailf">
+            <primary sortas="b-tailf">tailf</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="tunelp">
+        <term><command>tunelp</command></term>
+        <listitem>
+          <para>Est utilisé pour paramétrer finement une imprimante ligne</para>
+          <indexterm zone="ch-system-util-linux tunelp">
+            <primary sortas="b-tunelp">tunelp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ul">
+        <term><command>ul</command></term>
+        <listitem>
+          <para>Un filtre pour traduire les souslignements en séquences d'échappement
+          indiquant un souslignement pour le terminal utilisé</para>
+          <indexterm zone="ch-system-util-linux ul">
+            <primary sortas="b-ul">ul</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="umount">
+        <term><command>umount</command></term>
+        <listitem>
+          <para>Déconnecte un système de fichiers à partir de la hiérarchie de fichiers
+          du système</para>
+          <indexterm zone="ch-system-util-linux umount">
+            <primary sortas="b-umount">umount</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="vidmode">
+        <term><command>vidmode</command></term>
+        <listitem>
+          <para>Initialise le mode vidéo d'une image amorçable</para>
+          <indexterm zone="ch-system-util-linux vidmode">
+            <primary sortas="b-vidmode">vidmode</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="whereis">
+        <term><command>whereis</command></term>
+        <listitem>
+          <para>Affiche l'emplacement du binaire, les sources et la page de manuel de la
+          commande donnée</para>
+          <indexterm zone="ch-system-util-linux whereis">
+            <primary sortas="b-whereis">whereis</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="write">
+        <term><command>write</command></term>
+        <listitem>
+          <para>Envoie un message à l'utilisateur donné <emphasis>sauf si</emphasis>
+          l'utilisateur a désactivé de tels messages<</para>
+          <indexterm zone="ch-system-util-linux write">
+            <primary sortas="b-write">write</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
 
 </sect1>

@@ -1,162 +1,385 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
+
 <sect1 id="ch-system-udev" role="wrap">
-<title>Udev-&udev-version;</title>
-<?dbhtml filename="udev.html"?>
+  <?dbhtml filename="udev.html"?>
 
-<indexterm zone="ch-system-udev"><primary sortas="a-Udev">Udev</primary></indexterm>
+  <title>Udev-&udev-version;</title>
 
-<sect2 role="package"><title/>
-<para>Le paquet Udev contient des programmes pour créer dynamiquement des
-n&oelig;uds périphériques.</para>
+  <indexterm zone="ch-system-udev">
+    <primary sortas="a-Udev">Udev</primary>
+  </indexterm>
 
-<segmentedlist>
-<segtitle>&buildtime;</segtitle>
-<segtitle>&diskspace;</segtitle>
-<seglistitem><seg>0,1&nbsp;SBU</seg><seg>6,7&nbsp;Mo</seg></seglistitem>
-</segmentedlist>
+  <sect2 role="package">
+    <title/>
 
-<segmentedlist>
-<segtitle>&dependencies;</segtitle>
-<seglistitem><seg>Coreutils et Make</seg></seglistitem>
-</segmentedlist>
+    <para>Le paquet Udev contient des programmes pour créer
+    dynamiquement des n&oelig;uds périphériques.</para>
 
-</sect2>
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
 
-<sect2 role="installation">
-<title>Installation d'Udev</title>
+      <seglistitem>
+        <seg>&udev-ch6-sbu;</seg>
+        <seg>&udev-ch6-du;</seg>
+      </seglistitem>
+    </segmentedlist>
 
-<para>Compilez le paquet&nbsp;:</para>
+  </sect2>
 
-<screen><userinput>make udevdir=/dev</userinput></screen>
+  <sect2 role="installation">
+    <title>Installation de Udev</title>
 
-<variablelist>
-<varlistentry>
-<term><parameter>udevdir=/dev</parameter></term>
-<listitem><para>Ceci indique à <command>udev</command> le répertoire où les
-n&oelig;uds périphériques doivent être créés.</para></listitem>
-</varlistentry>
-</variablelist>
+    <para>L'archive tar udev-config contient des fichiers spécifiques à
+    LFS-specific utilisés pour configurer Udev. Déballez-le dans le
+    répertoire des sources Udev&nbsp;:</para>
 
-<para>Pour tester les résultats, exécutez&nbsp;:
-<userinput>make test</userinput>.</para>
+<screen><userinput>tar -xvf ../&udev-config;.tar.bz2</userinput></screen>
 
-<para>Installez le paquet&nbsp;:</para>
+    <para>Créez certains périphériques et répertoires qu'Udev ne peut pas
+    gérer car ils sont nécessaires très tôt dans le processus de
+    démarrage&nbsp;:</para>
 
-<screen><userinput>make DESTDIR=/ udevdir=/dev install</userinput></screen>
+<screen><userinput>install -dv /lib/{firmware,udev/devices/{pts,shm}}
+mknod -m0666 /lib/udev/devices/null c 1 3
+ln -sv /proc/self/fd /lib/udev/devices/fd
+ln -sv /proc/self/fd/0 /lib/udev/devices/stdin
+ln -sv /proc/self/fd/1 /lib/udev/devices/stdout
+ln -sv /proc/self/fd/2 /lib/udev/devices/stderr
+ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
 
-<para>Voici la signification de l'option de make&nbsp;:</para>
+    <para>Compilez le paquet&nbsp;:</para>
 
-<variablelist>
-  <varlistentry>
-    <term><parameter>DESTDIR=/</parameter>
-    </term>
-    <listitem>
-      <para>Ceci empêche le processus de construction d'Udev de tuer tous les
-        processus <command>udevd</command> qui pourraient être en cours
-	d'exécution sur le système hôte.
-      </para>
-    </listitem>
-  </varlistentry>
-</variablelist>
+<screen><userinput>make EXTRAS="`echo extras/*/`"</userinput></screen>
 
-<para>La configuration par défaut d'Udev est loin d'être idéale, donc
-installez les fichiers de configuration maintenant&nbsp;:</para>
+    <variablelist>
+      <title>Voici la signification de l'option de make&nbsp;:</title>
 
-<screen><userinput>cp -v ../&udev-config-file; /etc/udev/rules.d/25-lfs.rules</userinput></screen>
+      <varlistentry>
+        <term><parameter>EXTRAS=...</parameter></term>
+        <listitem>
+          <para>Ceci compile les binaires qui peuvent aider à écrire des règles
+          Udev personnalisées.</para>
+        </listitem>
+      </varlistentry>
 
-<!-- Edit Me -->
-<para>Exécutez les programme <command>udevstart</command> pour créer notre
-complément des n&oelig;uds de périphériques.</para>
+    </variablelist>
 
-<screen><userinput>/sbin/udevstart</userinput></screen>
+    <para>Pour tester les résultats, lancez&nbsp;:
 
-</sect2>
+    <userinput>make test</userinput>.</para>
 
-<sect2 id="contents-udev" role="content"><title>Contenu d'Udev</title>
+    <para>Notez que la suite de tests d'Udev produira de nombreux
+    messages dans les journaux du système hôte. Ils sont sans gravité et
+    vous pouvez les ignorer.</para>
 
-<segmentedlist>
-<segtitle>Programmes installés</segtitle>
-<segtitle>Répertoire installé</segtitle>
-<seglistitem><seg>udev, udevd, udevsend, udevstart, udevinfo et udevtest</seg>
-<seg>/etc/udev</seg></seglistitem>
-</segmentedlist>
+    <para>Installez le paquet&nbsp;:</para>
 
-<variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
-<?dbfo list-presentation="list"?>
-<?dbhtml list-presentation="table"?>
+<screen><userinput>make DESTDIR=/ EXTRAS="`echo extras/*/`" install</userinput></screen>
 
-<varlistentry id="udev">
-<term><command>udev</command></term>
-<listitem>
-<para>Crée les n&oelig;uds périphériques dans <filename
-class="directory">/dev</filename> ou renomme les interfaces réseau (pas dans
-LFS) en réponse aux événements de montage à chaud</para>
-<indexterm zone="ch-system-udev udev"><primary sortas="b-udev">udev</primary></indexterm>
-<beginpage/></listitem></varlistentry>
+    <variablelist>
+      <title>Voici la signification du paramètre make&nbsp;:</title>
 
-<varlistentry id="udevd">
-<term><command>udevd</command></term>
-<listitem>
-<para>Un démon qui réordonne les événements de montage à chaud avant de les
-soumettre à <command>udev</command>, évitant ainsi différentes conditions
-particulières</para>
-<indexterm zone="ch-system-udev udevd"><primary sortas="b-udevd">udevd</primary></indexterm>
-</listitem></varlistentry>
+      <varlistentry>
+        <term><parameter>DESTDIR=/</parameter></term>
+        <listitem>
+          <para>Ceci empêche le processus de construction d'Udev de tuer tous les
+          processus <command>udevd</command> qui pourraient être en cours
+          d'exécution sur le système hôte.</para>
+        </listitem>
+      </varlistentry>
 
-<varlistentry id="udevsend">
-<term><command>udevsend</command></term>
-<listitem>
-<para>Délivre les événements de montage à chaud à <command>udevd</command></para>
-<indexterm zone="ch-system-udev udevsend"><primary sortas="b-udevsend">udevsend</primary></indexterm>
-</listitem></varlistentry>
+    </variablelist>
 
-<varlistentry id="udevstart">
-<term><command>udevstart</command></term>
-<listitem>
-<para>Crée des n&oelig;uds périphériques dans <filename
-class="directory">/dev</filename> correspondant aux pilotes compilés directement
-dans le noyau&nbsp;; il réalise des tâches en simulant les événements de montage
-à chaud présumément supprimés par le noyau avant l'appel de ce programme (parce
-que le système de fichiers root n'a pas été démonté) et en soumettant des
-événements synthétiques de montage à chaud à <command>udev</command></para>
-<indexterm zone="ch-system-udev udevstart"><primary sortas="b-udevstart">udevstart</primary></indexterm>
-</listitem>
-</varlistentry>
+    <para>Udev doit être configuré afin de fonctionner correctement, vu
+    qu'il n'installe que quelques fichiers de configuration par défaut.
+    Tout d'abord, installez les fichiers de règles fréquemment utilisés
+    fournis par Udev&nbsp;:</para>
 
-<varlistentry id="udevinfo">
-<term><command>udevinfo</command></term>
-<listitem>
-<para>Autorise les utilisateurs à envoyer des requêtes à la base de données
-<command>udev</command> pour des informations sur tout périphérique actuellement
-présent sur le système&nbsp;; il fournit aussi une façon d'envoyer une requête à
-tout périphérique dans la hiérarchie <systemitem
-class="filesystem">sysfs</systemitem> pour aider à la création des règles udev
-</para>
-<indexterm zone="ch-system-udev udevinfo"><primary sortas="b-udevinfo">udevinfo</primary></indexterm>
-</listitem></varlistentry>
+<screen><userinput>cp -v etc/udev/rules.d/[0-9]* /etc/udev/rules.d/</userinput></screen>
 
-<varlistentry id="udevtest">
-<term><command>udevtest</command></term>
-<listitem>
-<para>Simule un lancement d'<command>udev</command> pour le périphérique donné
-et affiche le nom du n&oelig;ud que le vrai <command>udev</command> aurait créé
-ou (pas dans LFS) le nom de l'interface réseau renommé</para>
-<indexterm zone="ch-system-udev udevtest"><primary sortas="b-udevtest">udevtest</primary></indexterm>
-</listitem></varlistentry>
+    <para>Maintenant, installez les fichiers de règles spécifiques à
+    LFS&nbsp;:</para>
 
-<varlistentry id="etc-udev">
-<term><filename class="directory">/etc/udev</filename></term>
-<listitem>
-<para>Contient les fichiers de configuration d'<command>udev</command>, les
-droits des périphériques et les règles du nommage des périphériques</para>
-<indexterm zone="ch-system-udev etc-udev"><primary sortas="e-/etc/udev">/etc/udev</primary></indexterm>
-</listitem></varlistentry>
-</variablelist>
-</sect2>
+<screen><userinput>cd &udev-config;
+make install</userinput></screen>
+
+    <para>Installez la documentation qui explique les fichiers de règles
+    spécifiques à LFS&nbsp;:</para>
+
+<screen><userinput>make install-doc</userinput></screen>
+
+    <para>Installez la documentation qui explique les fichiers de règles
+    fréquemment utilisés fournis par Udev&nbsp;: </para>
+
+<screen><userinput>make install-extra-doc</userinput></screen>
+
+    <para>Installez la documentation qui explique comment créer des
+    règles Udev personnalisées&nbsp;:</para>
+
+<screen><userinput>cd ..
+install -m644 -v docs/writing_udev_rules/index.html \
+    /usr/share/doc/udev-&udev-version;/index.html</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-udev" role="content">
+    <title>Contenu de Udev</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Répertoire installé</segtitle>
+
+      <seglistitem>
+        <seg>ata_id, cdrom_id, create_floppy_devices, edd_id, firmware.sh,
+        path_id, scsi_id, udevcontrol, udevd, udevinfo, udevmonitor, udevsettle,
+        udevtest, udevtrigger, usb_id, vol_id, write_cd_rules et
+        write_net_rules</seg>
+        <seg>libvolume_id</seg>
+        <seg>/etc/udev</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="ata_id">
+        <term><command>ata_id</command></term>
+        <listitem>
+          <para>Fournit Udev avec une chaîne unique et des informations 
+          supplémentaires (uuid, label) pour un disque ATA</para>
+          <indexterm zone="ch-system-udev ata_id">
+            <primary sortas="b-ata_id">ata_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="cdrom_id">
+        <term><command>cdrom_id</command></term>
+        <listitem>
+          <para>Fournit Udev avec les possibilités d'un lecteur CD-ROM ou 
+          DVD-ROM</para>
+          <indexterm zone="ch-system-udev cdrom_id">
+            <primary sortas="b-cdrom_id">cdrom_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="create_floppy_devices">
+        <term><command>create_floppy_devices</command></term>
+        <listitem>
+          <para>Crée tous les périphériques amovibles possibles basés sur
+          le type CMOS</para>
+          <indexterm zone="ch-system-udev create_floppy_devices">
+            <primary sortas="b-create_floppy_devices">create_floppy_devices</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="edd_id">
+        <term><command>edd_id</command></term>
+        <listitem>
+          <para>Fournit Udev avec le EDD ID pour un lecteur de disque BIOS</para>
+          <indexterm zone="ch-system-udev edd_id">
+            <primary sortas="b-edd_id">edd_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="firmware.sh">
+        <term><command>firmware.sh</command></term>
+        <listitem>
+          <para>Dépose un firmware dans les périphériques</para>
+          <indexterm zone="ch-system-udev firmware.sh">
+            <primary sortas="b-firmware.sh">firmware.sh</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="path_id">
+        <term><command>path_id</command></term>
+        <listitem>
+          <para>Fournit le chemin de matériel unique le plus court possible vers un
+          un périphérique</para>
+          <indexterm zone="ch-system-udev path_id">
+            <primary sortas="b-path_id">path_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="scsi_id">
+        <term><command>scsi_id</command></term>
+        <listitem>
+          <para>Fournit Udev avec un identificateur SCSI unique basé sur
+          les données renvoyées par l'envoi d'une commande SCSI INQUIRY au
+          périphérique spécifié</para>
+          <indexterm zone="ch-system-udev scsi_id">
+            <primary sortas="b-scsi_id">scsi_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevcontrol">
+        <term><command>udevcontrol</command></term>
+        <listitem>
+          <para>Configure un nombre d'options pour le démon <command>udevd</command> 
+          courant, comme le niveau de traçage.</para>
+          <indexterm zone="ch-system-udev udevcontrol">
+            <primary sortas="b-udevcontrol">udevcontrol</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevd">
+        <term><command>udevd</command></term>
+        <listitem>
+          <para>Un démon qui écoute les <quote>uevents</quote> (événements udev)
+          sur le socket netlink, crée des périphériques et exécute les programmes
+          externes configurés en réponse à ces uevents</para>
+          <indexterm zone="ch-system-udev udevd">
+            <primary sortas="b-udevd">udevd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevinfo">
+        <term><command>udevinfo</command></term>
+        <listitem>
+          <para>Autorise les utilisateurs à envoyer des requêtes à la base de données
+          udev pour des informations sur tout
+          périphérique actuellement présent sur le système&nbsp;; il
+          fournit aussi une façon d'envoyer une requête à tout
+          périphérique dans la hiérarchie 
+
+          <systemitem class="filesystem">sysfs</systemitem> pour aider à la 
+          création des règles udev</para>
+          <indexterm zone="ch-system-udev udevinfo">
+            <primary sortas="b-udevinfo">udevinfo</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevmonitor">
+        <term><command>udevmonitor</command></term>
+        <listitem>
+          <para>Affiche les événements reçus du noyau et de l'environment qu'Udev
+          sort après l'application d'une règle</para>
+          <indexterm zone="ch-system-udev udevmonitor">
+            <primary sortas="b-udevmonitor">udevmonitor</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevsettle">
+        <term><command>udevsettle</command></term>
+        <listitem>
+          <para>Regarde la queue d'événement Udev et quitte si tous les uevents
+          courrants ont été gérés</para>
+          <indexterm zone="ch-system-udev udevsettle">
+            <primary sortas="b-udevsettle">udevsettle</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevtest">
+        <term><command>udevtest</command></term>
+        <listitem>
+          <para>Simule un lancement d'<command>udev</command> pour le périphérique donné
+          et affiche le nom du n&oelig;ud que le vrai <command>udev</command> aurait créé
+          ou (pas dans LFS) le nom de l'interface réseau renommé</para>
+          <indexterm zone="ch-system-udev udevtest">
+            <primary sortas="b-udevtest">udevtest</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevtrigger">
+        <term><command>udevtrigger</command></term>
+        <listitem>
+          <para>Fait en sorte que les <quote>events</quote> périphérique du noyau soient 
+          imités</para>
+          <indexterm zone="ch-system-udev udevtrigger">
+            <primary sortas="b-udevtrigger">udevtrigger</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="usb_id">
+        <term><command>usb_id</command></term>
+        <listitem>
+          <para>Fournit Udev avec des informations sur les périphériques USB</para>
+          <indexterm zone="ch-system-udev usb_id">
+            <primary sortas="b-usb_id">usb_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="vol_id">
+        <term><command>vol_id</command></term>
+        <listitem>
+          <para>Fournit Udev avec le label et l'uuid d'un système de fichiers</para>
+          <indexterm zone="ch-system-udev vol_id">
+            <primary sortas="b-vol_id">vol_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="write_cd_rules">
+        <term><command>write_cd_rules</command></term>
+        <listitem>
+          <para>Un script qui génère des règles Udev pour fournir des 
+          noms stables pour des lecteurs optiques (voir aussi
+          <xref linkend="ch-scripts-symlinks"/>)</para>
+          <indexterm zone="ch-system-udev write_cd_rules">
+            <primary sortas="b-write_cd_rules">write_cd_rules</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="write_net_rules">
+        <term><command>write_net_rules</command></term>
+        <listitem>
+          <para>Un script qui insère des règles Udev pour fournir des
+          noms stables pour des interfaces réseau (voir aussi
+          <xref linkend="ch-scripts-network"/>)
+          </para>
+          <indexterm zone="ch-system-udev write_net_rules">
+            <primary sortas="b-write_net_rules">write_net_rules</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libvolume_id">
+        <term><command>libvolume_id</command></term>
+        <listitem>
+          <para></para>
+          <indexterm zone="ch-system-udev libvolume_id">
+            <primary sortas="c-libvolume_id">libvolume_id</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="etc-udev">
+        <term><filename class="directory">/etc/udev</filename></term>
+        <listitem>
+          <para>Contient des fichiers de configuation Udev, des droits pour les
+          périphériques, et des règles pour nommer les périphériques</para>
+          <indexterm zone="ch-system-udev etc-udev">
+            <primary sortas="e-/etc/udev">/etc/udev</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
 
 </sect1>
-
