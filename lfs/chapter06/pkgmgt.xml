@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-pkgmgt">
+  <?dbhtml filename="pkgmgt.html"?>
+
+  <title>Gestion de paquetages</title>
+
+  <para>La gestion de paquetages est un ajout souvent demandé au livre
+LFS. Un gestionnaire de paquetages permet de conserver une trace des
+fichiers installés, simplifiant ainsi leur suppression ou leur mise à
+jour. Avant tout, NON&mdash;cette section ne parle pas d'un gestionnaire
+de paquetages particulier, elle n'en recommande pas non plus. Elle fait
+un tour des techniques les plus populaires pour indiquer comment elles
+fonctionnent. Le gestionnaire parfait de paquetages pourrait faire
+partie de ces techniques ou pourrait être une combinaison d'une ou
+plusieurs techniques. Cette section mentionne brièvement les problèmes
+pouvant survenir lors de la mise à jour des paquetages.</para>
+
+  <para>Parmi les raisons de l'absence d'un gestionnaire de paquetages
+  mentionné dans LFS ou BLFS&nbsp;:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>S'occuper de la gestion de paquetages est en dehors des buts de ces
+      livres&mdash; visant à apprendre comment un système Linux est construit.</para>
+    </listitem>
+
+    <listitem>
+      <para>Il existe de nombreuses solutions pour la gestion de paquetages,
+chacune ayant des forces et ses faiblesses. En inclure une qui
+satisfait tout le monde est difficile.</para>
+    </listitem>
+  </itemizedlist>
+
+  <para>Des astuces ont été écrites sur le thème de la gestion de
+  paquetages. Visitez le <ulink url="&hints-index;">Projet des
+  astuces</ulink> et voyez celui qui satisfait vos besoins.</para>
+
+  <sect2>
+    <title>Problèmes de mise à jour</title>
+
+    <para>Un gestionnaire de paquetages facilite la mise à jour des
+nouvelles versions au moment de leur sortie. Généralement, les
+instructions dans les livres LFS et BLFS peuvent être utilisées pour les
+nouvelles versions. Voici quelques points à connaître pour une mise à
+jour de paquetages, spécifiquement sur un système en cours de
+fonctionnement</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Il est recommandé, si un des outils de l'ensemble des outils
+        (glibc, gcc, binutils) doit être mis à jour avec une nouvelle version
+        mineure, de reconstruire LFS. Bien que vous <emphasis>pourriez</emphasis>
+        être capable de ne pas reconstruire tous les paquetages dans leur ordre 
+        de dépendances. Nous ne vous le recommandons pas. Par exemple, si
+        glibc-2.2.x a besoin d'être mis à jour vers glibc-2.3.x, il est
+        préférable de reconstruire. Pour les mises à jour encore plus
+        mineures, une simple réinstallation fonctionne généralement mais cela
+        n'est pas garanti. Par exemple, mettre à jour de glibc-2.3.1 à
+        glibc-2.3.2 ne causera aucun problème.</para>
+      </listitem>
+
+      <listitem>
+        <para>Si un paquetage contenant une bibliothèque partagée est mise à jour et
+        si le nom de cette dernière est modifié, alors les paquetages liées
+        dynamiquement à la bibliothèque devront être recompilés pour être liés
+        à la nouvelle bibliothèque. (Notez qu'il n'y a aucun corrélation entre
+        la version du paquetage et le nom de la bibliothèque.) Par exemple,
+        considérez un paquetage foo-1.2.3 qui installe une bibliothèque
+        partagée de nom
+        <filename class='libraryfile'>libfoo.so.1</filename>.
+        Disons que vous mettez à jour le
+        paquetage avec une nouvelle version foo-1.2.4 qui installe une
+        bibliothèque partagée de nom
+        <filename class='libraryfile'>libfoo.so.2</filename>. Dans ce cas, tous les
+        paquetages liés dynamiquement à
+        <filename class='libraryfile'>libfoo.so.1</filename> doivent être recompilés
+        pour être liés à
+        <filename class='libraryfile'>libfoo.so.2</filename>. Notez que vous ne devez pas supprimer
+             les anciennes bibliothèques jusqu'à ce que les paquetages indépendants
+             soient recompilés.</para>
+      </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>Techniques de gestion de paquetages</title>
+
+    <para>Ce qui suit est une liste de techniques habituelles de gestion de
+     paquetages. Avant de prendre une décision sur un gestionnaire de
+      paquetages, faites une recherche sur les différentes techniques et
+      notamment leurs faiblesses.</para>
+
+    <sect3>
+      <title>Tout est dans ma tête&nbsp!</title>
+
+      <para>Oui, c'est une technique de gestion de paquetages. Certains n'éprouvent
+      pas le besoin d'un gestionnaire de paquetages parce qu'ils connaissent
+      très bien les paquetages et connaissent les fichiers installés par chaque
+      paquetage. Certains utilisateurs n'en ont pas besoin parce qu'ils
+      planifient la reconstruction entière de LFS lorsqu'un paquetage est
+      modifié.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Installer dans des répertoires séparés</title>
+
+      <para>C'est une gestion des paquetages tellement simple qu'elle ne nécessite
+      aucun paquetage supplémentaire pour gérer les installations. Chaque
+      paquetage est installé dans un répertoire séparé. Par exemple, le
+      paquetage foo-1.1 est installé dans
+      <filename class='directory'>/usr/pkg/foo-1.1</filename>
+      et un lien symboique est créé vers
+      <filename class='directory'>/usr/pkg/foo-1.1</filename>. Lors de l'installation de
+      la nouvelle version foo-1.2, elle est installée dans
+      <filename class='directory'>/usr/pkg/foo-1.2</filename>
+      et l'ancien lien symbolique est remplacé par un lien symbolique vers la
+      nouvelle version.</para>
+
+      <para>Les variables d'environnement telles que <envar>PATH</envar>,
+      <envar>LD_LIBRARY_PATH</envar>, <envar>MANPATH</envar>,
+      <envar>INFOPATH</envar> et <envar>CPPFLAGS</envar> 
+      ont besoin d'être étendues pour inclure
+      <filename>/usr/pkg/foo</filename>. Pour plus que quelques paquetages, ce 
+      schéma devient ingérable.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Gestion de paquetage par lien symbolique</title>
+
+      <para>C'est une variante de la technique précédente. Chaque paquetage est
+        installé de façon similaire au schéma précédent. Mais au lieu de réaliser
+        le lien symbolique, chaque fichier dispose d'un lien symbolique vers
+        son équivalent dans la hiérarchie
+      <filename class='directory'>/usr</filename>. Ceci supprime le besoin d'étendre les variables
+      d'environnement. Bien que les liens symboliques peuvent être créés par
+      l'utilisateur, pour automatiser la création, certains gestionnaires de
+      paquetages ont été écrit avec cette approche. Parmi les plus populaires se
+      trouvent Stow, Epkg, Graft et Depot.</para>
+
+      <para>L'installation doit être faussée, de façon à ce que chaque paquetage pense
+        qu'il est installé dans
+       <filename class="directory">/usr</filename> alors qu'en réalité il est installé dans la
+       hiérarchie <filename class="directory">/usr/pkg</filename>.
+       Installer de cette manière n'est généralement pas une
+       tâche triviale. Par exemple, considérez que vous installez un paquetage
+       libfoo-1.1. Les instructions suivantes pourraient ne pas installer
+       correctement le paquetage&nbsp;:</para>
+
+<screen role="nodump"><userinput>./configure --prefix=/usr/pkg/libfoo/1.1
+make
+make install</userinput></screen>
+
+      <para>L'installation fonctionnera mais les paquetages dépendants pourraient ne
+      pas lier libfoo comme vous vous y attenderiez. Si vous compilez un
+      paquetage qui se lie à
+      <filename class='libraryfile'>/usr/pkg/libfoo/1.1/lib/libfoo.so.1</filename>
+      au lieu de <filename class='libraryfile'>/usr/lib/libfoo.so.1</filename>
+      comme vous le prévoyez. La bonne approche est d'utiliser la stratégie
+      <envar>DESTDIR</envar> pour fausser l'installation du paquetage. Cette approche
+      fonctionne ainsi&nbsp:</para>
+
+<screen role="nodump"><userinput>./configure --prefix=/usr
+make
+make DESTDIR=/usr/pkg/libfoo/1.1 install</userinput></screen>
+
+      <para>La plupart des paquetages supportent cette approche mais elle pose
+      problème à certains. Pour les paquetages non compatibles, vous pouvez soit
+      les installer manuellement soit trouver plus simple d'installer les
+      paquetages problématiques dans 
+      <filename class='directory'>/opt</filename>.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Basé sur le temps</title>
+
+      <para>Avec cette technique, un fichier est balisé avec l'heure avant
+      l'installation du paquetage. Après l'installation, une simple utilisation
+      de la commande
+      <command>find</command> avec les options appropriées peut générer une trace de
+      tous les fichiers installés après que le fichier temps ne soit créé.
+      install-log est un gestionnaire de paquetages écrit avec cette approche.</para>
+
+      <para>Bien que ce schéma a l'avantage d'être simple, il a deux inconvénients. Si
+      à l'installation, les fichiers sont installés sans balise de temps autre
+      que l'heure actuelle, ces fichiers ne seront pas suivis par le
+      gestionnaire de paquetages. De plus, ce schéma peut seulement être utilisé
+      lorsqu'un seul paquetage est installé à la fois. Les traces ne sont pas
+      fiables si deux paquetages sont installés dans deux consoles différentes.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Basé sur LD_PRELOAD</title>
+
+      <para>Avec cette approche, une bibliothèque est préchargée avant l'installation.
+      Lors de l'utilisation de cette dernière, cette bibliothèque trace les paquetages en cours
+      d'installation en s'attachant eux-même aux différents exécutables comme
+      <command>cp</command>, <command>install</command>, <command>mv</command>
+      et trace les appels système qui modifient le système de
+      fichiers. Pour que cette approche fonctionne, tous les exécutables ont
+      besoin d'être liés dynamiquement sans bit suid ou sgid. Le préchargement
+      de la bibliothèque pourrait causer quelques effets de bord involontaires
+      lors de l'installation ; donc, réalisez quelques tests pour vous assurer
+      que le gestionnaire de paquetages ne casse rien et trace bien tous les
+      fichiers appropriés.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Créer des archives de paquetages</title>
+
+      <para>Dans ce schéma, l'installation d'un paquetage est faussé dans un
+      répertoire séparé comme décrit plus haut. Après l'installation, une
+      archive du paquetage est créée en utilisant les fichiers installés.
+      L'archive est ensuite utilisée pour installer le paquetage soit sur la
+      machine locale soit même sur d'autres machines.</para>
+
+      <para>Cette approche est utilisée par la plupart des gestionnaires de paquetages
+        trouvés dans les distributions commerciales. Les exemples de gestionnaires
+        qui suivent cette approche sont RPM (qui est parfois requis par la
+      <ulink url="http://lsbbook.gforge.freestandards.org/package.html#RPM">Spécification
+      de base de Linux Standard</ulink>), pkg-utils, apt de Debian, et le
+      système de portage de Gentoo. Une astuce décrivant comment adopter ce 
+      style de gestion de paquetages pour les systèmes LFS se trouve à
+      <ulink url="&hints-root;fakeroot.txt"/>.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Gestion basée sur les utilisateurs</title>
+
+      <para>Ce schéma, unique à LFS, a été décrit par Matthias Benkmann et est
+      disponible sur le <ulink url="&hints-index;">Projet des astuces</ulink>. 
+      Dans ce schéma, chaque paquetage
+      est installé en tant qu'utilisateur séparé dans les emplacements
+      standards. Les fichiers appartenant à un paquetage sont facilement
+      identifiés grâce à l'identifiant de l'utilisateur. Les fonctionnalités et
+      avantages de cette approche sont trop complexes pour les décrire dans
+      cette section. Pour plus de détails, voir l'astuce sur
+      <ulink url="&hints-root;more_control_and_pkg_man.txt"/>.</para>
+
+    </sect3>
+
+  </sect2>
+
+</sect1>

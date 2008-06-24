@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-man-db" role="wrap">
+  <?dbhtml filename="man-db.html"?>
+
+  <title>Man-DB-&man-db-version;</title>
+
+  <indexterm zone="ch-system-man-db">
+    <primary sortas="a-Man-DB">Man-DB</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>Le paquet Man-DB contient des programmes pour trouver et voir
+    des pages de manuel.</para>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&man-db-ch6-sbu;</seg>
+        <seg>&man-db-ch6-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de Man-DB</title>
+
+    <para>Vous devez faire quatre ajustements aux sources de
+    Man-DB.</para>
+
+    <para>Le premier modifie la place des pages de manuel traduites
+    fournies avec Man-DB, afin qu'elles soient accessibles avec les
+    locales traditionnelle et UTF-8&nbsp;:</para>
+
+<screen><userinput>mv man/de{_DE.88591,}
+mv man/es{_ES.88591,}
+mv man/it{_IT.88591,}
+mv man/ja{_JP.eucJP,}
+sed -i 's,\*_\*,??,' man/Makefile.in</userinput></screen>
+
+    <para>Le second changement est une substitution
+    <command>sed</command> pour effacer les lignes
+    <quote>/usr/man</quote> et <quote>/usr/local/man</quote> dans le
+    fichier <filename>man_db.conf</filename> pour empêcher les résultats
+    redondants lors de l'utilisation des programmes comme
+    <command>whatis</command>&nbsp;:</para>
+
+<screen><userinput>sed -i -e '\%\t/usr/man%d' -e '\%\t/usr/local/man%d' src/man_db.conf.in</userinput></screen>
+
+    <para>Le troisième changement précise les programmes que Man-DB doit
+    pouvoir trouver lors de l'exécution, mais qui n'ont pas encore été
+    installés&nbsp;:</para>
+
+<screen><userinput>cat &gt;&gt; include/manconfig.h.in &lt;&lt; "EOF"
+<literal>#define WEB_BROWSER "exec /usr/bin/lynx"
+#define COL "/usr/bin/col"
+#define VGRIND "/usr/bin/vgrind"
+#define GRAP "/usr/bin/grap"</literal>
+EOF</userinput></screen>
+
+    <para>Le programme <command>col</command> fait partie du paquet
+    Util-linux, <command>lynx</command> est un navigateur web en mode
+    texte (voir BLFS pour les instructions d'installation),
+    <command>vgrind</command> convertit des sources de programme en
+    entrée Groff, et <command>grap</command> est utile pour présenter
+    des graphes dans des documents Groff. Les programmes
+    <command>vgrind</command> et <command>grap</command> ne sont
+    normalement pas nécessaires pour visualiser les pages de manuel. Ils
+    ne font pas partie de LFS ou de BLFS, mais vous devriez pouvoir les
+    installer vous-même après avoir fini LFS si vous le
+    souhaitez.</para>
+
+    <para>Finalement, appliquez un correctif aux sources pour corriger
+    des erreurs de sortie si la page de man est prématurément annulée en
+    tapant la touche 'q'.</para>
+
+<screen><userinput>patch -Np1 -i ../&man-db-fixes-patch;</userinput></screen>
+
+    <para>Préparez la compilation de man-DB&nbsp;:</para>
+
+<screen><userinput>./configure --prefix=/usr --enable-mb-groff --disable-setuid</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification des options de configuration&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--enable-mb-groff</parameter></term>
+        <listitem>
+          <para>Ceci dit au programme <command>man</command> d'utiliser les 
+          périphériques Groff  <quote>ascii8</quote> et <quote>nippon</quote>
+          pour formater des pages de manuel non ISO-8859-1.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-setuid</parameter></term>
+        <listitem>
+          <para>Ceci empêche que le programme <command>man</command> se voit 
+          attribué l'ID de l'utilisateur  <systemitem class="username">man</systemitem>.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compilez le paquet&nbsp;:</para>
+
+<screen><userinput>make</userinput></screen>
+
+    <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
+
+    <para>Installez le paquet&nbsp;:</para>
+
+<screen><userinput>make install</userinput></screen>
+
+    <para>Certains paquets fournissent des pages de man UTF-8 que cette
+    version de <command>man</command> n'est pas capable d'afficher. Le
+    script suivant permettra à certaines d'entre elles d'être converties
+    dans les codages attendus montrés dans la table ci-dessous. Man-DB
+    s'attend à ce que les pages de manuel soit dans les codages de la
+    table, et les convertira au besoin dans l'encodage de la locale
+    actuelle quand ils les affichera, afin qu'elles s'affichent en
+    locales UTF-8 et traditionelle. Ce script étant conçu ici pour une
+    utilisation limitée pendant la compilation du système, pour des
+    données publiques, nous n'allons pas nous ennuyer à vérifier les
+    erreurs, ni utiliser un nom de fichier temporaire
+    imprévisible&nbsp;:</para>
+
+<screen><userinput>cat &gt;&gt; convert-mans &lt;&lt; "EOF"
+<literal>#!/bin/sh -e
+FROM="$1"
+TO="$2"
+shift ; shift
+while [ $# -gt 0 ]
+do
+        FILE="$1"
+        shift
+        iconv -f "$FROM" -t "$TO" "$FILE" >.tmp.iconv
+        mv .tmp.iconv "$FILE"
+done</literal>
+EOF
+install -m755 convert-mans  /usr/bin</userinput></screen>
+
+        <para>Vous pouvez trouver des informations supplémentaires sur la 
+        compression des pages de man et d'info dans le livre BLFS sur
+    <link url="&blfs-root;view/cvs/postlfs/compressdoc.html"/>.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Pages de manuel non anglaises dans LFS</title>
+
+    <para>Les distributions Linux ont différentes politiques sur
+    l'encodage des caractères dans lequel les pages de man sont stockées
+    dans le système de fichiers. Par exemple, RedHat conserve toutes les
+    pages de manuel en UTF-8, tandis que Debian utilise des encodages
+    spécifiques à chaque langue (la plupart du temps 8-bit). Ceci est
+    lié à l'incompatibilité des paquets avec les pages de manuel
+    adaptées à différentes distributions.</para>
+
+    <para>LFS utilise les mêmes conventions que Debian. On a choisi cela
+    car  Man-DB ne comprend pas les pages de manuel stockées en UTF-8. Or,
+    pour nos objectifs, Man-DB est préférable à Man car il fonctionne
+    sans configuration complémentaire quelque soit la locale. Enfin,
+    jusqu'à maintenant, il n'y a pas d'implémentation de la
+    convention RedHat qui fonctionne entièrement.
+    <command>groff</command> de RedHat est connu pour ne pas formater
+    le texte.</para>
+
+    <para>La relation entre les codes de langue et l'encodage attendu
+    des pages de manuel est référencée ci-dessous. Man-DB les convertit
+    automatiquement vers l'encodage de la locale lors de leur
+    visualisation.</para>
+
+    <!-- Origin: man-db-2.4.3/src/encodings.c -->
+    <table>
+      <title>Encodage de caractère attendu des pages de manuel</title>
+      <?dbfo table-width="2.5in" ?>
+
+      <tgroup cols="2">
+
+        <colspec colnum="1" colwidth="1.5in"/>
+        <colspec colnum="2" colwidth="1in"/>
+
+        <thead>
+          <row>
+            <entry>Langue (code)</entry>
+            <entry>Encodage</entry>
+          </row>
+        </thead>
+
+        <tbody>
+          <row>
+            <entry>Danois (da)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Allemand (de)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Anglais (en)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Espagnol (es)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Finnois (fi)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Français (fr)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Irlandais (ga)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Galicien (gl)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Indonésien (id)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Islandais (is)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Italien (it)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Néerlandais (nl)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+	  <!-- FIXME: BUG: "no" is deprecated, should use "nb" or "nn" and
+          symlinks -->
+          <row>
+            <entry>Norvégien (no)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <!-- END BUG -->
+          <row>
+            <entry>Portugais (pt)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <row>
+            <entry>Suédois (sv)</entry>
+            <entry>ISO-8859-1</entry>
+          </row>
+          <!-- Languages below require patched groff -->
+          <row>
+            <entry>Tchèque (cs)</entry>
+            <entry>ISO-8859-2</entry>
+          </row>
+          <row>
+            <entry>Croate (hr)</entry>
+            <entry>ISO-8859-2</entry>
+          </row>
+          <row>
+            <entry>Hongrois (hu)</entry>
+            <entry>ISO-8859-2</entry>
+          </row>
+          <row>
+            <entry>Japonais (ja)</entry>
+            <entry>EUC-JP</entry>
+          </row>
+          <row>
+            <entry>Coréen (ko)</entry>
+            <entry>EUC-KR</entry>
+          </row>
+          <row>
+            <entry>Polonais (pl)</entry>
+            <entry>ISO-8859-2</entry>
+          </row>
+          <row>
+            <entry>Russe (ru)</entry>
+            <entry>KOI8-R</entry>
+          </row>
+          <row>
+            <entry>Slovaque (sk)</entry>
+            <entry>ISO-8859-2</entry>
+          </row>
+          <row>
+            <entry>Turc (tr)</entry>
+            <entry>ISO-8859-9</entry>
+          </row>
+        </tbody>
+
+      </tgroup>
+
+    </table>
+
+    <note>
+      <para>Les pages de manuel dont la langue ne figure pas dans la liste ne
+      sont pas supportées. Le norvégien ne fonctionne pas maintenant à cause du
+      passage de la locale no_NO à nb_NO, et le coréen n'est pas fonctionnel à
+      cause d'un correctif de Groff incomplet.</para>
+    </note>
+
+    <para>Si dès l'origine les pages de manuel sont distribuées dans le
+    même encodage que celui attendu par Man-DB, les pages de manuel
+    peuvent être copiées dans
+
+    <filename class="directory">/usr/share/man/<replaceable>&lt;langue
+    code&gt;</replaceable></filename>. Par exemple, vous pouvez
+    installer les pages de manuel en français 
+
+    (<ulink url="http://ccb.club.fr/man/man-fr-1.58.0.tar.bz2"/>) par la
+    commande suivante&nbsp;:</para>
+
+<screen role="nodump"><userinput>mkdir -p /usr/share/man/fr
+cp -rv man? /usr/share/man/fr</userinput></screen>
+
+    <para>Si à l'origine les pages de manuel sont distribuées en UTF-8
+    (par exemple, <quote>pour RedHat</quote>) au lieu du codage indiqué
+    dans la table ci-dessus, elles doivent être converties de l'UTF-8
+    vers le codage listé dans la table avant d'être installées. Cela peut
+    se faire avec <command>convert-mans</command>. Par exemple, vous
+    pouvez installer les pages de manuel en espagnol (<ulink
+    url="http://ditec.um.es/~piernas/manpages-es/man-pages-es-1.55.tar.bz2"/>)
+    avec les commandes suivantes&nbsp;:</para>
+
+<screen role="nodump"><userinput>mv man7/iso_8859-7.7{,X}
+convert-mans UTF-8 ISO-8859-1 man?/*.?
+mv man7/iso_8859-7.7{X,}
+make install</userinput></screen>
+
+    <note>
+      <para>Le besoin d'exclure le fichier <filename>man7/iso_8859-7.7</filename>
+      du processus de conversion qui est déjà en ISO-8859-1 est un bogue
+      de mise en paquet dans man-pages-es-1.55. Les futures versions ne 
+      devraient pas nécessiter cette tâche supplémentaire.</para>
+    </note>
+
+  </sect2>
+
+  <sect2 id="contents-man-db" role="content">
+    <title>Contenu de Man-DB</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+
+      <seglistitem>
+        <seg>accessdb, apropos, catman, convert-mans,lexgrog, man, mandb,
+        manpath, whatis et zsoelim</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="accessdb">
+        <term><command>accessdb</command></term>
+        <listitem>
+          <para>Transforme le contenu de la base de données <command>whatis</command>
+          en format lisible par un humain</para>
+          <indexterm zone="ch-system-man-db accessdb">
+            <primary sortas="b-accessdb">accessdb</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="apropos">
+        <term><command>apropos</command></term>
+        <listitem>
+          <para>Recherche la base de données <command>whatis</command> et
+          affiche les descriptions courtes des commandes système qui contiennent une
+          chaîne donnée</para>
+          <indexterm zone="ch-system-man-db apropos">
+            <primary sortas="b-apropos">apropos</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="catman">
+        <term><command>catman</command></term>
+        <listitem>
+          <para>Crée ou met à jour les pages de manuel préformatées</para>
+          <indexterm zone="ch-system-man-db catman">
+            <primary sortas="b-catman">catman</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="convert-mans">
+        <term><command>convert-mans</command></term>
+        <listitem>
+          <para>Reformate des pages de manuel afin que Man-DB puisse les afficher</para>
+          <indexterm zone="ch-system-man-db convert-mans">
+            <primary sortas="b-convert-mans">convert-mans</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="lexgrog">
+        <term><command>lexgrog</command></term>
+        <listitem>
+          <para>Affiche des informations en résumé d'une ligne à propos d'une
+          page de manuel donnée</para>
+          <indexterm zone="ch-system-man-db lexgrog">
+            <primary sortas="b-lexgrog">lexgrog</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="man">
+        <term><command>man</command></term>
+        <listitem>
+          <para>Formate et affiche les pages de manuel demandées</para>
+          <indexterm zone="ch-system-man-db man">
+            <primary sortas="b-man">man</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mandb">
+        <term><command>mandb</command></term>
+        <listitem>
+          <para>Crée ou met à jour la base de données <command>whatis</command></para>
+          <indexterm zone="ch-system-man-db mandb">
+            <primary sortas="b-mandb">mandb</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="manpath">
+        <term><command>manpath</command></term>
+        <listitem>
+          <para>Affiche le contenu de $MANPATH ou (si $MANPATH n'est pas paramé!ré)
+          d'un chemin de recherche convenable basé sur les paramètres de l'environnement 
+          de l'utilisateur</para>
+          <indexterm zone="ch-system-man-db manpath">
+            <primary sortas="b-manpath">manpath</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="whatis">
+        <term><command>whatis</command></term>
+        <listitem>
+          <para>Recherche la base de données <command>whatis</command> et
+          affiche les descriptions courtes des commandes système qui contiennent
+          le mot-clé donné sous la forme d'un mot séparé</para>
+          <indexterm zone="ch-system-man-db whatis">
+            <primary sortas="b-whatis">whatis</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="zsoelim">
+        <term><command>zsoelim</command></term>
+        <listitem>
+          <para>Lit des fichiers et remplace les lignes de la forme 
+          <emphasis>fichier .so</emphasis> par le contenu du <emphasis>fichier</emphasis>
+          mentionné</para>
+          <indexterm zone="ch-system-man-db zsoelim">
+            <primary sortas="b-zsoelim">zsoelim</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>
