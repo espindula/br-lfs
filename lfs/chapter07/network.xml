@@ -1,46 +1,133 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
 ]>
+
 <sect1 id="ch-scripts-network">
-<title>Configurer le script network</title>
-<?dbhtml filename="network.html"?>
+  <?dbhtml filename="network.html"?>
 
-<indexterm zone="ch-scripts-network">
-<primary sortas="d-network">network</primary>
-<secondary>configurer</secondary></indexterm>
+  <title>Configurer le script network</title>
 
-<para>Cette section s'applique seulement si une carte réseau doit être
-configurée.</para>
+  <indexterm zone="ch-scripts-network">
+    <primary sortas="d-network">network</primary>
+  <secondary>configuration</secondary></indexterm>
 
-<para>Si une carte réseau ne sera pas utilisée, il n'y a aucun besoin de créer
-des fichiers de configuration relatifs aux cartes réseau. Si c'est le cas,
-supprimez les liens symboliques <filename class="symlink">network</filename> de
-tous les répertoires des niveaux d'exécution (<filename
-class="directory">/etc/rc.d/rc*.d</filename>).</para>
+  <para>Cette section s'applique seulement si une carte réseau doit être
+  configurée.</para>
 
-<sect2>
-<title>Créer des fichiers de configuration des interfaces réseau</title>
+  <para>Si une carte réseau ne sera pas utilisée, il n'y a aucun besoin
+  de créer des fichiers de configuration relatifs aux cartes réseau. Si
+  c'est le cas, supprimez les liens symboliques
 
-<para>Les interfaces activées et désactivées par le script network dépendent
-des fichiers et des répertoires compris dans le répertoire <filename
-class="directory">/etc/sysconfig/network-devices</filename>. Ce répertoire
-doit contenir un sous-répertoire pour chaque interface à configurer, comme
-<filename>ifconfig.xyz</filename>, avec <quote>xyz</quote> le nom de l'interface
-réseau. Dans ce répertoire se trouvent des fichiers définissant les attributs
-de cette interface, comme le(s) adresse(s) IP, masque de sous-réseau et ainsi
-de suite.</para>
+  <filename class="symlink">network</filename> de tous les répertoires
+  des niveaux d'exécution
 
-<para>La commande suivante crée un fichier <filename>ipv4</filename> d'exemple
-pour le périphérique <emphasis>eth0</emphasis>&nbsp;:</para>
+  (<filename class="directory">/etc/rc.d/rc*.d</filename>).</para>
 
-<para>Les nouveaux fichiers sont créés dans ce répertoire. La commande suivan
-te crée un fichier d'exemple <filename>ipv4</filename> pour le périphérique
-<emphasis>eth0</emphasis>&nbsp;:</para>
+  <sect2>
+    <title>Création de noms stable pour les interfaces réseau</title>
 
-<screen><userinput>cd /etc/sysconfig/network-devices &amp;&amp;
-mkdir -v ifconfig.eth0 &amp;&amp;
+    <para>Avec Udev, la numérotation des pilotes réseau en module
+    n'est pas constante au fur et à mesure des redémarrages par défaut,
+    car les pilotes sont chargés en parallèle, et du coup, dans un ordre
+    aléatoire. Par exemple, sur un ordinateur ayant deux cartes réseau
+    fabriquées par Intel et Realtek, la carte réseau produite par Intel
+    peut devenir <filename class="devicefile">eth0</filename> et celle
+    de Realtek devient <filename class="devicefile">eth1</filename>.
+    Dans certains cas, après un redémarrage, les cartes sont
+    renumérotées d'une autre façon. Pour éviter cela, Udev est fourni
+    avec un script et des règles pour affecter des noms stables aux
+    cartes réseau basés sur leur adresse MAC.</para>
+
+    <para>Pré-générez les règles pour vous assurer que les mêmes noms
+    seront affectés aux mêmes périphériques à chaque démarrage, y
+    compris le premier&nbsp;:</para>
+
+<screen><userinput>/lib/udev/write_net_rules all_interfaces</userinput></screen>
+
+    <para>Maintenant, examinez le fichier 
+    <filename>/etc/udev/rules.d/70-persistent-net.rules</filename>, pour
+    trouver quel nom a été donné à quel périphérique
+    réseau&nbsp;:</para>
+
+<screen><userinput>cat /etc/udev/rules.d/70-persistent-net.rules</userinput></screen>
+
+    <para>Le fichier commence par un bloc de commentaire suivi de deux
+    lignes pour chaque NIC. La première ligne de chaque NIC est une
+    description commentée montrant ses IDs matériels (comme ses IDs de
+    fabricant PC et de périphérique, si c'est une carte PCI), puis avec
+    ses pilotes entre parenthèses, si le pilote peut être trouvé. Ni
+    l'ID du périphérique ni le pilote ne sont utilisés pour déterminer
+    quel nom donner à une interface. La deuxième ligne est est la règle
+    Udev correspondant à ce NIC et qui lui affecte au final un
+    nom.</para>
+
+    <para>Toutes les règles Udev sont constituées de plusieurs mots,
+    séparés par une virgule ou optionnellement un espace. Ces clés de
+    règle ainsi qu'une explication de chacune d'entre elles sont les
+    suivantes&nbsp;:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><literal>SUBSYSTEM=="net"</literal> - Ceci dit à Udev d'ignorer
+        les périphériques qui ne sont pas des cartes réseau.</para>
+      </listitem>
+      <listitem>
+        <para><literal>DRIVERS=="?*"</literal> - Ceci existe afin qu'Udev ignore
+        les VLAN ou les sous-interfaces bridge (car les sous-interfaces 
+        n'ont pas de pilotes). Ces sous-interfaces sont sautées car le nom
+        qui pourrait leur être affecté entrerait en conflit avec leur périphériques
+        parents.</para>
+      </listitem>
+      <listitem>
+        <para><literal>ATTRS{type}=="1"</literal> - Optionnel. Cette clé
+        ne sera ajoutée que si ce NIC est un NIC sans fil dont le pilote crée 
+        plusieurs interfaces virtuelles&nbsp;; il s'assure que la règle
+        ne correspond qu'à l'interface primaire. Les interfaces secondaires
+        n'ont pas de correspondance pour la même raison poussant à ce que les 
+        VLAN et les sous-interfaces bridge n'en ont pas&nbsp;:il y aurait un
+        conflit de noms.</para>
+      </listitem>
+      <listitem>
+        <para><literal>ATTRS{address}</literal> - La valeur de cette clé est 
+        l'adresse MAC du NIC.</para>
+      </listitem>
+      <listitem>
+        <para><literal>NAME</literal> - La valeur de cette clé est le nom qu'Udev
+        affectera à l'interface.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>La valeur de <literal>NAME</literal> est la partie importante.
+    Assurez-vous de connaître quel nom a été affecté à chacune de vos
+    cartes réseau avant de continuer, et assurez-vous d'utiliser cette
+    valeur <literal>NAME</literal> lorsque vous créerez les fichiers de
+    configuration ci-dessous.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Créer des fichiers de configuration des interfaces réseau</title>
+
+    <para>Les interfaces activées et désactivées par le script network
+    dépendent des fichiers et des répertoires compris dans la hiérarchie
+    <filename
+    class="directory">/etc/sysconfig/network-devices</filename>. Ce
+    répertoire doit contenir un sous-répertoire pour chaque interface à
+    configurer, comme <filename>ifconfig.xyz</filename>, où
+    <quote>xyz</quote> est le nom de l'interface réseau. Dans ce
+    répertoire se trouvent des fichiers définissant les attributs de
+    cette interface, comme le(s) adresse(s) IP, masque de sous-réseau et
+    ainsi de suite.</para>
+
+    <para>La commande suivante crée un fichier <filename>ipv4</filename>
+    d'exemple pour le périphérique 
+    <emphasis>eth0</emphasis>&nbsp;:</para>
+
+<screen><userinput>cd /etc/sysconfig/network-devices
+mkdir -v ifconfig.eth0
 cat &gt; ifconfig.eth0/ipv4 &lt;&lt; "EOF"
 <literal>ONBOOT=yes
 SERVICE=ipv4-static
@@ -50,65 +137,78 @@ PREFIX=24
 BROADCAST=192.168.1.255</literal>
 EOF</userinput></screen>
 
-<para>Les valeurs de ces variables doivent être modifiées dans chaque fichier
-pour correspondre à la bonne configuration. Si la variable
-<envar>ONBOOT</envar> est configurée à <quote>yes</quote>, le script network
-configurera la carte réseau (NIC) pendant le démarrage du système. S'il est
-configuré avec toute autre valeur que <quote>yes</quote>, l'interface réseau 
-sera ignorée par le script network et non montée.</para>
+    <para>Les valeurs de ces variables doivent être modifiées dans
+    chaque fichier pour correspondre à la bonne configuration. Si la
+    variable <envar>ONBOOT</envar> est configurée à <quote>yes</quote>,
+    le script network configurera la carte réseau
+    (<foreignphrase>Network Interface Card</foreignphrase>, NIC) pendant
+    le démarrage du système. S'il est configuré avec toute autre valeur
+    que <quote>yes</quote>, l'interface réseau sera ignorée par le
+    script network et non montée.</para>
 
-<para>La variable <envar>SERVICE</envar> définit la méthode utilisée pour obtenir
-une adresse IP. Les scripts de démarrage LFS ont un format d'affectation IP
-modulaire. Créer les fichier supplémentaires dans le répertoire <filename
-class="directory">/etc/sysconfig/network-devices/services</filename> autorise
-d'autres méthodes d'affectation. Ceci est habituellement utilisé pour le DHCP,
-qui est adressé dans le livre BLFS.</para>
+    <para>La variable <envar>SERVICE</envar> définit la méthode utilisée
+    pour obteni une adresse IP. Les scripts de démarrage LFS ont un
+    format d'affectation IP modulaire. Créer les fichier supplémentaires
+    dans le répertoire
 
-<para>La variable <envar>GATEWAY</envar> devrait contenir l'adresse IP par
-défaut de la passerelle, si elle existe. Sinon, mettez entièrement en
-commentaire la variable.</para>
+    <filename
+    class="directory">/etc/sysconfig/network-devices/services</filename>
+    autorise d'autres méthodes d'affectation. Ceci est habituellement
+    utilisé pour le DHCP (<foreignphrase>Dynamic Host Configuration
+    Protocol</foreignphrase>, NdT&nbsp;: protocole de configuration
+    dynamique de l'hôte), qui est adressé dans le livre BLFS.
 
-<para>La variable <envar>PREFIX</envar> a besoin de contenir le nombre de bits
-utilisé dans le sous-réseau. Chaque octet dans une adresse IP est sur huit
-bits. Si le masque réseau du sous-réseau est 255.255.255.0, alors il est en
-train d'utiliser les trois premiers octets (24 bits) pour spécifier le numéro
-réseau number. Si le masque réseau est 255.255.255.240, il utiliserait les
-128 premiers bits. Les préfixes plus longs que 24 bits sont habituellement u
-tilisés par les fournisseurs d'accès à Internet DSL et cable. Dans cet exemple
-(PREFIX=24), le masque réseau est 255.255.255.0. Ajustez la variable
-<envar>PREFIX</envar> en concordance avec votre sous-réseau spécifique.</para>
+    <para>La variable <envar>GATEWAY</envar> devrait contenir l'adresse
+    IP par défaut de la passerelle, si elle existe. Sinon, mettez
+    entièrement en commentaire la variable.</para>
 
-</sect2>
+    <para>La variable <envar>PREFIX</envar> a besoin de contenir le
+    nombre de bits utilisé dans le sous-réseau. Chaque octet dans une
+    adresse IP est sur huit bits. Si le masque réseau du sous-réseau est
+    255.255.255.0, alors il est en train d'utiliser les trois premiers
+    octets (24 bits) pour spécifier le numéro réseau. Si le
+    masque réseau est 255.255.255.240, il utiliserait les 128 premiers
+    bits. Les préfixes plus longs que 24 bits sont habituellement
+    utilisés par les fournisseurs d'accès à Internet DSL et cable. Dans
+    cet exemple (PREFIX=24), le masque réseau est 255.255.255.0. Ajustez
+    la variable <envar>PREFIX</envar> en concordance avec votre
+    sous-réseau spécifique.</para>
 
-<sect2 id="resolv.conf">
-<title>Créer le fichier /etc/resolv.conf</title>
-<indexterm zone="resolv.conf"><primary sortas="e-/etc/resolv.conf">/etc/resolv.conf</primary></indexterm>
+  </sect2>
 
-<para>Si le système a besoin d'être connecté à Internet, il aura besoin de la
-résolution de noms proposée par le DNS (Domain Name Service) pour résoudre les
-noms de domaines Internet, et vice-versa. Ceci se fait en plaçant les adresses
-IP du serveur DNS, disponibles auprès du FAI ou de l'administrateur système,
-dans <filename>/etc/resolv.conf</filename>. Créez le fichier en lançant ce qui
-suit&nbsp;:</para>
+  <sect2 id="resolv.conf">
+    <title>Créer le fichier /etc/resolv.conf</title>
+
+    <indexterm zone="resolv.conf">
+      <primary sortas="e-/etc/resolv.conf">/etc/resolv.conf</primary>
+    </indexterm>
+
+    <para>Si le système a besoin d'être connecté à Internet, il aura
+    besoin de la résolution de noms proposée par le DNS (Domain Name
+    Service) pour résoudre les noms de domaines Internet, et vice-versa.
+    Ceci se fait en plaçant les adresses IP du serveur DNS, disponibles
+    auprès du FAI ou de l'administrateur système, dans
+    <filename>/etc/resolv.conf</filename>. Créez le fichier en lançant
+    ce qui suit&nbsp;:</para>
 
 <screen><userinput>cat &gt; /etc/resolv.conf &lt;&lt; "EOF"
-<literal># Début /etc/resolv.conf
+<literal># Begin /etc/resolv.conf
 
-domain {<replaceable>[Votre nom de domaine]</replaceable>}
-nameserver <replaceable>[adresse IP de votre DNS principal]</replaceable>
-nameserver <replaceable>[adresse IP de votre DNS secondaire]</replaceable>
+domain <replaceable>&lt;Votre nom de domaine&gt;</replaceable>
+nameserver <replaceable>&lt;Adresse IP du DNS primaire&gt;</replaceable>
+nameserver <replaceable>&lt;Adresse IP du DNS secodaire&gt;</replaceable>
 
-# Fin /etc/resolv.conf</literal>
+# End /etc/resolv.conf</literal>
 EOF</userinput></screen>
 
-<para>Remplacez <replaceable>[adresse IP du DNS]</replaceable> avec l'adresse
-IP du DNS le plus approprié pour la configuration. Il y aura souvent plus d'une
-entrée (les conseils recommandent des serveurs DNS disposant de capacité de
-prise en charge. Si vous avez seulement besoin ou si vous voulez uniquement le
-serveur DNS, supprimez la seconde ligne <emphasis>serveur de noms</emphasis> à
-partir du fichier. L'adresse IP pourrait aussi être un routeur sur le réseau
-local.</para>
-</sect2>
+    <para>Remplacez l'<replaceable>&lt;adresse IP du DNS&gt;</replaceable> avec l'adresse
+    IP du DNS le plus approprié pour la configuration. Il y aura souvent plus d'une
+    entrée (les conseils recommandent des serveurs DNS disposant de capacité de
+    prise en charge. Si vous avez seulement besoin ou si vous voulez uniquement le
+    serveur DNS, supprimez la seconde ligne <emphasis>serveur de noms</emphasis> à
+    partir du fichier. L'adresse IP pourrait aussi être un routeur sur le réseau
+    local.</para>
+
+  </sect2>
 
 </sect1>
-
