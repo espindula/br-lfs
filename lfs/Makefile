@@ -1,63 +1,109 @@
-BASEDIR=~/lfs-book
-DUMPDIR=~/lfs-commands
-CHUNK_QUIET=0
-PDF_OUTPUT=LFS-BOOK.pdf
-NOCHUNKS_OUTPUT=LFS-BOOK.html
-XSLROOTDIR=/usr/share/xml/docbook/stylesheet/nwalsh
+BASEDIR = ~/lfs-book
+DUMPDIR = ~/lfs-commands
+RENDERTMP = $(HOME)/tmp
+CHUNK_QUIET = 1
+ROOT_ID =
+PDF_OUTPUT = LFS-BOOK.pdf
+NOCHUNKS_OUTPUT = LFS-BOOK.html
 
-lfs:
-	xsltproc --xinclude --nonet -stringparam profile.condition html \
-	-stringparam chunk.quietly $(CHUNK_QUIET)  -stringparam base.dir $(BASEDIR)/ \
-	stylesheets/lfs-chunked.xsl index.xml
+ifdef V
+  Q =
+else
+  Q = @
+endif
 
-	if [ ! -e $(BASEDIR)/stylesheets ]; then \
+lfs: validxml profile-html
+	@echo "Generating chunked XHTML files..."
+	$(Q)xsltproc --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
+	  -stringparam rootid "$(ROOT_ID)" -stringparam base.dir $(BASEDIR)/ \
+	  stylesheets/lfs-chunked.xsl $(RENDERTMP)/lfs-html.xml
+
+	@echo "Copying CSS code and images..."
+	$(Q)if [ ! -e $(BASEDIR)/stylesheets ]; then \
 	  mkdir -p $(BASEDIR)/stylesheets; \
 	fi;
-	cp stylesheets/*.css $(BASEDIR)/stylesheets
-
-	if [ ! -e $(BASEDIR)/images ]; then \
+	$(Q)cp stylesheets/lfs-xsl/*.css $(BASEDIR)/stylesheets
+	$(Q)if [ ! -e $(BASEDIR)/images ]; then \
 	  mkdir -p $(BASEDIR)/images; \
 	fi;
-	cp $(XSLROOTDIR)/images/*.png \
-	  $(BASEDIR)/images
-	cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" \
-	  *.html
-	cd $(BASEDIR)/; sed -i -e "s@../images@images@g" \
-	  *.html
+	$(Q)cp images/*.png $(BASEDIR)/images
+	$(Q)cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html
+	$(Q)cd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html
 
-	for filename in `find $(BASEDIR) -name "*.html"`; do \
+	@echo "Running Tidy and obfuscate.sh..."
+	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
 	  tidy -config tidy.conf $$filename; \
 	  true; \
 	  sh obfuscate.sh $$filename; \
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
 
-# Uncomment this for testing and stable versions
-pdf:
-	xsltproc --xinclude --nonet --stringparam profile.condition pdf \
-		--output $(BASEDIR)/lfs-pdf.xml stylesheets/lfs-profile.xsl index.xml
-	xsltproc --nonet --output $(BASEDIR)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
-		$(BASEDIR)/lfs-pdf.xml
-	sed -i -e "s/inherit/all/" $(BASEDIR)/lfs-pdf.fo
-	fop.sh $(BASEDIR)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
-	rm $(BASEDIR)/lfs-pdf.xml $(BASEDIR)/lfs-pdf.fo
+	$(Q)$(MAKE) wget-list
 
-nochunks:
-	xsltproc --xinclude --nonet -stringparam profile.condition html \
-	--output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
-	  stylesheets/lfs-nochunks.xsl index.xml
+pdf: validxml
+	@echo "Generating profiled XML for PDF..."
+	$(Q)xsltproc --nonet --stringparam profile.condition pdf \
+	  --output $(RENDERTMP)/lfs-pdf.xml stylesheets/lfs-xsl/profile.xsl \
+	  $(RENDERTMP)/lfs-full.xml
 
-	tidy -config tidy.conf $(BASEDIR)/$(NOCHUNKS_OUTPUT) || true
+	@echo "Generating FO file..."
+	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
+	  --output $(RENDERTMP)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
+	  $(RENDERTMP)/lfs-pdf.xml
+	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/lfs-pdf.fo
 
-	sh obfuscate.sh $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+	@echo "Generating PDF file..."
+	$(Q)if [ ! -e $(BASEDIR) ]; then \
+	  mkdir -p $(BASEDIR); \
+	fi;
+	$(Q)fop $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
 
-	sed -i -e "s@text/html@application/xhtml+xml@g"  \
+nochunks: validxml profile-html
+	@echo "Generating non chunked XHTML file..."
+	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
+	  --output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
+	  stylesheets/lfs-nochunks.xsl $(RENDERTMP)/lfs-html.xml
+
+	@echo "Running Tidy..."
+	$(Q)tidy -config tidy.conf $(BASEDIR)/$(NOCHUNKS_OUTPUT) || true
+	@echo "Running obfuscate.sh..."
+	$(Q)sh obfuscate.sh $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g"  \
 	  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 
-dump-commands:
-	xsltproc --xinclude --nonet --output $(DUMPDIR)/ \
-	   stylesheets/dump-commands.xsl index.xml
+tmpdir:
+	@echo "Creating and cleaning $(RENDERTMP)"
+	$(Q)[ -d $(RENDERTMP) ] || mkdir -p $(RENDERTMP)
+	$(Q)rm -f $(RENDERTMP)/lfs-{full,html,pdf}.xml
+	$(Q)rm -f $(RENDERTMP)/lfs-pdf.fo
+
+validxml: tmpdir
+	@echo "Validating the book..."
+	$(Q)xmllint --nonet --noent --xinclude --postvalid \
+	  -o $(RENDERTMP)/lfs-full.xml index.xml
+
+profile-html: validxml
+	@echo "Generating profiled XML for XHTML..."
+	$(Q)xsltproc --nonet --stringparam profile.condition html \
+	  --output $(RENDERTMP)/lfs-html.xml stylesheets/lfs-xsl/profile.xsl \
+	  $(RENDERTMP)/lfs-full.xml
+
+wget-list:
+	@echo "Generating wget list..."
+	$(Q)mkdir -p $(BASEDIR)
+	$(Q)xsltproc --xinclude --nonet --output $(BASEDIR)/wget-list \
+	  stylesheets/wget-list.xsl chapter03/chapter03.xml
+
+dump-commands: validxml
+	@echo "Dumping book commands..."
+	$(Q)xsltproc --output $(DUMPDIR)/ \
+	   stylesheets/dump-commands.xsl $(RENDERTMP)/lfs-full.xml
 
 validate:
-	xmllint --noout --nonet --xinclude --postvalid index.xml
+	@echo "Validating the book..."
+	$(Q)xmllint --noout --nonet --xinclude --postvalid index.xml
 
+all: lfs nochunks pdf dump-commands
+
+.PHONY : all dump-commands lfs nochunks pdf profile-html tmpdir validate \
+	 validxml wget-list
