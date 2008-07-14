@@ -1,0 +1,82 @@
+#!/bin/sh
+########################################################################
+# Begin $network_devices/services/ipv4-static
+#
+# Description : IPV4 Static Boot Script
+#
+# Authors     : Nathan Coulson - nathan@linuxfromscratch.org
+#        Kevin P. Fleming - kpfleming@linuxfromscratch.org
+#
+# Version     : 00.00
+#
+# Notes       :
+#
+########################################################################
+
+. /etc/sysconfig/rc 
+. ${rc_functions} 
+. ${IFCONFIG}
+
+if [ -z &quot;${IP}&quot; ]; then
+    boot_mesg &quot;IP variable missing from ${IFCONFIG}, cannot continue.&quot; ${FAILURE}
+    echo_failure
+    exit 1
+fi
+
+if [ -z &quot;${PREFIX}&quot; -a -z &quot;${PEER}&quot; ]; then
+    boot_mesg -n &quot;PREFIX variable missing from ${IFCONFIG},&quot; ${WARNING}
+    boot_mesg &quot; assuming 24.&quot;
+    echo_warning
+    PREFIX=24
+    args=&quot;${args} ${IP}/${PREFIX}&quot;
+elif [ -n &quot;${PREFIX}&quot; -a -n &quot;${PEER}&quot; ]; then
+    boot_mesg &quot;PREFIX and PEER both specified in ${IFCONFIG}, cannot continue.&quot; ${FAILURE}
+    echo_failure
+    exit 1
+elif [ -n &quot;${PREFIX}&quot; ]; then
+    args=&quot;${args} ${IP}/${PREFIX}&quot;
+elif [ -n &quot;${PEER}&quot; ]; then
+    args=&quot;${args} ${IP} peer ${PEER}&quot;
+fi
+
+if [ -n &quot;${BROADCAST}&quot; ]; then
+    args=&quot;${args} broadcast ${BROADCAST}&quot;
+fi
+
+case &quot;${2}&quot; in
+    up)
+        boot_mesg &quot;Adding IPv4 address ${IP} to the ${1} interface...&quot;
+        ip addr add ${args} dev ${1}
+        evaluate_retval
+    
+        if [ -n &quot;${GATEWAY}&quot; ]; then
+            if ip route | grep -q default; then
+                boot_mesg &quot;Gateway already setup; skipping.&quot; ${WARNING}
+                echo_warning
+            else
+                boot_mesg &quot;Setting up default gateway...&quot;
+                ip route add default via ${GATEWAY} dev ${1}
+                evaluate_retval
+             fi
+        fi
+    ;;
+    
+    down)
+        if [ -n &quot;${GATEWAY}&quot; ];    then
+            boot_mesg &quot;Removing default gateway...&quot;
+            ip route del default
+            evaluate_retval
+        fi
+    
+        boot_mesg &quot;Removing IPv4 address ${IP} from the ${1} interface...&quot;
+        ip addr del ${args} dev ${1}
+        evaluate_retval
+    ;;
+    
+    *)
+        echo &quot;Usage: ${0} [interface] {up|down}&quot;
+        exit 1
+    ;;
+esac
+
+# End $network_devices/services/ipv4-static

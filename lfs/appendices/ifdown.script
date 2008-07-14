@@ -1,0 +1,95 @@
+#!/bin/sh
+########################################################################
+# Begin $network_devices/ifdown
+#
+# Description : Interface Down
+#
+# Authors     : Nathan Coulson - nathan@linuxfromscratch.org
+#               Kevin P. Fleming - kpfleming@linuxfromscratch.org
+#
+# Version     : 00.01
+#
+# Notes       : the IFCONFIG variable is passed to the scripts found
+#               in the services directory, to indicate what file the
+#               service should source to get environmental variables.
+#
+########################################################################
+
+. /etc/sysconfig/rc 
+. ${rc_functions} 
+
+# Collect a list of configuration files for our interface
+if [ -n &quot;${2}&quot; ]; then
+    for file in ${@#$1}; do # All parameters except $1
+        FILES=&quot;${FILES} ${network_devices}/ifconfig.${1}/${file}&quot;
+    done
+elif [ -d &quot;${network_devices}/ifconfig.${1}&quot; ]; then
+    FILES=`echo ${network_devices}/ifconfig.${1}/*`
+else
+    FILES=&quot;${network_devices}/ifconfig.${1}&quot;
+fi
+
+# Reverse the order configuration files are processed in
+for file in ${FILES}; do
+    FILES2=&quot;${file} ${FILES2}&quot;
+done
+FILES=${FILES2}
+
+# Process each configuration file
+for file in ${FILES}; do
+    # skip backup files
+    if [ &quot;${file}&quot; != &quot;${file%&quot;&quot;~&quot;&quot;}&quot; ]; then
+        continue
+    fi
+
+    if [ ! -f &quot;${file}&quot; ]; then
+        boot_mesg &quot;${file} is not a network configuration file or directory.&quot; ${WARNING}
+        echo_warning
+        continue
+    fi
+    (
+        . ${file}
+
+        # Will not process this service if started by boot, and ONBOOT
+        # is not set to yes
+        if [ &quot;${IN_BOOT}&quot; = &quot;1&quot; -a &quot;${ONBOOT}&quot; != &quot;yes&quot; ]; then
+            continue
+        fi
+
+        # Will not process this service if started by hotplug, and 
+        # ONHOTPLUG is not set to yes
+        if [ &quot;${IN_HOTPLUG}&quot; = &quot;1&quot; -a &quot;${ONHOTPLUG}&quot; != &quot;yes&quot; ]; then
+            continue
+        fi
+    
+        # This will run the service script, if SERVICE is set
+        if [ -n &quot;${SERVICE}&quot; -a -x &quot;${network_devices}/services/${SERVICE}&quot; ]; then
+            if ip link show ${1} &gt; /dev/null 2&gt;&amp;1
+            then
+                IFCONFIG=${file} ${network_devices}/services/${SERVICE} ${1} down
+            else
+                boot_mesg &quot;Interface ${1} doesn&apos;t exist.&quot; ${WARNING}
+                echo_warning
+            fi
+        else
+            boot_mesg -n &quot;Unable to process ${file}.  Either&quot; ${FAILURE}
+            boot_mesg -n &quot; the SERVICE variable was not set,&quot;
+            boot_mesg &quot; or the specified service cannot be executed.&quot;
+            echo_failure
+            continue
+        fi
+    )
+done
+
+if [ -z &quot;${2}&quot; ]; then
+    link_status=`ip link show $1`
+    if [ -n &quot;${link_status}&quot; ]; then
+        if echo &quot;${link_status}&quot; | grep -q UP; then
+            boot_mesg &quot;Bringing down the ${1} interface...&quot;
+            ip link set ${1} down
+            evaluate_retval
+        fi
+    fi
+fi
+
+# End $network_devices/ifdown
