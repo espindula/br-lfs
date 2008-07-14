@@ -1,0 +1,61 @@
+#!/bin/sh
+# Begin /etc/init.d/setclock
+
+### BEGIN INIT INFO
+# Provides:            $time
+# Required-Start:      udev
+# Should-Start:
+# Required-Stop:
+# Should-Stop:
+# Default-Start:       sysinit
+# Default-Stop:        
+# Short-Description:   Stores and restores time from the hardware clock
+# Description:         On boot, system time is obtained from hwclock.  The
+#                      hardware clock can also be set on shutdown.
+# X-LFS-Default-Start: S25
+# X-LFS-Default-Stop:
+# X-LFS-Provided-By:   LFS
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+BIN_FILE="/sbin/hwclock"
+CONFIGFILE="/etc/sysconfig/clock"
+
+chk_stat
+
+. "${CONFIGFILE}"
+
+CLOCKPARAMS=
+
+case "${UTC}" in
+    yes|true|1)
+        CLOCKPARAMS="${CLOCKPARAMS} --utc"
+        ;;
+
+    no|false|0)
+        CLOCKPARAMS="${CLOCKPARAMS} --localtime"
+        ;;
+
+esac
+
+case ${1} in
+    start)
+        message="Setting system clock..."
+        ${BIN_FILE} --hctosys ${CLOCKPARAMS} >/dev/null
+        evaluate_retval standard
+        ;;
+
+    stop)
+        message="Setting hardware clock..."
+        ${BIN_FILE} --systohc ${CLOCKPARAMS} >/dev/null
+        evaluate_retval standard
+        ;;
+
+    *)
+        echo "Usage: ${0} {start|stop}"
+        ;;
+
+esac
+
+# End /etc/init.d/setclock
