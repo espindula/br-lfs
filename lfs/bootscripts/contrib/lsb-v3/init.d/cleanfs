@@ -1,0 +1,113 @@
+#!/bin/sh
+# Begin /etc/init.d/cleanfs
+
+### BEGIN INIT INFO
+# Provides:            cleanfs
+# Required-Start:      $local_fs
+# Should-Start:
+# Required-Stop:
+# Should-Stop:
+# Default-Start:       sysinit
+# Default-Stop:        
+# Short-Description:   Cleans temporary directories early in the boot process.
+# Description:         Cleans temporary directories /var/run, /var/lock, and
+#                      /tmp.  cleanfs also creates /var/run/utmp and any files 
+#                      defined in /etc/sysconfig/createfiles.
+# X-LFS-Default-Start: S50
+# X-LFS-Default-Stop:
+# X-LFS-Provided-By:   LFS
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+# Function to create files/directory on boot.
+create_files()
+{
+    # Read in the configuration file.
+    exec 9>&0 < /etc/sysconfig/createfiles
+    while read name type perm usr grp dtype maj min junk
+    do
+        # Ignore comments and blank lines.
+        case "${name}" in
+            ""|\#*) continue ;;
+        esac
+
+        # Ignore existing files.
+        if [ ! -e "${name}" ]
+        then
+            # Create stuff based on its type.
+            case "${type}" in
+                dir)
+                    mkdir "${name}"
+                    ;;
+                file)
+                    :> "${name}"
+                    ;;
+                dev)
+                    case "${dtype}" in
+                        char)
+                            mknod "${name}" c ${maj} ${min}
+                            ;;
+                        block)
+                            mknod "${name}" b ${maj} ${min}
+                            ;;
+                        pipe)
+                            mknod "${name}" p
+                            ;;
+                        *) 
+                            echo -n "\n${WARNING}Unknown device type: ${dtype}"
+                            echo "${NORMAL}"
+                            ;;
+                    esac
+                    ;;
+                *)
+                    echo "\n${WARNING}Unknown type: ${type}${NORMAL}"
+                    continue
+                    ;;
+            esac
+
+            # Set up the permissions, too.
+            chown ${usr}:${grp} "${name}"
+            chmod ${perm} "${name}"
+        fi
+    done
+    exec 0>&9 9>&-
+}
+
+case "${1}" in
+    start)
+        message="Cleaning file systems: "
+
+        message="${message}${INFO} /tmp"
+        find /tmp -xdev -mindepth 1 ! -name lost+found \
+            -delete || failed=1
+
+        message="${message} /var/lock"
+        find /var/lock -type f -exec rm -f {} \; || failed=1
+
+        message="${message} /var/run${NORMAL}"
+        find /var/run ! -type d ! -name utmp -exec rm -f {} \; || failed=1
+
+        > /var/run/utmp
+        if grep -q '^utmp:' /etc/group ; then
+            chmod 664 /var/run/utmp
+            chgrp utmp /var/run/utmp
+        fi
+
+        (exit ${failed})
+        evaluate_retval standard
+
+        if egrep -qv '^(#|$)' /etc/sysconfig/createfiles 2>/dev/null
+        then
+            message="Creating files and directories..."
+            create_files
+            evaluate_retval standard
+        fi
+        ;;
+    *)
+        echo "Usage: ${0} {start}"
+        exit 1
+        ;;
+esac
+
+# End /etc/init.d/cleanfs
