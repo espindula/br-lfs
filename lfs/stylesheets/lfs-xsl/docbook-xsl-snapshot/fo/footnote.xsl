@@ -6,7 +6,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: footnote.xsl,v 1.1 2008-06-26 19:05:49 gleu Exp $
+     $Id: footnote.xsl,v 1.2 2008-07-14 18:28:28 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -90,7 +90,7 @@
         <!-- FIXME: list in @from is probably not complete -->
         <xsl:number level="any" 
                     from="chapter|appendix|preface|article|refentry|bibliography" 
-                    count="footnote[not(@label)][not(ancestor::table) and not(ancestor::informaltable)]|ulink[$ulink.footnotes != 0][node()][@url != .][not(ancestor::footnote)][ulink.show != 0]" 
+                    count="footnote[not(@label)][not(ancestor::table) and not(ancestor::informaltable)]|ulink[$ulink.footnotes != 0][node()][@url != .][not(ancestor::footnote)][$ulink.show != 0]" 
                     format="1"/>
       </xsl:variable>
       <xsl:choose>

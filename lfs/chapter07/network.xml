@@ -29,7 +29,7 @@
   <sect2>
     <title>Création de noms stable pour les interfaces réseau</title>
 
-    <para>Avec Udev, la numérotation des pilotes réseau en module
+    <para>Avec Udev, la numérotation ddes pilotes réseau en module
     n'est pas constante au fur et à mesure des redémarrages par défaut,
     car les pilotes sont chargés en parallèle, et du coup, dans un ordre
     aléatoire. Par exemple, sur un ordinateur ayant deux cartes réseau
@@ -45,7 +45,10 @@
     seront affectés aux mêmes périphériques à chaque démarrage, y
     compris le premier&nbsp;:</para>
 
-<screen><userinput>/lib/udev/write_net_rules all_interfaces</userinput></screen>
+<screen><userinput>for NIC in /sys/class/net/* ; do
+    INTERFACE=${NIC##*/} udevadm test --action=add --subsystem=net $NIC
+done</userinput></screen>
+
 
     <para>Maintenant, examinez le fichier 
     <filename>/etc/udev/rules.d/70-persistent-net.rules</filename>, pour
@@ -57,12 +60,12 @@
     <para>Le fichier commence par un bloc de commentaire suivi de deux
     lignes pour chaque NIC. La première ligne de chaque NIC est une
     description commentée montrant ses IDs matériels (comme ses IDs de
-    fabricant PC et de périphérique, si c'est une carte PCI), puis avec
+    fabricant PCI et de périphérique, si c'est une carte PCI), puis avec
     ses pilotes entre parenthèses, si le pilote peut être trouvé. Ni
     l'ID du périphérique ni le pilote ne sont utilisés pour déterminer
-    quel nom donner à une interface. La deuxième ligne est est la règle
-    Udev correspondant à ce NIC et qui lui affecte au final un
-    nom.</para>
+    quel nom donner à une interface. Ces informations ne sont
+    qu'en tant que référence. La deuxième ligne est la règle Udev
+    correspondant à ce NIC et qui lui affecte au final un nom..</para>
 
     <para>Toutes les règles Udev sont constituées de plusieurs mots,
     séparés par une virgule ou optionnellement un espace. Ces clés de
@@ -75,6 +78,12 @@
         les périphériques qui ne sont pas des cartes réseau.</para>
       </listitem>
       <listitem>
+        <para><literal>ACTION=="add"</literal> - Ceci dit à Udev d'ignorer cette
+        règle pour un uevent qui n'est pas un ajout (les uevents "retrait" et
+        "changement" se produisent aussi mais ils n'ont pas besoin de renommer
+        les interfaces réseau).</para>
+ 
+      <listitem>
         <para><literal>DRIVERS=="?*"</literal> - Ceci existe afin qu'Udev ignore
         les VLAN ou les sous-interfaces bridge (car les sous-interfaces 
         n'ont pas de pilotes). Ces sous-interfaces sont sautées car le nom
@@ -82,17 +91,25 @@
         parents.</para>
       </listitem>
       <listitem>
-        <para><literal>ATTRS{type}=="1"</literal> - Optionnel. Cette clé
-        ne sera ajoutée que si ce NIC est un NIC sans fil dont le pilote crée 
-        plusieurs interfaces virtuelles&nbsp;; il s'assure que la règle
-        ne correspond qu'à l'interface primaire. Les interfaces secondaires
-        n'ont pas de correspondance pour la même raison poussant à ce que les 
-        VLAN et les sous-interfaces bridge n'en ont pas&nbsp;:il y aurait un
-        conflit de noms.</para>
+        <para><literal>ATTRS{type}=="1"</literal> - La valeur de cette
+
+        clé est l'adresse MAC du NIC.</para>
       </listitem>
       <listitem>
-        <para><literal>ATTRS{address}</literal> - La valeur de cette clé est 
-        l'adresse MAC du NIC.</para>
+        <para><literal>ATTR{type}=="1"</literal> - Ceci assure que la règle ne
+        correspond qu'à l'interface primaire dans le cas de certains pilotes
+      sans fil, qui créent plusieurs interfaces virtuelles. Les interfaces
+        secondaires sont sautées pour la même raison que le sont les VLAN et lei
+        sous-interfaces bridge&nbsp;: il y aurait en ce cas un conflit de noms.</para>
+      </listitem>
+      <listitem>
+        <para><literal>KERNEL=="eth*"</literal> - Cette clé a été ajoutée au
+       générateur de règles d'Udev ´pour gérer les machines ayant plusieurs
+       interfaces réseau, toutes ayant la même adresse MAC (la machine PS3 en 
+       fait partie). Si les interfaces indépendantes ont des noms de base
+       différents, cette clé permettra à Udev de leur parler en apartée. Ce
+       n'est normalement pas nécessaire pour la plupart des utilisateurs de
+       Lin1x From Scratch, mais ça ne fait pas de mal.</para>
       </listitem>
       <listitem>
         <para><literal>NAME</literal> - La valeur de cette clé est le nom qu'Udev
@@ -102,7 +119,7 @@
 
     <para>La valeur de <literal>NAME</literal> est la partie importante.
     Assurez-vous de connaître quel nom a été affecté à chacune de vos
-    cartes réseau avant de continuer, et assurez-vous d'utiliser cette
+    cartes réseau avant de continuer, et aisurez-vous d'utiliser cette
     valeur <literal>NAME</literal> lorsque vous créerez les fichiers de
     configuration ci-dessous.</para>
 
@@ -149,12 +166,14 @@ EOF</userinput></screen>
     <para>La variable <envar>SERVICE</envar> définit la méthode utilisée
     pour obteni une adresse IP. Les scripts de démarrage LFS ont un
     format d'affectation IP modulaire. Créer les fichier supplémentaires
-    dans le répertoire <filename
+    dans le répertoire
+
+    <filename
     class="directory">/etc/sysconfig/network-devices/services</filename>
     autorise d'autres méthodes d'affectation. Ceci est habituellement
     utilisé pour le DHCP (<foreignphrase>Dynamic Host Configuration
-    Protocol</foreignphrase>, NdT&nbsp;: protocole de configuration
-    dynamique de l'hôte), qui est adressé dans le livre BLFS.</para>
+    Protocol</foreignphrase>, NdT&nbsp;:protocole de configuration de
+    l'hôte dynamique), qui est adressé dans le livre BLFS.
 
     <para>La variable <envar>GATEWAY</envar> devrait contenir l'adresse
     IP par défaut de la passerelle, si elle existe. Sinon, mettez
@@ -167,7 +186,7 @@ EOF</userinput></screen>
     octets (24 bits) pour spécifier le numéro réseau. Si le
     masque réseau est 255.255.255.240, il utiliserait les 128 premiers
     bits. Les préfixes plus longs que 24 bits sont habituellement
-    utilisés par les fournisseurs d'accès à Internet DSL et cable. Dans
+    utilisés par les fournisseurs d'accès à Internet ADSL et câble. Dans
     cet exemple (PREFIX=24), le masque réseau est 255.255.255.0. Ajustez
     la variable <envar>PREFIX</envar> en concordance avec votre
     sous-réseau spécifique.</para>
@@ -199,7 +218,7 @@ nameserver <replaceable>&lt;Adresse IP du DNS secodaire&gt;</replaceable>
 # End /etc/resolv.conf</literal>
 EOF</userinput></screen>
 
-    <para>Remplacez l'<replaceable>&lt;adresse IP du DNS&gt;</replaceable> avec l'adresse
+    <para>Remplacez <replaceable>&lt;adresse IP du DNS&gt;</replaceable> avec l'adresse
     IP du DNS le plus approprié pour la configuration. Il y aura souvent plus d'une
     entrée (les conseils recommandent des serveurs DNS disposant de capacité de
     prise en charge. Si vous avez seulement besoin ou si vous voulez uniquement le

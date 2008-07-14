@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: formal.xsl,v 1.1 2008-06-26 19:05:51 gleu Exp $
+     $Id: formal.xsl,v 1.2 2008-07-14 18:28:30 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -103,9 +103,7 @@
   <xsl:variable name="content">
     <div class="{$class}">
       <xsl:if test="$spacing.paras != 0"><p/></xsl:if>
-      <xsl:call-template name="anchor">
-        <xsl:with-param name="conditional" select="0"/>
-      </xsl:call-template>
+      <xsl:call-template name="anchor"/>
       <xsl:apply-templates/>
   
       <!-- HACK: This doesn't belong inside formal.object; it 

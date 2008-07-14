@@ -6,7 +6,7 @@
 <xsl:output method="xml" encoding="UTF-8" indent="no" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"/>
 
 <!-- ********************************************************************
-     $Id: docbook.xsl,v 1.1 2008-06-26 19:05:51 gleu Exp $
+     $Id: docbook.xsl,v 1.2 2008-07-14 18:28:30 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -93,7 +93,7 @@
     <xsl:text>, but no template matches.</xsl:text>
   </xsl:message>
 
-  <span xmlns:saxon="http://icl.com/saxon" class="ERROR">
+  <span style="color: red">
     <xsl:text>&lt;</xsl:text>
     <xsl:value-of select="name(.)"/>
     <xsl:text>&gt;</xsl:text>

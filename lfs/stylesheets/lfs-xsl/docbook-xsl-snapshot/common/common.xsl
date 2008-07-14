@@ -7,7 +7,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: common.xsl,v 1.1 2008-06-26 19:05:48 gleu Exp $
+     $Id: common.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -20,7 +20,7 @@
   <info>
     <title>Common » Base Template Reference</title>
     <releaseinfo role="meta">
-      $Id: common.xsl,v 1.1 2008-06-26 19:05:48 gleu Exp $
+      $Id: common.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
     </releaseinfo>
   </info>
   <!-- * yes, partintro is a valid child of a reference... -->

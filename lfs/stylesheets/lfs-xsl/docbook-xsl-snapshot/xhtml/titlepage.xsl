@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: titlepage.xsl,v 1.1 2008-06-26 19:05:52 gleu Exp $
+     $Id: titlepage.xsl,v 1.2 2008-07-14 18:28:31 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -118,7 +118,7 @@
   <div>
     <xsl:apply-templates select="." mode="class.attribute"/>
     <xsl:call-template name="anchor"/>
-    <xsl:if test="not ($abstract.notitle.enabled = 0)">
+    <xsl:if test="$abstract.notitle.enabled = 0">
       <xsl:call-template name="formal.object.heading">
         <xsl:with-param name="title">
           <xsl:apply-templates select="." mode="title.markup"/>
@@ -126,6 +126,7 @@
       </xsl:call-template>
     </xsl:if>
     <xsl:apply-templates mode="titlepage.mode"/>
+    <xsl:call-template name="process.footnotes"/>
   </div>
 </xsl:template>
 
@@ -515,9 +516,7 @@
       <xsl:variable name="filename">
         <xsl:call-template name="make-relative-filename">
           <xsl:with-param name="base.dir" select="$base.dir"/>
-	  <xsl:with-param name="base.name">
-            <xsl:apply-templates mode="chunk-filename" select="."/>
-	  </xsl:with-param>
+	  <xsl:with-param name="base.name" select="concat($id,$html.ext)"/>
         </xsl:call-template>
       </xsl:variable>
 

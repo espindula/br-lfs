@@ -4,7 +4,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: admon.xsl,v 1.1 2008-06-26 19:05:49 gleu Exp $
+     $Id: admon.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -85,7 +85,9 @@
           <fo:list-item-body start-indent="body-start()">
             <xsl:if test="$admon.textlabel != 0 or title or info/title">
               <fo:block xsl:use-attribute-sets="admonition.title.properties">
-                <xsl:apply-templates select="." mode="object.title.markup"/>
+                <xsl:apply-templates select="." mode="object.title.markup">
+		  <xsl:with-param name="allow-anchors" select="1"/>
+		</xsl:apply-templates>
               </fo:block>
             </xsl:if>
             <fo:block xsl:use-attribute-sets="admonition.properties">
@@ -107,7 +109,9 @@
     <xsl:if test="$admon.textlabel != 0 or title or info/title">
       <fo:block keep-with-next.within-column='always'
                 xsl:use-attribute-sets="admonition.title.properties">
-         <xsl:apply-templates select="." mode="object.title.markup"/>
+         <xsl:apply-templates select="." mode="object.title.markup">
+	   <xsl:with-param name="allow-anchors" select="1"/>
+	 </xsl:apply-templates>
       </fo:block>
     </xsl:if>
 

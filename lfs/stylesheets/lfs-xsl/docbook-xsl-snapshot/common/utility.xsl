@@ -8,7 +8,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: utility.xsl,v 1.1 2008-06-26 19:05:49 gleu Exp $
+     $Id: utility.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -20,7 +20,7 @@
   <info>
     <title>Common » Utility Template Reference</title>
     <releaseinfo role="meta">
-      $Id: utility.xsl,v 1.1 2008-06-26 19:05:49 gleu Exp $
+      $Id: utility.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
     </releaseinfo>
   </info>
   <!-- * yes, partintro is a valid child of a reference... -->
@@ -31,7 +31,7 @@
       Stylesheets.</para>
     <note>
       <para>These templates are defined in a separate file from the set
-        of “common” templates because some of the comment templates
+        of “common” templates because some of the common templates
         reference DocBook XSL stylesheet parameters, requiring the
         entire set of parameters to be imported/included in any
         stylesheet that imports/includes the common templates.</para>

@@ -12,7 +12,7 @@ else
   Q = @
 endif
 
-lfs: validxml profile-html
+lfs: maketar validxml profile-html
 	@echo "Generating chunked XHTML files..."
 	$(Q)xsltproc --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
 	  -stringparam rootid "$(ROOT_ID)" -stringparam base.dir $(BASEDIR)/ \
@@ -34,7 +34,7 @@ lfs: validxml profile-html
 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
 	  tidy -config tidy.conf $$filename; \
 	  true; \
-	  sh obfuscate.sh $$filename; \
+	  /bin/bash obfuscate.sh $$filename; \
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
 
@@ -56,7 +56,7 @@ pdf: validxml
 	$(Q)if [ ! -e $(BASEDIR) ]; then \
 	  mkdir -p $(BASEDIR); \
 	fi;
-	$(Q)fop.sh $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+	$(Q)fop $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
 
 nochunks: validxml profile-html
 	@echo "Generating non chunked XHTML file..."
@@ -78,9 +78,17 @@ tmpdir:
 	$(Q)rm -f $(RENDERTMP)/lfs-pdf.fo
 
 validxml: tmpdir
+	@echo "Processing bootscripts..."
+	$(Q)sh process-scripts.sh $(RENDERTMP)
 	@echo "Validating the book..."
 	$(Q)xmllint --nonet --noent --xinclude --postvalid \
 	  -o $(RENDERTMP)/lfs-full.xml index.xml
+	$(Q)rm -f appendices/*.script
+	$(Q)sh aux-file-data.sh $(RENDERTMP)/lfs-full.xml
+
+maketar:
+	@echo "Making tarballs..."
+	$(Q)sh make-aux-files.sh $(RENDERTMP)
 
 profile-html: validxml
 	@echo "Generating profiled XML for XHTML..."
@@ -106,4 +114,4 @@ validate:
 all: lfs nochunks pdf dump-commands
 
 .PHONY : all dump-commands lfs nochunks pdf profile-html tmpdir validate \
-	 validxml wget-list
+	 validxml wget-list maketar

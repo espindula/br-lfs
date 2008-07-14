@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xslthl="http://xslthl.sf.net" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xslthl" version="1.0">
 
 <!-- ********************************************************************
-     $Id: highlight.xsl,v 1.1 2008-06-26 19:05:51 gleu Exp $
+     $Id: highlight.xsl,v 1.2 2008-07-14 18:28:31 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -18,36 +18,35 @@
 </xsl:template>
 
 <xsl:template match="xslthl:string">
-  <b class="hl-string"><i><span xmlns:saxon="http://icl.com/saxon" class="ERROR"><xsl:apply-templates/></span></i></b>
+  <b class="hl-string"><i style="color:red"><xsl:apply-templates/></i></b>
 </xsl:template>
 
 <xsl:template match="xslthl:comment">
-  <i class="hl-comment"><span xmlns:saxon="http://icl.com/saxon" class="ERROR"><xsl:apply-templates/></span></i>
+  <i class="hl-comment" style="color: silver"><xsl:apply-templates/></i>
 </xsl:template>
 
 <xsl:template match="xslthl:tag">
-  <b class="hl-tag"><span xmlns:saxon="http://icl.com/saxon" class="ERROR"><xsl:apply-templates/></span></b>
+  <b class="hl-tag" style="color: blue"><xsl:apply-templates/></b>
 </xsl:template>
 
 <xsl:template match="xslthl:attribute">
-  <span class="hl-attribute"><span xmlns:saxon="http://icl.com/saxon" class="ERROR"><xsl:apply-templates/></span></span>
+  <span class="hl-attribute" style="color: blue"><xsl:apply-templates/></span>
 </xsl:template>
 
 <xsl:template match="xslthl:value">
-  <span class="hl-value"><span xmlns:saxon="http://icl.com/saxon" class="ERROR"><xsl:apply-templates/></span></span>
+  <span class="hl-value" style="color: blue"><xsl:apply-templates/></span>
 </xsl:template>
 
 <xsl:template match="xslthl:html">
-  <b><i><span xmlns:saxon="http://icl.com/saxon" class="ERROR"><xsl:apply-templates/></span></i></b>
+  <b><i style="color: red"><xsl:apply-templates/></i></b>
 </xsl:template>
 
 <xsl:template match="xslthl:xslt">
-  <b><span xmlns:saxon="http://icl.com/saxon" class="ERROR"><xsl:apply-templates/></span></b>
+  <b style="color: blue"><xsl:apply-templates/></b>
 </xsl:template>
 
 <xsl:template match="xslthl:section">
   <b><xsl:apply-templates/></b>
 </xsl:template>
-
 
 </xsl:stylesheet>

@@ -8,6 +8,12 @@
 <sect1 id="ch-tools-gcc-pass2" role="wrap">
   <?dbhtml filename="gcc-pass2.html"?>
 
+  <sect1info condition="script">
+    <productname>gcc</productname>
+    <productnumber>&gcc-version;</productnumber>
+    <address>&gcc-url;</address>
+  </sect1info>
+
   <title>GCC-&gcc-version; - Pass 2</title>
 
   <indexterm zone="ch-tools-gcc-pass2">
@@ -49,7 +55,7 @@
     le système hôte est correctement configuré en réalisant un simple
     test&nbsp;:</para>
 
-<screen><userinput>expect -c "spawn ls"</userinput></screen>
+<screen><userinput remap="test">expect -c "spawn ls"</userinput></screen>
 
     <para>Le résultat pourrait être&nbsp;:</para>
 
@@ -75,7 +81,7 @@ Ask your system administrator to create more.</computeroutput></screen>
     script <command>fixincludes</command> peut être supprimée en lançant les
     commandes suivantes&nbsp;:</para>
 
-<screen><userinput>cp -v gcc/Makefile.in{,.orig}
+<screen><userinput remap="pre">cp -v gcc/Makefile.in{,.orig}
 sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userinput></screen>
 
     <para>La construction bootstrap effectuée à la section
@@ -86,33 +92,52 @@ sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userin
     correctif <command>sed</command> suivant pour l'utiliser afin de 
     les constructions des compilateurs cohérent&nbsp;:</para>
 
-<screen><userinput>cp -v gcc/Makefile.in{,.tmp}
+<screen><userinput remap="pre">cp -v gcc/Makefile.in{,.tmp}
 sed 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
   &gt; gcc/Makefile.in</userinput></screen>
 
-    <para>Appliquez le correctif suivant pour changer l'emplacement par défaut
-    de l'éditeur de liens dynamiques de GCC (généralement
-    <filename class="libraryfile">ld-linux.so.2</filename>)&nbsp;:</para>
+    <para>La commande suivante modifiera l'emplacement de l'éditeur de lien
+    dynamique de GCC pour utiliser celui que nous avons installé dans
+    <filename class="directory">/tools</filename>. Il supprime aussi
+    <filename class="directory">/usr/include</filename> du chemin de 
+    recherche des en-têtes de GCC.</para>
 
-<screen><userinput>patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
-
-    <para>Le  correctif ci-dessus supprime aussi
-    <filename class="directory">/usr/include</filename> du chemin de recherche
-    des en-têtes
-    de GCC. Corriger maintenant plutôt qu'ajuster le fichier specs après
+    <para>Faire cela maintenant plutôt qu'ajuster le fichier specs après
     l'installation nous assure que l'éditeur de liens dynamiques sera utilisé
     lors de la construction de GCC. C'est-à-dire, tous les binaires finaux (et
-    temporaires) créés lors de la construction seront liés à la nouvelle Glibc.</para>
+    temporaires) créés lors de la construction seront liés à la nouvelle Glibc.
+    Lancez&nbsp;:</para>
+    
+<screen><userinput remap="pre">for file in $(find gcc/config -name linux64.h -o -name linux.h) 
+do
+   cp -uv $file{,.orig}
+   sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
+   -e 's@/usr@/tools@g' $file.orig &gt; $file
+   echo "
+#undef STANDARD_INCLUDE_DIR
+#define STANDARD_INCLUDE_DIR 0" &gt;&gt; $file
+   touch $file.orig
+done</userinput></screen>
 
-    <important>
-      <para>Les correctifs ci-dessus sont critiques pour s'assurer
-      une construction avec succès. N'oubliez pas de l'appliquer..</para>
-    </important>
+    <para>Si ce qui précède vous semble dur à suivre, décomposons-le un peu.
+    D'abord, nous trouvons tous les fichiers sous le répertoire gcc/config qui
+    sont nommés soit <filename>linux.h</filename> soit
+    <filename>linux64.h</filename>. Pour chaque fichier trouvé, nous le copions
+    vers un fichier du même nom mais avec en plus le suffixe <quote>.orig</quote>.
+    Puis la première expression sed rattafee <quote>/tools</quote> à chaque
+    occurrence de <quote>/lib/ld</quote>, <quote>/lib64/ld</quote> ou
+    <quote>/lib32/ld</quote>, tandis que la deuxième remplace les occurrences
+    <quote>/usr</quote>. liées. Nous ajoutons alors nos déclarations define qui
+    modifie le chemin de recherche à la fin du fichier. Enfin, nous utilisons
+    <command>touch</command> pour mettre à jour la date sur les fichiers copiés.
+    Utilisé conjointement avec <command>cp -u</command>, cela empêche les
+    modifications inattendues des fichiers d'origine au cas où la commande
+    serait exécutée trois fois par inadvertence.</para>
 
     <para>De nouveau, créez un répertoire de construction
     séparé&nbsp;:</para>
 
-<screen><userinput>mkdir -v ../gcc-build
+<screen><userinput remap="pre">mkdir -v ../gcc-build
 cd ../gcc-build</userinput></screen>
 
     <para>Avant de commencer la construction de GCC, rappelez-vous de désinitialiser
@@ -121,11 +146,11 @@ cd ../gcc-build</userinput></screen>
 
     <para>Maintenant, préparez la compilation de GCC&nbsp;:</para>
 
-<screen><userinput>../gcc-&gcc-version;/configure --prefix=/tools \
+<screen><userinput remap="configure">../gcc-&gcc-version;/configure --prefix=/tools \
     --with-local-prefix=/tools --enable-clocale=gnu \
     --enable-shared --enable-threads=posix \
     --enable-__cxa_atexit --enable-languages=c,c++ \
-    --disable-libstdcxx-pch</userinput></screen>
+    --disable-libstdcxx-pch --disable-bootstrap</userinput></screen>
 
     <variablelist>
       <title>Voici la signification des nouvelles options de configure&nbsp;:</title>
@@ -183,11 +208,20 @@ cd ../gcc-build</userinput></screen>
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><parameter>--disable-bootstrap</parameter></term>
+        <listitem>
+          <para>Le bootstrapping du compilateur est le comportement par
+          défaut dans GCC. Cependant, notre méthode de compilation devrait
+          nous fournir un compilateur solide sans besoin de bootstrap chaque
+          fois.</para>
+        </listitem>
+      </varlistentry>
     </variablelist>
 
     <para>Compilez le paquet&nbsp;:</para>
 
-<screen><userinput>make</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
 
     <para>Il n'est pas nécessaire d'utiliser la cible 
     <parameter>bootstrap</parameter> maintenant car le compilateur utilisé pour
@@ -199,7 +233,7 @@ cd ../gcc-build</userinput></screen>
     nécessaire. Néanmoins, pour exécuter la suite de tests de GCC, lancez la
     commande suivante&nbsp;:</para>
 
-<screen><userinput>make -k check</userinput></screen>
+<screen><userinput remap="test">make -k check</userinput></screen>
 
     <para>L'option <parameter>-k</parameter> est utilisée pour faire en
     sorte que toute la suite de tests est exécutée et qu'elle ne s'arrête
@@ -211,7 +245,7 @@ cd ../gcc-build</userinput></screen>
 
     <para>Installez le paquet&nbsp;:</para>
 
-<screen><userinput>make install</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
 
     <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
     href="adjusting.xml"

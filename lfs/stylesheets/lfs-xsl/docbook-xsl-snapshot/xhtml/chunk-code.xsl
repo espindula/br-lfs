@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xmlns/chunkfast/1.0" xmlns:ng="http://docbook.org/docbook-ng" xmlns:db="http://docbook.org/ns/docbook" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="exsl cf ng db" version="1.0">
 
 <!-- ********************************************************************
-     $Id: chunk-code.xsl,v 1.1 2008-06-26 19:05:50 gleu Exp $
+     $Id: chunk-code.xsl,v 1.2 2008-07-14 18:28:29 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

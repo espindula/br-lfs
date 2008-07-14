@@ -8,7 +8,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: glossary.xsl,v 1.1 2008-06-26 19:05:49 gleu Exp $
+     $Id: glossary.xsl,v 1.2 2008-07-14 18:28:28 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

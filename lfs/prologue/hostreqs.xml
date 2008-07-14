@@ -12,27 +12,29 @@
 
     <para>Votre système hôte doit contenir les logiciels suivants dans leur
     version minimum indiquée. Cela ne devrait pas poser de problème sur la
-    plupart des distributions Linux modernes. Notez également que
+    plupart des distributions Linux modernes. Noter également que
     certaines distributions placeront les en-tête des logiciels
     dans un répertoire distinct des paquets, ayant souvent la forme
     <quote>&lt;nom-du-paquet&gt;-devel</quote> ou
-    <quote>&lt;nom-du-paquet&gt;-dev</quote>. Assurez-vous qu'ils sont 
+    <quote>&lt;nom-du-paquet&gt;-dev</quote>. Assurez-vous qu'ils sont
     installés si votre distribution les fournit.</para>
 
   <itemizedlist spacing="compact">
 
     <listitem>
-      <para><emphasis role="strong">Bash-2.05a</emphasis></para>
+      <para><emphasis role="strong">Bash-2.05a</emphasis> (/bin/sh
+      must be a symbolic or hard link to bash)</para>
     </listitem>
 
     <listitem>
       <para><emphasis role="strong">Binutils-2.12</emphasis> (les versions
-      supérieures à &binutils-version; ne sont pas recommendées car elles n'ont
-      pas été testées)</para>
+      supérieure à &binutils-version; ne sont pas recommandées car elles 
+      n'ont pas été testées)</para>
     </listitem>
 
     <listitem>
-      <para><emphasis role="strong">Bison-1.875</emphasis></para>
+      <para><emphasis role="strong">Bison-1.875</emphasis> (/usr/bin/yacc
+      doit être un lien vers bison ou un petit script qui exécute bison)</para>
     </listitem>
 
     <listitem>
@@ -53,20 +55,21 @@
     </listitem>
 
     <listitem>
-      <para><emphasis role="strong">Gawk-3.0</emphasis></para>
+      <para><emphasis role="strong">Gawk-3.0</emphasis> (/usr/bin/awk
+      doit être un lien vers gawk)</para>
     </listitem>
 
     <listitem>
-      <!-- Gcc-2.95.3 déterriore des tests quand on utilise CC="gcc -B/usr/bin/"
-           dans les *-sections pass1-->
+      <!-- Gcc-2.95.3 breaks feature tests when using CC="gcc -B/usr/bin/"
+           in the *-pass1 sections -->
       <para><emphasis role="strong">Gcc-3.0.1</emphasis> (les versions
-      supérieures à &gcc-version; ne sont pas recommendées car elles n'ont
+      supérieures à &gcc-version; ne sont pas recommandées car elles n'ont
       pas été testées)</para>
     </listitem>
 
     <listitem>
       <para><emphasis role="strong">Glibc-2.2.5</emphasis> (les versions
-      supérieures à &glibc-version; ne sont pas recommendées car elles n'ont
+      supérieures à &glibc-version; ne sont pas recommandées car elles n'ont
       pas été testées)</para>
     </listitem>
 
@@ -79,12 +82,11 @@
     </listitem>
 
     <listitem>
-      <para><emphasis role="strong">Linux Kernel-2.6.x</emphasis>
-      (compilées avec GCC-3.0 or supérieur)</para>
+      <para><emphasis role="strong">Noyau Linux 2.6.x</emphasis>
+      (compilées avec GCC-3.0 ou supérieur)</para>
 
       <para>Cette version du noyau est requise car le support pour le
-      <quote>thread-local storage</quote> de Binutils ne sera pas compilé et la
-      suite de
+'      <quote>thread-local storage</quote> de Binutils ne sera pas compilé et la suite de
       tests NPTL (<foreignphrase>Native POSIX Threading Library</foreignphrase>
       produira une erreur de segmentation (segfault) si le noyau du système
       hôte n'est pas au moins à la version 2.6.x, compilé avec une version 3.0
@@ -92,15 +94,15 @@
 
       <para>Si le noyau hôte est plus ancien que le 2.6.x, ou s'il n'a pas
       été compilé avec le compilateur GCC-3.0 (ou  supérieur),
-      vous devrez remplacer le noyau par un nouveau qui satisfait ces
-      spécifications. Vous pouvez employer deux méthodes pour résoudre ceci.
-      Vous pouvez d'abord voir si votre distribution Linux fournit un paquet 
+      vous devrez remplacer le noyau par un nouveau qui satiifait ces
+      spécifications. Vous pouvez emplyer deux méthodes pour résoudre ceci.
+      Vous pouvez d'abord voir si votre distribution Linux fournit un paquet
       pour le noyau 2.6. Si tel est le cas, vous pouvez l'installer. Si
       votre distribution n'offre pas un paquet pour le noyau 2.6, ou si vous
       préférez l'installer, vous pouvez compiler un noyau 2.6 vous-même.
       Les instructions pour la compilation du noyau et la configuration du
-      chargeur de démarrage (en suppossant que le système hôte utilise GRUB)
-      sont <xref linkend="chapter-bootable"/>.</para>
+      chargeur de démarrage (en supposant que le système hôte utilise GRUB) sont
+      <xref linkend="chapter-bootable"/>.</para>
     </listitem>
 
     <listitem>
@@ -112,11 +114,20 @@
     </listitem>
 
     <listitem>
+      <para><emphasis role="strong">Perl-5.6.0</emphasis></para>
+    </listitem>
+
+    <listitem>
       <para><emphasis role="strong">Sed-3.0.2</emphasis></para>
     </listitem>
 
     <listitem>
       <para><emphasis role="strong">Tar-1.14</emphasis></para>
+    </listitem>
+
+    <!-- Needed by the apparently broken Binutils-2.18 -->
+    <listitem>
+      <para><emphasis role="strong">Texinfo-4.8</emphasis></para>
     </listitem>
 
   </itemizedlist>
@@ -126,17 +137,23 @@
 
 <screen role="nodump"><userinput>cat &gt; version-check.sh &lt;&lt; "EOF"
 <literal>#!/bin/bash
+export LC_ALL=C
 
 # Simple script to list version numbers of critical development tools
 
 bash --version | head -n1 | cut -d" " -f2-4
-echo -n "Binutils: "; ld --version | head -n1 | cut -d" " -f3-4
+echo "/bin/sh -> `readlink -f /bin/sh`"
+echo -n "Binutils: "; ld --version | head -n1 | cut -d" " -f3-
 bison --version | head -n1
+if [ -e /usr/bin/yacc ]; then echo "/usr/bin/yacc -> `readlink -f /usr/bin/yacc`"; 
+  else echo "yacc not found"; fi
 bzip2 --version 2&gt;&amp;1 &lt; /dev/null | head -n1 | cut -d" " -f1,6-
 echo -n "Coreutils: "; chown --version | head -n1 | cut -d")" -f2
 diff --version | head -n1
 find --version | head -n1
 gawk --version | head -n1
+if [ -e /usr/bin/awk ]; then echo "/usr/bin/awk -> `readlink -f /usr/bin/awk`"; 
+  else echo "awk not found"; fi
 gcc --version | head -n1
 /lib/libc.so.6 | head -n1 | cut -d" " -f1-7
 grep --version | head -n1
@@ -145,8 +162,9 @@ cat /proc/version
 make --version | head -n1
 patch --version | head -n1
 sed --version | head -n1
-tar --version | head -n1</literal>
-
+tar --version | head -n1
+makeinfo --version | head -n1
+</literal>
 EOF
 
 bash version-check.sh</userinput></screen>

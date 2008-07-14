@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:stext="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.TextFactory" xmlns:simg="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.ImageIntrinsics" xmlns:ximg="xalan://com.nwalsh.xalan.ImageIntrinsics" xmlns:xtext="xalan://com.nwalsh.xalan.Text" xmlns:lxslt="http://xml.apache.org/xslt" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink stext xtext lxslt simg ximg" extension-element-prefixes="stext xtext" version="1.0">
 
 <!-- ********************************************************************
-     $Id: graphics.xsl,v 1.1 2008-06-26 19:05:51 gleu Exp $
+     $Id: graphics.xsl,v 1.2 2008-07-14 18:28:31 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -1076,14 +1076,7 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
 </xsl:template>
 
 <xsl:template match="imageobject">
-  <xsl:choose>
-    <xsl:when xmlns:svg="http://www.w3.org/2000/svg" test="svg:*">
-      <xsl:apply-templates/>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:apply-templates select="imagedata"/>
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:apply-templates select="imagedata"/>
 </xsl:template>
 
 <xsl:template match="imagedata">
@@ -1094,6 +1087,15 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
   </xsl:variable>
 
   <xsl:choose>
+    <!-- Handle MathML and SVG markup in imagedata -->
+    <xsl:when xmlns:mml="http://www.w3.org/1998/Math/MathML" test="mml:*">
+      <xsl:apply-templates/>
+    </xsl:when>
+    
+    <xsl:when xmlns:svg="http://www.w3.org/2000/svg" test="svg:*">
+      <xsl:apply-templates/>
+    </xsl:when>
+
     <xsl:when test="@format='linespecific'">
       <xsl:choose>
         <xsl:when test="$use.extensions != '0'                         and $textinsert.extension != '0'">

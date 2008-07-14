@@ -10,7 +10,7 @@
   version='1.0'>
 
 <!-- ********************************************************************
-     $Id: pi.xsl,v 1.1 2008-06-26 19:05:48 gleu Exp $
+     $Id: pi.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -21,7 +21,7 @@
 
 <doc:reference xmlns=""><info><title>Common Processing Instruction Reference</title>
     <releaseinfo role="meta">
-      $Id: pi.xsl,v 1.1 2008-06-26 19:05:48 gleu Exp $
+      $Id: pi.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
     </releaseinfo>
   </info>
   <partintro id="partintro">
@@ -89,7 +89,7 @@
 <doc:pi name="dbtimestamp" xmlns="">
   <refpurpose>Inserts a date timestamp</refpurpose>
   <refdescription>
-    <para>Use the <tag>dbtimestamp</tag> PI at any point in a
+    <para>Use the <tag class="xmlpi">dbtimestamp</tag> PI at any point in a
       source document to cause a date timestamp (a formatted
       string representing the current date and time) to be
       inserted in output of the document.</para>

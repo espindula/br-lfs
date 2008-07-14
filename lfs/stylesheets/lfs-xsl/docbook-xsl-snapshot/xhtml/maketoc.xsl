@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/1999/xhtml" version="1.0" exclude-result-prefixes="doc">
 
 <!-- ********************************************************************
-     $Id: maketoc.xsl,v 1.1 2008-06-26 19:05:52 gleu Exp $
+     $Id: maketoc.xsl,v 1.2 2008-07-14 18:28:31 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

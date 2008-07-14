@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl="http://exslt.org/common" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="suwl exsl xlink" version="1.0">
 
 <!-- ********************************************************************
-     $Id: xref.xsl,v 1.1 2008-06-26 19:05:52 gleu Exp $
+     $Id: xref.xsl,v 1.2 2008-07-14 18:28:31 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -854,6 +854,7 @@
 <xsl:template match="link" name="link">
   <xsl:param name="linkend" select="@linkend"/>
   <xsl:param name="a.target"/>
+  <xsl:param name="xhref" select="@xlink:href"/>
 
   <xsl:variable name="content">
     <xsl:call-template name="anchor"/>
@@ -900,6 +901,7 @@
     <xsl:with-param name="linkend" select="$linkend"/>
     <xsl:with-param name="content" select="$content"/>
     <xsl:with-param name="a.target" select="$a.target"/>
+    <xsl:with-param name="xhref" select="$xhref"/>
   </xsl:call-template>
 
 </xsl:template>

@@ -4,7 +4,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: passivetex.xsl,v 1.1 2008-06-26 19:05:49 gleu Exp $
+     $Id: passivetex.xsl,v 1.2 2008-07-14 18:28:28 texou Exp $
      ********************************************************************
       This extension stops PassiveTeX from merging subsequent '-' to 
       dashes. You must set passivetex.extensions to '1' if you want get

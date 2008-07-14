@@ -8,6 +8,12 @@
 <sect1 id="ch-system-coreutils" role="wrap">
   <?dbhtml filename="coreutils.html"?>
 
+  <sect1info condition="script">
+    <productname>coreutils</productname>
+    <productnumber>&coreutils-version;</productnumber>
+    <address>&coreutils-url;</address>
+  </sect1info>
+
   <title>Coreutils-&coreutils-version;</title>
 
   <indexterm zone="ch-system-coreutils">
@@ -41,24 +47,19 @@
     correctif suivant corrige ce comportement pour les architectures
     Intel&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../&coreutils-uname-patch;</userinput></screen>
-
-    <para>Empêchez Coreutils d'installer des binaires qui pourraient
-    être installés plus tard par d'autres paquets&nbsp;:</para>
-
-<screen><userinput>patch -Np1 -i ../&coreutils-suppress-patch;</userinput></screen>
+<screen><userinput remap="pre">patch -Np1 -i ../&coreutils-uname-patch;</userinput></screen>
 
     <para>POSIX exige que les programmes de Coreutils reconnaissent les
     limites des caractères correctement même dans des locales multibyte.
     Le correctif suivant corrige cette rigidité et d'autres bogues liés
     à l'internationalisation&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../&coreutils-i18n-patch;</userinput></screen>
+<screen><userinput remap="pre">patch -Np1 -i ../&coreutils-i18n-patch;</userinput></screen>
 
     <para>Afin de passer les tests ajoutés par ce correctif, les droits
     du fichier test doivent être modifiés&nbsp;:</para>
 
-<screen><userinput>chmod +x tests/sort/sort-mb-tests</userinput></screen>
+<screen><userinput remap="pre">chmod +x tests/sort/sort-mb-tests</userinput></screen>
 
     <note>
       <para>Autrefois, on a trouvé beaucoup de bogues dans ce correctif.
@@ -68,11 +69,24 @@
 
     <para>Maintenant, préparez la compilation de Coreutils&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=/usr</userinput></screen>
+<screen><userinput remap="configure">./configure --prefix=/usr --enable-install-program=hostname --enable-no-install-program=kill,uptime</userinput></screen>
 
+    <variablelist>
+      <title>Voici la signification des options de configuration.</title>
+      
+      <varlistentry>
+        <term><parameter>--enable-no-install-program=kill,uptime</parameter></term>
+        <listitem>
+          <para>Le but de ce paramètre est d'empêcher Coreutils de
+          d'installer des binaires qui seront installés plus tard par d'autres
+          paquets..</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    
     <para>Compilez le paquet&nbsp;:</para>
 
-<screen><userinput>make</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
 
     <para>Passez à <quote>Installez le paquet</quote> si vous n'exécutez
     pas la suite de test.</para>
@@ -82,7 +96,7 @@
 
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen><userinput>make NON_ROOT_USERNAME=nobody check-root</userinput></screen>
+<screen><userinput remap="test">make NON_ROOT_USERNAME=nobody check-root</userinput></screen>
 
     <para>Nous allons exécuter le reste des tests en tant qu'utilisateur
     <systemitem class="username">nobody</systemitem>. Certains tests
@@ -93,24 +107,29 @@
     <systemitem class="username">nobody</systemitem> à
     part&nbsp;:</para>
 
-<screen><userinput>echo "dummy:x:1000:nobody" &gt;&gt; /etc/group</userinput></screen>
+<screen><userinput remap="test">echo "dummy:x:1000:nobody" &gt;&gt; /etc/group</userinput></screen>
 
+    <para>Corrigez des droits afin qu'un utilisateur non-root puisse compiler
+    et exécuter les tests&nbsp;:
+    
+<screen><userinput remap="test">chown -v nobody gnulib-tests/.deps</userinput></screen>
+    
     <para>Maintenant, lancez les tests&nbsp;:</para>
 
-<screen><userinput>su-tools nobody -s /bin/bash -c "make RUN_EXPENSIVE_TESTS=yes check"</userinput></screen>
+<screen><userinput remap="test">su-tools nobody -s /bin/bash -c "make RUN_EXPENSIVE_TESTS=yes check"</userinput></screen>
 
     <para>Supprimez le groupe temporaire&nbsp;:</para>
 
-<screen><userinput>sed -i '/dummy/d' /etc/group</userinput></screen>
+<screen><userinput remap="test">sed -i '/dummy/d' /etc/group</userinput></screen>
 
     <para>Installez le paquet&nbsp;:</para>
 
-<screen><userinput>make install</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
 
     <para>Déplacez quelques programmes aux emplacements spécifiés par le
     FHS&nbsp;:</para>
 
-<screen><userinput>mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
+<screen><userinput remap="install">mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
 mv -v /usr/bin/{false,hostname,ln,ls,mkdir,mknod,mv,pwd,readlink,rm} /bin
 mv -v /usr/bin/{rmdir,stty,sync,true,uname} /bin
 mv -v /usr/bin/chroot /usr/sbin</userinput></screen>
@@ -123,7 +142,7 @@ mv -v /usr/bin/chroot /usr/sbin</userinput></screen>
     disponible dans les premières phases du démarrage, ces binaires ont
     besoin d'être sur la partition root&nbsp;:</para>
 
-<screen><userinput>mv -v /usr/bin/{head,sleep,nice} /bin</userinput></screen>
+<screen><userinput remap="install">mv -v /usr/bin/{head,sleep,nice} /bin</userinput></screen>
 
   </sect2>
 
@@ -297,7 +316,7 @@ mv -v /usr/bin/chroot /usr/sbin</userinput></screen>
         <term><command>dd</command> </term>
         <listitem>
           <para>Copie un fichier en utilisant la taille et le nombre de blocs donnés
-          tout en réalisant des conversions optionnelles</para>
+          tout en réalisant des conversions optionnelles<</para>
           <indexterm zone="ch-system-coreutils dd">
             <primary sortas="b-dd">dd</primary>
           </indexterm>
@@ -354,7 +373,7 @@ mv -v /usr/bin/chroot /usr/sbin</userinput></screen>
         <listitem>
           <para>Affiche le total de l'espace disque utilisé par le répertoire actuel, ou
           par chacun des répertoires donnés incluant tous les sous-répertoires, ou par
-          chacun des fichiers donnés</para>
+          chacun des fichiers donnés<</para>
           <indexterm zone="ch-system-coreutils du">
             <primary sortas="b-du">du</primary>
           </indexterm>
@@ -622,7 +641,7 @@ mv -v /usr/bin/chroot /usr/sbin</userinput></screen>
       <varlistentry id="nl">
         <term><command>nl</command></term>
         <listitem>
-          <para>Numérote les lignes des fichiers donnés</para>
+          <para>Numérote les lignes des fichiers donnés<</para>
           <indexterm zone="ch-system-coreutils nl">
             <primary sortas="b-nl">nl</primary>
           </indexterm>
@@ -787,8 +806,8 @@ mv -v /usr/bin/chroot /usr/sbin</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="sha256sum">
-        <term><command>sha256sum</command></term>
+      <varlistentry id="sha224sum">
+        <term><command>sha224sum</command></term>
         <listitem>
           <para>Affiche ou vérifie des sommes de contrôle 256-bit Secure Hash Algorithm (SHA1)</para>
           <indexterm zone="ch-system-coreutils sha256sum">

@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink suwl" version="1.0">
 
 <!-- ********************************************************************
-     $Id: inline.xsl,v 1.1 2008-06-26 19:05:51 gleu Exp $
+     $Id: inline.xsl,v 1.2 2008-07-14 18:28:31 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -81,7 +81,7 @@
                   </xsl:attribute>
 
                   <xsl:choose>
-                    <xsl:when test="$node/@xlink.title">
+                    <xsl:when test="$node/@xlink:title">
                       <xsl:attribute name="title">
                         <xsl:value-of select="$node/@xlink:title"/>
                       </xsl:attribute>
@@ -117,7 +117,7 @@
               <xsl:attribute name="href">
                 <xsl:value-of select="$xhref"/>
               </xsl:attribute>
-              <xsl:if test="$node/@xlink.title">
+              <xsl:if test="$node/@xlink:title">
                 <xsl:attribute name="title">
                   <xsl:value-of select="$node/@xlink:title"/>
                 </xsl:attribute>

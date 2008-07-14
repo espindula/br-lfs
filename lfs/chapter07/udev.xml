@@ -78,7 +78,6 @@
     fichiers virtuel appelé 
 
     <systemitem class="filesystem">sysfs</systemitem> est arrivé. Le
-    travail de <systemitem class="filesystem">sysfs</systemitem> est
     d'exporter une vue de la configuration matérielle du système pour
     les processus en espace utilisateur. Avec cette représentation
     visible de l'espace utilisateur, la possibilité de voir un
@@ -95,7 +94,9 @@
     <sect3>
       <title>Sysfs</title>
 
-      <para>On pourrait se
+      <para>Le système de fichier
+
+      <systemitem class="filesystem">sysfs</systemitem>. On pourrait se
       demander comment <systemitem class="filesystem">sysfs</systemitem>
       connaît les périphériques présents sur un système et quels numéros
       de périphériques devraient être utilisés. Les pilotes qui ont été
@@ -121,7 +122,7 @@
 
       <para>Le script de démarrage <command>S10udev</command> fait
       attention à créer les n&oelig;uds périphériques au lancement de
-      Linux. Le script supprime la gestion des uevents de
+      Linux. Le script supprime la gestion des uevents de 
       <command>/sbin/hotplug</command> par défaut. On fait cela car le
       noyau n'a plus besoin de faire appel à un binaire externe. À la
       place, <command>udevd</command> écoutera sur un socket netlink les
@@ -132,8 +133,9 @@
       car certains périphériques, répertoires et liens symboliques sont
       requis avant que les processus de gestion du périphérique
       dynamique ne soient disponibles pendant les premières étapes du
-      démarrage d'un système. La création des n&oelig;uds vers un
-      périphérique statique dans
+      démarrage d'un système, ou car  <command>udevd</command> lui-même
+      les exige. La création des n&oelig;uds vers un périphérique
+      statique dans
 
       <filename class="directory">/lib/udev/devices</filename> fournit
       aussi un environnement de travail facile pour les périphériques
@@ -157,11 +159,11 @@
       <filename>/sys/class/tty/vcs/dev</filename> contient la chaîne
       <quote>7:0</quote>. Cette chaîne est utilisée par <command>udevd</command>
       pour créer un n&oelig;ud de périphérique avec un nombre majeur
-      <emphasis>7</emphasis> et un nombre mineur <emphasis>0</emphasis>.
-      Les noms et les droits des n&oelig;uds sous le répertoire 
+      <emphasis>7</emphasis> et et un nombre mineur <emphasis>0</emphasis>. Les noms
+      et les droits des n&oelig;uds sous le répertoire 
       <filename class="directory">/dev</filename> sont déterminés par des
-      règles spécifiés dans des fichiers à l'intérieur du répertoire <filename
-      class="directory">/etc/udev/rules.d/</filename>. Celles-ci
+      règles spécifiés dans des fichiers à l'intérieur du répertoire
+		<filename class="directory">/etc/udev/rules.d/</filename>. Celles-ci
       sont numérotées d'une façon similaire au paquet LFS-Bootscripts. Si
       <command>udevd</command> ne peut trouver une règle pour le périphérique
      qu'il est en train de créer, il attribuera par défaut des droits 
@@ -174,33 +176,33 @@
     <sect3>
       <title>Chargement d'un module</title>
 
-      <para>Il se peut que les pilotes des périphériques compilés en module
-      aient des aliases compilés en eux. Les alias sont visibles dans la
-      sortie du programme <command>modinfo</command> et sont souvent liés
-      aux identifiants spécifiques au bus des périphériques supportés par un
-      module. Par exemple, le pilote <emphasis>snd-fm801</emphasis>
-      supporte les périphériques PCI ayant l'ID fabricant 0x1319 et l'ID de
-      périphérique 0x0801, et il a un alias qui est 
-      <quote>pci:v00001319d00000801sv*sd*bc04sc01i*</quote>.
-      Pour la plupart des périphériques, le pilote du bus définit l'alias du
-      pilote qui gérerait le périphérique via 
-      <systemitem class="filesystem">sysfs</systemitem>. Par exemple, le fichier
-      <filename>/sys/bus/pci/devices/0000:00:0d.0/modalias</filename> pourrait
-      contenir la chaîne 
+      <para>Il se peut que les pilotes des périphériques compilés en
+      module aient des aliases compilés en eux. Les aliases sont
+      visibles dans la sortie du programme <command>modinfo</command> et
+      sont souvent liés aux identifiants spécifiques au bus des
+      périphériques supportés par un module. Par exemple, le pilote
+      <emphasis>snd-fm801</emphasis> supporte les périphériques PCI
+      ayant l'ID fabricant 0x1319 et l'ID de périphérique 0x0801, et il
+      a un alias qui est 
+      <quote>pci:v00001319d00000801sv*sd*bc04sc01i*</quote>. Pour la
+      plupart des périphériques, le pilote du bus définit l'alias du
+      pilote qui gérerait le périphérique via  <systemitem
+      class="filesystem">sysfs</systemitem>. Par exemple, le fichier
+      <filename>/sys/bus/pci/devices/0000:00:0d.0/modalias</filename>
+      pourrait contenir la chaîne 
       <quote>pci:v00001319d00000801sv00001319sd00001319bc04sc01i00</quote>.
-      Il résultera des règles installées par LFS que <command>udevd</command>
-      fera appel à  <command>/sbin/modprobe</command> avec le contenu
-      de la variable d'environnement de l'uevent <envar>MODALIAS</envar> 
-      qui devrait être la même que le contenu du fichier
-      <filename>modalias</filename> dans sysfs, donc le chargement de
-      tous les modules dont les aliases correspondent à cette chaîne 
+      Il résultera des règles par défaut fournies avec Udev que
+      <command>udevd</command> fera appel à 
+      <command>/sbin/modprobe</command> avec le contenu de la variable
+      d'environnement de l'uevent <envar>MODALIAS</envar>  qui devrait
+      être la même que le contenu du fichier
+      <filename>modalias</filename> dans sysfs), donc le chargement de
       après les expansions génériques.</para>
 
-      <para>Dans cet exemple, cela signifie que, outre
-      <emphasis>snd-fm801</emphasis>, le pilote <emphasis>forte</emphasis>
-      obsolète (dont on ne veut pas) sera chargé s'il est disponible. Voir
-      ci-dessous les moyens d'empêcher le chargement des modules
-      indésirables.</para>
+      <para>Dans cet exemple, cela signifie que, outre <emphasis>snd-fm801</emphasis>,
+     le pilote <emphasis>forte</emphasis> obsolète (dont on ne veut pas 
+     sera chargé s'il est disponible. Voir ci-dessous les moyens d'empêcher
+      le chargement des modules indésirables.</para>
 
       <para>Le noyau lui-même est aussi capable de charger des modules
       de protocole réseau, de support pour des systèmes de fichiers et
@@ -319,7 +321,8 @@
       avec des lacunes peut correspondre à un disque SCSI (comme désiré)
       et au périphérique générique SCSI correspondant (de façon
       incorrecte) par le fabricant. Trouvez la règle défectueuse et
-      rendez-la plus précise.</para>
+      rendez-la plus précise, à l'aide de la commande
+      <command>udevadm info</command></para>
 
     </sect3>
 
@@ -335,9 +338,10 @@
 
       <systemitem class="filesystem">sysfs</systemitem> utilisé et en la
       mettant dans le fichier
-      <filename>/etc/udev/rules.d/10-wait_for_sysfs.rules</filename>.
-      Merci d'informer la liste de développement de LFS si vous faites
-      ainsi et que cela vous aide.</para>
+      <filename>/etc/udev/rules.d/10-wait_for_sysfs.rules</filename>
+      (créez ce fichier s'il n'existe pas). Merci d'informer la liste de
+      développement de LFS si vous faites ainsi et que cela vous
+      aide.</para>
 
     </sect3>
 

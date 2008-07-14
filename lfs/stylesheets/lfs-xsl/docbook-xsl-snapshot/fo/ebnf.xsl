@@ -6,7 +6,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: ebnf.xsl,v 1.1 2008-06-26 19:05:49 gleu Exp $
+     $Id: ebnf.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -18,7 +18,7 @@
 <doc:reference xmlns="">
 <referenceinfo>
 <releaseinfo role="meta">
-$Id: ebnf.xsl,v 1.1 2008-06-26 19:05:49 gleu Exp $
+$Id: ebnf.xsl,v 1.2 2008-07-14 18:28:27 texou Exp $
 </releaseinfo>
 <author><surname>Walsh</surname>
 <firstname>Norman</firstname></author>
