@@ -1,0 +1,306 @@
+#!/bin/bash
+# Begin /lib/lsb/manage-functions
+
+# /lib/lsb/manage-functions contains the functions used by 
+# /lib/lsb/install_initd and /lib/lsb/remove_initd as well as additional helper
+# functions for use in programs that would provide functionality similar to
+# the RedHat chkconfig utility, for instance.
+
+# source the confif file
+. /etc/lsb/lsb-config
+
+# Define all arrays at script start to avoid scope issues
+# scriptlist is a list of valid scripts used as an index
+declare -a scriptlist
+# fullheaders is a complete set of valid LSB headers, stored in memory for 
+# each indexed script, to avoid multiple disk reads
+declare -a fullheaders
+
+###############################################################################
+# get_headers() - Obtains a valid list of scripts contained in ${rcbase} and  #
+#                 inserts the name of the script into the scriptlist[] array  #
+#                 for use by all other functions.  Additionally, it inserts   #
+#                 the entire LSB header information from each script into a   #
+#                 second array, fullheaders[], so that diskreads need only be #
+#                 done once                                                   #
+#                 Returns no value, but populates the variable ${scriptcount} #
+#                 and the arrays ${scriptlist} and ${fullheaders} for use     #
+#                 with other functions in this script.  This function is      #
+#                 called unconditionally at the end of this scrip and is      #
+#                 provided as a function only for the case that it needs to   #
+#                 be called again after other operations.                     #
+###############################################################################
+get_headers()
+{
+    echo -n "Retrieving script information from disk..."
+    count=1
+    for file in $(find -P /etc/init.d -xdev -perm -u=x | sed -n 2~1p \
+                      | sed "s@/etc/init.d/rc@@")
+    do
+        # determine if script is an LSB compliant script
+        grep "### BEGIN INIT INFO" $file > /dev/null
+        if test $? -gt "0"
+        then
+            # this is not a valid script and is ignored
+            # skip the rest of the loop
+            continue
+        fi
+        # determine basename using only bash (is basename a builtin?)
+        filename=$(echo "${file}" | sed "s@${rcbase}/@@")
+        # assign it to an array possition
+        scriptlist["${count}"]="${filename}"
+        # find the begining of the init info for the script
+        begin=$(grep -n "### BEGIN INIT INFO" "${file}" | cut -d: -f1)
+        # find the end of the init info for the script
+        end=$(grep -n "### END INIT INFO" "${file}" | cut -d: -f1)
+        # we'll use the difference between the values in the tail command
+        diff=$(( ${end} - ${begin} ))
+        # assign the entire LSB header information as a single string to the
+        # fullheaders[] array
+        fullheaders["${count}"]=$(head -n "${end}" "${file}" \
+                                    | tail -n "${diff}")
+        count=$(( ${count} + 1 ))
+        unset begin
+        unset end
+        unset diff
+        unset filename
+    done
+    # a number or array elements would be a nice regular variable assignment
+    scriptcount="${#scriptlist[@]}"
+    unset count
+    echo -e "Completed!"
+}
+
+###############################################################################
+# print_headers() - Presents a formatted list of all LSB compliant script     #
+#                   headers to stdout preceeded by script name for use in     #
+#                   other scripts                                             #
+###############################################################################
+print_headers()
+{
+    get_headers
+    count=1
+    while test "${count}" -lt "${scriptcount}"
+    do
+        echo "${scriptlist[$count]}"
+        echo "============================================================="
+        echo "${fullheaders[$count]}"
+        echo ""
+        echo ""
+        count="$(( ${count} + 1 ))"
+    done
+}
+
+###############################################################################
+# get_index() - Determines the array index of the specified script            #
+###############################################################################
+
+get_index()
+{
+    filename=$(echo "${1}" | sed "s@${rcbase}/@@")
+    count=1
+    while test "${count}" -lt "${scriptcount}"
+    do
+        echo "${scriptlist[${count}]}" | grep "${filename}" > /dev/null
+        if test "${?}" -ne "0"
+        then
+            count=$(( ${count} + 1 ))
+            continue
+        else
+            break
+        fi
+    done
+    if test "${filename}" == "${scriptlist[${count}]}"
+    then
+        echo "${count}"
+    else
+        echo "${1} is not a valid LSB init script."
+        exit 1
+    fi
+    unset filename
+    unset count
+}
+
+###############################################################################
+# get_lsb_value() - Obtains the LSB Value of $1 for index of script ($2).     #
+###############################################################################
+get_lsb_value()
+{
+    # Probably need some error checking in here
+    echo "${fullheaders[${2}]}" | \
+        grep "^# ${1}" | \
+        sed -e "s@# ${1}:@@" \
+            -e "s/^[ \t]*//"
+}
+
+###############################################################################
+# convert_lsb_required() - Converts LSB defined facilities (facility names    #
+#                          begining with a '$' character) into script names   #
+#                          for required start/stop                            #
+###############################################################################
+convert_lsb_required()
+{
+    local count=0
+    local provides=""
+    local reqfacility=""
+    local reqprovideslist=""
+
+    for reqfacility in $@
+    do
+        # find the requires and it's index and then find the script name 
+        # from the index.  Since this is required, exit if it is not found
+        ## If reqfacility is already in script name format, nothing needs to
+        ## be done, just echo it back out.  I can't think of an easy way to
+        ## do this right now, the scriptname will be the same as the provides
+        ## anyway, so just let it fly for now...it'll be correct, it just 
+        ## takes an extra couple of commands to get the same result.
+        ## Besides, this will do some extra sanity checking in case somebody
+        ## writes a script that isn't named the same as provides, though this
+        ## isn't LSB compliant.  Additionally, these same comments apply to
+        ## the convert_lsb_should() fucntion below.
+        count=0
+        while test ${count} -lt ${scriptcount}
+        do
+            count=$(( $count + 1 ))
+            provides="$( get_lsb_value Provides ${count} )"
+            if test "${provides}" = "${reqfacility}"
+            then
+                 reqprovideslist="${reqprovideslist} ${scriptlist[$count]}"
+                 break
+            fi
+            if test ${count} -eq ${scriptcount}; then
+                # If we've never broken out of the while loop, then this is an
+                # unrecoverable error since it is a required item.  Exit now!
+                echo "Error: unable to locate required facility ${reqfacility}!"
+                exit 5
+            fi
+        done
+    done
+    echo "${reqprovideslist}" | sed -e "s/^[ \t]*//" -e "s/^[ \t]*//"
+}
+
+###############################################################################
+# convert_lsb_should() - Converts LSB defined facilities (facility names      #
+#                        begining with a '$' character) into script names for #
+#                        should start/stop                                    #
+###############################################################################
+
+convert_lsb_should()
+{
+    local count=0
+    local provides=""
+    local optfacility=""
+    local optprovideslist=""
+
+    for optfacility in $@
+    do
+        # find the should and it's index and then find the script name 
+        # from the index.  Since this is not an error, simply warn if it
+        # is not found.
+        count=0
+        while test ${count} -lt ${scriptcount}
+        do
+            count=$(( $count + 1 ))
+            provides="$( get_lsb_value Provides ${count} )"
+            if test "${provides}" = "${optfacility}"
+            then
+                 optprovideslist="${optprovideslist} ${scriptlist[$count]}"
+                 break
+            fi
+            # No need to error or warn on should items, and it's messy if so!
+        done
+    done
+    echo "${optprovideslist}" | sed -e "s/^[ \t]*//" -e "s/[ \t]*$//"
+}
+
+get_headers
+
+###############################################################################
+# get_lsb_required_value() - Additional function to simplify repetitive tasks #
+#                            Obtains the LSB Value of $1 for index of script  #
+#                            ($2) and immediately converts LSB defined        #
+#                            facilities (beginning with a '$' character) to a #
+#                            script name.  If the script is not found, then   #
+#                            the function exits with an error as per          #
+#                            convert_lsb_required.                            #
+###############################################################################
+get_lsb_required_value()
+{
+    local reqval
+    # Probably need some error checking in here
+    reqval=`echo "${fullheaders[${2}]}" | \
+        grep "^# ${1}" | \
+        sed -e "s@# ${1}:@@" \
+            -e "s/^[ \t]*//"`
+
+    # If $reqval contains a '$' charcter, then convert it to a script name
+    echo "${reqval}" | grep "\\$" 2>&1 > /dev/null
+    if test "${?}" -eq "0"
+    then
+        reqval=`convert_lsb_required "${reqval}"`
+    fi
+    echo "${reqval}"
+}
+
+###############################################################################
+# get_lsb_should_value() - Additional function to simplify repetitive tasks   #
+#                          Obtains the LSB Value of $1 for index of script    #
+#                          ($2) and immediately converts LSB defined          #
+#                          facilities (beginning with a '$' character) to a   #
+#                          script name.  If the script is not found, the      #
+#                          value is removed from the list as it is optional.  #
+###############################################################################
+get_lsb_should_value()
+{
+    local optval
+    local listitem
+    local optitem
+    # Probably need some error checking in here
+    optval=`echo "${fullheaders[${2}]}" | \
+        grep "^# ${1}" | \
+        sed -e "s@# ${1}:@@" \
+            -e "s/^[ \t]*//"`
+
+    # If $optval contains a '$' charcter, then convert it to a script name
+    echo "${optval}" | grep "\\$" 2>&1 > /dev/null
+    if test "${?}" -eq "0"
+    then
+        optval=`convert_lsb_should "${optval}"`
+        # if we still have a "$" character, then it's not found and it should
+        # be removed from the list (and it's trailing space if one exists)
+        # since it is optional
+        echo "${optval}" | grep "\\$" 2>&1 > /dev/null
+        if test "${?}" -eq "0"
+        then
+            # Remove the value
+            for listitem in ${optval} 
+            do
+                echo "${listitem}" | grep "\\$"
+                if test "${?}" -eq "0"
+                then
+                    optval=`echo "${optval}" | sed -e 's@${listitem} @@' \
+                                                   -e 's@${listitem}@@' | \
+                                sed -e "s@# ${1}:@@" \
+                                    -e "s/^[ \t]*//"`
+                fi
+            done
+        fi    
+    fi
+    # If a should start value does not have a script associted with it, then
+    # remove it (or it and trailing space) from the list
+    for optitem in ${otpval}
+    do
+        grep "${optitem}" "${statedir}/enabled-scripts" 2>&1 > /dev/null
+        if test "${?}" -ne "0"
+        then
+            optval=`echo "${optval}" | sed -e 's@${otpitem} @@' \
+                                           -e 's@${optitem}@@' | \
+                        sed -e "s@# ${1}:@@" \
+                            -e "s/^[ \t]*//"`
+        fi
+    done        
+
+    echo "${optval}"
+}
+
+# End /lib/lsb/manage-functions
