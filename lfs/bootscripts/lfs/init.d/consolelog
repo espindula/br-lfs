@@ -1,0 +1,61 @@
+#!/bin/sh
+# Begin $rc_base/init.d/consolelog
+
+########################################################################
+#
+# Description : Set the kernel log level for the console
+#
+# Authors     : Dan Nicholson - dnicholson@linuxfromscratch.org
+#
+# Version     : 00.00
+#
+# Notes       : /proc must be mounted before this can run
+#
+########################################################################
+
+. /etc/sysconfig/rc
+. ${rc_functions}
+
+# set the default loglevel
+LOGLEVEL=7
+if [ -r /etc/sysconfig/console ]; then
+	. /etc/sysconfig/console
+fi
+
+case "${1}" in
+	start)
+		case "$LOGLEVEL" in
+		[1-8])
+			boot_mesg "Setting the console log level to ${LOGLEVEL}..."
+			dmesg -n $LOGLEVEL
+			evaluate_retval
+			;;
+		*)
+			boot_mesg "Console log level '${LOGLEVEL}' is invalid" ${FAILURE}
+			echo_failure
+			;;
+		esac
+		;;
+	status)
+		# Read the current value if possible
+		if [ -r /proc/sys/kernel/printk ]; then
+			read level line < /proc/sys/kernel/printk
+		else
+			boot_mesg "Can't read the current console log level" ${FAILURE}
+			echo_failure
+		fi
+
+		# Print the value
+		if [ -n "$level" ]; then
+			${ECHO} -e "${INFO}The current console log level" \
+				"is ${level}${NORMAL}"
+		fi
+		;;
+
+	*)
+		echo "Usage: ${0} {start|status}"
+		exit 1
+		;;
+esac
+
+# End $rc_base/init.d/consolelog
