@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Boot scripts
 for s in bootscripts/lfs/init.d/*                    \

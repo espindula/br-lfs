@@ -67,7 +67,7 @@ nochunks: validxml profile-html
 	@echo "Running Tidy..."
 	$(Q)tidy -config tidy.conf $(BASEDIR)/$(NOCHUNKS_OUTPUT) || true
 	@echo "Running obfuscate.sh..."
-	$(Q)sh obfuscate.sh $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+	$(Q)bash obfuscate.sh $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g"  \
 	  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 
@@ -79,7 +79,7 @@ tmpdir:
 
 validxml: tmpdir
 	@echo "Processing bootscripts..."
-	$(Q)sh process-scripts.sh $(RENDERTMP)
+	$(Q)bash process-scripts.sh $(RENDERTMP)
 	@echo "Validating the book..."
 	$(Q)xmllint --nonet --noent --xinclude --postvalid \
 	  -o $(RENDERTMP)/lfs-full.xml index.xml
