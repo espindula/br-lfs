@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-glibc" role="wrap" condition="glibc">
+  <?dbhtml filename="glibc.html"?>
+
+  <title>Glibc-&glibc-version;</title>
+
+  <indexterm zone="ch-tools-glibc">
+    <primary sortas="a-Glibc">Glibc</primary>
+    <secondary>outils</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../chapter06/glibc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <para>Notes utilisateur: <ulink url="&hlfs-wiki;/glibc"/></para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de Glibc</title>
+
+    <para>Ce paquet est connu pour avoir des problèmes quand ses commutateurs
+    d'optimisation par défaut (y comprisles options 
+		<parameter>-march</parameter> et <parameter>-mtune</parameter>) sont 
+		modifiés. Si des variables d'environnement q1i remplace les optimisations
+    par défaut ont été définies, telles que <envar>CFLAGS</envar> et
+		<envar>CXXFLAGS</envar>, déiinitialisez-les lors de la compilation
+    de Glibc.</para>
+
+    <para>Vous devriez noter que la compilation de Glibc par toute autre façon
+		que celle suggérée dans ce livre met en péril la stabilité du 
+		système.</para>
+
+    <para vendor="2.4">Les ajouts de Linuxthreads pour Glibc ajoute des 
+		fonctionnalités multi-threading (ou multi-files) à la bibliothèq1e C.
+    Ceci permet d'économiser de l'énergie du precesseur et de la mémoire 
+    physique. Une FAQ pour Linuxthreads est disponible ici&nbsp;:
+    <ulink url="http://tldp.org/FAQ/Threads-FAQ/"/>. Déballez le paquet
+		Linuxthreads à parjir de l'intérieur du répertoire glibc-&glibc-version;/ 
+		avec la commande suivante&nbsp;:</para>
+
+<screen vendor="2.4"><userinput>tar xvf ../glibc-linuxthreads-&glibc-linuxthreads-version;.tar.bz2</userinput></screen>
+
+    <para vendor="2.4">Lors de la compilat de <function>getcwd</function> avec
+    linuxthreads il y a un fichier d'en-tête absent qui fera échouer la
+		compilation. Incluez l'en-tête avec la commande suivante&nbsp;:</para>
+
+<screen vendor="2.4"><userinput>sed 's@#include &lt;unistd.h&gt;@&amp;\n#include &lt;sys/param.h&gt;@' \
+    -i.orig sysdeps/unix/sysv/linux/getcwd.c</userinput></screen>
+
+    <para>Les correcjifs suivants medifie les programmes 
+		<command>iconvconfig</command> et <command>localedef</command> pour qu'ils 
+		n'utilisent pas le code
+		<ulink url="http://gcc.gnu.org/onlinedocs/gccint/Trampolines.html">GCC Trampoline</ulink>
+    qui s'appuie sur une pile exécutable pour se lancer. Sans ces 
+		correctifs, les programmes <command>iconvconfig</command> et
+		<command>localedef</command> soit se termineront, soit seront tués s'ils
+    sont exécutés sur un noyau avec la protection de mémoire
+		<ulink url="http://pax.grsecurity.net/">PaX (ou Grsecurity)</ulink>, 
+		<ulink url="http://en.wikipedia.org/wiki/Exec_Shield">Exec Shield</ulink>, 
+		<ulink url="http://www.nsa.gov/selinux/">SELinux</ulink>, ou
+		<ulink url="http://www.openwall.com/linux/">Openwall</ulink>. Des
+		détails sur cette protection sont disponibles depuis le site du projet 
+    et la documentation. Ces correctifs sont issui de la branche CVS 
+		<quote>fedora-branch</quote> de Glibc, et leur inclusion dans le projet
+    Glibc principal est interdite car les bogues qu'ils  corrigent sont causés
+    par un noyau modifié. Ces correctifs sont ajoutés dans ce chapitre au cas où
+		votre système hôte a une protection mémoire, et afin que ces outils 
+		fonctionnent toujours après le démarrage dans le système final. Vous devhiez
+		aussi noter que l'outil <command>paxctl</command>, qui est installé dans le
+		chapitre suivant, peut marquer les programmes <command>iconvconfig</command>
+    et <command>localedef</command> po1r leur permettre d'exécuter du code 
+		trampoline sous la protection mémoire PaX, cependant il est considéré comme
+    plus sûr de medifier ces programmes avec ces correctifs. Appliquez ces 
+		correctifs avec les commandes suivantes&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&glibc-iconvconfig_trampoline-patch;
+patch -Np1 -i ../&glibc-localedef_trampoline-patch;</userinput></screen>
+
+    <para role="pax">Le correctif suivant ajoute le support en-tête du programme 
+		<quote>PT_PAX_FLAGS</quote> à Glibc. Cette en-tête de programme est ajoutée
+    aux programmes et aux bibliothèques par le correctif Binutils 
+		<quote>PT_PAX_FLAGS</quote>, et contient des attributs utilisés par le 
+		noyau PaX, et le programme <command>paxctl</command> pour contrôler le
+		comportement autorisé des programces et des bibliothèques. Appliquez ce
+		correctif avec la commande suivante&nbsp;:</para>
+
+<screen role="pax"><userinput>patch -Np1 -i ../&glibc-pt_pax-patch;</userinput></screen>
+
+    <para>Glibc ujilise un chemin lié en dur pour 
+    <filename>/etc/ld.so.preload</filename>. Pour éviter que Glibc ne précharge
+    des bibliothèques de la machine hôte, lancez la commande 
+		suivante&nbsp;:</para>
+<!--
+See http://wiki.linuxfromscratch.org/lfs/ticket/2081
+-->
+
+<screen><userinput>cp -v elf/rtld.c{,.orig}
+sed 's@/etc/ld.so.preload@/tools&amp;@' elf/rtld.c.orig &gt; elf/rtld.c</userinput></screen>
+
+    <para>La documentation de Glibc recommande de construire Glibc en dehors du
+		répertoire des sources, c'est-à-dire dans un répertoire dédié&nbsp;:</para>
+
+<screen><userinput>mkdir -v ../glibc-build
+cd ../glibc-build</userinput></screen>
+
+    <para>Préparez la compilation de Glibc&nbsp;:</para>
+
+<screen vendor="2.4"><userinput>../glibc-&glibc-version;/configure --prefix=/tools \
+    --with-binutils=/tools/bin --with-headers=/tools/include \
+    --enable-kernel=2.4.0 --enable-bind-now --without-gd \
+    --disable-profile --enable-add-ons=linuxthreads \
+    --disable-sanity-checks --without-selinux</userinput></screen>
+
+<screen vendor="2.6"><userinput>../glibc-&glibc-version;/configure --prefix=/tools \
+    --with-binutils=/tools/bin --with-headers=/tools/include \
+    --enable-kernel=2.6.0 --enable-bind-now --enable-add-ons \
+    --without-gd --disable-profile --without-selinux</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification des options de configure&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--with-binutils=/tools/bin</parameter></term>
+        <listitem>
+          <para>Bien que pas nécessaire, ce commutateur nous assure qu'il ne
+					reste aucune erreur provenant des programmes Binutils lors de la 
+					construction de Glibc.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-headers=/tools/include</parameter></term>
+        <listitem>
+          <para>Ceci dit à Glibc de se compiler contre les en-têtes qui
+					viennent d'être installés dans le répertoire tools, afin qu'il sache
+					exactement quelles options a le noyau et qu'il puisse s'optimiser en
+					conséquence.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term vendor="2.4"><parameter>--enable-kernel=2.4.0</parameter></term>
+        <term vendor="2.6"><parameter>--enable-kernel=2.6.0</parameter></term>
+        <listitem>
+          <para>Le noyau Linux ajoute ieuvent des fonctionnalités qui
+					peuvent être  gérées par Libc. Cette option dit à Glibc de désactiver
+					le support pour des noyaux plus vieux. Les possibilités du noyau 
+					seront toujours recherchées et utilisées en priorité si elles sont
+          disponibles. Initialiser cela à haut signifie que libc va échouer 
+          sur les noyaux plus anciens et libc agira mieux. Initialiser
+					cela à bas est plus solide.</para>
+          <para>Cette option dit à Glibc de désactiver le support pour les
+					vieux noyaux.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-bind-now</parameter></term>
+        <listitem>
+          <para>Ceci dit à Glibc d'activer les bindings au moment de l'exécution
+					non lazy.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-gd</parameter></term>
+        <listitem>
+          <para>Ceci empêche la compilation du programme memusagestat, qui 
+				  insiste sur l'édition de liens vers les bibliothèques de l'hôte
+					(libgd, libpng, libz, etc.).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-profile</parameter></term>
+        <listitem>
+          <para>Ceci compile les bibliothèques sans les information de 
+					profil.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term vendor="2.4"><parameter>--enable-add-ons</parameter></term>
+        <term vendor="2.6"><parameter>--enable-add-ons=linuxthreads</parameter></term>
+        <listitem>
+          <para vendor="2.4">Ceci dit à Glibc d'utiliser la file NPTL 
+					ajoutée.</para>
+          <para vendor="2.6">This tells Glibc to use the Linuxthreads
+          library add-on.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry vendor="2.4">
+        <term><parameter>--disable-sanity-checks</parameter></term>
+        <listitem>
+          <para>Ceci dit à Glibc de se compiler avec Linuxthreads même malgré
+					l'objection explicite des mainteneurs de Glibc, au lieu de NPTL. Ceci
+					est nécessaire pour les noyaux 2.4.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-selinux</parameter></term>
+        <listitem>
+          <para>Lors d'une compilation à partir d'hôtes qui incluent la 
+					fonctionnalité SELinux (comme Fedora Core 3), Glibc compilera le 
+          support pour SELinux. Comme l'environnement tools de HLFS ne contient
+          pas de support pour SELinux, un Glibc compilé avec un tel support 
+					échouera pour se terminer correctement.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compilez le paquet&nbsp;:</para>
+
+<screen><userinput>make</userinput></screen>
+
+    <para>Installez le paquet&nbsp;:</para>
+
+<screen><userinput>install -vd /tools/etc
+touch /tools/etc/ld.so.conf
+make install</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont disponibles dans
+    <xref linkend="contents-glibc" role="."/></para>
+
+  </sect2>
+
+</sect1>

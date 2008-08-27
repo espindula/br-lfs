@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-technotes-arc4random">
+  <?dbhtml filename="arc4random.html"?>
+
+  <title>Arc4random</title>
+
+  <para>La fonction de la bibliothèque <function>arc4random()</function> 
+  a été développée par OpenBSD pour fournir des nombres aléatoires fiables
+  même lorsque le système est dans un ordre 
+  d'exécution affreux. A l'origine, elle a été faite pour fournir une interface
+	Libc pour <filename class="devicefile">/dev/arandom</filename> et
+  <filename class="devicefile">arandom</filename> de sysctl, mais
+	<filename class="devicefile">arandom</filename> n'existe pas dans Linux. La 
+	bibliothèque <filename class="libraryfile">arc4random</filename> utilise
+	un cryptogramme mouvant de clé arcfour (ou rc4) qui peut-être dans environ
+  (2**1700) états.</para>
+
+  <para>Le correctif du noyau frandom, fournissant
+	<filename class="devicefile">erandom</filename>, est très semblable à
+	<filename class="devicefile">arandom</filename> sauf que
+	<filename class="devicefile">erandom</filename> doit être bâti à la main, et
+	que <filename class="devicefile">erandom</filename> utilise le hachage md5
+	là où <filename class="devicefile">arandom</filename> utilise arcfour.
+	<filename class="devicefile">erandom</filename> est basé sur l'état de
+  <filename class="devicefile">frandom</filename> et n'utilise pas de mémoire
+	du noyau, mais du coup il est peu sûr pour la cryptographie. 
+  <filename class="devicefile">frandom</filename> est bâti directement à partir
+	de l'ensemble de la mémoire du noyau, mais une seule fois par utilisation, et
+  il peut produire des gigaoctets de sortie en ne consommant que 256 octets 
+  de mémoire noyau. Pour refabriquer 
+	<filename class="devicefile">erandom</filename> utilisez simplement
+	<filename class="devicefile">frandom</filename>, par exemple en envoyant
+	un bloc de <filename class="devicefile">frandom</filename> vers
+	<filename class="devicefile">/dev/null</filename>. Les interfaces sysctl
+	sont disponibles pour fournir de la mémoire dans le chroot. Sysctl est
+	une seule interface <quote>thread</quote> (à la suite), donc les périphériques
+	dans <filename class="directory">/dev</filename> sont essayés en premier. Même
+  si les périphériques dans <filename class="devicefile">/dev</filename> ne  
+	sont pas disponibles, sysctl a très bien fait. Les périphériques
+  <filename class="directory">frandom</filename>,
+	<filename class="devicefile">erandom</filename> et les périphériques sysctl
+	<filename class="devicefile">urandom</filename> et les  interfaces
+	sont en effet disponibles dans le correctif du noyau pseudo_random.</para>
+
+  <para>Dans cette implémentation, les correctifs de Libc pour 
+	<filename class="libraryfile">arc4random</filename> fournissent deux fonctions
+  clé, <function>arc4random()</function> et <function>arc4randomII()</function>.
+  <function>arc4random()</function> utilise
+	<filename class="devicefile">urandom</filename> est est prévue pour des
+	applications cryptographiques, <function>arc4randomII()</function> utilise
+	<filename class="devicefile">erandom</filename> et est prévu pour des
+	applications non cryptographiques. Ces deux fonctions incluent 
+  <function>gettimeofday(2)</function> au moment de l'initialisation, ce qui 
+	rend impossible de générer la même séquence deux fois, même si le générateur
+  aléatoire du noyau (<filename class="devicefile">urandom</filename>) est
+	tombé. Les premiers mots long 256 (1024 octets) sont supprimés du fait d'une
+  faiblesse <quote>texte inconnu</quote> dans le cryptogramme rcl. Il y a une  
+  page de man fournie avec les correctifs de Libc.. La page de manuel pour
+  <filename class="libraryfile">arc4random</filename> (3) fournie par OpenBSD
+  suppose que <function>arc4random()</function> utilise
+	<filename class="devicefile">arandom</filename>, et elle n'est pas correct
+	pour cette implémentation.</para>
+
+  <para>Les corrctifs Libc corrigent aussi <command>mktemp</command>(3) 
+	pour utiliser <function>arc4randomII()</function>.</para>
+
+  <para>Beaucoup d'applications peuvent utiliser
+	<function>arc4random()</function> à la place de
+  <filename class="devicefile">/dev/urandom</filename>. Ces applications n'ont  
+  pas souvent de contrôle d'échec ou d'erreur si le pilote aléatoire du noyau
+	n'est pas disponible.</para>
+
+  <para>OpenSSL supporte <function>arc4random()</function> avec un correctif 
+	mineur pour l'activer. Leur alternative portable est d'utiliser
+  <function>getpid()</function>, donc l'utilisation de 
+  <function>arc4random()</function> est une amélioration significative.</para>
+
+  <para>Voir aussi&nbsp;:
+    <itemizedlist>
+      <listitem>
+        <para>La page d'accueil Frandom - 
+				<ulink url="http://frandom.sourceforge.net/"/></para>
+      </listitem>
+      <listitem>
+        <para><ulink url="http://www.research.ibm.com/trl/projects/security/ssp/"/></para>
+      </listitem>
+      <listitem>
+        <para>Le papier décrivant Arcfour - 
+				<ulink url="http://www.mozilla.org/projects/security/pki/nss/draft-kaukonen-cipher-arcfour-03.txt"/></para>
+      </listitem>
+      <listitem>
+        <para>Le papier décrivant la faiblesse de RC4 (et d'arcfour) -
+        <ulink url="http://www.wisdom.weizmann.ac.il/~itsik/RC4/Papers/Rc4_ksa.ps"/></para>
+      </listitem>
+      <listitem>
+        <para>Le code source originel de la bibliothèque -
+			  <ulink url="http://www.openbsd.org/cgi-bin/cvsweb/src/lib/libc/crypt/arc4random.c"/></para>
+      </listitem>
+    </itemizedlist>
+  </para>
+
+</sect1>

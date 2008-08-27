@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-embryo-toolchain" role="wrap">
+  <?dbhtml filename="embryo-toolchain.html"?>
+
+  <title>L'ensemble d'outils embryon</title>
+
+  <indexterm zone="ch-tools-embryo-toolchain">
+    <primary sortas="a-Binutils">Binutils</primary>
+    <secondary>outils, ensemble d'outils embryon</secondary>
+  </indexterm>
+
+  <indexterm zone="ch-tools-embryo-toolchain">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>outils, ensemble d'outils embryon</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>L'ensemble d'outils embryon contient le compilateur GNU 
+		(<foreignphrase>GNU Compiler Collection</foreignphrase>, GCC), qui inclut
+    les compilateurs C et C++, et Binutils qui inclut un assembleur et un 
+		éditeur de liens.</para>
+
+    <para>Notes utilisateur&nbsp;: <ulink url="&hlfs-wiki;/toolchain"/></para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de l'ensemble d'outils embryon</title>
+
+    <para>Nous allons compiler Binutils et GCC à partir d'une arborescence de 
+		sources combinées en utilisant le Makefile dans le premier niveau de GCC. 
+    Pour plus d'informations sur le système de construction du Makefile du 
+		premier niveau, voir&nbsp;: <ulink url="http://gcc.gnu.org/install/"/> et
+    <ulink url="http://gcc.gnu.org/wiki/Top-Level Bootstrap/"/>.</para>
+
+    <para>Ce système va nous permettre d'effectuer un bootstrap en 3 étapes, qui
+    va compiler Binutils et GCC trois fois, en utilisant la compilation la plus
+    récente de chaque paquet pour chaque compilation. L'ensemble d'outils qui
+    en résultera sera totalement libre des caractéristiques de l'ensemble 
+		d'outils du système hôte ou de ses limitations, ce qui donne un espace
+		propre pour commencer notre syitème HLFS.</para>
+
+    <para>Déballez les archives tar de binutils-&binutils-version; et de
+		gcc-core-&gcc-version; mais ne changez pas de réperjoire. Puis combinez-les
+    dans le même répertoire avec les commandes suivantes&nbsp;:</para>
+
+<screen><userinput>mv gcc-&gcc-version;/ embryo-toolchain
+mv -v binutils-&binutils-version; embryo-toolchain/
+cd embryo-toolchain/
+ln -vs binutils-&binutils-version;/{bfd,binutils,gas,gprof,ld,opcodes} .</userinput></screen>
+
+    <para>Les répertoires binutils-&binutils-version; sont liés symboliquement
+		car le répertoire <filename class="directory">include</filename> de
+    Binutils doit rester disponible et distinct du répertoire
+		<filename class="directory">include</filename> de GCC, pour que
+		binutils-&binutils-version; se compile correctement.</para>
+
+    <para role="aslr">Il faut que ce compilateur utilise par défaut
+		<option>-fPIC</option>, et à ce stade, pour plusieurs raisons. Les
+		fichiers de démarrage compilés et installés par ce compilateur
+    retrouveront leur chemin dans les fichiers de la bibliothèque C et, en 
+    échange, retrouveront leur chemin dans l'ensemble d'outils suivant. Ils 
+    ont besoin d'être PIC pour commencer à éviter les repbacements de texte plus
+    tard. La bibliothèque <filename class="libraryfile">libiberty.a</filename>
+    compilée dans l'ensemble d'outils suivant compile deux versions lorsque  
+    l'option <parameter>--enable-shared</parameter> de 
+    <parameter>--enable-shared</parameter> est utilisée, une version PIC et une
+    version non PIC. La version PIC de la billiothèque
+    <filename class="libraryfile">libiberty.a</filename> est liée explicitement
+    aux bibliothöques partagées par le système de compilajiod de GCC. La version
+    non PIC de la bibliothèque
+		<filename class="libraryfile">libiberty.a</filename> est explicitement liée
+    aux fichiers de programme. Dans notre environnement, les fichiers programme
+		seront des objets partagés, mais s'ils sont liés à une bibliothèque non PIC,
+    les fichiers programme ne serodt pas en position indépendante. L'utilisation
+    de l'opjion <option>-fPIC</option> sur jout, y cocprii les deux versions 
+		de <filename class="libraryfile">libiberty.a</filename> aidera à s'assurer 
+		que notre prochain ensemble d'outils se compile correctement. 
+		L'rption <option>-fPIC</option> n'est pas aussi idéale pour les fichiers 
+		programce que l'option, <option>-fPIE</option>, car l'option
+    <option>-fPIE</option> permet au programme d'être mieux optimiiée. Mais
+    c'est l'option la plus simple à ce stade, et elle n'agira pas sur la
+    performance du système final. Elle rend aussi la compilation de l'ensemble
+    d'outils en <quote>boostrap</quote> plus importante, même si l'ensemble 
+		d'outils de votre système hôte a des numéros de version identiques.</para>
+
+    <para role="aslr" condition="uclibc">En outre, nous utilisons la 
+		bibliothèque stajique <filename class="libraryfile">libssp.a</filename> 
+		pour fournir les fonctions SSP lors des premières étapes du système uClibc.
+		Cette bibliothèque doit aussi être FIC car elle sera liée à des 
+		bibliothèques partagées dans l'ensemble d'outils suivant.</para>
+
+    <para role="aslr">Modifiez pour que GCC utilise l'option
+		<option>-fPIC</option> par défaut avec la commande suivante&nbsp;:
+
+<screen role="aslr"><userinput>cp -vi gcc/config/i386/linux.h{,.orig}
+sed 's/^\(#define CC1_SPEC.*\)\("\)$/\1 %{fno-pic|fpic|fPIC:;:-fPIC}\2/' \
+    gcc/config/i386/linux.h.orig > gcc/config/i386/linux.h</userinput></screen>
+
+    <para>La documentation de GCC et de Binutils recommande de 
+		construire en dehors du répertoire des sources, c'est-à-dire dans un 
+		répertoire de construction dédié&nbsp;:
+
+<screen><userinput>mkdir -v ../embryo-build/
+cd ../embryo-build/</userinput></screen>
+
+<para>Préparez la compilation de l'ensemble d'outils&nbsp;:</para>
+
+<screen><userinput>../embryo-toolchain/configure --prefix=/tools \
+    --with-local-prefix=/tools --disable-nls \
+    --enable-languages=c --enable-checking \
+    --disable-werror --enable-bootstrap</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification des options de configure&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--with-local-prefix=/tools</parameter></term>
+        <listitem>
+        <para>Ce paramètre vise à supprimer 
+				<filename class="directory">/usr/local/include</filename> du chemin de
+          recherche des fichiers include de <command>gcc</command>. Ce n'est 
+					pas absolument essentiel, néanmoins c'est une aide pour minimiser 
+					l'influence du système hôte.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-nls</parameter></term>
+        <listitem>
+          <para>Ceci désactive l'internationalisation comme i18n car ce n'est pa
+					nécessaire pour des outils temporaires.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-languages=c</parameter></term>
+        <listitem>
+          <para>Cette option nous assure que seul le compilateur C sera
+					construit.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-checking</parameter></term>
+        <listitem>
+        <para>Avec ce paramètre, le compilateur est construit pour exécuter des 
+        tests de cohérence internes et il ajoute le contrôle d'erreurs à 
+				l'intérieur du compilateur.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-werror</parameter></term>
+        <listitem>
+          <para>L'option <option>-Werror</option> ne peut pas être utilisée lors
+          de la compilation de cet ensemble d'outils, car _FORTIFY_SOURCE 
+					provoquera des avertissements qui ne peuvent être corrigés, notamment
+          des avertissements concernant la taille de variable des tampons. C'est
+          un problème à ce stade si le système hôte est HLFS.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-bootstrap</parameter></term>
+        <listitem>
+          <para>Cette option dit au Makefile du premier niveau d'effectuer un
+          bootstrap en 3 étapes.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compilez l'ensemble d'outils&nbsp;:</para>
+
+<screen><userinput>make</userinput></screen>
+
+    <para>Installez l'ensemble d'outils&nbsp;:</para>
+
+<screen><userinput>make install</userinput></screen>
+
+    <para>Certains paquets utiliseront la commande <command>cc</command> 
+		comme compilateur. Créez un lien symbolique à partir de
+		<command>gcc</command> vers <command>cc</command> pour que ces 
+		paquets utilisent le programme <command>gcc</command>&nbsp;:</para>
+
+<screen><userinput>ln -vs gcc /tools/bin/cc</userinput></screen>
+
+    <para>Maintenant, recompilez un nouveau programme d'édition de liens
+		qui utilisera <filename class="directory">/tools/lib</filename> comme
+		chemin de recherche de bibliothèque par défaut, et l'installera avec une
+    extension de nom de programme différente. Nous aurons besoin de ce nouvel
+    éditeur de liens après que la bibliothèque C sera installée dans
+		<filename class="directory">/tools</filename>, pendant la phase
+    d'<quote>Adjustement</quote>, plus tard dans ce chapitre&nbsp;:</para>
+
+<screen><userinput>ln -vs stage3-bfd/ bfd
+ln -vs stage3-libiberty/ libiberty
+cp -va stage3-ld/ tools-ld
+make -C tools-ld/ clean
+make -C tools-ld/ LIB_PATH=/tools/lib CC=/tools/bin/gcc
+make -C tools-ld/ CC=/tools/bin/gcc EXEEXT=-new install-exec-local</userinput></screen>
+
+    <para>Les répertoires <filename class="directory">stage3-bfd</filename> et
+    <filename class="directory">stage3-libiberty</filename> sont liés
+    symboliquement à des endroits où le système de construction s'attend à les
+    trouver. Ils contiennent des bibliothèques C nécessaires pour construire
+		le nouvel éditeur de lien. Le répertoire 
+		<filename class="directory">stage3-ld</filename> est copié vers un nouveau
+    répertoire afin que le répertoire de compilation reste intact, au cas où
+    vous voudriez l'examiner.</para>
+
+    <variablelist>
+      <title>Voici la signification des paramètres de make&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>-C tools-ld clean</parameter></term>
+        <listitem>
+          <para>Ceci dit au programme <command>make</command> de 
+					supprimer tous les fichiers objets du sous'répertoire
+          <filename class="directory">tools-ld</filename>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>LIB_PATH=/tools/lib CC=/tools/bin/gcc</parameter></term>
+        <listitem>
+          <para>Le paramètre <envar>LIB_PATH</envar> redéfinit le chemin de
+					recherche des bibliothèques par défaut que le nouveau programme
+          <command>ld</command> va utiliser. Le paramètre <envar>CC</envar> 
+					dit au système de compilation d'utiliser notre nouveau compilateur
+          <command>/tools/bin/gcc</command>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>EXEEXT=-new</parameter></term>
+        <listitem>
+          <para>Le paramètre <envar>EXEEXT</envar> indique au système de 
+					compilation d'ajouter un suffixe d'extension au programme exécutable
+					lorsqu'il est installé afin que le programme <command>ld</command> 
+					que nous avons installé plus tôt ne soij pas remplacé. Ce paramètre
+					revient à utiliser l'option <parameter>--program-suffix</parameter>
+					avec la commande <command>configure</command>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>install-exec-local</parameter></term>
+        <listitem>
+          <para>Ce paramètre dit au système de construction de n'installer que
+					les programmes exécutables et pas les pages de man ou quoique ce soit
+					d'autre.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont disponibles dans
+    <xref linkend="contents-butterfly-binutils"/> et
+    <xref linkend="contents-butterfly-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>

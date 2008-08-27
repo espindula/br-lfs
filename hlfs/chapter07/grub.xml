@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="bootable-grub">
+  <?dbhtml filename="grub.html"?>
+
+  <title>Rendre le système HLFS amorçable</title>
+
+  <indexterm zone="bootable-grub">
+    <primary sortas="a-Grub">Grub</primary>
+    <secondary>configuring</secondary>
+  </indexterm>
+
+  <para>Votre système HLBS flambant neuf est pratiquement fini. Une des
+  dernières choses à faire est de vous assurer que le système peut
+  démarrer correctement.</para>
+  
+  <para>Le chargement au démarrage est un domaine complexe. Tout
+  d'abord, quelques mots de mise en garde sont nécessaires. Vous devez
+  vraiment connaître le chargeur actuel et tout autre système
+  d'exploitation présent sur le disque dur amorçable. Assurez-vous
+  d'avoir une disquette de démarrage de façon à pouvoir
+  <quote>sauver</quote> l'ordinateur si, par malheur, celui-ci devenait
+  inutilisable (non amorçable).</para>
+
+  <para>Plus tôt, nous avons compilé et installé le chargeur de
+  démarrage Grub pour cette étape. La procédure implique l'écriture de
+  quelques fichiers spéciaux de Grub en des endroits spécifiques sur le
+  disque dur. Nous recommandons fortement la création d'une disquette de
+  démarrage Grub comme sauvegarde. Insérez une disquette de démarrage
+  vierge et lancez les commandes suivantes&nbsp;:</para>
+
+<screen><userinput>dd if=/boot/grub/stage1 of=/dev/fd0 bs=512 count=1
+dd if=/boot/grub/stage2 of=/dev/fd0 bs=512 seek=1</userinput></screen>
+
+  <para>Enlevez la disquette et rangez-la dans un endroit sûr.
+  Maintenant, lancez le shell <command>grub</command>&nbsp;:</para>
+
+<screen><userinput>grub</userinput></screen>
+
+  <para>Grub utilise sa propre structure de nommage des disques et
+  partitions, de la forme <emphasis>(hdn,m)</emphasis>, où
+  <emphasis>n</emphasis> est le numéro du disque dur et
+  <emphasis>m</emphasis> le numéro de la partition, tout deux commençant
+  à zéro. Par exemple, la partition
+  <filename class="partition">hda1</filename> est <emphasis>(hd0,0)</emphasis>
+  pour GRUB alors que <filename class="partition">hdb3</filename> est
+  Contrairement à Linux, Grub ne considère
+  pas les lecteurs de CDRoms comme des disques durs. Par exemple, si un
+  CD se trouve sur <filename class="partition">hdb</filename> 
+  et un second disque dur sur <filename class="partition">hdc</filename>,
+  ce dernier disque sera malgré tout <emphasis>(hd1)</emphasis>.</para>
+
+  <para>En utilisant les informations ci-dessus, déterminez la
+  désignation appropriée pour votre partition root (ou votre partition
+  de démarrage si celle que vous utilisez est séparée). Pour l'exemple
+  suivant, il est supposé que votre partition root (ou votre partition
+  séparée) est
+  <filename class="partition">hdb1</filename>.</para>
+
+  <para>Indiquez à Grub où chercher ses fichiers
+  <filename>stage{1,2}</filename>. La touche tabulation est utilisable
+  partout pour que Grub vous affiche les alternatives&nbsp;:</para>
+
+<screen><userinput>root (hd1,0)</userinput></screen>
+
+  <warning>
+    <para>La commande suivante écrasera votre chargeur de démarrage actuel.
+    Ne lancez pas cette commande si ce n'est pas désiré, par exemple, lors de
+    l'utilisation d'un autre gestionnaire de démarrage pour gérer votre MBR
+    (Master Boot Record). Dans ce cas, il serait probablement plus sensé
+    d'installer Grub dans le <quote>secteur de boot</quote> de la partition LFS,
+    auquel cas la prochaine commande deviendrait
+    <userinput>setup (hd0,3)</userinput>.</para>
+  </warning>
+
+  <para>Indiquez à Grub de s'installer dans le MBR de
+  <filename class="partition">hda</filename>&nbsp;:</para>
+
+<screen><userinput>setup (hd0)</userinput></screen>
+
+  <para>Si tout va bien, Grub indiquera avoir trouvé ses fichiers dans
+  <filename class="directory">/boot/grub</filename>. C'est tout ce qu'il
+  y a à faire. Quittez le shell <command>grub</command>&nbsp;:</para>
+
+<screen><userinput>quit</userinput></screen>
+
+  <para>Créez un fichier <quote>liste de menus</quote> définissant le
+  menu de démarrage de Grub&nbsp;:</para>
+
+<screen><userinput>cat &gt; /tmp/menu.lst.new &lt;&lt; "EOF"
+<literal># Début de /boot/grub/menu.lst
+
+# Par défaut démarre la première entrée du menu.
+default 0
+
+# Laisse 30 secondes avant de démarrer le système par défaut.
+timeout 30
+
+# Utilise des couleurs plus jolies 
+color green/black light-green/black
+
+# La première entrée est pour HLFS.
+title HLFS &version;
+root (hd1,0)
+kernel /boot/hlfskernel-<package vendor="2.6">&linux26-version;</package><package vendor="2.4">&linux24-version;</package> root=/dev/hdb3</literal>
+EOF</userinput></screen>
+
+  <para>Ajoutez une entrée pour votre distribution hôte si vous le
+  souhaitez. Cela pourrait ressembler à ceci&nbsp;:</para>
+
+<screen><userinput>cat &gt;&gt; /tmp/menu.lst.new &lt;&lt; "EOF"
+<literal>title Red Hat
+root (hd0,2)
+kernel /boot/kernel-2.6.5 root=/dev/hda3
+initrd /boot/initrd-2.6.5</literal>
+EOF</userinput></screen>
+
+  <para>Dans le cas d'une dual-boot avec Windows,
+  l'entrée suivante devrait le permettre&nbsp;:</para>
+
+<screen><userinput>cat &gt;&gt; /tmp/menu.lst.new &lt;&lt; "EOF"
+<literal>title Windows
+rootnoverify (hd0,0)
+chainloader +1</literal>
+EOF</userinput></screen>
+
+  <para>Et installez-le&nbsp;:</para>
+
+<screen><userinput>install -m644 /tmp/menu.lst.new /boot/grub/menu.lst
+rm /tmp/menu.lst.new</userinput></screen>
+
+  <para>Si <command>info grub</command>
+  ne fournit pas toutes les données nécessaires, plus d'informations
+  concernant Grub sont disponibles sur le site web, situé sur
+  <ulink url="http://www.gnu.org/software/grub/"/>.</para>
+
+  <para>Le FHS stipule que le fichier <filename>menu.lst</filename> de
+  GRUB doit être un lien symbolique vers
+  <filename class="symlink">/etc/grub/menu.lst</filename>. Pour
+  satisfaire ce pré-requis, lancez la commande suivante&nbsp;:</para>
+
+<screen><userinput>mkdir /etc/grub &amp;&amp;
+ln -s /boot/grub/menu.lst /etc/grub</userinput></screen>
+
+</sect1>

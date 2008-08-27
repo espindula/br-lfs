@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-uclibc" role="wrap" condition="uclibc">
+  <?dbhtml filename="uclibc.html"?>
+
+  <title>uClibc-&uclibc-version;</title>
+
+  <indexterm zone="ch-system-uclibc">
+    <primary sortas="a-uClibc">uClibc</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>Le paquet uClibc contient ... TO BE WRITTEN</para>
+
+    <para>Notes utilisateur&nbsp;: <ulink url="&hlfs-wiki;/uclibc"/></para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de uClibc</title>
+
+    <para>Appliquez les correctifs&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&uClibc-fixes-patch;</userinput></screen>
+
+    <para>Mettez l'archive tar de locale prégénérée là où uClibc peut la
+		trouver&nbsp;:</para>
+
+<screen><userinput>install -m444 ../uClibc-locale-&uclibc-locale-version;.tgz extra/locale/</userinput></screen>
+
+    <para>Ce correctif fera démarrer votre configuration&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&uClibc-config-patch;</userinput></screen>
+
+    <para>Puis lancez menuconfig. Il est très semblable au menuconfig du 
+    noyau.</para>
+
+    <para><envar>UCLIBC_HAS_WCHAR</envar> est nécessaire pour compiler
+		<command>g++</command>.
+    <envar>UCLIBC_HAS_RPC</envar> est nécessaire pour compiler Util-Linux
+    (<command>nfsmount</command>). <envar>UCLIBC_HAS_FULL_RPC</envar> n'est pas
+    requis mais Util-Linux utilisera des données prégénérées si elle n'est pas
+		activée. <envar>DO_C99_MATH</envar> est nécessaire à Iproute2 pour la
+    fonction <function>rint</function>.
+		<envar>UCLIBC_HAS_GLIBC_CUSTOM_PRINTF</envar> (<filename
+    class="headerfile">printf.h</filename>) est nécessaire pour certains 
+		paquets comme Reiserfsprogs mais pour aucun du système de base.
+		<envar>UCLIBC_HAS_WORDEXP</envar> est nécessaire pour installer Alsa-Lib. 
+		Activez toutes les options de sécurité, sauf SSP. L'option 
+    The <envar>UCLIBC_SUSV3_LEGACY</envar> est nécessaire pour fournir 
+    <function>index</function>, même si cela est méprisé par de nombreux 
+		paquets, y compris menuconfig d'uClibc, en ont besoin. L'option
+    <envar>UCLIBC_SUSV3_LEGACY_MACROS</envar> pose problème avec certains    
+    paquets comme GCC. Les cibles <command>make defconfig</command> et
+    <command>make allyesconfig</command> ne sont pas recommandées. Les prefix
+    d'installation sont déjà initialisés correctement par le correctif de
+		configuration.</para>
+
+    <para>Ce que vous pourriez vouloir modifier est Processor-Family et
+		IPV6.</para>
+
+<screen><userinput>make menuconfig</userinput></screen>
+
+    <para>Compilez et installez le paquet&nbsp;:</para>
+
+<screen><userinput>make
+make install</userinput></screen>
+
+    <para>Puis compilez et installez les outils&nbsp;:</para>
+
+<screen><userinput>make headers
+make CC="gcc -Wl,--dynamic-linker,/lib/ld-uClibc.so.0 /lib/libc.so.0" \
+    -C utils
+install -v utils/{iconv,ldd} /usr/bin/
+install -v utils/ldconfig /sbin/</userinput></screen>
+
+    <para>Supprimez les bibliothèques statiques. Enregistrez 
+		<filename class="libraryfile">libc.a</filename>
+    pour les tests de GCC. libdl.a est nécessaire pour la suite de tests de
+		Binutils&nbsp;:</para>
+
+<screen><userinput>install -vd /usr/lib/static/
+mv -v /usr/lib/{libcrypt,libm,libnsl,libpthread}.a /usr/lib/static
+mv -v /usr/lib/{libresolv,librt,libutil}.a /usr/lib/static/</userinput></screen>
+
+    <para>Supprimez ces liens symboliques&nbsp;:</para>
+
+<screen><userinput>rm -v /usr/lib/{libc_pic,libcrypt_pic,libm_pic,libnsl_pic}.a
+rm -v /usr/lib/{libpthread_pic,libresolv_pic,librt_pic,libutil_pic}.a</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="ld-conf" role="configuration">
+    <title>Configurer le chargeur dynamique</title>
+
+    <indexterm zone="ld-conf">
+      <primary sortas="e-/etc/ld.so.conf">/etc/ld.so.conf</primary>
+    </indexterm>
+
+    <para>Créez un nouveau fichier <filename>/etc/ld.so.conf</filename> en
+		lançant ce qui suit&nbsp;:</para>
+
+<screen><userinput>echo "/usr/local/lib" &gt; ld.so.conf.new
+install -v -m644 ld.so.conf.new /etc/ld.so.conf</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="conf-timezone" role="configuration">
+    <title>Configurer le fuseau horaire</title>
+
+    <indexterm zone="conf-timezone">
+      <primary sortas="e-/etc/TZ">/etc/TZ</primary>
+    </indexterm>
+
+    <para>Le fuseau horaire du système est initialisé avec le fichier
+		<filename>/etc/TZ</filename>. Les utilisateurs peuvent utiliser la variable
+    d'environnement <envar>TZ</envar> pour leur heure locale. Voir 
+		<ulink url="http://www.opengroup.org/onlinepubs/007904975/basedefs/xbd_chap08.html"/>
+    et/ou <ulink url="http://leaf.sourceforge.net/doc/guide/buci-tz.html#id2599108"/>
+    pour une description plus complète. Cet exemple est pour l'heure standard 
+		orientale et il s'ajustera d'une heure automatiquement l'heure des
+		sauvegardes de jour &nbsp;:</para>
+
+<screen><userinput>echo "<replaceable>EST5EDT</replaceable>" > TZ.new
+install -m644 TZ.new /etc/TZ</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-uclibc" role="content">
+	  <title>Contenu de uClibc</title>
+
+    <segmentedlist>
+      <segtitle>Programmes nstallés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+
+      <seglistitem>
+        <seg>??, ??, ??</seg>
+        <seg>??, ??, ??</seg>
+      </seglistitem>
+    </segmentedlist>
+    <!--
+    <variablelist><bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="UNKNOW">
+        <term><command>UNKNOW</command></term>
+        <listitem>
+        <para>EDIT ME.</para>
+        <indexterm zone="ch-system-uclibc UNKNOW">
+          <primary sortas="b-UNKNOW">UNKNOW</primary>
+        </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  -->
+  </sect2>
+
+</sect1>

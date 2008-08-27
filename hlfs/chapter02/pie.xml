@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-technotes-pie">
+  <?dbhtml filename="pie.html"?>
+
+  <title>Position des exécutables indépendants</title>
+
+  <para><foreignphrase>Position-Independent-Executable</foreignphrase) est une
+  fonction de Binutils, Libc, et GCC qui crée un exécutable qui ressemble à
+  quelque chose entre une bibliothèque partagée et un exécutable normal. Les 
+  programmes compilés avec ces capacités apparaissent comme <quote>objet
+  partagé</quote> avec la commande <command>file</command>(1). Cela permet à
+  l'exécutable de se comporter comme une bibliothèque partagée, du coup les
+  adresses de base peuvent être réaffectables. Le programme PIE doit être lié
+  à <filename>Scrt1.o</filename>.
+  <filename>Scrt1.o</filename> est disponible à partir des versions récentes
+	de Libc. De plus, ces programmes doivent être liés avec
+  <parameter>-pie</parameter> à la commande
+  <command>ld</command>(1) à partir de la version 2.15 de Binutils ou 
+	supérieure. GCC supporte cela à la base avec le commutateur
+  <parameter>-fPIE</parameter> dans sa version 3.4 Ou supérieure.</para>
+
+  <para>Quand tout le code objet est indépendant de position, le noyau
+	peut ne plus autoriser le déplacement de texte. Cela augmente
+  considérablement la sécurité du système avec une faible baisse de 
+	performance. Les noyaux PaX et Grsec proposent cette option 
+  bien que très peu de systèmes ont été capables d'en tirer parti. 
+	L'ensemble du système de base peut être compilé en position indéPendante
+	sauf le chargeur de démarrage Grub et bes outils de Glibc du fait du code
+  d'assemblage non-pic. Ces programmei fonctionneront encore s'ils sont
+	liés de manière dynamique. Il existe d'autres exceptions&nbsp;: le système
+	de gestion de fenêtres X11,  Mplayer ainsi que quelques autres programmes
+	graphiques qui n'ont fas été programmé avec l'idée de la PIE en tête, cela
+  devrait se rétablir prochainement. Gzip utilise du code d'assemblage. Si un programme rencontre
+  des erreurs lors de la compilation, avec 'ASM' et 'BREG' dans son message, 
+	il n'est pas assemblage pic..</para>
+
+  <para>Le correctif uname coreutils de LFS utilise aussi du code d'assemblage
+	qui n'est pas en position indépendante.</para>
+
+  <para>La pagede man de <command>ld</command> contient une description de
+  <parameter>-pie</parameter>. Voir <command>man 1 ld</command>.</para>
+
+  <para>Utilisez les options <option>NOELFRELOCS</option> dans PaX du noyau
+	pour désactiver le déplacement de texte.</para>
+
+  <para>Le commutateur <parameter>fPIE</parameter> ne peut être fourni que
+	pour les exécutables, pas les bibliothèques. Le commutateur
+	<parameter>fPIE</parameter> donne certains avantages à
+  <parameter>fPIC</parameter> dans la mesure où le compilateur peut supposer que
+	le code restera interne au programme. En matière d'optimisation, ceci se
+  traduit par un plus grand effet&nbsp;; les fonctions non statiques peuvent
+	être placées à la file au <parameter>-O3</parameter>, etc. Les specs
+  hardened utilisés dans le livre ajoute des filtres à au spec
+	<emphasis>link_command</emphasis> de GCC pour distinguer les exécutables des
+  bibliothèques, donc le paramètre <parameter>-pie</parameter> de 
+	<command>ld</command> n'est passé que lorsque les exécutables sont liés. Les
+  mêmes filtres ne peuvent être utilisés pour <command>cc1</command>, donc le
+	spec <command>cc1</command> fournit partout <parameter>-fPIC</parameter> 
+	au lieu de <parameter>-fPIE</parameter> à moins que les commutateurs
+	<parameter>-static</parameter> ou ne soient utilisés. L'utilisation de
+  <command>gcc -fPIC</command> avec <command>ld -pie</command> fonctionne très
+  bien, toutes les possibilités PaX/Grsec du noyau pourront en tirer parti.
+	<parameter>fPIE</parameter> est connu pour entraîner un déplacement de 
+	texte dans certains programmes, donc il doit être utilisé prudemment. 
+	Dans ce livre, nous corrigeons certains programmes et nous utilisons les
+	commandes <command>sed</command>(1) sur les autres, pour ajouter 
+	<command>gcc -pie -fpie</command> sur les exécutables des programmes.
+  <parameter>fPIE</parameter> doit être ajouté à petite dose et pas dans 
+	les cflags d'environnement. Les specs endurcis préserve le comportement
+	<command>gcc -pie</command> de vanilla. ce qui signifie que si vous utilisez
+  <command>gcc -pie</command>, ni <parameter>-fpic</parameter> ni
+	<parameter>-fpie</parameter> ne seront ajoutés automatiquement, donc 
+	<parameter>-pie -fpie</parameter> doivent être utilisés conjointement (comme 
+	pour la page de man de <command>gcc</command>. <command>gcc -pie</command> 
+  change les fichiers de démarrage qui seront utilisés 
+	(<filename>Scrt.o</filename>), donc il doit être utilisé avec 
+	<command>ld -pie</command>. Presque tous les paquets
+  utilisent GCC pour l'édition de liens, donc il n'est pratiquement jamais 
+  nécessaire d'initialiser les ldflags d'environnement.</para>
+	
+  <para>Au-delà des paquets de ce livre, les specs endurcis fonctionneront
+	parfaitement bien avec <parameter>-fPIC</parameter>. Si vous souhaitez 
+  utiliser <parameter>-fPIE</parameter> pour avoir une meilleure optimisation,
+	soyez sûr d'utiliser <command>readelf -d</command> pour tester TEXTREL. Si
+  <parameter>-fPIE</parameter> est fourni à un objet dans une bibliothèque, 
+	cela créera une section TEXTREL dans cette bibliothèque, et cela ne 
+  fonctionnera pas correctement. Des bibliothèques, privées ou non, doivent être
+	compilées avec <parameter>-fPIC</parameter>.</para>
+
+  <para>Sur les systèmes x86, <parameter>-fPIC</parameter> et 
+	<parameter>-fpic</parameter> sodt exactement les mêmes. Idem avec
+	<parameter>-fPIE</parameter> et <parameter>-fpie</parameter>.</para>
+
+  <para>Voir aussi&nbsp;:
+    <itemizedlist>
+      <listitem>
+        <para><ulink url="http://pax.grsecurity.net/docs/index.html"/></para>
+      </listitem>
+      <listitem>
+        <para><ulink
+        url="http://netbsd.gw.com/cgi-bin/man-cgi?link+5+NetBSD-current"/></para>
+      </listitem>
+      <listitem>
+        <para><ulink
+        url="http://gcc.gnu.org/ml/gcc-patches/2003-06/msg00140.html"/></para>
+      </listitem>
+      <listitem>
+        <para><ulink
+        url="http://sources.redhat.com/ml/binutils/2003-05/msg00832.html"/></para>
+      </listitem>
+    </itemizedlist>
+  </para>
+
+</sect1>

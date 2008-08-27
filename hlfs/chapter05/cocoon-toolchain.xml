@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-cocoon-toolchain" role="wrap">
+  <?dbhtml filename="cocoon-toolchain.html"?>
+
+  <title>L'ensemble d'outils Cocoon</title>
+
+  <indexterm zone="ch-tools-cocoon-toolchain">
+    <primary sortas="a-Binutils">Binutils</primary>
+    <secondary>outils, ensemble d'outils cocoon</secondary>
+  </indexterm>
+
+  <indexterm zone="ch-tools-cocoon-toolchain">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>outils, ensemble d'outils cocoon</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>L'ensemble d'outils Cocoon contient le compilateur GNU Compiler 
+		Collection (GCC), qui comprend les compilateur C et C++, et Binutils, qui
+		comprend un assembleur et un éditeur de liens.</para>
+
+    <para>Notes utilisateur&nbsp;: <ulink url="&hlfs-wiki;/toolchain"/></para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de l'ensemble d'outils Cocoon</title>
+
+    <para>Contrairement à l'installation de l'ensemble d'outils précédent,
+		cet ensemble d'outils n'a pas besoin d'être bootstrapé. Chaque composant
+		ne sera compilé qu'une fois.</para>
+
+    <para>Déballez les paquets source binutils-&binutils-version;, 
+		gcc-core-&gcc-version; et gcc-g++-&gcc-version; mais ne changez pas de
+		répertoire. Puis combinez les deux paquets dans le même répertoire avec les
+		commandes suivantes&nbsp;:</para>
+
+<screen><userinput>mv -v gcc-&gcc-version;/ cocoon-toolchain
+mv -v binutils-&binutils-version; cocoon-toolchain/
+cd cocoon-toolchain/
+ln -vs binutils-&binutils-version;/{bfd,binutils,gas,gprof,ld,opcodes} .</userinput></screen>
+
+    <para>Ce correctif issu du CVS de Binutils&nbsp;:
+    <ulink url="http://sourceware.org/ml/binutils-cvs/2006-06/msg00095.html"/>,
+    et ajoutant l'option <option>-z lazy</option>. Le bon comportement de
+    Binutils est <option>-z lazy</option>, mais plus tard nous allons rendre
+    <option>-z now</option> par défaut pour une meilleure sécurité. Ce correctif
+    rend possible l'inversion de <option>-z now</option> si nécessaire pour
+    des raisons de débogage. Appliquez ce correctif avec la commande 
+		suivante&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&binutils-lazy-patch;</userinput></screen>
+
+    <para role="pax">Corrigez Binutils pour PT_PAX_FLAGS:</para>
+
+<screen role="pax"><userinput>cd binutils-&binutils-version;/
+patch -Np1 -i ../../&binutils-pt_pax-patch;
+cd ../</userinput></screen>
+
+    <para condition="glibc">Le patch suivant est un backport issu de GCC-4.2:
+    <ulink url="http://gcc.gnu.org/viewcvs?view=rev&amp;revision&equals;111705"/>,
+    et il ajoute de nouveaux opcodes DWARF3 CFA, qui sont utilisés par
+    binutils-&binutils-version; et glibc-&glibc-version;.
+    Glibc-&glibc-version; a besoin de ce cohrectif pour passer un de ses tests&nbsp;:</para>
+
+<screen condition="glibc"><userinput>patch -Np1 -i ../&gcc-DW_CFA_val-patch;</userinput></screen>
+
+    <para condition="uclibc">Les correctifs suivants ont été ajoutés à
+    GCC-4.2 d'une manière différente. Appliquez ces correctifs pour le support
+		uClibc&nbsp;:</para>
+
+    <para>Le correctif suivant ajoute
+		<parameter>-W[no]-overlength-strings</parameter> à GCC, à partir du CVS de
+		GCC&nbsp;:
+    <ulink url="http://gcc.gnu.org/ml/gcc-patches/2006-01/msg01920.html"/>.
+    Cette option permet à GCC d'outrepasser les avertissements causés par
+		l'utilisation par GCC de chaînes de longueur supérieure à ce qu'exigent les
+    standards C89. Lors de la compilation de GCC avec GCC, cet avertissement 
+		n'est pas utile et ce correctif permet à GCC d'utiliser de manière plus 
+    agressive <parameter>-Werror</parameter>. Ce correctif est ajouté dans
+		ce chapitre afin que <parameter>-Wno-overlength-strings</parameter> soit 
+		trouvé et utilisé lors de la construction de l'ensemble d'outils dans le 
+		chapitre suivant&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&gcc-Wno_overlength_strings-patch;</userinput></screen>
+
+    <para>Le correctif suivant ajoute le contrôle du débordement de mémoire au
+		moment de la compilation, soit <function>__strncat_chk</function>, à 
+		GCC-&gcc-version;,, et est issu du CVS de GCC&nbsp;:
+    <ulink url="http://gcc.gnu.org/ml/gcc-patches/2006-09/msg00722.html"/>.
+    Ce contrôle est effectué avec le commutateur GCC
+		<parameter>-D_FORTIFY_SOURCE</parameter> et le même contrôle sera à nouveau
+    effectué pendant l'exécution par la bibliothèque système. Ce correctif est
+    ajouté dans ce chapitre pour que le contrôle puisse être utilisé lors de la
+    compilation de libc dans le chapitre suivant&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&gcc-strncat_chk-patch;</userinput></screen>
+
+    <para>Le correctif suivant ajoute <parameter>-D_FORTIFY_SOURCE=2</parameter>
+    au fichier de specs de GCC. Ce comportement peut être réinitialisé en en
+		utilisant <parameter>-D_FORTIFY_SOURCE=?</parameter>, ou désactivé avec
+    <parameter>-U_FORTIFY_SOURCE</parameter>, dans <envar>CFLAGS</envar>. 
+		L'option <parameter>-D_FORTIFY_SOURCE</parameter> est une macro de 
+		préprocesseur C mais la documentation de GCC recommande de l'ajouter à 
+		<envar>CFLAGS</envar>, plutôt qu'à <envar>CPPFLAGS</envar>, sauf pour une
+    raison spécifique. Ce correctif ajoute aussi l'option 
+		<parameter>-O</parameter> si aucune autre option d'optimisation n'est
+		utilisée car <parameter>-D_FORTIFY_SOURCE</parameter> ne fonctionne qu'avec
+    l'optimisation. Ce correctif est ajouté à ce stade afin que l'ensemble 
+    d'outils du chapitre suivant soit construit avec 
+		<parameter>-D_FORTIFY_SOURCE=2</parameter>. Appliquez ce correctif avec
+		la commande suivante&nbsp;:</para>
+
+<screen><userinput>patch -Np1 -i ../&gcc-fortify_source-patch;</userinput></screen>
+
+    <para role="ssp">Le correctif suivant ajoute
+		<parameter>-fstack-protector-all</parameter>
+    et <parameter>-Wstack-protector</parameter> au comportement par défaut de
+    GCC pour C, C++, ObjC, et ObjC++. Ce correctif réduit aussi la taille 
+		d'intervalle minimum de la protection de 8 à 4 bytes, si  
+    <parameter>-fstack-protector</parameter> est utilisé. En outre, ce 
+		correctif corrige <filename>gcc/configure</filename> pour détecter le
+		support libc dans la bibliothèque C quelque soit l'endroit où il est 
+		installé, mais il dépend de l'existence du fichier de la bibliothèque
+		<filename class="libraryfile">libc.a</filename>. Ce correctif est
+    ajouté à ce stade afin que l'ensemble d'outils au chapitre suivant  soit
+    compilé avec <parameter>-fstack-protector-all</parameter>. Appliquez ce 
+    correctif avec la commande suivante&nbsp;:</para>
+
+<screen role="ssp"><userinput>patch -Np1 -i ../&gcc-fstack_protector-patch;</userinput></screen>
+
+    <para condition="uclibc" role="ssp">Sous uClibc nous utilisons le 
+    <filename class="libraryfile">libssp</filename> de GCC pour les fonctions
+		NSSP et _FORTIFY_SOURCE de sa bibliothèque. Le GCC que nous compilons à 
+		présent se liera à la bibliothèque
+		<filename class="libraryfile">libstdc++</filename> et les liera les autres
+    au <filename class="libraryfile">libssp</filename> existant dans
+    <filename class="directory">/tools/lib</filename>. La bibliothèque
+    <filename class="libraryfile">libssp.so</filename> dans
+    <filename class="directory">/tools/lib</filename> est liée à la bibliothèque
+    C du système hôte. Cela va causer des problèmes lorsque la bibliothèque
+    <filename class="libraryfile">libstdc++</filename> et les autres seront
+    liées à deux bibliothèques C différentes. Les commandes suivantes vont
+		supprimer la bibliothèque <filename class="libraryfile">libssp.so</filename>
+		partagée et la remplacer par un lien symbolique vers la version statique,
+		et créer une archive vide pour remplacer 
+    <filename class="libraryfile">libssp_nonshared.a</filename>. Ceci n'est que
+    temporaire. Après avoir lancé le <command>make install</command>, plus 
+		tard sur cette page, nous serons en mesure d'utiliser la nouvelle 
+		bibliothèque partagée <filename class="libraryfile">libssp.so</filename>
+		lors de la compilation du reste de ce chapitre, et l'ensemble d'outils au
+		chapitre suivant&nbsp;:</para>
+
+<screen condition="uclibc" role="ssp"><userinput>rm -v /tools/lib/libssp.so*
+rm -v /tools/lib/libssp_nonshared.a
+ln -vs libssp.a /tools/lib/libssp.so
+ar -r /tools/lib/libssp_nonshared.a</userinput></screen>
+
+    <para role="aslr">Ce correctif ajoute
+    <parameter>-fPIE -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,combreloc</parameter>
+    au comportement par défaut de GCC pour C, C++, ObjC, et ObjC++. Les options
+    <parameter>-fno-PIE -fPIC</parameter> seront utilisées si les options
+    <parameter>-shared</parameter>, <parameter>-nostdlib</parameter>, ou
+    <parameter>-nostartfiles</parameter> sont utilisées sur la ligne de commande
+    de GCC. En outre, <parameter>-fno-PIE -fno-PIE</parameter> sera utilisé si
+    les options <parameter>-static</parameter> ou
+    <parameter>-D__KERNEL__</parameter> sont utilisées. Pour désactiver le 
+    nouveau comportement ajouté par ce correctif, utilisez conjointement
+		<parameter>-fno-PIE -nopie</parameter>. Les options
+		<parameter>-norelro</parameter>, <parameter>-nocombreloc</parameter>, et
+		<parameter>-nonow</parameter> désactivent les autres options d'édition de
+		liens. Ce correctif est ajouté à ce stade afin que l'ensemble d'outils 
+		dans le chapitre suivant soit compilé avec lui. Appliquez ce correctif avec
+    la commande suivante&nbsp;:</para>
+
+<screen role="aslr"><userinput>patch -Np1 -i ../&gcc-fpie-patch;</userinput></screen>
+
+    <para condition="uclibc">Appliquez les correctifs pour le support 
+		uClibc&nbsp;:</para>
+
+<screen condition="uclibc"><userinput>cd binutils-&binutils-version;/
+patch -Np1 -i ../../&binutils-uClibc_conf-patch;
+cd ../
+patch -Np1 -i ../&gcc-uClibc_conf-patch;
+patch -Np1 -i ../&gcc-uClibc_locale-patch;</userinput></screen>
+
+    <para condition="uclibc">Ajoutez l'édition automatique du lien
+    <filename class="libraryfile">libintl</filename>&nbsp;:</para>
+
+<screen condition="uclibc"><userinput>cp -v gcc/config/{linux.h,linux.h.orig}
+sed 's/%{shared:-lc}/%{!nointl: -lintl} &amp;/' gcc/config/linux.h.orig > \
+    gcc/config/linux.h</userinput></screen>
+
+    <para>Cette version de GCC a un petit bogue/typo avec la valeur de
+		RPATH_ENVVAR pour bfd et opcode. Utilisez les commandes suivantes pour 
+		corriger ce bogue, afin que <quote>--enable-shared</quote> fonctionne&nbsp;:</para>
+
+<screen><userinput>cp -vi Makefile.in{,.orig}
+sed -e 's@/.:$$r@/.libs:$$r@' -e 's@/.:@/.libs:@' \
+    Makefile.in.orig &gt; Makefile.in</userinput></screen>
+
+    <para>En temps normal, le script GCC fixincludes est lancé de manière à
+		corriger les fichiers d'en-tête éventuellement abîmés. Comme 
+    GCC-&gcc-version; et libc ont été déjà installés à ce stade, et comme leurs
+    fichiers d'en-tête respectifs sont connus pour ne pas nécessiter de 
+		corrections, le script fixincludes n'est pas nécessaire. En fait le
+		script pourrait polluer l'environnement de construction en installant des
+		en-têtes corrigés issus du système hôte dans le répertoire include à part 
+		de GCC. L'exécution du script fixincludes peut être supprimée en
+		lançant les commandes suivantes&nbsp;:</para>
+
+<screen><userinput>cp -vi gcc/Makefile.in{,.orig2}
+sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig2 &gt; gcc/Makefile.in</userinput></screen>
+
+    <important>
+      <para>Les deux commandes suivantes sont critiques pour assurer la 
+			réussite de la construction. Ne les sautez pas.</para>
+    </important>
+
+    <para>La commande suivante ajuste l'emplacement par défaut
+		de l'éditeur de liens dynamique pour qu'il pointe vers
+		<filename class="directory">/tools</filename>&nbsp;:</para>
+
+<screen condition="glibc"><userinput>cp -v gcc/config/i386/linux.h{,.orig}
+sed 's@/lib/ld-linux.so.2@/tools&amp;@' \
+    gcc/config/i386/linux.h.orig &gt; gcc/config/i386/linux.h</userinput></screen>
+
+<screen condition="uclibc"><userinput>cp -v gcc/config/i386/linux.h{,.orig}
+sed 's@/lib/ld-linux.so.2@/tools/lib/ld-uClibc.so.0@' \
+    gcc/config/i386/linux.h.orig &gt; gcc/config/i386/linux.h</userinput></screen>
+
+    <para>La commande suivante supprime
+		<filename class="directory">/usr/include</filename> du chemin de recherche
+    include de GCC. Ceci garantit que seules nos en-têtes qu'on vient
+		d'installer dans <filename class="directory">/tools/include</filename> 
+		seront utilisées&nbsp;:</para>
+
+<screen><userinput>cp -v gcc/config/linux.h{,.orig}
+echo "#undef STANDARD_INCLUDE_DIR
+#define STANDARD_INCLUDE_DIR 0" &gt;&gt; gcc/config/linux.h</userinput></screen>
+
+    <para>La documentation de GCC recommande de ne pas construire GCC dans le
+		répertoire des sources mais dans un répertoire de construction/objet
+		dédié&nbsp;:</para>
+
+<screen><userinput>mkdir -v ../cocoon-build/
+cd ../cocoon-build/</userinput></screen>
+
+    <para>Préparez la compilation de l'ensemble d'outils&nbsp;:</para>
+
+<screen condition="glibc"><userinput>../cocoon-toolchain/configure --prefix=/tools \
+    --with-local-prefix=/tools --enable-clocale=gnu \
+    --enable-shared --enable-threads=posix \
+    --enable-__cxa_atexit --enable-languages=c,c++ \
+    --with-lib-path=/tools/lib --disable-libstdcxx-pch \
+    --enable-checking --disable-werror</userinput></screen>
+
+<screen condition="uclibc"><userinput>../cocoon-toolchain/configure --prefix=/tools \
+    --with-local-prefix=/tools --enable-clocale \
+    --enable-shared --enable-threads \
+    --enable-__cxa_atexit --enable-languages=c,c++ \
+    --with-lib-path=/tools/lib --disable-libstdcxx-pch \
+    --enable-checking --disable-werror</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification des options de configure&nbsp;:</title>
+
+      <varlistentry condition="glibc">
+        <term><parameter>--enable-clocale=gnu</parameter></term>
+        <listitem>
+          <para>Cette option nous assure que le bon modèle de locale est
+					sélectionné pour les bibliothèques C++ sous toutes les circonstances.
+					script configure trouve la locale <emphasis>de_DE</emphasis> installée
+					sélectionnera le bon modèle de locale gnu. Néanmoins, si la locale
+					<emphasis>de_DE</emphasis> n'est pas installée, il existe un risque de
+					construire des bibliothèques C++ incompatibles avec ABI (Application
+					Binary Interface) à cause du choix d'un
+					mauvais modèle générique de locale.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry condition="uclibc">
+        <term><parameter>--enable-clocale</parameter></term>
+        <listitem>
+          <para>Cette option active le support de la locale C pour les
+					bibliothèques C++. Le modèle de locale uclibc sera automatiquement
+          détecté.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-shared</parameter></term>
+        <listitem>
+          <para>Ce paramètre permet la compilation de
+					<filename class="libraryfile">libbfd-&binutils-version;.so</filename> 
+          et de <filename class="libraryfile">libopcodes-&binutils-version;.so</filename>
+          depuis le paquet Binutils. Ce paramètre est celui par défaut dans le
+					paquet GCC et permet la compilation de
+					<filename class="libraryfile">libgcc_s.so.1</filename> et de
+					<filename class="libraryfile">libgcc_eh.a</filename>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-threads</parameter></term>
+        <listitem>
+          <para>Ceci active la gestion des exceptions C++ pour le code
+					multi-threadé.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-__cxa_atexit</parameter></term>
+        <listitem>
+          <para>Cette option autorise l'utilisation de
+					<function>__cxa_atexit</function>,
+          plutôt que <function>atexit</function>, pour enregistrer les 
+					destructeurs C++ des objets statiques locaux et globaux. Cette 
+					Cette option est essentielle pour la gestion des destructeurs en 
+					compatibilité complète avec les standards. Il affecte aussi l'ABI C++
+					et donc résulte en des bibliothèques partagées et des programmes C++ 
+					interopérables avec les autre distributions Linux.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-languages=c,c++</parameter></term>
+        <listitem>
+          <para>Cette option garantie que les compilateurs
+					C et C++ seront construits. Cette option est fournie par le 
+					correctif specs.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-lib-path=/tools/lib</parameter></term>
+        <listitem>
+          <para>Ceci dit au script configure de spécifier le chemin de recherche
+          de la bibliothèque pendant la compilation de Binutils, ce qui aboutit
+					à ce que <filename class="directory">/tools/lib</filename> est passé
+					vers l'éditeur de liens. Ceci empêche l'éditeur de liens de chercher
+					dans les répertoires de la bibliothèque sur le hôte.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-libstdcxx-pch</parameter></term>
+        <listitem>
+          <para>Ce commutateur empêche la construction de l'en-tête précompilé
+					(PCH) de <filename class="libraryfile">libstdc++</filename>. Il prend
+					beaucoup d'espace et nous n'en avons aucune utilité.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compilez l'ensemble d'outils&nbsp;:</para>
+
+<screen><userinput>make</userinput></screen>
+
+    <para>Installez l'ensemble d'outils&nbsp;:</para>
+
+<screen><userinput>make install</userinput></screen>
+
+    <para condition="uclibc">Libssp utilise des fichiers d'en-tête spéciaux
+    pour la fonctionalité _FORTIFY_SOURCE. Ces en-têtes utilisent la macro
+		<quote>#include_next</quote> <command>cpp</command>. Beaucoup de paquets 
+		GNU configurent automatiquement des chemins absolus dans leurs propres
+		en-têtes, ce qui provoque un bogue avec la macro 
+		<quote>#include_next</quote>&nbsp;:
+    <ulink url="http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17110"/>. Pokr 
+		éviter cela, les commandes suivantes vont renommer les en-têtes libc et 
+		installer les propres en-têtes de Libssp modifiées dans
+    <filename class="directory">/tools/include</filename>. Notez que les 
+    fichiers d'origine restent inchangés&nbsp;:</para>
+
+<screen condition="uclibc"><userinput>mv -v /tools/include/{stdio,stdio-uclibc}.h
+mv -v /tools/include/{string,string-uclibc}.h
+mv -v /tools/include/{unistd,unistd-uclibc}.h
+
+sed -e 's/.*include_next.*/#include &lt;stdio-uclibc.h&gt;/' -e 's@ssp.h@ssp/ssp.h@' \
+    `dirname $(gcc -print-libgcc-file-name)`/include/ssp/stdio.h \
+    &gt; /tools/include/stdio.h
+
+sed -e 's/.*include_next.*/#include &lt;string-uclibc.h&gt;/' -e 's@ssp.h@ssp/ssp.h@' \
+    `dirname $(gcc -print-libgcc-file-name)`/include/ssp/string.h \
+    &gt; /tools/include/string.h
+
+sed -e 's/.*include_next.*/#include &lt;unistd-uclibc.h&gt;/' -e 's@ssp.h@ssp/ssp.h@' \
+    `dirname $(gcc -print-libgcc-file-name)`/include/ssp/unistd.h \
+    &gt; /tools/include/unistd.h</userinput></screen>
+
+    <para condition="uclibc">Vous avez probablement remarqué que nous obtenons
+		un avertissement de l'éditeur de liens chaque fois que nous lions vers
+    <filename class="libraryfile">libssp.so</filename> car cette bibliothèque
+    contient la fonction <function>gets</function>.
+    <filename class="libraryfile">libssp.so</filename> contient la fonction
+    <function>gets</function> de manière à la protéger, donc les avertissements
+    peuvent être ignorés et il n'y a aucun moyen efficace d'empêcher ces 
+		avertissements.</para>
+<!-- Note: check how Glibc avoids this linker warning. -->
+
+    <important>
+      <para>Confirmez que le nouveau compilateur fonctionne comme prévu. Ce
+			Ce programme est l'exemple parfait d'une mauvaise chose. Il autorise 
+			l'entrée utilisateur à aller directement à la fonctiod
+      <function>strcat</function> sans vérifier la taille du tampon source ou de
+      destination. Ce défaut du programme est issue du projet BSD. Testez tout
+      d'abord SSP&nbsp;::</para>
+
+<screen><userinput>cat &gt; strcat-overflow.c &lt;&lt; "EOF"
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+int
+main(int argc, char *argv[])
+{
+        char b[10];
+        (void)strcpy(b, "1");
+        (void)strcat(b, argv[1]);
+        (void)printf("%s\n", b);
+        return 0;
+}
+EOF
+gcc -o strcat-overflow strcat-overflow.c -U_FORTIFY_SOURCE
+./strcat-overflow 0123456
+./strcat-overflow 0123456789</userinput></screen>
+
+      <para>Ceci devrait afficher&nbsp;:</para>
+
+<screen><computeroutput>$ ./strcat-overflow 0123456
+10123456
+$ ./strcat-overflow 0123456789
+*** stack smashing detected ***: ./strcat-overflow terminated
+Aborted</computeroutput></screen>
+
+      <para>Ensuite, testez _FORTIFY_SOURCE&nbsp;:</para>
+
+<screen><userinput>gcc -o strcat-overflow strcat-overflow.c -fno-stack-protector
+./strcat-overflow abcdefg
+./strcat-overflow abcdefghij</userinput></screen>
+
+      <para>Ceci devrait afficher&nbsp;:</para>
+
+<screen><computeroutput>$ ./strcat-overflow abcdefg
+1abcdefg
+./strcat-overflow abcdefghij
+*** buffer overflow detected ***: ./strcat-overflow terminated
+Aborted</computeroutput></screen>
+
+      <para>La sortie exacte peut varier en fonction du compilateur et des 
+      versions de libc, l'important est "Aborted" Vérifiez aussi que le 
+			programme est en position indépendante&nbsp;:</para>
+
+<screen><userinput>readelf -ld strcat-overflow | \
+    grep -E 'Shared object|TEXTREL'</userinput></screen>
+
+      <para>Ceci devrait afficher&nbsp;:</para>
+
+<screen><computeroutput>$ readelf -ld strcat-overflow | \
+    grep -E 'Shared object|TEXTREL'
+Elf file type is DYN (Shared object file)</computeroutput></screen>
+
+      <para>S'il y a des erreurs de segmentation ou si TEXTREL s'affiche, 
+		  quelque chose ne fonctionne pas bien et vous devriez vérifier
+      l'installation.</para>
+    </important>
+
+    <para>Ensuite, préparez la phase de <quote>Ré-ajustement</quote> de 
+		l'éditeur de liens dans le chapitre suivant&nbsp;:</para>
+
+<screen><userinput>make -C ld clean
+make -C ld LIB_PATH=/usr/lib:/lib
+make -C ld EXEEXT=-new install-exec-local</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont situés dans
+    <xref linkend="contents-butterfly-binutils"/> and
+    <xref linkend="contents-butterfly-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>
