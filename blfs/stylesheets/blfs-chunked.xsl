@@ -1,45 +1,25 @@
-<?xml version='1.0' encoding="ISO-8859-1"?>
+<?xml version='1.0' encoding='ISO-8859-1'?>
 
-<!-- Version 0.9 - Manuel Canales Esparcia <macana@lfs-es.org>
-Based on the original lfs-chunked.xsl created by Matthew Burgess -->
+<!--
+$LastChangedBy: manuel $
+$Date: 2008-08-30 13:59:04 $
+-->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  	<!-- We use XHTML -->
- 	<!--
-  <xsl:import href="http://docbook.sourceforge.net/release/xsl/1.65.1/xhtml/chunk.xsl"/>
-	-->
-  <xsl:import href="/usr/share/sgml/docbook/stylesheet/xsl/nwalsh/xhtml/chunk.xsl"/>
-  <xsl:param name="chunker.output.encoding" select="'ISO-8859-1'"/>
-  
-  	<!-- Including our others customized templates -->
-  <xsl:include href="xhtml/lfs-admon.xsl"/>
-  <xsl:include href="xhtml/lfs-index.xsl"/>
-  <xsl:include href="xhtml/lfs-legalnotice.xsl"/>
-  <xsl:include href="xhtml/lfs-mixed.xsl"/> 
-  <xsl:include href="xhtml/lfs-navigational.xsl"/>
-  <xsl:include href="xhtml/lfs-titles.xsl"/>
-  <xsl:include href="xhtml/lfs-toc.xsl"/>
+    <!-- LFS top-level chunk templates. -->
+  <xsl:import href="lfs-xsl/chunkfast.xsl"/>
 
-  	<!-- The CSS Stylesheet -->
-  <xsl:param name="html.stylesheet" select="'../stylesheets/blfs.css'"/>
+    <!-- The LFS book type to be processed (lfs, blfs, clfs, or hlfs) -->
+  <xsl:param name="book-type">blfs</xsl:param>
 
-  	<!-- Dropping some unwanted style attributes -->
-  <xsl:param name="ulink.target" select="''"></xsl:param>
-  <xsl:param name="css.decoration" select="0"></xsl:param>
-  
-    <!-- No XML declaration -->
-  <xsl:param name="chunker.output.omit-xml-declaration" select="'yes'"/>
-  
-    <!-- Insert a stylesheet for printing -->
-  <xsl:template name='user.head.content'>
-     <link rel='stylesheet' href="../stylesheets/blfs-print.css" type="text/css" media='print'/>
-  </xsl:template> 
+    <!-- Are sections enumerated? 1 = yes, 0 = no
+           Note: Activating this will increase a lot rendering time. -->
+  <xsl:param name="section.autolabel" select="0"/>
 
-<xsl:template match="userinput">
-  <xsl:call-template name="inline.monoseq"/>
-</xsl:template>
+    <!-- Do section labels include the component label? 1 = yes, 0 = no -->
+  <xsl:param name="section.label.includes.component.label" select="0"/>
 
 </xsl:stylesheet>
