@@ -15,7 +15,7 @@ if [ "${#}" -ne 1 ]; then
 fi
 
 # Do not use the RUNLEVEL and PREVLEVEL variables provided by init so 
-# that they can be modified and alternate directories (sysinit) can 
+# that they can be modified and alternate directories (S) can 
 # be used without affecting init
 runlevel="${1}"
 prevlevel="${PREVLEVEL}"
@@ -26,12 +26,12 @@ if [ "${prevlevel}" = "" ]; then
 fi
 
 # Mount a tmpfs to store boot accounting information
-if [ "${runlevel}" = "sysinit" -a "${TEMPFS_MOUNT}" != "" ]; then
+if [ "${runlevel}" = "S" -a "${TEMPFS_MOUNT}" != "" ]; then
     mount -n -t tmpfs tmpfs "${TEMPFS_MOUNT}" -o mode=600
 fi
 
 # Provide an interactive prompt (if requested)
-if [ "${runlevel}" = "sysinit" -a "${iprompt}" = "yes" ]; then
+if [ "${runlevel}" = "S" -a "${iprompt}" = "yes" ]; then
     # ash does not accept t and n flags for read
     ls -l /bin/sh | grep "/ash"
     if [ "${?}" -eq "0" ]; then
@@ -66,12 +66,12 @@ if [ ! -d "${RC_BASE}/rc${runlevel}.d" ]; then
 fi
 
 # Source the interactive state file if it exists
-if [ "${runlevel}" != "sysinit" -a -f "${TEMPFS_MOUNT}/.interactive-start" ]; then
+if [ "${runlevel}" != "S" -a -f "${TEMPFS_MOUNT}/.interactive-start" ]; then
     . "${TEMPFS_MOUNT}/.interactive-start"
 fi
 
-# Prompt for interactive startup after completing sysinit
-if [ "${interactive}" = "I" -a "${runlevel}" != "sysinit" -a \
+# Prompt for interactive startup after completing S
+if [ "${interactive}" = "I" -a "${runlevel}" != "S" -a \
     "${runlevel}" != "0" -a "${runlevel}" != "6" ]; then
     echo -n -e "Proceed with interactive starup of runlevel "
     echo -n -e "${INFO}${runlevel}${NORMAL}?"
@@ -104,10 +104,10 @@ if [ "${prevlevel}" != "N" ]; then
 
         script=${link#$RC_BASE/rc$runlevel.d/K[0-9][0-9]}
         prev_start=$RC_BASE/rc$prevlevel.d/S[0-9][0-9]$script
-        sysinit_start=$RC_BASE/rcsysinit.d/S[0-9][0-9]$script
+        S_start=$RC_BASE/rcS.d/S[0-9][0-9]$script
 
         if [ "${runlevel}" != "0" -a "${runlevel}" != "6" ]; then
-            if [ ! -f ${prev_start} ] && [ ! -f ${sysinit_start} ]; then
+            if [ ! -f ${prev_start} ] && [ ! -f ${S_start} ]; then
                 echo -e -n "${WARNING}WARNING:\n\n${link} can't be"
                 echo -e "${WARNING} executed because it was not"
                 echo -e -n "${WARNING} not started in the previous"
@@ -180,14 +180,17 @@ done
 
 # Strip apply time to the logs, strip out any color codes and dump 
 # the log to /var/log/boot.log
-if [ -f "${TEMPFS_MOUNT}/.bootlog" -a "${runlevel}" != "sysinit" ]; then
+if [ -f "${TEMPFS_MOUNT}/.bootlog" -a "${runlevel}" != "S" ]; then
     # Remove any color codes from the temp log file
     sed -i 's@\\033\[[0-9];[0-9][0-9]m@@g' "${TEMPFS_MOUNT}/.bootlog"
     #Fix the time and hostname
     BTIMESPEC=$(echo `date +"%b %d %T"` `hostname`)
     sed -i "s@^bootlog:@${BTIMESPEC} bootlog:@" "${TEMPFS_MOUNT}/.bootlog"
-    cat "${TEMPFS_MOUNT}/.bootlog" >> /var/log/boot.log
-    rm -f "${TEMPFS_MOUNT}/.bootlog"
+    # Don't try and write in 0 and 6, this is a 'boot' log
+    if [ "${runlevel}" != "0" -a "${runlevel}" != "6" ]; then
+        cat "${TEMPFS_MOUNT}/.bootlog" >> /var/log/boot.log
+        rm -f "${TEMPFS_MOUNT}/.bootlog"
+    fi
 fi
 
 # End $RC_BASE/init.d/rc

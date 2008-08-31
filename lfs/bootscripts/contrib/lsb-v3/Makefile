@@ -14,7 +14,7 @@ create-dirs:
 	install -d -m ${DIRMODE} ${EXTDIR}/rc4.d
 	install -d -m ${DIRMODE} ${EXTDIR}/rc5.d
 	install -d -m ${DIRMODE} ${EXTDIR}/rc6.d
-	install -d -m ${DIRMODE} ${EXTDIR}/rcsysinit.d
+	install -d -m ${DIRMODE} ${EXTDIR}/rcS.d
 	install -d -m ${DIRMODE} ${EXTDIR}/init.d
 	install -d -m ${DIRMODE} ${EXTDIR}/sysconfig
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/lsb
@@ -74,22 +74,24 @@ install: create-dirs create-service-dir create-boottemp-dir
 	ln -sf ../init.d/swap        ${EXTDIR}/rc6.d/S80swap
 	ln -sf ../init.d/localnet    ${EXTDIR}/rc6.d/S90localnet
 	ln -sf ../init.d/reboot      ${EXTDIR}/rc6.d/S99reboot
-	ln -sf ../init.d/mountkernfs ${EXTDIR}/rcsysinit.d/S00mountkernfs
-	ln -sf ../init.d/sysctl      ${EXTDIR}/rcsysinit.d/S05sysctl
-	ln -sf ../init.d/modules     ${EXTDIR}/rcsysinit.d/S10modules
-	ln -sf ../init.d/udev        ${EXTDIR}/rcsysinit.d/S15udev
-	ln -sf ../init.d/swap        ${EXTDIR}/rcsysinit.d/S20swap
-	ln -sf ../init.d/setclock    ${EXTDIR}/rcsysinit.d/S25setclock
-	ln -sf ../init.d/checkfs     ${EXTDIR}/rcsysinit.d/S30checkfs
-	ln -sf ../init.d/mountfs     ${EXTDIR}/rcsysinit.d/S40mountfs
-	ln -sf ../init.d/udev_retry  ${EXTDIR}/rcsysinit.d/S45udev_retry
-	ln -sf ../init.d/cleanfs     ${EXTDIR}/rcsysinit.d/S50cleanfs
-	ln -sf ../init.d/console     ${EXTDIR}/rcsysinit.d/S70console
-	ln -sf ../init.d/localnet    ${EXTDIR}/rcsysinit.d/S80localnet
+	ln -sf ../init.d/mountkernfs ${EXTDIR}/rcS.d/S00mountkernfs
+	ln -sf ../init.d/sysctl      ${EXTDIR}/rcS.d/S05sysctl
+	ln -sf ../init.d/modules     ${EXTDIR}/rcS.d/S10modules
+	ln -sf ../init.d/udev        ${EXTDIR}/rcS.d/S15udev
+	ln -sf ../init.d/swap        ${EXTDIR}/rcS.d/S20swap
+	ln -sf ../init.d/setclock    ${EXTDIR}/rcS.d/S25setclock
+	ln -sf ../init.d/checkfs     ${EXTDIR}/rcS.d/S30checkfs
+	ln -sf ../init.d/mountfs     ${EXTDIR}/rcS.d/S40mountfs
+	ln -sf ../init.d/udev_retry  ${EXTDIR}/rcS.d/S45udev_retry
+	ln -sf ../init.d/cleanfs     ${EXTDIR}/rcS.d/S50cleanfs
+	ln -sf ../init.d/console     ${EXTDIR}/rcS.d/S70console
+	ln -sf ../init.d/localnet    ${EXTDIR}/rcS.d/S80localnet
 	if [ ! -f ${EXTDIR}/sysconfig/createfiles ]; then install -m ${CONFMODE} sysconfig/createfiles ${EXTDIR}/sysconfig/; fi
 	if [ ! -f ${EXTDIR}/sysconfig/modules     ]; then install -m ${CONFMODE} sysconfig/modules     ${EXTDIR}/sysconfig/; fi
 	if [ ! -f ${EXTDIR}/sysconfig/rc          ]; then install -m ${CONFMODE} sysconfig/rc          ${EXTDIR}/sysconfig/; fi
 	if [ ! -f ${EXTDIR}/sysconfig/rc.site     ]; then install -m ${CONFMODE} sysconfig/rc.site     ${EXTDIR}/sysconfig/; fi
+	if [ -f   ${EXTDIR}/inittab               ]; then install -m ${CONFMODE} ${EXTDIR}/inittab     ${EXTDIR}/inittab.bak;
+	install                   -m ${CONFMODE} etc/inittab ${EXTDIR}/
 	install                   -m ${MODE} sysconfig/network-devices/ifup   ${EXTDIR}/sysconfig/network-devices/
 	install                   -m ${MODE} sysconfig/network-devices/ifdown ${EXTDIR}/sysconfig/network-devices/
 	install                   -m ${MODE} sysconfig/network-devices/services/ipv4-static       ${EXTDIR}/sysconfig/network-devices/services/
@@ -120,13 +122,13 @@ minimal: create-dirs create-service-dir create-boottemp-dir
 	ln -sf ../init.d/mountfs     ${EXTDIR}/rc6.d/S70mountfs
 	ln -sf ../init.d/swap        ${EXTDIR}/rc6.d/S80swap
 	ln -sf ../init.d/reboot      ${EXTDIR}/rc6.d/S99reboot
-	ln -sf ../init.d/mountkernfs ${EXTDIR}/rcsysinit.d/S00mountkernfs
-	ln -sf ../init.d/udev        ${EXTDIR}/rcsysinit.d/S10udev
-	ln -sf ../init.d/swap        ${EXTDIR}/rcsysinit.d/S20swap
-	ln -sf ../init.d/setclock    ${EXTDIR}/rcsysinit.d/S25setclock
-	ln -sf ../init.d/checkfs     ${EXTDIR}/rcsysinit.d/S30checkfs
-	ln -sf ../init.d/mountfs     ${EXTDIR}/rcsysinit.d/S40mountfs
-	ln -sf ../init.d/cleanfs     ${EXTDIR}/rcsysinit.d/S50cleanfs
+	ln -sf ../init.d/mountkernfs ${EXTDIR}/rcS.d/S00mountkernfs
+	ln -sf ../init.d/udev        ${EXTDIR}/rcS.d/S10udev
+	ln -sf ../init.d/swap        ${EXTDIR}/rcS.d/S20swap
+	ln -sf ../init.d/setclock    ${EXTDIR}/rcS.d/S25setclock
+	ln -sf ../init.d/checkfs     ${EXTDIR}/rcS.d/S30checkfs
+	ln -sf ../init.d/mountfs     ${EXTDIR}/rcS.d/S40mountfs
+	ln -sf ../init.d/cleanfs     ${EXTDIR}/rcS.d/S50cleanfs
 	if [ ! -f ${EXTDIR}/sysconfig/rc          ]; then install -m ${CONFMODE} sysconfig/rc          ${EXTDIR}/sysconfig/; fi
 
 .PHONY: all create-dirs create-service-dir create-boottemp-dir \
