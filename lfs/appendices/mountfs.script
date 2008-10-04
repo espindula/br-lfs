@@ -1,0 +1,54 @@
+#!/bin/sh
+########################################################################
+# Begin $rc_base/init.d/mountfs
+#
+# Description : File System Mount Script
+#
+# Authors     : Gerard Beekmans - gerard@linuxfromscratch.org
+#
+# Version     : 00.00
+#
+# Notes       :
+#
+########################################################################
+
+. /etc/sysconfig/rc
+. ${rc_functions}
+
+case &quot;${1}&quot; in
+    start)
+        boot_mesg &quot;Remounting root file system in read-write mode...&quot;
+        mount -n -o remount,rw / &gt;/dev/null
+        evaluate_retval
+
+        # Remove fsck-related file system watermarks.
+        rm -f /fastboot /forcefsck
+
+        boot_mesg &quot;Recording existing mounts in /etc/mtab...&quot;
+        &gt; /etc/mtab
+        mount -f / || failed=1
+        mount -f /proc || failed=1
+        mount -f /sys || failed=1
+        (exit ${failed})
+        evaluate_retval
+
+        # This will mount all filesystems that do not have _netdev in
+        # their option list.  _netdev denotes a network filesystem.
+        boot_mesg &quot;Mounting remaining file systems...&quot;
+        mount -a -O no_netdev &gt;/dev/null
+        evaluate_retval
+        ;;
+
+    stop)
+        boot_mesg &quot;Unmounting all other currently mounted file systems...&quot;
+        umount -a -d -r &gt;/dev/null
+        evaluate_retval
+        ;;
+
+    *)
+        echo &quot;Usage: ${0} {start|stop}&quot;
+        exit 1
+        ;;
+esac
+
+# End $rc_base/init.d/mountfs
