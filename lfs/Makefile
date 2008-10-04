@@ -111,6 +111,7 @@ validate:
 	@echo "Processing bootscripts...
 	$(Q)bash process-scripts.sh $(RENDERTMP)
 	@echo "Validating the book..."
+	$(Q)xmllint --noout --nonet --xinclude --postvalid index.xml
 
 all: lfs nochunks pdf dump-commands
 
