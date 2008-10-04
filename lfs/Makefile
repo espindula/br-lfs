@@ -108,7 +108,7 @@ dump-commands: validxml
 	   stylesheets/dump-commands.xsl $(RENDERTMP)/lfs-full.xml
 
 validate:
-	@echo "Processing bootscripts...
+	@echo "Processing bootscripts..."
 	$(Q)bash process-scripts.sh $(RENDERTMP)
 	@echo "Validating the book..."
 	$(Q)xmllint --noout --nonet --xinclude --postvalid index.xml
