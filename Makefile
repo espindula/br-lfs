@@ -107,7 +107,7 @@ dump-commands: validxml
 	$(Q)xsltproc --output $(DUMPDIR)/ \
 	   stylesheets/dump-commands.xsl $(RENDERTMP)/lfs-full.xml
 
-validate: validxml
+validate: maketar validxml
 	@echo "Validation complete."
 
 all: lfs nochunks pdf dump-commands
