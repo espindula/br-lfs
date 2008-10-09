@@ -44,50 +44,33 @@
     <note>
       <para>If you would like to enforce the use of strong passwords, refer to
       <ulink url="&blfs-root;view/svn/postlfs/cracklib.html"/> for installing
-      Cracklib prior to building Shadow. Then add
+      CrackLib prior to building Shadow. Then add
       <parameter>--with-libcrack</parameter> to the <command>configure</command>
       command below.</para>
     </note>
 
-    <para>Fix a bug in the <command>useradd</command> and
+    <!-- <para>Fix a bug in the <command>useradd</command> and
     <command>usermod</command> programs which prevent them from accepting group
     names rather than group ID numbers to the <option>-g</option> option:</para>
 
 <screen><userinput remap="pre">patch -Np1 -i ../&shadow-useradd-patch;</userinput></screen>
-
-    <para>Prepare Shadow for compilation:</para>
-
-<screen><userinput remap="configure">./configure --libdir=/lib --sysconfdir=/etc --enable-shared \
-    --without-selinux</userinput></screen>
-
-    <variablelist>
-      <title>The meaning of the configure options:</title>
-
-      <varlistentry>
-        <term><parameter>--without-selinux</parameter></term>
-        <listitem>
-          <para>Support for selinux is enabled by default, but selinux is not
-          built in a base LFS system.  The <command>configure</command> script
-          will fail if this option is not used.</para>
-        </listitem>
-      </varlistentry>
-
-    </variablelist>
+   -->
 
     <para>Disable the installation of the <command>groups</command> program
     and its man pages, as Coreutils provides a better version:</para>
 
-<screen><userinput remap="configure">sed -i 's/groups$(EXEEXT) //' src/Makefile
-find man -name Makefile -exec sed -i 's/groups\.1 / /' {} \;</userinput></screen>
+<screen><userinput remap="configure">sed -i 's/groups$(EXEEXT) //' src/Makefile.in
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \;</userinput></screen>
 
     <para>Disable the installation of Chinese and Korean manual pages, since
     Man-DB cannot format them properly:</para>
 
-<screen><userinput remap="configure">sed -i -e 's/ ko//' -e 's/ zh_CN zh_TW//' man/Makefile</userinput></screen>
+<screen><userinput remap="configure">sed -i -e 's/ ko//' -e 's/ zh_CN zh_TW//' man/Makefile.in</userinput></screen>
 
     <para>Shadow supplies other manual pages in a UTF-8 encoding.  Man-DB
     can display these in the recommended encodings by using the
-    <command>convert-mans</command> script which we installed:</para>
+    <command>convert-mans</command> script which was installed during the
+    Man-DB package:</para>
 
 <screen><userinput remap="configure">for i in de es fi fr id it pt_BR; do
     convert-mans UTF-8 ISO-8859-1 man/${i}/*.?
@@ -109,8 +92,8 @@ convert-mans UTF-8 ISO-8859-9 man/tr/*.?</userinput></screen>
     for user mailboxes that Shadow uses by default to the <filename
     class="directory">/var/mail</filename> location used currently:</para>
 
-<screen><userinput remap="configure">sed -i -e 's@#MD5_CRYPT_ENAB.no@MD5_CRYPT_ENAB yes@' \
-    -e 's@/var/spool/mail@/var/mail@' etc/login.defs</userinput></screen>
+<screen><userinput remap="configure">sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD MD5@' \
+       -e 's@/var/spool/mail@/var/mail@' etc/login.defs</userinput></screen>
 
     <note>
       <para>If you chose to build Shadow with Cracklib support, run the following:</para>
@@ -118,6 +101,29 @@ convert-mans UTF-8 ISO-8859-9 man/tr/*.?</userinput></screen>
 <screen role="nodump"><userinput>sed -i 's@DICTPATH.*@DICTPATH\t/lib/cracklib/pw_dict@' \
     etc/login.defs</userinput></screen>
     </note>
+
+    <para>Prepare Shadow for compilation:</para>
+
+<!-- Keeping this in case we revert to an older version
+<screen><userinput remap="configure">./configure -libdir=/lib -sysconfdir=/etc -enable-shared \
+    -without-selinux</userinput></screen>
+-->
+
+<screen><userinput remap="configure">./configure --sysconfdir=/etc</userinput></screen>
+
+    <!-- <variablelist>
+      <title>The meaning of the configure options:</title>
+
+      <varlistentry>
+        <term><parameter>-without-selinux</parameter></term>
+        <listitem>
+          <para>Support for selinux is enabled by default, but selinux is not
+          built in a base LFS system.  The <command>configure</command> script
+          will fail if this option is not used.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist> -->
 
     <para>Compile the package:</para>
 
@@ -133,11 +139,11 @@ convert-mans UTF-8 ISO-8859-9 man/tr/*.?</userinput></screen>
 
 <screen><userinput remap="install">mv -v /usr/bin/passwd /bin</userinput></screen>
 
-    <para>Move Shadow's libraries to more appropriate locations:</para>
+    <!-- <para>Move Shadow's libraries to more appropriate locations:</para>
 
 <screen><userinput remap="install">mv -v /lib/libshadow.*a /usr/lib
 rm -v /lib/libshadow.so
-ln -sfv ../../lib/libshadow.so.0 /usr/lib/libshadow.so</userinput></screen>
+ln -sfv ../../lib/libshadow.so.0 /usr/lib/libshadow.so</userinput></screen> -->
 
   </sect2>
 
@@ -167,12 +173,52 @@ ln -sfv ../../lib/libshadow.so.0 /usr/lib/libshadow.so</userinput></screen>
 <screen><userinput>grpconv</userinput></screen>
 
     <para>Shadow's stock configuration for the <command>useradd</command>
-    utility is not suitable for LFS systems.  Use the following commands to
-    change the default home directory for new users and prevent the creation of
-    mail spool files:</para>
+    utility has a few caveats that need some explanation. First, the default
+    action for the <command>useradd</command> utility is to create the user and
+    a group of the same name as the user. By default the user ID (UID) and
+    group ID (GID) numbers will begin with 1000. This means if you don't pass
+    parameters to <command>useradd</command>, each user will be a member of a
+    unique group on the system. If this behaviour is undesireable, you'll need
+    to pass the <parameter>-g</parameter> parameter to
+    <command>useradd</command>. The default parameters are stored in the
+    <filename>/etc/default/useradd</filename> file. You may need to modify two
+    parameters in this file to suit your particular needs.</para>
 
-<screen><userinput>useradd -D -b /home
-sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
+    <variablelist>
+      <title><filename>/etc/default/useradd</filename> Parameter Explanations</title>
+
+      <varlistentry>
+        <term><parameter>GROUP=1000</parameter></term>
+        <listitem>
+          <para>This parameter sets the beginning of the group numbers used in
+          the /etc/group file. You can modify it to anything you desire. Note
+          that <command>useradd</command> will never reuse a UID or GID. If the
+          number identified in this parameter is used, it will use the next
+          available number after this. Note also that if you don't have a group
+          1000 on your system the first time you use <command>useradd</command>
+          without the <parameter>-g</parameter> parameter, you'll get a message
+          displayed on the terminal that says:
+          <computeroutput>useradd: unknown GID 1000</computeroutput>. You may
+          disregard this message and group number 1000 will be used.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>CREATE_MAIL_SPOOL=yes</parameter></term>
+        <listitem>
+          <para>This parameter causes <command>useradd</command> to create a
+          mailbox file for the newly created user. <command>useradd</command>
+          will make the group ownership of this file to the
+          <systemitem class="groupname">mail</systemitem> group with 0660
+          permissions. If you would prefer that these mailbox files are not
+          created by <command>useradd</command>, issue the following
+          command:</para>
+
+<screen><userinput>sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
 
   </sect2>
 
@@ -191,7 +237,6 @@ sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
 
     <segmentedlist>
       <segtitle>Installed programs</segtitle>
-      <segtitle>Installed libraries</segtitle>
 
       <seglistitem>
         <seg>chage, chfn, chgpasswd, chpasswd, chsh, expiry, faillog, gpasswd,
@@ -199,7 +244,6 @@ sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
         lastlog, login, logoutd, newgrp, newusers, nologin, passwd, pwck,
         pwconv, pwunconv, sg (link to newgrp), su, useradd, userdel, usermod,
         vigr (link to vipw), and vipw</seg>
-        <seg>libshadow.{a,so}</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -547,16 +591,6 @@ sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
           <filename>/etc/shadow</filename> files</para>
           <indexterm zone="ch-system-shadow vipw">
             <primary sortas="b-vipw">vipw</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="libshadow">
-        <term><filename class="libraryfile">libshadow</filename></term>
-        <listitem>
-          <para>Contains functions used by most programs in this package</para>
-          <indexterm zone="ch-system-shadow libshadow">
-            <primary sortas="c-libshadow">libshadow</primary>
           </indexterm>
         </listitem>
       </varlistentry>
