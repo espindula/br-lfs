@@ -58,50 +58,41 @@ ln -sv /proc/self/fd/1 /lib/udev/devices/stdout
 ln -sv /proc/self/fd/2 /lib/udev/devices/stderr
 ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
 
+    <para>Prepare the package for compilation:</para>
+
+<screen><userinput remap="configure">./configure --prefix=/ --includedir=/usr/include \
+    --datarootdir=/usr/share</userinput></screen>
+
     <para>Compile the package:</para>
 
-<screen><userinput remap="make">make EXTRAS="`echo extras/*/`"</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
 
-    <variablelist>
-      <title>The meaning of the make option:</title>
-
-      <varlistentry>
-        <term><parameter>EXTRAS=...</parameter></term>
-        <listitem>
-          <para>This builds the helper binaries that can aid in writing custom
-          Udev rules.</para>
-        </listitem>
-      </varlistentry>
-
-    </variablelist>
-
-    <para>To test the results, issue:</para>
-
-<screen><userinput remap="test">make test</userinput></screen>
-
-    <para>Note that the Udev testsuite will produce numerous messages in
-    the host system's logs. These are harmless and can be ignored.</para>
+    <para>This package does not come with a test suite.</para>
 
     <para>Install the package:</para>
 
-<screen><userinput remap="install">make DESTDIR=/ EXTRAS="`echo extras/*/`" install</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
 
-    <variablelist>
-      <title>The meaning of the make parameter:</title>
+    <para>Recreate the library <filename class="extension">.so</filename> files
+    currently in the <filename class="directory">/lib</filename> directory in
+    <filename class="directory">/usr/lib</filename>, then remove the
+    originals:</para>
 
-      <varlistentry>
-        <term><parameter>DESTDIR=/</parameter></term>
-        <listitem>
-          <para>This prevents the Udev build process from killing any
-          <command>udevd</command> processes that may be running on the
-          host system.</para>
-        </listitem>
-      </varlistentry>
+<screen><userinput remap="install">ln -sv ../../lib/$(readlink /lib/libudev.so) \
+       /usr/lib/libudev.so
+ln -sv ../../lib/$(readlink /lib/libvolume_id.so) \
+       /usr/lib/libvolume_id.so
+rm -v /lib/lib{udev,volume_id}.so</userinput></screen>
 
-    </variablelist>
+    <para>Move the <filename class="extension">.pc</filename> files currently
+    in the <filename class="directory">/lib/pkgconfig</filename> directory to
+    their proper place in <filename class="directory">/usr/lib</filename>:</para>
+
+<screen><userinput remap="install">mv -v /lib/pkgconfig/lib{udev,volume_id}.pc /usr/lib/pkgconfig
+rmdir -v /lib/pkgconfig</userinput></screen>
 
     <para>Udev has to be configured in order to work properly, as its default
-    configuration does not cover all devices. First install a few extra rules
+    configuration does not cover all devices. First install two extra rules
     files from Udev to help support device-mapper and RAID setups:</para>
 
 <screen><userinput remap="install">install -m644 -v etc/udev/packages/64-*.rules \
@@ -110,7 +101,7 @@ ln -sv /proc/kcore /lib/udev/devices/core</userinput></screen>
     <para>Now install a file to create symlinks for certain hand-held devices:</para>
 
 <screen><userinput remap="install">install -m644 -v etc/udev/packages/40-pilot-links.rules \
-    /etc/udev/rules.d/40-pilot-links.rules</userinput></screen>
+    /etc/udev/rules.d/</userinput></screen>
 
     <!-- There are more files available in the packages/ directory, if we want
          to consider using them.  Most are probably irrelevant to LFS though.
@@ -136,8 +127,7 @@ make install</userinput></screen>
     rules:</para>
 
 <screen><userinput remap="install">cd ..
-install -dv /usr/share/doc/udev-&udev-version;
-install -m644 -v docs/writing_udev_rules/index.html \
+install -m644 -v -D docs/writing_udev_rules/index.html \
     /usr/share/doc/udev-&udev-version;/index.html</userinput></screen>
 
   </sect2>
@@ -154,7 +144,7 @@ install -m644 -v docs/writing_udev_rules/index.html \
         <seg>ata_id, cdrom_id, collect, create_floppy_devices, edd_id,
         firmware.sh, fstab_import, path_id, scsi_id, udevadm, udevd,
         usb_id, vol_id, write_cd_rules, and write_net_rules</seg>
-        <seg>libvolume_id</seg>
+        <seg>libudev and libvolume_id</seg>
         <seg>/etc/udev</seg>
       </seglistitem>
     </segmentedlist>
@@ -333,10 +323,20 @@ install -m644 -v docs/writing_udev_rules/index.html \
         </listitem>
       </varlistentry>
 
+      <varlistentry id="libudev">
+        <term><command>libudev</command></term>
+        <listitem>
+          <para>A library interface to udev device information</para>
+          <indexterm zone="ch-system-udev libudev">
+            <primary sortas="c-libudev">libudev</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="libvolume_id">
         <term><command>libvolume_id</command></term>
         <listitem>
-          <para></para>
+          <para>A library interface to read volume labels and uuids</para>
           <indexterm zone="ch-system-udev libvolume_id">
             <primary sortas="c-libvolume_id">libvolume_id</primary>
           </indexterm>
