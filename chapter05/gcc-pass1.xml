@@ -61,8 +61,8 @@ cd ../gcc-build</userinput></screen>
     <para>Prepare GCC for compilation:</para>
 
 <screen><userinput remap="configure">CC="gcc -B/usr/bin/" ../gcc-&gcc-version;/configure --prefix=/tools \
-    --with-local-prefix=/tools --disable-nls --enable-shared \
-    --enable-languages=c --disable-decimal-float</userinput></screen>
+    --with-local-prefix=/tools --disable-nls --disable-shared \
+    --enable-languages=c</userinput></screen>
 
     <variablelist>
       <title>The meaning of the configure options:</title>
@@ -90,14 +90,11 @@ cd ../gcc-build</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--enable-shared</parameter></term>
+        <term><parameter>--disable-shared</parameter></term>
         <listitem>
-          <para>This switch allows the building of <filename
-          class="libraryfile">libgcc_s.so.1</filename> and
-          <filename class="libraryfile">libgcc_eh.a</filename>.
-          Having <filename class="libraryfile">libgcc_eh.a</filename>
-          available ensures that the configure script for Glibc (the
-          next package we compile) produces the proper results.</para>
+          <para>This switch forces gcc to link its internal libraries
+          statically. We do this to avoid possible issues with the host
+          system.</para>
         </listitem>
       </varlistentry>
 
@@ -129,6 +126,17 @@ cd ../gcc-build</userinput></screen>
     <para>Install the package:</para>
 
 <screen><userinput remap="install">make install</userinput></screen>
+
+    <para>Using <parameter>--disable-shared</parameter> means that the
+    <filename>libgcc_eh.a</filename> file isn't created and installed. The
+    Glibc package depends on this library as it uses
+    <parameter>-lgcc_eh</parameter> within its build system. We can satisfy
+    that dependency by creating a symlink to <filename>libgcc.a</filename>,
+    since that file will end up containing the objects normally contained in
+    <filename>libgcc_eh.a</filename>.</para>
+
+<screen><userinput remap="install">ln -vs libgcc.a `gcc -print-libgcc-file-name | \
+    sed 's/libgcc/&amp;_eh/'`</userinput></screen>
 
     <para>As a finishing touch, create a symlink. Many programs and scripts
     run <command>cc</command> instead of <command>gcc</command>, which is
