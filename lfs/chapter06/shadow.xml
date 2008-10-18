@@ -45,55 +45,36 @@
       <para>Si vous aimeriez multiplier l'usage des mots de passe efficaces,
       reportez-vous à 
       <ulink url="&blfs-root;view/svn/postlfs/cracklib.html"/> pour l'installation
-      de Cracklib avant de compiler Shadow. Puis ajoutez 
+      de CrackLib avant de compiler Shadow. Puis ajoutez 
       <parameter>--with-libcrack</parameter> à la commande <command>configure</command>
       ci-dessous.</para>
     </note>
 
-    <para>Réparez un bogue dans les programmes
+    <!-- <para>Corrigez un bogue dans les programmes
     <command>useradd</command> et <command>usermod</command> qui les
     empêche d'accepter des noms de groupe plutôt que des nombres ID de
     groupe avec <option>-g</option>&nbsp;:</para>
 
 <screen><userinput remap="pre">patch -Np1 -i ../&shadow-useradd-patch;</userinput></screen>
-
-    <para>Préparez la compilation de Shadow&nbsp;:</para>
-
-<screen><userinput remap="configure">./configure --libdir=/lib --sysconfdir=/etc --enable-shared \
-    --without-selinux</userinput></screen>
-
-    <variablelist>
-      <title>Voici la signification des options de configuration&nbsp;:</title>
-
-      <varlistentry>
-        <term><parameter>--without-selinux</parameter></term>
-        <listitem>
-          <para>Le support pour SELinux est activé par défaut, mais selinux 
-          n'est pas compilé dans un système LFS de base. Le script
-          <command>configure</command> échouera si vous n'utilisez pas cette
-          option.</para>
-        </listitem>
-      </varlistentry>
-
-    </variablelist>
+-'>
 
     <para>Désactivez l'installation du programme
     <command>groups</command> et de sa page man car Coreutils fournit
     une meilleure version&nbsp;:</para>
 
-<screen><userinput remap="configure">sed -i 's/groups$(EXEEXT) //' src/Makefile
-find man -name Makefile -exec sed -i 's/groups\.1 / /' {} \;</userinput></screen>
+<screen><userinput remap="configure">sed -i 's/groups$(EXEEXT) //'src/Makefile.in
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \;</userinput></screen>
 
     <para>Désactivez l'installation des pages de manuel en chinois et en
     coréen, puisque Man-DB ne peut pas les formater
     correctement&nbsp;:</para>
 
-<screen><userinput remap="configure">sed -i -e 's/ ko//' -e 's/ zh_CN zh_TW//' man/Makefile</userinput></screen>
+<screen><userinput remap="configure">sed -i -e 's/ ko//' -e 's/ zh_CN zh_TW//'man/Makefile.in</userinput></screen>
 
     <para>Shadow fournit d'autres pages de manuel dans l'encodage UTF-8.
     Man-DB peut afficher ces dernières dans les encodages recommandés en
-    utilisant le script <command>convert-mans</command> que nous avons
-    installé&nbsp;:</para>
+    utilisant le script <command>convert-mans</command> qu'on a installé au
+    paquet Man-DB&nbsp;:</para>
 
 <screen><userinput remap="configure">for i in de es fi fr id it pt_BR; do
     convert-mans UTF-8 ISO-8859-1 man/${i}/*.?
@@ -117,8 +98,8 @@ convert-mans UTF-8 ISO-8859-9 man/tr/*.?</userinput></screen>
     défaut en l'endroit <filename class="directory">/var/mail</filename>
     utilisé actuellement&nbsp;:</para>
 
-<screen><userinput remap="configure">sed -i -e 's@#MD5_CRYPT_ENAB.no@MD5_CRYPT_ENAB yes@' \
-    -e 's@/var/spool/mail@/var/mail@' etc/login.defs</userinput></screen>
+<screen><userinput remap="configure">sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD MD5@' \
+        -e 's@/var/spool/mail@/var/mail@' etc/login.defs</userinput></screen>
 
     <note>
       <para>Si vous compilez Shadow avec le support pour Cracklib, lancez 
@@ -127,6 +108,27 @@ convert-mans UTF-8 ISO-8859-9 man/tr/*.?</userinput></screen>
 <screen role="nodump"><userinput>sed -i 's@DICTPATH.*@DICTPATH\t/lib/cracklib/pw_dict@' \
     etc/login.defs</userinput></screen>
     </note>
+
+    <para>Préparez la compilation de Shadow&nbsp;:</para>
+
+<!-- Keeping this in case we revert to an older version
+<screen><userinput remap="configure">./configure -libdir=/lib -sysconfdir=/etc --without-selinux</userinput></screen> -->
+
+<screen><userinput remap="configure">./configure --sysconfdir=/etc</userinput></screen>
+
+    <!-- <variablelist>
+      <title>Voici la signification des options de configuration&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--without-selinux</parameter></term>
+        <listitem>
+          <para>Le support pour SELinux est activé par défaut, mais selinux 
+          n'est pas compilé dans un système LFS de base. Le script
+          <command>configure</command> échouera si vous n'utilisez pas cette
+          option.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist> -->
 
     <para>Compilez le paquet&nbsp;:</para>
 
@@ -142,12 +144,12 @@ convert-mans UTF-8 ISO-8859-9 man/tr/*.?</userinput></screen>
 
 <screen><userinput remap="install">mv -v /usr/bin/passwd /bin</userinput></screen>
 
-    <para>Déplacez les bibliothèques de Shadow dans des emplacements
+    <!-- <para>Déplacez les bibliothèques de Shadow dans des emplacements
     plus appropriés&nbsp;:</para>
 
 <screen><userinput remap="install">mv -v /lib/libshadow.*a /usr/lib
 rm -v /lib/libshadow.so
-ln -sfv ../../lib/libshadow.so.0 /usr/lib/libshadow.so</userinput></screen>
+ln -sfv ../../lib/libshadow.so.0 /usr/lib/libshadow.so</userinput></screen> -->
 
   </sect2>
 
@@ -184,14 +186,52 @@ ln -sfv ../../lib/libshadow.so.0 /usr/lib/libshadow.so</userinput></screen>
 
 <screen><userinput>grpconv</userinput></screen>
 
-    <para>La configuration fournie avec Shadow pour l'utilitaire
-    <command>useradd</command> ne convient pas aux systèmes LFS. 
-    Utilisez les commandes pour changer le répertoire personnel par défaut
-    des nouveaux utilisateurs et empêcher la création de fichiers de
-    traçage de mail&nbsp;:</para>
-
-<screen><userinput>useradd -D -b /home
-sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
+    <para>La configuration fournie avec Shadow pour l'outil présente quelques
+    inconvénients qui appellent quelques explications. D'abord, l'action par
+    défaut de l'outil <command>useradd</command> est de créer un utilisateur
+    et un groupe du même nom que l'utilisateur. Par défaut les numéros d''ID 
+    utilisateur (UID) et d'ID de groupe (GID) commenceront a 1000. Cela signifie
+    que si vous ne passez pas de paramètres à <command>useradd</command>, chaque
+    utilisateur sera membre d'un groupe unique sur le système. Si vous ne désirez
+    pas ce comportement, vous devrez passer le paramètre <parameter>-g</parameter>
+    à <command>useradd</command>. Les paramètres par défaut sont stockés dans
+    fichier <filename>/etc/default/useradd</filename>. Il se peut que vous
+    deviez modifier deux paramètres dans ce fichier pour satisfaire vos
+    besoins particuliers.</para>
+    
+    <variablelist>
+      <title><filename>/etc/default/useradd</filename> Explication de parametres</title>
+      
+      <term><parameter>GROUP=1000</parameter></term>
+        <listitem>
+          <para>Ce paramètre initialise le début des numéros de groupe utilisés
+          dans le fichier /etc/group. Vous pouvez le modifier avec ce que vous
+          désirez. Notez que <command>useradd</command> ne réutilisera jamais un
+          UID ou un GID. Si le numéro identifié dans ce paramètre est utilisé,
+          il utilisera le numéro disponible suivant celui-ci. Notez aussi que
+          si vous n'avez pas de groupe 1000 sur votre système la première fois
+          que vous utilisez <command>useradd</command> sans le paramètre
+          <parameter>-g</parameter>, vous obtiendrez un message sur le terminal
+          qui dit&nbsp;:
+          <computeroutput>useradd: unknown GID 1000</computeroutput>. Vous
+          pouvez passer ce message et le numéro de groupe 1000 sera utilisé.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><parameter>CREATE_MAIL_SPOOL=yes</parameter></term>
+          <listitem>
+            <para>Il résulte de ce paramètre que <command>useradd</command>
+            crée un fichier de boîte mail pour le nouvel utilisateur créé.
+            <command>useradd</command> rendra le groupe 
+            <systemitem class="groupname">mail</systemitem> propriétaire de ce
+            fichier avec les droits 0660. Si vous préféreriez que
+            <command>useradd</command> ne crée pas ces fichiers de boîte mail,
+            lancez la commande suivante&nbsp;:</para>
+            
+<screen><userinput>sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
+          </listitem>
+        </varlistentry>
+      </variablelist>
 
   </sect2>
 
@@ -210,7 +250,6 @@ sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
 
     <segmentedlist>
       <segtitle>Programmes installés</segtitle>
-      <segtitle>Bibliothèques installées</segtitle>
 
       <seglistitem>
         <seg>chage, chfn, chgpasswd, chpasswd, chsh, expiry, faillog, gpasswd,
@@ -218,7 +257,6 @@ sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
         lastlog, login, logoutd, newgrp, newusers, nologin, passwd, pwck,
         pwconv, pwunconv, sg (lien vers newgrp), su, useradd, userdel, usermod,
         vigr (lien vers vipw) et vipw</seg>
-        <seg>libshadow.{a,so}</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -580,18 +618,6 @@ sed -i 's/yes/no/' /etc/default/useradd</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-
-      <varlistentry id="libshadow">
-        <term><filename class="libraryfile">libshadow</filename></term>
-        <listitem>
-          <para>Contient des fonctions utilisées par la plupart des programmes de ce
-          paquet</para>
-          <indexterm zone="ch-system-shadow libshadow">
-            <primary sortas="c-libshadow">libshadow</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
     </variablelist>
 
   </sect2>

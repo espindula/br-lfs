@@ -46,10 +46,9 @@
     <para>GCC exige maintenant les paquets GMP et MPFR. Comce il se peut que
     ces paquets ne soient pas inclus dans votre distribution hôte, ils vont
     être compilés avec GCC.</para>
-    
-<screen><userinput remap="pre">tar -jxf ../mpfr/&mpfr-version;.tar.bz2 &amp;&amp;
-mv mpfr-&mpfr-version; mpfr &amp;&amp;
-tar -jxf ../gmp-&gmp-version;.tar.bz2 &amp;&amp;
+<screen><userinput remap="pre">tar -jxf ../mpfr-&mpfr-version;.tar.bz2
+mv mpfr-&mpfr-version; mpfr
+tar -jxf ../gmp-&gmp-version;.tar.bz2
 mv gmp-&gmp-version; gmp</userinput></screen>
 
     <para>La documentation de GCC recommande de ne pas construire GCC dans le
@@ -61,8 +60,8 @@ cd ../gcc-build</userinput></screen>
     <para>Préparez la compilation de GCC&nbsp;:</para>
 
 <screen><userinput remap="configure">CC="gcc -B/usr/bin/" ../gcc-&gcc-version;/configure --prefix=/tools \
-     --with-local-prefix=/tools --disable-nls --enable-shared \
-     --enable-languages=c --disable-decimal-float</userinput></screen>
+     --with-local-prefix=/tools --disable-nls --disable-shared --disable-libssp \
+     --enable-languages=c</userinput></screen>
 
     <variablelist>
       <title>Voici la signification des options de configure&nbsp;:</title>
@@ -91,14 +90,11 @@ cd ../gcc-build</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--enable-shared</parameter></term>
+        <term><parameter>--disable-shared</parameter></term>
         <listitem>
-          <para>Cette option permet la construction de
-          <filename class="libraryfile">libgcc_s.so.1</filename> et
-          <filename class="libraryfile">libgcc_eh.a</filename>.
-          Disposer de <filename class="libraryfile">libgcc_eh.a</filename>
-          nous assure que le script configure
-          de Glibc (le prochain paquet à compiler) produira de bons résultats.</para>
+          <para>Ce paramètre oblige GCC à lier ses bibliothèques internes de
+          manière statique. On procède ainsi pour éviter les problèmes avec
+          le système hôte.</para>
         </listitem>
       </varlistentry>
 
@@ -133,6 +129,17 @@ cd ../gcc-build</userinput></screen>
 
 <screen><userinput remap="install">make install</userinput></screen>
 
+    <para>L'utilisation de <parameter>--disable-shared</parameter> signifie
+    que le fichier <filename>libgcc_eh.a</filename> n'est pas créé et installé.
+    Le paquet Glibc dépend de cette bibliothèque puisqu'il utilise
+    <parameter>-lgcc_eh</parameter> à l'intérieur de son système de construction.
+    On peut satisfaire cette dépendance en créant un lien symbolique vers
+    <filename>libgcc.a</filename>, puisque ce fichier va finir par contenir les
+    objets normalement contenus dans <filename>libgcc_eh.a</filename>.</para>
+
+<screen><userinput remap="install">ln -vs libgcc.a `gcc -print-libgcc-file-name| \
+    sed 's/libgcc/&amp;_eh/'`</userinput></screen>
+    
     <para>En touche finale, créez un lien symbolique. Beaucoup de programmes
     lancent <command>cc</command> au lieu de <command>gcc</command>, ceci pour
     conserver des programmes génériques et donc utilisables sur tout type
