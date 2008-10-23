@@ -48,41 +48,18 @@
     the <filename>man_db.conf</filename> file to prevent redundant results
     when using programs such as <command>whatis</command>:</para> -->
 
-    <para>Use a <command>sed</command> substitution to delete
-    the <quote>/usr/man</quote> and <quote>/usr/local/man</quote> lines in
-    the <filename>man_db.conf</filename> file to prevent redundant results
-    when using programs such as <command>whatis</command>:</para>
+    <para>LFS creates <filename>/usr/man</filename> and
+    <filename>/usr/local/man</filename> as symlinks.   Remove them from the
+    <filename>man_db.conf</filename> file to prevent redundant
+    results when using programs such as <command>whatis</command>:</para>
 
 <screen><userinput remap="pre">sed -i -e '\%\t/usr/man%d' -e '\%\t/usr/local/man%d' src/man_db.conf.in</userinput></screen>
 
-    <!-- This is removed and the same thing is done using the configure
-         command, which seems to be the more proper method
-
-    <para>The second change accounts for programs that Man-DB should be able
-    to find at runtime, but that haven't been installed yet:</para>
-
-<screen><userinput remap="pre">cat &gt;&gt; include/manconfig.h.in &lt;&lt; "EOF"
-<literal>#define WEB_BROWSER "exec /usr/bin/lynx"
-#define COL "/usr/bin/col"
-#define VGRIND "/usr/bin/vgrind"
-#define GRAP "/usr/bin/grap"</literal>
-EOF</userinput></screen>
-
-    <para>The <command>col</command> program is a part of the Util-linux
-    package, <command>lynx</command> is a text-based web browser (see BLFS
-    for installation instructions), <command>vgrind</command> converts
-    program sources to Groff input, and <command>grap</command> is useful
-    for typesetting graphs in Groff documents. The <command>vgrind</command>
-    and <command>grap</command> programs are not normally needed for viewing
-    manual pages. They are not part of LFS or BLFS, but you should be able
-    to install them yourself after finishing LFS if you wish to do so.</para>
-
-    -->
-
     <para>Prepare Man-DB for compilation:</para>
 
-<screen><userinput remap="configure">./configure --prefix=/usr --libexecdir=/usr/lib --sysconfdir=/etc \
-    --disable-setuid --with-browser=/usr/bin/lynx \
+<screen><userinput remap="configure">./configure --prefix=/usr --libexecdir=/usr/lib \
+    --sysconfdir=/etc --disable-setuid \
+    --enable-mb-groff --with-browser=/usr/bin/lynx \
     --with-col=/usr/bin/col --with-vgrind=/usr/bin/vgrind \
     --with-grap=/usr/bin/grap</userinput></screen>
 
@@ -98,17 +75,27 @@ EOF</userinput></screen>
       </varlistentry>
 
       <varlistentry>
+        <term><parameter>--enable-mb-groff</parameter></term>
+        <listitem>
+          <para>This switch tells <application>man-db</application> to expect
+          the Debian multibyte patched version of
+          <application>groff</application>.</para>  
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><parameter>--with-...</parameter></term>
         <listitem>
           <para>These four parameters are used to set some default programs.
           The <command>col</command> program is a part of the Util-linux-ng
-          package, <command>lynx</command> is a text-based web browser (see BLFS
-          for installation instructions), <command>vgrind</command> converts
-          program sources to Groff input, and <command>grap</command> is useful
-          for typesetting graphs in Groff documents. The <command>vgrind</command>
-          and <command>grap</command> programs are not normally needed for viewing
-          manual pages. They are not part of LFS or BLFS, but you should be able
-          to install them yourself after finishing LFS if you wish to do so.</para>
+          package, <command>lynx</command> is a text-based web browser (see
+          BLFS for installation instructions), <command>vgrind</command>
+          converts program sources to Groff input, and <command>grap</command>
+          is useful for typesetting graphs in Groff documents. The
+          <command>vgrind</command> and <command>grap</command> programs are
+          not normally needed for viewing manual pages. They are not part of
+          LFS or BLFS, but you should be able to install them yourself after
+          finishing LFS if you wish to do so.</para>
         </listitem>
       </varlistentry>
 
@@ -124,15 +111,15 @@ EOF</userinput></screen>
 
 <screen><userinput remap="install">make install</userinput></screen>
 
-    <para>Some packages provide UTF-8 man pages which this version of
-    <command>man</command> is unable to display.  The following script will
-    allow some of these to be converted into the expected encodings shown in
-    the table below. Man-DB expects the manual pages to be in the encodings
-    in the table, and will convert them as necessary to the actual locale
-    encoding when it displays them, so that they will display in both UTF-8
-    and traditional locales.  Because this script is intended for limited use
-    during the system build, for public data, we will not bother with error
-    checking, nor use a non-predictable temporary file name:</para>
+    <para>Some packages provide UTF-8 manual pages, which previous versions of
+    <application>Man-DB</application> were unable to display.  This limitation
+    has been fixed in recent versions, and <application>Man-DB</application>
+    can now convert manual pages from legacy encodings to UTF-8
+    (and vice-versa) on the fly.  This used to be a rather annoying
+    problem across different distributions, as packages written for one
+    distribution would require changes to work on another. The following
+    script will allow you to convert manual pages to and from legacy and UTF-8
+    encodings.</para>
 
 <screen><userinput remap="install">cat &gt;&gt; convert-mans &lt;&lt; "EOF"
 <literal>#!/bin/sh -e
@@ -160,24 +147,39 @@ install -m755 convert-mans  /usr/bin</userinput></screen>
 
     <para>Linux distributions have different policies concerning the character
     encoding in which manual pages are stored in the filesystem. E.g., RedHat
-    stores all manual pages in UTF-8, while Debian uses language-specific
-    (mostly 8-bit) encodings. This leads to incompatibility of packages with
-    manual pages designed for different distributions.</para>
+    stores all manual pages in UTF-8, while Debian previously used
+    language-specific (mostly 8-bit) encodings. As mentioned above, this leads
+    to incompatibility of packages with manual pages designed for different
+    distributions.</para>
 
-    <para>LFS uses the same conventions as Debian. This was chosen because
-    Man-DB does not understand man pages stored in UTF-8. And, for our
-    purposes, Man-DB is preferable to Man as it works without extra
-    configuration in any locale. Lastly, as of now, there is no fully-working
-    implementation of the RedHat convention. RedHat's <command>groff</command>
-    is known to misformat text.</para>
+    <para>LFS previously used the same convention as Debian. This was chosen
+    because <application>Man-DB</application> did not understand manual pages
+    stored in UTF-8 at the time of its introduction into LFS.  For our purposes
+    at that time, <application>Man-DB</application> was preferable to
+    <application>Man</application> as it worked without any additional
+    configuration in any locale.  This is still true today as
+    <application>Man-DB</application> with Debian patched
+    <application>Groff</application> will now dynamically convert UTF-8 encoded
+    manual pages to the user's locale.  Additionally, this combination provides
+    support for Chinese and Japanese locales, and limited support for Korean,
+    whereas <application>Man</application> does not. The current offering of
+    <application>Man</application> as used in RedHat requires major
+    modifications to both the <application>Man</application> and
+    <application>Groff</application> packages, and still falls short on
+    Chinese, Japanese, and Korean encodings.</para>
+
+    <para>Finally, most distributions, including Debian, are rapidly migrating
+    to all UTF-8 encoded manual pages. Upstream packagers will very likely drop
+    legacy encodings in favor of UTF-8, though adoption has been slow due to
+    the hacks required to make the current <application>Man</application> and
+    <application>Groff</application> packages work correctly together.</para>
 
     <para>The relationship between language codes and the expected encoding
-    of manual pages is listed below. Man-DB automatically converts them to
-    the locale encoding while viewing.</para>
+    of legacy manual pages is listed below.</para>
 
-    <!-- Origin: man-db-2.4.3/src/encodings.c -->
+    <!-- Origin: man-db-2.5.2/src/encodings.c -->
     <table>
-      <title>Expected character encoding of manual pages</title>
+      <title>Expected character encoding of legacy 8-bit manual pages</title>
       <?dbfo table-width="2.5in" ?>
 
       <tgroup cols="2">
@@ -258,6 +260,10 @@ install -m755 convert-mans  /usr/bin</userinput></screen>
           </row>
           <!-- Languages below require patched groff -->
           <row>
+            <entry>Bulgarian (bg)</entry>
+            <entry>CP1251</entry>
+          </row>
+          <row>
             <entry>Czech (cs)</entry>
             <entry>ISO-8859-2</entry>
           </row>
@@ -290,8 +296,28 @@ install -m755 convert-mans  /usr/bin</userinput></screen>
             <entry>ISO-8859-2</entry>
           </row>
           <row>
+            <entry>Serbian (sr)</entry>
+            <entry>ISO-8859-5</entry>
+          </row>
+          <row>
             <entry>Turkish (tr)</entry>
             <entry>ISO-8859-9</entry>
+          </row>
+          <row>
+            <entry>Simplified Chinese (zh_CN)</entry>
+            <entry>GBK</entry>
+          </row>
+          <row>
+            <entry>Simplified Chinese,Singapore} (zh_SG)</entry>
+            <entry>GBK</entry>
+          </row>
+          <row>
+            <entry>Traditional Chinese (zh_TW)</entry>
+            <entry>BIG5</entry>
+          </row>
+          <row>
+            <entry>Traditional Chinese, Hong Kong (zh_HK)</entry>
+            <entry>BIG5HKSCS</entry>
           </row>
         </tbody>
 
@@ -301,28 +327,35 @@ install -m755 convert-mans  /usr/bin</userinput></screen>
 
     <note>
       <para>Manual pages in languages not in the list are not supported.
-      Norwegian doesn't work now because of the transition from no_NO to
-      nb_NO locale, and Korean is non-functional because of the incomplete
-      Groff patch.</para>
+      Norwegian does not work because of the transition from no_NO to
+      nb_NO locale, and will be fixed in the next release of 
+      <application>Man-DB</application>.  Korean is currently non functional
+      because of incomplete fixes in the Groff patch.</para>
     </note>
 
-    <para>If upstream distributes the manual pages in the same encoding
-    as Man-DB expects, the manual pages can be copied to
-    <filename class="directory">/usr/share/man/<replaceable>&lt;language
-    code&gt;</replaceable></filename>. E.g., French manual pages
-    (<ulink url="http://ccb.club.fr/man/man-fr-1.58.0.tar.bz2"/>) can be
-    installed with the following command:</para>
 
-<screen role="nodump"><userinput>mkdir -p /usr/share/man/fr
-cp -rv man? /usr/share/man/fr</userinput></screen>
+    <para>If upstream distributes the manual pages in a legacy encoding,
+    the manual pages can simply be copied to
+    <filename class="directory">/usr/share/man/<replaceable>&lt;language
+    code&gt;</replaceable></filename>. For example, <ulink
+    url="http://www.infodrom.org/projects/manpages-de/download/manpages-de-0.5.tar.gz">
+    German manual pages</ulink> can be installed with the following
+    commands:</para>
+
+<screen role="nodump"><userinput>mkdir -p /usr/share/man/de
+cp -rv man? /usr/share/man/de</userinput></screen>
 
     <para>If upstream distributes manual pages in UTF-8 (i.e., <quote>for
     RedHat</quote>) instead of the encoding listed in the table above, they
-    have to be converted from UTF-8 to the encoding listed in the table before
-    installation. This can be achieved with <command>convert-mans</command>,
-    e.g., Spanish manual pages (<ulink
-    url="http://ditec.um.es/~piernas/manpages-es/man-pages-es-1.55.tar.bz2"/>)
-    can be installed with the following commands:</para>
+    can either be converted from UTF-8 to the encoding listed in the table
+    above, or they can be installed directly into
+    <filename class="directory">/usr/share/man/<replaceable>&lt;language
+    code&gt;</replaceable>.UTF-8</filename>.</para>
+
+    <para>For example, to install <ulink
+    url="http://ditec.um.es/~piernas/manpages-es/man-pages-es-1.55.tar.bz2">
+    Spanish manual pages</ulink> in the legacy encoding, use the following
+    commands:</para>
 
 <screen role="nodump"><userinput>mv man7/iso_8859-7.7{,X}
 convert-mans UTF-8 ISO-8859-1 man?/*.?
@@ -330,11 +363,19 @@ mv man7/iso_8859-7.7{X,}
 make install</userinput></screen>
 
     <note>
-      <para>The need to exclude the <filename>man7/iso_8859-7.7</filename> file
-      from the conversion process because it is already in ISO-8859-1 is a
-      packaging bug in man-pages-es-1.55. Future versions should not require
-      this workaround.</para>
+      <para>The <filename>man7/iso_8859-7.7</filename> file needs to be
+      exclueded from the conversion process because it is already in
+      ISO-8859-1 format.  This is a packaging bug in man-pages-es-1.55.
+      Future versions should not require this workaround.</para>
     </note>
+
+    <para>Finally, as an example installation of UTF-8 manual pages, the <ulink 
+    url="http://manpagesfr.free.fr/download/man-pages-fr-2.40.0.tar.bz2">
+    French manual pages</ulink> can be installed with the following
+    commands:</para>
+
+<screen role="nodump"><userinput>mkdir -p /usr/share/man/fr.UTF-8
+cp -rv man? /usr/share/man/fr.UTF-8</userinput></screen>
 
   </sect2>
 
@@ -391,7 +432,7 @@ make install</userinput></screen>
       <varlistentry id="convert-mans">
         <term><command>convert-mans</command></term>
         <listitem>
-          <para>Reformat man pages so that Man-DB can display them</para>
+          <para>Reformats manual pages into the chosen encoding.</para>
           <indexterm zone="ch-system-man-db convert-mans">
             <primary sortas="b-convert-mans">convert-mans</primary>
           </indexterm>
