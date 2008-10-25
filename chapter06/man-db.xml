@@ -111,71 +111,95 @@
 
 <screen><userinput remap="install">make install</userinput></screen>
 
-    <para>Some packages provide UTF-8 manual pages, which previous versions of
-    <application>Man-DB</application> were unable to display.  This limitation
-    has been fixed in recent versions, and <application>Man-DB</application>
-    can now convert manual pages from legacy encodings to UTF-8
-    (and vice-versa) on the fly.  This used to be a rather annoying
-    problem across different distributions, as packages written for one
-    distribution would require changes to work on another. The following
-    script will allow you to convert manual pages to and from legacy and UTF-8
-    encodings.</para>
-
-<screen><userinput remap="install">cat &gt;&gt; convert-mans &lt;&lt; "EOF"
-<literal>#!/bin/sh -e
-FROM="$1"
-TO="$2"
-shift ; shift
-while [ $# -gt 0 ]
-do
-        FILE="$1"
-        shift
-        iconv -f "$FROM" -t "$TO" "$FILE" >.tmp.iconv
-        mv .tmp.iconv "$FILE"
-done</literal>
-EOF
-install -m755 convert-mans  /usr/bin</userinput></screen>
-
-    <para>Additional information regarding the compression of
-    man and info pages can be found in the BLFS book at
-    <ulink url="&blfs-root;view/cvs/postlfs/compressdoc.html"/>.</para>
-
   </sect2>
 
   <sect2>
     <title>Non-English Manual Pages in LFS</title>
+<!--
+    <para>Some packages provide UTF-8 manual pages, which previous versions of
+    <application>Man-DB</application> were unable to display correctly because
+    the expected (8-bit) encoding for each language was hard-coded in the
+    source of <application>Man-DB</application>.
+    <application>Man-DB</application> now uses the extension of the directory
+    name in order to determine the encoding of the manual pages stored within.
+    If no extension exists, <application>Man-DB</application> uses a built-in
+    table (see below) to determine the encoding.  E.g., because of "UTF-8" in
+    the directory name, it knows that all manual pages residing in 
+    <filename class="directory">/usr/share/man/fr.UTF-8</filename> are UTF-8
+    encoded and, according to the built-in table, expects all manual pages
+    residing in <filename class="directory">/usr/share/man/ru</filename> to
+    be encoded using KOI8-R.</para>
 
     <para>Linux distributions have different policies concerning the character
     encoding in which manual pages are stored in the filesystem. E.g., RedHat
     stores all manual pages in UTF-8, while Debian previously used
-    language-specific (mostly 8-bit) encodings. As mentioned above, this leads
-    to incompatibility of packages with manual pages designed for different
-    distributions.</para>
+    language-specific (mostly 8-bit) encodings. Many other distributions simply
+    ignore the problem all together.  LFS also used the legacy encodings in
+    previuos versions of the book. This was chosen because of the ease of
+    configuration associated with <application>Man-DB</application>.
+    Additionally, <application>Man-DB</application> provided support for
+    Chinese and Japanese locales, and limited support for Korean, whereas
+    <application>Man</application> did not at that time.</para>
 
-    <para>LFS previously used the same convention as Debian. This was chosen
-    because <application>Man-DB</application> did not understand manual pages
-    stored in UTF-8 at the time of its introduction into LFS.  For our purposes
-    at that time, <application>Man-DB</application> was preferable to
-    <application>Man</application> as it worked without any additional
-    configuration in any locale.  This is still true today as
-    <application>Man-DB</application> with Debian patched
-    <application>Groff</application> will now dynamically convert UTF-8 encoded
-    manual pages to the user's locale.  Additionally, this combination provides
-    support for Chinese and Japanese locales, and limited support for Korean,
-    whereas <application>Man</application> does not. The current offering of
-    <application>Man</application> as used in RedHat requires major
-    modifications to both the <application>Man</application> and
-    <application>Groff</application> packages, and still falls short on
-    Chinese, Japanese, and Korean encodings.</para>
+    <para>In contrast, the setup in Fedora Core expects all manual pages
+    to be UTF-8 encoded, and stored in directories without suffixes.
+    Disagreement about the expected encoding of manual pages amongst
+    distribution vendors, has led to confusion for upstream package maintainers.
+    Some packages contain, UTF-8 manual pages, while others ship with manual
+    pages in legacy encodings.  Unlike the
+    <application>Man</application>/<application>Groff</application> setup in
+    Fedora Core, <application>Man-DB</application> can make very good decisions
+    about the on disk encoding and present the information to the user in their
+    prefered format, without complex configurations.</para>
 
-    <para>Finally, most distributions, including Debian, are rapidly migrating
-    to all UTF-8 encoded manual pages. Upstream packagers will very likely drop
-    legacy encodings in favor of UTF-8, though adoption has been slow due to
-    the hacks required to make the current <application>Man</application> and
-    <application>Groff</application> packages work correctly together.</para>
+    <para><application>Man-DB</application> has, for the most part, made this
+    problem completely transparent to end users, as long as the manual pages
+    are installed into the correct directory.  There may be times, however,
+    where one encoding is preferred over the other.  For this purpose, the
+    <command>convert-mans</command> script was written. It will convert manual
+    pages to another encoding before (or after) installation.  Install the
+    <command>convert-mans</command> script with the following
+    instructions:</para>
+-->
+    <para>Some packages provide non-English manual pages. They are displayed 
+    correctly only if their location and encoding matches the expectation of 
+    the "man" program. However, different Linux distributions have different 
+    policies (expressed in the choice of the <command>man</command> program,
+    its configuration and patches applied to it) concerning the character 
+    encoding in which manual pages are stored in the filesystem.</para>
 
-    <para>The relationship between language codes and the expected encoding
-    of legacy manual pages is listed below.</para>
+    <para>E.g., Debian previously required Russian manual pages to be encoded
+    in KOI8-R and to be placed in
+    <filename class="directory">/usr/share/man/ru</filename>. Now, in addition,
+    their <command>man</command> program (<application>Man-DB</application>)
+    searches for UTF-8 encoded Russian manual pages in
+    <filename class="directory">/usr/share/man/ru.UTF-8</filename>. On the
+    other hand, Fedora uses UTF-8 encoded manual pages exclusively. Russian
+    manual pages  are found in
+    <filename class="directory">/usr/share/man/ru</filename> and their
+    <command>man</command> program doesn't acknowledge
+    <filename class="directory">/usr/share/man/ru.UTF-8</filename>.  Many
+    other distributions ignore the on disk encodings completely, leaving the
+    end user with a mix of improperly encoded manual pages for their
+    configuration. When <command>man</command> processes the requtested page,
+    it will display the contents as configured, resulting in completely
+    unreadable text if the on disk encoding is not what is expected for that
+    configuration.</para>
+
+    <para>Disagreement about the expected encoding of manual pages amongst
+    distribution vendors, has led to confusion for upstream package
+    maintainers. One package may contain UTF-8 manual pages, while another
+    ships with manual pages in legacy encodings. <command>man</command>
+    searches for manual pages based on the user's locale settings.
+    <application>Man-DB</application> uses a built-in table (see below) to
+    determine the on disk encoding of manual pages found for a user's
+    locale, only if the directories found do not have an extension that
+    describes the encoding. E.g., because of ".UTF-8" in the directory name,
+    <application>Man-DB</application> knows that all manual pages residing in 
+    <filename class="directory">/usr/share/man/fr.UTF-8</filename> are UTF-8
+    encoded and, according to the built-in table, expects all manual pages
+    residing in <filename class="directory">/usr/share/man/ru</filename> to
+    be encoded using KOI8-R.</para>
 
     <!-- Origin: man-db-2.5.2/src/encodings.c -->
     <table>
@@ -308,7 +332,7 @@ install -m755 convert-mans  /usr/bin</userinput></screen>
             <entry>GBK</entry>
           </row>
           <row>
-            <entry>Simplified Chinese,Singapore} (zh_SG)</entry>
+            <entry>Simplified Chinese, Singapore (zh_SG)</entry>
             <entry>GBK</entry>
           </row>
           <row>
@@ -330,12 +354,36 @@ install -m755 convert-mans  /usr/bin</userinput></screen>
       Norwegian does not work because of the transition from no_NO to
       nb_NO locale, and will be fixed in the next release of 
       <application>Man-DB</application>.  Korean is currently non functional
-      because of incomplete fixes in the Groff patch.</para>
+      because of incomplete fixes in the Debian
+      <application>Groff</application> patch applied in LFS.</para>
     </note>
 
+    <para>Packages may install manual pages into an improperly named directory,
+    depending on which distributions the author develops the package for. To
+    assist in the conversion of the manual pages to the proper encoding for the
+    directory in which they are installed, the <command>convert-mans</command>
+    script was written. It will convert manual pages to another encoding before
+    (or after) installation.  Install the <command>convert-mans</command>
+    script with the following instructions:</para>
 
-    <para>If upstream distributes the manual pages in a legacy encoding,
-    the manual pages can simply be copied to
+<screen><userinput remap="install">cat &gt;&gt; convert-mans &lt;&lt; "EOF"
+<literal>#!/bin/sh -e
+FROM="$1"
+TO="$2"
+shift ; shift
+while [ $# -gt 0 ]
+do
+        FILE="$1"
+        shift
+        iconv -f "$FROM" -t "$TO" "$FILE" >.tmp.iconv
+        mv .tmp.iconv "$FILE"
+done</literal>
+EOF
+install -m755 convert-mans  /usr/bin</userinput></screen>
+
+
+    <para>If upstream distributes the manual pages in a legacy encoding, the
+    manual pages can simply be copied to
     <filename class="directory">/usr/share/man/<replaceable>&lt;language
     code&gt;</replaceable></filename>. For example, <ulink
     url="http://www.infodrom.org/projects/manpages-de/download/manpages-de-0.5.tar.gz">
@@ -353,26 +401,20 @@ cp -rv man? /usr/share/man/de</userinput></screen>
     code&gt;</replaceable>.UTF-8</filename>.</para>
 
     <para>For example, to install <ulink
-    url="http://ditec.um.es/~piernas/manpages-es/man-pages-es-1.55.tar.bz2">
-    Spanish manual pages</ulink> in the legacy encoding, use the following
-    commands:</para>
-
-<screen role="nodump"><userinput>mv man7/iso_8859-7.7{,X}
-convert-mans UTF-8 ISO-8859-1 man?/*.?
-mv man7/iso_8859-7.7{X,}
-make install</userinput></screen>
-
-    <note>
-      <para>The <filename>man7/iso_8859-7.7</filename> file needs to be
-      exclueded from the conversion process because it is already in
-      ISO-8859-1 format.  This is a packaging bug in man-pages-es-1.55.
-      Future versions should not require this workaround.</para>
-    </note>
-
-    <para>Finally, as an example installation of UTF-8 manual pages, the <ulink 
     url="http://manpagesfr.free.fr/download/man-pages-fr-2.40.0.tar.bz2">
-    French manual pages</ulink> can be installed with the following
+    French manual pages</ulink> in the legacy encoding, use the following
     commands:</para>
+
+<screen role="nodump"><userinput>convert-mans UTF-8 ISO-8859-1 man?/*.?
+mkdir -p /usr/share/man/fr
+cp -rv man? /usr/share/man/fr</userinput></screen>
+
+    <note><para>The French manual pages ship with ready made scripts to do the
+    same conversion. The above instructions are used only as an example for
+    use of the <command>convert-mans</command> script.</para></note>
+
+    <para>Finally, as an example installation of UTF-8 manual pages, again, the
+    French manual pages could be installed with the following commands:</para>
 
 <screen role="nodump"><userinput>mkdir -p /usr/share/man/fr.UTF-8
 cp -rv man? /usr/share/man/fr.UTF-8</userinput></screen>
