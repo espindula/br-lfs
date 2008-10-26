@@ -291,6 +291,12 @@ reloadproc()
 		pidofproc -s -p "${pidfile}" "${1}"
 	fi
 
+	# Warn about stale pid file
+	if [ "$?" = 1 ]; then
+		boot_mesg -n "Removing stale pid file: ${pidfile}. " ${WARNING}
+		rm -f "${pidfile}"
+	fi
+
 	if [ -n "${pidlist}" ];	then
 		for pid in ${pidlist}
 		do
@@ -504,7 +510,7 @@ getpids()
 #                     warning in stdout
 #          return 4 - Program or service status is unknown
 #
-# Dependencies: nice
+# Dependencies: nice, rm
 #
 # Todo: LSB says this should be called start_daemon
 #       LSB does not say that it should call evaluate_retval
@@ -567,8 +573,8 @@ loadproc()
 				return 0 # 4
 				;;
 			1)
-				log_warning_msg "Unable to continue: ${pidfile} exists"
-				return 0 # 4
+				boot_mesg "Removing stale pid file: ${pidfile}" ${WARNING}
+				rm -f "${pidfile}"
 				;;
 			3)
 				;;
@@ -598,7 +604,7 @@ loadproc()
 #                     warning in stdout
 #          return 4 - Unknown Status
 #
-# Dependencies: kill
+# Dependencies: kill, rm
 #
 # Todo: LSB does not say that it should call evaluate_retval
 #       It checks for PIDFILE, which is deprecated.
@@ -646,6 +652,12 @@ killproc()
 		pidofproc -s "${1}"
 	else
 		pidofproc -s -p "${pidfile}" "${1}"
+	fi
+
+	# Remove stale pidfile
+	if [ "$?" = 1 ]; then
+		boot_mesg "Removing stale pid file: ${pidfile}." ${WARNING}
+		rm -f "${pidfile}"
 	fi
 
     # If running, send the signal
