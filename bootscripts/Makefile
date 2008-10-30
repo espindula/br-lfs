@@ -75,8 +75,8 @@ install: create-dirs create-service-dir
 	ln -sf ../init.d/setclock    ${EXTDIR}/rc.d/rcsysinit.d/S25setclock
 	ln -sf ../init.d/checkfs     ${EXTDIR}/rc.d/rcsysinit.d/S30checkfs
 	ln -sf ../init.d/mountfs     ${EXTDIR}/rc.d/rcsysinit.d/S40mountfs
-	ln -sf ../init.d/udev_retry  ${EXTDIR}/rc.d/rcsysinit.d/S45udev_retry
-	ln -sf ../init.d/cleanfs     ${EXTDIR}/rc.d/rcsysinit.d/S50cleanfs
+	ln -sf ../init.d/cleanfs     ${EXTDIR}/rc.d/rcsysinit.d/S45cleanfs
+	ln -sf ../init.d/udev_retry  ${EXTDIR}/rc.d/rcsysinit.d/S50udev_retry
 	ln -sf ../init.d/console     ${EXTDIR}/rc.d/rcsysinit.d/S70console
 	ln -sf ../init.d/localnet    ${EXTDIR}/rc.d/rcsysinit.d/S80localnet
 	ln -sf ../init.d/sysctl      ${EXTDIR}/rc.d/rcsysinit.d/S90sysctl
@@ -126,7 +126,7 @@ minimal: create-dirs create-service-dir
 	ln -sf ../init.d/setclock    ${EXTDIR}/rc.d/rcsysinit.d/S25setclock
 	ln -sf ../init.d/checkfs     ${EXTDIR}/rc.d/rcsysinit.d/S30checkfs
 	ln -sf ../init.d/mountfs     ${EXTDIR}/rc.d/rcsysinit.d/S40mountfs
-	ln -sf ../init.d/cleanfs     ${EXTDIR}/rc.d/rcsysinit.d/S50cleanfs
+	ln -sf ../init.d/cleanfs     ${EXTDIR}/rc.d/rcsysinit.d/S45cleanfs
 	if [ ! -f ${EXTDIR}/sysconfig/rc          ]; then install -m ${CONFMODE} lfs/sysconfig/rc          ${EXTDIR}/sysconfig/; fi
 
 .PHONY: all create-dirs create-service-dir \
