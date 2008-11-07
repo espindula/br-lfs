@@ -24,7 +24,7 @@ rm -rf $TMP_DIR
 
 sed -i -e s/BOOTSCRIPTS-SIZE/$bootsize/              \
        -e s/BOOTSCRIPTS-INSTALL-KB/$bootinstallsize/ \
-			 -e s/BOOTSCRIPTS-MD5SUM/$bootmd5/ $FILE
+       -e s/BOOTSCRIPTS-MD5SUM/$bootmd5/ $FILE
 
 ############
 
