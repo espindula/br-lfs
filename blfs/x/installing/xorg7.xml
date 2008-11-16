@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="xorg7" xreflabel="Xorg-&xorg7-version;">
+  <?dbhtml filename="xorg7.html"?>
+
+  <sect1info>
+    <othername>$LastChangedBy: randy $</othername>
+    <date>$Date: 2008-11-16 21:28:02 $</date>
+  </sect1info>
+
+  <title>Introduction to Xorg-&xorg7-version;</title>
+
+  <indexterm zone="xorg7">
+    <primary sortas="a-xorg7">Xorg</primary>
+  </indexterm>
+
+
+  <para><application>Xorg</application> is a freely redistributable,
+  open-source implementation of the <application>X</application> Window
+  System. This system provides a client/server interface between display
+  hardware (the mouse, keyboard, and video displays) and the desktop
+  environment, while also providing both the windowing infrastructure and a
+  standardized application interface (API).</para>
+
+  <para condition="html" role="usernotes">User Notes:
+  <ulink url='&blfs-wiki;/Xorg7'/></para>
+
+  <bridgehead renderas="sect3">Xorg Download and Installation
+  Instructions</bridgehead>
+
+  <para>Xorg-7.0.0 introduced a completely auto-tooled, modular build system.
+  With the new modular build system, it is no longer possible to download
+  the entire package in a single file.  In fact, there may be as many as
+  293 files that need to be fetched from the download location.  To assist
+  with such a large task, installing <xref linkend="wget"/> is strongly
+  recommended for downloading the needed files.  A complete
+  <application>wget</application> file list is provided for each section
+  that includes multiple packages.</para>
+
+  <para>Given the number of packages available, deciding which packages you
+  need to install for your particular setup may seem a bit overwhelming at
+  first.  Take a look at
+  <ulink url="http://wiki.x.org/wiki/ModuleDescriptions">this page</ulink>
+  and
+  <ulink url="http://lists.x.org/archives/xorg-modular/2005-November/000801.html">this thread</ulink>
+  to get an idea of what you will need.  If you are unsure, you should
+  install all packages at the cost of extra disk space. To see which packages
+  have changed between releases of Xorg, see the upstream
+  <ulink url="http://xorg.freedesktop.org/releases/X11R&xorg7-version;/src/update/">update</ulink>
+  and
+  <ulink url="http://xorg.freedesktop.org/releases/X11R&xorg7-version;/src/deprecated/">deprecated</ulink>
+  directories.</para>
+
+  <note>
+    <para>Even if you intend to download only the necessary packages, you
+    should download the wget file lists.  The list of files are ordered by
+    dependency, and the package versions listed in the files are known to
+    work well with each other. Further, the wget file lists contain comments
+    for specific packages that are deprecated or are not recommended to
+    install. Newer packages are likely intended for the
+    next release of <application>Xorg</application> and have already proved
+    to be incompatible with current versions of software installed in BLFS.
+    The installed size of <application>Xorg</application> can be reduced
+    considerably by installing only the packages that you will need and use,
+    however, the BLFS book cannot account for all dependencies and build
+    options for the individual <application>Xorg</application> packages.
+    The instructions assume that all packages have been built.  A
+    <ulink url="&blfs-wiki;/Xorg7">wiki</ulink>
+    page containing dependency information is under development.  You are
+    encouraged to add to these pages if you discover additional information
+    that may be helpful to other users who selectively install individual
+    packages.</para>
+  </note>
+
+<!--
+  <para>Additionally, because of the large number of repetitive commands,
+  you are encouraged to script the build.  For most sections, you can use
+  a script with commands similar to the following, to compile and install
+  all packages in a wget file list:</para>
+-->
+
+  <para>Additionally, because of the large number of repetitive commands,
+  you are encouraged to partially automate the build.  The commands below
+  (or similar) can be entered at the command line to compile each group of
+  packages (proto, utils, libs, apps, drivers).  The wiki links on each
+  group's page contain specific commands to compile the entire group of
+  packages, based on the content of the wget files.</para>
+
+<screen>bash -e #exit on all errors
+section=proto
+version=&xorg7-version;
+mkdir $section
+cd $section
+
+# download and check packages
+grep -v '^#' ../${section}-${version}.wget | wget -i- -c \
+    -B http://xorg.freedesktop.org/releases/individual/${section}/
+md5sum -c ../${section}-${version}.md5
+
+# build packages
+for package in $(grep -v '^#' ../${section}-${version}.wget)
+do
+  packagedir=$(echo $package | sed 's/.tar.bz2//')
+  tar -xf $package
+  cd $packagedir
+  ./configure $XORG_CONFIG
+  make
+  make install
+  cd ..
+  rm -rf $packagedir
+  rm -f $package
+done 2&gt;&amp;1 | tee -a ../xorg-${section}-compile.log #log the entire loop</screen>
+
+  <para>The above shell will exit immediately on error.  If it runs to
+  completion, you should manually exit the shell before continuing on to
+  the next set of instructions.</para>
+
+  <sect2>
+    <title>Setting up the Xorg Build Environment</title>
+
+    <para>First, you'll need to create a working directory:</para>
+
+<screen><userinput>mkdir xc &amp;&amp;
+cd xc</userinput></screen>
+
+    <para>As with previous releases of the X Window System, it may be
+    desirable to install <application>Xorg</application> into an alternate
+    prefix.  This is no longer common practice among Linux distributions.
+    The common installation prefix for <application>Xorg</application> on
+    Linux is <filename class="directory">/usr</filename>.  There is no
+    standard alternate prefix, nor is there any exception in the current
+    revision of the Filesystem Hierarchy Standard for Release 7 of the X
+    Window System.  Alan Coopersmith of Sun Microsystems, has recently
+    stated "At Sun, we were using
+    <filename class="directory">/usr/X11</filename> and plan to stick with
+    it."  Only the <filename class="directory">/opt/*</filename> prefix or
+    the <filename class="directory">/usr</filename> prefix adhere to the
+    current FHS guidelines.</para>
+
+    <para>Choose your installation prefix, and set the
+    <envar>XORG_PREFIX</envar> variable with the following
+    command:</para>
+
+<screen><userinput>export XORG_PREFIX="<replaceable>&lt;PREFIX&gt;</replaceable>"</userinput></screen>
+
+    <para>Throughout these instructions, you will use the following
+    <command>configure</command> switches for all of the packages.  Create the
+    <envar>XORG_CONFIG</envar> variable to use for this parameter
+    substitution:</para>
+
+<screen><userinput>export XORG_CONFIG="--prefix=$XORG_PREFIX --sysconfdir=/etc \
+    --mandir=$XORG_PREFIX/share/man --localstatedir=/var"</userinput></screen>
+
+    <note>
+      <para>Make sure that you also add these variables to your personal or
+      system-wide profile as they are used throughout this book. See
+      <xref linkend="postlfs-config-profile"/> for more information.</para>
+    </note>
+
+    <para>If you've decided to use an alternate prefix, be sure to add
+    <filename class="directory">
+    $XORG_PREFIX/bin</filename> to your
+    <envar>PATH</envar> environment variable and  <filename class="directory">
+    $XORG_PREFIX/lib/pkgconfig</filename>
+    to your <envar>PKG_CONFIG_PATH</envar> variable.  For detailed instructions,
+    see <xref linkend="postlfs-config-profile"/>.  You should also add
+    <filename class="directory">
+    $XORG_PREFIX/lib</filename> to the
+    <filename>/etc/ld.so.conf</filename> file and <filename class="directory">
+    $XORG_PREFIX/share/man</filename> as
+    a MANDATORY_MANPATH in <filename>/etc/man_db.conf</filename>.</para>
+
+    <para>Packages in Xorg store their configuration files in
+    <filename class="directory">$XORG_PREFIX/lib/X11</filename> by default.
+    This is strictly against FHS guidelines.  To simplify installation,
+    create the proper installation directories in
+    <filename class="directory">/etc/X11</filename> and create symlinks
+    in <filename class="directory">$XORG_PREFIX/lib/X11</filename> to
+    satisfy the installation.  Execute the following commands as the
+    <systemitem class="username">root</systemitem> user:</para>
+
+<screen role="root"><userinput>
+install -v -m755 -d \
+    /etc/X11/{app-defaults,fs,twm,xdm,xinit,xkb,xsm} &amp;&amp;
+
+install -v -m755 -d $XORG_PREFIX/lib/X11 &amp;&amp;
+
+for link in \
+    /etc/X11/{app-defaults,fs,twm,xdm,xinit,xkb,xsm}
+do
+    ln -sv $link $XORG_PREFIX/lib/X11
+done
+</userinput></screen>
+
+  </sect2>
+
+</sect1>

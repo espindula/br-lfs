@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="unpacking">
+  <?dbhtml filename="unpacking.html"?>
+
+  <sect1info>
+    <othername>$LastChangedBy: randy $</othername>
+    <date>$Date: 2008-11-16 21:28:01 $</date>
+  </sect1info>
+
+  <title>Notes on Building Software</title>
+
+  <para>Those people who have built an LFS system may be aware
+  of the general principles of downloading and unpacking software.  We will
+  however repeat some of that information here for those new to building
+  their own software.</para>
+
+  <para>Each set of installation instructions contains a URL from which you
+  can download the package.  We do however keep a selection of patches
+  available via HTTP.  These are referenced as needed in the installation
+  instructions.</para>
+
+  <para>While you can keep the source files anywhere you like, we assume that
+  you have unpacked the package and changed into the directory created by the
+  unpacking process (the 'build' directory).  We also assume you have
+  uncompressed any required patches and they are in the directory immediately
+  above the 'build' directory.</para>
+
+  <para>We can not emphasize strongly enough that you should start from a
+  <emphasis>clean source tree</emphasis> each time. This means that if
+  you have had an error during configuration or compilation, it's usually
+  best to delete the source tree and
+  re-unpack it <emphasis>before</emphasis> trying again. This obviously
+  doesn't apply if you're an advanced user used to hacking
+  <filename>Makefile</filename>s and C code, but if in doubt, start from a
+  clean tree.</para>
+
+  <sect2>
+    <title>Building Software as an Unprivileged (non-root) User</title>
+
+    <para>The golden rule of Unix System Administration is to use your
+    superpowers only when necessary. Hence, BLFS recommends that you
+    build software as an unprivileged user and only become the
+    <systemitem class='username'>root</systemitem> user when installing the
+    software. This philosophy is followed in all the packages in this book.
+    Unless otherwise specified, all instructions should be executed as an
+    unprivileged user. The book will advise you on instructions that need
+    <systemitem class='username'>root</systemitem> privileges.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Unpacking the Software</title>
+
+    <para>If a file is in <filename class='extension'>.tar</filename> format
+    and compressed, it is unpacked by running one of the following
+    commands:</para>
+
+<screen><userinput>tar -xvf filename.tar.gz
+tar -xvf filename.tgz
+tar -xvf filename.tar.Z
+tar -xvf filename.tar.bz2</userinput></screen>
+
+    <note>
+      <para>You may omit using the <option>v</option> parameter in the commands
+      shown above and below if you wish to suppress the verbose listing of all
+      the files in the archive as they are extracted. This can help speed up the
+      extraction as well as make any errors produced during the extraction
+      more obvious to you.</para>
+    </note>
+
+    <para>You can also use a slightly different method:</para>
+
+<screen><userinput>bzcat filename.tar.bz2 | tar -xv</userinput></screen>
+
+    <para>Finally, you sometimes need to be able to unpack patches which are
+    generally not in <filename class='extension'>.tar</filename> format. The
+    best way to do this is to copy the patch file to parent of the 'build'
+    directory and then run one of the following commands depending on whether
+    the file is a <filename class='extension'>.gz</filename> or <filename
+    class='extension'>.bz2</filename> file:</para>
+
+<screen><userinput>gunzip -v patchname.gz
+bunzip2 -v patchname.bz2</userinput></screen>
+
+  </sect2>
+
+  <sect2>
+    <title>Verifying File Integrity Using 'md5sum'</title>
+
+    <para>Generally, to verify that the downloaded file is genuine and complete,
+    many package maintainers also distribute md5sums of the files. To verify the
+    md5sum of the downloaded files, download both the file and the
+    corresponding md5sum file to the same directory (preferably from different
+    on-line locations), and (assuming <filename>file.md5sum</filename> is the
+    md5sum file downloaded) run the following command:</para>
+
+<screen><userinput>md5sum -c file.md5sum</userinput></screen>
+
+    <para>If there are any errors, they will be reported. Note that the BLFS
+    book includes md5sums for all the source files also. To use the BLFS
+    supplied md5sums, you can create a <filename>file.md5sum</filename> (place
+    the md5sum data and the exact name of the downloaded file on the same
+    line of a file, separated by white space) and run the command shown above.
+    Alternately, simply run the command shown below and compare the output
+    to the md5sum data shown in the BLFS book.</para>
+
+<screen><userinput>md5sum <replaceable>&lt;name_of_downloaded_file&gt;</replaceable></userinput></screen>
+
+  </sect2>
+
+  <sect2>
+    <title>Creating Log Files During Installation</title>
+
+    <para>For larger packages, it is convenient to create log files instead of
+    staring at the screen hoping to catch a particular error or warning. Log
+    files are also useful for debugging and keeping records. The following
+    command allows you to create an installation log. Replace
+    <replaceable>&lt;command&gt;</replaceable> with the command you intend to execute.</para>
+
+<screen><userinput>( <replaceable>&lt;command&gt;</replaceable> 2&gt;&amp;1 | tee compile.log &amp;&amp; exit $PIPESTATUS )</userinput></screen>
+
+    <para><option>2&gt;&amp;1</option> redirects error messages to the same
+    location as standard output. The <command>tee</command> command allows
+    viewing of the output while logging the results to a file. The parentheses
+    around the command run the entire command in a subshell and finally the
+    <command>exit $PIPESTATUS</command> command ensures the result of the
+    <replaceable>&lt;command&gt;</replaceable> is returned as the result and not the
+    result of the <command>tee</command> command.</para>
+
+  </sect2>
+
+  <sect2 id="automating-builds" xreflabel="Automated Building Procedures">
+    <title>Automated Building Procedures</title>
+
+    <para>There are times when automating the building of a package can come in
+    handy. Everyone has their own reasons for wanting to automate building,
+    and everyone goes about it in their own way. Creating
+    <filename>Makefile</filename>s, <application>Bash</application> scripts,
+    <application>Perl</application> scripts or simply a list of commands used
+    to cut and paste are just some of the methods you can use to automate
+    building BLFS packages. Detailing how and providing examples of the many
+    ways you can automate the building of packages is beyond the scope of this
+    section. This section will expose you to using file redirection and the
+    <command>yes</command> command to help provide ideas on how to automate
+    your builds.</para>
+
+    <bridgehead renderas="sect3">File Redirection to Automate Input</bridgehead>
+
+    <para>You will find times throughout your BLFS journey when you will come
+    across a package that has a command prompting you for information. This
+    information might be configuration details, a directory path, or a response
+    to a license agreement. This can present a challenge to automate the
+    building of that package. Occasionally, you will be prompted for different
+    information in a series of questions. One method to automate this type of
+    scenario requires putting the desired responses in a file and using
+    redirection so that the program uses the data in the file as the answers to
+    the questions.</para>
+
+    <para>Building the <application>CUPS</application> package is a good
+    example of how redirecting a file as input to prompts can help you automate
+    the build. If you run the test suite, you are asked to respond to a series
+    of questions regarding the type of test to run and if you have any
+    auxiliary programs the test can use. You can create a file with your
+    responses, one response per line, and use a command similar to the
+    one shown below to automate running the test suite:</para>
+
+<screen><userinput>make check &lt; ../cups-1.1.23-testsuite_parms</userinput></screen>
+
+    <para>This effectively makes the test suite use the responses in the file
+    as the input to the questions. Occasionally you may end up doing a bit of
+    trial and error determining the exact format of your input file for some
+    things, but once figured out and documented you can use this to automate
+    building the package.</para>
+
+    <bridgehead renderas="sect3">Using <command>yes</command> to Automate
+    Input</bridgehead>
+
+    <para>Sometimes you will only need to provide one response, or provide the
+    same response to many prompts. For these instances, the
+    <command>yes</command> command works really well. The
+    <command>yes</command> command can be used to provide a response (the same
+    one) to one or more instances of questions. It can be used to simulate
+    pressing just the <keycap>Enter</keycap> key, entering the
+    <keycap>Y</keycap> key or entering a string of text. Perhaps the easiest
+    way to show its use is in an example.</para>
+
+    <para>First, create a short <application>Bash</application> script by
+    entering the following commands:</para>
+
+<screen><userinput>cat &gt; blfs-yes-test1 &lt;&lt; "EOF"
+<literal>#!/bin/bash
+
+echo -n -e "\n\nPlease type something (or nothing) and press Enter ---> "
+
+read A_STRING
+
+if test "$A_STRING" = ""; then A_STRING="Just the Enter key was pressed"
+else A_STRING="You entered '$A_STRING'"
+fi
+
+echo -e "\n\n$A_STRING\n\n"</literal>
+EOF
+chmod 755 blfs-yes-test1</userinput></screen>
+
+    <para>Now run the script by issuing <command>./blfs-yes-test1</command> from
+    the command line. It will wait for a response, which can be anything (or
+    nothing) followed by the <keycap>Enter</keycap> key. After entering
+    something, the result will be echoed to the screen. Now use the
+    <command>yes</command> command to automate the entering of a
+    response:</para>
+
+<screen><userinput>yes | ./blfs-yes-test1</userinput></screen>
+
+    <para>Notice that piping <command>yes</command> by itself to the script
+    results in <keycap>y</keycap> being passed to the script. Now try it with a
+    string of text:</para>
+
+<screen><userinput>yes 'This is some text' | ./blfs-yes-test1</userinput></screen>
+
+    <para>The exact string was used as the response to the script. Finally,
+    try it using an empty (null) string:</para>
+
+<screen><userinput>yes '' | ./blfs-yes-test1</userinput></screen>
+
+    <para>Notice this results in passing just the press of the
+    <keycap>Enter</keycap> key to the script. This is useful for times when the
+    default answer to the prompt is sufficient. This syntax is used in the
+    <xref linkend="net-tools-automate-example"/> instructions to accept all the
+    defaults to the many prompts during the configuration step. You may now
+    remove the test script, if desired.</para>
+
+    <bridgehead renderas="sect3">File Redirection to Automate Output</bridgehead>
+
+    <para>In order to automate the building of some packages, especially those
+    that require you to read a license agreement one page at a time, requires
+    using a method that avoids having to press a key to display each page.
+    Redirecting the output to a file can be used in these instances to assist
+    with the automation. The previous section on this page touched on creating
+    log files of the build output. The redirection method shown there used the
+    <command>tee</command> command to redirect output to a file while also
+    displaying the output to the screen. Here, the output will only be sent to
+    a file.</para>
+
+    <para>Again, the easiest way to demonstrate the technique is to show an
+    example. First, issue the command:</para>
+
+<screen><userinput>ls -l /usr/bin | more</userinput></screen>
+
+    <para>Of course, you'll be required to view the output one page at a time
+    because the <command>more</command> filter was used. Now try the same
+    command, but this time redirect the output to a file. The special file
+    <filename>/dev/null</filename> can be used instead of the filename shown,
+    but you will have no log file to examine:</para>
+
+<screen><userinput>ls -l /usr/bin | more &gt; redirect_test.log 2&gt;&amp;1</userinput></screen>
+
+    <para>Notice that this time the command immediately returned to the shell
+    prompt without having to page through the output. You may now remove the
+    log file.</para>
+
+    <para>The last example will use the <command>yes</command> command in
+    combination with output redirection to bypass having to page through the
+    output and then provide a <keycap>y</keycap> to a prompt. This technique
+    could be used in instances when otherwise you would have to page through
+    the output of a file (such as a license agreement) and then answer the
+    question of <quote>do you accept the above?</quote>. For this example,
+    another short <application>Bash</application> script is required:</para>
+
+<screen><userinput>cat &gt; blfs-yes-test2 &lt;&lt; "EOF"
+<literal>#!/bin/bash
+
+ls -l /usr/bin | more
+
+echo -n -e "\n\nDid you enjoy reading this? (y,n) "
+
+read A_STRING
+
+if test "$A_STRING" = "y"; then A_STRING="You entered the 'y' key"
+else A_STRING="You did NOT enter the 'y' key"
+fi
+
+echo -e "\n\n$A_STRING\n\n"</literal>
+EOF
+chmod 755 blfs-yes-test2</userinput></screen>
+
+    <para>This script can be used to simulate a program that requires you to
+    read a license agreement, then respond appropriately to accept the
+    agreement before the program will install anything. First, run the script
+    without any automation techniques by issuing
+    <command>./blfs-yes-test2</command>.</para>
+
+    <para>Now issue the following command which uses two automation techniques,
+    making it suitable for use in an automated build script:</para>
+
+<screen><userinput>yes | ./blfs-yes-test2 &gt; blfs-yes-test2.log 2&gt;&amp;1</userinput></screen>
+
+    <para>If desired, issue <command>tail blfs-yes-test2.log</command> to see
+    the end of the paged output, and confirmation that <keycap>y</keycap> was
+    passed through to the script. Once satisfied that it works as it should,
+    you may remove the script and log file.</para>
+
+    <para>Finally, keep in mind that there are many ways to automate and/or
+    script the build commands. There is not a single <quote>correct</quote> way
+    to do it. Your imagination is the only limit.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Dependencies</title>
+
+    <para>For each package described, BLFS lists the known dependencies.
+    These are listed under several headings, whose meaning is as follows:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis>Required</emphasis> means that the target package
+        cannot be correctly built without the dependency having first been
+        installed.</para>
+      </listitem>
+      <listitem>
+        <para><emphasis>Recommended</emphasis> means that BLFS strongly
+        suggests this package is installed first for a clean and trouble-free
+        build, that won't have issues either during the build process, or at
+        run-time.</para>
+      </listitem>
+      <listitem>
+        <para><emphasis>Optional</emphasis> means that this package might be
+        installed for added functionality. Often BLFS will describe the
+        dependency to explain the added functionality that will result.</para>
+      </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
