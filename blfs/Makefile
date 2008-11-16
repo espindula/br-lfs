@@ -2,7 +2,7 @@
 # By Tushar Teredesai <tushar@linuxfromscratch.org>
 # 2004-01-31
 # $LastChangedBy: bdubbs $
-# $Date: 2008-08-30 14:59:27 $
+# $Date: 2008-11-16 21:27:59 $
 
 # Adjust these to suit your installation
 BASEDIR ?= $(HOME)/public_html/blfs-book-xsl
