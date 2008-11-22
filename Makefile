@@ -84,7 +84,7 @@ validxml: tmpdir
 	$(Q)xmllint --nonet --noent --xinclude --postvalid \
 	  -o $(RENDERTMP)/lfs-full.xml index.xml
 	$(Q)rm -f appendices/*.script
-	$(Q)sh aux-file-data.sh $(RENDERTMP)/lfs-full.xml
+	$(Q)./aux-file-data.sh $(RENDERTMP)/lfs-full.xml
 
 maketar:
 	@echo "Making tarballs..."
