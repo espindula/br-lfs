@@ -48,13 +48,17 @@
 
 <screen><userinput remap="pre">sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
 
-    <para>The bootstrap build performed in <xref linkend="ch-tools-gcc-pass1"/>
+    <para>For x86 machines, the bootstrap build performed in
+    <xref linkend="ch-tools-gcc-pass2"/>
     built GCC with the <option>-fomit-frame-pointer</option> compiler flag.
     Non-bootstrap builds omit this flag by default, so apply the following
     <command>sed</command> to use it in order to ensure consistent compiler
     builds:</para>
 
-<screen><userinput remap="pre">sed -i 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in</userinput></screen>
+<screen><userinput remap="pre">case `uname -m` in
+  i?86) sed -i 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' \
+        gcc/Makefile.in ;;
+esac</userinput></screen>
 
     <para>The <command>fixincludes</command> script is known to occasionally
     erroneously attempt to &quot;fix&quot; the system headers installed so far. As
@@ -76,7 +80,7 @@ cd ../gcc-build</userinput></screen>
     --libexecdir=/usr/lib --enable-shared \
     --enable-threads=posix --enable-__cxa_atexit \
     --enable-clocale=gnu --enable-languages=c,c++ \
-    --disable-bootstrap</userinput></screen>
+    --disable-multilib --disable-bootstrap</userinput></screen>
 
     <para>Note that for other languages, there are some prerequsites that
     are not available.  See the BLFS Book for instructions on how to
@@ -160,6 +164,14 @@ cd ../gcc-build</userinput></screen>
 /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/../../../crti.o succeeded
 /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/../../../crtn.o succeeded</computeroutput></screen>
 
+  <para>Depending on your machine architecture, the above may differ slightly,
+  the difference usually being the name of the directory
+  after <filename class="directory">/usr/lib/gcc</filename>. If your machine is
+  a 64-bit system, you may also see a directory named <filename class="directory">lib64</filename>
+  towards the end of the string. The important thing to
+  look for here is that gcc has found all three <filename>crt*.o</filename> files under
+  the <filename class="directory">/usr/lib</filename> directory.</para>
+
     <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
     href="readjusting.xml"
     xpointer="xpointer(//*[@os='g'])"/>
@@ -172,9 +184,12 @@ cd ../gcc-build</userinput></screen>
 
 <screen><computeroutput>#include &lt;...&gt; search starts here:
  /usr/local/include
- /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/include
+ /usr/lib/gcc/x86_64-unknown-linux-gnu/&gcc-version;/include
  /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/include-fixed
  /usr/include</computeroutput></screen>
+
+   <para>Again, note that the directory named after your target triplet may be
+   different than the above, depending on your architecture.</para>
 
     <note><para>As of version 4.3.0, GCC now unconditionally installs the
     <filename>limits.h</filename> file into the private
@@ -194,6 +209,18 @@ cd ../gcc-build</userinput></screen>
     xpointer="xpointer(//*[@os='k'])"/>
 
 <screen><computeroutput>SEARCH_DIR("/usr/i686-pc-linux-gnu/lib")
+SEARCH_DIR("/usr/local/lib")
+SEARCH_DIR("/lib")
+SEARCH_DIR("/usr/lib");</computeroutput></screen>
+
+   <para>A 64-bit system may see a few more directories. For example, here
+   is the output from a x86_64 machine:</para>
+
+<screen><computeroutput>SEARCH_DIR("/usr/x86_64-unknown-linux-gnu/lib64")
+SEARCH_DIR("/usr/local/lib64")
+SEARCH_DIR("/lib64")
+SEARCH_DIR("/usr/lib64")
+SEARCH_DIR("/usr/x86_64-unknown-linux-gnu/lib")
 SEARCH_DIR("/usr/local/lib")
 SEARCH_DIR("/lib")
 SEARCH_DIR("/usr/lib");</computeroutput></screen>

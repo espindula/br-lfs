@@ -37,16 +37,7 @@ ln -sv /tools/bin/ld /tools/$(gcc -dumpmachine)/bin/ld</userinput></screen>
   and Glibc start files. A <command>sed</command> command accomplishes
   this:</para>
 
-  <important>
-    <para>If working on a platform where the name of the dynamic linker is
-    something other than <filename class="libraryfile">ld-linux.so.2</filename>,
-    substitute <quote>ld-linux.so.2</quote> with the name of the platform's
-    dynamic linker in the following commands. Refer to <xref
-    linkend="ch-tools-toolchaintechnotes" role=","/> if necessary.</para>
-  </important>
-
-<screen><userinput>gcc -dumpspecs | sed \
-    -e 's@/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' \
+<screen><userinput>gcc -dumpspecs | sed -e 's@/tools@@g' \
     -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
     -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' &gt; \
     `dirname $(gcc --print-libgcc-file-name)`/specs</userinput></screen>
@@ -97,7 +88,8 @@ readelf -l a.out | grep ': /lib'</userinput></screen>
 <screen os="j"><userinput>grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'</userinput></screen>
 
   <para os="k">If everything is working correctly, there should be no errors,
-  and the output of the last command will be:</para>
+  and the output of the last command (allowing for platform-specific target triplets)
+  will be:</para>
 
 <screen><computeroutput>SEARCH_DIR("/tools/i686-pc-linux-gnu/lib")
 SEARCH_DIR("/usr/lib")
@@ -105,10 +97,11 @@ SEARCH_DIR("/lib");</computeroutput></screen>
 
   <para os="l">Next make sure that we're using the correct libc:</para>
 
-<screen os="m"><userinput>grep "/lib/libc.so.6 " dummy.log</userinput></screen>
+<screen os="m"><userinput>grep "/lib.*/libc.so.6 " dummy.log</userinput></screen>
 
   <para os="n">If everything is working correctly, there should be no errors,
-  and the output of the last command will be:</para>
+  and the output of the last command (allowing for a lib64 directory on 64-bit hosts)
+  will be:</para>
 
 <screen os="o"><computeroutput>attempt to open /lib/libc.so.6 succeeded</computeroutput></screen>
 
@@ -118,7 +111,8 @@ SEARCH_DIR("/lib");</computeroutput></screen>
 
   <para os="r">If everything is working correctly, there should be no errors,
   and the output of the last command will be (allowing for
-  platform-specific differences in dynamic linker name):</para>
+  platform-specific differences in dynamic linker name and a lib64 directory
+  on 64-bit hosts):</para>
 
 <screen os="s"><computeroutput>found ld-linux.so.2 at /lib/ld-linux.so.2</computeroutput></screen>
 

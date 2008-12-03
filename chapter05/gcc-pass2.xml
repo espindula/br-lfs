@@ -99,7 +99,8 @@ sed 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
     GCC. That is, all of the binaries created during the build will link
     against the new Glibc. Issue:</para>
 
-<screen><userinput remap="pre">for file in $(find gcc/config -name linux64.h -o -name linux.h)
+<screen><userinput remap="pre">for file in \
+ $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
 do
   cp -uv $file{,.orig}
   sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
@@ -112,7 +113,8 @@ done</userinput></screen>
 
     <para>In case the above seems hard to follow, let's break it down a bit.
     First we find all the files under the gcc/config directory that are named
-    either <filename>linux.h</filename> or <filename>linux64.h</filename>.
+    either <filename>linux.h</filename>, <filename>linux64.h</filename> or
+    <filename>sysv4.h</filename>.
     For each file found, we copy it to a file of the same name but with an added
     suffix of <quote>.orig</quote>. Then the first sed expression prepends
     <quote>/tools</quote> to every instance of <quote>/lib/ld</quote>,
@@ -123,6 +125,14 @@ done</userinput></screen>
     When used in conjunction with <command>cp -u</command>, this prevents unexpected
     changes to the original files in case the command is inadvertently run twice.
     </para>
+
+    <para>Unsetting the multlib spec for GCC ensures that it
+    won't attempt to link against libraries on the host:</para>
+
+<screen><userinput remap="pre">for file in $(find gcc/config -name t-linux64) ; do \
+   cp -v $file{,.orig}
+   sed '/MULTILIB_OSDIRNAMES/d' $file.orig &gt; $file
+done</userinput></screen>
 
     <para>As in the first build of GCC it requires the GMP and MPFR packages.
     Unpack the tarballs and move them into the required directory names:</para>
@@ -146,7 +156,8 @@ cd ../gcc-build</userinput></screen>
     --with-local-prefix=/tools --enable-clocale=gnu \
     --enable-shared --enable-threads=posix \
     --enable-__cxa_atexit --enable-languages=c,c++ \
-    --disable-libstdcxx-pch --disable-bootstrap</userinput></screen>
+    --disable-libstdcxx-pch --disable-multilib \
+    --disable-bootstrap</userinput></screen>
 
     <variablelist>
       <title>The meaning of the new configure options:</title>

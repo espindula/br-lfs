@@ -84,9 +84,11 @@ mv glibc-libidn-&glibc-version; libidn</userinput></screen>-->
     test would be carried out against the wrong Glibc. We can force the script
     to check the Glibc we have just installed with the following:</para>
 
-<screen><userinput remap="pre">sed -i \
-'s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=/lib/ld-linux.so.2 -o|' \
-        scripts/test-installation.pl</userinput></screen> -->
+<screen><userinput remap="pre">DL=$(readelf -l /bin/sh | grep interpreter | \
+awk '{print $4}' | sed -e 's@/tools@@' -e 's@]$@@')
+sed -i &quot;s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=$DL -o|&quot; \
+        scripts/test-installation.pl
+unset DL</userinput></screen> -->
 
     <para>First apply two patches which correct failures in the test
     suite:</para>
@@ -109,9 +111,11 @@ patch -Np1 -i ../&glibc-ildoubl-test-fix-patch;</userinput></screen>
 <screen><userinput remap="pre">mkdir -v ../glibc-build
 cd ../glibc-build</userinput></screen>
 
-    <para>Again, add the needed compiler flag to CFLAGS:</para>
+    <para>Again, add the needed compiler flags to CFLAGS for x86 machines:</para>
 
-<screen><userinput remap="configure">echo "CFLAGS += -march=i486 -mtune=native" &gt; configparms</userinput></screen>
+<screen><userinput remap="configure">case `uname -m` in
+  i?86) echo "CFLAGS += -march=i486 -mtune=native" &gt; configparms ;;
+esac</userinput></screen>
 
     <para>Prepare Glibc for compilation:</para>
 
