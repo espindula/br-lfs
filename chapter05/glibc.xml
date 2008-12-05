@@ -43,11 +43,6 @@
   <sect2 role="installation">
     <title>Installation of Glibc</title>
 
-    <para>Fix a potential issue if <filename>/etc/ld.so.preload</filename> is
-    used on the host system.</para>
-
-<screen><userinput remap="pre">sed -i 's@/etc/ld.so.preload@/tools/etc/ld.so.preload@' elf/rtld.c</userinput></screen>
-
     <para>The Glibc documentation recommends building Glibc outside of the source
     directory in a dedicated build directory:</para>
 
@@ -71,13 +66,22 @@ esac</userinput></screen>
     <para>Next, prepare Glibc for compilation:</para>
 
 <screen><userinput remap="configure">../glibc-&glibc-version;/configure --prefix=/tools \
+    --host=$LFS_TGT --build=$(../glibc-&glibc-version;/scripts/config.guess) \
     --disable-profile --enable-add-ons \
-    --enable-kernel=2.6.0 --with-binutils=/tools/bin \
-    --without-gd --with-headers=/tools/include \
-    --without-selinux</userinput></screen>
+    --enable-kernel=2.6.0 --with-headers=/tools/include \
+    libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes</userinput></screen>
 
     <variablelist>
       <title>The meaning of the configure options:</title>
+
+      <varlistentry>
+        <term><parameter>--host=$LFS_TGT, --build=$(../glibc-&glibc-version;/scripts/config.guess)</parameter></term>
+        <listitem>
+          <para>The combined effect of these switches is that Glibc's build system
+          configures itself to cross-compile, using the cross-linker and
+          cross-compiler in <filename class="directory">/tools</filename>.</para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><parameter>--disable-profile</parameter></term>
@@ -104,24 +108,6 @@ esac</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--with-binutils=/tools/bin</parameter></term>
-        <listitem>
-          <para>While not required, this switch ensures that there are
-          no errors pertaining to which Binutils programs get used during the
-          Glibc build.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--without-gd</parameter></term>
-        <listitem>
-          <para>This prevents the build of the <command>memusagestat</command>
-          program, which insists on linking against the host's libraries
-          (libgd, libpng, libz, etc.).</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><parameter>--with-headers=/tools/include</parameter></term>
         <listitem>
           <para>This tells Glibc to compile itself against the headers recently
@@ -131,12 +117,19 @@ esac</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--without-selinux</parameter></term>
+        <term><parameter>libc_cv_forced_unwind=yes</parameter></term>
         <listitem>
-          <para>When building from hosts that include SELinux functionality
-          (e.g., Fedora Core 3), Glibc will build with support for SELinux.
-          As the LFS tools environment does not contain support for SELinux, a
-          Glibc compiled with such support will fail to operate correctly.</para>
+          <para>The build requires support for forced unwind, but because it is
+          being cross compiled, it cannot auto detect it. Setting this variable
+          on the command line explicitly tells the configure script that support
+          is available.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>libc_cv_c_cleanup=yes</parameter></term>
+        <listitem>
+          <para>The build also requires support for C cleanup handling, which it
+          cannot auto detect when being cross compiled. Enable it explicitly.</para>
         </listitem>
       </varlistentry>
 
@@ -166,13 +159,6 @@ esac</userinput></screen>
 
     <para>This package does come with a test suite, however, it cannot be
     run at this time because we do not have a C++ compiler yet.</para>
-
-    <para>The install stage of Glibc will issue a harmless warning at the
-    end about the absence of <filename>/tools/etc/ld.so.conf</filename>.
-    Prevent this warning with:</para>
-
-<screen><userinput remap="install">mkdir -v /tools/etc
-touch /tools/etc/ld.so.conf</userinput></screen>
 
     <para>Install the package:</para>
 

@@ -41,7 +41,7 @@
   </sect2>
 
   <sect2 role="installation">
-    <title>Installation of GCC</title>
+    <title>Installation of Cross GCC</title>
 
     <para>GCC now requires the GMP and MPFR packages. As these packages may
     not be included in your host distribution, they will be built with
@@ -60,34 +60,15 @@ cd ../gcc-build</userinput></screen>
 
     <para>Prepare GCC for compilation:</para>
 
-<screen><userinput remap="configure">CC="gcc -B/usr/bin/" ../gcc-&gcc-version;/configure --prefix=/tools \
-    --with-local-prefix=/tools --disable-nls --disable-shared --disable-libssp \
-    --disable-multilib --enable-languages=c</userinput></screen>
+<screen><userinput remap="configure">../gcc-&gcc-version;/configure \
+    --target=$LFS_TGT --prefix=/tools \
+    --disable-nls --disable-shared --disable-multilib \
+    --disable-decimal-float --disable-threads \
+    --disable-libmudflap --disable-libssp \
+    --disable-libgomp --enable-languages=c</userinput></screen>
 
     <variablelist>
       <title>The meaning of the configure options:</title>
-
-      <varlistentry>
-        <term><envar>CC="gcc -B/usr/bin/"</envar></term>
-        <listitem>
-          <para>This forces <command>gcc</command> to prefer the linker from
-          the host in <filename class="directory">/usr/bin</filename>. This
-          is necessary on some hosts where the new <command>ld</command>
-          built in the previous section is not compatible with the host's
-          <command>gcc</command>.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--with-local-prefix=/tools</parameter></term>
-        <listitem>
-          <para>The purpose of this switch is to remove <filename
-          class="directory">/usr/local/include</filename> from
-          <command>gcc</command>'s include search path. This is not
-          absolutely essential, however, it helps to minimize the
-          influence of the host system.</para>
-        </listitem>
-      </varlistentry>
 
       <varlistentry>
         <term><parameter>--disable-shared</parameter></term>
@@ -99,10 +80,20 @@ cd ../gcc-build</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-libssp</parameter></term>
+        <term><parameter>--disable-decimal-float, --disable-threads, --disable-libmudflap, --disable-libssp, --disable-libgomp</parameter></term>
         <listitem>
-          <para>This switch prevents a conflict with older versions of 
-          glibc which can cause the build to fail.</para>
+          <para>These switches disable support for the decimal floating point extension,
+          threading, libmudflap, libssp and libgomp respectively. These features will fail
+          to compile when building a cross-compiler and are not necessary for the task of
+          cross-compiling the temporary libc.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-multilib</parameter></term>
+        <listitem>
+          <para>On x86_64, LFS does not yet support a multilib configuration.
+          This switch is harmless for x86.</para>
         </listitem>
       </varlistentry>
 
@@ -114,22 +105,9 @@ cd ../gcc-build</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry>
-        <term><parameter>--disable-multilib</parameter></term>
-        <listitem>
-          <para>We currently only want to build support for 64-bit libraries.</para>
-        </listitem>
-      </varlistentry>
-
     </variablelist>
 
-    <para>The following command will compile GCC not once, but several times. It
-    uses the programs compiled in a first round to compile itself a second time,
-    and then again a third time. It then compares these second and third compiles
-    to make sure it can reproduce itself flawlessly. This is called
-    <quote>bootstrapping</quote>. Building GCC in this way ensures that it was
-    compiled correctly and is now the default configuration for the released
-    package. Continue with compiling by running:</para>
+    <para>Compile GCC by running:</para>
 
 <screen><userinput remap="make">make</userinput></screen>
 
@@ -146,22 +124,13 @@ cd ../gcc-build</userinput></screen>
     <para>Using <parameter>--disable-shared</parameter> means that the
     <filename>libgcc_eh.a</filename> file isn't created and installed. The
     Glibc package depends on this library as it uses
-    <parameter>-lgcc_eh</parameter> within its build system. We can satisfy
-    that dependency by creating a symlink to <filename>libgcc.a</filename>,
+    <parameter>-lgcc_eh</parameter> within its build system. This dependency
+    can be satisfied by creating a symlink to <filename>libgcc.a</filename>,
     since that file will end up containing the objects normally contained in
     <filename>libgcc_eh.a</filename>.</para>
 
-<screen><userinput remap="install">ln -vs libgcc.a `gcc -print-libgcc-file-name | \
+<screen><userinput remap="install">ln -vs libgcc.a `$LFS_TGT-gcc -print-libgcc-file-name | \
     sed 's/libgcc/&amp;_eh/'`</userinput></screen>
-
-    <para>As a finishing touch, create a symlink. Many programs and scripts
-    run <command>cc</command> instead of <command>gcc</command>, which is
-    used to keep programs generic and therefore usable on all kinds of UNIX
-    systems where the GNU C compiler is not always installed. Running
-    <command>cc</command> leaves the system administrator free to decide
-    which C compiler to install:</para>
-
-<screen><userinput remap="install">ln -vs gcc /tools/bin/cc</userinput></screen>
 
   </sect2>
 

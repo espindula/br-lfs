@@ -41,33 +41,19 @@
   </sect2>
 
   <sect2 role="installation">
-    <title>Re-installation of GCC</title>
+    <title>Installation of GCC</title>
 
-    <para>The tools required to test GCC and Binutils&mdash;Tcl, Expect
-    and DejaGNU&mdash;are installed now. GCC and Binutils can now be
-    rebuilt, linking them against the new Glibc and testing them properly
-    (if running the test suites in this chapter). Please note that these
-    test suites are highly dependent on properly functioning PTYs which
-    are provided by the host. PTYs are most commonly implemented via the
-    <systemitem class="filesystem">devpts</systemitem> file system. Check
-    to see if the host system is set up correctly in this regard by
-    performing a quick test:</para>
+    <para>Versions of GCC later than 4.3 will treat this build as if
+    it were a relocated compiler and disallow searching for startfiles in
+    the location specified by <parameter>--prefix</parameter>. Since this
+    will not be a relocated compiler, and the startfiles in
+    <filename class="directory">/tools</filename> are crucial to building
+    a working compiler linked to the libs in <filename class="directory">/tools</filename>,
+    apply the following patch which partially reverts GCC to its old behavior:</para>
 
-<screen><userinput remap="test">expect -c "spawn ls"</userinput></screen>
+<screen><userinput remap="pre">patch -Np1 -i ../&gcc-startfiles-patch;</userinput></screen>
 
-    <para>The response might be:</para>
-
-<screen><computeroutput>The system has no more ptys.
-Ask your system administrator to create more.</computeroutput></screen>
-
-    <para>If the above message is received, the host does not have its PTYs
-    set up properly. In this case, there is no point in running the test
-    suites for GCC and Binutils until this issue is resolved. Please consult
-    the LFS FAQ at <ulink url="&lfs-root;/lfs/faq.html#no-ptys"/> for more
-    information on how to get PTYs working.</para>
-
-    <para>As previously explained in <xref linkend="ch-tools-adjusting"/>,
-    under normal circumstances the GCC <command>fixincludes</command> script
+    <para>Under normal circumstances the GCC <command>fixincludes</command> script
     is run in order to fix potentially broken header files. As GCC-&gcc-version;
     and Glibc-&glibc-version; have already been installed at this point, and
     their respective header files are known to not require fixing, the
@@ -80,18 +66,17 @@ Ask your system administrator to create more.</computeroutput></screen>
 <screen><userinput remap="pre">cp -v gcc/Makefile.in{,.orig}
 sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userinput></screen>
 
-    <para>The bootstrap build performed in <xref linkend="ch-tools-gcc-pass1"/>
-    built GCC with the <option>-fomit-frame-pointer</option> compiler flag.
-    Non-bootstrap builds omit this flag by default, so apply the following
-    <command>sed</command> to use it in order to ensure consistent compiler
-    builds:</para>
+    <para>Non-bootstrap builds omit the <option>-fomit-frame-pointer</option>
+    build flag by default, and the goal should be to produce a compiler that is
+    exactly the same as if it were bootstrapped. Apply the following
+    <command>sed</command> command to force the build to use the flag:</para>
 
 <screen><userinput remap="pre">cp -v gcc/Makefile.in{,.tmp}
 sed 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
   &gt; gcc/Makefile.in</userinput></screen>
 
     <para>The following command will change the location of GCC's default
-    dynamic linker to use the one we installed in
+    dynamic linker to use the one installed in
     <filename class="directory">/tools</filename>. It also removes <filename
     class="directory">/usr/include</filename> from GCC's include search path.
     Doing this now rather than adjusting the specs file after installation
@@ -105,9 +90,11 @@ do
   cp -uv $file{,.orig}
   sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
   -e 's@/usr@/tools@g' $file.orig &gt; $file
-  echo "
+  echo '
 #undef STANDARD_INCLUDE_DIR
-#define STANDARD_INCLUDE_DIR 0" &gt;&gt; $file
+#define STANDARD_INCLUDE_DIR 0
+#define STANDARD_STARTFILE_PREFIX_1 ""
+#define STANDARD_STARTFILE_PREFIX_2 ""' &gt;&gt; $file
   touch $file.orig
 done</userinput></screen>
 
@@ -120,19 +107,24 @@ done</userinput></screen>
     <quote>/tools</quote> to every instance of <quote>/lib/ld</quote>,
     <quote>/lib64/ld</quote> or <quote>/lib32/ld</quote>, while the second one
     replaces hard-coded instances of <quote>/usr</quote>. Then we add our define
-    statements which alter the include search path to the end of the file. Finally,
-    we use <command>touch</command> to update the timestamp on the copied files.
+    statements which alter the include search path and the default startfile prefix
+    to the end of the file.
+    Finally, we use <command>touch</command> to update the timestamp on the copied files.
     When used in conjunction with <command>cp -u</command>, this prevents unexpected
     changes to the original files in case the command is inadvertently run twice.
     </para>
 
-    <para>Unsetting the multlib spec for GCC ensures that it
+    <para>On x86_64, unsetting the multlib spec for GCC ensures that it
     won't attempt to link against libraries on the host:</para>
 
-<screen><userinput remap="pre">for file in $(find gcc/config -name t-linux64) ; do \
-   cp -v $file{,.orig}
-   sed '/MULTILIB_OSDIRNAMES/d' $file.orig &gt; $file
-done</userinput></screen>
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    for file in $(find gcc/config -name t-linux64) ; do \
+      cp -v $file{,.orig}
+      sed '/MULTILIB_OSDIRNAMES/d' $file.orig &gt; $file
+    done
+  ;;
+esac</userinput></screen>
 
     <para>As in the first build of GCC it requires the GMP and MPFR packages.
     Unpack the tarballs and move them into the required directory names:</para>
@@ -152,7 +144,9 @@ cd ../gcc-build</userinput></screen>
 
     <para>Now prepare GCC for compilation:</para>
 
-<screen><userinput remap="configure">../gcc-&gcc-version;/configure --prefix=/tools \
+<screen><userinput remap="configure">CC="$LFS_TGT-gcc -B/tools/lib/" \
+    AR=$LFS_TGT-ar RANLIB=$LFS_TGT-ranlib \
+    ../gcc-&gcc-version;/configure --prefix=/tools \
     --with-local-prefix=/tools --enable-clocale=gnu \
     --enable-shared --enable-threads=posix \
     --enable-__cxa_atexit --enable-languages=c,c++ \
@@ -227,27 +221,58 @@ cd ../gcc-build</userinput></screen>
 
 <screen><userinput remap="make">make</userinput></screen>
 
-    <para>Compilation is now complete. As previously mentioned, running the test
-    suites for the temporary tools compiled in this chapter is not mandatory.
-    To run the GCC test suite anyway, use the following command:</para>
-
-<screen><userinput remap="test">make -k check</userinput></screen>
-
-    <para>The <parameter>-k</parameter> flag is used to make the test suite run
-    through to completion and not stop at the first failure. The GCC test
-    suite is very comprehensive and is almost guaranteed to generate a few
-    failures.</para>
-
-    <para>For a discussion of test failures that are of particular
-    importance, please see <xref linkend="ch-system-gcc" role="."/></para>
-
     <para>Install the package:</para>
 
 <screen><userinput remap="install">make install</userinput></screen>
 
-    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
-    href="adjusting.xml"
-    xpointer="xpointer(/sect1/caution[1])"/>
+    <para>As a finishing touch, create a symlink. Many programs and scripts
+    run <command>cc</command> instead of <command>gcc</command>, which is
+    used to keep programs generic and therefore usable on all kinds of UNIX
+    systems where the GNU C compiler is not always installed. Running
+    <command>cc</command> leaves the system administrator free to decide
+    which C compiler to install:</para>
+
+<screen><userinput remap="install">ln -vs gcc /tools/bin/cc</userinput></screen>
+
+  <caution>
+    <para>At this point, it is imperative to stop and ensure that the basic
+    functions (compiling and linking) of the new toolchain are working as
+    expected. To perform a sanity check, run the following commands:</para>
+
+<screen><userinput>echo 'main(){}' &gt; dummy.c
+cc dummy.c
+readelf -l a.out | grep ': /tools'</userinput></screen>
+
+    <para>If everything is working correctly, there should be no errors,
+    and the output of the last command will be of the form:</para>
+
+<screen><computeroutput>[Requesting program interpreter:
+    /tools/lib/ld-linux.so.2]</computeroutput></screen>
+
+    <para>Note that <filename class="directory">/tools/lib</filename>, or
+    <filename class="directory">/tools/lib64</filename> for 64-bit machines
+    appears as the prefix of the dynamic linker.</para>
+
+    <para>If the output is not shown as above or there was no output at all,
+    then something is wrong. Investigate and retrace the steps to find out
+    where the problem is and correct it. This issue must be resolved before
+    continuing on. First, perform the sanity check again, using
+    <command>gcc</command> instead of <command>cc</command>. If this works,
+    then the <filename class="symlink">/tools/bin/cc</filename> symlink is
+    missing. Install the symlink as per above.
+    Next, ensure that the <envar>PATH</envar> is correct. This
+    can be checked by running <command>echo $PATH</command> and verifying that
+    <filename class="directory">/tools/bin</filename> is at the head of the
+    list. If the <envar>PATH</envar> is wrong it could mean that you are not
+    logged in as user <systemitem class="username">lfs</systemitem> or that
+    something went wrong back in <xref linkend="ch-tools-settingenviron"
+    role="."/></para>
+
+    <para>Once all is well, clean up the test files:</para>
+
+<screen><userinput>rm -v dummy.c a.out</userinput></screen>
+
+  </caution>
 
   </sect2>
 

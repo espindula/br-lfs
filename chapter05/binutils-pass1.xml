@@ -41,7 +41,7 @@
   </sect2>
 
   <sect2 role="installation">
-    <title>Installation of Binutils</title>
+    <title>Installation of Cross Binutils</title>
 
     <para>It is important that Binutils be the first package compiled
     because both Glibc and GCC perform various tests on the available
@@ -70,19 +70,20 @@ cd ../binutils-build</userinput></screen>
 
     <para>Now prepare Binutils for compilation:</para>
 
-<screen><userinput remap="configure">CC="gcc -B/usr/bin/" ../binutils-&binutils-version;/configure \
-    --prefix=/tools --disable-nls --disable-werror</userinput></screen>
+<screen><userinput remap="configure">../binutils-&binutils-version;/configure \
+    --target=$LFS_TGT --prefix=/tools \
+    --disable-nls --disable-werror</userinput></screen>
 
     <variablelist>
       <title>The meaning of the configure options:</title>
 
       <varlistentry>
-        <term><envar>CC="gcc -B/usr/bin/"</envar></term>
+        <term><envar>--target=$LFS_TGT</envar></term>
         <listitem>
-          <para>This forces <command>gcc</command> to prefer the linker from
-          the host in <filename class="directory">/usr/bin</filename>. This
-          is necessary on some hosts where the new <command>ld</command>
-          built here is not compatible with the host's <command>gcc</command>.
+          <para>Because the machine description in the <envar>LFS_TGT</envar>
+          variable is slightly different than the value returned by the
+          config.guess script, this switch will tell the configure script to
+          adjust Binutil's build system for building a cross linker.
           </para>
         </listitem>
       </varlistentry>
@@ -124,48 +125,16 @@ cd ../binutils-build</userinput></screen>
     tests at this point are minimal since the programs from this
     first pass will soon be replaced by those from the second.</para>
 
-    <para>Create a symlink to ensure the sanity of our toolchain:</para>
+    <para>If building on x86_64, create a symlink to ensure the sanity of
+    the toolchain:</para>
 
-<screen><userinput remap="install">mkdir -v /tools/lib
-ln -sv lib /tools/lib64</userinput></screen>
+<screen><userinput remap="install">case $(uname -m) in
+  x86_64) mkdir -v /tools/lib &amp;&amp; ln -sv lib /tools/lib64 ;;
+esac</userinput></screen>
 
     <para>Install the package:</para>
 
 <screen><userinput remap="install">make install</userinput></screen>
-
-    <para>Finally, prepare the linker for the <quote>Adjusting</quote> phase
-    later on:</para>
-
-<screen><userinput remap="adjust">make -C ld clean
-make -C ld LIB_PATH=/tools/lib
-cp -v ld/ld-new /tools/bin</userinput></screen>
-
-    <variablelist>
-      <title>The meaning of the make parameters:</title>
-
-      <varlistentry>
-        <term><parameter>-C ld clean</parameter></term>
-        <listitem>
-          <para>This tells the make program to remove all compiled
-          files in the <filename class="directory">ld</filename>
-          subdirectory.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>-C ld LIB_PATH=/tools/lib</parameter></term>
-        <listitem>
-          <para>This option rebuilds everything in the <filename
-          class="directory">ld</filename> subdirectory. Specifying the
-          <envar>LIB_PATH</envar> Makefile variable on the command line
-          allows us to override the default value and point it to the
-          temporary tools location. The value of this variable specifies
-          the linker's default library search path. This preparation is
-          used later in the chapter.</para>
-        </listitem>
-      </varlistentry>
-
-    </variablelist>
 
   </sect2>
 
