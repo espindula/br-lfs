@@ -107,7 +107,8 @@ sed 's/^XCFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
     lors de la construction de GCC. C'est-à-dire que tous les exécutables créés lors de la construction seront liés à la nouvelle Glibc.
     Lancez&nbsp;:</para>
     
-<screen><userinput remap="pre">for file in $(find gcc/config -name linux64.h -o -name linux.h) 
+<screen><userinput remap="pre">for file in \
+ $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
 do
    cp -uv $file{,.orig}
    sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
@@ -120,8 +121,8 @@ done</userinput></screen>
 
     <para>Si ce qui précède vous semble dur à suivre, décomposons-le un peu.
     D'abord, nous trouvons tous les fichiers sous le répertoire gcc/config qui
-    sont nommés soit <filename>linux.h</filename> soit
-    <filename>linux64.h</filename>. Pour chaque fichier trouvé, nous le copions
+    sont nommés <filename>linux.h</filename> ou <filename>linux64.h</filename>.
+    Pour chaque fichier trouvé, nous le copions
     vers un fichier du même nom mais avec en plus le suffixe <quote>.orig</quote>.
     Puis la première expression sed préfixe chaque
     occurrence de <quote>/lib/ld</quote>, <quote>/lib64/ld</quote> ou
@@ -131,6 +132,15 @@ done</userinput></screen>
     Utilisé conjointement avec <command>cp -u</command>, cela empêche les
     modifications inattendues des fichiers d'origine au cas où la commande
     serait exécutée deux fois par inadvertence.</para>
+    
+    <para>Le déparamétrage du spec multilib (multibibliothèque) pour GCC
+    assure qu'il ne s'efforcera pas de se lier aux bibliothèque sur le
+    système hôte&nbsp;:</para>
+    
+<screen><userinput remap="pre">for file in $(find gcc/config -name t-linux64) ; do \
+   cp -v $file{,.orig}
+   sed '/MULTILIB_OSDIRNAMES/d' $file.orig &gt; $file
+done</userinput></screen>
     
     <para>Comme dans la première construction de GCC, il a besoin de GMP et
     de MPFR. Déballez les archives tar et déplacez-les dans les répertoires
@@ -157,7 +167,8 @@ cd ../gcc-build</userinput></screen>
     --with-local-prefix=/tools --enable-clocale=gnu \
     --enable-shared --enable-threads=posix \
     --enable-__cxa_atexit --enable-languages=c,c++ \
-    --disable-libstdcxx-pch --disable-bootstrap</userinput></screen>
+    --disable-libstdcxx-pch --disable-multilib \
+    --disable-bootstrap</userinput></screen>
 
     <variablelist>
       <title>Voici la signification des nouvelles options de configure&nbsp;:</title>

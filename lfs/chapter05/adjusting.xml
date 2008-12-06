@@ -30,27 +30,26 @@ ln -sv /tools/bin/ld /tools/$(gcc -dumpmachine)/bin/ld</userinput></screen>
   pointe vers le nouvel éditeur de liens. Ceci se fait en plaçant le fichier 
   <quote>specs</quote> de GCC à un endroit où GCC va le chercher par défaut.
   Un simple script <command>sed</command> modifie alors l'éditeur de liens
-  dynamique que GCC utilisera.</para>
+  dynamique que GCC utilisera. Ici, le principe est de trouver  toutes les
+  références au fichier de l'éditeur de liens dynamique que dans
+  <filename class="directory">/lib</filename> ou éventuellement
+  <filename class="directory">/lib64</filename> si le système hôte est capable
+  de tourner en 64 bits, et de les ajuster pour qu'ils pointent vers le
+  nouvel endroit dans <filename class="directory">/tools</filename>.</para>
 
   <para>Par soucis de précision, il est recommandé que la commande
   ci-dessus soit copiée/collée.
-  Assurez-vous  d'inspecter visuellement le fichier specs pour vérifier
-  que toutes les occurrences de <quote>/lib/ld-linux.so.2</quote> ont
-  été remplacées par <quote>/tools/lib/ld-linux.so.2</quote>&nbsp;:</para>
-
-  <important>
-    <para>Au cas où le nom de l'éditeur de liens de la plateforme de
-    travail est autre que  <filename class="libraryfile">ld-linux.so.2</filename>,
-    remplacez <quote>ld-linux.so.2</quote> par le nom de l'éditeur de liens de
-    votre plateforme dans les commandes ci-dessus. Référez-vous à 
-    <xref linkend="ch-tools-toolchaintechnotes" role=","/> si
-    nécessaire</para>
-  </important>
+  Assurez-vous d'inspecter visuellement le fichier specs pour vérifier qu'il a
+  correctement ajusté toutes les références à l'endreit où se trou2e
+  l'éditeur de liens dynamique. Reportez-vous si nécessaire à
+  <xref linkend="ch-tools-toolchaintechnotes" role=","/> pour le nom par défaut
+  de l'éditeur de liens dynamique.</para>
 
 <!-- Ampersands are needed to allow copy and paste -->
-<screen><userinput>gcc -dumpspecs | sed 's@/lib/ld-linux.so.2@/tools&amp;@g' \
-  > `dirname $(gcc -print-libgcc-file-name)`/specs</userinput></screen>
 
+<screen><userinput>gcc -dumpspecs | sed 's@/lib\(64\)\?/ld@/tools&amp;@g' &gt; \
+   `dirname $(gcc -print-libgcc-file-name)`/specs</userinput></screen>
+   
   <para>Pendant la procédure de construction, GCC exécute un script 
   (<command>fixincludes</command>) qui parcourt le système pour déterminer les
   fichiers d'en-tête qui pourraient nécessiter une réparation (ils pourraient
@@ -88,8 +87,9 @@ readelf -l a.out | grep ': /tools'</userinput></screen>
 <screen><computeroutput>[Requesting program interpreter:
     /tools/lib/ld-linux.so.2]</computeroutput></screen>
 
-    <para>Notez que <filename class="directory">/tools/lib</filename>
-    apparaît comme préfixe de l'éditeur de liens dynamique.</para>
+    <para>Notez que <filename class="directory">/tools/lib</filename> ou
+    <filename class="directory">/tools/lib64</filename> pour les machines
+    64 bits apparaît comme préfixe de l'éditeur de liens dynamique.</para>
 
     <para>Si l'affichage diffère ou s'il n'y a aucun affichage, alors
     quelque chose ne se passe pas bien. Enquêtez et tracez vos étapes pour

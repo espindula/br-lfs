@@ -87,9 +87,11 @@ mv glibc-libidn-&glibc-version; libidn</userinput></screen> -->
     se fier au mauvais Glibc. Nous pouvons forcer le script à tester la Glibc que
     nous venons d'installer en lançant ceci&nbsp;:</para>
 
-<screen><userinput remap="pre">sed -i \
-'s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=/lib/ld-linux.so.2 -o|' \
-        scripts/test-installation.pl</userinput></screen> -->
+<screen><userinput remap="pre">DL=$(readelf -l /bin/sh | grep interpreter | \
+awk '{print $4}' | sed -e 's@/tools@@' -e 's@]$@@')
+sed -i &quot;s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=$DL -o|&quot; \
+        scripts/test-installation.pl
+unset DL</userinput></screen> -->
 
     <para>Tout d'abord, appliquez deux correctifs qui corrigent des échecs dans
     la suite de tests&nbsp;:</para>
@@ -111,9 +113,12 @@ patch -Np1 -i ../&glibc-ildoubl-test-fix-patch;</userinput></screen>
 <screen><userinput remap="pre">mkdir -v ../glibc-build
 cd ../glibc-build</userinput></screen>
 
-    <para>Ajoutez à nouveau à CFLAGS le commutateur du compilateur requis&nbsp;:</para>
+    <para>Ajoutez à nouveau à CFLAGS les commutateurs du compilateur requis&nbsp;:</para>
     
-<screen><userinput remap="configure">echo "CFLAGS += -march=i486 -mtune=native" &gt; configparms</userinput></screen>
+<screen><userinput remap="configure">case `uname -m` in
+   i?86) echo "CFLAGS += -march=i486 -mtune=native" &gt; configparms ;;
+esac</userinput></screen>
+
 
     <para>Préparez la compilation de Glibc&nbsp;:</para>
 

@@ -39,17 +39,8 @@ ln -sv /tools/bin/ld /tools/$(gcc -dumpmachine)/bin/ld</userinput></screen>
   en-têtes corrects et les fichiers de démarrage de Glibc. Une commande
   <command>sed</command> fait cela&nbsp;:</para>
 
-  <important>
-    <para>Si vous travaillez sur une plateforme où le nom de 
-    l'éditeur de liens est différent de
-    <filename class="libraryfile">ld-linux.so.2</filename>, remplacez
-    <quote>ld-linux.so.2</quote> par le nom de l'éditeur de liens dynamiques
-    de la plateforme dans les commandes suivantes. Reportez-vous à
-    <xref linkend="ch-tools-toolchaintechnotes" role=","/> si nécessaire.</para>
-  </important>
-
-<screen><userinput>gcc -dumpspecs | sed \
-    -e 's@/tools/lib/ld-linux.so.2@/lib/ld-linux.so.2@g' \
+<screen><userinput>gcc -dumpspecs | sed -e 's@/tools@@g' \
+    -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
     -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
     -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' &gt; \
     `dirname $(gcc --print-libgcc-file-name)`/specs</userinput></screen>
@@ -103,7 +94,8 @@ readelf -l a.out | grep ': /lib'</userinput></screen>
 <screen os="j"><userinput>grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'</userinput></screen>
 
   <para os="k">Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs
-  et la sortie de la dernière commande sera&nbsp;:</para>
+  et la sortie de la dernière commande sera (selon la triplette cible
+  spécifique à chaque plateforme)&nbsp;:</para>
 
 <screen><computeroutput>SEARCH_DIR("/tools/i686-pc-linux-gnu/lib")
 SEARCH_DIR("/usr/lib")
@@ -111,10 +103,11 @@ SEARCH_DIR("/lib");</computeroutput></screen>
 
   <para os="l">Ensuite, assurez-vous que nous utilisons la bonne libc&nbsp;:</para>
 
-<screen os="m"><userinput>grep "/lib/libc.so.6 " dummy.log</userinput></screen>
+<screen os="m"><userinput>grep "/lib.*/libc.so.6 "dummy.log</userinput></screen>
 
   <para os="n">Si tout fonctionne correctement, il ne devrait pas y avoir d'erreur
-    et la sortie de la dernière commande sera&nbsp;:</para>
+    et la sortie de la dernière commande sera (selon la triplette cible
+  spécifique à chaque plateforme)&nbsp;:</para>
 
 <screen os="o"><computeroutput>attempt to open /lib/libc.so.6 succeeded</computeroutput></screen>
 
@@ -124,7 +117,8 @@ SEARCH_DIR("/lib");</computeroutput></screen>
 
   <para os="r">Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et
   la sortie de la commande sera (avec des différences spécifiques aux plateformes
-  dans le nom de l'éditeur de liens)&nbsp;:</para>
+  dans le nom de l'éditeur de liens et un répertoire lib64 sur les hôtes
+  64 bits)&nbsp;:</para>
 
 <screen os="s"><computeroutput>found ld-linux.so.2 at /lib/ld-linux.so.2</computeroutput></screen>
 
