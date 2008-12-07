@@ -43,11 +43,6 @@
   <sect2 role="installation">
     <title>Installation de Glibc</title>
 
-   <para>Corrigez un problème potentiel si <filename>/etc/ld.so.preload</filename>
-   est utilisé sur le szstème hôte&nbsp;:</para>
-   
-<screen><userinput remap="pre">sed -i 's@/etc/ld.so.preload@/tools/etc/ld.so.preload@' elf/rtld.c</userinput></screen>
-
    <para>La documentation de Glibc recommande de construire Glibc en dehors du
     répertoire des sources, c'est-à-dire dans un répertoire dédié&nbsp;:</para>
 
@@ -73,14 +68,23 @@ esac</userinput></screen>
     <para>Ensuite, préparez la compilation de Glibc&nbsp;:</para>
 
 <screen><userinput remap="configure">../glibc-&glibc-version;/configure --prefix=/tools \
+    --host=$LFS_TGT --build=$(../glibc-&glibc-version;/scripts/config.guess) \
     --disable-profile --enable-add-ons \
-    --enable-kernel=2.6.0 --with-binutils=/tools/bin \
-    --without-gd --with-headers=/tools/include \
-    --without-selinux</userinput></screen>
+    --enable-kernel=2.6.0 --with-headers=/tools/include \
+    libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes</userinput></screen>
 
     <variablelist>
       <title>Voici la signification des options de configure&nbsp;:</title>
 
+      <varlistentry>
+        <term><parameter>--host=$LFS_TGT, --build=$(../glibc-&glibc-version;/scripts/config.guess)</parameter></term>
+        <listitem>
+          <para>L'effet combiné de ces commutateurs est que le système de
+          construction de Glibc se configure pour se compiler de manière
+          croisée en 1tilisant l'éditeur de liens croisé et le compilateur
+          croisé dans <filename class="directory">/tools</filename>.</para>
+        </listitem>
+      </varlistentry>
       <varlistentry>
         <term><parameter>--disable-profile</parameter></term>
         <listitem>
@@ -107,42 +111,31 @@ esac</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--with-binutils=/tools/bin</parameter></term>
-        <listitem>
-          <para>Bien que pas nécessaire, ce commutateur nous assure qu'il ne
-          reste aucune erreur provenant des programmes Binutils lors de la construction
-          de Glibc.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--without-gd</parameter></term>
-        <listitem>
-          <para>Ce commutateur empêche la construction du programme
-          <command>memusagestat</command>, qui insiste pour être lié avec les
-          bibliothèques de l'hôte (libgd, libpng, libz et ainsi de suite)..</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><parameter>--with-headers=/tools/include</parameter></term>
         <listitem>
-          <para>Ceci dit à Glibc de se compiler contre les en-têtes qui
-          viennent d'être installés dans le répertoire tools, afin qu'il sache
-          exactement quelles options a le noyau et qu'il puisse s'optimiser en
-          conséquence.</para>
+          <para>Ceci dit à Glibc de se compiler contre les en-têtes récemment
+          installées dans le répertoire tools, afin qu'il connaisse exactement les
+          fonctionnalités du noyau et puisse s'optimiser en conséquence.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--without-selinux</parameter></term>
+        <term><parameter>libc_cv_forced_unwind=yes</parameter></term>
         <listitem>
-          <para>Lors de la construction à partir d'hôtes qui incluent la
-          fonctionnalité SELinux (par exemple Fedora Core 3), Glibc construira 
-          le support pour SELinux. Comme l'environnement d'outils LFS ne 
-          contient pas de support
-          pour SELinux, une Glibc compilée avec ce support ne fonctionnera pas
-          correctement.</para>
+          <para>La construction exige le support pour défilement (unyind) forcé
+          mais comme il est compilé de manière croisée, il ne peut pas
+          s'autodétecter. L'initialisation de cette vahiable iur la ligne de
+          commande dit explicitement au script configure que le support est
+          disponible.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>libc_cv_c_cleanup=yes</parameter></term>
+        <listitem>
+          <para>La construction exige la gestion du support pour le nettoyage (cleanup) C
+          qu'il ne peut détecter automatiquement lorsqu'il est compilé de manière
+          croisée. L'active explicitement.</para>
         </listitem>
       </varlistentry>
 
@@ -173,14 +166,6 @@ esac</userinput></screen>
 
     <para>Ce paquet est fourni avec une suite de test, cependant vous ne pouvez
     pas l'exécuter à ce moment car nous n'avons pas encore de compilateur C++.</para>
-    
-    <para>L'étape d'installation de Glibc affichera un message d'avertissement sans
-    conséquence pour l'absence de 
-    <filename>/tools/etc/ld.so.conf</filename>.
-    Supprimez ce message avec&nbsp;:</para>
-
-<screen><userinput remap="install">mkdir -v /tools/etc
-touch /tools/etc/ld.so.conf</userinput></screen>
 
     <para>Installez le paquet&nbsp;:</para>
 

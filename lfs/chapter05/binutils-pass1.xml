@@ -42,7 +42,7 @@
 
   <sect2 role="installation">
 
-       <title>Installation de  Binutils</title>
+       <title>Installation de Binutils croisé</title>
 
     <para>Il est important que Binutils soit le premier paquet compilé
     parce que Glibc et GCC réalisent différents tests sur l'éditeur de
@@ -75,21 +75,20 @@ cd ../binutils-build</userinput></screen>
     
     <para>Maintenant, préparez la compilation de Binutils&nbsp;:</para>
 
-<screen><userinput remap="configure">CC="gcc -B/usr/bin/" ../binutils-&binutils-version;/configure \
-    --prefix=/tools --disable-nls --disable-werror</userinput></screen>
-
+<screen><userinput remap="configure">../binutils-&binutils-version;/configure \
+     --target=$LFS_TGT --prefix=/tools \
+     --disable-nls --disable-werror</userinput></screen>
     <variablelist>
       <title>Voici la signification des options de configure&nbsp;:</title>
 
       <varlistentry>
-        <term><envar>CC="gcc -B/usr/bin/"</envar></term>
+        <term><envar>--target=$LFS_TGT</envar></term>
         <listitem>
-          <para>Cela oblige <command>gcc</command> à préférer l'éditeur de liens
-          du système hôte dans <filename class="directory">/usr/bin</filename>.
-          C'est nécessaire sur certains systèmes hôtes où le nouveau
-          <command>ld</command> compilé ici n'est pas compatible avec le
-          <command>gcc</command> du système hôte.
-          </para>
+          <para>Vu que la description de la machine dans la variable
+          <envar>LFS_TGT</envar> est légèrement différente de la valeur retournée
+          par le script config.guess, ce paramètre va dire au script configure
+          d'ajuster le système de monstruction de Binutils pour la construction
+          d'un éditeur de lien croisé.</para>
         </listitem>
       </varlistentry>
 
@@ -132,52 +131,19 @@ cd ../binutils-build</userinput></screen>
     seraient minimes car les programmes de la première passe seront
     bientôt remplacés par ceux de la seconde.</para>
     
-    <para>Créez un lien symbolique pour assurer la propreté de notre
-    ensemble d'o1tils&nbsp;:</para>
-    
-<screen><userinput remap="install">mkdir -v /tools/lib
-ln -sv lib /tools/lib64</userinput></screen>
+    <para>Si vous construisez sur une x86_64, créez un lien symbolique pour assurer la propreté de notre
+    ensemble d'outils&nbsp;:</para>
+
+<screen><userinput remap="install">case $(uname -m) in
+   x86_64) mkdir -v /tools/lib &amp;&amp; ln -sv lib /tools/lib64 ;;
+esac</userinput></screen>
 
     <para>Installez le paquet&nbsp;:</para>
 
 <screen><userinput remap="install">make install</userinput></screen>
 
-    <para>Enfin, préparez l'éditeur de liens pour la phase
-    d'<quote>ajustement</quote> un peu plus tard&nbsp;:</para>
-
-<screen><userinput remap="adjust">make -C ld clean
-make -C ld LIB_PATH=/tools/lib
-cp -v ld/ld-new /tools/bin</userinput></screen>
-
-    <variablelist>
-      <title>Voici la signification des paramètres de make&nbsp;:</title>
-
-      <varlistentry>
-        <term><parameter>-C ld clean</parameter></term>
-        <listitem>
-          <para>Ceci indique au programme make de supprimer tous les fichiers
-          compilés du sous-répertoire <filename class="directory">ld</filename>.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>-C ld LIB_PATH=/tools/lib</parameter></term>
-        <listitem>
-          <para>Cette option reconstruit tout ce qui se trouve dans le
-          sous-répertoire <filename class="directory">ld</filename>. Spécifier
-          la variable makefile <envar>LIB_PATH</envar> en ligne de commande 
-          nous autorise à écraser la valeur par défaut et à la faire pointer 
-          vers notre emplacement temporaire des outils. La valeur de
-          cette variable spécifie le chemin de recherche des bibliothèques par 
-          défaut pour l'éditeur de liens. Cette préparation est utilisée plus 
-          tard dans le chapitre.</para>
-        </listitem>
-      </varlistentry>
-
-    </variablelist>
-
   </sect2>
-
+  
   <sect2 role="content">
     <title/>
 

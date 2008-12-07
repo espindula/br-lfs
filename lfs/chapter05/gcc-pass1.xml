@@ -41,7 +41,7 @@
   </sect2>
 
   <sect2 role="installation">
-    <title>Installation de GCC</title>
+    <title>Installation de GCC croisé</title>
 
     <para>GCC exige maintenant les paquets GMP et MPFR. Comce il se peut que
     ces paquets ne soient pas inclus dans votre distribution hôte, ils vont
@@ -59,35 +59,15 @@ cd ../gcc-build</userinput></screen>
 
     <para>Préparez la compilation de GCC&nbsp;:</para>
 
-<screen><userinput remap="configure">CC="gcc -B/usr/bin/" ../gcc-&gcc-version;/configure --prefix=/tools \
-     --with-local-prefix=/tools --disable-nls --disable-shared --disable-libssp \
-      --disable-multilib --enable-languages=c</userinput></screen>
-
+<screen><userinput remap="configure">../gcc-&gcc-version;/configure \
+    --target=$LFS_TGT --prefix=/tools \
+    --disable-nls --disable-shared --disable-multilib \
+    --disable-decimal-float --disable-threads \
+    --disable-libmudflap --disable-libssp \
+    --disable-libgomp --enable-languages=c</userinput></screen>
+    
     <variablelist>
       <title>Voici la signification des options de configure&nbsp;:</title>
-
-      <varlistentry>
-        <term><envar>CC="gcc -B/usr/bin/"</envar></term>
-        <listitem>
-          <para>Ceci oblige <command>gcc</command> à préférer l'éditeur de liens
-          du système hôte dans <filename class="directory">/usr/bin</filename>.
-          C'est nécessaire sur certains systèmes hôtes où le nouveau <command>ld</command>
-          compilé dans la section précédente n'est pas compatible avec le 
-          <command>gcc</command> du système hôte.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--with-local-prefix=/tools</parameter></term>
-        <listitem>
-          <para>Le but de cette option est de supprimer
-          <filename class="directory">/usr/local/include</filename> du chemin 
-          de recherche des fichiers include de
-          <command>gcc</command>. Ce n'est pas absolument
-          essentiel&nbsp;; néanmoins, c'est une aide pour minimiser l'influence 
-          du système hôte.</para>
-        </listitem>
-      </varlistentry>
 
       <varlistentry>
         <term><parameter>--disable-shared</parameter></term>
@@ -99,10 +79,22 @@ cd ../gcc-build</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-libssp</parameter></term>
+        <term><parameter>--disable-decimal-float, --disable-threads, --disable-libmudflap, --disable-libssp, --disable-libgomp</parameter></term>
         <listitem>
-          <para>Ce paramètre empêche un conflit avec les vieilles versions de
-          Glibc, qui peut faire échouer la compilation.</para>
+          <para>Ces paramètres désactivent le support de l'extension ayant un
+          point flottant décimal, du threading, respectivement de
+          libmudflap, libssp et libgomp. Ces fonctionnalités ne parviendront
+          pas à se construire lors de la construction d'un compilateur
+          croisé et ne sont pas nécessaires pour la tâche de compilation
+          croisée de la libc temporaire.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>--disable-multilib</parameter></term>
+        <listitem>
+          <para>Sur du x86_64, LFS ne supporte pas encore une configuration
+          multilib (plusieurs bibliothèques). Ce paramètre n'a pas
+          d'importance pour x86.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -112,24 +104,10 @@ cd ../gcc-build</userinput></screen>
           construit. C'est le seul langage actuellement nécessaire.</para>
         </listitem>
       </varlistentry>
-      <varlistentry>
-        <term><parameter>--disable-multilib</parameter></term>
-        <listitem>
-          <para>Nous ne voulons actuellement compiler que le support pour
-          les bibliotgèques 64 bits.</para>
-        </listitem>
-      </varlistentry>
 
     </variablelist>
 
-    <para>La commande suivante ne va pas compiler GCC qu'une fois mais 
-    plusieurs fois. Elle utilise les programmes compilés dans le premier tour pour se 
-    compiler une deuxième fois, puis une troisième fois. Il compare alors 
-    les deuxième et troisième compilations pour s'assurer qu'il arrive à 
-    se reproduire lui-même proprement. Cela s'appelle le
-    <quote>bootstrapping</quote>. Compiler Glibc de cette façon assure que
-    GCC est compilé correctement et c'est à présent la configuration par défaut
-    pour le paquet actuel. Continuez avec la compilation du paquet&nbsp;:</para>
+    <para>Compilez GCC en lançant&nbsp;:</para>
 
 <screen><userinput remap="make">make</userinput></screen>
 
@@ -151,18 +129,9 @@ cd ../gcc-build</userinput></screen>
     <filename>libgcc.a</filename>, puisque ce fichier va finir par contenir les
     objets normalement contenus dans <filename>libgcc_eh.a</filename>.</para>
 
-<screen><userinput remap="install">ln -vs libgcc.a `gcc -print-libgcc-file-name| \
+<screen><userinput remap="install">ln -vs libgcc.a `$LFS_TGT-gcc -print-libgcc-file-name | \
     sed 's/libgcc/&amp;_eh/'`</userinput></screen>
     
-    <para>En touche finale, créez un lien symbolique. Beaucoup de programmes
-    lancent <command>cc</command> au lieu de <command>gcc</command>, ceci pour
-    conserver des programmes génériques et donc utilisables sur tout type
-    de système Unix où le compilateur GNU C n'est pas toujours installé. Utiliser
-    <command>cc</command> permet de libérer l'administrateur système dans son choix
-    du compilateur C à installer.</para>
-
-<screen><userinput remap="install">ln -vs gcc /tools/bin/cc</userinput></screen>
-
   </sect2>
 
   <sect2 role="content">
