@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-multiarch-wrapper" role="wrap">
+  <?dbhtml filename="multiarch_wrapper.html"?>
+
+  <title>Creating a Multiarch Wrapper</title>
+
+  <indexterm zone="ch-system-multiarch-wrapper">
+    <primary sortas="a-File">Multiarch Wrapper</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>The Multiarch Wrapper is used to wrap certain binaries that have
+    hardcoded paths to libraries or are architecture specific.</para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation of The Multiarch Wrapper</title>
+
+    <para os="a">Create the source file:</para>
+
+<screen os="b"><userinput>cat &gt; multiarch_wrapper.c &lt;&lt; "EOF"
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;string.h&gt;
+
+#ifndef USE_ARCH
+#define USE_ARCH "64"
+#endif
+
+int main(int argc, char **argv)
+{
+  char *filename;
+  char *use_arch;
+
+  if(!(use_arch = getenv("USE_ARCH")))
+    use_arch = USE_ARCH;
+
+  filename = (char *) malloc(strlen(argv[0]) + strlen(use_arch) + 2);
+  strcpy(filename, argv[0]);
+  strcat(filename, "-");
+  strcat(filename, use_arch);
+
+  execvp(filename, argv);
+  perror(argv[0]);
+  free(filename);
+}
+EOF</userinput></screen>
+
+    <para os="c">Compile and Install the Multiarch Wrapper:</para>
+
+<screen os="d"><userinput>gcc ${BUILD64} multiarch_wrapper.c -o /usr/bin/multiarch_wrapper</userinput></screen>
+
+    <para os="e">This multiarch wrapper is going to be used later on in the book
+    with Perl. It will also be very useful outside of the base CLFS system.</para>
+
+    <para os="f">Create a testcase:</para>
+
+<screen os="g"><userinput>echo 'echo "32bit Version"' &gt; test-32
+echo 'echo "64bit Version"' &gt; test-64
+chmod 755 test-32 test-64
+ln -sv /usr/bin/multiarch_wrapper test</userinput></screen>
+
+    <para os="h">Test the wrapper:</para>
+
+<screen os="i"><userinput>USE_ARCH=32 ./test
+USE_ARCH=64 ./test</userinput></screen>
+
+    <para os="j">The output of the above command should be:</para>
+
+<screen os="k" role="nodump"><userinput>32bit Version
+64bit Version</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-multiarch-wrapper" role="content">
+    <title>Contents of The Multiarch Wrapper</title>
+
+    <segmentedlist>
+      <segtitle>Installed programs</segtitle>
+
+      <seglistitem>
+        <seg>multiarch_wrapper</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="multiarch_wrapper">
+        <term><command>multiarch_wrapper</command></term>
+        <listitem>
+          <para>Will execute a different program based on the
+          <envar>USE_ARCH</envar> variable. The <envar>USE_ARCH</envar>
+          variable will be the suffix of the executed program.</para>
+          <indexterm zone="ch-system-multiarch-wrapper multiarch_wrapper">
+            <primary sortas="b-multiarch_wrapper">multiarch_wrapper</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

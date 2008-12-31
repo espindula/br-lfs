@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-bootable-lilo">
+  <?dbhtml filename="lilo.html"?>
+
+  <title>Rendre le système CLFS amorçable</title>
+
+  <indexterm zone="ch-bootable-lilo">
+    <primary sortas="a-Lilo">Lilo</primary>
+    <secondary>configuring</secondary>
+  </indexterm>
+
+    <para os="a">Votre système CLBS flambant neuf est pratiquement fini. Une des
+  dernières choses à faire est de vous assurer que le système peut
+  démarrer proprement. Les instructions ci-dessous s'appliquent
+  seulement aux ordinateurs utilisant Lilo, ce qui signifie dans le contexte de ce livre les systèmes x86_64 Pure64. Des informations sur
+  <quote>le chargement de démarrage</quote> pour d'autres architectures devraient être disponibles dans les endroits de ressources
+  spécifiques à ces architectures habituels.</para>
+
+  <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+  href="../x86/grub.xml"
+  xpointer="xpointer(//*[@os='b'])"/>
+
+    <para os="c">Si vous avez  pl1sieurs systèmes sur votre machine qui utilisent un chargeur de démarrage différent comme GHUB, il se peut 
+    que vous préfériez utiliser pl1tôt celui-ci - consultez la documentation appropriée.  Le reste de cette section suppose que vous allez 
+    utiliser Lilo.</para> 
+
+    <para os="d">Plus haut, nous avons construit et installé le logiciel chargeur de démarrage Lilo pour préparer cette étape. La  procédure 
+    implique d'écrire une image de démarrage à un endroit spécifique sur le disque dur. Nous vous recommandons fort d'utiliser mkrescue 
+    pour faire un CD d'amorçage Lilo (en utilisant par exemple dvdrecord issu de dvdrtools) comme sauvegarde (ceci exige le support des 
+    périphériques de bloc en boucle (<foreignphrase>loopback block device</foreignphrase>) dans le noyau).</para>
+
+    <para os="e">Normalement, vous dialoguez avec Lilo en utilisant le curseur et les touches <literal>enter</literal> pour faire une 
+    sélection parmi les ou l'option(s) disponible(s), mais il est parfois nécessaire d'ajouter d'autres options de démarrage comme
+    'init=/bin/bash' pour déboguer des échecs du noyau. Le pire est quand  votre plan de codage de clavier est différent du type qwerty 
+    américain, car il devient plus difficile de taper les options de démarrage, sauf si Lilo connaît le type de votre clavier. Nous allons 
+    donc créer un fichier de table de touches pour Lilo (.ktl) - ceux-ci sont désignés comme des fichiers .klt en un point de la 
+    documentation, ce qui peut être une coquille mais qui a été suivi par certaines distributions. Le nom et l'emplacement ne sont pas 
+    importants mais on les met par convention dans /boot avec le nom représentant le type de clavier. Pour un clavier de type britannique, 
+    la commande suivante fera ceci&nbsp;:</para> 
+
+<screen os="f" role="nodump"><userinput>keytab-lilo.pl uk >/boot/uk.ktl</userinput></screen>
+
+    <para os="g">L'argument de la commande est le nom du plan de clavier ou si nécessaire, vous pouvez spécifier le chemin complet vers le 
+    plan de clavier. Utilisez ce qui convient à votre plan de clavier.</para>
+
+    <para os="h">Quand le livre CLFS x86 utilisait le Lilo inclu, il conseillait plutôt que de le lancer depuis le chroot au cas où la MBR
+    devenait corrompu. Vu que maintenant vous avez monté /proc et que nous avons des fichiers sépciaux de périphériques pour les disques, il 
+    semble plus sûr d'exécuter des versions récentes de Lilo en chroot, bien qu'il soit toujours possible qu'un chargeur de démarrage pis à 
+    jour ou un fichier de configuration défectueux rende le système non amorçable.</para>  
+
+    <para os="i">L'étape suivante est de créer /etc/lilo.conf&nbsp;:</para>
+
+<screen os="j" role="nodump"><userinput>cat &gt; /etc/lilo.conf &lt;&lt; "EOF"
+<literal># Début de /etc/lilo.conf
+# lilo.conf
+#
+# options globales
+boot=/dev/&lt;bootdisk&gt;
+keytable=/boot/&lt;keytable&gt;
+lba32
+map=/boot/map
+prompt
+
+# Réglez le nom à l'image par défaut à démarrer
+default=clfs
+
+# définissez une image
+image=/boot/clfskernel
+    label=clfs
+    root=/dev/&lt;partition&gt;
+    read-only
+# ajoutez éventuellement des paramètres à passer comme 
+#   append="video=radeonfb:1024x768-16@70"
+
+# répétez pour d'autres images de noyau
+
+# ajoutez éventuellement d'autres systèmes d'exploitation
+# voir man lilo.conf pour des exemples 
+EOF</literal></userinput></screen>
+
+
+    <para os="k">Remplacez &lt;bootdisk&gt; par le nom du disque (ou de la partition) sur lequel le secteur d'amorçage va être écrit, par 
+    exemple sda. Remplacez &lt;keytable&gt; par le nom du fichier de table de touches que vous avez créé et &lt;partition&gt; par le nom de 
+    la partition racine du nouveau système.</para>
+
+  <warning os="l">
+    <para>La commande suivante écrasera votre chargeur de démarrage actuel.
+    Ne lancez pas cette commande si ce n'est pas désiré.</para>
+  </warning>
+
+    <para os="m">Lancez Lilo&nbsp;:</para>
+
+<screen os="n" role="nodump"><userinput>/sbin/lilo -v</userinput></screen>
+
+  <note os='o'>
+    <para>Les personnes qui ont utilisé GRUB  doivent garder  à l'esprit que Lilo fonctionne différemment - en particulier vous ne pouvez 
+    pas éditer les choix disponibles comme cela se fait dans le shell <command>grub</command> et Lilo enregistre les adresses de bloc des 
+    noyaux dans les blocs d'amorçage chaque fois que /sbin/lilo est lancé. Cela signifie que quand vous compilez un nouveau noyau, vous 
+    devez l'ajouter à /etc/lilo.conf et relancer /sbin/lilo. Cela veut dire aussi que si vous recompilez un noyau existant et que vous le 
+    sauvegardez sous le même nom, vous devez également relancer /sbin/lilo s'il occupe des blocs différents sur le système de 
+    fichiers.</para>
+  </note>
+
+    <para os="p">Si vous exécutez plusieurs systèmes sur cette machine et que tous utilisent Lilo, c'est une bonne idée de s'assurer que 
+    chaque système exécute la même version de Lilo, sinon il se peut qu'une vieille version ne soit pas capable d'écraser le chargeur de 
+    démarrage à partir d'une version plus récente. Vous devrez aussi vous assurer que les copies de /etc/lilo.conf sur chaque système 
+    restent synchronisées.</para>
+
+</sect1>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<appendix id="appendixe" xreflabel="Appendix E">
+  <?dbhtml dir="appendices"?>
+  <?dbhtml filename="macmiscellany.html"?>
+
+  <title>Open Firmware and Mac issues.</title>
+
+    <para>This appendix documents some of the features of ppc macintoshes,
+    and in particular the requirements of coexisting with Mac OS's (OSX or
+    the old OS9).  It is only relevant to NewWorld hardware.</para>
+
+  <variablelist>
+
+    <varlistentry>
+      <term><emphasis role="bold">Open Firmware and blessed partitions</emphasis></term>
+      <listitem>
+        <para>The Open Firmware (OF) is the code in ROM or nvram which controls
+        how the machine boots.  If booting automatically, it will boot from the
+	first valid blessed partition it finds (this is a simplification,
+	but it is adequate for normal purposes).</para>
+
+	<para>It can only read apple filesystems (hfs, hfs+, or hfsx depending
+	on the version of the firmware).  For disks under linux, the blessing
+	is done by ybin when it installs yaboot (the loader) and yaboot.conf.</para>
+
+	<para>Mac OS's have a tendency to look at other hfs{,+,x} filesystems
+	on the disk, and unbless them if they do not match their expectations.
+	Unblessing makes them unbootable. Fortunately, a filesystem of type
+	<literal>Apple_Bootstrap</literal> can be read as hfs by the OF, but will
+	be ignored by Mac OS.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><emphasis role="bold">Partitioning</emphasis></term>
+      <listitem>
+	<para>Macintoshes use their own partition format - this means that other
+	machines are unlikely to be able to read or write to macintosh partitions
+	(in particular, fdisk does not understand them). The format allows a large
+	number of individual partitions, and the native Mac tools had a tendency
+	to insert small "filler" partitions between the real partitions. Under
+	linux, using more than 15 partitions can be problematic (shortage of device
+	nodes), so the normal approach is to use the Mac tools to create an area
+	of freespace at the <emphasis>front</emphasis> of the disk, then put the
+	Mac OS partition(s) after it and (re-)install the Mac OS.  The
+	freespace can then be partitioned using <command>parted</command> or the
+	older <command>mac-fdisk</command>.  It seems that recent versions of the
+	Mac tools may no longer insert the filler partitions, so it may be
+	possible to do all the partitioning before installing OSX.</para>
+
+	<warning>
+	<para>The Macintosh resizing and partitioning tools are destructive and may
+	delete all data when a partition is resized, even on unaltered partitions.
+	</para>
+	</warning>
+
+	<para>For the Linux partitions, you will need a bootstrap partition - this
+	can normally be a mere 800KB in size (the smallest hfs partition available)
+	although the Fedora installer  has been known to insist on 800MB.  This has
+	to be in front of the Mac OS partition.  The bootstrap is
+	<emphasis>never</emphasis> mounted as a regular partition and should not
+	be confused with a <literal>/boot</literal> partition.  Other partitions
+	are as normal (at least one rootfs, perhaps swap, perhaps others).</para>
+
+	<para>According to the lfs-from-osx hint, the Mac partitioning tools
+	can create an apple_bootstrap partition and therefore there is no need
+	to use a Linux CD to create the desired partitions from freespace, but
+	using a Linux CD to create the partitions is a more widely tested approach.
+	</para>
+
+	<para>If you follow this approach, partition 1 will be the apple partition
+	map, partition 2 will be the bootstrap at the start of the disk, the
+	linux partitions will follow, and then the mac partition(s) - under OSX
+	the first mac partition will be number 3, under OS9 it would have a higher
+	number and there would be some apple driver partitions.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><emphasis role="bold">OSX or OF upgrades</emphasis></term>
+      <listitem>
+	<para>If the machine is dual-booted with OSX, the mac kernel or the OF
+	will probably be upgraded at some point.  This appears to either unbless
+	the bootstrap,	or else just point the OF boot device to the mac partition
+	- so, the linux system will no longer be bootable.</para>
+
+	<para>Therefore, you will need to know which partition contains the bootstrap
+	so that you can boot it from OF (on an apple keyboard, hold down
+	option-command-o-f (that is, alt-apple-o-f) while booting then enter a
+	command like:</para>
+
+<screen><userinput role="nodump">boot hd:2,yaboot</userinput></screen>
+
+	<para>This will allow you to select a linux boot, and from there you
+	will have to rerun <command>ybin</command>.</para>
+
+	<para>The "OS chooser" menu that yaboot typically loads is stored in the
+	OF and will not be available after a Mac kernel or firmware upgrade until
+	<command>ybin</command> has been rerun.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><emphasis role="bold">Yaboot's requirements</emphasis></term>
+      <listitem>
+	<para>Yaboot is the boot loader for linux, sometimes referred to as
+	the second stage loader.  It reads the yaboot.conf file on the bootstrap
+	partition to find which linux system(s) should be available, and
+	attempts to load the required kernel.</para>
+
+	<para>The bootstrap man page warns that the path to the kernel should
+	contain no more than one directory for reliability.</para>
+
+	<para>Yaboot has to be able to understand the filesystem, so that it
+	can find the kernel.  It understands hfs (not useful for linux, it is
+	not case-sensitive), ext2 (and therefore it can read ext3), reiser3,
+	and xfs.  If you want to use a different type of filesystem for '/'
+	you will have to create a separate boot partition with a supported
+	filesystem, and use that to hold the kernels.</para>
+
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><emphasis role="bold">Requirements if starting from OSX</emphasis></term>
+      <listitem>
+	<para>Older versions of OSX (panther, leopard) can write to ext2
+	filesystems using version 1.3 of ext2fsx.  The upgrade to tiger broke
+	this, and version 1.4 of ext2fsx only supports reading.  Users of
+	current OSX will therefore have to find some other way of creating
+	a suitable filesystem and populating it, such as a Live CD or rescue CD.
+	</para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
+
+</appendix>

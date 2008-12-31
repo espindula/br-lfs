@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-chroot-before-chroot">
+  <?dbhtml filename="before-chroot.html"?>
+  <title>Before Entering the Chroot Environment</title>
+
+  <sect2 role="determining-ifneeded">
+    <title>Determining if steps need to be taken</title>
+
+    <para>Before we can enter the chroot we have to make sure that the system is
+    in the proper state. From this point on the <envar>${CLFS_TARGET}</envar>
+    enviornment variable will no longer exist, so it will have no bearing on the
+    rest of the book. From this point on, most packages will rely on
+    <command>config.guess</command> provided by
+    <xref linkend="ch-system-automake"/>. Packages that do not use autotools
+    either do not care about the target triplet, or they have their own means
+    of determining it's value.</para>
+
+    <para>In both cases, The information about the host cpu used to determine
+    the target triplet is gathered from the same place,
+    <command>uname -m</command>. Executing this command outside of the chroot
+    aswell as inside the chroot will have the exact same output.</para>
+
+   <para>If you're unsure if you're host and target have the same target
+    triplet, you can use this test to determine what the hosts target triplet
+    is and if you need to take any steps to ensure that you don't build for the
+    wrong architecture. Extract the <xref linkend="ch-system-automake"/> tarball
+    and <command>cd</command> into the created directory. Then execute the
+    following to see what they detected target triplet is by
+    <command>config.guess</command>.</para>
+
+<screen><userinput>lib/config.guess</userinput></screen>
+
+    <para>If the output of that command does not equal what is in
+    <envar>${CLFS_TARGET}</envar> then you need to read on. If it does then you
+    can safely continue onto <xref linkend="ch-chroot-chroot"/>.</para>
+
+  </sect2>
+
+  <sect2 role="using-setarch">
+    <title>Using Setarch</title>
+
+    <para>If your host has a tool called <command>setarch</command> this may
+    solve your problems. The reason for saying may is because on a architecture
+    such as x86_64, using <command>setarch linux32 uname -m</command> will only
+    ever output i686. It is not possible to get an output of i486 or i586.</para>
+
+    <para>To test if setarch does everything you need it to, execute the
+    following command from inside of the <xref linkend="ch-system-automake"/>
+    directory:</para>
+
+<screen><userinput>setarch linux32 lib/config.guess</userinput></screen>
+
+    <para>If the output of the command above equals what is in
+    <envar>${CLFS_TARGET}</envar> then you have a viable solution. You can
+    wrap the chroot command on the next page with
+    <command>setarch linux32</command>. It will look like the following:</para>
+
+<screen><userinput>setarch linux32 chroot "${CLFS}" /tools/bin/env -i \
+    HOME=/root TERM="${TERM}" PS1='\u:\w\$ ' \
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin \
+    /tools/bin/bash --login +h</userinput></screen>
+
+    <para>If setarch works for you then you can safely continue onto
+    <xref linkend="ch-chroot-chroot"/>. If not, there is one more option
+    covered in this book.</para>
+
+  </sect2>
+
+  <sect2 role="using-uname_hack">
+    <title>Using a Uname Hack</title>
+
+    <para os="uua">The Uname Hack is a kernel module that modifies the output of
+    <command>uname -m</command> by directly changing the value of the
+    detected machine type. The kernel module will save the original value
+    and restore it when the module is unloaded.</para>
+
+    <variablelist os="uub" role="materials">
+      <varlistentry>
+        <term>Uname Hack (&uname_hack-version;) - &uname_hack-size;:</term>
+
+        <listitem>
+          <para>Home page: <ulink url="&uname_hack-home;"/></para>
+          <para>Download: <ulink url="&uname_hack-url;"/></para>
+          <para>MD5 sum: <literal>&uname_hack-md5;</literal></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para os="uuc">Extract the tarball and <command>cd</command> into the
+    created directory. To build the Uname Hack you must have the kernel sources
+    for you currently running kernel available. Build the Uname Hack with the
+    following or similar command:</para>
+
+<screen os="uud"><userinput>make uname_hack_fake_machine=i486</userinput></screen>
+
+    <variablelist os="uue">
+      <title>The meaning of the make and install options:</title>
+
+      <varlistentry os="uue1">
+        <term><parameter>uname_hack_fake_machine=i486</parameter></term>
+        <listitem>
+          <para>This parameter sets the value that the uts machine type will be
+          changed to. Alternativley this could be set to i586 or i686.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para os="uuf">In the top level directory of the Uname Hack pacakage you
+    should see a file named uname_hack.ko. As soon as that module is loaded
+    into the running kernel the output of <command>uname -m</command> will be
+    affected immediately system-wide. Load the kernel module with the following
+    command:</para>
+
+<screen os="uug"><userinput>insmod uname_hack.ko</userinput></screen>
+
+    <para os="uuh">To test if the Uname Hack is working properly, execute the
+    following command from inside of the <xref linkend="ch-system-automake"/>
+    directory:</para>
+
+<screen os="uui"><userinput>lib/config.guess</userinput></screen>
+
+    <para os="uuj">The output of the above command should be the same as the
+    <envar>${CLFS_TARGET}</envar> enviornment variable. If this is not the
+    case, You can try and get help on the CLFS Support Mailing List or the
+    IRC Channel. See <xref linkend="ch-intro-askforhelp"/> for more
+    information.</para>
+
+  </sect2>
+
+</sect1>

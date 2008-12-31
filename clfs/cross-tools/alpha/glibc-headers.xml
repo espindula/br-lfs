@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-cross-tools-glibc-headers" role="wrap">
+  <?dbhtml filename="glibc-headers.html"?>
+
+  <title>Glibc-&glibc-version; Headers</title>
+
+  <indexterm zone="ch-cross-tools-glibc-headers">
+    <primary sortas="a-Glibc">Glibc</primary>
+    <secondary>cross tools, headers</secondary>
+  </indexterm>
+
+  <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+  href="../../final-system/common/glibc.xml"
+  xpointer="xpointer(//*[@role='package'])"/>
+
+  <sect2 role="installation">
+    <title>Installation of Glibc Headers</title>
+
+    <para os="s1">The following sed removes a dependency of gcc 3.4.x from
+    the glibc we are using in cross-lfs. The reason we are changing it is
+    because this only installs the headers, no compiling takes place. In the
+    next Glibc installation, we use the GCC that's built right after this section:</para>
+
+<screen os="s2"><userinput>cp -v configure{,.orig}
+sed -e 's/3.4/3.[0-9]/g' configure.orig > configure</userinput></screen>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../../final-system/common/glibc.xml"
+    xpointer="xpointer(//*[@os='e'])"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../../final-system/common/glibc.xml"
+    xpointer="xpointer(//*[@os='f'])"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../common/glibc.xml"
+    xpointer="xpointer(//*[@os='dd'])"/>
+
+<screen os="de"><userinput>echo "libc_cv_forced_unwind=yes" &gt; config.cache
+echo "libc_cv_c_cleanup=yes" &gt;&gt; config.cache
+echo "libc_cv_mlong_double_128=yes" &gt;&gt; config.cache
+echo "libc_cv_alpha_tls=yes" &gt;&gt; config.cache</userinput></screen>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../../final-system/common/glibc.xml"
+    xpointer="xpointer(//*[@os='g'])"/>
+
+<screen os="s3"><userinput>CC=gcc ../glibc-&glibc-version;/configure --prefix=/tools \
+   --host=${CLFS_TARGET} --build=${CLFS_HOST} \
+   --disable-sanity-checks --enable-kernel=2.6.0 \
+   --with-headers=/tools/include --cache-file=config.cache \
+   --with-binutils=/cross-tools/${CLFS_TARGET}/bin</userinput></screen>
+
+    <note os="e1">
+      <para><emphasis>Any</emphasis> error message you see about nptl at this point
+      can safely be ignored.</para>
+   </note>
+
+    <variablelist os="ca">
+       <title>The meaning of the configure options:</title>
+
+          <varlistentry os="ca1">
+             <term><parameter>CC=gcc</parameter></term>
+             <listitem>
+                <para>Tells Glibc to use the host's GCC compiler.</para>
+             </listitem>
+          </varlistentry>
+
+         <varlistentry os="ca2">
+            <term><parameter>--prefix=/tools</parameter></term>
+            <listitem>
+               <para>This tells the configure script to prepare to install the
+ 	          package in the <filename class="directory">/tools</filename>
+ 	          directory.</para>
+             </listitem>
+         </varlistentry>
+
+         <varlistentry os="ca3">
+            <term><parameter>--build=${CLFS_HOST}</parameter></term>
+            <listitem>
+               <para>When used with --host, this creates a cross-architecture
+                  executable that creates files for ${CLFS_TARGET} but runs on ${CLFS_HOST}.</para>
+            </listitem>
+        </varlistentry>
+
+        <varlistentry os="ca4">
+           <term><parameter>--host=${CLFS_TARGET}</parameter></term>
+           <listitem>
+               <para>When used with --build, this creates a cross-architecture
+                  executable that creates files for ${CLFS_TARGET} but runs on ${CLFS_HOST}.</para>
+           </listitem>
+        </varlistentry>
+
+       <varlistentry os="ca5">
+          <term><parameter>--disable-sanity-checks</parameter></term>
+          <listitem>
+             <para>This switch disables any checks that are in place.</para>
+           </listitem>
+       </varlistentry>
+
+       <varlistentry os="ca6">
+            <term><parameter>--enable-kernel=2.6.0</parameter></term>
+            <listitem>
+               <para>This tells Glibc to compile the library with support
+               for 2.6.x Linux kernels.</para>
+            </listitem>
+       </varlistentry>
+
+       <varlistentry os="ca7">
+           <term><parameter>--with-headers=/tools/include</parameter></term>
+           <listitem>
+              <para>This tells Glibc to compile itself against the headers
+              recently installed to the <filename class="directory">/tools</filename>
+              directory, so that it knows exactly what features the kernel has
+              and can optimize itself accordingly.</para>
+           </listitem>
+       </varlistentry>
+
+       <varlistentry os="ca8">
+           <term><parameter>--with-binutils=/cross-tools/${CLFS_TARGET}/bin</parameter></term>
+           <listitem>
+              <para>This tells Glibc to use the Binutils for our specific target architecture.</para>
+            </listitem>
+       </varlistentry>
+
+       </variablelist>
+
+   <para os="cb">Now, install the headers:</para>
+
+<screen os="cd"><userinput>make install-headers</userinput></screen>
+
+   <para os="ce">Some files aren't installed by the above command, so
+    we will copy the additional header files we need.</para>
+
+   <para os="cf">First we will copy a common file over to <filename
+   class="directory">/tools/include</filename>:</para>
+
+<screen os="cg"><userinput>install -dv /tools/include/bits
+cp -v bits/stdio_lim.h /tools/include/bits</userinput></screen>
+
+   <para os="ch">Now we will create a blank stub file:</para>
+
+<screen os="ci"><userinput>touch /tools/include/gnu/stubs.h</userinput></screen>
+
+   <para os="cj">Another header is needed for NPTL:</para>
+
+<screen><userinput>cp -v ../glibc-&glibc-version;/nptl/sysdeps/unix/sysv/linux/alpha/bits/pthreadtypes.h \
+    /tools/include/bits/</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Details on this package are located in <xref
+    linkend="contents-glibc" role="."/></para>
+
+  </sect2>
+
+</sect1>

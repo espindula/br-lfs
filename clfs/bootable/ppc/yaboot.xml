@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-bootable-yaboot" arch="ppc">
+  <?dbhtml filename="yaboot.html"?>
+
+  <title>Making the CLFS System Bootable</title>
+
+  <indexterm zone="ch-bootable-yaboot">
+    <primary sortas="a-Yaboot">Yaboot</primary>
+  <secondary>configuring</secondary></indexterm>
+
+  <para os="a">Your shiny new CLFS system is almost complete. One of the last
+  things to do is to ensure that the system can be properly booted. The
+  instructions below apply only to NewWorld Macintoshes.</para>
+
+  <para os="b">Boot loading can be a complex area, so a few cautionary words
+  are in order. Be familiar with the current boot loader and any other
+  operating systems present on the hard drive(s) that need to be bootable.
+  Make sure that an emergency CD is ready to <quote>rescue</quote> the
+  computer if it becomes un-bootable.  It is also a good idea to enable booting
+  from Open Firmware in case things go really wrong.</para>
+
+  <para os="c">Earlier, we compiled and installed the yaboot boot loader software
+  in preparation for this step. The procedure involves writing the bootloader
+  to a bootstrap partition and blessing it so that Open Firmware will boot from
+  it.  This is all handled by <command>ybin</command> the yaboot installer.</para>
+
+  <para os="d">Ybin writes an optional 'OS selector' menu into Open Firmware,
+  then writes yaboot and yaboot.conf to the bootstrap partition, blesses this,
+  and updates the boot device recorded in nvram. When booted, the OF provides
+  the initial menu to choose between linux, boot from CD, and e.g. OSX
+  (depending on what was in yaboot.conf). If you boot to 'linux', yaboot is
+  executed and lets you select which kernel to use.</para>
+
+  <para os="e">Images (kernels) are specified, together with any necessary path,
+  in yaboot.conf - the details are incorporated into the bootloader, but no attempt
+  is made to access or validate the paths until they are selected.  There are many
+  possible options that can be specified in yaboot.conf, see the man page for the
+  details.  Most people will be able to specify device=hd: (for a single hard disk),
+  but if you have multiple disks, or if you wish to be pedantic, you can specify the
+  full OF path to the device, obtained by running <command>ofpath /dev/hdX</command>
+  .</para>
+
+  <para os="h">Using the above information, determine the appropriate designators
+  for the bootstrap partition and the root partition.  For the following example,
+  it is assumed that the bootstrap partition is <filename class="partition">hda2
+  </filename> and the root partition is <filename class="partition">hda7</filename>
+  .  We will also assume that you wish to be able to boot an OSX installation on
+  <filename class="partition">hda4</filename>.  Change these items as necessary
+  for your machine.</para>
+
+  <para os="i">If your machine has a SATA disk, specify the partitions using
+  <filename class="devicefile">/dev/sda7</filename> and so forth in the usual
+  way.  At least some of the distros specify a full OF path to the 'device' and
+  to the image(s), such as
+  <parameter>device=/ht@0,f2000000/pci@3/k2-sata-root@c/k2-sata@0/disk@0:</parameter>
+  for the disk, and
+  <parameter>image=/ht@0,f2000000/pci@3/k2-sata-root@c/k2-sata@0/disk@0:9,/boot/clfskernel-&linux-version;</parameter>
+  which definitely works.</para>
+
+  <para os="k">Create a <quote>yaboot.conf</quote> file defining yaboot's boot
+  menu:</para>
+
+<screen os="l" role="nodump"><?dbfo keep-together="auto"?><userinput>cat &gt; /etc/yaboot.conf &lt;&lt; "EOF"
+<literal># Begin /etc/yaboot.conf
+
+# By default, yaboot will boot the first menu entry.
+
+# Allow 10 seconds before booting the default.
+# this will also apply to the first-stage os selector
+timeout=100
+
+# These variables are global
+# first, where to put the bootstrap partition
+boot=/dev/hda2
+
+# Which disk to use
+device=hd:
+
+# Default partition for the kernel images
+partition=7
+
+# default root partition
+root=/dev/hda7
+
+# where ybin is to find yaboot and ofboot
+install=/usr/lib/yaboot/yaboot
+magicboot=/usr/lib/yaboot/ofboot
+
+# allow the initial menu to offer CD as an option
+enablecdboot
+
+# allow the initial menu to offer booting from Open Firmware
+enableofboot
+
+# allow the initial menu to boot from mac osx
+macosx=/dev/hda4
+
+# white on black is boring!
+# note  the spellings : 'fgcolor' but 'light'
+# in this context, light means 'without high intensity'
+fgcolor=light-green
+
+# The first entry is for CLFS.
+# For all images, the pathname is relative to the filesystem
+# on which they are situated and can include at most one
+# directory
+image=/boot/clfskernel-&linux-version;
+    label=&version;
+    read-only</literal>
+EOF</userinput></screen>
+
+
+  <para os="n">Add an entry for the host distribution, if you have one. It might
+  look something like this if the kernel and initrd are in the host's '/'
+  directory on <filename class="partition">hda6</filename>:</para>
+
+<screen os="o" role="nodump"><userinput>cat &gt;&gt; /etc/yaboot.conf &lt;&lt; "EOF"
+<literal>title Debian
+image=/pci@f4000000/ata-6d/disk@0:6,/vmlinux
+    label=Debian
+    initrd=/pci@f4000000/ata-6d/disk@0:6,/initrd.gz
+    initrd-size=10000
+    append="root=/dev/hda7"
+    read-only</literal>
+EOF</userinput></screen>
+
+  <warning os="r">
+    <para>The following command will update the bootstrap partition and the
+    boot variable in Open Firmware. Do not run the command if this is not
+    desired.</para>
+  </warning>
+
+<screen os="s" role="nodump"><userinput>ybin</userinput></screen>
+
+  <para os="t">Alternatively, if the bootstrap partition has not already been
+  initialized, perhaps because you are using a Live CD, you will need to use
+  a different command to install the bootloader for the first time:</para>
+
+<screen os="u" role="nodump"><userinput>mkofboot</userinput></screen>
+
+</sect1>

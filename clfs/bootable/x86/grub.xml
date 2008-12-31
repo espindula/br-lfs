@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-bootable-grub">
+  <?dbhtml filename="grub.html"?>
+
+  <title>Making the CLFS System Bootable</title>
+
+  <indexterm zone="ch-bootable-grub">
+    <primary sortas="a-GRUB">GRUB</primary>
+    <secondary>configuring</secondary>
+  </indexterm>
+
+  <para os="a">Your shiny new CLFS system is almost complete. One of the last
+  things to do is to ensure that the system can be properly booted. The
+  instructions below apply only to computers of IA-32 architecture,
+  meaning mainstream PCs. Information on <quote>boot loading</quote> for
+  other architectures should be available in the usual resource-specific
+  locations for those architectures.</para>
+
+  <para os="b">Boot loading can be a complex area, so a few cautionary words
+  are in order. Be familiar with the current boot loader and any other
+  operating systems present on the hard drive(s) that need to be bootable.
+  Make sure that an emergency boot disk is ready to <quote>rescue</quote>
+  the computer if the computer becomes unusable (un-bootable).</para>
+
+  <para os="c">Earlier, we compiled and installed the GRUB boot loader software
+  in preparation for this step. The procedure involves writing some special
+  GRUB files to specific locations on the hard drive. We highly recommend
+  creating a GRUB boot floppy diskette as a backup. Insert a blank floppy
+  diskette and run the following commands:</para>
+
+<screen os="d"><userinput>dd if=/boot/grub/stage1 of=/dev/fd0 bs=512 count=1
+dd if=/boot/grub/stage2 of=/dev/fd0 bs=512 seek=1</userinput></screen>
+
+  <para os="e">Remove the diskette and store it somewhere safe. Now, run the
+  <command>grub</command> shell:</para>
+
+<screen os="f"><userinput>grub</userinput></screen>
+
+  <para os="g">GRUB uses its own naming structure for drives and partitions in
+  the form of <emphasis>(hdn,m)</emphasis>, where <emphasis>n</emphasis>
+  is the hard drive number and <emphasis>m</emphasis> is the partition
+  number, both starting from zero. For example, partition <filename
+  class="partition">hda1</filename> is <emphasis>(hd0,0)</emphasis> to
+  GRUB and <filename class="partition">hdb3</filename> is
+  <emphasis>(hd1,2)</emphasis>. In contrast to Linux, GRUB does not
+  consider CD-ROM drives to be hard drives. For example, if using a CD
+  on <filename class="partition">hdb</filename> and a second hard drive
+  on <filename class="partition">hdc</filename>, that second hard drive
+  would still be <emphasis>(hd1)</emphasis>.</para>
+
+  <para os="h">Using the above information, determine the appropriate designator
+  for the root partition (or boot partition, if a separate one is used).
+  For the following example, it is assumed that the root (or separate boot)
+  partition is <filename class="partition">hda4</filename>.</para>
+
+  <para os="i">Tell GRUB where to search for its <filename>stage{1,2}</filename>
+  files. The Tab key can be used everywhere to make GRUB show the
+  alternatives:</para>
+
+<screen os="j"><userinput>root (hd0,3)</userinput></screen>
+
+  <warning os="k">
+    <para>The following command will overwrite the current boot loader.
+    Do not run the command if this is not desired, for example, if using
+    a third party boot manager to manage the Master Boot Record (MBR).
+    In this scenario, it would make more sense to install GRUB into the
+    <quote>boot sector</quote> of the CLFS partition. In this case, this
+    next command would become <userinput>setup (hd0,3)</userinput>.</para>
+  </warning>
+
+  <para os="l">Tell GRUB to install itself into the MBR of
+  <filename class="partition">hda</filename>:</para>
+
+<screen os="m"><userinput>setup (hd0)</userinput></screen>
+
+  <para os="n">If all went well, GRUB will have reported finding its files in
+  <filename class="directory">/boot/grub</filename>. That's all there is
+  to it. Quit the <command>grub</command> shell:</para>
+
+<screen os="o"><userinput>quit</userinput></screen>
+
+  <para os="p">Create a <quote>menu list</quote> file defining GRUB's boot
+  menu:</para>
+
+<screen><userinput>cat &gt; /boot/grub/menu.lst &lt;&lt; "EOF"
+<literal># Begin /boot/grub/menu.lst
+
+# By default boot the first menu entry.
+default 0
+
+# Allow 30 seconds before booting the default.
+timeout 30
+
+# Use prettier colors.
+color green/black light-green/black
+
+# The first entry is for CLFS.
+title CLFS &version;
+root (hd0,3)
+kernel /boot/clfskernel-&linux-version; root=/dev/hda4</literal>
+EOF</userinput></screen>
+
+
+  <para os="q">Add an entry for the host distribution if desired. It might look
+  like this:</para>
+
+<screen os="r"><userinput>cat &gt;&gt; /boot/grub/menu.lst &lt;&lt; "EOF"
+<literal>title Red Hat
+root (hd0,2)
+kernel /boot/kernel-2.6.5 root=/dev/hda3
+initrd /boot/initrd-2.6.5</literal>
+EOF</userinput></screen>
+
+  <para os="s">If dual-booting Windows, the following entry will allow
+  booting it:</para>
+
+<screen os="t"><userinput>cat &gt;&gt; /boot/grub/menu.lst &lt;&lt; "EOF"
+<literal>title Windows
+rootnoverify (hd0,0)
+chainloader +1</literal>
+EOF</userinput></screen>
+
+  <para os="u">If <command>info grub</command> does not provide all necessary
+  material, additional information regarding GRUB is located on its
+  website at: <ulink url="http://www.gnu.org/software/grub/"/>.</para>
+
+  <para os="v">The FHS stipulates that the bootloader's configuration file should
+  be symlinked to <filename class="symlink">/etc/{Bootloader Name}</filename>.
+  To satisfy this requirement for GRUB, issue the following command:</para>
+
+<screen os="w"><userinput>mkdir -v /etc/grub &amp;&amp;
+ln -sv /boot/grub/menu.lst /etc/grub</userinput></screen>
+
+</sect1>

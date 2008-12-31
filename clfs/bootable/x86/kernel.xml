@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-bootable-kernel" role="wrap">
+  <?dbhtml filename="kernel.html"?>
+
+  <title>Linux-&linux-version;</title>
+
+  <indexterm zone="ch-bootable-kernel">
+    <primary sortas="a-Linux">Linux</primary>
+  </indexterm>
+
+  <sect2 role="package"><title/>
+    <para>The Linux package contains the Linux kernel.</para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation of the kernel</title>
+
+    <para os="p1">A number of vulnerabilities have come to light after the
+    stable kernel team stopped supporting 2.6.24.  The following patch addresses
+    them:</para>
+
+<screen os="p2"><userinput>patch -Np1 -i ../&linux-security-patch;</userinput></screen>
+
+    <para os="a">Building the kernel involves a few steps&mdash;configuration,
+    compilation, and installation. Read the <filename>README</filename>
+    file in the kernel source tree for alternative methods to the way this
+    book configures the kernel.</para>
+
+    <para os="b">Prepare for compilation by running the following command:</para>
+
+<screen os="c"><userinput>make mrproper</userinput></screen>
+
+    <para os="d">This ensures that the kernel tree is absolutely clean. The
+    kernel team recommends that this command be issued prior to each
+    kernel compilation. Do not rely on the source tree being clean after
+    un-tarring.</para>
+
+    <para os="h">Configure the kernel via a menu-driven interface.
+    Please note that the udev bootscript requires "rtc" and "tmpfs" to be
+    enabled and built into the kernel, not as modules. CBLFS has
+    some information regarding particular kernel configuration requirements of
+    packages outside of CLFS at <ulink
+    url="&cblfs-root;"/>:</para>
+
+<screen os="i"><userinput>make menuconfig</userinput></screen>
+
+    <para os="j">Alternatively, <command>make oldconfig</command> may be more
+    appropriate in some situations. See the <filename>README</filename>
+    file for more information.</para>
+
+    <para os="k">If desired, skip kernel configuration by copying the kernel
+    config file, <filename>.config</filename>, from the host system
+    (assuming it is available) to the root directory of the unpacked kernel
+    sources. However, we do not recommend this option. It is often better
+    to explore all the configuration menus and create the kernel configuration
+    from scratch.</para>
+
+    <para os="m">Compile the kernel image and modules:</para>
+
+<screen os="n"><userinput>make</userinput></screen>
+
+    <para os="o">If using kernel modules, an
+    <filename>/etc/modprobe.conf</filename> file may be needed.
+    Information pertaining to modules and kernel configuration is
+    located in the kernel documentation in the <filename
+    class="directory">Documentation</filename> directory of the kernel
+    sources tree. Also, <filename>modprobe.conf(5)</filename> may
+    be of interest.</para>
+
+    <para os="p">Be very careful when reading other documentation relating to
+    kernel modules because it usually applies to 2.4.x kernels only. As
+    far as we know, kernel configuration issues specific to Hotplug and
+    Udev are not documented. The problem is that Udev will create a device
+    node only if Hotplug or a user-written script inserts the corresponding
+    module into the kernel, and not all modules are detectable by Hotplug.
+    Note that statements like the one below in the
+    <filename>/etc/modprobe.conf</filename> file do not work with Udev:</para>
+
+<screen os="q"><literal>alias char-major-XXX some-module</literal></screen>
+
+    <para os="r">Because of the complications with Udev and modules,
+    we strongly recommend starting with a completely non-modular kernel
+    configuration, especially if this is the first time using Udev.</para>
+
+    <para os="s">Install the modules, if the kernel configuration uses
+    them:</para>
+
+<screen os="t"><userinput>make modules_install</userinput></screen>
+
+    <para os="u">After kernel compilation is complete, additional steps are
+    required to complete the installation. Some files need to be copied to
+    the <filename class="directory">/boot</filename> directory.</para>
+
+    <para os="v">Issue the following command to install the kernel:</para>
+
+<screen><userinput>cp -v arch/i386/boot/bzImage /boot/clfskernel-&linux-version;</userinput></screen>
+
+    <para os="w"><filename>System.map</filename> is a symbol file for the kernel.
+    It maps the function entry points of every function in the kernel API,
+    as well as the addresses of the kernel data structures for the running
+    kernel. Issue the following command to install the map file:</para>
+
+<screen os="w1"><userinput>cp -v System.map /boot/System.map-&linux-version;</userinput></screen>
+
+    <para os="x">The kernel configuration file <filename>.config</filename>
+    produced by the <command>make menuconfig</command> step above contains
+    all the configuration selections for the kernel that was just compiled.
+    It is a good idea to keep this file for future reference:</para>
+
+<screen os="x1"><userinput>cp -v .config /boot/config-&linux-version;</userinput></screen>
+
+    <para os="y">It is important to note that the files in the kernel source
+    directory are not owned by <systemitem class="username">root</systemitem>.
+    Whenever a package is unpacked as user <systemitem
+    class="username">root</systemitem> (like we do inside the final-system
+    build environment), the files have the user and group IDs of whatever
+    they were on the packager's computer. This is usually not a problem
+    for any other package to be installed because the source tree is
+    removed after the installation. However, the Linux source tree is
+    often retained for a long time. Because of this, there is a chance
+    that whatever user ID the packager used will be assigned to somebody
+    on the machine. That person would then have write access to the kernel
+    source.</para>
+
+    <para os="y1">If the kernel source tree is going to retained, run
+    <command>chown -R 0:0</command> on the <filename
+    class="directory">linux-&linux-version;</filename> directory to
+    ensure all files are owned by user <systemitem
+    class="username">root</systemitem>.</para>
+
+    <warning os="z">
+      <para>Some kernel documentation recommends creating a symlink from
+      <filename class="symlink">/usr/src/linux</filename> pointing to the
+      kernel source directory. This is specific to kernels prior to the
+      2.6 series and <emphasis>must not</emphasis> be created on a CLFS
+      system as it can cause problems for packages you may wish to build
+      once your base CLFS system is complete.</para>
+
+      <para>Also, the headers in the system's <filename
+      class="directory">include</filename> directory should
+      <emphasis>always</emphasis> be the ones against which Glibc was
+      compiled (from the Linux-Headers package) and should
+      <emphasis>never</emphasis> be replaced by the kernel headers.</para>
+    </warning>
+
+  </sect2>
+
+  <sect2 id="contents-kernel" role="content">
+    <title>Contents of Linux</title>
+
+    <segmentedlist>
+      <segtitle>Installed files</segtitle>
+
+      <seglistitem>
+        <seg>config-[linux-version], clfskernel-[linux-version],
+        and System.map-[linux-version]</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="config">
+        <term><filename>config-[linux-version]</filename></term>
+        <listitem>
+          <para>Contains all the configuration selections for the kernel</para>
+          <indexterm zone="ch-bootable-kernel config">
+            <primary sortas="e-/boot/config">/boot/config-[linux-version]</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="clfskernel">
+        <term><filename>clfskernel-[linux-version]</filename></term>
+        <listitem>
+          <para>The engine of the Linux system. When turning on the
+          computer, the kernel is the first part of the operating system
+          that gets loaded. It detects and initializes all components of
+          the computer's hardware, then makes these components available
+          as a tree of files to the software and turns a single CPU into
+          a multitasking machine capable of running scores of programs
+          seemingly at the same time.</para>
+          <indexterm zone="ch-bootable-kernel clfskernel">
+            <primary sortas="b-clfskernel">clfskernel-[linux-version]</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="System.map">
+        <term><filename>System.map-[linux-version]</filename></term>
+        <listitem>
+          <para>A list of addresses and symbols; it maps the entry points
+          and addresses of all the functions and data structures in the
+          kernel</para>
+          <indexterm zone="ch-bootable-kernel System.map">
+            <primary sortas="e-/boot/System.map">/boot/System.map-[linux-version]</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

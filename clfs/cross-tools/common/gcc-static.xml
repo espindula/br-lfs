@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-cross-tools-gcc-static" role="wrap">
+  <?dbhtml filename="gcc-static.html"?>
+
+  <title>GCC-&gcc-version; croisé - Statique</title>
+
+  <indexterm zone="ch-cross-tools-gcc-static">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>cross tools, static</secondary>
+  </indexterm>
+
+  <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+  href="../../final-system/common/gcc.xml"
+  xpointer="xpointer(//*[@role='package'])"/>
+
+  <sect2 role="installation">
+    <title>Installation du compilateur  GCCcroisé avec libgcc statique et sans Threads</title>
+
+<!--
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../../final-system/common/gcc.xml"
+    xpointer="xpointer(//*[@os='p1'])"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../../final-system/common/gcc.xml"
+    xpointer="xpointer(//*[@os='p2'])"/>
+-->
+
+    <para os="aa">Faites deux ajustements essentiels pour le fichier specs de GCC pour vous assurer que GCC utilise notre environnement de
+    construction&nbsp;:</para>
+
+<screen os="ab"><userinput>patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
+
+    <para os="ac">Pour être sûr que les deux outils utilise la bonne syntaxe, appliquez le correctif suivant&nbsp;:</para>
+
+<screen os="ad"><userinput>patch -Np1 -i ../&gcc-posix-patch;</userinput></screen>
+
+    <para os="ae">Le correctif suivant assure que <command>gcc</command> ne cherche pas
+    <filename class="libraryfile">libgcc_s.so</filename> dans  le répertoire
+        <filename class="directory">/usr</filename> lors de la compilation croisée&nbsp;:</para>
+
+<screen os="af"><userinput>patch -Np1 -i ../&gcc-cross_search-patch;</userinput></screen>
+
+    <para os="ag">Modifiez le spec StartFile Spec pour pointer  vers le bon emplacement de la bibliothèque&nbsp;:</para>
+
+<screen os="ah"><userinput>echo "
+#undef STARTFILE_PREFIX_SPEC
+#define STARTFILE_PREFIX_SPEC \"/tools/lib/\"" &gt;&gt; gcc/config/linux.h</userinput></screen>
+
+    <para os="ai">Maintenant, ´modifiez le chemin de recherche include par défaut du préprocesseur c de GCC pour n'utiliser que
+    <filename class="directory">/tools</filename>&nbsp;:</para>
+
+<screen os="aj"><userinput>cp -v gcc/Makefile.in{,.orig}
+sed -e "s@\(^CROSS_SYSTEM_HEADER_DIR =\).*@\1 /tools/include@g" \
+    gcc/Makefile.in.orig > gcc/Makefile.in</userinput></screen>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../../final-system/common/gcc.xml"
+    xpointer="xpointer(//*[@os='f'])"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../../final-system/common/gcc.xml"
+    xpointer="xpointer(//*[@os='g'])"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    href="../../final-system/common/gcc.xml"
+    xpointer="xpointer(//*[@os='h'])"/>
+
+<screen os="al"><userinput>../gcc-&gcc-version;/configure --prefix=/cross-tools \
+    --host=${CLFS_HOST} --target=${CLFS_TARGET} --disable-multilib \
+    --with-local-prefix=/tools --disable-nls --disable-shared \
+    --disable-threads --enable-languages=c</userinput></screen>
+
+    <variablelist os="am">
+      <title>Voici la signification des options de configure&nbsp;:</title>
+
+     <varlistentry>
+        <term><parameter>--with-local-prefix=/tools</parameter></term>
+        <listitem>
+          <para>Le but de ce paramètre est de supprimer 
+          <filename class="directory">/usr/local/include</filename> du chemin de recherche include de
+          <command>gcc</command>. Ce n'est pas  absolument essentiel, néanmoins  cela aide à cinimiser l'influence du système hôte.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-shared</parameter></term>
+        <listitem>
+          <para>Désactive la création des bibliothèques partagées.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-threads</parameter></term>
+        <listitem>
+          <para>Cela empêchera GCC de chercher les fichiers include multi-thread, vu qu'ils n'ont pas encore  été créés pour cette 
+          architecture. GCC sera capable de trouver les informations multi-thread après que les en-têtes Glibc ont été créés.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-languages=c</parameter></term>
+        <listitem>
+          <para>Cette option nous assure que seul le compilateur C sera construit.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para os="an">Poursuivez en comfilant le paquet&nbsp;:</para>
+
+<screen os="ao"><userinput>make all-gcc</userinput></screen>
+
+    <para os="ap">Installez le paquet&nbsp;:</para>
+
+<screen os="aq"><userinput>make install-gcc</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont disponibles dans <xref
+    linkend="contents-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>
