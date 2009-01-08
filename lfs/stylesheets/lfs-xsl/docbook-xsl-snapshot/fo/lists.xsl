@@ -4,7 +4,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: lists.xsl,v 1.2 2008-07-14 18:28:28 texou Exp $
+     $Id: lists.xsl,v 1.3 2009-01-08 22:58:12 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -577,7 +577,7 @@
   <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
 
   <fo:block id="{$id}" xsl:use-attribute-sets="list.item.spacing"  
-      keep-together.within-column="always" 
+      keep-together.within-column="auto" 
       keep-with-next.within-column="always">
     <xsl:apply-templates select="term"/>
   </fo:block>

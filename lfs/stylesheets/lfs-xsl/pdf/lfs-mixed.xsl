@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
 <!--
-$LastChangedBy: manuel $
-$Date: 2008-07-14 18:28:31 $
+$LastChangedBy: bdubbs $
+$Date: 2009-01-08 22:58:12 $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -99,9 +99,32 @@ $Date: 2008-07-14 18:28:31 $
           <xsl:when test="$keep.together != ''">
             <xsl:value-of select="$keep.together"/>
           </xsl:when>
+
+<!-- The following section has been modified by Martin Miehe. Page breaks
+     should be allowed within the long script listings in the appendices.
+
           <xsl:otherwise>always</xsl:otherwise>
+-->
+          <xsl:otherwise>
+            <xsl:choose>
+              <xsl:when test="ancestor::appendix">auto</xsl:when>
+              <xsl:otherwise>always</xsl:otherwise>
+            </xsl:choose>
+          </xsl:otherwise>
+<!-- End of modification -->
+
         </xsl:choose>
       </xsl:attribute>
+
+<!-- The following lines were inserted by Martin Miehe. Scripts and rules 
+     in the appendices should have a smaller font-size so that at least 
+     80 characters fit to one line. -->
+
+      <xsl:if test="ancestor::appendix">    <!-- name(/) != appendix" -->
+        <xsl:attribute name="font-size">10pt</xsl:attribute>
+      </xsl:if>
+<!-- End of insertion. -->
+
       <xsl:apply-imports/>
     </fo:block>
   </xsl:template>
