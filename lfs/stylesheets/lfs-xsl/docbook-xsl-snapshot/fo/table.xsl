@@ -13,7 +13,7 @@
 <xsl:include href="../common/table.xsl"/>
 
 <!-- ********************************************************************
-     $Id: table.xsl,v 1.3 2009-01-08 22:58:12 texou Exp $
+     $Id: table.xsl,v 1.4 2009-01-15 10:06:32 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -27,7 +27,7 @@
   <info>
     <title>Formatting Object Table Reference</title>
     <releaseinfo role="meta">
-      $Id: table.xsl,v 1.3 2009-01-08 22:58:12 texou Exp $
+      $Id: table.xsl,v 1.4 2009-01-15 10:06:32 texou Exp $
     </releaseinfo>
   </info>
   <partintro xml:id="partintro">
@@ -248,7 +248,7 @@
                  xsl:use-attribute-sets="table.cell.padding">
     <xsl:if test="$xep.extensions != 0">
       <!-- Suggested by RenderX to workaround a bug in their implementation -->
-      <xsl:attribute name="keep-together.within-column">auto</xsl:attribute>
+      <xsl:attribute name="keep-together.within-column">always</xsl:attribute>
     </xsl:if>
     <xsl:if test="$rowsep &gt; 0">
       <xsl:call-template name="border">
