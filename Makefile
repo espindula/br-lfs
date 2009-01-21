@@ -79,7 +79,7 @@ tmpdir:
 
 validxml: tmpdir
 	@echo "Processing bootscripts..."
-	$(Q)bash process-scripts.sh $(RENDERTMP)
+	$(Q)bash process-scripts.sh
 	@echo "Validating the book..."
 	$(Q)xmllint --nonet --noent --xinclude --postvalid \
 	  -o $(RENDERTMP)/lfs-full.xml index.xml
@@ -88,7 +88,7 @@ validxml: tmpdir
 
 maketar:
 	@echo "Making tarballs..."
-	$(Q)sh make-aux-files.sh $(RENDERTMP)
+	$(Q)sh make-aux-files.sh
 
 profile-html: validxml
 	@echo "Generating profiled XML for XHTML..."
