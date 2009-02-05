@@ -96,6 +96,28 @@ hr {
       </div>
       <div class="toc">
         <h3>
+          <xsl:text>Native Build</xsl:text>
+        </h3>
+	<ul>
+          <h3>
+             <xsl:text>Work in Progress.</xsl:text>
+          </h3>
+          <li>
+            <h4>
+              <a href="native">
+                <xsl:text>Native 32Bit</xsl:text>
+              </a>
+            </h4>
+          </li>
+          <li>
+            <h4>
+              <a href="native64">
+                <xsl:text>Native Multilib</xsl:text>
+              </a>
+            </h4>
+          </li>
+        </ul>
+        <h3>
           <xsl:text>32 Bit Builds</xsl:text>
         </h3>
         <ul>
@@ -116,7 +138,6 @@ hr {
               </a>
             </h4>
           </li>
-<!--
           <li>
             <h4>
               <a href="mips">
@@ -131,7 +152,6 @@ hr {
               </a>
             </h4>
           </li>
--->
 	</ul>
         <h3>
           <xsl:text>64 Bit Builds</xsl:text>
@@ -147,7 +167,6 @@ hr {
               </a>
             </h4>
           </li>
-<!--
           <li>
             <h4>
               <a href="mips64-64">
@@ -155,7 +174,6 @@ hr {
               </a>
             </h4>
           </li>
--->
           <li>
             <h4>
              <a href="sparc64-64">
@@ -163,7 +181,6 @@ hr {
              </a>
             </h4>
           </li>
-<!--
           <li>
             <h4>
              <a href="alpha">
@@ -171,7 +188,6 @@ hr {
              </a>
             </h4>
           </li>
--->
 	</ul>
         <h3>
           <xsl:text>Multilib Builds</xsl:text>
@@ -187,7 +203,6 @@ hr {
               </a>
             </h4>
           </li>
-<!--
           <li>
             <h4>
               <a href="mips64">
@@ -195,7 +210,6 @@ hr {
               </a>
             </h4>
           </li>
--->
           <li>
             <h4>
              <a href="sparc64">
@@ -222,19 +236,6 @@ hr {
     <h2 class="subtitle">
       <xsl:text>Version &version;</xsl:text>
     </h2>
-  </xsl:template>
-
-  <xsl:template match="authorgroup">
-    <h3 class="author">
-      <xsl:value-of select="author[1]/firstname"/>
-      <xsl:text> </xsl:text>
-      <xsl:value-of select="author[1]/surname"/>
-    </h3>
-    <h3 class="author">
-      <xsl:value-of select="author[2]/firstname"/>
-      <xsl:text> </xsl:text>
-      <xsl:value-of select="author[2]/surname"/>
-    </h3>
   </xsl:template>
 
   <xsl:template match="copyright">

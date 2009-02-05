@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
 <!--
-$LastChangedBy: manuel@linuxfromscratch.org $
-$Date: 2008-12-31 18:36:33 $
+$LastChangedBy: jim $
+$Date: 2009-02-05 20:06:49 $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -124,7 +124,7 @@ a:active { color: #6b77b1 ! important;}
   padding: 0 1em;
 }
 
-.book h1, .book .authorgroup, .book .copyright, .book .legalnotice .revhistory {
+.book h1, .book .copyright, .book .legalnotice .revhistory {
   background: #f5f6f7;
   margin: 0px auto;
   padding: .1em 1em;
