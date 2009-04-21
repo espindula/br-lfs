@@ -22,14 +22,6 @@
   <sect2 role="installation">
     <title>Installation du compilateur  GCCcroisé avec libgcc statique et sans Threads</title>
 
-    <xi:include xmlns:xi="~http://www.w3.org/2003/XInclude"
-    href="../../final-system/common/gcc.xml"
-    xpointer="xpointer(//*[@os='p1'])"/
-    <xi:include xmlns:xi="~http://www.w3.org/2003/XInclude"
-    href="../../final-system/common/gcc.xml"
-    xpointer="xpointer(//*[@os='p2'])"/>
-
-<!--
     <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
     href="../../final-system/common/gcc.xml"
     xpointer="xpointer(//*[@os='p1'])"/>
@@ -37,7 +29,6 @@
     <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
     href="../../final-system/common/gcc.xml"
     xpointer="xpointer(//*[@os='p2'])"/>
--->
 
     <para os="aa">Faites deux ajustements essentiels pour le fichier specs de GCC pour vous assurer que GCC utilise notre environnement de
     construction&nbsp;:</para>
@@ -48,24 +39,31 @@
 
 <screen os="ad"><userinput>patch -Np1 -i ../&gcc-posix-patch;</userinput></screen>
 
+ 
+    <para os="ag">Modifiez la spec StartFile et le Standard Include Dir afin que GCC regarde dans
+    <filename class="directory">/tools</filename>&nbsp;:</para>
+
+<screen os="ah"><userinput>echo -en '#undef STANDARD_INCLUDE_DIR\n#define STANDARD_INCLUDE_DIR "/tools/include/"\n\n' >> gcc/config/linux.h
+echo -en '\n#undef STANDARD_STARTFILE_PREFIX_1\n#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"\n' >> gcc/config/linux.h
+echo -en '\n#undef STANDARD_STARTFILE_PREFIX_2\n#define STANDARD_STARTFILE_PREFIX_2 ""\n' >> gcc/config/linux.h</userinput></screen>
+
     <para os="ae">Le correctif suivant assure que <command>gcc</command> ne cherche pas
     <filename class="libraryfile">libgcc_s.so</filename> dans  le répertoire
         <filename class="directory">/usr</filename> lors de la compilation croisée&nbsp;:</para>
 
 <screen os="af"><userinput>patch -Np1 -i ../&gcc-cross_search-patch;</userinput></screen>
 
-    <para os="ag">Modifiez le spec StartFile Spec pour pointer  vers le bon emplacement de la bibliothèque&nbsp;:</para>
-
-<screen os="ah"><userinput>echo "
-#undef STARTFILE_PREFIX_SPEC
-#define STARTFILE_PREFIX_SPEC \"/tools/lib/\"" &gt;&gt; gcc/config/linux.h</userinput></screen>
-
     <para os="ai">Maintenant, ´modifiez le chemin de recherche include par défaut du préprocesseur c de GCC pour n'utiliser que
     <filename class="directory">/tools</filename>&nbsp;:</para>
 
 <screen os="aj"><userinput>cp -v gcc/Makefile.in{,.orig}
-sed -e "s@\(^CROSS_SYSTEM_HEADER_DIR =\).*@\1 /tools/include@g" \
-    gcc/Makefile.in.orig > gcc/Makefile.in</userinput></screen>
+sed -e "s@\(^CROSS_SYSTEM_HEADER_DIR =\).*@\1 /tools/include at g" \
+     gcc/Makefile.in.orig &gt; gcc/Makefile.in</userinput></screen>
+
+    <para os="t1">Nous allons créer un faux limits.h pour que la construction n'utilise pas celui fourni par la distrib 
+    hôte&nbsp;:</para>
+
+<screen os="t2"><userinput>touch /tools/include/limits.h</userinput></screen>
 
     <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
     href="../../final-system/common/gcc.xml"
@@ -79,10 +77,14 @@ sed -e "s@\(^CROSS_SYSTEM_HEADER_DIR =\).*@\1 /tools/include@g" \
     href="../../final-system/common/gcc.xml"
     xpointer="xpointer(//*[@os='h'])"/>
 
-<screen os="al"><userinput>../gcc-&gcc-version;/configure --prefix=/cross-tools \
-    --host=${CLFS_HOST} --target=${CLFS_TARGET} --disable-multilib \
-    --with-local-prefix=/tools --disable-nls --disable-shared \
-    --disable-threads --enable-languages=c</userinput></screen>
+<screen os="al"><userinput>AR=ar LDFLAGS="-Wl,-rpath,/cross-tools/lib" \
+  ../gcc-&gcc-version;/configure --prefix=/cross-tools \
+  --build=${CLFS_HOST} --host=${CLFS_HOST} --target=${CLFS_TARGET} \
+  --with-sysroot=${CLFS} --with-local-prefix=/tools --disable-nls \
+  --disable-shared --with-mpfr=/cross-tools --with-gmp=/cross-tools \
+  --without-headers --with-newlib --disable-decimal-float \
+  --disable-libgomp --disable-libmudflap --disable-libssp \
+  --disable-threads --enable-languages=c --disable-multilib</userinput></screen>
 
     <variablelist os="am">
       <title>Voici la signification des options de configure&nbsp;:</title>

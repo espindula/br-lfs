@@ -33,7 +33,8 @@
     <para os="a">Préparez la compilation de Ncurses&nbsp;:</para>
 
 <screen os="b"><userinput>./configure --prefix=/usr --libdir=/lib \
-    --with-shared --without-debug</userinput></screen>
+    --with-shared --without-debug --enable-widec</userinput></screen>
+
 
     <para os="c">Compilez le paquet&nbsp;:</para>
 
@@ -47,20 +48,33 @@
 
     <para os="h">Déplacez les bibliothèques stajiques de Ncurses au bon endroit&nbsp;:</para>
 
-<screen os="i"><userinput>mv -v /lib/lib{panel,menu,form,ncurses,ncurses++,curses}.a /usr/lib</userinput></screen>
+<screen os="i"><userinput>mv -v /lib/lib{panelw,menuw,formw,ncursesw,ncurses++w}.a /usr/lib</userinput></screen>
 
     <para os="j">Créez des liens symboliques dans <filename class="directory">/usr/lib:</filename></para>
 
-<screen os="k"><userinput>rm -v /lib/lib{ncurses,menu,panel,form,curses}.so
-ln -svf ../../lib/libncurses.so.5 /usr/lib/libcurses.so
-ln -svf ../../lib/libncurses.so.5 /usr/lib/libncurses.so
-ln -svf ../../lib/libmenu.so.5 /usr/lib/libmenu.so
-ln -svf ../../lib/libpanel.so.5 /usr/lib/libpanel.so
-ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
+<screen os="k"><userinput>rm -v /lib/lib{ncursesw,menuw,panelw,formw}.so
+ln -svf ../../lib/libncursesw.so.5 /usr/lib/libncursesw.so
+ln -svf ../../lib/libmenuw.so.5 /usr/lib/libmenuw.so
+ln -svf ../../lib/libpanelw.so.5 /usr/lib/libpanelw.so
+ln -svf ../../lib/libformw.so.5 /usr/lib/libformw.so</userinput></screen>
 
-    <para os="l">Donnez les droits d'exécution aux bibliothèques de Ncurses&nbsp;:</para>
+    <para os="l">Maintenant, nous allons rendre notre Ncurses compatible pour que les vieux programmes non compatibles avec widec se construisent correctement&nbsp;:</para>
 
-<screen os="m"><userinput>chmod -v 755 /lib/lib{panel,menu,form,ncurses}.so.&ncurses-version;</userinput></screen>
+<screen os="m"><userinput>for lib in curses ncurses form panel menu ; do
+        echo "INPUT(-l${lib}w)" > /usr/lib/lib${lib}.so
+        ln -sfv lib${lib}w.a /usr/lib/lib${lib}.a
+done
+ln -sfv libncursesw.so /usr/lib/libcursesw.so
+ln -sfv libncursesw.a /usr/lib/libcursesw.a
+ln -sfv libncurses++w.a /usr/lib/libncurses++.a
+ln -sfv ncursesw5-config /usr/bin/ncurses5-config</userinput></screen>
+
++
+    <para os="n">Maintenant, nous allons créer un lien symbolique pour /usr/share/terminfo dans
+     <filename class="directory">/usr/lib</filename> pour des questions de compatibilité&nbsp;:</para>
+ 
+<screen os="o"><userinput>ln -sfv ../../usr/share/terminfo /usr/lib/terminfo</userinput></screen>
+ 
 
   </sect2>
 
@@ -72,15 +86,18 @@ ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
       <segtitle>Bibliothèques installées</segtitle>
 
       <seglistitem>
-        <seg>captoinfo (link to tic), clear, infocmp, infotocap (link to tic),
-        ncurses5-config, reset (link to tset), tack, tic, toe, tput et tset</seg>
-        <seg>libcurses.[a,so] (link to libncurses.[a,so]), libform.[a,so],
-        libmenu.[a,so], libncurses++.a, libncurses.[a,so] et
-        libpanel.[a,so]</seg>
+        <seg>captoinfo (lien vers tic), clear, infocmp, infotocap (lien vers tic),
+        ncursesw5-config, reset (lien vers tset), tabs, tic, toe, tput et tset</seg>
+        <seg>libcursesw.so (link to libncursesw.so), libformw.[a,so] et
+        libpanelw.[a,so]</seg>
       </seglistitem>
     </segmentedlist>
 
     <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
       <varlistentry id="captoinfo">
         <term><command>captoinfo</command></term>
         <listitem>
@@ -94,7 +111,7 @@ ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
       <varlistentry id="clear">
         <term><command>clear</command></term>
         <listitem>
-          <para>Efface l'écran si possible</para>
+          <para>Vide l'écran, si possible</para>
           <indexterm zone="ch-system-ncurses clear">
             <primary sortas="b-clear">clear</primary>
           </indexterm>
@@ -104,7 +121,7 @@ ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
       <varlistentry id="infocmp">
         <term><command>infocmp</command></term>
         <listitem>
-          <para>Compare ou affiche les descriptions terminfo</para>
+          <para>Compare ou affiche des descriptions terminfo</para>
           <indexterm zone="ch-system-ncurses infocmp">
             <primary sortas="b-infocmp">infocmp</primary>
           </indexterm>
@@ -121,34 +138,32 @@ ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="ncurses5-config">
-        <term><command>ncurses5-config</command></term>
+      <varlistentry id="ncursesw5-config">
+        <term><command>ncursesw5-config</command></term>
         <listitem>
           <para>Fournit des informations de configuration de ncurses</para>
-          <indexterm zone="ch-system-ncurses ncurses5-config">
-            <primary sortas="b-ncurses5-config">ncurses5-config</primary>
+          <indexterm zone="ch-system-ncurses ncursesw5-config">
+            <primary sortas="b-ncursesw5-config">ncursesw5-config</primary>
           </indexterm>
-          </listitem>
-        </varlistentry>                      
-          
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="reset">
         <term><command>reset</command></term>
         <listitem>
-          <para>Réinitialise un terminal avec ses valeurs par défaut</para>
+          <para>Réinitialise un terminal à ses valeurs par défaut</para>
           <indexterm zone="ch-system-ncurses reset">
             <primary sortas="b-reset">reset</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="tack">
-        <term><command>tack</command></term>
+      <varlistentry id="tabs">
+        <term><command>tabs</command></term>
         <listitem>
-          <para>Vérificateur d'actions terminfo&nbsp;; il est principalement
-          utilisé pour corriger d'une entrée dans la base de données
-          terminfo</para>
-          <indexterm zone="ch-system-ncurses tack">
-            <primary sortas="b-tack">tack</primary>
+          <para>Initialise et vide des taquets de tab sur un terminal</para>
+          <indexterm zone="ch-system-ncurses tabs">
+            <primary sortas="b-tabs">tabs</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -156,10 +171,8 @@ ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
       <varlistentry id="tic">
         <term><command>tic</command></term>
         <listitem>
-          <para>Le compilateur d'entrée de description terminfo, traduisant un 
-          fichier terminfo au format source dans un format binaire nécessaire 
-          pour les routines des bibliothèques ncurses. Un fichier terminfo 
-          contient des informations sur les capacités d'un terminal particulier</para>
+          <para>Le compilateur entrée-description qui traduit un fichier terminfo à partir du format source en format binaire requis pour les routines de la bibliothèque 
+          ncurses.  Un fichier terminfo contient des informations sur les possibilités d'un terminal donné</para>
           <indexterm zone="ch-system-ncurses tic">
             <primary sortas="b-tic">tic</primary>
           </indexterm>
@@ -169,8 +182,7 @@ ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
       <varlistentry id="toe">
         <term><command>toe</command></term>
         <listitem>
-          <para>Liste tous les types de terminaux disponibles, donnant pour 
-          chacun d'entre eux son nom principal et sa description</para>
+          <para>Liste tous les types de terminaux disponibles, en donnant leur nom primaire et leur description</para>
           <indexterm zone="ch-system-ncurses toe">
             <primary sortas="b-toe">toe</primary>
           </indexterm>
@@ -180,9 +192,8 @@ ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
       <varlistentry id="tput">
         <term><command>tput</command></term>
         <listitem>
-          <para>Rend les valeurs de capacités dépendant du terminal disponibles
-          au shell&nbsp;; il peut aussi être utilisé pour réinitialiser un 
-          terminal ou pour afficher son nom long</para>
+          <para>Rend disponibles les fonctionalités dépendantes du terminal pour le shell&nbsp;; il peut aussi être utilisé pour réinitialiser ou paramétrer un terminal ou 
+          d'afficher son nom long</para>
           <indexterm zone="ch-system-ncurses tput">
             <primary sortas="b-tput">tput</primary>
           </indexterm>
@@ -199,55 +210,55 @@ ln -svf ../../lib/libform.so.5 /usr/lib/libform.so</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libcurses">
-        <term><filename class="libraryfile">libcurses</filename></term>
+      <varlistentry id="libcursesw">
+        <term><filename class="libraryfile">libcursesw</filename></term>
         <listitem>
-          <para>Un lien vers <filename>libncurses</filename></para>
-          <indexterm zone="ch-system-ncurses libcurses">
-            <primary sortas="c-libcurses">libcurses</primary>
+          <para>Un lien vers <filename>libncursesw</filename></para>
+          <indexterm zone="ch-system-ncurses libcursesw">
+            <primary sortas="c-libcurses">libcursesw</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libncurses">
-        <term><filename class="libraryfile">libncurses</filename></term>
+      <varlistentry id="libncursesw">
+        <term><filename class="libraryfile">libncursesw</filename></term>
         <listitem>
           <para>Contient des fonctions pour afficher du texte de plusieurs 
           façons compliquées sur un écran de terminal&nbsp;; un bon exemple
           d'utilisation de ces fonctions est le menu affiché par le
           <command>make menuconfig</command> du noyau</para>
-          <indexterm zone="ch-system-ncurses libncurses">
-            <primary sortas="c-libncurses">libncurses</primary>
+          <indexterm zone="ch-system-ncurses libncursesw">
+            <primary sortas="c-libncurses">libncursesw</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libform">
-        <term><filename class="libraryfile">libform</filename></term>
+      <varlistentry id="libformw">
+        <term><filename class="libraryfile">libformw</filename></term>
         <listitem>
           <para>Contient des fonctions pour implémenter des formes</para>
-          <indexterm zone="ch-system-ncurses libform">
-            <primary sortas="c-libform">libform</primary>
+          <indexterm zone="ch-system-ncurses libformw">
+            <primary sortas="c-libform">libformw</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libmenu">
-        <term><filename class="libraryfile">libmenu</filename></term>
+      <varlistentry id="libmenuw">
+        <term><filename class="libraryfile">libmenuw</filename></term>
         <listitem>
           <para>Contient des fonctions pour implémenter des menus</para>
-          <indexterm zone="ch-system-ncurses libmenu">
-            <primary sortas="c-libmenu">libmenu</primary>
+          <indexterm zone="ch-system-ncurses libmenuw">
+            <primary sortas="c-libmenu">libmenuw</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libpanel">
-        <term><filename class="libraryfile">libpanel</filename></term>
+      <varlistentry id="libpanelw">
+        <term><filename class="libraryfile">libpanelw</filename></term>
         <listitem>
           <para>Contient des fonctions pour implémenter des panneaux</para>
-          <indexterm zone="ch-system-ncurses libpanel">
-            <primary sortas="c-libpanel">libpanel</primary>
+          <indexterm zone="ch-system-ncurses libpanelw">
+            <primary sortas="c-libpanel">libpanelw</primary>
           </indexterm>
         </listitem>
       </varlistentry>
