@@ -141,8 +141,8 @@ div.important em, div.warning em, div.caution em {
       <hr/>
       <div class="toc">
         <h3>
-          <xsl:text>Choose your preferred Libc implementation and Linux kernel
-          series to build the system based on</xsl:text>
+          <xsl:text>Choisissez l'implémentation de Libc que vous préférez et les
+          séries du noyau sur lesquelles vous souhaitez baser votre système</xsl:text>
         </h3>
         <noscript>
           <ul>
