@@ -41,12 +41,11 @@
   <sect2 role="installation">
     <title>Installation of Man-DB</title>
 
-    <para>LFS creates <filename>/usr/man</filename> and
-    <filename>/usr/local/man</filename> as symlinks.   Remove them from the
-    <filename>man_db.conf</filename> file to prevent redundant
-    results when using programs such as <command>whatis</command>:</para>
+    <para>Apply a patch to fix a problem with the testsuite, which doesn't
+    expect <command>col</command> to be UTF-8 aware, which Util-Linux-NG's
+    version is:</para>
 
-<screen><userinput remap="pre">sed -i -e '\%\t/usr/man%d' -e '\%\t/usr/local/man%d' src/man_db.conf.in</userinput></screen>
+<screen><userinput remap="pre">patch -Np1 -i ../&man-db-testsuite-patch;</userinput></screen>
 
     <para>Prepare Man-DB for compilation:</para>
 
@@ -88,7 +87,9 @@
 
 <screen><userinput remap="make">make</userinput></screen>
 
-    <para>This package does not come with a test suite.</para>
+   <para>To test the results, issue:</para>
+
+<screen><userinput remap="test">make check</userinput></screen>
 
     <para>Install the package:</para>
 
@@ -99,47 +100,13 @@
   <sect2>
     <title>Non-English Manual Pages in LFS</title>
 
-    <para>Some packages provide non-English manual pages. They are displayed 
-    correctly only if their location and encoding matches the expectation of 
-    the "man" program. However, different Linux distributions have different 
-    policies (expressed in the choice of the <command>man</command> program,
-    its configuration and patches applied to it) concerning the character 
-    encoding in which manual pages are stored in the filesystem.</para>
+    <para>The following table shows the character set that Man-DB assumes
+    manual pages installed under
+    <filename class="directory">/usr/share/man/&lt;ll&gt;</filename> will be
+    encoded with.  In addition to this, Man-DB correctly determines if manual
+    pages installed in that directory are UTF-8 encoded.</para>
 
-    <para>E.g., Debian previously required Russian manual pages to be encoded
-    in KOI8-R and to be placed in
-    <filename class="directory">/usr/share/man/ru</filename>. Now, in addition,
-    their <command>man</command> program (<application>Man-DB</application>)
-    searches for UTF-8 encoded Russian manual pages in
-    <filename class="directory">/usr/share/man/ru.UTF-8</filename>. On the
-    other hand, Fedora uses UTF-8 encoded manual pages exclusively. Russian
-    manual pages  are found in
-    <filename class="directory">/usr/share/man/ru</filename> and their
-    <command>man</command> program doesn't acknowledge
-    <filename class="directory">/usr/share/man/ru.UTF-8</filename>.  Many
-    other distributions ignore the on disk encodings completely, leaving the
-    end user with a mix of improperly encoded manual pages for their
-    configuration. When <command>man</command> processes the requtested page,
-    it will display the contents as configured, resulting in completely
-    unreadable text if the on disk encoding is not what is expected for that
-    configuration.</para>
-
-    <para>Disagreement about the expected encoding of manual pages amongst
-    distribution vendors, has led to confusion for upstream package
-    maintainers. One package may contain UTF-8 manual pages, while another
-    ships with manual pages in legacy encodings. <command>man</command>
-    searches for manual pages based on the user's locale settings.
-    <application>Man-DB</application> uses a built-in table (see below) to
-    determine the on disk encoding of manual pages found for a user's
-    locale, only if the directories found do not have an extension that
-    describes the encoding. E.g., because of ".UTF-8" in the directory name,
-    <application>Man-DB</application> knows that all manual pages residing in 
-    <filename class="directory">/usr/share/man/fr.UTF-8</filename> are UTF-8
-    encoded and, according to the built-in table, expects all manual pages
-    residing in <filename class="directory">/usr/share/man/ru</filename> to
-    be encoded using KOI8-R.</para>
-
-    <!-- Origin: man-db-2.5.2/src/encodings.c -->
+    <!-- Origin: man-db-2.5.5/src/encodings.c -->
     <table>
 <title>Expected character encoding of legacy 8-bit manual pages</title>
       <?dbfo table-width="6in" ?>
@@ -164,38 +131,44 @@
           <row>
             <entry>Danish (da)</entry>
             <entry>ISO-8859-1</entry>
-            <entry>Bulgarian (bg)</entry>
-            <entry>CP1251</entry>
+            <entry>Croation (hr)</entry>
+            <entry>ISO-8859-1</entry>
           </row>
           <row>
             <entry>German (de)</entry>
-            <entry>ISO-8859-1</entry>
-            <entry>Czech (cs)</entry>
-            <entry>ISO-8859-2</entry>
-          </row>
-          <row>
-            <entry>English (en)</entry>
-            <entry>ISO-8859-1</entry>
-            <entry>Croatian (hr)</entry>
-            <entry>ISO-8859-2</entry>
-          </row>
-          <row>
-            <entry>Spanish (es)</entry>
             <entry>ISO-8859-1</entry>
             <entry>Hungarian (hu)</entry>
             <entry>ISO-8859-2</entry>
           </row>
           <row>
-            <entry>Finnish (fi)</entry>
+            <entry>English (en)</entry>
             <entry>ISO-8859-1</entry>
             <entry>Japanese (ja)</entry>
             <entry>EUC-JP</entry>
           </row>
           <row>
-            <entry>French (fr)</entry>
+            <entry>Spanish (es)</entry>
             <entry>ISO-8859-1</entry>
             <entry>Korean (ko)</entry>
             <entry>EUC-KR</entry>
+          </row>
+          <row>
+            <entry>Estonian (et)</entry>
+            <entry>ISO-8859-1</entry>
+            <entry>Lithuanian (lt)</entry>
+            <entry>ISO-8859-13</entry>
+          </row>
+          <row>
+            <entry>Finnish (fi)</entry>
+            <entry>ISO-8859-1</entry>
+            <entry>Latvian (lv)</entry>
+            <entry>ISO-8859-13</entry>
+          </row>
+          <row>
+            <entry>French (fr)</entry>
+            <entry>ISO-8859-1</entry>
+            <entry>Macedonian (mk)</entry>
+            <entry>ISO-8859-5</entry>
           </row>
           <row>
             <entry>Irish (ga)</entry>
@@ -206,117 +179,88 @@
           <row>
             <entry>Galician (gl)</entry>
             <entry>ISO-8859-1</entry>
-            <entry>Russian (ru)</entry>
-            <entry>KOI8-R</entry>
+            <entry>Romanian (ro)</entry>
+            <entry>ISO-8859-2</entry>
           </row>
           <row>
             <entry>Indonesian (id)</entry>
             <entry>ISO-8859-1</entry>
-            <entry>Slovak (sk)</entry>
-            <entry>ISO-8859-2</entry>
-          </row>
-          <row>
-            <entry>Icelandic (is)</entry>
-            <entry>ISO-8859-1</entry>
-            <entry>Serbian (sr)</entry>
-            <entry>ISO-8859-5</entry>
-          </row>
-          <row>
-            <entry>Italian (it)</entry>
-            <entry>ISO-8859-1</entry>
-            <entry>Turkish (tr)</entry>
-            <entry>ISO-8859-9</entry>
-          </row>
-          <row>
-            <entry>Dutch (nl)</entry>
-            <entry>ISO-8859-1</entry>
-            <entry>Simplified Chinese (zh_CN)</entry>
-            <entry>GBK</entry>
-          </row>
-          <!-- FIXME: BUG: "no" is deprecated, should use "nb" or "nn" and
-          symlinks -->
-          <row>
-            <entry>Norwegian (no)</entry>
-            <entry>ISO-8859-1</entry>
-            <entry>Simplified Chinese, Singapore (zh_SG)</entry>
-            <entry>GBK</entry>
-          </row>
-          <!-- END BUG -->
-          <row>
-            <entry>Portuguese (pt)</entry>
-            <entry>ISO-8859-1</entry>
-            <entry>Traditional Chinese (zh_TW)</entry>
-            <entry>BIG5</entry>
-          </row>
-          <row>
-            <entry>Swedish (sv)</entry>
-            <entry>ISO-8859-1</entry>
-            <entry>Traditional Chinese, Hong Kong (zh_HK)</entry>
-            <entry>BIG5HKSCS</entry>
-          </row>
-
-          <!-- Languages below require patched groff -->
-          <!--
-          <row>
-            <entry>Bulgarian (bg)</entry>
-            <entry>CP1251</entry>
-          </row>
-          <row>
-            <entry>Czech (cs)</entry>
-            <entry>ISO-8859-2</entry>
-          </row>
-          <row>
-            <entry>Croatian (hr)</entry>
-            <entry>ISO-8859-2</entry>
-          </row>
-          <row>
-            <entry>Hungarian (hu)</entry>
-            <entry>ISO-8859-2</entry>
-          </row>
-          <row>
-            <entry>Japanese (ja)</entry>
-            <entry>EUC-JP</entry>
-          </row>
-          <row>
-            <entry>Korean (ko)</entry>
-            <entry>EUC-KR</entry>
-          </row>
-          <row>
-            <entry>Polish (pl)</entry>
-            <entry>ISO-8859-2</entry>
-          </row>
-          <row>
             <entry>Russian (ru)</entry>
             <entry>KOI8-R</entry>
           </row>
           <row>
+            <entry>Icelandic (is)</entry>
+            <entry>ISO-8859-1</entry>
             <entry>Slovak (sk)</entry>
             <entry>ISO-8859-2</entry>
           </row>
           <row>
+            <entry>Italian (it)</entry>
+            <entry>ISO-8859-1</entry>
+            <entry>Slovenian (sl)</entry>
+            <entry>ISO-8859-2</entry>
+          </row>
+          <row>
+            <entry>Norwegian Bokmal (nb)</entry>
+            <entry>ISO-8859-1</entry>
+            <entry>Serbian Latin (sr@latin)</entry>
+            <entry>ISO-8859-2</entry>
+          </row>
+          <row>
+            <entry>Dutch (nl)</entry>
+            <entry>ISO-8859-1</entry>
             <entry>Serbian (sr)</entry>
             <entry>ISO-8859-5</entry>
           </row>
           <row>
+            <entry>Norwegian Nynorsk (nn)</entry>
+            <entry>ISO-8859-1</entry>
             <entry>Turkish (tr)</entry>
             <entry>ISO-8859-9</entry>
           </row>
           <row>
+            <entry>Norwegian (no)</entry>
+            <entry>ISO-8859-1</entry>
+            <entry>Ukrainian (uk)</entry>
+            <entry>KOI8-U</entry>
+          </row>
+          <row>
+            <entry>Portuguese (pt)</entry>
+            <entry>ISO-8859-1</entry>
+            <entry>Vietnamese (vi)</entry>
+            <entry>TCVN5712-1</entry>
+          </row>
+          <row>
+            <entry>Swedish (sv)</entry>
+            <entry>ISO-8859-1</entry>
             <entry>Simplified Chinese (zh_CN)</entry>
             <entry>GBK</entry>
           </row>
           <row>
+            <entry>Belarusian (be)</entry>
+            <entry>CP1251</entry>
             <entry>Simplified Chinese, Singapore (zh_SG)</entry>
             <entry>GBK</entry>
           </row>
           <row>
+            <entry>Bulgarian (bg)</entry>
+            <entry>CP1251</entry>
+            <entry>Traditional Chinese, Hong Kong (zh_HK)</entry>
+            <entry>BIG5HKSCS</entry>
+          </row>
+          <row>
+            <entry>Czech (cs)</entry>
+            <entry>ISO-8859-2</entry>
             <entry>Traditional Chinese (zh_TW)</entry>
             <entry>BIG5</entry>
           </row>
           <row>
-            <entry>Traditional Chinese, Hong Kong (zh_HK)</entry>
-            <entry>BIG5HKSCS</entry>
-          </row>-->
+            <entry>Greek (el)</entry>
+            <entry>ISO-8859-7</entry>
+            <entry></entry>
+            <entry></entry>
+          </row>
+
         </tbody>
 
       </tgroup>
@@ -324,74 +268,8 @@
     </table>
 
     <note>
-      <para>Manual pages in languages not in the list are not supported.
-      Norwegian does not work because of the transition from no_NO to
-      nb_NO locale, and will be fixed in the next release of 
-      <application>Man-DB</application>.  Korean is currently non functional
-      because of incomplete fixes in the Debian
-      <application>Groff</application> patch applied in LFS.</para>
+      <para>Manual pages in languages not in the list are not supported.</para>
     </note>
-
-    <para>Packages may install manual pages into an improperly named directory,
-    depending on which distributions the author develops the package for. To
-    assist in the conversion of the manual pages to the proper encoding for the
-    directory in which they are installed, the <command>convert-mans</command>
-    script was written. It will convert manual pages to another encoding before
-    (or after) installation.  Install the <command>convert-mans</command>
-    script with the following instructions:</para>
-
-<screen><userinput remap="install">cat &gt;&gt; convert-mans &lt;&lt; "EOF"
-<literal>#!/bin/sh -e
-FROM="$1"
-TO="$2"
-shift ; shift
-while [ $# -gt 0 ]
-do
-        FILE="$1"
-        shift
-        iconv -f "$FROM" -t "$TO" "$FILE" >.tmp.iconv
-        mv .tmp.iconv "$FILE"
-done</literal>
-EOF
-install -v -m755 convert-mans  /usr/bin</userinput></screen>
-
-
-    <para>If upstream distributes the manual pages in a legacy encoding, the
-    manual pages can simply be copied to
-    <filename class="directory">/usr/share/man/<replaceable>&lt;language
-    code&gt;</replaceable></filename>. For example, <ulink
-    url="http://www.infodrom.org/projects/manpages-de/download/manpages-de-0.5.tar.gz">
-    German manual pages</ulink> can be installed with the following
-    commands:</para>
-
-<screen role="nodump"><userinput>mkdir -p /usr/share/man/de
-cp -rv man? /usr/share/man/de</userinput></screen>
-
-    <para>If upstream distributes manual pages in UTF-8 (i.e., <quote>for
-    RedHat</quote>) instead of the encoding listed in the table above, they
-    can either be converted from UTF-8 to the encoding listed in the table
-    above, or they can be installed directly into
-    <filename class="directory">/usr/share/man/<replaceable>&lt;language
-    code&gt;</replaceable>.UTF-8</filename>.</para>
-
-    <para>For example, to install <ulink
-    url="http://manpagesfr.free.fr/download/man-pages-fr-2.40.0.tar.bz2">
-    French manual pages</ulink> in the legacy encoding, use the following
-    commands:</para>
-
-<screen role="nodump"><userinput>convert-mans UTF-8 ISO-8859-1 man?/*.?
-mkdir -p /usr/share/man/fr
-cp -rv man? /usr/share/man/fr</userinput></screen>
-
-    <note><para>The French manual pages ship with ready made scripts to do the
-    same conversion. The above instructions are used only as an example for
-    use of the <command>convert-mans</command> script.</para></note>
-
-    <para>Finally, as an example installation of UTF-8 manual pages, again, the
-    French manual pages could be installed with the following commands:</para>
-
-<screen role="nodump"><userinput>mkdir -p /usr/share/man/fr.UTF-8
-cp -rv man? /usr/share/man/fr.UTF-8</userinput></screen>
 
   </sect2>
 
@@ -441,16 +319,6 @@ cp -rv man? /usr/share/man/fr.UTF-8</userinput></screen>
           <para>Creates or updates the pre-formatted manual pages</para>
           <indexterm zone="ch-system-man-db catman">
             <primary sortas="b-catman">catman</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="convert-mans">
-        <term><command>convert-mans</command></term>
-        <listitem>
-          <para>Reformats manual pages into the chosen encoding.</para>
-          <indexterm zone="ch-system-man-db convert-mans">
-            <primary sortas="b-convert-mans">convert-mans</primary>
           </indexterm>
         </listitem>
       </varlistentry>
