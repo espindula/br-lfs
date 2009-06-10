@@ -6,7 +6,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: refentry.xsl,v 1.1 2008-08-27 20:14:27 texou Exp $
+     $Id: refentry.xsl 1189 2007-07-21 15:04:58Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -20,7 +20,7 @@
   <info>
     <title>Common » Refentry Metadata Template Reference</title>
     <releaseinfo role="meta">
-      $Id: refentry.xsl,v 1.1 2008-08-27 20:14:27 texou Exp $
+      $Id: refentry.xsl 1189 2007-07-21 15:04:58Z manuel $
     </releaseinfo>
   </info>
   <!-- * yes, partintro is a valid child of a reference... -->

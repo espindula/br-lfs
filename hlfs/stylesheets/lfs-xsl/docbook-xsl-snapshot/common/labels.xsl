@@ -5,7 +5,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: labels.xsl,v 1.1 2008-08-27 20:14:27 texou Exp $
+     $Id: labels.xsl 1189 2007-07-21 15:04:58Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

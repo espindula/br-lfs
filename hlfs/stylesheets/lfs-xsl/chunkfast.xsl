@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-27 20:14:25 $
+$Date: 2007-07-08 13:03:30 +0200 (dim, 08 jui 2007) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
