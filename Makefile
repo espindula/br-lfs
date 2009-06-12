@@ -58,7 +58,7 @@ pdf: validxml
 	fi;
 	$(Q)fop $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
 
-nochunks: validxml profile-html
+nochunks: maketar validxml profile-html
 	@echo "Generating non chunked XHTML file..."
 	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
 	  --output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
