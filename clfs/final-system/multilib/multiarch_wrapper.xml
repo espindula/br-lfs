@@ -28,32 +28,59 @@
     <para os="a">Create the source file:</para>
 
 <screen os="b"><userinput>cat &gt; multiarch_wrapper.c &lt;&lt; "EOF"
-#include &lt;unistd.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;errno.h&gt;
-#include &lt;string.h&gt;
+#define _GNU_SOURCE
 
-#ifndef USE_ARCH
-#define USE_ARCH "64"
+#include &lt;errno.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;unistd.h&gt;
+
+#ifndef DEF_SUFFIX
+#  define DEF_SUFFIX "64"
 #endif
 
 int main(int argc, char **argv)
 {
   char *filename;
-  char *use_arch;
+  char *suffix;
 
-  if(!(use_arch = getenv("USE_ARCH")))
-    use_arch = USE_ARCH;
+  if(!(suffix = getenv("USE_ARCH")))
+    if(!(suffix = getenv("BUILDENV")))
+      suffix = DEF_SUFFIX;
 
-  filename = (char *) malloc(strlen(argv[0]) + strlen(use_arch) + 2);
-  strcpy(filename, argv[0]);
-  strcat(filename, "-");
-  strcat(filename, use_arch);
+  if (asprintf(&amp;filename, "%s-%s", argv[0], suffix) &lt; 0) {
+    perror(argv[0]);
+    return -1;
+  }
 
-  execvp(filename, argv);
+  int status = EXIT_FAILURE;
+  pid_t pid = fork();
+
+  if (pid == 0) {
+    execvp(filename, argv);
+    perror(filename);
+    goto end;
+  } else if (pid &lt; 0) {
+    goto end_error;
+  } else {
+    if (waitpid(pid, &amp;status, 0) != pid) {
+      status = EXIT_FAILURE;
+      goto end_error;
+    }
+    status = WEXITSTATUS(status);
+  }
+  goto end;
+
+end_error:
   perror(argv[0]);
+end:
   free(filename);
+
+  return status;
 }
+
 EOF</userinput></screen>
 
     <para os="c">Compile and Install the Multiarch Wrapper:</para>
