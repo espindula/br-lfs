@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink suwl" version="1.0">
 
 <!-- ********************************************************************
-     $Id: inline.xsl 1235 2007-09-09 08:57:57Z manuel $
+     $Id: inline.xsl,v 1.1 2008-08-27 20:14:32 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

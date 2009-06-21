@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="doc" version="1.0">
 
 <!-- ********************************************************************
-     $Id: qandaset.xsl 1189 2007-07-21 15:04:58Z manuel $
+     $Id: qandaset.xsl,v 1.1 2008-08-27 20:14:33 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

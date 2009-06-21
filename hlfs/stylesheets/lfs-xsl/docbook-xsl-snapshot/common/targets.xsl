@@ -5,7 +5,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: targets.xsl 1183 2007-07-08 11:03:30Z manuel $
+     $Id: targets.xsl,v 1.1 2008-08-27 20:14:27 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

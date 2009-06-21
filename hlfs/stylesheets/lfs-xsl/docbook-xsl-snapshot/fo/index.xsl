@@ -10,7 +10,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: index.xsl 1183 2007-07-08 11:03:30Z manuel $
+     $Id: index.xsl,v 1.1 2008-08-27 20:14:29 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

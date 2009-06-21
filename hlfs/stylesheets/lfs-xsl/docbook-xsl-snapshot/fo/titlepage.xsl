@@ -4,7 +4,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: titlepage.xsl 1183 2007-07-08 11:03:30Z manuel $
+     $Id: titlepage.xsl,v 1.1 2008-08-27 20:14:30 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

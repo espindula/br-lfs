@@ -10,7 +10,7 @@
   version='1.0'>
 
 <!-- ********************************************************************
-     $Id: pi.xsl 1235 2007-09-09 08:57:57Z manuel $
+     $Id: pi.xsl,v 1.1 2008-08-27 20:14:27 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -21,7 +21,7 @@
 
 <doc:reference xmlns=""><info><title>Common Processing Instruction Reference</title>
     <releaseinfo role="meta">
-      $Id: pi.xsl 1235 2007-09-09 08:57:57Z manuel $
+      $Id: pi.xsl,v 1.1 2008-08-27 20:14:27 texou Exp $
     </releaseinfo>
   </info>
   <partintro id="partintro">

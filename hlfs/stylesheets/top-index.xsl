@@ -183,10 +183,10 @@ div.important em, div.warning em, div.caution em {
 document.write("<form id=\"setup_ftrs\" onsubmit=\"javascript: return featuresSetup(this);\" ");
 document.write("      style=\"width: 23em; margin-left: 10em; margin-bottom: 5em\">");
 document.write(" <fieldset style=\"margin-bottom: 2em\">");
-document.write("  <legend style=\"font-size: 1.3em; margin-left: 5em;\">Book variant</legend>");
+document.write("  <legend style=\"font-size: 1.3em; margin-left: 5em;\">Variante du livre</legend>");
 document.write("  <table class=\"form\" style=\"margin-left: auto; margin-right: auto;\">");
 document.write("   <tr>");
-document.write("    <th style=\"padding-right: 1em;\">Kernel version:</th>");
++document.write("    <th style=\"padding-right: 1em;\">Version du noyau&nbsp;:</th>");
 document.write("    <td style=\"padding-right: 1em;\">");
 document.write("     <input type=\"radio\" name=\"kernel\" id=\"kernel_26\" value=\"2.6\"");
 document.write("            checked=\"checked\" />");
@@ -198,7 +198,7 @@ document.write("     <label for=\"kernel_24\">2.4</label>");
 document.write("    </td>");
 document.write("   </tr>");
 document.write("   <tr>");
-document.write("    <th style=\"padding-right: 1em;\">C library used:</th>");
+document.write("    <th style=\"padding-right: 1em;\">Bibliothèque utilisée&nbsp;:</th>");
 document.write("    <td style=\"padding-right: 1em;\">");
 document.write("     <input type=\"radio\" name=\"libc\" id=\"glibc\" value=\"glibc\"");
 document.write("            checked=\"checked\" />");
@@ -266,7 +266,7 @@ document.write("   </label>");
 document.write("  </div>");
 document.write(" </fieldset>");
 */
-document.write(" <input type=\"submit\" value=\"Go to the book\" style=\"font-size: 1.3em; margin-left: 4em;\"/>");
+document.write(" <input type=\"submit\" value=\"Lire le livre\" style=\"font-size: 1.3em; margin-left: 4em;\"/>");
 document.write("</form>");
 
 /* Restore features according to cookie, if we have it. */

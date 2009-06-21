@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: lists.xsl 1189 2007-07-21 15:04:58Z manuel $
+     $Id: lists.xsl,v 1.1 2008-08-27 20:14:33 texou Exp $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
