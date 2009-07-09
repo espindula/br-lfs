@@ -3,7 +3,7 @@
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: autoidx-ng.xsl,v 1.1 2008-08-27 20:14:28 texou Exp $
+     $Id: autoidx-ng.xsl 1183 2007-07-08 11:03:30Z manuel $
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.

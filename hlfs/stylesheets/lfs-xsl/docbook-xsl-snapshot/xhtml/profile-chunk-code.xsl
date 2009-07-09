@@ -6,7 +6,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xmlns/chunkfast/1.0" xmlns:ng="http://docbook.org/docbook-ng" xmlns:db="http://docbook.org/ns/docbook" xmlns:exslt="http://exslt.org/common" xmlns="http://www.w3.org/1999/xhtml" exslt:dummy="dummy" ng:dummy="dummy" db:dummy="dummy" extension-element-prefixes="exslt" exclude-result-prefixes="exsl cf ng db exslt" version="1.0">
 
 <!-- ********************************************************************
-     $Id: profile-chunk-code.xsl,v 1.1 2008-08-27 20:14:33 texou Exp $
+     $Id: profile-chunk-code.xsl 1189 2007-07-21 15:04:58Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

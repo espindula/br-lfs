@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/1999/xhtml" version="1.0" exclude-result-prefixes="doc">
 
 <!-- ********************************************************************
-     $Id: profile-onechunk.xsl,v 1.1 2008-08-27 20:14:33 texou Exp $
+     $Id: profile-onechunk.xsl 1183 2007-07-08 11:03:30Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

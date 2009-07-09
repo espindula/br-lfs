@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:k="http://www.isogen.com/functions/com.isogen.saxoni18n.Saxoni18nService" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="k" version="1.0">
 
 <!-- ********************************************************************
-     $Id: autoidx-kimber.xsl,v 1.1 2008-08-27 20:14:31 texou Exp $
+     $Id: autoidx-kimber.xsl 1183 2007-07-08 11:03:30Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

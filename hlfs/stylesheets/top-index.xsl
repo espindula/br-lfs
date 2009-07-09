@@ -186,7 +186,7 @@ document.write(" <fieldset style=\"margin-bottom: 2em\">");
 document.write("  <legend style=\"font-size: 1.3em; margin-left: 5em;\">Variante du livre</legend>");
 document.write("  <table class=\"form\" style=\"margin-left: auto; margin-right: auto;\">");
 document.write("   <tr>");
-+document.write("    <th style=\"padding-right: 1em;\">Version du noyau&nbsp;:</th>");
++document.write("    <th style=\"padding-right: 1em;\">Version du noyau:</th>");
 document.write("    <td style=\"padding-right: 1em;\">");
 document.write("     <input type=\"radio\" name=\"kernel\" id=\"kernel_26\" value=\"2.6\"");
 document.write("            checked=\"checked\" />");
@@ -198,7 +198,7 @@ document.write("     <label for=\"kernel_24\">2.4</label>");
 document.write("    </td>");
 document.write("   </tr>");
 document.write("   <tr>");
-document.write("    <th style=\"padding-right: 1em;\">Bibliothèque utilisée&nbsp;:</th>");
+document.write("    <th style=\"padding-right: 1em;\">Bibliothèque utilisée:</th>");
 document.write("    <td style=\"padding-right: 1em;\">");
 document.write("     <input type=\"radio\" name=\"libc\" id=\"glibc\" value=\"glibc\"");
 document.write("            checked=\"checked\" />");
@@ -377,7 +377,7 @@ featuresRestoreForm("setup_ftrs");
   <xsl:template match="note">
     <div class="admon note">
       <img alt="note" src="images/note.png"/>
-      <h3 class="admontitle">Note&nbsp;:</h3>
+      <h3 class="admontitle">Note:</h3>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
@@ -385,7 +385,7 @@ featuresRestoreForm("setup_ftrs");
   <xsl:template match="warning">
     <div class="admon warning">
       <img alt="note" src="images/warning.png"/>
-      <h3 class="admontitle">Avertissement&nbsp;:</h3>
+      <h3 class="admontitle">Avertissement:</h3>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
