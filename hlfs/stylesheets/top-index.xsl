@@ -141,37 +141,36 @@ div.important em, div.warning em, div.caution em {
       <hr/>
       <div class="toc">
         <h3>
-          <xsl:text>Choisisez l'implémentation de la Libc ainsi
-              que la série du noyau Linux sur lesquels sur votre système sera
-              construit</xsl:text>
+          <xsl:text>Choose your preferred Libc implementation and Linux kernel
+          series to build the system based on</xsl:text>
         </h3>
         <noscript>
           <ul>
             <li>
               <h4>
                 <a href="glibc-2.4/index.html">
-                  <xsl:text>Basé sur Glibc + Linux-2.4</xsl:text>
+                  <xsl:text>Glibc + Linux-2.4 based</xsl:text>
                 </a>
               </h4>
             </li>
             <li>
               <h4>
                 <a href="glibc-2.6/index.html">
-                  <xsl:text>Basé sur Glibc + Linux-2.6</xsl:text>
+                  <xsl:text>Glibc + Linux-2.6 based</xsl:text>
                 </a>
               </h4>
             </li>
             <li>
               <h4>
                 <a href="uclibc-2.4/index.html">
-                  <xsl:text>Basé sur uClibc + Linux-2.4</xsl:text>
+                  <xsl:text>uClibc + Linux-2.4 based</xsl:text>
                 </a>
               </h4>
             </li>
             <li>
               <h4>
                 <a href="uclibc-2.6/index.html">
-                  <xsl:text>Basé sur uClibc + Linux-2.6</xsl:text>
+                  <xsl:text>uClibc + Linux-2.6 based</xsl:text>
                 </a>
               </h4>
             </li>
@@ -183,10 +182,10 @@ div.important em, div.warning em, div.caution em {
 document.write("<form id=\"setup_ftrs\" onsubmit=\"javascript: return featuresSetup(this);\" ");
 document.write("      style=\"width: 23em; margin-left: 10em; margin-bottom: 5em\">");
 document.write(" <fieldset style=\"margin-bottom: 2em\">");
-document.write("  <legend style=\"font-size: 1.3em; margin-left: 5em;\">Variante du livre</legend>");
+document.write("  <legend style=\"font-size: 1.3em; margin-left: 5em;\">Book variant</legend>");
 document.write("  <table class=\"form\" style=\"margin-left: auto; margin-right: auto;\">");
 document.write("   <tr>");
-+document.write("    <th style=\"padding-right: 1em;\">Version du noyau:</th>");
+document.write("    <th style=\"padding-right: 1em;\">Kernel version:</th>");
 document.write("    <td style=\"padding-right: 1em;\">");
 document.write("     <input type=\"radio\" name=\"kernel\" id=\"kernel_26\" value=\"2.6\"");
 document.write("            checked=\"checked\" />");
@@ -198,7 +197,7 @@ document.write("     <label for=\"kernel_24\">2.4</label>");
 document.write("    </td>");
 document.write("   </tr>");
 document.write("   <tr>");
-document.write("    <th style=\"padding-right: 1em;\">Bibliothèque utilisée:</th>");
+document.write("    <th style=\"padding-right: 1em;\">C library used:</th>");
 document.write("    <td style=\"padding-right: 1em;\">");
 document.write("     <input type=\"radio\" name=\"libc\" id=\"glibc\" value=\"glibc\"");
 document.write("            checked=\"checked\" />");
@@ -266,7 +265,7 @@ document.write("   </label>");
 document.write("  </div>");
 document.write(" </fieldset>");
 */
-document.write(" <input type=\"submit\" value=\"Lire le livre\" style=\"font-size: 1.3em; margin-left: 4em;\"/>");
+document.write(" <input type=\"submit\" value=\"Go to the book\" style=\"font-size: 1.3em; margin-left: 4em;\"/>");
 document.write("</form>");
 
 /* Restore features according to cookie, if we have it. */
@@ -385,7 +384,7 @@ featuresRestoreForm("setup_ftrs");
   <xsl:template match="warning">
     <div class="admon warning">
       <img alt="note" src="images/warning.png"/>
-      <h3 class="admontitle">Avertissement:</h3>
+      <h3 class="admontitle">Warning:</h3>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
