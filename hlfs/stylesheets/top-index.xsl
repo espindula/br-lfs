@@ -141,36 +141,36 @@ div.important em, div.warning em, div.caution em {
       <hr/>
       <div class="toc">
         <h3>
-          <xsl:text>Choose your preferred Libc implementation and Linux kernel
-          series to build the system based on</xsl:text>
+          <xsl:text>Choisissez votre implémentation Libc et votre série du noyau
+          Linux préférées comme base de la construction de votre système</xsl:text>
         </h3>
         <noscript>
           <ul>
             <li>
               <h4>
                 <a href="glibc-2.4/index.html">
-                  <xsl:text>Glibc + Linux-2.4 based</xsl:text>
+                  <xsl:text>Basé sur Glibc + Linux-2.4</xsl:text>
                 </a>
               </h4>
             </li>
             <li>
               <h4>
                 <a href="glibc-2.6/index.html">
-                  <xsl:text>Glibc + Linux-2.6 based</xsl:text>
+                  <xsl:text>Basé sur Glibc + Linux-2.6</xsl:text>
                 </a>
               </h4>
             </li>
             <li>
               <h4>
                 <a href="uclibc-2.4/index.html">
-                  <xsl:text>uClibc + Linux-2.4 based</xsl:text>
+                  <xsl:text>Basé sur uClibc + Linux-2.4</xsl:text>
                 </a>
               </h4>
             </li>
             <li>
               <h4>
                 <a href="uclibc-2.6/index.html">
-                  <xsl:text>uClibc + Linux-2.6 based</xsl:text>
+                  <xsl:text>Basé sur uClibc + Linux-2.6</xsl:text>
                 </a>
               </h4>
             </li>
@@ -376,7 +376,7 @@ featuresRestoreForm("setup_ftrs");
   <xsl:template match="note">
     <div class="admon note">
       <img alt="note" src="images/note.png"/>
-      <h3 class="admontitle">Note:</h3>
+      <h3 class="admontitle">Remarque:</h3>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
@@ -384,7 +384,7 @@ featuresRestoreForm("setup_ftrs");
   <xsl:template match="warning">
     <div class="admon warning">
       <img alt="note" src="images/warning.png"/>
-      <h3 class="admontitle">Warning:</h3>
+      <h3 class="admontitle">Avertissement:</h3>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
