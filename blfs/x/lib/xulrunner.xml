@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+
+  <!ENTITY xulrunner-download-http "http://releases.mozilla.org/pub/mozilla.org/firefox/releases/&firefox-version;/source/firefox-&firefox-version;-source.tar.bz2">
+  <!ENTITY xulrunner-download-ftp  "ftp://ftp.mozilla.org/pub/mozilla.org/firefox/releases/&firefox-version;/source/firefox-&firefox-version;-source.tar.bz2">
+  <!-- md5sum and size should match firefox, but the buildize and time will differ -->
+  <!ENTITY xulrunner-md5sum        "9875c9237b532009df8e91c3785539a3">
+  <!ENTITY xulrunner-size          "35.3 MB">
+  <!ENTITY xulrunner-buildsize     "663 MB">
+  <!ENTITY xulrunner-time          "13.2 SBU">
+]>
+
+<sect1 id="xulrunner" xreflabel="Xulrunner-&xulrunner-version;">
+  <?dbhtml filename="xulrunner.html" ?>
+
+  <sect1info>
+    <othername>$LastChangedBy: ken $</othername>
+    <date>$Date: 2009-03-12 14:37:30 +0100 (jeu 12 mar 2009) $</date>
+  </sect1info>
+
+  <title>Xulrunner-&xulrunner-version;</title>
+
+  <indexterm zone="xulrunner">
+    <primary sortas="a-Xulrunner">Xulrunner</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title>Introduction to Xulrunner</title>
+
+    <para><application>Xulrunner</application> is a runtime environment for XUL
+    applications, and forms the major part of the <application>Mozilla</application>
+    codebase.  In particular, it provides the gecko engine together with pkgconfig
+    files so that applications such as <application>Epiphany</application> and
+    <application>Yelp</application> can use it.</para>
+
+   <note>
+    <para>If you later build a newer version of <application>xulrunner</application>
+    to pick up the latest security fixes, you <emphasis>must</emphasis> update the
+    symlinks (including for nss, nspr if you are using the versions in
+    <application>xulrunner</application>) and rebuild every application which uses
+    gecko, including upgrading <application>firefox</application> if you have installed
+    that.</para>
+   </note>
+
+    <bridgehead renderas="sect3">Package Information</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Download (HTTP): <ulink url="&xulrunner-download-http;"/></para>
+      </listitem>
+      <listitem>
+        <para>Download (FTP): <ulink url="&xulrunner-download-ftp;"/></para>
+	<tip><para>When a new version of <application>firefox</application> is
+	released, sometimes a corresponding new version of
+	<application>xulrunner</application> appears at the same time. At other
+	times it appears several days later or not at all. So far in the
+	<application>firefox-3.0</application> series, every new release has
+	created xulrunner libraries with a corresponding new version. Whenever
+	a separate xulrunner tarball has been released, it has been bitwise
+	identical to the corresponding firefox tarball. So, we will use the
+	<application>firefox</application> tarball to save downloading this
+	large package twice.</para></tip>
+      </listitem>
+      <listitem>
+        <para>Download MD5 sum: &xulrunner-md5sum;</para>
+      </listitem>
+      <listitem>
+        <para>Download size: &xulrunner-size;</para>
+      </listitem>
+      <listitem>
+        <para>Estimated disk space required: &xulrunner-buildsize;</para>
+      </listitem>
+      <listitem>
+        <para>Estimated build time: &xulrunner-time;</para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3">Xulrunner Dependencies</bridgehead>
+
+    <bridgehead renderas="sect4">Required</bridgehead>
+    <para role="required"><xref linkend="gtk2"/>,
+    <xref linkend="libidl"/>
+    <xref linkend="pango"/>
+    <xref linkend="python"/>, and
+    <xref linkend="zip"/></para>
+
+    <para>Note: <application>libjpeg</application> should have been installed
+    before <application>GTK+</application> and should exist on your system. If
+    for some reason you haven't installed <application>libjpeg</application>,
+    you should remove the <option>--with-system-jpeg</option> option from the
+    <filename>.mozconfig</filename> file created below.</para>
+
+    <bridgehead renderas="sect4">Optional</bridgehead>
+    <para role="optional"><xref linkend="dbus-glib"/>,
+    <xref linkend="doxygen"/>,
+    <xref linkend="curl"/> (only for crash-reporter),
+    <xref linkend="gnome-vfs"/> and <xref linkend="libgnomeui"/>
+    (for gnome integration),
+    <xref linkend="lcms"/>,
+    <xref linkend="libpng"/> (patched for apng support),
+    <ulink url="http://sqlite.org/">SQLite</ulink>,
+    <xref linkend="startup-notification"/>.
+    <xref linkend="unzip"/>,
+    <ulink url="http://www.valgrind.org/">Valgrind</ulink> (only for testing the
+    jemalloc code), and
+    <xref linkend="wget"/></para>
+
+    <para condition="html" role="usernotes">User Notes:
+    <ulink url="&blfs-wiki;/xulrunner"/></para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation of Xulrunner</title>
+
+  <!-- FIXME : I assume current OOo can't use xulrunner ?
+    lines near the bottom of the file. If you are going to build the
+    <application>OpenOffice</application> package and you want to use this
+    <application>Xulrunner</application> installation as the default
+    <application>Mozilla</application> source, ensure you uncomment the
+	+ substitutions to stop the comment breaking the syntax
+    <option>++enable-ldap+/option+ option in the file created below. -->
+    <para>The configuration of <application>Xulrunner</application> is
+    accomplished by creating a <filename>.mozconfig</filename> file containing
+    the desired configuration options. A default <filename>.mozconfig</filename>
+    is created below. To see the entire list of available configuration options
+    (and an abbreviated description of each one), issue
+    <command>./configure --help</command>.  If you are going to use
+    system-installed versions of the <application>NSS</application> and
+    <application>NSPR</application> libraries, ensure you uncomment the two
+    lines near the bottom of the file.
+    You should review the entire file and comment or uncomment options as
+    necessary. If you would prefer to download the file instead of creating
+    it by typing or cut-and-pasting, you can find it at <ulink
+    url="&files-anduin;/xulrunner-&xulrunner-version;-mozconfig"/>
+    (the file must be installed in the root of the source tree
+    <filename class='directory'>mozilla</filename> directory, and named
+    <filename>.mozconfig</filename>).</para>
+
+<screen><?dbfo keep-together="auto"?><userinput>cat &gt; .mozconfig &lt;&lt; "EOF"
+<literal># This file contains the options used in the Xulrunner build. You may
+# need to specify additional options for your specific build needs.
+# Use the information provided by running './configure --help' to
+# help you determine if you need to add any additional options.
+# Some additional options can be added by uncommenting the examples
+# in this file or adding options by inserting a line containing
+# 'ac_add_options --some-option-you-need'.  Be aware that some accepted
+# options, such as '--with-system-bz2', do not affect the build.
+
+# specify that we want to build xulrunner
+ac_add_options --enable-application=xulrunner
+
+# Create an object directory and specify to build the package in that
+# directory. If desired, modify the location of the object directory
+# to a directory inside the source tree by removing '../' from the
+# line below.
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../xulrunner-build
+
+# Specify the installation prefix. If you would prefer Xulrunner
+# installed in a different prefix, modify the line below to fit
+# your needs (the config will always be written to /etc/gre.d)
+ac_add_options --prefix=/usr
+
+# apply a minimal level of optimization (-O)
+ac_add_options --enable-optimize
+
+# These options are used so that the Xulrunner binaries are linked to
+# the system-installed copies of the specified libraries instead of
+# the source tree code which may not be the most recent versions (or,
+# for cairo, may contain additional patches) : with the exception of
+# libsqlite3, the libraries are statically linked - using the shipped
+# version of libsqlite3 has bee n reported to cause problems with other
+# applications which were using sqlite3.
+
+# (the --enable-system options)
+# comment this if you want to use whatever patched version of cairo
+# is in the shipped mozilla tree, together with the system headers.
+ac_add_options --enable-system-cairo
+
+# comment this if you have not installed lcms
+ac_add_options --enable-system-lcms
+
+# comment this if you have not installed sqlite
+ac_add_options --enable-system-sqlite
+
+# (the --with-system options)
+# comment this if you did not build libjpeg before gtk+-2
+ac_add_options --with-system-jpeg
+
+# These two options enable support for building Xulrunner with
+# system-installed versions of the Network Security Services (NSS)
+# and Netscape Portable Runtime (NSPR) libraries. Uncomment both
+# lines to enable support for system-installed NSS/NSPR instead of
+# building the versions shipped with xulrunner.
+#ac_add_options --with-system-nspr
+#ac_add_options --with-system-nss
+
+# comment this if you have not built png with the apng patch
+ac_add_options --with-system-png
+
+# The pthreads option is only used when building nspr
+# so you can comment this if you enable --with-system-nspr
+ac_add_options --with-pthreads
+
+# zlib is in LFS
+ac_add_options --with-system-zlib
+
+# (options to disable parts of the package)
+# This option is used to disable the a11y support in the Xulrunner
+# binaries. Comment out this option if you require a11y support.
+ac_add_options --disable-accessibility
+
+# uncomment this if you did not build curl
+#ac_add_options --disable-crashreporter
+
+# comment this if you have built dbus-glib
+ac_add_options --disable-dbus
+
+# comment this if you have gnome-vfs and libgnomeui, and wish to
+# integrate xulrunner into your gnome desktop
+ac_add_options --disable-gnomevfs
+
+# This option is added so that the Mozilla Installer program is not
+# built or installed. The program is not required for a BLFS
+# installation of Xulrunner.
+ac_add_options --disable-installer
+
+# If you enable javaxpcom, you must have a java compiler installed.
+ac_add_options --disable-javaxpcom
+
+# mochitest often causes problems
+ac_add_options --disable-mochitest
+
+# This option is added so that test libraries and programs are not
+# built. These would only be required for debugging purposes.
+ac_add_options --disable-tests
+
+# Disable the updater, which is not appropriate if you build from source
+ac_add_options --disable-updater
+
+# (options to add extra parts of the package)
+# This option is used to enable source tree included LDAP support in
+# the Xulrunner binaries.
+###################################################################
+#
+# NOTE: You must uncomment this option if there is any chance of
+# compiling the OpenOffice package from source code using this copy
+# of Xulrunner for your Mozilla support.
+# This has NOT been tested, current versions of OpenOffice are
+# assumed not to compile against this version of xulrunner!
+#
+###################################################################
+#ac_add_options --enable-ldap
+
+# Use the anti-phishing measures (a blacklist of sites)
+ac_add_options --enable-safe-browsing
+
+# This option is used so that the debugging symbols are removed from
+# the installed binaries during the installation process. Comment out
+# this option if you may have a need to retain the debugging symbols
+# in the installed binaries (the resulting binaries will be about 7MB
+# bigger).
+ac_add_options --enable-strip
+
+# Uncomment this option if you desire support for dual-monitor
+# display using the X-Window Xinerama libraries.
+#ac_add_options --enable-xinerama
+
+# ('with' options)
+# This option identifies the default binary directory of the Xulrunner
+# installation and is used to locate Xulrunner's installed files. This
+# option is not required for end-user browsing, and is only used for
+# development purposes.
+#ac_add_options --with-default-mozilla-five-home=/usr/lib/xulrunner-&xulrunner-version;</literal>
+
+EOF</userinput></screen>
+
+    <para>Compile <application>Xulrunner</application> by issuing the
+    following commands:</para>
+
+<screen><userinput>echo "Requires: nspr" >>xulrunner/installer/libxul-embedding.pc.in &amp;&amp;
+make -f client.mk build</userinput></screen>
+
+    <para>This package does not come with a test suite.</para>
+
+    <para>Now, as the <systemitem class="username">root</systemitem> user,
+    install the package:</para>
+
+<screen role="root"><userinput>make -f client.mk install &amp;&amp;
+for DL in \
+    libnss3.so libnssutil3.so libsmime3.so libssl3.so libsoftokn3.so \
+    libplds4.so libplc4.so libnspr4.so ; do
+        ln -sv xulrunner-&xulrunner-version;/$DL /usr/lib/$DL
+done &amp;&amp;
+ln -sv mozilla-nspr.pc /usr/lib/pkgconfig/nspr.pc &amp;&amp;
+mkdir /usr/lib/mozilla &amp;&amp;
+ln -sv /usr/lib/xulrunner-&xulrunner-version;/plugins /usr/lib/mozilla/plugins</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="commands">
+    <title>Command Explanations</title>
+
+    <para><command>echo "Requires: nspr" >>xulrunner/installer/libxul-embedding.pc.in</command>
+    : If you try to build <application>Yelp</application> without this, the
+    prtypes header from nspr will not be found.  It is arguable whose error this
+    is (the code presumably works on earlier geckos), but this fix is unlikely
+    to cause any damage in other packages.</para>
+
+    <para><command>make -f client.mk ...</command>: Mozilla products are
+    packaged to allow the use of a configuration file which can be used to
+    pass the configuration settings to the <command>configure</command>
+    command. <command>make</command> uses the <filename>client.mk</filename>
+    file to get initial configuration and setup parameters, then depending on
+    the target parameter (<parameter>build</parameter> or
+    <parameter>install</parameter>), either runs the
+    <command>configure</command> script and compiles the package or installs
+    the package.</para>
+
+    <para><command>for DL in ...</command>: The nspr and nss libraries shipped
+    with this package are installed into /usr/lib/xulrunner-&xulrunner-version;
+    which means they will not be found at runtime.  By using symbolic links from
+    <filename class="directory">/usr/lib</filename> they will be found and we can
+    easily change the links to point to a newer version when we upgrade.</para>
+
+    <para><command>ln -sv /usr/lib/xulrunner-&xulrunner-version;/plugins
+    /usr/lib/mozilla/plugins</command>: Some packages will install browser plugins
+    into /usr/lib/mozilla/plugins. By creating this as a symlink to the basic
+    plugins we keep them all together.</para>
+
+   <tip>
+    <para>When you upgrade xulrunner, remember to update the symlinks and to
+    copy any additional plugins compiled agaisnt this series of xulrunner to the
+    new plugin directory.</para>
+   </tip>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title>Contents</title>
+
+    <segmentedlist>
+      <segtitle>Installed Programs</segtitle>
+      <segtitle>Installed Libraries</segtitle>
+      <segtitle>Installed Directories</segtitle>
+
+      <seglistitem>
+        <seg>xulrunner</seg>
+        <seg>Numerous libraries, browser components, plugins, extensions, and
+        helper modules installed in <filename
+        class='directory'>/usr/lib/xulrunner-&xulrunner-version;</filename></seg>
+        <seg>/etc/gre.d, /usr/include/xulrunner-&xulrunner-version;,
+        /usr/lib/xulrunner-&xulrunner-version;, and
+        /usr/lib/xulrunner-devel-&xulrunner-version;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="xulrunner-prog">
+        <term><command>xulrunner</command></term>
+        <listitem>
+          <para>is a shell script, useful for identifying the version
+          installed.</para>
+          <indexterm zone="xulrunner xulrunner-prog">
+            <primary sortas="b-xulrunner">xulrunner</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

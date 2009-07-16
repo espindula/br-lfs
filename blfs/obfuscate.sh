@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # $LastChangedBy: manuel $
-# $Date: 2008-11-16 21:28:00 $
+# $Date: 2007-07-07 12:41:20 +0200 (sam, 07 jui 2007) $
 
 # obfuscate.sh
 # obfuscate email addresses in XML/HTML
