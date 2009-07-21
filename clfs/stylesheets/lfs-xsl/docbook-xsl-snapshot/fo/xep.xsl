@@ -5,7 +5,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: xep.xsl,v 1.1 2008-12-31 18:36:34 texou Exp $
+     $Id$
      ********************************************************************
      (c) Stephane Bline Peregrine Systems 2001
      Implementation of xep extensions:

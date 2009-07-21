@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
 <!--
-$LastChangedBy: manuel@linuxfromscratch.org $
-$Date: 2008-12-31 18:36:35 $
+$LastChangedBy$
+$Date$
 -->
 
 <!DOCTYPE xsl:stylesheet [

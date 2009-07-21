@@ -26,7 +26,7 @@
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: autoidx-kosek.xsl,v 1.1 2008-12-31 18:36:33 texou Exp $
+     $Id$
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.

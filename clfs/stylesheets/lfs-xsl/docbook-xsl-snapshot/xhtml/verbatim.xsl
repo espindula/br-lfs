@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:sverb="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.Verbatim" xmlns:xverb="xalan://com.nwalsh.xalan.Verbatim" xmlns:lxslt="http://xml.apache.org/xslt" xmlns:exsl="http://exslt.org/common" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="sverb xverb lxslt exsl" version="1.0">
 
 <!-- ********************************************************************
-     $Id: verbatim.xsl,v 1.1 2008-12-31 18:36:35 texou Exp $
+     $Id$
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

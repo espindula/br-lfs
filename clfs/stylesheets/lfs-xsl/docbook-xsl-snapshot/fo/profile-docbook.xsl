@@ -9,7 +9,7 @@
 <xsl:output method="xml" indent="no"/>
 
 <!-- ********************************************************************
-     $Id: profile-docbook.xsl,v 1.1 2008-12-31 18:36:34 texou Exp $
+     $Id$
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

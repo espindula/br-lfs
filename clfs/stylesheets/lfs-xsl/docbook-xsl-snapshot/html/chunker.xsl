@@ -9,7 +9,7 @@
                 extension-element-prefixes="saxon redirect lxslt exsl">
 
 <!-- ********************************************************************
-     $Id: chunker.xsl,v 1.1 2008-12-31 18:36:34 texou Exp $
+     $Id$
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

@@ -4,7 +4,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: spaces.xsl,v 1.1 2008-12-31 18:36:34 texou Exp $
+     $Id$
      ********************************************************************
      XSL-FO specification treats all space characters like ordinary spaces.
      We need to map them to fo:leader with different widths in order to
