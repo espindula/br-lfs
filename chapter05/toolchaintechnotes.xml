@@ -17,13 +17,13 @@
   to at any time during the process.</para>
 
   <para>The overall goal of <xref linkend="chapter-temporary-tools"/> is to
-  provide a temporary environment that can be chrooted into and from which can be
-  produced a clean, trouble-free build of the target LFS system in <xref
-  linkend="chapter-building-system"/>. Along the way, we separate the new system
-  from the host system as much as possible, and in doing so, build a
-  self-contained and self-hosted toolchain. It should be noted that the build
-  process has been designed to minimize the risks for new readers and provide
-  maximum educational value at the same time.</para>
+  provide a temporary environment that can be chrooted into,
+  where a clean, trouble-free build of the target LFS system in <xref
+  linkend="chapter-building-system"/> can be produced. Along the way, we
+  separate the new system from the host system as much as possible, and in
+  doing so, build a self-contained and self-hosted toolchain. 
+  The build process has been designed to minimize the risks for new
+  readers and to provide the most educational value at the same time.</para>
 
   <important>
     <para>Before continuing, be aware of the name of the working platform,
@@ -54,11 +54,13 @@
 
   <itemizedlist>
     <listitem>
-      <para>Slightly adjusting the name of the working platform ensures that
-      the first build of Binutils and GCC produces a compatible cross-linker
-      and cross-compiler. Instead of producing binaries for another architecture,
-      the cross-linker and cross-compiler will produce binaries compatible with
-      the current hardware.</para>
+      <para>Slightly adjusting the name of the working platform, by changing the
+      &quot;vendor&quot; field target triplet by way of the
+      <envar>LFS_TGT</envar> variable, ensures that the first build of Binutils
+      and GCC produces a compatible cross-linker and cross-compiler. Instead of
+      producing binaries for another architecture, the cross-linker and
+      cross-compiler will produce binaries compatible with the current
+      hardware.</para>
     </listitem>
     <listitem>
       <para>The temporary libraries are cross-compiled. This removes all
@@ -98,9 +100,8 @@
   <para>The next package installed is GCC. An example of what can be
   seen during its run of <command>configure</command> is:</para>
 
-<screen><computeroutput>checking what assembler to use...
-        /tools/i686-pc-linux-gnu/bin/as
-checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</computeroutput></screen>
+<screen><computeroutput>checking what assembler to use... /tools/i686-lfs-linux-gnu/bin/as
+checking what linker to use... /tools/i686-lfs-linux-gnu/bin/ld</computeroutput></screen>
 
   <para>This is important for the reasons mentioned above. It also demonstrates
   that GCC's configure script does not search the PATH directories to find which
@@ -117,34 +118,33 @@ checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</computeroutput><
 
   <para>The next package installed is Glibc. The most important considerations
   for building Glibc are the compiler, binary tools, and kernel headers. The
-  compiler is generally not an issue since Glibc will always use the
-  <command>gcc</command> found in a <envar>PATH</envar> directory. The binary
-  tools and kernel headers can be a bit more complicated. Therefore, take no
-  risks and use the available configure switches to enforce the correct
-  selections. After the run of <command>configure</command>, check the contents
-  of the <filename>config.make</filename> file in the <filename
+  compiler is generally not an issue since Glibc will always use the compiler
+  relating to the <parameter>--host</parameter> parameter passed to its
+  configure script, e.g. in our case,
+  <command>i686-lfs-linux-gnu-gcc</command>. The binary tools and kernel
+  headers can be a bit more complicated. Therefore, take no risks and use the
+  available configure switches to enforce the correct selections. After the run
+  of <command>configure</command>, check the contents of the
+  <filename>config.make</filename> file in the <filename
   class="directory">glibc-build</filename> directory for all important details.
-  Note the use of <parameter>CC="gcc -B/tools/bin/"</parameter> to control which
-  binary tools are used and the use of the <parameter>-nostdinc</parameter>
-  and <parameter>-isystem</parameter> flags to control the compiler's include
+  Note the use of <parameter>CC="i686-lfs-gnu-gcc"</parameter> to control which
+  binary tools are used and the use of the <parameter>-nostdinc</parameter> and
+  <parameter>-isystem</parameter> flags to control the compiler's include
   search path. These items highlight an important aspect of the Glibc
   package&mdash;it is very self-sufficient in terms of its build machinery and
   generally does not rely on toolchain defaults.</para>
 
-  <para>After the Glibc installation, make some adjustments to ensure that
-  searching and linking take place only within the <filename
-  class="directory">/tools</filename> prefix.  Install an adjusted
-  <command>ld</command>, which has a hard-wired search path limited to
-  <filename class="directory">/tools/lib</filename>. Then amend
-  <command>gcc</command>'s specs file to point to the new dynamic linker in
-  <filename class="directory">/tools/lib</filename>. This last step is vital
-  to the whole process. As mentioned above, a hard-wired path to a dynamic
-  linker is embedded into every Executable and Link Format (ELF)-shared
-  executable.  This can be inspected by running:
+  <para>After the Glibc installation, change <command>gcc</command>'s specs file
+  to point to the new dynamic linker in <filename
+  class="directory">/tools/lib</filename>.  This last step is vital in ensuring
+  that searching and linking take place only within the <filename
+  class="directory">/tools</filename> prefix. A hard-wired
+  path to a dynamic linker is embedded into every Executable and Link Format
+  (ELF)-shared executable.  This can be inspected by running:
   <userinput>readelf -l &lt;name of binary&gt; | grep interpreter</userinput>.
-  Amending gcc's specs file ensures that every program compiled from here
-  through the end of this chapter will use the new dynamic linker in
-  <filename class="directory">/tools/lib</filename>.</para>
+  Amending <command>gcc</command>'s specs file ensures that every program
+  compiled from here through the end of this chapter will use the new dynamic
+  linker in <filename class="directory">/tools/lib</filename>.</para>
 
   <para>For the second pass of GCC, its sources also need to be modified
   to tell GCC to use the new dynamic linker. Failure to do
@@ -164,8 +164,8 @@ checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</computeroutput><
   linkend="chapter-building-system"/>, the first major package to be
   installed is Glibc, due to its self-sufficient nature mentioned above.
   Once this Glibc is installed into <filename
-  class="directory">/usr</filename>, perform a quick changeover of the
-  toolchain defaults, then proceed in building the rest of the target
+  class="directory">/usr</filename>, we will perform a quick changeover of the
+  toolchain defaults, and then proceed in building the rest of the target
   LFS system.</para>
 
   <!-- FIXME: Removed as part of the fix for bug 1061 - we no longer build pass1
