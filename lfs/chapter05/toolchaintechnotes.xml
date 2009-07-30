@@ -18,11 +18,11 @@
   référence à tout moment lors du processus de construction.</para>
 
   <para>Le but global du <xref linkend="chapter-temporary-tools"/> est
-  de fournir un environnement temporaire que nous utiliserons comme racine (chroot)
-  du système à partir duquel le système LFS cible du <xref linkend="chapter-building-system"/> pourra être produit proprement, sans soucis.
-  Tout au long du chemin, nous nous séparons du système hôte autant que possible et, ce faisant,
-  nous construisons un ensemble d'outils qui se tient. Il devrait être
-  noté que le processus de construction a été conçu pour minimiser les
+  de fournir une zone temporaire qui contient un ensemble
+  d'outils connus qui peuvent être isolés du système hôte. En utilisant
+  <command>chroot</command>, les commandes dans le reste des chapitres se cantonneront à
+  cet environnement, en assurant une construction du système LFS cible
+  propre, sans soucis. Le processus de construction a été conçu pour minimiser les
   risques pour les nouveaux lecteurs et pour fournir une valeur
   éducative maximale en même temps.</para>
 
@@ -64,9 +64,11 @@
 
   <itemizedlist>
     <listitem>
-      <para>Un léger ajustement du nom de la plateforme de travail assure que la
+      <para>Un léger ajustement du nom de la plateforme de travail,
+      en modifiant le champ &quot;vendor&quot; de la triplette cible via la variable
+      <envar>LFS_TGT</envar>, assure que la
       première construction de Binutils et de GCC produira un éditeur de liens
-      en un compilateur croisés compatibles. Au lieu de produire des binaires
+      et un compilateur croisés compatibles. Au lieu de produire des binaires
       pour une autre architecture, l'éditeur de liens et le compilateur croisés
       vont produire des binaires compatibles avec le matériel actuel.</para>
     </listitem>
@@ -118,9 +120,8 @@
   peut être vu pendant son exécution de <command>configure</command>
   est&nbsp;:</para>
 
-<screen><computeroutput>checking what assembler to use...
-        /tools/i686-pc-linux-gnu/bin/as
-checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</computeroutput></screen>
+<screen><computeroutput>checking what assembler to use... /tools/i686-lfs-linux-gnu/bin/as
+checking what linker to use... /tools/i686-lfs-linux-gnu/bin/ld</computeroutput></screen>
 
   <para>C'est important pour les raisons mentionnées ci-dessus. Cela démontre
   aussi que le script configure de GCC ne cherche pas les répertoires PATH pour
@@ -145,38 +146,31 @@ checking what linker to use... /tools/i686-pc-linux-gnu/bin/ld</computeroutput><
   <para>Le prochain paquetage installé est Glibc. Les choses les plus 
   importantes à prendre en considération pour construire Glibc sont
   le compilateur, les outils binaires et les en-têtes du noyau.
-  Le compilateur n'est généralement pas un problème car Glibc utilise
-  toujours le <command>gcc</command> trouvé dans un répertoire du <envar>PATH</envar>. 
-  Les outils binaires
-  et les en-têtes du noyau peuvent être un peu plus compliqués. Du coup,
+  Le compilateur ne pose généralement pas de problème car Glibc utilise
+  toujours le compilateur lié au paramètre <parameter>--host</parameter> passé à
+  son script configure, par exemple, dans notre cas,
+  <command>i686-lfs-linux-gnu-gcc</command>. 
+  Les outils binaires et les en-têtes du noyau peuvent être un peu plus compliqués. Du coup,
   ne prenez pas de risque et utilisez les options disponibles de
   configure pour renforcer les bonnes sélections. Après l'exécution de 
   <command>configure</command>, vérifiez le contenu du fichier <filename>config.make</filename>
   dans le répertoire <filename class="directory">glibc-build</filename> pour tous les détails importants. Notez
   l'utilisation de 
-
-  <parameter>CC="gcc -B/tools/bin/"</parameter> pour contrôler le outils
-  binaires utilisés, et l'utilisation des  commutateurs
+  <parameter>CC="i686-lfs-gnu-gcc"</parameter> pour contrôler le outils
+  binaires utilisés, et l'utilisation des commutateurs
   <parameter>-nostdinc</parameter> et <parameter>-isystem</parameter>
   pour contrôler le chemin de recherche des en-têtes du compilateur. Ces
   éléments soulignent un aspect important du paquetage glibc&mdash;il
   est auto-suffisant en terme de machinerie de construction et ne repose
   généralement pas sur l'ensemble d'outils par défaut.</para>
 
-  <para>Après l'installation de Glibc, réalisez les ajustements pour
-  vous assurer que la recherche et l'édition de liens prennent seulement
-  place à l'intérieur du préfixe
-
-  <filename class="directory">/tools</filename>. Installez un
-  <command>ld</command> ajusté qui a un chemin de recherche limité, codé
-  en dur, vers <filename class="directory">/tools/lib</filename>. Puis,
-  modifiez le
+  <para>Après l'installation de Glibc, modifiez le
   fichier specs de <command>gcc</command>  pour pointer vers le nouvel éditeur de
   liens dynamique dans 
-
   <filename class="directory">/tools/lib</filename>. Cette
-  dernière étape est vitale pour le processus complet. Comme mentionné ci-dessus,
-  un chemin en dur vers un éditeur de liens est intégré dans chaque exécutable
+  dernière étape est vitale en assurant que la recherche et l'édition des liens
+  ne s'opère qu'à l'intérieur du préfixe <filename class="directory">/tools</filename>.
+  Un chemin en dur vers un éditeur de liens est intégré dans chaque exécutable
   ainsi que dans chaque exécutable partagé (ELF). Ceci peut être inspecté en
   exécutant&nbsp;:
 
@@ -215,8 +209,8 @@ Glibc dans
   linkend="chapter-building-system"/>, le premier paquetage majeur à
   être installé est Glibc, à cause de sa nature auto-suffisante
   mentionnée ci-dessus. Une fois que Glibc est installée dans  <filename
-  class="directory">/usr</filename>, réalisez une rapide modification
-  des valeurs par défaut de l'ensemble des outils puis continuez la
+  class="directory">/usr</filename>, nous allons réaliser une rapide modification
+  des valeurs par défaut de l'ensemble des outils puis continuer la
   construction du reste du système LFS cible.</para>
 
   <!-- FIXME: Removed as part of the fix for bug 1061 - we no longer build pass1
