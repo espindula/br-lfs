@@ -81,6 +81,7 @@ $(ARCHS_HTML):
 	$(Q)mkdir -p $(BASEDIR)/$(html_arch)/images
 	$(Q)cp $(PWD)/images/*.png $(BASEDIR)/$(html_arch)/images
 	$(Q)sed -i -e "s@../images@images@g" $(BASEDIR)/$(html_arch)/*.html
+	$(Q)$(MAKE) ARCHS=$(html_arch) DLLISTDIR=$(BASEDIR) download-list
 
 nochunks: tmpdir $(ARCHS_NOCHUNKS) tidy
 
@@ -165,7 +166,7 @@ $(ARCHS_DLLIST): override dllist_arch = $(@:%$(S)dllist=%)
 $(ARCHS_DLLIST):
 	@echo "Creating download list for $(dllist_arch)..."
 	$(Q)mkdir -p $(DLLISTDIR)
-	$(Q)xsltproc --xinclude --nonet --output $(DLLISTDIR)/$(dllist_arch).dl.list \
+	$(Q)xsltproc --xinclude --nonet --output $(DLLISTDIR)/$(dllist_arch)/dl.list \
 	  $(PWD)/stylesheets/wget.xsl $(PWD)/$(dllist_arch)-index.xml
 
 help:
