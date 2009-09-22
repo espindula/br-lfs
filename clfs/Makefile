@@ -42,7 +42,7 @@ tidy:
 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
 	  tidy -config $(PWD)/tidy.conf $$filename; \
 	  true; \
-	  sh $(PWD)/obfuscate.sh $$filename; \
+	  bash $(PWD)/obfuscate.sh $$filename; \
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
 else
@@ -106,7 +106,7 @@ $(ARCHS_NOCHUNKS):
 	@echo "Running Tidy..."
 	$(Q)tidy -config $(PWD)/tidy.conf $(BASEDIR)/CLFS-$(nochunk_arch).html || true
 	@echo "Running obfuscate.sh..."
-	$(Q)sh $(PWD)/obfuscate.sh $(BASEDIR)/CLFS-$(nochunk_arch).html
+	$(Q)bash $(PWD)/obfuscate.sh $(BASEDIR)/CLFS-$(nochunk_arch).html
 	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g"  \
 	  $(BASEDIR)/CLFS-$(nochunk_arch).html
 
