@@ -19,7 +19,7 @@
 
 
     <para>Le paquet EGLIBC contient la bibliothèque C principale. Cette bibliothèque
-    fournit toutes les routines basiques pour allouer de la mémoire, rechercher des
+    fournit toutes les routines de base pour allouer de la mémoire, rechercher dans des
     répertoires, ouvrir et fermer des fichiers, les lire et les écrire, gérer
     les chaînes, faire de la recherche de motifs, faire de l'arithmétique etc.</para>
 
@@ -30,8 +30,8 @@
 
     <note os="z">
       <para>Certains paquets non compris dans CLFS suggèrent d'installer GNU
-      libiconv pour traduire les données d'un codage en un autre. La page d'accueil
-      du projet (<ulink url="http://www.gnu.org/software/libiconv/"/>) précise
+      libiconv pour traduire les données d'un encodage en un autre. La page d'accueil
+      du projet (<ulink url="http://www.gnu.org/software/libiconv/"/>) précise que
       <quote>Cette bibliothèque fournit une implémentation de <function>iconv()</function>
       à utiliser sur les systèmes qui n'en disposent
       pas ou dont l'implémentation ne convertit pas l'Unicode.</quote> EGLIBC fournit
@@ -54,7 +54,7 @@ sed -i "s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=${LINKER} -o|" \
   scripts/test-installation.pl
 unset LINKER</userinput></screen>
 
-    <para os="b">Le système de construction d'EGLIBC est très bien fait et s'installe
+    <para os="b">Le système de construction d'EGLIBC est autosuffisant et s'installe
     parfaitement, même si notre fichier specs pour le compilateur et l'éditeur de
     liens pointent toujours vers <filename class="directory">/tools</filename>. Les
     specs et l'éditeur de liens ne peuvent pas être ajustés avant l'installation de
@@ -106,17 +106,16 @@ make -k check &gt;eglibc-check-log 2&gt;&amp;1 ; grep Error eglibc-check-log</us
     <para os="o">La suite de tests EGLIBC est très dépendante de certaines fonctions du système hôte, en particulier du noyau. 
     Normalement, le test posix/annexc échoue et vous devriez voir <literal>Error 1 (ignored)</literal> dans la sortie. 
     Excepté cela, la suite de tests d'EGLIBC devrait toujours passer. Néanmoins, dans certaines circonstances, certains 
-    échecs sont inévitables. Si un test échoue à cause d'un programme manquant (ou d'un lien symbolique manq1ant), ou du fait 
+    échecs sont inévitables. Si un test échoue à cause d'un programme manquant (ou d'un lien symbolique manquant), ou du fait 
     d'une erreur de segmentation, vous verrez un code d'erreur supérieur à 127 et les détails seront dans le journal. De 
     manière plus générale, les tests échoueront avec <literal>Error 2</literal> - pour eux le contenu du fichier
-    <filename>.out</filename> file, comme <filename>posix/annexc.out</filename> peut vous donner des
+    <filename>.out</filename>, comme <filename>posix/annexc.out</filename> peut vous donner des
     informations. Voici une liste des problèmes les plus fréquents&nbsp;:</para>
 
     <itemizedlist os="p">
       <listitem>
-        <para>Les tests <emphasis>math</emphasis> échouent quelque fois lors de
-        leur exécution sur des systèmes où le processeur n'est pas un Intel ou un AMD
-        authentique.</para>
+        <para>Les tests <emphasis>math</emphasis> échouent quelque fois.
+        Certaines optimisations sont connues pour être une cause de cela.</para>
       </listitem>
       <listitem>
         <para>Si vous avez monté la partition CLFS avec l'option
@@ -155,10 +154,11 @@ make -k check &gt;eglibc-check-log 2&gt;&amp;1 ; grep Error eglibc-check-log</us
     <para>Pour gagner du temps, une alternative au lancement de la commande précédente (qui génère et installe toutes les 
     locales listées dans le fichier <filename>EGLIBC-&eglibc-version;/localedata/SUPPORTED</filename> est de n'installer que les locales 
     nécessaires et exigées. Vous pouvez faire cela avec la commande <command>localedef</command>. Des informations sur cette commande se 
-    trouvent dans le fichier <filename>INSTALL</filename> dans le source d'EGLIBC. Néanmoins, il y a un nombre de locales 
+    trouvent dans le fichier <filename>INSTALL</filename> des sources d'EGLIBC. Néanmoins, il y a un nombre de locales 
     essentielles pour que les tests des paquets à venir passent, en particulier les tests <emphasis>libstdc++</emphasis> de
-    GCC. Les instructions suivantes au lieu de la cible <parameter>install-locales</parameter> utiliié ci-.deisus, 
-    installeront le réglage cinimal des locales nécessaire pour que les tests s'exécutent avec succès&nbsp;:</para>
+    GCC. Les instructions suivantes au lieu de la cible
+    <parameter>install-locales</parameter> utilisée ci-dessus, 
+    installeront l'ensemeble minimal des locales nécessaires pour que les tests s'exécutent avec succès&nbsp;:</para>
 
 <screen role="nodump"><userinput>mkdir -pv /usr/lib/locale
 localedef -i cs_CZ -f UTF-8 cs_CZ.UTF-8
@@ -175,14 +175,15 @@ localedef -i it_IT -f ISO-8859-1 it_IT
 localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
 
     <para>Certaines locales installées par la commande <command>make localedata/install-locales</command> ci-dessus ne sont 
-    pas supportées correctement par certaines applications qui sont dans CLFS et CBLFS. Vu de divers problèmes
-    survenus du fait de certains présupposés des programmeurs de certaines applications, lesquelles se cassent dans de telles 
-    locales, vous ne devriez pas utiliser CLFS dans des locales utilisant des encodages multibytes (y compris UTF-8) ou le 
+    pas supportées correctement par certaines applications qui sont dans CLFS et CBLFS. 
+    À la vue des divers problèmes survenus du fait de certains présupposés des programmeurs de certaines applications, lesquelles se cassent 
+    dans de telles locales, vous ne devriez pas utiliser CLFS dans des locales utilisant des encodages
+    multioctets (y compris UTF-8) ou le 
     sens d'écriture de droite à gauche. De nombreux correctifs non officiels et instables sont nécessaires pour corriger ces 
-    problèmes et les développeurs de CLFS ont décidé de ne pas supporter des locales si complexes pour l'instant. Ceci 
-    s'applique aux locales ja_JP et fa_IR locales&mdash;elles n'ont été installées que pour les tests de GCC et de
-    Gettext passent et le programme <command>watch</command> (qui fait partie du paquet Procps) ne fonctionnent pas 
-    correctement avec elles. Diverses solutions pour contourner ces ressrictions sont documentées dans les astuces liées à 
+    problèmes et les développeurs de CLFS ont décidé de ne pas supporter des locales complexes pour l'instant. Ceci 
+    s'applique aux locales ja_JP et fa_IR &mdash; elles n'ont été installées que pour que les tests de GCC et de
+    Gettext passent et le programme <command>watch</command> (qui fait partie du paquet Procps) ne fonctionne pas 
+    correctement avec elles. Diverses solutions pour contourner ces restrictions sont documentées dans les astuces liées à 
     l'internationalisation.</para>
 
   </sect2>
@@ -199,13 +200,13 @@ localedef -i ja_JP -f EUC-JP ja_JP</userinput></screen>
     </indexterm>
 
     <para>Le fichier <filename>/etc/nsswitch.conf</filename> doit être créé
-    parce que, bien que EGLIBC en fournisse un par défaut lorsque ce fichier est
+    car, bien que EGLIBC en fournisse un par défaut lorsque ce fichier est
     manquant ou corrompu, les valeurs par défaut d'EGLIBC ne fonctionnent pas bien
     dans un environnement en réseau. De plus, le fuseau horaire a besoin d'être
     configuré.</para>
 
     <para>Créez un nouveau fichier <filename>/etc/nsswitch.conf</filename> en
-    lançant ce qui suit&nbsp;:</para>
+    exécutant ce qui suit&nbsp;:</para>
 
 <screen><userinput>cat &gt; /etc/nsswitch.conf &lt;&lt; "EOF"
 <literal># Début de /etc/nsswitch.conf
@@ -225,12 +226,12 @@ rpc: files
 # Fin de /etc/nsswitch.conf</literal>
 EOF</userinput></screen>
 
-    <para>Pour déterminer dans quel fuseau horaire vous vous situez, lancez le
+    <para>Pour déterminer dans quel fuseau horaire vous vous situez, exécutez le
     script suivant&nbsp;:</para>
 
 <screen role="nodump"><userinput>tzselect</userinput></screen>
 
-    <para>Après avoir répondu à quelques questions sur votre emplacement, le
+    <para>Après avoir répondu à quelques questions sur votre localisation, le
     script affichera le nom du fuseau horaire (quelque chose comme <emphasis>EST5EDT</emphasis> ou
     <emphasis>Canada/Eastern</emphasis>). Puis créez le fichier <filename>/etc/localtime</filename> en lançant&nbsp;:</para>
 
@@ -248,10 +249,10 @@ EOF</userinput></screen>
         <listitem>
           <para>Ceci est nécessaire pour forcer la suppression du lien
           symbolique déjà existant. La raison pour laquelle nous copions plutôt que de
-          simplement créer un lien symbolique est de se couvrir de la situation où
+          simplement créer un lien symbolique est d'anticiper la situation où
           <filename class="directory">/usr</filename>
-          serait une partition séparée. Ceci
-          pourrait arriver, par exemple, en démarrant en mode
+          est une partition séparée. Ceci
+          pourrait être important en démarrant en mode
           utilisateur unique.</para>
         </listitem>
       </varlistentry>
@@ -347,7 +348,7 @@ EOF</userinput></screen>
       <varlistentry id="getconf">
         <term><command>getconf</command></term>
         <listitem>
-          <para>Affiche les  valeurs de la configuration syitème pour les variables spécifiques à un système de 
+          <para>Affiche les valeurs de la configuration syitème pour les variables spécifiques à un système de 
           fichiers</para>
           <indexterm zone="ch-system-eglibc getconf">
             <primary sortas="b-getconf">getconf</primary>
@@ -358,7 +359,7 @@ EOF</userinput></screen>
       <varlistentry id="getent">
         <term><command>getent</command></term>
         <listitem>
-          <para>Récupère les entrées à partir d'une base de données administrative</para>
+          <para>Récupère les entrées à partir d'une base de données d'administration</para>
           <indexterm zone="ch-system-eglibc getent">
             <primary sortas="b-getent">getent</primary>
           </indexterm>
@@ -799,7 +800,7 @@ EOF</userinput></screen>
       <varlistentry id="libutil">
         <term><filename class="libraryfile">libutil</filename></term>
         <listitem>
-          <para>Contient du code pour les fonctions <quote>standard</quote>
+          <para>Contient du code pour les fonctions <quote>standards</quote>
           utilisées par de nombreux outils Unix</para>
           <indexterm zone="ch-system-eglibc libutil">
             <primary sortas="c-libutil">libutil</primary>
