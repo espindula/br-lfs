@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-30 14:54:48 $
+$Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -11,7 +11,7 @@ $Date: 2008-08-30 14:54:48 $
 
   <!-- This stylesheet controls how list are generated. -->
 
-    <!-- What spacing do you want before and after lists? -->
+    <!-- What spacing do you want before et after lists? -->
   <xsl:attribute-set name="list.block.spacing">
     <xsl:attribute name="space-before.optimum">0.6em</xsl:attribute>
     <xsl:attribute name="space-before.minimum">0.4em</xsl:attribute>
@@ -44,8 +44,8 @@ $Date: 2008-08-30 14:54:48 $
   <xsl:param name="variablelist.max.termlength">35</xsl:param>
 
     <!-- varlistentry mode block:
-           Addibg a bullet, left alignament, and @kepp-*.* attributes
-           for packages and paches list. -->
+           Addibg a bullet, left alignament, et @kepp-*.* attributes
+           for packages et paches list. -->
     <!-- The original template is in {docbook-xsl}/fo/list.xsl -->
   <xsl:template match="varlistentry" mode="vl.as.blocks">
     <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
@@ -140,7 +140,7 @@ $Date: 2008-08-30 14:54:48 $
   </xsl:template>
 
     <!-- simplelist:
-           Self-made template. Wrap it into a fo:block and process member childs.
+           Self-made template. Wrap it into a fo:block et process member childs.
            If @type is specified, the original templates will be used.
            NOTE: when using type='horiz' or type='vert', FOP-0.93 will complaints
              about not supported table-layout="auto" -->

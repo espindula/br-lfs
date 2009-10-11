@@ -8,12 +8,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: callout.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: callout.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -26,7 +26,7 @@
 
   <xsl:choose>
     <xsl:when test="$use.extensions != '0'
-                    and $callouts.extension != '0'">
+                    et $callouts.extension != '0'">
       <xsl:variable name="rtf">
         <xsl:apply-templates select="$verbatim">
           <xsl:with-param name="suppress-numbers" select="'1'"/>
@@ -52,7 +52,7 @@
 
       <xsl:choose>
         <xsl:when test="$verbatim/@linenumbering = 'numbered'
-                        and $linenumbering.extension != '0'">
+                        et $linenumbering.extension != '0'">
           <xsl:call-template name="number.rtf.lines">
             <xsl:with-param name="rtf" select="$rtf-with-callouts"/>
             <xsl:with-param name="pi.context"
@@ -134,7 +134,7 @@
   <xsl:choose>
     <!-- Draw callouts as images -->
     <xsl:when test="$callout.graphics != '0'
-                    and $conum &lt;= $callout.graphics.number.limit">
+                    et $conum &lt;= $callout.graphics.number.limit">
       <xsl:variable name="filename"
                     select="concat($callout.graphics.path, $conum,
 		                   $callout.graphics.extension)"/>
@@ -159,7 +159,7 @@
     </xsl:when>
 
     <xsl:when test="$callout.unicode != 0
-                    and $conum &lt;= $callout.unicode.number.limit">
+                    et $conum &lt;= $callout.unicode.number.limit">
       <xsl:variable name="comarkup">
         <xsl:choose>
           <xsl:when test="$callout.unicode.start.character = 10102">

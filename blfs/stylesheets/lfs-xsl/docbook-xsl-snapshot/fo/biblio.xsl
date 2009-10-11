@@ -4,12 +4,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: biblio.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: biblio.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -133,9 +133,9 @@
     </xsl:if>
 
     <xsl:apply-templates select="*[not(self::blockinfo)
-                                   and not(self::info)
-                                   and not(self::title)
-                                   and not(self::titleabbrev)]"/>
+                                   et not(self::info)
+                                   et not(self::title)
+                                   et not(self::titleabbrev)]"/>
   </fo:block>
 </xsl:template>
 

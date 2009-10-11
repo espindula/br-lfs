@@ -4,19 +4,19 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="doc" version="1.0">
 
 <!-- ********************************************************************
-     $Id: ebnf.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: ebnf.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
 <doc:reference xmlns="">
 <referenceinfo xmlns="http://www.w3.org/1999/xhtml">
 <releaseinfo role="meta">
-$Id: ebnf.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+$Id: ebnf.xsl 6840 2007-07-07 10:25:55Z manuel $
 </releaseinfo>
 <author><surname>Walsh</surname>
 <firstname>Norman</firstname></author>
@@ -30,15 +30,15 @@ $Id: ebnf.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
 <section><title>Introduction</title>
 
 <para>This is technical reference documentation for the DocBook XSL
-Stylesheets; it documents (some of) the parameters, templates, and
+Stylesheets; it documents (some of) the parameters, templates, et
 other elements of the stylesheets.</para>
 
-<para>This reference describes the templates and parameters relevant
+<para>This reference describes the templates et parameters relevant
 to formatting EBNF markup.</para>
 
 <para>This is not intended to be <quote>user</quote> documentation.
 It is provided for developers writing customization layers for the
-stylesheets, and for anyone who's interested in <quote>how it
+stylesheets, et for anyone who's interested in <quote>how it
 works</quote>.</para>
 
 <para>Although I am trying to be thorough, this documentation is known

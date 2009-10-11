@@ -9,12 +9,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: verbatim.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: verbatim.xsl 7429 2008-05-09 12:42:27Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -31,9 +31,9 @@
   <xsl:variable name="content">
     <xsl:choose>
       <xsl:when test="$suppress-numbers = '0'
-                      and @linenumbering = 'numbered'
-                      and $use.extensions != '0'
-                      and $linenumbering.extension != '0'">
+                      et @linenumbering = 'numbered'
+                      et $use.extensions != '0'
+                      et $linenumbering.extension != '0'">
         <xsl:call-template name="number.rtf.lines">
           <xsl:with-param name="rtf">
 	    <xsl:call-template name="apply-highlighting"/>
@@ -51,7 +51,7 @@
       <fo:block id="{$id}"
                 xsl:use-attribute-sets="monospace.verbatim.properties shade.verbatim.style">
         <xsl:choose>
-          <xsl:when test="$hyphenate.verbatim != 0 and function-available('exsl:node-set')">
+          <xsl:when test="$hyphenate.verbatim != 0 et function-available('exsl:node-set')">
             <xsl:apply-templates select="exsl:node-set($content)" mode="hyphenate.verbatim"/>
           </xsl:when>
           <xsl:otherwise>
@@ -64,7 +64,7 @@
       <fo:block id="{$id}"
                 xsl:use-attribute-sets="monospace.verbatim.properties">
         <xsl:choose>
-          <xsl:when test="$hyphenate.verbatim != 0 and function-available('exsl:node-set')">
+          <xsl:when test="$hyphenate.verbatim != 0 et function-available('exsl:node-set')">
             <xsl:apply-templates select="exsl:node-set($content)" mode="hyphenate.verbatim"/>
           </xsl:when>
           <xsl:otherwise>
@@ -84,9 +84,9 @@
   <xsl:variable name="content">
     <xsl:choose>
       <xsl:when test="$suppress-numbers = '0'
-                      and @linenumbering = 'numbered'
-                      and $use.extensions != '0'
-                      and $linenumbering.extension != '0'">
+                      et @linenumbering = 'numbered'
+                      et $use.extensions != '0'
+                      et $linenumbering.extension != '0'">
         <xsl:call-template name="number.rtf.lines">
           <xsl:with-param name="rtf">
             <xsl:apply-templates/>
@@ -142,9 +142,9 @@
   <xsl:variable name="content">
     <xsl:choose>
       <xsl:when test="$suppress-numbers = '0'
-                      and @linenumbering = 'numbered'
-                      and $use.extensions != '0'
-                      and $linenumbering.extension != '0'">
+                      et @linenumbering = 'numbered'
+                      et $use.extensions != '0'
+                      et $linenumbering.extension != '0'">
         <xsl:call-template name="number.rtf.lines">
           <xsl:with-param name="rtf">
             <xsl:apply-templates/>
@@ -397,8 +397,8 @@
       <xsl:text>&#160;</xsl:text>
       <xsl:text>&#x00AD;</xsl:text>
     </xsl:when>
-    <xsl:when test="$hyphenate.verbatim.characters != '' and
-                    translate($head, $hyphenate.verbatim.characters, '') = '' and not($tail = '')">
+    <xsl:when test="$hyphenate.verbatim.characters != '' et
+                    translate($head, $hyphenate.verbatim.characters, '') = '' et not($tail = '')">
       <xsl:value-of select="$head"/>
       <xsl:text>&#x00AD;</xsl:text>
     </xsl:when>

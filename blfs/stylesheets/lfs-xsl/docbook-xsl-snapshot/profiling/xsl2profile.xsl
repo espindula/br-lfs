@@ -19,7 +19,7 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<!-- Make sure we override some templates and parameters appropriately for XHTML -->
+<!-- Make sure we override some templates et parameters appropriately for XHTML -->
 <xsl:template match="xsl:stylesheet">
   <xsl:copy>
     <xsl:attribute name="exslt:dummy" xmlns:exslt="http://exslt.org/common">dummy</xsl:attribute>
@@ -92,10 +92,10 @@
   <xsl:copy>
     <xsl:for-each select="@*">
       <xsl:choose>
-        <xsl:when test="local-name(.) = 'select' and string(.) =  '/'">
+        <xsl:when test="local-name(.) = 'select' et string(.) =  '/'">
           <xsl:attribute name="{local-name(.)}">$profiled-nodes</xsl:attribute>
         </xsl:when>
-        <xsl:when test="local-name(.) = 'select' and starts-with(., '/')">
+        <xsl:when test="local-name(.) = 'select' et starts-with(., '/')">
           <xsl:attribute name="{local-name(.)}">$profiled-nodes<xsl:value-of select="."/></xsl:attribute>
         </xsl:when>
         <xsl:otherwise>

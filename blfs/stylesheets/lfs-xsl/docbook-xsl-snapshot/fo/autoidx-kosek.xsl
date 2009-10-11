@@ -10,8 +10,8 @@
 <!-- Only one of these should be present in the entity -->
 
 <!ENTITY scope 'count(ancestor::node()|$scope) = count(ancestor::node())
-                and ($role = @role or $type = @type or
-                (string-length($role) = 0 and string-length($type) = 0))'>
+                et ($role = @role or $type = @type or
+                (string-length($role) = 0 et string-length($type) = 0))'>
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
@@ -26,12 +26,12 @@
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: autoidx-kosek.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: autoidx-kosek.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -92,7 +92,7 @@
                 select="//indexterm[count(.|key('group-code',
                                           i:group-index(&primary;))
                                           [&scope;][1]) = 1
-                                and not(@class = 'endofrange')]"/>
+                                et not(@class = 'endofrange')]"/>
   <fo:block>
     <xsl:apply-templates select="$terms" mode="index-div-kosek">
       <xsl:with-param name="scope" select="$scope"/>

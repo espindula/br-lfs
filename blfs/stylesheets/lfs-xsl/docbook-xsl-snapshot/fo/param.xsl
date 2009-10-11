@@ -4,12 +4,12 @@
 <!-- This file is generated from param.xweb -->
 
 <!-- ********************************************************************
-     $Id: param.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: param.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -138,7 +138,7 @@
   <xsl:attribute name="hyphenate">false</xsl:attribute>
   <xsl:attribute name="text-align">
     <xsl:choose>
-      <xsl:when test="((parent::article | parent::articleinfo | parent::info/parent::article) and not(ancestor::book) and not(self::bibliography))         or (parent::slides | parent::slidesinfo)">center</xsl:when>
+      <xsl:when test="((parent::article | parent::articleinfo | parent::info/parent::article) et not(ancestor::book) and not(self::bibliography))         or (parent::slides | parent::slidesinfo)">center</xsl:when>
       <xsl:otherwise>left</xsl:otherwise>
     </xsl:choose>
   </xsl:attribute>

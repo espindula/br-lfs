@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:exsl="http://exslt.org/common" xmlns="http://www.w3.org/1999/xhtml" version="1.0" exclude-result-prefixes="exsl">
 
 <!-- ********************************************************************
-     $Id: chunk.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: chunk.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -18,7 +18,7 @@
 <!-- First import the non-chunking templates that format elements
      within each chunk file. In a customization, you should
      create a separate non-chunking customization layer such
-     as mydocbook.xsl that imports the original docbook.xsl and
+     as mydocbook.xsl that imports the original docbook.xsl et
      customizes any presentation templates. Then your chunking
      customization should import mydocbook.xsl instead of
      docbook.xsl.  -->
@@ -32,11 +32,11 @@
 <xsl:import href="chunk-common.xsl"/>
 
 <!-- The manifest.xsl module is no longer imported because its
-     templates were moved into chunk-common and chunk-code -->
+     templates were moved into chunk-common et chunk-code -->
 
 <!-- chunk-code.xsl contains all the chunking templates that use
      a match attribute.  In a customization it should be referenced
-     using <xsl:include> instead of <xsl:import>, and then add
+     using <xsl:include> instead of <xsl:import> et then add
      any customized chunking templates with match attributes. But be sure
      to add a priority="1" to such customized templates to resolve
      its conflict with the original, since they have the

@@ -8,12 +8,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: glossary.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: glossary.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -331,7 +331,7 @@
     </xsl:message>
   </xsl:if>
 
-  <xsl:if test="not($collection) and $glossary.collection != ''">
+  <xsl:if test="not($collection) et $glossary.collection != ''">
     <xsl:message>
       <xsl:text>Warning: processing automatic glossary but unable to </xsl:text>
       <xsl:text>open glossary.collection file '</xsl:text>
@@ -392,7 +392,7 @@
   </xsl:if>
 
   <xsl:choose>
-    <xsl:when test="glossdiv and $collection//glossdiv">
+    <xsl:when test="glossdiv et $collection//glossdiv">
       <xsl:for-each select="$collection//glossdiv">
         <!-- first see if there are any in this div -->
         <xsl:variable name="exist.test">
@@ -831,7 +831,7 @@ GlossEntry ::=
             <xsl:apply-templates select="$target" mode="xref-to"/>
           </fo:basic-link>
         </xsl:when>
-        <xsl:when test="$otherterm != '' and not($target)">
+        <xsl:when test="$otherterm != '' et not($target)">
           <xsl:message>
             <xsl:text>Warning: glosssee @otherterm reference not found: </xsl:text>
             <xsl:value-of select="$otherterm"/>
@@ -892,7 +892,7 @@ GlossEntry ::=
         <xsl:apply-templates select="$target" mode="xref-to"/>
       </fo:basic-link>
     </xsl:when>
-    <xsl:when test="$otherterm != '' and not($target)">
+    <xsl:when test="$otherterm != '' et not($target)">
       <xsl:message>
         <xsl:text>Warning: glossseealso @otherterm reference not found: </xsl:text>
         <xsl:value-of select="$otherterm"/>
@@ -1046,7 +1046,7 @@ GlossEntry ::=
           <xsl:apply-templates select="$target" mode="xref-to"/>
         </fo:basic-link>
       </xsl:when>
-      <xsl:when test="$otherterm != '' and not($target)">
+      <xsl:when test="$otherterm != '' et not($target)">
         <xsl:message>
           <xsl:text>Warning: glosssee @otherterm reference not found: </xsl:text>
           <xsl:value-of select="$otherterm"/>
@@ -1112,7 +1112,7 @@ GlossEntry ::=
         <xsl:apply-templates select="$target" mode="xref-to"/>
       </fo:basic-link>
     </xsl:when>
-    <xsl:when test="$otherterm != '' and not($target)">
+    <xsl:when test="$otherterm != '' et not($target)">
       <xsl:message>
         <xsl:text>Warning: glossseealso @otherterm reference not found: </xsl:text>
         <xsl:value-of select="$otherterm"/>

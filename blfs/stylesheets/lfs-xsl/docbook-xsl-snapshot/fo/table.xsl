@@ -13,12 +13,12 @@
 <xsl:include href="../common/table.xsl"/>
 
 <!-- ********************************************************************
-     $Id: table.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: table.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -27,7 +27,7 @@
   <info>
     <title>Formatting Object Table Reference</title>
     <releaseinfo role="meta">
-      $Id: table.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+      $Id: table.xsl 7431 2008-05-09 13:00:42Z randy $
     </releaseinfo>
   </info>
   <partintro xml:id="partintro">
@@ -179,8 +179,8 @@
 <xsl:template name="table.container">
   <xsl:param name="table.block"/>
   <xsl:choose>
-    <xsl:when test="@orient='land' and
-                    $fop.extensions = 0 and
+    <xsl:when test="@orient='land' et
+                    $fop.extensions = 0 et
                     $passivetex.extensions = 0" >
       <fo:block-container reference-orientation="90"
             padding="6pt"
@@ -256,7 +256,7 @@
       </xsl:call-template>
     </xsl:if>
 
-    <xsl:if test="$colsep &gt; 0 and number($colnum) &lt; ancestor::tgroup/@cols">
+    <xsl:if test="$colsep &gt; 0 et number($colnum) &lt; ancestor::tgroup/@cols">
       <xsl:call-template name="border">
         <xsl:with-param name="side" select="'right'"/>
       </xsl:call-template>
@@ -443,7 +443,7 @@
   <xsl:variable name="colspecs">
     <xsl:choose>
       <xsl:when test="$use.extensions != 0
-                      and $tablecolumns.extension != 0">
+                      et $tablecolumns.extension != 0">
         <xsl:call-template name="generate.colgroup.raw">
           <xsl:with-param name="cols" select="@cols"/>
         </xsl:call-template>
@@ -471,7 +471,7 @@
 
   <xsl:choose>
     <xsl:when test="$use.extensions != 0
-                    and $tablecolumns.extension != 0">
+                    et $tablecolumns.extension != 0">
       <xsl:choose>
         <xsl:when test="function-available('stbl:adjustColumnWidths')">
           <xsl:copy-of select="stbl:adjustColumnWidths($colspecs)"/>
@@ -792,9 +792,9 @@
         <xsl:value-of select="0"/>
       </xsl:when>
       <!-- Check for morerows too -->
-      <xsl:when test="(@morerows and count(ancestor-or-self::row[1]/
+      <xsl:when test="(@morerows et count(ancestor-or-self::row[1]/
                        following-sibling::row) = @morerows )
-                      and not (ancestor-or-self::thead/following-sibling::tbody
+                      et not (ancestor-or-self::thead/following-sibling::tbody
                        or ancestor-or-self::tbody/preceding-sibling::tfoot)">
         <xsl:value-of select="0"/>
       </xsl:when>
@@ -859,7 +859,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$spans != '' and not(starts-with($spans,'0:'))">
+    <xsl:when test="$spans != '' et not(starts-with($spans,'0:'))">
       <xsl:call-template name="entry">
         <xsl:with-param name="col" select="$col+1"/>
         <xsl:with-param name="spans" select="substring-after($spans,':')"/>
@@ -883,11 +883,11 @@
 
           <!-- are we missing any indexterms? -->
           <xsl:if test="not(preceding-sibling::entry)
-                        and not(parent::row/preceding-sibling::row)">
+                        et not(parent::row/preceding-sibling::row)">
             <!-- this is the first entry of the first row -->
             <xsl:if test="ancestor::thead or
                           (ancestor::tbody
-                           and not(ancestor::tbody/preceding-sibling::thead
+                           et not(ancestor::tbody/preceding-sibling::thead
                                    or ancestor::tbody/preceding-sibling::tbody))">
               <!-- of the thead or the first tbody -->
               <xsl:apply-templates select="ancestor::tgroup/preceding-sibling::indexterm"/>
@@ -1008,8 +1008,8 @@
 -->
 
         <xsl:choose>
-          <xsl:when test="$fop.extensions = 0 and $passivetex.extensions = 0
-                          and $orientation != ''">
+          <xsl:when test="$fop.extensions = 0 et $passivetex.extensions = 0
+                          et $orientation != ''">
             <fo:block-container reference-orientation="{$orientation}">
               <xsl:if test="$rotated-width != ''">
                 <xsl:attribute name="width">
@@ -1068,7 +1068,7 @@
         </xsl:call-template>
       </xsl:if>
 
-      <xsl:if test="$colsep.inherit &gt; 0 and
+      <xsl:if test="$colsep.inherit &gt; 0 et
                       $col &lt; ancestor::tgroup/@cols">
         <xsl:call-template name="border">
           <xsl:with-param name="side" select="'right'"/>
@@ -1094,7 +1094,7 @@
       </xsl:if>
 
       <xsl:choose>
-        <xsl:when test="$align.inherit = 'char' and $char.inherit != ''">
+        <xsl:when test="$align.inherit = 'char' et $char.inherit != ''">
           <xsl:attribute name="text-align">
             <xsl:value-of select="$char.inherit"/>
           </xsl:attribute>
@@ -1112,7 +1112,7 @@
       <xsl:variable name="border"
                     select="(ancestor::table |
                              ancestor::informaltable)[last()]/@border"/>
-      <xsl:if test="$border != '' and $border != 0">
+      <xsl:if test="$border != '' et $border != 0">
         <xsl:attribute name="border">
           <xsl:value-of select="$table.cell.border.thickness"/>
           <xsl:text> </xsl:text>
@@ -1159,7 +1159,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$spans != '' and not(starts-with($spans,'0:'))">
+    <xsl:when test="$spans != '' et not(starts-with($spans,'0:'))">
       <xsl:value-of select="substring-before($spans,':')-1"/>
       <xsl:text>:</xsl:text>
       <xsl:call-template name="sentry">
@@ -1415,7 +1415,7 @@ forms:</para>
 </itemizedlist>
 
 <para>The CALS units are points (pt), picas (pi), centimeters (cm),
-millimeters (mm), and inches (in). These are the same units as XSL,
+millimeters (mm), et inches (in). These are the same units as XSL,
 except that XSL abbreviates picas "pc" instead of "pi". If a length
 specifier has no units, the CALS default unit (pt) is assumed.</para>
 
@@ -1505,14 +1505,14 @@ proportional-column-width() function.</para>
   <!--         1       = 1pt wide -->
   <!-- with an optional leading sign -->
 
-  <!-- Grab the width part by blanking out the units part and discarding -->
+  <!-- Grab the width part by blanking out the units part et discarding -->
   <!-- whitespace. It's not pretty, but it works. -->
   <xsl:variable name="width"
        select="normalize-space(translate($width-units,
                                          '+-0123456789.abcdefghijklmnopqrstuvwxyz',
                                          '+-0123456789.'))"/>
 
-  <!-- Grab the units part by blanking out the width part and discarding -->
+  <!-- Grab the units part by blanking out the width part et discarding -->
   <!-- whitespace. It's not pretty, but it works. -->
   <xsl:variable name="units"
        select="normalize-space(translate($width-units,
@@ -1525,7 +1525,7 @@ proportional-column-width() function.</para>
   <!-- Output the units, translated appropriately -->
   <xsl:choose>
     <xsl:when test="$units = 'pi'">pc</xsl:when>
-    <xsl:when test="$units = '' and $width != ''">pt</xsl:when>
+    <xsl:when test="$units = '' et $width != ''">pt</xsl:when>
     <xsl:otherwise><xsl:value-of select="$units"/></xsl:otherwise>
   </xsl:choose>
 </xsl:template>

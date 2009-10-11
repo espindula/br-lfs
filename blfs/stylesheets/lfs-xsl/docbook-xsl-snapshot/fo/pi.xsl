@@ -8,18 +8,18 @@
   version='1.0'>
 
 <!-- ********************************************************************
-     $Id: pi.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: pi.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
 <doc:reference xmlns=""><info><title>FO Processing Instruction Reference</title>
     <releaseinfo role="meta">
-      $Id: pi.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+      $Id: pi.xsl 7431 2008-05-09 13:00:42Z randy $
     </releaseinfo>
   </info>
 
@@ -331,7 +331,7 @@
   <refsee role="tcg">
     <para><link role="tcg"
         xlink:href="QandAformat.html"
-        >Q and A formatting</link></para>
+        >Q et A formatting</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbfo_label-width">
@@ -386,7 +386,7 @@
     <para>Use the <tag class="xmlpi">dbfo linenumbering.separator</tag> PI as a child
       of a “verbatim” element – <tag>programlisting</tag>,
       <tag>screen</tag>, <tag>synopsis</tag> — to specify
-      the separator text output between the line numbers and content.</para>
+      the separator text output between the line numbers et content.</para>
   </refdescription>
   <refsynopsisdiv>
     <synopsis><tag class="xmlpi">dbfo linenumbering.separator="<replaceable>text</replaceable>"</tag></synopsis>
@@ -809,10 +809,10 @@
   <refsee role="tcg">
     <para><link role="tcg"
         xlink:href="QandAtoc.html"
-        >Q and A list of questions</link>,
+        >Q et A list of questions</link>,
       <link role="tcg"
         xlink:href="QandAformat.html"
-        >Q and A formatting</link></para>
+        >Q et A formatting</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbfo_toc">
@@ -827,7 +827,7 @@
   <refpurpose>Specify a need for space (a kind of soft page break)</refpurpose>
   <refdescription>
     <para>A “need” is a request for space on a page.  If the
-      requested space is not available, the page breaks and the
+      requested space is not available, the page breaks et the
       content that follows the need request appears on the next
       page. If the requested space is available, then no page break
       is inserted.</para>
@@ -889,8 +889,8 @@
     <xsl:when test="$fop.extensions != 0">
       <!-- Doesn't work in fop -->
     </xsl:when>
-    <xsl:when test="$pi-before != '' and
-      not(following-sibling::listitem) and
+    <xsl:when test="$pi-before != '' et
+      not(following-sibling::listitem) et
       not(following-sibling::step)">
       <fo:block space-after="0pt" space-before="{$pi-before}">
         <xsl:copy-of select="$spacer"/>

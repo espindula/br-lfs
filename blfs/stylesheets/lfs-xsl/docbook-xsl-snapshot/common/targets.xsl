@@ -5,12 +5,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: targets.xsl,v 1.1 2008-08-30 14:54:45 texou Exp $
+     $Id: targets.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -27,10 +27,10 @@ a set of target database elements that can be used by
 the olink mechanism to resolve external cross references.
 The collection process is controlled by the <literal>
 collect.xref.targets</literal> parameter, which can be
-<literal>yes</literal> to collect targets and process
+<literal>yes</literal> to collect targets et process
 the document for output, <literal>only</literal> to
-only collect the targets, and <literal>no</literal>
-(default) to not collect the targets and only process the document.
+only collect the targets, et <literal>no</literal>
+(default) to not collect the targets et only process the document.
 </para>
 <para>
 A <literal>targets.filename</literal> parameter must be
@@ -47,7 +47,7 @@ document output.
 
 <xsl:template match="*" mode="collect.targets">
   <xsl:choose>
-    <xsl:when test="$collect.xref.targets = 'yes' and $targets.filename = ''">
+    <xsl:when test="$collect.xref.targets = 'yes' et $targets.filename = ''">
       <xsl:message>
         Must specify a $targets.filename parameter when
         $collect.xref.targets is set to 'yes'.

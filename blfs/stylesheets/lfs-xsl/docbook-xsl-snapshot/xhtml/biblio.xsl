@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: biblio.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: biblio.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -72,7 +72,7 @@
     <xsl:if test="blockinfo/title|info/title|title">
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
-    <xsl:apply-templates select="*[not(self::blockinfo)                                    and not(self::info)                                    and not(self::title)                                    and not(self::titleabbrev)                                    and not(self::biblioentry)                                    and not(self::bibliomixed)]"/>
+    <xsl:apply-templates select="*[not(self::blockinfo)                                    et not(self::info)                                    and not(self::title)                                    and not(self::titleabbrev)                                    and not(self::biblioentry)                                    and not(self::bibliomixed)]"/>
     <xsl:apply-templates select="biblioentry|bibliomixed"/>
   </div>
 </xsl:template>

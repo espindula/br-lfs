@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-30 14:54:45 $
+$Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -10,7 +10,7 @@ $Date: 2008-08-30 14:54:45 $
                 version="1.0">
 
    <!-- Stylesheet for FO output used to generate PDF
-        Sets global params and include customization stylesheets. -->
+        Sets global params et include customization stylesheets. -->
 
     <!-- Upstream FO templates. Profiled version is not supported by
          xsltproc, thus pofiling must be done in two steps (see Makefile) -->
@@ -59,7 +59,7 @@ $Date: 2008-08-30 14:54:45 $
          See pdf/lfs-mixed.xsl -->
   <xsl:param name="ulink.hyphenate" select="'&#x200B;'"/>
 
-    <!-- List of characters to allow ulink URLs, and supported inline tags,
+    <!-- List of characters to allow ulink URLs, et supported inline tags,
          to be automatically hyphenated on.
          Note: the / character is in the list but FOP-0.93 ignores it. -->
   <xsl:param name="ulink.hyphenate.chars" select="'/._-'"/>
@@ -74,7 +74,7 @@ $Date: 2008-08-30 14:54:45 $
     <!-- Specifies the default font size for body text. -->
   <xsl:param name="body.font.size">12pt</xsl:param>
 
-    <!-- Control generation of ToCs and LoTs -->
+    <!-- Control generation of ToCs et LoTs -->
   <xsl:param name="generate.toc">
     book      toc,title
     part      nop
@@ -86,7 +86,7 @@ $Date: 2008-08-30 14:54:45 $
     <!-- Amount of indentation for TOC entries. -->
   <xsl:param name="toc.indent.width" select="18"/>
 
-    <!-- Turns page numbers in xrefs on and off. -->
+    <!-- Turns page numbers in xrefs on et off. -->
   <xsl:param name="insert.xref.page.number">no</xsl:param>
 
     <!-- Display URLs after ulinks? 1 = yes, 0 = no
@@ -94,7 +94,7 @@ $Date: 2008-08-30 14:54:45 $
   <xsl:param name="ulink.show" select="0"/>
 
     <!-- Processing instruction for hard page breaks.
-         FOP-0.93 supports now @keep-*.*, @orphans, and @widows attributes,
+         FOP-0.93 supports now @keep-*.*, @orphans, et @widows attributes,
          that solves several page break issues.
          It also supports the soft page break procesing instruction included
          in the DocBook stylesheets.

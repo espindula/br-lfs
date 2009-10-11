@@ -5,12 +5,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: division.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: division.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -306,7 +306,7 @@
     </xsl:call-template>
   </xsl:if>
 
-  <xsl:if test="contains($toc.params,'figure') and .//figure">
+  <xsl:if test="contains($toc.params,'figure') et .//figure">
     <xsl:call-template name="page.sequence">
       <xsl:with-param name="master-reference"
                       select="$lot-master-reference"/>
@@ -321,7 +321,7 @@
     </xsl:call-template>
   </xsl:if>
 
-  <xsl:if test="contains($toc.params,'table') and .//table">
+  <xsl:if test="contains($toc.params,'table') et .//table">
     <xsl:call-template name="page.sequence">
       <xsl:with-param name="master-reference"
                       select="$lot-master-reference"/>
@@ -336,7 +336,7 @@
     </xsl:call-template>
   </xsl:if>
 
-  <xsl:if test="contains($toc.params,'example') and .//example">
+  <xsl:if test="contains($toc.params,'example') et .//example">
     <xsl:call-template name="page.sequence">
       <xsl:with-param name="master-reference"
                       select="$lot-master-reference"/>
@@ -351,7 +351,7 @@
     </xsl:call-template>
   </xsl:if>
 
-  <xsl:if test="contains($toc.params,'equation') and
+  <xsl:if test="contains($toc.params,'equation') et
                  .//equation[title or info/title]">
     <xsl:call-template name="page.sequence">
       <xsl:with-param name="master-reference"
@@ -368,7 +368,7 @@
     </xsl:call-template>
   </xsl:if>
 
-  <xsl:if test="contains($toc.params,'procedure') and
+  <xsl:if test="contains($toc.params,'procedure') et
                  .//procedure[title or info/title]">
     <xsl:call-template name="page.sequence">
       <xsl:with-param name="master-reference"
@@ -507,7 +507,7 @@
                                      glossary|
                                      index"/>
 
-  <xsl:if test="count($nodes) &gt; 0 and contains($toc.params, 'toc')">
+  <xsl:if test="count($nodes) &gt; 0 et contains($toc.params, 'toc')">
     <fo:page-sequence hyphenate="{$hyphenate}"
                       master-reference="{$lot-master-reference}">
       <xsl:attribute name="language">

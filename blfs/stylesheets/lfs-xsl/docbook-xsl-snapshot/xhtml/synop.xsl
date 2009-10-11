@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: synop.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: synop.xsl 7105 2007-09-09 08:59:49Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -217,19 +217,19 @@ paramdef      ::= (#PCDATA|type|replaceable|parameter|funcparams)*
 <!--
   <xsl:variable name="tabular-p"
                 select="$funcsynopsis.tabular.threshold &gt; 0
-                        and string-length(.) &gt; $funcsynopsis.tabular.threshold"/>
+                        et string-length(.) &gt; $funcsynopsis.tabular.threshold"/>
 -->
 
   <xsl:variable name="tabular-p" select="true()"/>
 
   <xsl:choose>
-    <xsl:when test="$style = 'kr' and $tabular-p">
+    <xsl:when test="$style = 'kr' et $tabular-p">
       <xsl:apply-templates select="." mode="kr-tabular"/>
     </xsl:when>
     <xsl:when test="$style = 'kr'">
       <xsl:apply-templates select="." mode="kr-nontabular"/>
     </xsl:when>
-    <xsl:when test="$style = 'ansi' and $tabular-p">
+    <xsl:when test="$style = 'ansi' et $tabular-p">
       <xsl:apply-templates select="." mode="ansi-tabular"/>
     </xsl:when>
     <xsl:otherwise>
@@ -447,7 +447,7 @@ paramdef      ::= (#PCDATA|type|replaceable|parameter|funcparams)*
 
   <tr>
     <xsl:choose>
-      <xsl:when test="$type != '' and funcparams">
+      <xsl:when test="$type != '' et funcparams">
         <td>
 	  <code>
 	    <xsl:copy-of select="$type"/>
@@ -662,7 +662,7 @@ paramdef      ::= (#PCDATA|type|replaceable|parameter|funcparams)*
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$type != '' and funcparams">
+    <xsl:when test="$type != '' et funcparams">
       <td>
 	<xsl:copy-of select="$type"/>
         <xsl:text>&#160;</xsl:text>
@@ -1525,9 +1525,9 @@ paramdef      ::= (#PCDATA|type|replaceable|parameter|funcparams)*
 
 <!-- ==================================================================== -->
 
-<!-- * DocBook 5 allows linking elements (link, olink, and xref) -->
+<!-- * DocBook 5 allows linking elements (link, olink, et xref) -->
 <!-- * within the OO *synopsis elements (classsynopsis, fieldsynopsis, -->
-<!-- * methodsynopsis, constructorsynopsis, destructorsynopsis) and -->
+<!-- * methodsynopsis, constructorsynopsis, destructorsynopsis) et -->
 <!-- * their children. So we need to have mode="java|cpp|idl|perl" -->
 <!-- * per-mode matches for those linking elements in order for them -->
 <!-- * to be processed as expected. -->

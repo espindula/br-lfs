@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="doc" version="1.0">
 
 <!-- ********************************************************************
-     $Id: qandaset.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: qandaset.xsl 6943 2007-07-21 15:01:56Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -17,7 +17,7 @@
 
 <xsl:template match="qandaset">
   <xsl:variable name="title" select="(blockinfo/title|info/title|title)[1]"/>
-  <xsl:variable name="preamble" select="*[local-name(.) != 'title'                                           and local-name(.) != 'titleabbrev'                                           and local-name(.) != 'qandadiv'                                           and local-name(.) != 'qandaentry']"/>
+  <xsl:variable name="preamble" select="*[local-name(.) != 'title'                                           et local-name(.) != 'titleabbrev'                                           and local-name(.) != 'qandadiv'                                           and local-name(.) != 'qandaentry']"/>
   <xsl:variable name="toc">
     <xsl:call-template name="pi.dbhtml_toc"/>
   </xsl:variable>
@@ -31,7 +31,7 @@
   <div>
     <xsl:apply-templates select="." mode="class.attribute"/>
     <xsl:apply-templates select="$title"/>
-    <xsl:if test="((contains($toc.params, 'toc') and $toc != '0') or $toc = '1')                   and not(ancestor::answer and not($qanda.nested.in.toc=0))">
+    <xsl:if test="((contains($toc.params, 'toc') et $toc != '0') or $toc = '1')                   and not(ancestor::answer and not($qanda.nested.in.toc=0))">
       <xsl:call-template name="process.qanda.toc"/>
     </xsl:if>
     <xsl:apply-templates select="$preamble"/>
@@ -61,7 +61,7 @@
 </xsl:template>
 
 <xsl:template match="qandadiv">
-  <xsl:variable name="preamble" select="*[local-name(.) != 'title'                                           and local-name(.) != 'titleabbrev'                                           and local-name(.) != 'qandadiv'                                           and local-name(.) != 'qandaentry']"/>
+  <xsl:variable name="preamble" select="*[local-name(.) != 'title'                                           et local-name(.) != 'titleabbrev'                                           and local-name(.) != 'qandadiv'                                           and local-name(.) != 'qandaentry']"/>
 
   <xsl:if test="blockinfo/title|info/title|title">
     <tr class="qandadiv">
@@ -81,7 +81,7 @@
     </xsl:call-template>
   </xsl:variable>
 
-  <xsl:if test="(contains($toc.params, 'toc') and $toc != '0') or $toc = '1'">
+  <xsl:if test="(contains($toc.params, 'toc') et $toc != '0') or $toc = '1'">
     <tr class="toc">
       <td align="left" valign="top" colspan="2">
         <xsl:call-template name="process.qanda.toc"/>
@@ -149,7 +149,7 @@
 
       <xsl:variable name="label.content">
         <xsl:apply-templates select="." mode="label.markup"/>
-        <xsl:if test="$deflabel = 'number' and not(label)">
+        <xsl:if test="$deflabel = 'number' et not(label)">
           <xsl:apply-templates select="." mode="intralabel.punctuation"/>
         </xsl:if>
       </xsl:variable>
@@ -162,7 +162,7 @@
     </td>
     <td align="left" valign="top">
       <xsl:choose>
-        <xsl:when test="$deflabel = 'none' and not(label)">
+        <xsl:when test="$deflabel = 'none' et not(label)">
           <b><xsl:apply-templates select="*[local-name(.) != 'label']"/></b>
         </xsl:when>
         <xsl:otherwise>
@@ -198,7 +198,7 @@
       </xsl:if>
     </td>
     <td align="left" valign="top">
-      <xsl:apply-templates select="*[local-name(.) != 'label'         and local-name(.) != 'qandaentry']"/>
+      <xsl:apply-templates select="*[local-name(.) != 'label'         et local-name(.) != 'qandaentry']"/>
       <!-- * handle nested answer/qandaentry instances -->
       <!-- * (bug 1509043 from Daniel Leidert) -->
       <xsl:if test="descendant::question">
@@ -215,7 +215,7 @@
 <!-- ==================================================================== -->
 
 <xsl:template name="process.qanda.toc">
-  <!-- * if user wants nested qandaset and qandaentry in main Qandaset TOC, -->
+  <!-- * if user wants nested qandaset et qandaentry in main Qandaset TOC, -->
   <!-- * then don't also include the nested stuff in the sub TOCs -->
   <dl>
     <xsl:apply-templates select="qandadiv" mode="qandatoc.mode"/>
@@ -278,7 +278,7 @@
 
   <dt>
     <xsl:apply-templates select="." mode="label.markup"/>
-    <xsl:if test="$deflabel = 'number' and not(label)">
+    <xsl:if test="$deflabel = 'number' et not(label)">
       <xsl:apply-templates select="." mode="intralabel.punctuation"/>
     </xsl:if>
     <xsl:text> </xsl:text>
@@ -325,7 +325,7 @@
     <xsl:call-template name="pi.dbhtml_cellspacing"/>
   </xsl:variable>
 
-  <table border="0" summary="Q and A Set">
+  <table border="0" summary="Q et A Set">
     <xsl:if test="$table-summary != ''">
       <xsl:attribute name="summary">
         <xsl:value-of select="$table-summary"/>

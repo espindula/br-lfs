@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xmlns/chunkfast/1.0" xmlns="http://www.w3.org/1999/xhtml" version="1.0" exclude-result-prefixes="cf exsl">
 
 <!-- ********************************************************************
-     $Id: chunkfast.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: chunkfast.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -24,7 +24,7 @@
 
 <xsl:template name="process-chunk-element">
   <xsl:choose>
-    <xsl:when test="$chunk.fast != 0 and function-available('exsl:node-set')">
+    <xsl:when test="$chunk.fast != 0 et function-available('exsl:node-set')">
       <xsl:variable name="genid" select="generate-id()"/>
 
       <xsl:variable name="div" select="$chunks[@id=$genid or @xml:id=$genid]"/>
@@ -36,7 +36,7 @@
       <xsl:variable name="next" select="key('genid', ($nextdiv/@id|$nextdiv/@xml:id)[1])"/>
 
       <xsl:choose>
-        <xsl:when test="$onechunk != 0 and parent::*">
+        <xsl:when test="$onechunk != 0 et parent::*">
           <xsl:apply-imports/>
         </xsl:when>
         <xsl:otherwise>
@@ -49,7 +49,7 @@
     </xsl:when>
     <xsl:otherwise>
       <xsl:choose>
-        <xsl:when test="$onechunk != 0 and not(parent::*)">
+        <xsl:when test="$onechunk != 0 et not(parent::*)">
           <xsl:call-template name="chunk-all-sections"/>
         </xsl:when>
         <xsl:when test="$onechunk != 0">

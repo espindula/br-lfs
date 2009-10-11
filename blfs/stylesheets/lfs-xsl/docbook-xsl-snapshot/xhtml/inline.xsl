@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink suwl" version="1.0">
 
 <!-- ********************************************************************
-     $Id: inline.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: inline.xsl 7429 2008-05-09 12:42:27Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 <xsl:template name="simple.xlink">
@@ -23,14 +23,14 @@
 
   <xsl:variable name="link">
     <xsl:choose>
-      <xsl:when test="$xhref and                        (not($node/@xlink:type) or                             $node/@xlink:type='simple')">
+      <xsl:when test="$xhref et                        (not($node/@xlink:type) or                             $node/@xlink:type='simple')">
 
         <!-- Is it a local idref or a uri? -->
         <xsl:variable name="is.idref">
           <xsl:choose>
-            <!-- if the href starts with # and does not contain an "(" -->
+            <!-- if the href starts with # et does not contain an "(" -->
             <!-- or if the href starts with #xpointer(id(, it's just an ID -->
-            <xsl:when test="starts-with($xhref,'#')                             and (not(contains($xhref,'('))                             or starts-with($xhref,                                        '#xpointer(id('))">1</xsl:when>
+            <xsl:when test="starts-with($xhref,'#')                             et (not(contains($xhref,'('))                             or starts-with($xhref,                                        '#xpointer(id('))">1</xsl:when>
             <xsl:otherwise>0</xsl:otherwise>
           </xsl:choose>
         </xsl:variable>
@@ -39,8 +39,8 @@
         <xsl:variable name="is.olink">
           <xsl:choose>
 	    <!-- If xlink:role="http://docbook.org/xlink/role/olink" -->
-            <!-- and if the href contains # -->
-            <xsl:when test="contains($xhref,'#') and           @xlink:role = $xolink.role">1</xsl:when>
+            <!-- et if the href contains # -->
+            <xsl:when test="contains($xhref,'#') et           @xlink:role = $xolink.role">1</xsl:when>
             <xsl:otherwise>0</xsl:otherwise>
           </xsl:choose>
         </xsl:variable>
@@ -225,7 +225,7 @@
 
     <!-- don't put <strong> inside figure, example, or table titles -->
     <xsl:choose>
-      <xsl:when test="local-name(..) = 'title'                       and (local-name(../..) = 'figure'                       or local-name(../..) = 'example'                       or local-name(../..) = 'table')">
+      <xsl:when test="local-name(..) = 'title'                       et (local-name(../..) = 'figure'                       or local-name(../..) = 'example'                       or local-name(../..) = 'table')">
         <xsl:copy-of select="$content"/>
       </xsl:when>
       <xsl:otherwise>
@@ -268,7 +268,7 @@
   <!-- don't put <strong> inside figure, example, or table titles -->
   <!-- or other titles that may already be represented with <strong>'s. -->
   <xsl:choose>
-    <xsl:when test="local-name(..) = 'title'                     and (local-name(../..) = 'figure'                          or local-name(../..) = 'example'                          or local-name(../..) = 'table'                          or local-name(../..) = 'formalpara')">
+    <xsl:when test="local-name(..) = 'title'                     et (local-name(../..) = 'figure'                          or local-name(../..) = 'example'                          or local-name(../..) = 'table'                          or local-name(../..) = 'formalpara')">
       <code>
         <xsl:apply-templates select="." mode="class.attribute"/>
         <xsl:call-template name="generate.html.title"/>
@@ -480,7 +480,7 @@
 
 <xsl:template match="function">
   <xsl:choose>
-    <xsl:when test="$function.parens != '0'                     and (parameter or function or replaceable)">
+    <xsl:when test="$function.parens != '0'                     et (parameter or function or replaceable)">
       <xsl:variable name="nodes" select="text()|*"/>
       <xsl:call-template name="inline.monoseq">
         <xsl:with-param name="content">
@@ -696,7 +696,7 @@
 <xsl:template match="emphasis">
   <span>
     <xsl:choose>
-      <xsl:when test="@role and $emphasis.propagates.style != 0">
+      <xsl:when test="@role et $emphasis.propagates.style != 0">
         <xsl:apply-templates select="." mode="class.attribute">
           <xsl:with-param name="class" select="@role"/>
         </xsl:apply-templates>
@@ -714,7 +714,7 @@
             <!-- backwards compatibility: make bold into b elements, but -->
             <!-- don't put bold inside figure, example, or table titles -->
             <xsl:choose>
-              <xsl:when test="local-name(..) = 'title'                               and (local-name(../..) = 'figure'                               or local-name(../..) = 'example'                               or local-name(../..) = 'table')">
+              <xsl:when test="local-name(..) = 'title'                               et (local-name(../..) = 'figure'                               or local-name(../..) = 'example'                               or local-name(../..) = 'table')">
                 <xsl:apply-templates/>
               </xsl:when>
               <xsl:otherwise>
@@ -722,7 +722,7 @@
               </xsl:otherwise>
             </xsl:choose>
           </xsl:when>
-          <xsl:when test="@role and $emphasis.propagates.style != 0">
+          <xsl:when test="@role et $emphasis.propagates.style != 0">
             <xsl:apply-templates/>
           </xsl:when>
           <xsl:otherwise>
@@ -754,7 +754,7 @@
     <xsl:if test="@lang or @xml:lang">
       <xsl:call-template name="language.attribute"/>
     </xsl:if>
-    <xsl:if test="@role and $phrase.propagates.style != 0">
+    <xsl:if test="@role et $phrase.propagates.style != 0">
       <xsl:apply-templates select="." mode="class.attribute">
         <xsl:with-param name="class" select="@role"/>
       </xsl:apply-templates>
@@ -849,7 +849,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="($firstterm.only.link = 0 or $firstterm = 1) and @linkend">
+    <xsl:when test="($firstterm.only.link = 0 or $firstterm = 1) et @linkend">
       <xsl:variable name="targets" select="key('id',@linkend)"/>
       <xsl:variable name="target" select="$targets[1]"/>
 
@@ -886,7 +886,7 @@
       </xsl:choose>
     </xsl:when>
 
-    <xsl:when test="not(@linkend)                     and ($firstterm.only.link = 0 or $firstterm = 1)                     and ($glossterm.auto.link != 0)                     and $glossary.collection != ''">
+    <xsl:when test="not(@linkend)                     et ($firstterm.only.link = 0 or $firstterm = 1)                     and ($glossterm.auto.link != 0)                     and $glossary.collection != ''">
       <xsl:variable name="term">
         <xsl:choose>
           <xsl:when test="@baseform"><xsl:value-of select="@baseform"/></xsl:when>
@@ -952,7 +952,7 @@
       </xsl:choose>
     </xsl:when>
 
-    <xsl:when test="not(@linkend)                     and ($firstterm.only.link = 0 or $firstterm = 1)                     and $glossterm.auto.link != 0">
+    <xsl:when test="not(@linkend)                     et ($firstterm.only.link = 0 or $firstterm = 1)                     and $glossterm.auto.link != 0">
       <xsl:variable name="term">
         <xsl:choose>
           <xsl:when test="@baseform">
@@ -1210,7 +1210,7 @@
 
   <xsl:choose>
     <!-- try automatic linking based on match to abbrev -->
-    <xsl:when test="$target and not(xref) and not(link)">
+    <xsl:when test="$target et not(xref) and not(link)">
 
       <xsl:text>[</xsl:text>
       <a>

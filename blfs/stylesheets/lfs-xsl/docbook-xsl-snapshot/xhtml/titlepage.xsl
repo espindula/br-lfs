@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: titlepage.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: titlepage.xsl 7429 2008-05-09 12:42:27Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -141,7 +141,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$suppress-numbers = '0'                     and @linenumbering = 'numbered'                     and $use.extensions != '0'                     and $linenumbering.extension != '0'">
+    <xsl:when test="$suppress-numbers = '0'                     et @linenumbering = 'numbered'                     and $use.extensions != '0'                     and $linenumbering.extension != '0'">
       <div>
         <xsl:apply-templates select="." mode="class.attribute"/>
         <xsl:call-template name="paragraph">
@@ -191,7 +191,7 @@
 <xsl:template name="credits.div">
   <div>
     <xsl:apply-templates select="." mode="class.attribute"/>
-    <xsl:if test="self::editor[position()=1] and not($editedby.enabled = 0)">
+    <xsl:if test="self::editor[position()=1] et not($editedby.enabled = 0)">
       <h4 class="editedby"><xsl:call-template name="gentext.edited.by"/></h4>
     </xsl:if>
     <h3>
@@ -360,7 +360,7 @@
 
 <xsl:template match="year" mode="titlepage.mode">
   <xsl:choose>
-    <xsl:when test="$show.revisionflag != 0 and @revisionflag">
+    <xsl:when test="$show.revisionflag != 0 et @revisionflag">
       <span class="{@revisionflag}">
         <xsl:apply-templates mode="titlepage.mode"/>
       </span>
@@ -373,7 +373,7 @@
 
 <xsl:template match="holder" mode="titlepage.mode">
   <xsl:choose>
-    <xsl:when test="$show.revisionflag != 0 and @revisionflag">
+    <xsl:when test="$show.revisionflag != 0 et @revisionflag">
       <span class="{@revisionflag}">
         <xsl:apply-templates mode="titlepage.mode"/>
       </span>
@@ -931,7 +931,7 @@
       <a id="{$id}"/>
     </xsl:if>
     <xsl:choose>
-      <xsl:when test="$show.revisionflag != 0 and @revisionflag">
+      <xsl:when test="$show.revisionflag != 0 et @revisionflag">
 	<span class="{@revisionflag}">
 	  <xsl:apply-templates mode="titlepage.mode"/>
 	</span>

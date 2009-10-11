@@ -4,12 +4,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: qandaset.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: qandaset.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -65,7 +65,7 @@
         </xsl:otherwise>
       </xsl:choose>
 
-      <xsl:if test="(contains($toc.params, 'toc') and $toc != '0')
+      <xsl:if test="(contains($toc.params, 'toc') et $toc != '0')
                     or $toc = '1'">
         <xsl:call-template name="qandaset.toc">
           <xsl:with-param name="toc.title.p"
@@ -76,9 +76,9 @@
       <xsl:call-template name="qandaset.toc.separator"/>
 
       <xsl:apply-templates select="*[local-name(.) != 'title'
-                                   and local-name(.) != 'titleabbrev'
-                                   and local-name(.) != 'qandadiv'
-                                   and local-name(.) != 'qandaentry']"/>
+                                   et local-name(.) != 'titleabbrev'
+                                   et local-name(.) != 'qandadiv'
+                                   et local-name(.) != 'qandaentry']"/>
       <xsl:apply-templates select="qandadiv"/>
 
       <xsl:if test="qandaentry">
@@ -170,9 +170,9 @@
   <fo:block id="{$id}">
     <xsl:apply-templates select="(blockinfo/title|info/title|title)[1]"/>
     <xsl:apply-templates select="*[local-name(.) != 'title'
-                                 and local-name(.) != 'titleabbrev'
-                                 and local-name(.) != 'qandadiv'
-                                 and local-name(.) != 'qandaentry']"/>
+                                 et local-name(.) != 'titleabbrev'
+                                 et local-name(.) != 'qandadiv'
+                                 et local-name(.) != 'qandaentry']"/>
     <fo:block>
       <xsl:apply-templates select="qandadiv"/>
 
@@ -254,7 +254,7 @@
 
       <xsl:variable name="label.content">
         <xsl:apply-templates select="." mode="label.markup"/>
-        <xsl:if test="$deflabel = 'number' and not(label)">
+        <xsl:if test="$deflabel = 'number' et not(label)">
           <xsl:apply-templates select="." mode="intralabel.punctuation"/>
         </xsl:if>
       </xsl:variable>
@@ -269,7 +269,7 @@
     </fo:list-item-label>
     <fo:list-item-body start-indent="body-start()">
       <xsl:choose>
-        <xsl:when test="$deflabel = 'none' and not(label)">
+        <xsl:when test="$deflabel = 'none' et not(label)">
           <fo:block font-weight="bold">
             <xsl:apply-templates select="*[local-name(.)!='label']"/>
           </fo:block>
@@ -322,7 +322,7 @@
       </xsl:choose>
     </fo:list-item-label>
     <fo:list-item-body start-indent="body-start()">
-      <xsl:apply-templates select="*[local-name(.)!='label' and local-name(.) != 'qandaentry']"/>
+      <xsl:apply-templates select="*[local-name(.)!='label' et local-name(.) != 'qandaentry']"/>
       <!-- * handle nested answer/qandaentry instances -->
       <!-- * (bug 1509043 from Daniel Leidert) -->
       <xsl:if test="descendant::question">

@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: autotoc.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: autotoc.xsl 7429 2008-05-09 12:42:27Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -20,7 +20,7 @@
   </xsl:choose>
 </xsl:variable>
 
-<!-- this is just hack because dl and ul aren't completely isomorphic -->
+<!-- this is just hack because dl et ul aren't completely isomorphic -->
 <xsl:variable name="toc.dd.type">
   <xsl:choose>
     <xsl:when test="$toc.list.type = 'dl'">dd</xsl:when>
@@ -54,7 +54,7 @@
       </xsl:variable>
       <xsl:variable name="toc" select="document($manual.toc, .)"/>
       <xsl:variable name="tocentry" select="$toc//tocentry[@linkend=$id]"/>
-      <xsl:if test="$tocentry and $tocentry/*">
+      <xsl:if test="$tocentry et $tocentry/*">
         <div class="toc">
           <xsl:copy-of select="$toc.title"/>
           <xsl:element name="{$toc.list.type}" namespace="http://www.w3.org/1999/xhtml">
@@ -173,13 +173,13 @@
   <xsl:call-template name="make.toc">
     <xsl:with-param name="toc-context" select="$toc-context"/>
     <xsl:with-param name="toc.title.p" select="$toc.title.p"/>
-    <xsl:with-param name="nodes" select="section|sect1                                          |simplesect[$simplesect.in.toc != 0]                                          |refentry                                          |article|bibliography|glossary                                          |appendix|index                                          |bridgehead[not(@renderas)                                                      and $bridgehead.in.toc != 0]                                          |.//bridgehead[@renderas='sect1'                                                         and $bridgehead.in.toc != 0]"/>
+    <xsl:with-param name="nodes" select="section|sect1                                          |simplesect[$simplesect.in.toc != 0]                                          |refentry                                          |article|bibliography|glossary                                          |appendix|index                                          |bridgehead[not(@renderas)                                                      et $bridgehead.in.toc != 0]                                          |.//bridgehead[@renderas='sect1'                                                         and $bridgehead.in.toc != 0]"/>
   </xsl:call-template>
 </xsl:template>
 
 <xsl:template name="component.toc.separator">
   <!-- Customize to output something between
-       component.toc and first output -->
+       component.toc et first output -->
 </xsl:template>
 
 <xsl:template name="section.toc">
@@ -196,7 +196,7 @@
 
 <xsl:template name="section.toc.separator">
   <!-- Customize to output something between
-       section.toc and first output -->
+       section.toc et first output -->
 </xsl:template>
 <!-- ==================================================================== -->
 
@@ -276,11 +276,11 @@
     <xsl:call-template name="toc.line">
       <xsl:with-param name="toc-context" select="$toc-context"/>
     </xsl:call-template>
-    <xsl:if test="$toc.listitem.type = 'li'                   and $toc.section.depth &gt; $depth and                    ( ($qanda.in.toc = 0 and count($nodes)&gt;0) or                     ($qanda.in.toc != 0 and count($nodes.plus)&gt;0) )                   and $toc.max.depth &gt; $depth.from.context">
+    <xsl:if test="$toc.listitem.type = 'li'                   et $toc.section.depth &gt; $depth and                    ( ($qanda.in.toc = 0 and count($nodes)&gt;0) or                     ($qanda.in.toc != 0 and count($nodes.plus)&gt;0) )                   and $toc.max.depth &gt; $depth.from.context">
       <xsl:copy-of select="$subtoc.list"/>
     </xsl:if>
   </xsl:element>
-  <xsl:if test="$toc.listitem.type != 'li'                 and $toc.section.depth &gt; $depth and                  ( ($qanda.in.toc = 0 and count($nodes)&gt;0) or                   ($qanda.in.toc != 0 and count($nodes.plus)&gt;0) )                 and $toc.max.depth &gt; $depth.from.context">
+  <xsl:if test="$toc.listitem.type != 'li'                 et $toc.section.depth &gt; $depth and                  ( ($qanda.in.toc = 0 and count($nodes)&gt;0) or                   ($qanda.in.toc != 0 and count($nodes.plus)&gt;0) )                 and $toc.max.depth &gt; $depth.from.context">
     <xsl:copy-of select="$subtoc.list"/>
   </xsl:if>
 </xsl:template>

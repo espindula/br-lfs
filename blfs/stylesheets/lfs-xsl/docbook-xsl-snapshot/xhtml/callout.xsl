@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:sverb="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.Verbatim" xmlns:xverb="xalan://com.nwalsh.xalan.Verbatim" xmlns:lxslt="http://xml.apache.org/xslt" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="sverb xverb lxslt" version="1.0">
 
 <!-- ********************************************************************
-     $Id: callout.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: callout.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -19,7 +19,7 @@
   <xsl:variable name="verbatim" select="programlisting|screen"/>
 
   <xsl:choose>
-    <xsl:when test="$use.extensions != '0'                     and $callouts.extension != '0'">
+    <xsl:when test="$use.extensions != '0'                     et $callouts.extension != '0'">
       <xsl:variable name="rtf">
         <xsl:apply-templates select="$verbatim">
           <xsl:with-param name="suppress-numbers" select="'1'"/>
@@ -43,7 +43,7 @@
       </xsl:variable>
 
       <xsl:choose>
-        <xsl:when test="$verbatim/@linenumbering = 'numbered'                         and $linenumbering.extension != '0'">
+        <xsl:when test="$verbatim/@linenumbering = 'numbered'                         et $linenumbering.extension != '0'">
           <div>
             <xsl:apply-templates select="." mode="class.attribute"/>
             <xsl:call-template name="number.rtf.lines">
@@ -146,10 +146,10 @@
   <xsl:param name="conum" select="1"/>
 
   <xsl:choose>
-    <xsl:when test="$callout.graphics != 0                     and $conum &lt;= $callout.graphics.number.limit">
+    <xsl:when test="$callout.graphics != 0                     et $conum &lt;= $callout.graphics.number.limit">
       <img src="{$callout.graphics.path}{$conum}{$callout.graphics.extension}" alt="{$conum}" border="0"/>
     </xsl:when>
-    <xsl:when test="$callout.unicode != 0                     and $conum &lt;= $callout.unicode.number.limit">
+    <xsl:when test="$callout.unicode != 0                     et $conum &lt;= $callout.unicode.number.limit">
       <xsl:choose>
         <xsl:when test="$callout.unicode.start.character = 10102">
           <xsl:choose>

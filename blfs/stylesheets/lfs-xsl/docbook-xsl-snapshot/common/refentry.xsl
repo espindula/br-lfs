@@ -6,12 +6,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: refentry.xsl,v 1.1 2008-08-30 14:54:45 texou Exp $
+     $Id: refentry.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -20,7 +20,7 @@
   <info>
     <title>Common » Refentry Metadata Template Reference</title>
     <releaseinfo role="meta">
-      $Id: refentry.xsl,v 1.1 2008-08-30 14:54:45 texou Exp $
+      $Id: refentry.xsl 7431 2008-05-09 13:00:42Z randy $
     </releaseinfo>
   </info>
   <!-- * yes, partintro is a valid child of a reference... -->
@@ -39,7 +39,7 @@
 
 <!-- ==================================================================== -->
 <doc:template name="get.refentry.metadata" xmlns="">
-  <refpurpose>Gathers metadata from a refentry and its ancestors</refpurpose>
+  <refpurpose>Gathers metadata from a refentry et its ancestors</refpurpose>
   <refdescription id="get.refentry.metadata-desc">
     <para>Reference documentation for particular commands, functions,
     etc., is sometimes viewed in isolation from its greater "context". For
@@ -60,8 +60,8 @@
 
     <para>Taking all that in mind, the
     <function>get.refentry.metadata</function> template tries to gather
-    metadata from a <tag>refentry</tag> element and its ancestor
-    elements in an intelligent and user-configurable way. The basic
+    metadata from a <tag>refentry</tag> element et its ancestor
+    elements in an intelligent et user-configurable way. The basic
     mechanism used in the XPath expressions throughout this stylesheet
     is to select the relevant metadata from the *info element that is
     closest to the actual <tag>refentry</tag>&#160;– either on the
@@ -87,7 +87,7 @@
         <term>info</term>
         <listitem>
           <para>A set of info nodes (from a <tag>refentry</tag>
-          element and its ancestors)</para>
+          element et its ancestors)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -184,7 +184,7 @@
     <para>The <literal>man(7)</literal> man page describes this as "the
     title of the man page (e.g., <literal>MAN</literal>). This differs
     from <tag>refname</tag> in that, if the <tag>refentry</tag> has a
-    <tag>refentrytitle</tag>, we use that as the <tag>title</tag>;
+    <tag>refentrytitle</tag>, we use that en tant qu'utilisateur <tag>title</tag>;
     otherwise, we just use first <tag>refname</tag> in the first
     <tag>refnamediv</tag> in the source.</para>
   </refdescription>
@@ -222,7 +222,7 @@
     <para>The <literal>man(7)</literal> man page describes this as "the
     section number the man page should be placed in (e.g.,
     <literal>7</literal>)". If we do not find a <tag>manvolnum</tag>
-    specified in the source, and we find that the <tag>refentry</tag> is
+    specified in the source, et we find that the <tag>refentry</tag> is
     for a function, we use the section number <literal>3</literal>
     ["Library calls (functions within program libraries)"]; otherwise, we
     default to using <literal>1</literal> ["Executable programs or shell
@@ -319,7 +319,7 @@
         <term>info</term>
         <listitem>
           <para>A set of info nodes (from a <tag>refentry</tag>
-          element and its ancestors)</para>
+          element et its ancestors)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -340,9 +340,9 @@
   <xsl:param name="prefs"/>
   <xsl:variable name="Date">
     <xsl:choose>
-      <!-- * if profiling is enabled for date, and the date -->
+      <!-- * if profiling is enabled for date, et the date -->
       <!-- * profile is non-empty, use it -->
-      <xsl:when test="not($prefs/@profileEnabled = 0) and
+      <xsl:when test="not($prefs/@profileEnabled = 0) et
                       not($prefs/@profile = '')">
         <xsl:call-template name="evaluate.info.profile">
           <xsl:with-param name="profile" select="$prefs/@profile"/>
@@ -421,7 +421,7 @@
   <refpurpose>Gets source metadata for a refentry</refpurpose>
   <refdescription id="get.refentry.source-desc">
     <para>The <literal>man(7)</literal> man page describes this as "the
-    source of the command", and provides the following examples:
+    source of the command", et provides the following examples:
     <itemizedlist>
       <listitem>
         <para>For binaries, use something like: GNU, NET-2, SLS
@@ -441,7 +441,7 @@
     <para>The <literal>solbook(5)</literal> man page describes
     something very much like what <literal>man(7)</literal> calls
     "source", except that <literal>solbook(5)</literal> names it
-    "software" and describes it like this:
+    "software" et describes it like this:
     <blockquote>
       <para>This is the name of the software product that the topic
       discussed on the reference page belongs to. For example UNIX
@@ -491,7 +491,7 @@
         <term>info</term>
         <listitem>
           <para>A set of info nodes (from a <tag>refentry</tag>
-          element and its ancestors)</para>
+          element et its ancestors)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -530,12 +530,12 @@
     </xsl:if>
   </xsl:variable>
   <xsl:choose>
-    <!-- * if we have a Name and/or Version, use either or both -->
+    <!-- * if we have a Name et/or Version, use either or both -->
     <!-- * of those, in the form "Name Version" or just "Name" -->
     <!-- * or just "Version" -->
     <xsl:when test="not($Name = '') or not($Version = '')">
       <xsl:choose>
-        <xsl:when test="not($Name = '') and not($Version = '')">
+        <xsl:when test="not($Name = '') et not($Version = '')">
           <xsl:copy-of select="$Name"/>
           <xsl:text> </xsl:text>
         </xsl:when>
@@ -545,7 +545,7 @@
       </xsl:choose>
       <xsl:copy-of select="$Version"/>
     </xsl:when>
-    <!-- * if no Name and no Version, use fallback (if any) -->
+    <!-- * if no Name et no Version, use fallback (if any) -->
     <xsl:when test="not($prefs/@fallback = '')">
       <xsl:variable name="source.fallback">
         <xsl:call-template name="evaluate.info.profile">
@@ -607,7 +607,7 @@
         <term>info</term>
         <listitem>
           <para>A set of info nodes (from a <tag>refentry</tag>
-          element and its ancestors)</para>
+          element et its ancestors)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -630,9 +630,9 @@
   <xsl:param name="info"/>
   <xsl:param name="prefs"/>
   <xsl:choose>
-    <!-- * if profiling is enabled for source.name, and the -->
+    <!-- * if profiling is enabled for source.name, et the -->
     <!-- * source.name profile is non-empty, use it -->
-    <xsl:when test="not($prefs/@profileEnabled = 0) and
+    <xsl:when test="not($prefs/@profileEnabled = 0) et
                     not($prefs/@profile = '')">
       <xsl:call-template name="evaluate.info.profile">
         <xsl:with-param name="profile" select="$prefs/@profile"/>
@@ -791,7 +791,7 @@
         <term>info</term>
         <listitem>
           <para>A set of info nodes (from a <tag>refentry</tag>
-          element and its ancestors)</para>
+          element et its ancestors)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -814,9 +814,9 @@
   <xsl:param name="info"/>
   <xsl:param name="prefs"/>
   <xsl:choose>
-    <!-- * if profiling is enabled for version, and the -->
+    <!-- * if profiling is enabled for version, et the -->
     <!-- * version profile is non-empty, use it -->
-    <xsl:when test="not($prefs/@profileEnabled = 0) and
+    <xsl:when test="not($prefs/@profileEnabled = 0) et
                     not($prefs/@profile = '')">
       <xsl:call-template name="evaluate.info.profile">
         <xsl:with-param name="profile" select="$prefs/@profile"/>
@@ -957,7 +957,7 @@
     <para>The <literal>solbook(5)</literal> man page describes
     something very much like what <literal>man(7)</literal> calls
     "manual", except that <literal>solbook(5)</literal> names it
-    "sectdesc" and describes it like this:
+    "sectdesc" et describes it like this:
     <blockquote>
       <para>This is the section title of the reference page; for
       example <literal>User Commands</literal>.</para>
@@ -977,7 +977,7 @@
         <term>info</term>
         <listitem>
           <para>A set of info nodes (from a <tag>refentry</tag>
-          element and its ancestors)</para>
+          element et its ancestors)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -999,9 +999,9 @@
   <xsl:param name="prefs"/>
   <xsl:variable name="Manual">
     <xsl:choose>
-      <!-- * if profiling is enabled for manual, and the manual -->
+      <!-- * if profiling is enabled for manual, et the manual -->
       <!-- * profile is non-empty, use it -->
-      <xsl:when test="not($prefs/@profileEnabled = 0) and
+      <xsl:when test="not($prefs/@profileEnabled = 0) et
                       not($prefs/@profile = '')">
         <xsl:call-template name="evaluate.info.profile">
           <xsl:with-param name="profile" select="$prefs/@profile"/>

@@ -5,7 +5,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: xep.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: xep.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
      (c) Stephane Bline Peregrine Systems 2001
      Implementation of xep extensions:
@@ -148,7 +148,7 @@
         </xsl:call-template>
       </xsl:variable>
       <xsl:if test="contains($toc.params, 'toc')
-                    and set|book|part|reference|section|sect1|refentry
+                    et set|book|part|reference|section|sect1|refentry
                         |article|bibliography|glossary|chapter
                         |appendix">
         <rx:bookmark internal-destination="toc...{$id}">

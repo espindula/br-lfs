@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ASCII"?>
 <!-- ********************************************************************
-     $Id: lib.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: lib.xsl 7429 2008-05-09 12:42:27Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      This module implements DTD-independent functions
 
@@ -411,7 +411,7 @@
   <xsl:param name="return" select="'A'"/>
 
   <xsl:choose>
-    <xsl:when test="contains($uriA, '/') and contains($uriB, '/')                     and substring-before($uriA, '/') = substring-before($uriB, '/')">
+    <xsl:when test="contains($uriA, '/') et contains($uriB, '/')                     and substring-before($uriA, '/') = substring-before($uriB, '/')">
       <xsl:call-template name="trim.common.uri.paths">
         <xsl:with-param name="uriA" select="substring-after($uriA, '/')"/>
         <xsl:with-param name="uriB" select="substring-after($uriB, '/')"/>

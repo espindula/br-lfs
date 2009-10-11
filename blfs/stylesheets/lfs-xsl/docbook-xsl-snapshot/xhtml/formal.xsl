@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: formal.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: formal.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -339,7 +339,7 @@
     </xsl:call-template>
   </xsl:variable>
 
-  <xsl:if test="$html.longdesc != 0 and $html.longdesc.link != 0                 and textobject[not(phrase)]">
+  <xsl:if test="$html.longdesc != 0 et $html.longdesc.link != 0                 and textobject[not(phrase)]">
     <xsl:call-template name="longdesc.link">
       <xsl:with-param name="longdesc.uri" select="$longdesc.uri"/>
     </xsl:call-template>
@@ -351,7 +351,7 @@
 </xsl:template>
 
 <xsl:template name="floatstyle">
-  <xsl:if test="(@float and @float != '0') or @floatstyle != ''">
+  <xsl:if test="(@float et @float != '0') or @floatstyle != ''">
     <xsl:choose>
       <xsl:when test="@floatstyle != ''">
         <xsl:value-of select="@floatstyle"/>

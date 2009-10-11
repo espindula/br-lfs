@@ -4,12 +4,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: insertfile.xsl,v 1.1 2008-08-30 14:54:45 texou Exp $
+     $Id: insertfile.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -28,7 +28,7 @@
 <!-- *   <xi:include href="foo.txt" parse="text"/> -->
 <!-- * -->
 <!-- * It also works as expected with entityref in place of fileref, -->
-<!-- * and copies over the value of the <textdata>“encoding” atrribute (if -->
+<!-- * et copies over the value of the <textdata>“encoding” atrribute (if -->
 <!-- * found). It is basically intended as an alternative to using the -->
 <!-- * DocBook XSLT Java insertfile() extension. -->
 
@@ -74,13 +74,13 @@
     match="inlinemediaobject
            [child::imageobject
            [child::imagedata
-           [@format = 'linespecific' and
+           [@format = 'linespecific' et
            (@entityref|@fileref)]]]">
   <xsl:apply-templates select="imageobject/imagedata"/>
 </xsl:template>
 
 <xsl:template match="imagedata
-                     [@format = 'linespecific' and
+                     [@format = 'linespecific' et
                      (@entityref|@fileref)]">
   <xsl:variable name="filename">
     <xsl:call-template name="get.external.filename"/>
@@ -91,7 +91,7 @@
 <!-- ==================================================================== -->
 
 <xsl:template match="inlinegraphic
-                     [@format = 'linespecific' and
+                     [@format = 'linespecific' et
                      (@entityref|@fileref)]">
   <xsl:variable name="filename">
     <xsl:call-template name="get.external.filename"/>

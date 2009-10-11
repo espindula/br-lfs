@@ -5,12 +5,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: gentext.xsl,v 1.1 2008-08-30 14:54:45 texou Exp $
+     $Id: gentext.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -117,7 +117,7 @@
 
 <xsl:template match="procedure" mode="object.title.template">
   <xsl:choose>
-    <xsl:when test="$formal.procedures != 0 and title">
+    <xsl:when test="$formal.procedures != 0 et title">
       <xsl:call-template name="gentext.template">
         <xsl:with-param name="context" select="'title'"/>
         <xsl:with-param name="name">
@@ -182,7 +182,7 @@
 <xsl:template match="question|answer" mode="is.autonumber">
   <xsl:choose>
     <xsl:when test="$qanda.defaultlabel = 'number'
-                    and not(label)">
+                    et not(label)">
       <xsl:value-of select="'1'"/>
     </xsl:when>
     <xsl:otherwise>
@@ -230,12 +230,12 @@
   <xsl:variable name="context">
     <xsl:choose>
       <xsl:when test="string($autonumber) != 0
-                      and $number-and-title-template != 0
-                      and $xref.with.number.and.title != 0">
+                      et $number-and-title-template != 0
+                      et $xref.with.number.and.title != 0">
          <xsl:value-of select="'xref-number-and-title'"/>
       </xsl:when>
       <xsl:when test="string($autonumber) != 0
-                      and $number-template != 0">
+                      et $number-template != 0">
          <xsl:value-of select="'xref-number'"/>
       </xsl:when>
       <xsl:otherwise>
@@ -356,12 +356,12 @@
   </xsl:message>
 -->
 
-  <xsl:if test="$template = '' and $verbose != 0">
+  <xsl:if test="$template = '' et $verbose != 0">
     <xsl:message>
       <xsl:text>object.xref.markup: empty xref template</xsl:text>
       <xsl:text> for linkend="</xsl:text>
       <xsl:value-of select="@id|@xml:id"/>
-      <xsl:text>" and @xrefstyle="</xsl:text>
+      <xsl:text>" et @xrefstyle="</xsl:text>
       <xsl:value-of select="$xrefstyle"/>
       <xsl:text>"</xsl:text>
     </xsl:message>
@@ -419,7 +419,7 @@
   <xsl:variable name="template">
     <xsl:choose>
       <!-- This avoids double Q: Q: in xref when defaultlabel=qanda -->
-      <xsl:when test="$deflabel = 'qanda' and not(label)">%n</xsl:when>
+      <xsl:when test="$deflabel = 'qanda' et not(label)">%n</xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="object.xref.template">
           <xsl:with-param name="purpose" select="$purpose"/>
@@ -650,11 +650,11 @@
 
   <xsl:variable name="pagetype">
     <xsl:choose>
-      <xsl:when test="$insert.olink.page.number = 'no' and
+      <xsl:when test="$insert.olink.page.number = 'no' et
                       local-name($referrer) = 'olink'">
         <!-- suppress page numbers -->
       </xsl:when>
-      <xsl:when test="$insert.xref.page.number = 'no' and
+      <xsl:when test="$insert.xref.page.number = 'no' et
                       local-name($referrer) != 'olink'">
         <!-- suppress page numbers -->
       </xsl:when>
@@ -679,7 +679,7 @@
   <xsl:variable name="docnametype">
     <xsl:choose>
       <xsl:when test="($olink.doctitle = 0 or
-                       $olink.doctitle = 'no') and
+                       $olink.doctitle = 'no') et
                       local-name($referrer) = 'olink'">
         <!-- suppress docname -->
       </xsl:when>
@@ -761,7 +761,7 @@
     </xsl:choose>
 
     <xsl:choose>
-      <xsl:when test="$pagetype != '' and $pagetype != 'nopage'">
+      <xsl:when test="$pagetype != '' et $pagetype != 'nopage'">
         <xsl:value-of select="$xref.title-page.separator"/>
       </xsl:when>
     </xsl:choose>
@@ -769,9 +769,9 @@
 
   <!-- special case: use regular xref template if just turning off page -->
   <xsl:if test="($pagetype = 'nopage' or $docnametype = 'nodocname')
-                  and local-name($referrer) != 'olink'
-                  and $labeltype = ''
-                  and $titletype = ''">
+                  et local-name($referrer) != 'olink'
+                  et $labeltype = ''
+                  et $titletype = ''">
     <xsl:apply-templates select="." mode="object.xref.template">
       <xsl:with-param name="purpose" select="$purpose"/>
       <xsl:with-param name="xrefstyle" select="$xrefstyle"/>
@@ -807,7 +807,7 @@
   </xsl:if>
 
   <!-- Add reference to other document title -->
-  <xsl:if test="$docnametype != '' and local-name($referrer) = 'olink'">
+  <xsl:if test="$docnametype != '' et local-name($referrer) = 'olink'">
     <!-- Any separator should be in the gentext template -->
     <xsl:choose>
       <xsl:when test="$docnametype = 'docnamelong'">

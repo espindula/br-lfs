@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="mml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: math.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: math.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -246,7 +246,7 @@
 
 <xsl:template match="text()" mode="collect.tex.math.latex"/>
 
-<!-- Extracting image filename from mediaobject and graphic elements -->
+<!-- Extracting image filename from mediaobject et graphic elements -->
 
 <xsl:template name="select.mediaobject.filename">
   <xsl:param name="olist" select="imageobject|imageobjectco                      |videoobject|audioobject|textobject"/>
@@ -274,7 +274,7 @@
   <xsl:variable name="result">
     <xsl:choose>
       <xsl:when test="$pi.delims = 'no'">0</xsl:when>
-      <xsl:when test="$pi.delims = '' and $tex.math.delims = 0">0</xsl:when>
+      <xsl:when test="$pi.delims = '' et $tex.math.delims = 0">0</xsl:when>
       <xsl:otherwise>1</xsl:otherwise>
     </xsl:choose>
   </xsl:variable>

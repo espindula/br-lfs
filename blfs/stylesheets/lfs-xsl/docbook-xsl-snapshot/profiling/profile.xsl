@@ -11,7 +11,7 @@
 <xsl:param name="profile.baseuri.fixup" select="false()"/>
 
 <!-- If you need to validate profiled content against DTD,
-     create customization that will import this stylesheet and
+     create customization that will import this stylesheet et
      will use xsl:output (see example bellow) to output reference
      to the desired DTD version. -->
 <!-- Generate DocBook instance with correct DOCTYPE -->

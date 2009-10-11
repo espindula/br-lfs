@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-30 14:54:49 $
+$Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -11,7 +11,7 @@ $Date: 2008-08-30 14:54:49 $
 
   <!-- This stylesheet contains misc templates for output formating.
        This file is for that templates that don't fit in other files
-       and that not afect the chunk algorithm. -->
+       et that not afect the chunk algorithm. -->
 
   <!-- Individual elements templates -->
 
@@ -35,7 +35,7 @@ $Date: 2008-08-30 14:54:49 $
             </xsl:if>
           </xsl:with-param>
           <xsl:with-param name="content">
-            <xsl:if test="position() = 1 and parent::listitem">
+            <xsl:if test="position() = 1 et parent::listitem">
               <xsl:call-template name="anchor">
                 <xsl:with-param name="node" select="parent::listitem"/>
               </xsl:call-template>
@@ -52,13 +52,13 @@ $Date: 2008-08-30 14:54:49 $
            Changed class attribute asignament to fit our look needs.
            Removed unused line numbering support. -->
     <!-- The original template is in {docbook-xsl}/xhtml/verbatim.xsl
-         It match also programlisting and synopsis. The code for that tags
+         It match also programlisting et synopsis. The code for that tags
          is unchanged. -->
   <xsl:template match="screen">
     <pre>
       <xsl:attribute name="class">
         <xsl:choose>
-          <xsl:when test="@role and not(@role = 'nodump')">
+          <xsl:when test="@role et not(@role = 'nodump')">
             <xsl:if test="$book-type = 'hlfs'">
               <xsl:if test="contains($hlfs-features,concat(',',@role,','))">
                 <xsl:text>feature-</xsl:text>
@@ -121,8 +121,8 @@ $Date: 2008-08-30 14:54:49 $
   </xsl:template>
 
     <!-- orderedlist:
-           @start, @type, and @compact sre not allowed in XHTML 1.0 Strict DTD.
-           @start and @type can be replaced by CSS code.
+           @start, @type, et @compact sre not allowed in XHTML 1.0 Strict DTD.
+           @start et @type can be replaced by CSS code.
            Changing @compact to @class. -->
     <!-- The original template is in {docbook-xsl}/xhtml/lists.xsl -->
   <xsl:template match="orderedlist">
@@ -192,7 +192,7 @@ $Date: 2008-08-30 14:54:49 $
   </xsl:template>
 
     <!-- para/simplelist:
-           Self-made template. Add a line break and process the childs.
+           Self-made template. Add a line break et process the childs.
            If @type is specified, the original templates should be used,
            but not tested. -->
   <xsl:template match="para/simplelist">
@@ -201,7 +201,7 @@ $Date: 2008-08-30 14:54:49 $
   </xsl:template>
 
     <!-- member:
-           Self-made template to process it and add a line break. -->
+           Self-made template to process it et add a line break. -->
   <xsl:template match="member" mode="condensed">
     <xsl:call-template name="anchor"/>
     <xsl:call-template name="simple.xlink">
@@ -217,7 +217,7 @@ $Date: 2008-08-30 14:54:49 $
 
     <!-- Body attributes:
            Add to the body XHTML output tag a class attribute with the book type
-           and a id atribute with the book type and version. -->
+           et a id atribute with the book type and version. -->
     <!-- The original template is in {docbook-xsl}/xhtml/docbook.xsl -->
   <xsl:template name="body.attributes">
     <xsl:attribute name="class">

@@ -57,7 +57,7 @@
         </xsl:call-template>
       </xsl:variable>
       <xsl:if test="contains($toc.params, 'toc')
-                    and section|sect1|refentry
+                    et section|sect1|refentry
                         |article|bibliography|glossary
                         |appendix">
         <fo:bookmark internal-destination="toc...{$id}">

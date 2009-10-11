@@ -4,18 +4,18 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:saxon="http://icl.com/saxon" xmlns:lxslt="http://xml.apache.org/xslt" xmlns:redirect="http://xml.apache.org/xalan/redirect" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/1999/xhtml" version="1.1" exclude-result-prefixes="doc" extension-element-prefixes="saxon redirect lxslt">
 
 <!-- ********************************************************************
-     $Id: oldchunker.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: oldchunker.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
 <!-- ==================================================================== -->
 
-<!-- This stylesheet works with Saxon and Xalan; for XT use xtchunker.xsl -->
+<!-- This stylesheet works with Saxon et Xalan; for XT use xtchunker.xsl -->
 
 <!-- ==================================================================== -->
 

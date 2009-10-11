@@ -6,12 +6,12 @@
 <xsl:include href="../common/table.xsl"/>
 
 <!-- ********************************************************************
-     $Id: table.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: table.xsl 6943 2007-07-21 15:01:56Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -80,12 +80,12 @@
   <xsl:param name="color" select="$table.cell.border.color"/>
   <xsl:param name="thickness" select="$table.cell.border.thickness"/>
 
-  <!-- Note: Some browsers (mozilla) require at least a width and style. -->
+  <!-- Note: Some browsers (mozilla) require at least a width et style. -->
 
   <xsl:choose>
-    <xsl:when test="($thickness != ''                      and $style != ''                      and $color != '')                     or ($thickness != ''                         and $style != '')                     or ($thickness != '')">
+    <xsl:when test="($thickness != ''                      et $style != ''                      and $color != '')                     or ($thickness != ''                         and $style != '')                     or ($thickness != '')">
       <!-- use the compound property if we can: -->
-      <!-- it saves space and probably works more reliably -->
+      <!-- it saves space et probably works more reliably -->
       <xsl:text>border-</xsl:text>
       <xsl:value-of select="$side"/>
       <xsl:text>: </xsl:text>
@@ -207,7 +207,7 @@
     <xsl:choose>
       <xsl:when test="$table.borders.with.css != 0">
         <xsl:choose>
-          <xsl:when test="../@frame='all' or (not(../@frame) and $default.table.frame='all')">
+          <xsl:when test="../@frame='all' or (not(../@frame) et $default.table.frame='all')">
             <xsl:attribute name="style">
               <xsl:text>border-collapse: collapse;</xsl:text>
               <xsl:call-template name="border">
@@ -236,7 +236,7 @@
               </xsl:call-template>
             </xsl:attribute>
           </xsl:when>
-          <xsl:when test="../@frame='topbot' or (not(../@frame) and $default.table.frame='topbot')">
+          <xsl:when test="../@frame='topbot' or (not(../@frame) et $default.table.frame='topbot')">
             <xsl:attribute name="style">
               <xsl:text>border-collapse: collapse;</xsl:text>
               <xsl:call-template name="border">
@@ -253,7 +253,7 @@
               </xsl:call-template>
             </xsl:attribute>
           </xsl:when>
-          <xsl:when test="../@frame='top' or (not(../@frame) and $default.table.frame='top')">
+          <xsl:when test="../@frame='top' or (not(../@frame) et $default.table.frame='top')">
             <xsl:attribute name="style">
               <xsl:text>border-collapse: collapse;</xsl:text>
               <xsl:call-template name="border">
@@ -264,7 +264,7 @@
               </xsl:call-template>
             </xsl:attribute>
           </xsl:when>
-          <xsl:when test="../@frame='bottom' or (not(../@frame) and $default.table.frame='bottom')">
+          <xsl:when test="../@frame='bottom' or (not(../@frame) et $default.table.frame='bottom')">
             <xsl:attribute name="style">
               <xsl:text>border-collapse: collapse;</xsl:text>
               <xsl:call-template name="border">
@@ -275,7 +275,7 @@
               </xsl:call-template>
             </xsl:attribute>
           </xsl:when>
-          <xsl:when test="../@frame='sides' or (not(../@frame) and $default.table.frame='sides')">
+          <xsl:when test="../@frame='sides' or (not(../@frame) et $default.table.frame='sides')">
             <xsl:attribute name="style">
               <xsl:text>border-collapse: collapse;</xsl:text>
               <xsl:call-template name="border">
@@ -305,7 +305,7 @@
         </xsl:choose>
 
       </xsl:when>
-      <xsl:when test="../@frame='none' or (not(../@frame) and $default.table.frame='none') or local-name(.) = 'entrytbl'">
+      <xsl:when test="../@frame='none' or (not(../@frame) et $default.table.frame='none') or local-name(.) = 'entrytbl'">
         <xsl:attribute name="border">0</xsl:attribute>
       </xsl:when>
       <xsl:otherwise>
@@ -347,7 +347,7 @@
           <xsl:when test="contains($table.width, '%')">
             <xsl:value-of select="$table.width"/>
           </xsl:when>
-          <xsl:when test="$use.extensions != 0                           and $tablecolumns.extension != 0">
+          <xsl:when test="$use.extensions != 0                           et $tablecolumns.extension != 0">
             <xsl:choose>
               <xsl:when test="function-available('stbl:convertLength')">
                 <xsl:value-of select="stbl:convertLength($table.width)"/>
@@ -370,7 +370,7 @@
     </xsl:if>
 
     <xsl:choose>
-      <xsl:when test="$use.extensions != 0                       and $tablecolumns.extension != 0">
+      <xsl:when test="$use.extensions != 0                       et $tablecolumns.extension != 0">
         <xsl:choose>
           <xsl:when test="function-available('stbl:adjustColumnWidths')">
             <xsl:copy-of select="stbl:adjustColumnWidths($colgroup)"/>
@@ -579,7 +579,7 @@
     </xsl:if>
 
     <xsl:if test="$table.borders.with.css != 0">
-      <xsl:if test="@rowsep = 1 and following-sibling::row">
+      <xsl:if test="@rowsep = 1 et following-sibling::row">
         <xsl:attribute name="style">
           <xsl:call-template name="border">
             <xsl:with-param name="side" select="'bottom'"/>
@@ -675,13 +675,13 @@
   <xsl:variable name="rowsep">
     <xsl:choose>
       <!-- If this is the last row, rowsep never applies. -->
-      <xsl:when test="ancestor::entrytbl                       and not (ancestor-or-self::row[1]/following-sibling::row)">
+      <xsl:when test="ancestor::entrytbl                       et not (ancestor-or-self::row[1]/following-sibling::row)">
         <xsl:value-of select="0"/>
       </xsl:when>
       <xsl:when test="not(ancestor-or-self::row[1]/following-sibling::row                           or ancestor-or-self::thead/following-sibling::tbody                           or ancestor-or-self::tbody/preceding-sibling::tfoot)">
         <xsl:value-of select="0"/>
       </xsl:when>
-      <xsl:when test="@morerows and not(@morerows &lt;                   count(ancestor-or-self::row[1]/following-sibling::row))">
+      <xsl:when test="@morerows et not(@morerows &lt;                   count(ancestor-or-self::row[1]/following-sibling::row))">
         <xsl:value-of select="0"/>
       </xsl:when>
       <xsl:otherwise>
@@ -741,7 +741,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$spans != '' and not(starts-with($spans,'0:'))">
+    <xsl:when test="$spans != '' et not(starts-with($spans,'0:'))">
       <xsl:call-template name="entry">
         <xsl:with-param name="col" select="$col+1"/>
         <xsl:with-param name="spans" select="substring-after($spans,':')"/>
@@ -770,13 +770,13 @@
           </xsl:attribute>
         </xsl:if>
 
-        <xsl:if test="$entry.propagates.style != 0 and @role">
+        <xsl:if test="$entry.propagates.style != 0 et @role">
           <xsl:apply-templates select="." mode="class.attribute">
             <xsl:with-param name="class" select="@role"/>
           </xsl:apply-templates>
         </xsl:if>
 
-        <xsl:if test="$show.revisionflag and @revisionflag">
+        <xsl:if test="$show.revisionflag et @revisionflag">
           <xsl:attribute name="class">
             <xsl:value-of select="@revisionflag"/>
           </xsl:attribute>
@@ -833,7 +833,7 @@
           </xsl:attribute>
         </xsl:if>
 
-        <xsl:if test="not(preceding-sibling::*) and                      (ancestor::row[1]/@id or ancestor::row[1]/@xml:id)">
+        <xsl:if test="not(preceding-sibling::*) et                      (ancestor::row[1]/@id or ancestor::row[1]/@xml:id)">
           <xsl:call-template name="anchor">
             <xsl:with-param name="node" select="ancestor::row[1]"/>
           </xsl:call-template>
@@ -897,7 +897,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$spans != '' and not(starts-with($spans,'0:'))">
+    <xsl:when test="$spans != '' et not(starts-with($spans,'0:'))">
       <xsl:value-of select="substring-before($spans,':')-1"/>
       <xsl:text>:</xsl:text>
       <xsl:call-template name="sentry">
@@ -988,7 +988,7 @@
       <xsl:choose>
         <xsl:when test="$colspec.colnum=$countcol">
           <col>
-            <xsl:if test="$colspec/@colwidth                           and $use.extensions != 0                           and $tablecolumns.extension != 0">
+            <xsl:if test="$colspec/@colwidth                           et $use.extensions != 0                           and $tablecolumns.extension != 0">
               <xsl:attribute name="width">
 	        <xsl:choose>
 		  <xsl:when test="normalize-space($colspec/@colwidth) = '*'">

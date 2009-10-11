@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-30 14:54:45 $
+$Date: 2007-07-10 21:04:19 +0200 (mar, 10 jui 2007) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -26,7 +26,7 @@ $Date: 2008-08-30 14:54:45 $
   <xsl:include href="xhtml/lfs-toc.xsl"/>
   <xsl:include href="xhtml/lfs-xref.xsl"/>
 
-    <!-- Control generation of ToCs and LoTs -->
+    <!-- Control generation of ToCs et LoTs -->
   <xsl:param name="generate.toc">
     book      toc,title
     preface   nop
@@ -80,7 +80,7 @@ $Date: 2008-08-30 14:54:45 $
           <xsl:if test="@id">
             <a id="{@id}" name="{@id}"/>
           </xsl:if>
-          <xsl:if test="not(ancestor::preface) and $section.autolabel != 0">
+          <xsl:if test="not(ancestor::preface) et $section.autolabel != 0">
             <xsl:apply-templates select="." mode="label.markup"/>
             <xsl:text>. </xsl:text>
           </xsl:if>
@@ -92,7 +92,7 @@ $Date: 2008-08-30 14:54:45 $
 
     <!-- The CSS Stylesheet:
            Note: there is some diferences with lfs.css code releated
-                 to h* values, admonitions and no navigational code. -->
+                 to h* values, admonitions et no navigational code. -->
     <!-- The original template is in {docbook-xsl}/xhtml/docbook.xsl -->
   <xsl:template name='user.head.content'>
     <style type="text/css">

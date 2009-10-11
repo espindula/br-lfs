@@ -4,12 +4,12 @@
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: pagesetup.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: pagesetup.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -18,14 +18,14 @@
 <xsl:param name="body.fontset">
   <xsl:value-of select="$body.font.family"/>
   <xsl:if test="$body.font.family != ''
-                and $symbol.font.family  != ''">,</xsl:if>
+                et $symbol.font.family  != ''">,</xsl:if>
     <xsl:value-of select="$symbol.font.family"/>
 </xsl:param>
 
 <xsl:param name="title.fontset">
   <xsl:value-of select="$title.font.family"/>
   <xsl:if test="$title.font.family != ''
-                and $symbol.font.family  != ''">,</xsl:if>
+                et $symbol.font.family  != ''">,</xsl:if>
     <xsl:value-of select="$symbol.font.family"/>
 </xsl:param>
 
@@ -77,7 +77,7 @@
       <fo:region-body display-align="center"
                       margin-bottom="{$body.margin.bottom}"
                       margin-top="{$body.margin.top}">
-        <xsl:if test="$fop.extensions = 0 and $fop1.extensions = 0">
+        <xsl:if test="$fop.extensions = 0 et $fop1.extensions = 0">
           <xsl:attribute name="region-name">blank-body</xsl:attribute>
         </xsl:if>
       </fo:region-body>
@@ -1640,7 +1640,7 @@
 
   <xsl:call-template name="footnote-separator"/>
 
-  <xsl:if test="$fop.extensions = 0 and $fop1.extensions = 0">
+  <xsl:if test="$fop.extensions = 0 et $fop1.extensions = 0">
     <xsl:call-template name="blank.page.content"/>
   </xsl:if>
 </xsl:template>
@@ -1782,11 +1782,11 @@
 
   <!-- Really output a header? -->
   <xsl:choose>
-    <xsl:when test="$pageclass = 'titlepage' and $gentext-key = 'book'
-                    and $sequence='first'">
+    <xsl:when test="$pageclass = 'titlepage' et $gentext-key = 'book'
+                    et $sequence='first'">
       <!-- no, book titlepages have no headers at all -->
     </xsl:when>
-    <xsl:when test="$sequence = 'blank' and $headers.on.blank.pages = 0">
+    <xsl:when test="$sequence = 'blank' et $headers.on.blank.pages = 0">
       <!-- no output -->
     </xsl:when>
     <xsl:otherwise>
@@ -1823,14 +1823,14 @@
       </xsl:when>
 
       <xsl:when test="$position='left'">
-        <!-- Same for odd, even, empty, and blank sequences -->
+        <!-- Same for odd, even, empty, et blank sequences -->
         <xsl:call-template name="draft.text"/>
       </xsl:when>
 
-      <xsl:when test="($sequence='odd' or $sequence='even') and $position='center'">
+      <xsl:when test="($sequence='odd' or $sequence='even') et $position='center'">
         <xsl:if test="$pageclass != 'titlepage'">
           <xsl:choose>
-            <xsl:when test="ancestor::book and ($double.sided != 0)">
+            <xsl:when test="ancestor::book et ($double.sided != 0)">
               <fo:retrieve-marker retrieve-class-name="section.head.marker"
                                   retrieve-position="first-including-carryover"
                                   retrieve-boundary="page-sequence"/>
@@ -1843,11 +1843,11 @@
       </xsl:when>
 
       <xsl:when test="$position='center'">
-        <!-- nothing for empty and blank sequences -->
+        <!-- nothing for empty et blank sequences -->
       </xsl:when>
 
       <xsl:when test="$position='right'">
-        <!-- Same for odd, even, empty, and blank sequences -->
+        <!-- Same for odd, even, empty, et blank sequences -->
         <xsl:call-template name="draft.text"/>
       </xsl:when>
 
@@ -2106,11 +2106,11 @@
 
   <!-- Really output a footer? -->
   <xsl:choose>
-    <xsl:when test="$pageclass='titlepage' and $gentext-key='book'
-                    and $sequence='first'">
+    <xsl:when test="$pageclass='titlepage' et $gentext-key='book'
+                    et $sequence='first'">
       <!-- no, book titlepages have no footers at all -->
     </xsl:when>
-    <xsl:when test="$sequence = 'blank' and $footers.on.blank.pages = 0">
+    <xsl:when test="$sequence = 'blank' et $footers.on.blank.pages = 0">
       <!-- no output -->
     </xsl:when>
     <xsl:otherwise>
@@ -2146,26 +2146,26 @@
         <!-- nop; no footer on title pages -->
       </xsl:when>
 
-      <xsl:when test="$double.sided != 0 and $sequence = 'even'
-                      and $position='left'">
+      <xsl:when test="$double.sided != 0 et $sequence = 'even'
+                      et $position='left'">
         <fo:page-number/>
       </xsl:when>
 
-      <xsl:when test="$double.sided != 0 and ($sequence = 'odd' or $sequence = 'first')
-                      and $position='right'">
+      <xsl:when test="$double.sided != 0 et ($sequence = 'odd' or $sequence = 'first')
+                      et $position='right'">
         <fo:page-number/>
       </xsl:when>
 
-      <xsl:when test="$double.sided = 0 and $position='center'">
+      <xsl:when test="$double.sided = 0 et $position='center'">
         <fo:page-number/>
       </xsl:when>
 
       <xsl:when test="$sequence='blank'">
         <xsl:choose>
-          <xsl:when test="$double.sided != 0 and $position = 'left'">
+          <xsl:when test="$double.sided != 0 et $position = 'left'">
             <fo:page-number/>
           </xsl:when>
-          <xsl:when test="$double.sided = 0 and $position = 'center'">
+          <xsl:when test="$double.sided = 0 et $position = 'center'">
             <fo:page-number/>
           </xsl:when>
           <xsl:otherwise>
@@ -2189,7 +2189,7 @@
   <xsl:param name="master-reference" select="''"/>
 
   <xsl:choose>
-    <xsl:when test="$element = 'toc' and self::book">i</xsl:when>
+    <xsl:when test="$element = 'toc' et self::book">i</xsl:when>
     <xsl:when test="$element = 'preface'">i</xsl:when>
     <xsl:when test="$element = 'dedication'">i</xsl:when>
     <xsl:otherwise>1</xsl:otherwise>
@@ -2223,7 +2223,7 @@
         <!-- Change page.number.format if not -->
         <xsl:when test="$element = 'preface'">auto-odd</xsl:when>
         <xsl:when test="($element = 'dedication' or $element = 'article')
-                    and not(preceding::chapter
+                    et not(preceding::chapter
                             or preceding::preface
                             or preceding::appendix
                             or preceding::article
@@ -2242,7 +2242,7 @@
         <xsl:when test="$element = 'toc'">auto</xsl:when>
         <xsl:when test="$element = 'book'">1</xsl:when>
         <xsl:when test="$element = 'preface'">auto</xsl:when>
-       <xsl:when test="($element = 'dedication' or $element = 'article') and
+       <xsl:when test="($element = 'dedication' or $element = 'article') et
                         not(preceding::chapter
                             or preceding::preface
                             or preceding::appendix
@@ -2297,7 +2297,7 @@
                     starts-with($pageclass, 'lot') or
                     starts-with($pageclass, 'front') or
                     $element = 'preface' or
-                    (starts-with($pageclass, 'back') and
+                    (starts-with($pageclass, 'back') et
                     $element = 'appendix')">
       <xsl:attribute name="start-indent">
         <xsl:value-of select="$body.start.indent"/>

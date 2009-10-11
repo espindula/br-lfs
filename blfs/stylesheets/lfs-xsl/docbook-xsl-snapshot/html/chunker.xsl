@@ -9,12 +9,12 @@
                 extension-element-prefixes="saxon redirect lxslt exsl">
 
 <!-- ********************************************************************
-     $Id: chunker.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: chunker.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -101,7 +101,7 @@
       </xsl:if>
       <xsl:text>Writing </xsl:text>
       <xsl:value-of select="$filename"/>
-      <xsl:if test="name(.) != '' and $suppress-context-node-name = 0">
+      <xsl:if test="name(.) != '' et $suppress-context-node-name = 0">
         <xsl:text> for </xsl:text>
         <xsl:value-of select="name(.)"/>
         <xsl:if test="@id or @xml:id">
@@ -122,7 +122,7 @@
         <!-- Handle the permutations ... -->
         <xsl:when test="$media-type != ''">
           <xsl:choose>
-            <xsl:when test="$doctype-public != '' and $doctype-system != ''">
+            <xsl:when test="$doctype-public != '' et $doctype-system != ''">
               <exsl:document href="{$filename}"
                              method="{$method}"
                              encoding="{$encoding}"
@@ -136,7 +136,7 @@
                 <xsl:copy-of select="$content"/>
               </exsl:document>
             </xsl:when>
-            <xsl:when test="$doctype-public != '' and $doctype-system = ''">
+            <xsl:when test="$doctype-public != '' et $doctype-system = ''">
               <exsl:document href="{$filename}"
                              method="{$method}"
                              encoding="{$encoding}"
@@ -149,7 +149,7 @@
                 <xsl:copy-of select="$content"/>
               </exsl:document>
             </xsl:when>
-            <xsl:when test="$doctype-public = '' and $doctype-system != ''">
+            <xsl:when test="$doctype-public = '' et $doctype-system != ''">
               <exsl:document href="{$filename}"
                              method="{$method}"
                              encoding="{$encoding}"
@@ -162,7 +162,7 @@
                 <xsl:copy-of select="$content"/>
               </exsl:document>
             </xsl:when>
-            <xsl:otherwise><!-- $doctype-public = '' and $doctype-system = ''"> -->
+            <xsl:otherwise><!-- $doctype-public = '' et $doctype-system = ''"> -->
               <exsl:document href="{$filename}"
                              method="{$method}"
                              encoding="{$encoding}"
@@ -178,7 +178,7 @@
         </xsl:when>
         <xsl:otherwise>
           <xsl:choose>
-            <xsl:when test="$doctype-public != '' and $doctype-system != ''">
+            <xsl:when test="$doctype-public != '' et $doctype-system != ''">
               <exsl:document href="{$filename}"
                              method="{$method}"
                              encoding="{$encoding}"
@@ -191,7 +191,7 @@
                 <xsl:copy-of select="$content"/>
               </exsl:document>
             </xsl:when>
-            <xsl:when test="$doctype-public != '' and $doctype-system = ''">
+            <xsl:when test="$doctype-public != '' et $doctype-system = ''">
               <exsl:document href="{$filename}"
                              method="{$method}"
                              encoding="{$encoding}"
@@ -203,7 +203,7 @@
                 <xsl:copy-of select="$content"/>
               </exsl:document>
             </xsl:when>
-            <xsl:when test="$doctype-public = '' and $doctype-system != ''">
+            <xsl:when test="$doctype-public = '' et $doctype-system != ''">
               <exsl:document href="{$filename}"
                              method="{$method}"
                              encoding="{$encoding}"
@@ -215,7 +215,7 @@
                 <xsl:copy-of select="$content"/>
               </exsl:document>
             </xsl:when>
-            <xsl:otherwise><!-- $doctype-public = '' and $doctype-system = ''"> -->
+            <xsl:otherwise><!-- $doctype-public = '' et $doctype-system = ''"> -->
               <exsl:document href="{$filename}"
                              method="{$method}"
                              encoding="{$encoding}"
@@ -236,7 +236,7 @@
         <!-- Handle the permutations ... -->
         <xsl:when test="$media-type != ''">
           <xsl:choose>
-            <xsl:when test="$doctype-public != '' and $doctype-system != ''">
+            <xsl:when test="$doctype-public != '' et $doctype-system != ''">
               <saxon:output saxon:character-representation="{$saxon.character.representation}"
                             href="{$filename}"
                             method="{$method}"
@@ -251,7 +251,7 @@
                 <xsl:copy-of select="$content"/>
               </saxon:output>
             </xsl:when>
-            <xsl:when test="$doctype-public != '' and $doctype-system = ''">
+            <xsl:when test="$doctype-public != '' et $doctype-system = ''">
               <saxon:output saxon:character-representation="{$saxon.character.representation}"
                             href="{$filename}"
                             method="{$method}"
@@ -265,7 +265,7 @@
                 <xsl:copy-of select="$content"/>
               </saxon:output>
             </xsl:when>
-            <xsl:when test="$doctype-public = '' and $doctype-system != ''">
+            <xsl:when test="$doctype-public = '' et $doctype-system != ''">
               <saxon:output saxon:character-representation="{$saxon.character.representation}"
                             href="{$filename}"
                             method="{$method}"
@@ -279,7 +279,7 @@
                 <xsl:copy-of select="$content"/>
               </saxon:output>
             </xsl:when>
-            <xsl:otherwise><!-- $doctype-public = '' and $doctype-system = ''"> -->
+            <xsl:otherwise><!-- $doctype-public = '' et $doctype-system = ''"> -->
               <saxon:output saxon:character-representation="{$saxon.character.representation}"
                             href="{$filename}"
                             method="{$method}"
@@ -296,7 +296,7 @@
         </xsl:when>
         <xsl:otherwise>
           <xsl:choose>
-            <xsl:when test="$doctype-public != '' and $doctype-system != ''">
+            <xsl:when test="$doctype-public != '' et $doctype-system != ''">
               <saxon:output saxon:character-representation="{$saxon.character.representation}"
                             href="{$filename}"
                             method="{$method}"
@@ -310,7 +310,7 @@
                 <xsl:copy-of select="$content"/>
               </saxon:output>
             </xsl:when>
-            <xsl:when test="$doctype-public != '' and $doctype-system = ''">
+            <xsl:when test="$doctype-public != '' et $doctype-system = ''">
               <saxon:output saxon:character-representation="{$saxon.character.representation}"
                             href="{$filename}"
                             method="{$method}"
@@ -323,7 +323,7 @@
                 <xsl:copy-of select="$content"/>
               </saxon:output>
             </xsl:when>
-            <xsl:when test="$doctype-public = '' and $doctype-system != ''">
+            <xsl:when test="$doctype-public = '' et $doctype-system != ''">
               <saxon:output saxon:character-representation="{$saxon.character.representation}"
                             href="{$filename}"
                             method="{$method}"
@@ -336,7 +336,7 @@
                 <xsl:copy-of select="$content"/>
               </saxon:output>
             </xsl:when>
-            <xsl:otherwise><!-- $doctype-public = '' and $doctype-system = ''"> -->
+            <xsl:otherwise><!-- $doctype-public = '' et $doctype-system = ''"> -->
               <saxon:output saxon:character-representation="{$saxon.character.representation}"
                             href="{$filename}"
                             method="{$method}"

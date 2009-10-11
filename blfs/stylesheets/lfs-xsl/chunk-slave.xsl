@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-30 14:54:45 $
+$Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -10,7 +10,7 @@ $Date: 2008-08-30 14:54:45 $
                 version="1.0">
 
    <!-- Second level chunked output template.
-        Sets global params and include customized elements templates. -->
+        Sets global params et include customized elements templates. -->
 
     <!-- Upstream XHTML presentation templates -->
   <xsl:import href="docbook-xsl-snapshot/xhtml/docbook.xsl"/>
@@ -45,7 +45,7 @@ $Date: 2008-08-30 14:54:45 $
     <!-- No XML declaration -->
   <xsl:param name="chunker.output.omit-xml-declaration" select="'yes'"/>
 
-    <!-- Control generation of ToCs and LoTs -->
+    <!-- Control generation of ToCs et LoTs -->
   <xsl:param name="generate.toc">
     book      toc,title
     preface   toc

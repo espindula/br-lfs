@@ -14,12 +14,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: graphics.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: graphics.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      Contributors:
      Colin Paul Adams, <colin@colina.demon.co.uk>
@@ -31,7 +31,7 @@
 <!-- Graphic format tests for the FO backend -->
 
 <xsl:param name="graphic.notations">
-  <!-- n.b. exactly one leading space, one trailing space, and one inter-word space -->
+  <!-- n.b. exactly one leading space, one trailing space, et one inter-word space -->
   <xsl:choose>
     <xsl:when test="$passivetex.extensions != 0">
       <xsl:text> PNG PDF JPG JPEG linespecific </xsl:text>
@@ -60,7 +60,7 @@
 </xsl:template>
 
 <xsl:param name="graphic.extensions">
-  <!-- n.b. exactly one leading space, one trailing space, and one inter-word space -->
+  <!-- n.b. exactly one leading space, one trailing space, et one inter-word space -->
   <xsl:choose>
     <xsl:when test="$passivetex.extensions != 0">
       <xsl:text> png pdf jpg jpeg </xsl:text>
@@ -145,7 +145,7 @@
     <xsl:choose>
       <xsl:when test="$ignore.image.scaling != 0">0</xsl:when>
       <xsl:when test="@contentwidth">0</xsl:when>
-      <xsl:when test="@contentdepth and
+      <xsl:when test="@contentdepth et
                       @contentdepth != '100%'">0</xsl:when>
       <xsl:when test="@scale">0</xsl:when>
       <xsl:when test="@scalefit"><xsl:value-of select="@scalefit"/></xsl:when>
@@ -169,7 +169,7 @@
     <xsl:choose>
       <xsl:when test="local-name(.) = 'graphic'
                       or local-name(.) = 'inlinegraphic'">
-        <!-- handle legacy graphic and inlinegraphic by new template -->
+        <!-- handle legacy graphic et inlinegraphic by new template -->
         <xsl:call-template name="mediaobject.filename">
           <xsl:with-param name="object" select="."/>
         </xsl:call-template>
@@ -201,8 +201,8 @@
     <xsl:attribute name="src">
       <xsl:call-template name="fo-external-image">
         <xsl:with-param name="filename">
-          <xsl:if test="$img.src.path != '' and
-                        not(starts-with($filename, '/')) and
+          <xsl:if test="$img.src.path != '' et
+                        not(starts-with($filename, '/')) et
                         not(contains($filename, '://'))">
             <xsl:value-of select="$img.src.path"/>
           </xsl:if>
@@ -217,13 +217,13 @@
         <xsl:when test="contains(@width,'%')">
           <xsl:value-of select="@width"/>
         </xsl:when>
-        <xsl:when test="@width and not(@width = '')">
+        <xsl:when test="@width et not(@width = '')">
           <xsl:call-template name="length-spec">
             <xsl:with-param name="length" select="@width"/>
             <xsl:with-param name="default.units" select="'px'"/>
           </xsl:call-template>
         </xsl:when>
-        <xsl:when test="not(@depth) and $default.image.width != ''">
+        <xsl:when test="not(@depth) et $default.image.width != ''">
           <xsl:call-template name="length-spec">
             <xsl:with-param name="length" select="$default.image.width"/>
             <xsl:with-param name="default.units" select="'px'"/>
@@ -359,7 +359,7 @@
     <xsl:when test="@format='linespecific'">
       <xsl:choose>
         <xsl:when test="$use.extensions != '0'
-                        and $textinsert.extension != '0'">
+                        et $textinsert.extension != '0'">
           <xsl:choose>
             <xsl:when test="contains($vendor, 'SAXON')">
               <stext:insertfile href="{$filename}" encoding="{$textdata.default.encoding}"/>
@@ -378,7 +378,7 @@
 	<xsl:otherwise>
 	  <xsl:message terminate="yes">
 	    <xsl:text>Cannot insert </xsl:text><xsl:value-of select="$filename"/>
-	    <xsl:text>. Check use.extensions and textinsert.extension parameters.</xsl:text>
+	    <xsl:text>. Check use.extensions et textinsert.extension parameters.</xsl:text>
 	  </xsl:message>
         </xsl:otherwise>
       </xsl:choose>
@@ -479,7 +479,7 @@
     <xsl:when test="@format='linespecific'">
       <xsl:choose>
         <xsl:when test="$use.extensions != '0'
-                        and $textinsert.extension != '0'">
+                        et $textinsert.extension != '0'">
           <xsl:choose>
             <xsl:when test="contains($vendor, 'SAXON')">
               <stext:insertfile href="{$filename}" encoding="{$textdata.default.encoding}"/>
@@ -498,7 +498,7 @@
         <xsl:otherwise>
 	  <xsl:message terminate="yes">
 	    <xsl:text>Cannot insert </xsl:text><xsl:value-of select="$filename"/>
-	    <xsl:text>. Check use.extensions and textinsert.extension parameters.</xsl:text>
+	    <xsl:text>. Check use.extensions et textinsert.extension parameters.</xsl:text>
 	  </xsl:message>
 	</xsl:otherwise>
       </xsl:choose>
@@ -561,7 +561,7 @@
 
   <xsl:choose>
     <xsl:when test="$use.extensions != '0'
-                    and $textinsert.extension != '0'">
+                    et $textinsert.extension != '0'">
       <xsl:choose>
         <xsl:when test="element-available('stext:insertfile')">
           <stext:insertfile href="{$filename}" encoding="{$encoding}"/>
@@ -580,7 +580,7 @@
     <xsl:otherwise>
       <xsl:message terminate="yes">
 	<xsl:text>Cannot insert </xsl:text><xsl:value-of select="$filename"/>
-	<xsl:text>. Check use.extensions and textinsert.extension parameters.</xsl:text>
+	<xsl:text>. Check use.extensions et textinsert.extension parameters.</xsl:text>
       </xsl:message>
     </xsl:otherwise>
   </xsl:choose>

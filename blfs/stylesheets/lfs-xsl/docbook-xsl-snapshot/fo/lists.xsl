@@ -4,12 +4,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: lists.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: lists.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -39,7 +39,7 @@
     <xsl:apply-templates select="title" mode="list.title.mode"/>
   </xsl:if>
 
-  <!-- Preserve order of PIs and comments -->
+  <!-- Preserve order of PIs et comments -->
   <xsl:apply-templates
       select="*[not(self::listitem
                 or self::title
@@ -157,7 +157,7 @@
     <xsl:when test="$itemsymbol='bullet'">&#x2022;</xsl:when>
     <xsl:when test="$itemsymbol='endash'">&#x2013;</xsl:when>
     <xsl:when test="$itemsymbol='emdash'">&#x2014;</xsl:when>
-    <!-- Some of these may work in your XSL-FO processor and fonts -->
+    <!-- Some of these may work in your XSL-FO processor et fonts -->
     <!--
     <xsl:when test="$itemsymbol='square'">&#x25A0;</xsl:when>
     <xsl:when test="$itemsymbol='box'">&#x25A0;</xsl:when>
@@ -202,7 +202,7 @@
     <xsl:apply-templates select="title" mode="list.title.mode"/>
   </xsl:if>
 
-  <!-- Preserve order of PIs and comments -->
+  <!-- Preserve order of PIs et comments -->
   <xsl:apply-templates
       select="*[not(self::listitem
                 or self::title
@@ -268,7 +268,7 @@
   </xsl:variable>
 
   <xsl:if test="parent::orderedlist/@inheritnum='inherit'
-                and ancestor::listitem[parent::orderedlist]">
+                et ancestor::listitem[parent::orderedlist]">
     <xsl:apply-templates select="ancestor::listitem[parent::orderedlist][1]"
                          mode="item-number"/>
   </xsl:if>
@@ -427,7 +427,7 @@
     <xsl:apply-templates select="title" mode="list.title.mode"/>
   </xsl:if>
 
-  <!-- Preserve order of PIs and comments -->
+  <!-- Preserve order of PIs et comments -->
   <xsl:apply-templates
     select="*[not(self::varlistentry
               or self::title
@@ -475,7 +475,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$longest &gt; $maxlength and $maxlength &gt; 0">
+    <xsl:when test="$longest &gt; $maxlength et $maxlength &gt; 0">
       <xsl:value-of select="$maxlength"/>
     </xsl:when>
     <xsl:when test="not($terms)">
@@ -543,7 +543,7 @@
     <xsl:apply-templates select="title" mode="list.title.mode"/>
   </xsl:if>
 
-  <!-- Preserve order of PIs and comments -->
+  <!-- Preserve order of PIs et comments -->
   <xsl:apply-templates
     select="*[not(self::varlistentry
               or self::title
@@ -599,7 +599,7 @@
     <xsl:when test="not(following-sibling::term)"/> <!-- do nothing -->
     <xsl:otherwise>
       <!-- * if we have multiple terms in the same varlistentry, generate -->
-      <!-- * a separator (", " by default) and/or an additional line -->
+      <!-- * a separator (", " by default) et/or an additional line -->
       <!-- * break after each one except the last -->
       <fo:inline><xsl:value-of select="$variablelist.term.separator"/></fo:inline>
       <xsl:if test="not($variablelist.term.break.after = '0')">
@@ -920,7 +920,7 @@
     </xsl:choose>
   </xsl:variable>
 
-  <!-- Preserve order of PIs and comments -->
+  <!-- Preserve order of PIs et comments -->
   <xsl:variable name="preamble"
         select="*[not(self::step
                   or self::title
@@ -934,8 +934,8 @@
                         |processing-instruction()[preceding-sibling::step]"/>
 
   <fo:block id="{$id}" xsl:use-attribute-sets="procedure.properties list.block.spacing">
-    <xsl:if test="./title and $placement = 'before'">
-      <!-- n.b. gentext code tests for $formal.procedures and may make an "informal" -->
+    <xsl:if test="./title et $placement = 'before'">
+      <!-- n.b. gentext code tests for $formal.procedures et may make an "informal" -->
       <!-- heading even though we called formal.object.heading. odd but true. -->
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
@@ -948,8 +948,8 @@
       <xsl:apply-templates select="$steps"/>
     </fo:list-block>
 
-    <xsl:if test="./title and $placement != 'before'">
-      <!-- n.b. gentext code tests for $formal.procedures and may make an "informal" -->
+    <xsl:if test="./title et $placement != 'before'">
+      <!-- n.b. gentext code tests for $formal.procedures et may make an "informal" -->
       <!-- heading even though we called formal.object.heading. odd but true. -->
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
@@ -1162,7 +1162,7 @@
                            mode="list.title.mode"/>
     </xsl:if>
 
-    <!-- Preserve order of PIs and comments -->
+    <!-- Preserve order of PIs et comments -->
     <xsl:apply-templates
          select="*[not(self::callout or self::title or self::titleabbrev)]
                    |comment()[not(preceding-sibling::callout)]

@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xslthl="http://xslthl.sf.net" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xslthl" version="1.0">
 
 <!-- ********************************************************************
-     $Id: highlight.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: highlight.xsl 7105 2007-09-09 08:59:49Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     and other information.
+     et other information.
 
      ******************************************************************** -->
 

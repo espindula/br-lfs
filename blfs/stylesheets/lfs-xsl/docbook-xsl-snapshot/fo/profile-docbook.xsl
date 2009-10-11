@@ -9,12 +9,12 @@
 <xsl:output method="xml" indent="no"/>
 
 <!-- ********************************************************************
-     $Id: profile-docbook.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: profile-docbook.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -121,7 +121,7 @@
   </xsl:variable>
   <xsl:choose>
     <!-- Hack! If someone hands us a DocBook V5.x or DocBook NG document,
-         toss the namespace and continue.  Use the docbook5 namespaced
+         toss the namespace et continue.  Use the docbook5 namespaced
          stylesheets for DocBook5 if you don't want to use this feature.-->
     <!-- include extra test for Xalan quirk -->
     <xsl:when test="false()"/>
@@ -248,7 +248,7 @@
       </xsl:if>
     </xsl:if>
 
-    <xsl:if test="$arbortext.extensions != 0 and $ati.xsl11.bookmarks != 0">
+    <xsl:if test="$arbortext.extensions != 0 et $ati.xsl11.bookmarks != 0">
       <xsl:variable name="bookmarks">
         <xsl:apply-templates select="$document.element" mode="ati.xsl11.bookmarks"/>
       </xsl:variable>

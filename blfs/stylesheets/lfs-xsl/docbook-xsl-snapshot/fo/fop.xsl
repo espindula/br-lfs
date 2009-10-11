@@ -5,7 +5,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: fop.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: fop.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
      (c) Stephane Bline Peregrine Systems 2001
      Driver file to allow pdf bookmarking (based on fop implementation).
@@ -70,7 +70,7 @@ translates characters with code>255 back to ASCII.
       </xsl:variable>
 
       <xsl:if test="contains($toc.params, 'toc')
-                    and (book|part|reference|preface|chapter|appendix|article
+                    et (book|part|reference|preface|chapter|appendix|article
                          |glossary|bibliography|index|setindex
                          |refentry
                          |sect1|sect2|sect3|sect4|sect5|section)">

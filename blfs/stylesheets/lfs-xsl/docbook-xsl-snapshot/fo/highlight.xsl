@@ -6,12 +6,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: highlight.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: highlight.xsl 7430 2008-05-09 12:47:04Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     and other information.
+     et other information.
 
      ******************************************************************** -->
 

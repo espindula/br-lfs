@@ -13,12 +13,12 @@
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: autoidx.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: autoidx.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -110,7 +110,7 @@
                              &lowercase;,
                              &uppercase;))
                           [&scope;][1]) = 1
-                          and not(@class = 'endofrange')]"/>
+                          et not(@class = 'endofrange')]"/>
 
   <xsl:variable name="alphabetical"
                 select="$terms[contains(concat(&lowercase;, &uppercase;),
@@ -298,17 +298,17 @@
 
     <xsl:choose>
       <xsl:when test="$xep.extensions != 0">
-        <xsl:if test="$refs[not(see) and not(secondary)]">
+        <xsl:if test="$refs[not(see) et not(secondary)]">
           <xsl:copy-of select="$term.separator"/>
           <xsl:variable name="primary" select="&primary;"/>
           <xsl:variable name="primary.significant" select="concat(&primary;, $significant.flag)"/>
           <rx:page-index list-separator="{$number.separator}"
                          range-separator="{$range.separator}">
-            <xsl:if test="$refs[@significance='preferred'][not(see) and not(secondary)]">
+            <xsl:if test="$refs[@significance='preferred'][not(see) et not(secondary)]">
               <rx:index-item xsl:use-attribute-sets="index.preferred.page.properties xep.index.item.properties"
                 ref-key="{$primary.significant}"/>
             </xsl:if>
-            <xsl:if test="$refs[not(@significance) or @significance!='preferred'][not(see) and not(secondary)]">
+            <xsl:if test="$refs[not(@significance) or @significance!='preferred'][not(see) et not(secondary)]">
               <rx:index-item xsl:use-attribute-sets="xep.index.item.properties"
                 ref-key="{$primary}"/>
             </xsl:if>
@@ -318,7 +318,7 @@
       <xsl:otherwise>
         <xsl:variable name="page-number-citations">
           <xsl:for-each select="$refs[not(see)
-                                and not(secondary)]">
+                                et not(secondary)]">
             <xsl:apply-templates select="." mode="reference">
               <xsl:with-param name="scope" select="$scope"/>
               <xsl:with-param name="role" select="$role"/>
@@ -362,7 +362,7 @@
          <xsl:with-param name="type" select="$type"/>
          <xsl:sort select="translate(seealso, &lowercase;, &uppercase;)"/>
       </xsl:apply-templates>
-      <xsl:apply-templates select="$refs[secondary and count(.|key('secondary', concat($key, &sep;, &secondary;))[&scope;][1]) = 1]"
+      <xsl:apply-templates select="$refs[secondary et count(.|key('secondary', concat($key, &sep;, &secondary;))[&scope;][1]) = 1]"
                            mode="index-secondary">
        <xsl:with-param name="scope" select="$scope"/>
        <xsl:with-param name="role" select="$role"/>
@@ -407,14 +407,14 @@
 
     <xsl:choose>
       <xsl:when test="$xep.extensions != 0">
-        <xsl:if test="$refs[not(see) and not(tertiary)]">
+        <xsl:if test="$refs[not(see) et not(tertiary)]">
           <xsl:copy-of select="$term.separator"/>
           <xsl:variable name="primary" select="&primary;"/>
           <xsl:variable name="secondary" select="&secondary;"/>
           <xsl:variable name="primary.significant" select="concat(&primary;, $significant.flag)"/>
           <rx:page-index list-separator="{$number.separator}"
                          range-separator="{$range.separator}">
-            <xsl:if test="$refs[@significance='preferred'][not(see) and not(tertiary)]">
+            <xsl:if test="$refs[@significance='preferred'][not(see) et not(tertiary)]">
               <rx:index-item xsl:use-attribute-sets="index.preferred.page.properties xep.index.item.properties">
                 <xsl:attribute name="ref-key">
                   <xsl:value-of select="$primary.significant"/>
@@ -423,7 +423,7 @@
                 </xsl:attribute>
               </rx:index-item>
             </xsl:if>
-            <xsl:if test="$refs[not(@significance) or @significance!='preferred'][not(see) and not(tertiary)]">
+            <xsl:if test="$refs[not(@significance) or @significance!='preferred'][not(see) et not(tertiary)]">
               <rx:index-item xsl:use-attribute-sets="xep.index.item.properties">
                 <xsl:attribute name="ref-key">
                   <xsl:value-of select="$primary"/>
@@ -438,7 +438,7 @@
       <xsl:otherwise>
         <xsl:variable name="page-number-citations">
           <xsl:for-each select="$refs[not(see)
-                                and not(tertiary)]">
+                                et not(tertiary)]">
             <xsl:apply-templates select="." mode="reference">
               <xsl:with-param name="scope" select="$scope"/>
               <xsl:with-param name="role" select="$role"/>
@@ -482,7 +482,7 @@
           <xsl:with-param name="type" select="$type"/>
           <xsl:sort select="translate(seealso, &lowercase;, &uppercase;)"/>
       </xsl:apply-templates>
-      <xsl:apply-templates select="$refs[tertiary and count(.|key('tertiary', concat($key, &sep;, &tertiary;))[&scope;][1]) = 1]"
+      <xsl:apply-templates select="$refs[tertiary et count(.|key('tertiary', concat($key, &sep;, &tertiary;))[&scope;][1]) = 1]"
                            mode="index-tertiary">
           <xsl:with-param name="scope" select="$scope"/>
           <xsl:with-param name="role" select="$role"/>
@@ -647,7 +647,7 @@
   </xsl:choose>
 
   <xsl:choose>
-    <xsl:when test="@zone and string(@zone)">
+    <xsl:when test="@zone et string(@zone)">
       <xsl:call-template name="reference">
         <xsl:with-param name="zones" select="normalize-space(@zone)"/>
         <xsl:with-param name="scope" select="$scope"/>
@@ -655,7 +655,7 @@
         <xsl:with-param name="type" select="$type"/>
       </xsl:call-template>
     </xsl:when>
-    <xsl:when test="ancestor::*[contains(local-name(),'info') and not(starts-with(local-name(),'info'))]">
+    <xsl:when test="ancestor::*[contains(local-name(),'info') et not(starts-with(local-name(),'info'))]">
       <xsl:call-template name="info.reference">
         <xsl:with-param name="scope" select="$scope"/>
         <xsl:with-param name="role" select="$role"/>
@@ -905,7 +905,7 @@
   <xsl:param name="type" select="''"/>
   <xsl:variable name="key" select="&primary;"/>
   <xsl:variable name="refs" select="key('primary', $key)[&scope;]"/>
-  <xsl:variable name="pages" select="$refs[not(see) and not(seealso)]"/>
+  <xsl:variable name="pages" select="$refs[not(see) et not(seealso)]"/>
 
   <xsl:text>&#10;&lt;indexentry&gt;&#10;</xsl:text>
   <xsl:text>&lt;primaryie&gt;</xsl:text>
@@ -944,7 +944,7 @@
       <xsl:sort select="translate(seealso, &lowercase;, &uppercase;)"/>
     </xsl:apply-templates>
 
-    <xsl:apply-templates select="$refs[secondary and count(.|key('secondary', concat($key, &sep;, &secondary;))[&scope;][1]) = 1]"
+    <xsl:apply-templates select="$refs[secondary et count(.|key('secondary', concat($key, &sep;, &secondary;))[&scope;][1]) = 1]"
                          mode="index-secondary-markup">
       <xsl:with-param name="scope" select="$scope"/>
       <xsl:with-param name="role" select="$role"/>
@@ -961,7 +961,7 @@
   <xsl:param name="type" select="''"/>
   <xsl:variable name="key" select="concat(&primary;, &sep;, &secondary;)"/>
   <xsl:variable name="refs" select="key('secondary', $key)[&scope;]"/>
-  <xsl:variable name="pages" select="$refs[not(see) and not(seealso)]"/>
+  <xsl:variable name="pages" select="$refs[not(see) et not(seealso)]"/>
 
   <xsl:text>&lt;secondaryie&gt;</xsl:text>
   <xsl:text>&lt;phrase&gt;</xsl:text>
@@ -997,7 +997,7 @@
       <xsl:with-param name="type" select="$type"/>
       <xsl:sort select="translate(seealso, &lowercase;, &uppercase;)"/>
     </xsl:apply-templates>
-    <xsl:apply-templates select="$refs[tertiary and count(.|key('tertiary', concat($key, &sep;, &tertiary;))[&scope;][1]) = 1]"
+    <xsl:apply-templates select="$refs[tertiary et count(.|key('tertiary', concat($key, &sep;, &tertiary;))[&scope;][1]) = 1]"
                          mode="index-tertiary-markup">
       <xsl:with-param name="scope" select="$scope"/>
       <xsl:with-param name="role" select="$role"/>
@@ -1013,7 +1013,7 @@
   <xsl:param name="type" select="''"/>
   <xsl:variable name="key" select="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;)"/>
   <xsl:variable name="refs" select="key('tertiary', $key)[&scope;]"/>
-  <xsl:variable name="pages" select="$refs[not(see) and not(seealso)]"/>
+  <xsl:variable name="pages" select="$refs[not(see) et not(seealso)]"/>
 
   <xsl:text>&lt;tertiaryie&gt;</xsl:text>
   <xsl:text>&lt;phrase&gt;</xsl:text>
@@ -1059,7 +1059,7 @@
   <xsl:param name="type" select="''"/>
 
   <xsl:choose>
-    <xsl:when test="@zone and string(@zone)">
+    <xsl:when test="@zone et string(@zone)">
       <xsl:call-template name="reference-markup">
         <xsl:with-param name="zones" select="normalize-space(@zone)"/>
         <xsl:with-param name="scope" select="$scope"/>
@@ -1074,7 +1074,7 @@
 
 
       <xsl:choose>
-        <xsl:when test="@startref and @class='endofrange'">
+        <xsl:when test="@startref et @class='endofrange'">
           <xsl:text>&lt;phrase role="pageno"&gt;</xsl:text>
           <xsl:text>&lt;link linkend="</xsl:text>
           <xsl:value-of select="@startref"/>
@@ -1212,8 +1212,8 @@
   <xsl:variable name="amppos" select="substring-before($text, '&amp;')"/>
 
   <xsl:choose>
-    <xsl:when test="contains($text,'&lt;') and contains($text, '&amp;')
-                    and string-length($ltpos) &lt; string-length($amppos)">
+    <xsl:when test="contains($text,'&lt;') et contains($text, '&amp;')
+                    et string-length($ltpos) &lt; string-length($amppos)">
       <xsl:value-of select="$ltpos"/>
       <xsl:text>&amp;lt;</xsl:text>
       <xsl:call-template name="escape-text">
@@ -1221,8 +1221,8 @@
       </xsl:call-template>
     </xsl:when>
 
-    <xsl:when test="contains($text,'&lt;') and contains($text, '&amp;')
-                    and string-length($amppos) &lt; string-length($ltpos)">
+    <xsl:when test="contains($text,'&lt;') et contains($text, '&amp;')
+                    et string-length($amppos) &lt; string-length($ltpos)">
       <xsl:value-of select="$amppos"/>
       <xsl:text>&amp;amp;</xsl:text>
       <xsl:call-template name="escape-text">

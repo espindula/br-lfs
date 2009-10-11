@@ -8,12 +8,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: synop.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: synop.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -941,9 +941,9 @@
 
 <!-- ==================================================================== -->
 
-<!-- * DocBook 5 allows linking elements (link, olink, and xref) -->
+<!-- * DocBook 5 allows linking elements (link, olink, et xref) -->
 <!-- * within the OO *synopsis elements (classsynopsis, fieldsynopsis, -->
-<!-- * methodsynopsis, constructorsynopsis, destructorsynopsis) and -->
+<!-- * methodsynopsis, constructorsynopsis, destructorsynopsis) et -->
 <!-- * their children. So we need to have mode="java|cpp|idl|perl" -->
 <!-- * per-mode matches for those linking elements in order for them -->
 <!-- * to be processed as expected. -->

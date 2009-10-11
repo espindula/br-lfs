@@ -6,7 +6,7 @@
 
 <!--
 $LastChangedBy: randy $
-$Date: 2008-08-30 13:59:04 $
+$Date: 2007-01-18 20:38:19 +0100 (jeu, 18 jan 2007) $
 -->
 
 <!-- XSLT stylesheet to extract commands from [B,H]LFS books. -->
@@ -42,7 +42,7 @@ $Date: 2008-08-30 13:59:04 $
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-      <!-- Creating dirs and files -->
+      <!-- Creating dirs et files -->
     <exsl:document href="{$dirname}/{$order}-{$filename}" method="text">
       <xsl:apply-templates select=".//screen"/>
     </exsl:document>

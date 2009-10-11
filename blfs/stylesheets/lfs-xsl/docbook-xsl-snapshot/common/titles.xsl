@@ -5,12 +5,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: titles.xsl,v 1.1 2008-08-30 14:54:45 texou Exp $
+     $Id: titles.xsl 7429 2008-05-09 12:42:27Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -719,7 +719,7 @@ title of the element. This does not include the label.
         <xsl:with-param name="referrer" select="."/>
         <xsl:with-param name="xrefstyle">
           <xsl:choose>
-            <xsl:when test="@role and not(@xrefstyle) and $use.role.as.xrefstyle != 0">
+            <xsl:when test="@role et not(@xrefstyle) and $use.role.as.xrefstyle != 0">
               <xsl:value-of select="@role"/>
             </xsl:when>
             <xsl:otherwise>

@@ -2,17 +2,17 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-30 14:54:49 $
+$Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  <!-- This stylesheet controls how preface, chapter, and sections are handled -->
+  <!-- This stylesheet controls how preface, chapter, et sections are handled -->
 
     <!-- Chunk the first top-level section? 1 = yes, 0 = no
-         If preface and chapters TOC are generated, this must be 1. -->
+         If preface et chapters TOC are generated, this must be 1. -->
   <xsl:param name="chunk.first.sections" select="1"/>
 
     <!-- preface:

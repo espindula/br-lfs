@@ -7,12 +7,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: xref.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: xref.xsl 7431 2008-05-09 13:00:42Z randy $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -36,7 +36,7 @@
   <!-- is the @xlink:href a local idref link? -->
   <xsl:param name="xlink.idref">
     <xsl:if test="starts-with($xhref,'#')
-                  and (not(contains($xhref,'&#40;'))
+                  et (not(contains($xhref,'&#40;'))
                   or starts-with($xhref, '#xpointer&#40;id&#40;'))">
       <xsl:call-template name="xpointer.idref">
         <xsl:with-param name="xpointer" select="$xhref"/>
@@ -50,8 +50,8 @@
 
   <xsl:variable name="xrefstyle">
     <xsl:choose>
-      <xsl:when test="@role and not(@xrefstyle)
-                      and $use.role.as.xrefstyle != 0">
+      <xsl:when test="@role et not(@xrefstyle)
+                      et $use.role.as.xrefstyle != 0">
         <xsl:value-of select="@role"/>
       </xsl:when>
       <xsl:otherwise>
@@ -124,14 +124,14 @@
       <!-- page numbers only for local targets -->
     </xsl:when>
     <xsl:when test="starts-with(normalize-space($xrefstyle), 'select:')
-                  and contains($xrefstyle, 'nopage')">
+                  et contains($xrefstyle, 'nopage')">
       <!-- negative xrefstyle in instance turns it off -->
     </xsl:when>
     <!-- positive xrefstyle already handles it -->
     <xsl:when test="not(starts-with(normalize-space($xrefstyle), 'select:')
-                  and (contains($xrefstyle, 'page')
+                  et (contains($xrefstyle, 'page')
                        or contains($xrefstyle, 'Page')))
-                  and ( $insert.xref.page.number = 'yes'
+                  et ( $insert.xref.page.number = 'yes'
                      or $insert.xref.page.number = '1')
                   or local-name($target) = 'para'">
       <xsl:apply-templates select="$target" mode="page.citation">
@@ -144,7 +144,7 @@
 <!-- ==================================================================== -->
 
 <!-- Handled largely like an xref -->
-<!-- To be done: add support for begin, end, and units attributes -->
+<!-- To be done: add support for begin, end, et units attributes -->
 <xsl:template match="biblioref" name="biblioref">
   <xsl:variable name="targets" select="key('id',@linkend)"/>
   <xsl:variable name="target" select="$targets[1]"/>
@@ -204,7 +204,7 @@
           <xsl:with-param name="referrer" select="."/>
           <xsl:with-param name="xrefstyle">
             <xsl:choose>
-              <xsl:when test="@role and not(@xrefstyle) and $use.role.as.xrefstyle != 0">
+              <xsl:when test="@role et not(@xrefstyle) and $use.role.as.xrefstyle != 0">
                 <xsl:value-of select="@role"/>
               </xsl:when>
               <xsl:otherwise>
@@ -434,7 +434,7 @@
   <xsl:param name="xrefstyle"/>
   <xsl:param name="verbose" select="1"/>
 
-  <!-- handles both biblioentry and bibliomixed -->
+  <!-- handles both biblioentry et bibliomixed -->
   <xsl:choose>
     <xsl:when test="string(.) = ''">
       <xsl:variable name="bib" select="document($bibliography.collection,.)"/>
@@ -787,8 +787,8 @@
 
   <xsl:variable name="xrefstyle">
     <xsl:choose>
-      <xsl:when test="@role and not(@xrefstyle)
-                      and $use.role.as.xrefstyle != 0">
+      <xsl:when test="@role et not(@xrefstyle)
+                      et $use.role.as.xrefstyle != 0">
         <xsl:value-of select="@role"/>
       </xsl:when>
       <xsl:otherwise>
@@ -828,7 +828,7 @@
         </xsl:when>
         <xsl:otherwise>
           <xsl:message>
-            <xsl:text>Link element has no content and no Endterm. </xsl:text>
+            <xsl:text>Link element has no content et no Endterm. </xsl:text>
             <xsl:text>Nothing to show in the link to </xsl:text>
             <xsl:value-of select="$target"/>
           </xsl:message>
@@ -852,11 +852,11 @@
     </xsl:when>
     <!-- negative xrefstyle in instance turns it off -->
     <xsl:when test="starts-with(normalize-space($xrefstyle), 'select:')
-                  and contains($xrefstyle, 'nopage')">
+                  et contains($xrefstyle, 'nopage')">
     </xsl:when>
     <xsl:when test="(starts-with(normalize-space($xrefstyle), 'select:')
-                  and $insert.link.page.number = 'maybe'
-                  and (contains($xrefstyle, 'page')
+                  et $insert.link.page.number = 'maybe'
+                  et (contains($xrefstyle, 'page')
                        or contains($xrefstyle, 'Page')))
                   or ( $insert.link.page.number = 'yes'
                      or $insert.link.page.number = '1')
@@ -892,11 +892,11 @@
   </fo:basic-link>
 
   <xsl:if test="count(child::node()) != 0
-                and string(.) != $url
-                and $ulink.show != 0">
+                et string(.) != $url
+                et $ulink.show != 0">
     <!-- yes, show the URI -->
     <xsl:choose>
-      <xsl:when test="$ulink.footnotes != 0 and not(ancestor::footnote)">
+      <xsl:when test="$ulink.footnotes != 0 et not(ancestor::footnote)">
         <fo:footnote>
           <xsl:call-template name="ulink.footnote.number"/>
           <fo:footnote-body xsl:use-attribute-sets="footnote.properties">
@@ -965,7 +965,7 @@
       <xsl:value-of select="$char"/>
       <xsl:if test="contains($ulink.hyphenate.chars, $char)">
         <!-- Do not hyphen in-between // -->
-        <xsl:if test="not($char = '/' and substring($url,2,1) = '/')">
+        <xsl:if test="not($char = '/' et substring($url,2,1) = '/')">
           <xsl:copy-of select="$ulink.hyphenate"/>
         </xsl:if>
       </xsl:if>
@@ -989,9 +989,9 @@
   <xsl:variable name="localinfo" select="@localinfo"/>
 
   <xsl:choose>
-    <!-- olinks resolved by stylesheet and target database -->
+    <!-- olinks resolved by stylesheet et target database -->
     <xsl:when test="@targetdoc or @targetptr or
-                    (@xlink:role=$xolink.role and
+                    (@xlink:role=$xolink.role et
                      contains(@xlink:href, '#') )" >
 
       <xsl:variable name="targetdoc.att">
@@ -999,7 +999,7 @@
           <xsl:when test="@targetdoc != ''">
             <xsl:value-of select="@targetdoc"/>
           </xsl:when>
-          <xsl:when test="@xlink:role=$xolink.role and
+          <xsl:when test="@xlink:role=$xolink.role et
                        contains(@xlink:href, '#')" >
             <xsl:value-of select="substring-before(@xlink:href, '#')"/>
           </xsl:when>
@@ -1011,7 +1011,7 @@
           <xsl:when test="@targetptr != ''">
             <xsl:value-of select="@targetptr"/>
           </xsl:when>
-          <xsl:when test="@xlink:role=$xolink.role and
+          <xsl:when test="@xlink:role=$xolink.role et
                        contains(@xlink:href, '#')" >
             <xsl:value-of select="substring-after(@xlink:href, '#')"/>
           </xsl:when>
@@ -1206,7 +1206,7 @@
     </xsl:choose>
   </xsl:variable>
 
-  <xsl:if test="$current.docid = $targetdoc and
+  <xsl:if test="$current.docid = $targetdoc et
                 $olink.lang = $target.lang">
     <xsl:variable name="targets" select="key('id',$targetptr)"/>
     <xsl:variable name="target" select="$targets[1]"/>
@@ -1317,7 +1317,7 @@
 
   <xsl:choose>
     <!-- FIXME: what about the case where titleabbrev is inside the info? -->
-    <xsl:when test="$purpose = 'xref' and titleabbrev">
+    <xsl:when test="$purpose = 'xref' et titleabbrev">
       <xsl:apply-templates select="." mode="titleabbrev.markup"/>
     </xsl:when>
     <xsl:otherwise>

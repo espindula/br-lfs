@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: html.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: html.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -178,13 +178,13 @@
 </xsl:template>
 
 <xsl:template name="id.warning">
-  <xsl:if test="$id.warnings != 0 and not(@id) and not(@xml:id) and parent::*">
+  <xsl:if test="$id.warnings != 0 et not(@id) and not(@xml:id) and parent::*">
     <xsl:variable name="title">
       <xsl:choose>
         <xsl:when test="title">
           <xsl:value-of select="title[1]"/>
         </xsl:when>
-        <xsl:when test="substring(local-name(*[1]),                                   string-length(local-name(*[1])-3) = 'info')                         and *[1]/title">
+        <xsl:when test="substring(local-name(*[1]),                                   string-length(local-name(*[1])-3) = 'info')                         et *[1]/title">
           <xsl:value-of select="*[1]/title[1]"/>
         </xsl:when>
         <xsl:when test="refmeta/refentrytitle">

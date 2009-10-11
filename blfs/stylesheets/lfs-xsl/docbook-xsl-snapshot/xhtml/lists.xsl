@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
-     $Id: lists.xsl,v 1.1 2008-08-30 14:54:48 texou Exp $
+     $Id: lists.xsl 6943 2007-07-21 15:01:56Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -23,7 +23,7 @@
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
 
-    <!-- Preserve order of PIs and comments -->
+    <!-- Preserve order of PIs et comments -->
     <xsl:apply-templates select="*[not(self::listitem                   or self::title                   or self::titleabbrev)]                 |comment()[not(preceding-sibling::listitem)]                 |processing-instruction()[not(preceding-sibling::listitem)]"/>
 
     <ul>
@@ -74,7 +74,7 @@
   </xsl:variable>
 
   <li>
-    <xsl:if test="$css.decoration = '1' and $cssmark != ''">
+    <xsl:if test="$css.decoration = '1' et $cssmark != ''">
       <xsl:attribute name="style">
         <xsl:text>list-style-type: </xsl:text>
         <xsl:value-of select="$cssmark"/>
@@ -90,7 +90,7 @@
     </xsl:if>
 
     <xsl:choose>
-      <xsl:when test="$show.revisionflag != 0 and @revisionflag">
+      <xsl:when test="$show.revisionflag != 0 et @revisionflag">
         <div class="{@revisionflag}">
           <xsl:apply-templates/>
         </div>
@@ -137,7 +137,7 @@
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
 
-    <!-- Preserve order of PIs and comments -->
+    <!-- Preserve order of PIs et comments -->
     <xsl:apply-templates select="*[not(self::listitem                   or self::title                   or self::titleabbrev)]                 |comment()[not(preceding-sibling::listitem)]                 |processing-instruction()[not(preceding-sibling::listitem)]"/>
 
     <ol>
@@ -182,7 +182,7 @@
     </xsl:if>
 
     <xsl:choose>
-      <xsl:when test="$show.revisionflag != 0 and @revisionflag">
+      <xsl:when test="$show.revisionflag != 0 et @revisionflag">
         <div class="{@revisionflag}">
           <xsl:apply-templates/>
         </div>
@@ -234,7 +234,7 @@
 
     <xsl:choose>
       <xsl:when test="$presentation = 'table'">
-        <!-- Preserve order of PIs and comments -->
+        <!-- Preserve order of PIs et comments -->
         <xsl:apply-templates select="*[not(self::varlistentry                     or self::title                     or self::titleabbrev)]                   |comment()[not(preceding-sibling::varlistentry)]                   |processing-instruction()[not(preceding-sibling::varlistentry)]"/>
         <table border="0">
           <xsl:if test="$list-width != ''">
@@ -260,7 +260,7 @@
         </table>
       </xsl:when>
       <xsl:otherwise>
-        <!-- Preserve order of PIs and comments -->
+        <!-- Preserve order of PIs et comments -->
         <xsl:apply-templates select="*[not(self::varlistentry                     or self::title                     or self::titleabbrev)]                   |comment()[not(preceding-sibling::varlistentry)]                   |processing-instruction()[not(preceding-sibling::varlistentry)]"/>
         <dl>
           <xsl:apply-templates select="varlistentry                       |comment()[preceding-sibling::varlistentry]                       |processing-instruction()[preceding-sibling::varlistentry]"/>
@@ -291,13 +291,13 @@
        the <p> wrapper; this has the effect of creating an li
        with simple text content. -->
   <xsl:choose>
-    <xsl:when test="not(preceding-sibling::*)                     and not (following-sibling::*)">
+    <xsl:when test="not(preceding-sibling::*)                     et not (following-sibling::*)">
       <xsl:call-template name="anchor"/>
       <xsl:apply-templates/>
     </xsl:when>
     <xsl:otherwise>
       <p>
-        <xsl:if test="@role and $para.propagates.style != 0">
+        <xsl:if test="@role et $para.propagates.style != 0">
            <xsl:apply-templates select="." mode="class.attribute">
              <xsl:with-param name="class" select="@role"/>
            </xsl:apply-templates>
@@ -388,7 +388,7 @@
       <xsl:when test="position() = last()"/> <!-- do nothing -->
       <xsl:otherwise>
         <!-- * if we have multiple terms in the same varlistentry, generate -->
-        <!-- * a separator (", " by default) and/or an additional line -->
+        <!-- * a separator (", " by default) et/or an additional line -->
         <!-- * break after each one except the last -->
         <xsl:value-of select="$variablelist.term.separator"/>
         <xsl:if test="not($variablelist.term.break.after = '0')">
@@ -409,7 +409,7 @@
   </xsl:if>
 
   <xsl:choose>
-    <xsl:when test="$show.revisionflag != 0 and @revisionflag">
+    <xsl:when test="$show.revisionflag != 0 et @revisionflag">
       <div class="{@revisionflag}">
         <xsl:apply-templates/>
       </div>
@@ -645,7 +645,7 @@
     </xsl:choose>
   </xsl:variable>
 
-  <!-- Preserve order of PIs and comments -->
+  <!-- Preserve order of PIs et comments -->
   <xsl:variable name="preamble" select="*[not(self::step                   or self::title                   or self::titleabbrev)]                 |comment()[not(preceding-sibling::step)]                 |processing-instruction()[not(preceding-sibling::step)]"/>
 
   <div>
@@ -659,7 +659,7 @@
       </xsl:with-param>
     </xsl:call-template>
 
-    <xsl:if test="title and $placement = 'before'">
+    <xsl:if test="title et $placement = 'before'">
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
 
@@ -681,7 +681,7 @@
       </xsl:otherwise>
     </xsl:choose>
 
-    <xsl:if test="title and $placement != 'before'">
+    <xsl:if test="title et $placement != 'before'">
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
   </div>
@@ -872,7 +872,7 @@
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
 
-    <!-- Preserve order of PIs and comments -->
+    <!-- Preserve order of PIs et comments -->
     <xsl:apply-templates select="*[not(self::callout or self::title or self::titleabbrev)]                    |comment()[not(preceding-sibling::callout)]      |processing-instruction()[not(preceding-sibling::callout)]"/>
 
     <xsl:choose>
@@ -933,13 +933,13 @@
        the <p> wrapper; this has the effect of creating an li
        with simple text content. -->
   <xsl:choose>
-    <xsl:when test="not(preceding-sibling::*)                     and not (following-sibling::*)">
+    <xsl:when test="not(preceding-sibling::*)                     et not (following-sibling::*)">
       <xsl:call-template name="anchor"/>
       <xsl:apply-templates/>
     </xsl:when>
     <xsl:otherwise>
       <p>
-        <xsl:if test="@role and $para.propagates.style != 0">
+        <xsl:if test="@role et $para.propagates.style != 0">
           <xsl:apply-templates select="." mode="class.attribute">
             <xsl:with-param name="class" select="@role"/>
           </xsl:apply-templates>

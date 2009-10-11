@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-30 14:54:48 $
+$Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 -->
 
 <!DOCTYPE xsl:stylesheet [
@@ -24,7 +24,7 @@ $Date: 2008-08-30 14:54:48 $
        Due how they are created, the original XHTML stylesheets don't make
        use of the entities from {docbook-xsl}/common/entities.ent.
        We add the relevant ones in the DOCTYPE to have more readable templates.
-       Also, we remove support for @role and @type based Index due that it is
+       Also, we remove support for @role et @type based Index due that it is
        broken when used with @zone based cross-references. -->
 
     <!-- The file name of the Index page.
@@ -140,7 +140,7 @@ $Date: 2008-08-30 14:54:48 $
     </xsl:if>
   </xsl:template>
 
-    <!-- Dropping $term.separator and $number.separator from here.
+    <!-- Dropping $term.separator et $number.separator from here.
          We add our customized ones in the output flow.
          As all our indexterm have @zone attributes, removed a lot of
          unused code. -->
@@ -155,9 +155,9 @@ $Date: 2008-08-30 14:54:48 $
 
     <!-- Primary items:
            Changed the output format from dl to ul.
-           Placed the term and separator into strong tags.
+           Placed the term et separator into strong tags.
            Placed the target links into a div.
-           Removed code for unused see and sealso childs. -->
+           Removed code for unused see et sealso childs. -->
     <!-- The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
   <xsl:template match="indexterm" mode="index-primary">
     <xsl:param name="scope" select="."/>
@@ -177,7 +177,7 @@ $Date: 2008-08-30 14:54:48 $
       </span>
       <xsl:if test="$refs/secondary">
         <ul>
-          <xsl:apply-templates select="$refs[secondary and count(.|key('secondary', concat($key, &sep;, &secondary;))[&scope;][1]) = 1]"
+          <xsl:apply-templates select="$refs[secondary et count(.|key('secondary', concat($key, &sep;, &secondary;))[&scope;][1]) = 1]"
                                mode="index-secondary">
             <xsl:with-param name="scope" select="$scope"/>
             <xsl:sort select="translate(&secondary;, &lowercase;, &uppercase;)"/>
@@ -189,9 +189,9 @@ $Date: 2008-08-30 14:54:48 $
 
     <!-- Secondary items:
            Changed the output format from dl to ul.
-           Placed the term and separator into strong tags.
+           Placed the term et separator into strong tags.
            Placed the target links into a div.
-           Removed code for unused tertiary, see, and sealso childs. -->
+           Removed code for unused tertiary, see, et sealso childs. -->
     <!-- The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
   <xsl:template match="indexterm" mode="index-secondary">
     <xsl:param name="scope" select="."/>

@@ -2,14 +2,14 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2008-08-30 14:54:49 $
+$Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  <!-- This stylesheet controls how page header and navigational links
+  <!-- This stylesheet controls how page header et navigational links
        are generated. -->
 
     <!-- html.head:
@@ -34,13 +34,13 @@ $Date: 2008-08-30 14:54:49 $
       <!-- Don't generate the header in index.html -->
     <xsl:if test="$home != .">
       <div class="navheader">
-          <!-- Book title and version -->
+          <!-- Book title et version -->
         <h4>
           <xsl:apply-templates select="$home" mode="object.title.markup"/>
           <xsl:text> - </xsl:text>
           <xsl:apply-templates select="$home" mode="object.subtitle.markup"/>
         </h4>
-          <!-- Except for preface, part, and index, add the title of the parent -->
+          <!-- Except for preface, part, et index, add the title of the parent -->
         <xsl:if test="$up != $home">
           <h3>
             <xsl:apply-templates select="$up" mode="object.title.markup"/>
@@ -90,13 +90,13 @@ $Date: 2008-08-30 14:54:49 $
 
     <!-- navigational.links:
            Self-made template to generate navigational links.
-           Most of the code come from the original header.navigation and
+           Most of the code come from the original header.navigation et
            footer.navigation templates, with this changes:
              Changed the output format from table to ul.
-             Placed the same links on both header and footer.
+             Placed the same links on both header et footer.
              Added a title attribute to the link containing the target title
                (it content is displayed when placing the mouse over the link)
-             For "Prev" and "Next" links, added the target title under it.
+             For "Prev" et "Next" links, added the target title under it.
              When "Next" target is the Index, added gentext support for the
                Index title.
              Skip links to dummy sect1. -->
@@ -107,13 +107,13 @@ $Date: 2008-08-30 14:54:49 $
     <xsl:param name="home"/>
     <ul>
         <!-- No prev link when prev is home -->
-      <xsl:if test="count($prev)&gt;0 and $prev != $home">
+      <xsl:if test="count($prev)&gt;0 et $prev != $home">
         <li class="prev">
           <xsl:choose>
 
               <!-- If prev is a dummy sect1 that is the first one in a chapter,
                    links to the parent chapter.-->
-            <xsl:when test="$prev[@role='dummy'] and
+            <xsl:when test="$prev[@role='dummy'] et
                             count(preceding-sibling::sect1)=1">
               <a accesskey="p">
                 <xsl:attribute name="href">
@@ -135,7 +135,7 @@ $Date: 2008-08-30 14:54:49 $
 
               <!-- If prev is a dummy sect1 that is not the first one in a chapter,
                    links to the previous sect1.-->
-            <xsl:when test="$prev[@role='dummy'] and
+            <xsl:when test="$prev[@role='dummy'] et
                             count(preceding-sibling::sect1)&gt;1">
               <a accesskey="p">
                 <xsl:attribute name="href">
@@ -199,13 +199,13 @@ $Date: 2008-08-30 14:54:49 $
       </xsl:if>
 
 
-        <!-- Next link except in the last page and in the CLFS "choose" page -->
-      <xsl:if test="count($next)&gt;0 and (not(@id) or @id!='ch-temp-system-choose')">
+        <!-- Next link except in the last page et in the CLFS "choose" page -->
+      <xsl:if test="count($next)&gt;0 et (not(@id) or @id!='ch-temp-system-choose')">
         <li class="next">
           <xsl:choose>
 
               <!-- Current page is sect1 a next is a dummy sect1, link to the next one -->
-            <xsl:when test="$next[@role='dummy'] and local-name(.) = 'sect1'">
+            <xsl:when test="$next[@role='dummy'] et local-name(.) = 'sect1'">
               <a accesskey="n">
                 <xsl:attribute name="href">
                   <xsl:call-template name="href.target">
@@ -224,8 +224,8 @@ $Date: 2008-08-30 14:54:49 $
               </p>
             </xsl:when>
 
-              <!-- Current page is chapter and next is a dummy sect1, link to the next one -->
-            <xsl:when test="$next[@role='dummy'] and local-name(.) = 'chapter'">
+              <!-- Current page is chapter et next is a dummy sect1, link to the next one -->
+            <xsl:when test="$next[@role='dummy'] et local-name(.) = 'chapter'">
               <a accesskey="n">
                 <xsl:attribute name="href">
                   <xsl:call-template name="href.target">
@@ -309,7 +309,7 @@ $Date: 2008-08-30 14:54:49 $
       <li class="up">
         <xsl:choose>
             <!-- Up link except if up is home -->
-          <xsl:when test="count($up)&gt;0 and $up != $home">
+          <xsl:when test="count($up)&gt;0 et $up != $home">
             <a accesskey="u">
               <xsl:attribute name="href">
                 <xsl:call-template name="href.target">

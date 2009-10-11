@@ -4,12 +4,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/1999/xhtml" version="1.0" exclude-result-prefixes="doc">
 
 <!-- ********************************************************************
-     $Id: chunktoc.xsl,v 1.1 2008-08-30 14:54:47 texou Exp $
+     $Id: chunktoc.xsl 6943 2007-07-21 15:01:56Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -356,7 +356,7 @@
 
   <xsl:if test="string($lots) != ''">
     <xsl:choose>
-      <xsl:when test="$chunk.tocs.and.lots != 0 and not(parent::*)">
+      <xsl:when test="$chunk.tocs.and.lots != 0 et not(parent::*)">
         <xsl:call-template name="write.chunk">
           <xsl:with-param name="filename">
             <xsl:call-template name="make-relative-filename">

@@ -7,12 +7,12 @@
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: fo-rtf.xsl,v 1.1 2008-08-30 14:54:46 texou Exp $
+     $Id: fo-rtf.xsl 6840 2007-07-07 10:25:55Z manuel $
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     copyright and other information.
+     copyright et other information.
 
      ******************************************************************** -->
 
@@ -25,7 +25,7 @@
 
 <!-- insert.fo.fnum mode templates insert a particular RTF at the beginning
      of the first paragraph in the primary RTF. In fact, they are inserting
-     a footnote-number, so we tinker a few other things too, like spacing and
+     a footnote-number, so we tinker a few other things too, like spacing et
      font-sizes. -->
 
 <xsl:template match="/" mode="insert.fo.fnum">
