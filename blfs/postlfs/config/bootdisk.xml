@@ -1,672 +1,87 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<sect1 id="postlfs-config-bootdisk">
-<?dbhtml filename="bootdisk.html"?>
-<title>Créer un disque de démarrage personnalisé</title>
-
-<sect2>
-<title>Besoins décents pour une disque de démarrage de dépannage</title>
-<para>Cette section se concentre particulièrement sur la création d'une
-disquette de dépannage (<emphasis>rescue</emphasis>). Comme le nom l'indique,
-le système hôte a un problème, souvent des informations de partition perdues
-ou des systèmes de fichiers corrompus qui l'empêchent de se lancer ou d'opérer
-correctement. Pour cette raison, vous <emphasis>ne devez pas</emphasis>
-dépendre de ressources disponibles sur l'hôte à réparer. Présumer qu'une
-partition ou un disque dur donné <emphasis>sera</emphasis> disponible est très
-risqué.</para>
-
-<para>Suivant cet avertissement, le disque de dépannage créé ici n'a pas de
-dépendances avec les ressources de l'hôte système, autres que le démarrage et le
-matériel. Au minimum, les raisons les plus communes d'échec nécessitant un
-disque de dépannage devraient être résolues par le contenu de ce disque. Ceci
-inclut la perte d'une partition (<acronym>MBR</acronym> perdu ou corrompu), la
-corruption d'un système de fichiers et le besoin de permettre la création et
-l'édition de fichiers qui pourraient avoir été perdus ou corrompus, un possible
-effet des deux autres problèmes.</para>
-
-<para>Des utilitaires supplémentaires doivent être disponibles pour rechercher
-du texte ou des fichiers, copier, déplacer et supprimer des fichiers et plein
-d'autres opérations normales qui pourraient être nécessaires lors de la
-reconstruction.</para>
-</sect2>
-
-<sect2>
-<title>La disquette de dépannage minimale</title>
-
-<para>Le but ici est de créer une disquette de démarrage qui supportera les
-opérations communes listées ci-dessus. Ces fonctions sont fournies en incluant
-les exécutables sélectionnés à partir de <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox
-</ulink></application> et <application><ulink
-url="http://freshmeat.net/projects/e2fsprogs/">e2fsprogs</ulink></application>.
-Un éditeur basique et un outil de partionnement rudimentaire pourraient aussi
-être inclus, de manière optionnelle.</para>
-
-<para>Néanmoins, ceci n'est pas la limite. Un disque minimal est décrit ici mais
-vous pouvez ajouter tout ce qui peut tenir sur la disquette. De plus, si un
-disquette n'est pas suffisante pour vos besoins, vous pouvez réaliser un système
-multi-disquettes de secours, ce qui sous-entend que vous n'avez pas de limite.
-Ceci est discuté plus bas. Le nombre des variations est trop grand pour être
-mentionné ici.</para>
-</sect2>
-
-<sect2>
-<title>Construire la disquette de dépannage</title>
-<sect3>
-<title>Prérequis</title>
-
-<para>Vous devez avoir des disquettes, reconnues bonnes. Certains préfèrent
-utiliser la commande <command>fdformat</command> pour les préparer parce qu'elle
-effectue aussi une vérification. Voir la page man pour plus de détails. Une
-autre bonne idée est de toujours préparer des duplications de la disquette de
-dépannage. Un média peut se déteriorer.</para>
-
-<para>Ces instructions présument une installation <acronym>LFS</acronym> de base
-utilisant le système de fichiers ext2/ext3.</para>
-
-<para>Vous avez besoin du support du périphérique loopback activé dans le noyau
-de votre hôte pour utiliser cette procédure.</para>
-
-<para>Vous devez construire un noyau personnalisé incluant seulement les
-fonctionnalités nécessaires pour dépanner votre système, de façon à ce qu'il ait
-la plus petite taille possible. Aucune raison de compiler ici le support de
-fonctionnalités comme <application>XFree86</application>,
-<application>DRI</application>, etc, car la plupart des dépannages sont réalisés
-à partir de la ligne de commande. Si vous avez <xref linkend="gcc2"/>, celui-ci est
-connu pour produire des noyaux petits. Donc, vous pouvez utiliser ce compilateur
-pour ce noyau. Si vous le faites, n'oubliez pas les modules chargeables dont
-vous avez besoin, ils devront nécessairement être compilé avec le même
-compilateur que celui qui a créé le noyau.</para>
-
-<para>L'image de la disquette de dépannage doit inclure le support du système de
-fichiers de votre choix (nous présummons ext2/3 ici), d'un disque ram et d'un
-disque ram initial (initrd). Désactivez tout ce que vous pouvez dans la
-configuration du noyau. Vous devez conserver le support du système de fichiers
-proc et tempfs à cause de leur utilité générame. Le système de fichiers proc est
-nécessaire notamment à la commande <command>mount</command> pour travailler
-correctement.</para>
-
-<para>Si vous installez <emphasis>seulement</emphasis> l'ensemble minimal de
-composants indiqués dans ce document, vous aurez un noyau de 643 blocs, voire
-plus petit. Si vous voulez des programmes optionnels - un éditeur basique comme
-<command>ed</command> et un outil de partionnement rudimentaire comme
-<command>sfdisk</command> - le noyau aura besoin d'une taille de 595 blocs. Cela
-ne devrait pas être un problème majeur à moins que vos besoins ne soient
-ésotériques. Sur le système utilisé pour développer cette version des
-procédures, en utilisant seulement les systèmes de fichiers ext2 et en
-n'utilisant pas le réseau ou les <acronym>CD</acronym> pour le dépannage,
-l'image du noyau pèse seulement 481 blocs. Et vous pouvez gagner plus - aucun
-examen plus complet n'a été effectué pour des gains supplémentaires.</para>
-
-<para>Cette image du noyau sera appelée "rescueimage" après. Vous pouvez appeler
-votre image de la façon que vous voulez et utiliser simplement ce nom dans
-toutes les commandes qui incluent "rescueimage".</para>
-
-<para>Si vous ne pouvez pas diminuer la taille de votre image de démarrage à une
-taille suffisante pour que tout tienne sur le disque, pas d'inquiétude. Vous
-pouvez toujours construire un ensemble de deux disquettes, une de démarrage et
-une disquette root. Le noyau vous demandera d'insérer la disquette de démarrage
-root. Ceci donnera plus de place à l'image de disque ram compressée. Ceci
-autorisera l'image du disque ram compressé d'avoir une taille de 1440 blocs et
-une image de démarrage de même taille.</para>
-
-<para>Les limites en taille de l'image de démarrage données ci-dessus pourraient
-varier suivant les modifications de locale. Utilisez-les seulement comme exemple
-et non comme un bible. La taille de l'image de dépannage, montrée par
-<command>ls -sk</command> est seulement une approximation à cause de
-l'"overhead". Sur le système utilisé pour développer cette version de ces
-procédures, la commande affiche 488 blocs mais le vrai nombre de blocs écrits
-est seulement de 480 et une fraction, ce qui signifie que 481 blocs sont
-réellements utilisés.</para>
-</sect3>
-
-<sect3>
-<title>Etapes de la construction de la disquette de dépannage</title>
-
-<para>Les étapes de base seront&nbsp;:</para>
-<itemizedlist>
-<listitem><para>créer un point de montage pour un système de fichiers</para></listitem>
-<listitem><para>créer un fichier vide pour contenir le système de fichiers</para></listitem>
-<listitem><para>lier le fichier vide à un périphérique loopback</para></listitem>
-<listitem><para>créer un système de fichiers de 4&nbsp;Mo</para></listitem>
-<listitem><para>monter le système de fichiers</para></listitem>
-<listitem><para>ajouter les composants au système de fichiers</para></listitem>
-<listitem><para>créer l'initrd compressé</para></listitem>
-<listitem><para>joindre rescueimage et initrd sur une disquette</para></listitem>
-</itemizedlist>
-
-<para>Le disque ram initial sera automatiquement chargé au démarrage si la
-configuration est faite correctement.</para>
-
-<para><emphasis>Créer un point de montage et un fichier vide pour contenir le
-système de fichiers</emphasis></para>
-
-<screen><userinput><command>mkdir -p /mnt/loop1
-dd if=/dev/zero of=/tmp/rfloppy bs=1k count=4096</command></userinput></screen>
-
-<para><emphasis>Explication des commandes</emphasis></para>
-
-<para><command>dd</command>: C'est un outil général de copie entrée-vers-sortie
-disposant de nombreuses fonctionnalités de transformation.</para>
-
-<para><parameter>if=/dev/zero</parameter>: Ce paramètre affecte le fichier
-d'entrée de <command>dd</command> à un périphérique renvoyant un flux infini de
-zéros.</para>
-
-<para><parameter>of=/tmp/rfloppy</parameter>: Ce paramètre redirige la sortie de
-<command>dd</command> vers <filename>/tmp/rfloppy</filename>.</para>
-
-<para><parameter>bs=1k count=4096</parameter>: Ces paramètres indiquent à
-<command>dd</command> de lire et écrire par paquets de 1024 octets et d'en
-traiter 4096.</para>
-
-<para><emphasis>Lier le fichier au périphérique loopback, créer un système de
-fichier et le monter.</emphasis></para>
-
-<para>La raison pour laquelles ces commandes sont utilisées est qu'elles
-fonctionnent quelle que soit la version de <command>mount</command> (les plus
-anciennes n'ont pas l'option <userinput>-o loop</userinput>) ou si <filename>/etc/mtab</filename>
-est un lien symbolique de <filename class="directory">/proc</filename> (ce qui
-fait que mount se révèle incapable de "délier" proprement un périphérique loop,
-à cause de la "perte" d'informations).
-Un autre ensemble de commandes est fourni, après ces trois commandes, que vous
-pouvez utiliser si vous n'êtes dans aucune de ces situations.</para>
-
-<screen><userinput><command>losetup /dev/loop1 /tmp/rfloppy
-mke2fs -m 0 -N 504 /dev/loop1
-mount -t ext2 /dev/loop1 /mnt/loop1</command></userinput></screen>
-
-<para><emphasis>Explication des commandes</emphasis></para>
-
-<para><command>losetup /dev/loop1 /tmp/rfloppy</command>: Cette commande
-"lie" le périphérique loopback au fichier vide.</para>
-
-<para><command>mke2fs -m 0 -N 504 /dev/loop1</command>: Cette
-commande crée un système de fichiers ext2 sur le périphérique loopback (ce qui
-signifie réellement qu'il est créé dans le fichier vers lequel pointe le
-périphérique loopback) et ne réserve aucun bloc. Le paramètre
-<userinput>-N 504</userinput> fait que seules 504 inodes sont allouées, laissant
-plus d'espace pour d'autres choses nécessaires dans le système de fichiers.
-</para>
-
-<para><command>mount -t ext2 /dev/loop1 /mnt/loop1</command>: Ceci monte le
-système de fichiers tout juste créé, comme s'il s'agissait d'un vrai
-périphérique comme un disque dur ou une disquette. Ceci permet toutes les
-commandes habituelles du système d'entrées/sorties comme si un vrai périphérique
-était présent.</para>
-
-<para>Si votre commande <command>mount</command> supporte l'option
-<option>-o loop</option> <emphasis>et</emphasis> que votre
-<filename>/etc/mtab</filename> est un vrai fichier, plutôt qu'un lien symbolique
-vers <filename class="directory">/proc</filename>, les trois commandes ci-dessus
-peuvent être remplacées par ces deux commandes.</para>
-
-<screen><userinput><command>mke2fs -F -m 0 -N 504 /tmp/rfloppy
-mount -o loop /tmp/rfloppy /mnt/loop1</command></userinput></screen>
-
-<para><emphasis>Explication des commandes</emphasis></para>
-
-<para><command>mke2fs -F -m 0 -N 504 /tmp/rfloppy</command>: Comme auparavant,
-un système de fichiers est créé avec seulement 504 inodes et aucun bloc réservé,
-qui sera lié au périphérique loopback. Le paramètre <userinput>-F</userinput>
-supprime simplement une question irritante lorsque <command>mke2fs</command>
-réalisé que vous n'accédez pas à un périphérique.</para>
-
-<para><command>mount -o loop /tmp/rfloppy /mnt/loop1</command>: Cette
-commande indique à <command>mount</command> de lier le fichier nommé vers un
-périphérique loopback qu'il détecte automatiquement (le premier disponible) et
-monte le périphérique sur <filename class="directory">/mnt/loop1</filename>.</para>
-
-<para><emphasis>Ajouter des composants au système de fichiers</emphasis></para>
-
-<para><emphasis>Note d'avertissement:</emphasis> Si vous n'êtes pas dans un
-environnement <command>chroot</command>, assurez-vous que vous n'omettez pas
-accidentellement la référence <filename class="directory">/mnt/loop1</filename>
-dans les commandes. Si vous le faites, vous pourriez remplacer les composants
-équivalents de votre hôte avec les composants installés avec ces procédures.
-Même si vous vous trouvez dans un environnement chroot, vous aurez besoin de
-faire attention si l'environnement est votre système <acronym>LFS</acronym>
-fraichement construit que vous comptez utiliser comme hôte dans le futur.
-</para>
-
-<para>Tout d'abord, pour conserver autant de place libre que possible, supprimez
-le répertoire <filename>lost+found</filename>, qui n'est pas nécessaire sauf
-dans le cas d'un <command>fsck</command>. Comme <command>fsck</command> ne sera
-jamais exécuté sur ce système de fichiers, il n'est pas nécessaire.</para>
-
-<screen><userinput><command>rmdir /mnt/loop1/lost+found/</command></userinput></screen>
-
-<para>Maintenant, créez un ensemble minimal de répertoires.</para>
-
-<screen><userinput><command>mkdir /mnt/loop1/{dev,proc,etc,sbin,bin,lib,mnt,usr,var}</command></userinput></screen>
-
-<para>Ajoutez les périphérique nécessaires pour l'image initrd. Si vous utilisez
-devfs, la commande suivante fonctionne aussi, car vous n'avez que les
-périphériques que vous utilisez.</para>
-
-<screen><userinput><command>cp -dpR /dev/* /mnt/loop1/dev</command></userinput></screen>
-
-<para>Si vous utilisez <command>MAKEDEV</command> pour créer vos périphériques
-dans votre hôte, vous voudrez utiliser quelque chose de similaire à cette
-longue commande, pour minimiser l'espace perdu si les inodes ne sont pas
-nécessaires.</para>
-
-<para><emphasis>Vous devez modifier ceci pour convenir à la configuration de la
-disquette de démarrage.</emphasis>  Par exemple, vous avez besoin de
-périphériques <acronym>SCSI</acronym> et vous n'avez pas besoin des
-périphériques frame buffer ou des pseudo-terminaux. De même, le nombre de
-disques durs et de partitions que vous incluez doit être minimal. Des analyses
-poussées n'ont pas été effectuées dans la liste di-dessous, donc il peut rester
-des inodes et de l'espace disque à récupérer en optimisant cet ensemble.
-</para>
-
-<screen><userinput><command>mkdir /mnt/loop1/dev/pts
-cp -a \ 
-&nbsp;&nbsp;&nbsp;&nbsp;/dev/null /dev/console \
-&nbsp;&nbsp;&nbsp;&nbsp;/dev/fb[0-7] /dev/fd /dev/fd0 /dev/fd0h1440 /dev/full \
-&nbsp;&nbsp;&nbsp;&nbsp;/dev/hda* /dev/hdb* /dev/hdc* /dev/hdd* /dev/initctl /dev/kmem \
-&nbsp;&nbsp;&nbsp;&nbsp;/dev/loop[0-3] /dev/lp0 /dev/mem /dev/port \
-&nbsp;&nbsp;&nbsp;&nbsp;/dev/psaux /dev/ram \
-&nbsp;&nbsp;&nbsp;&nbsp;/dev/ram0 /dev/ram1 /dev/ram2 /dev/ram3 /dev/random /dev/rtc \
-&nbsp;&nbsp;&nbsp;&nbsp;/dev/shm /dev/stderr /dev/stdin /dev/stdout /dev/tty \
-&nbsp;&nbsp;&nbsp;&nbsp;/dev/tty[0-9] /dev/ttyS0 /dev/ttyS1 /dev/urandom /dev/zero \
-&nbsp;&nbsp;/mnt/loop1/dev</command></userinput></screen>
-
-<para><emphasis>Qu'est-il nécessaire dans le répertoire <filename class="directory">/etc</filename></emphasis></para>
-
-<para>Si vous voulez, vous pouvez copier tout ou partie de vos fichiers
-<filename>/etc/passwd</filename> et <filename>/etc/group</filename>. Mais même
-si chacun d'entre eux fait moins que 1024 octets, vous perdrez deux inodes et
-deux blocs sur le disque ram initial. Cela a vraiment une importance car nous
-essayons de gagner tout ce qui est possible comme espace disque sur cette
-disquette de 1,44 Mo. Chaque bit nous aide. La stratégie prise ici est de créer
-ces deux fichiers los de la phase de démarrage et d'initialisation. Les
-commandes pour créer ces deux fichiers seront intégrées dans le script
-<filename>rcS</filename> que <filename>linuxrc</filename> (en fait
-<application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox
-</ulink></application>) appelle après le chargement de initrd. De cette façon,
-aucune inode et bloc n'est utilisé sur la disquette pour emporter ces fichiers.
-</para>
-
-<para>Certains aimeraient copier leur répertoire <filename class="directory">/etc/rc*</filename>
-dans l'image du disque ram mais ceci pourrait n'avoir aucune valeur, autre
-qu'une archive, dans un scénario de dépannage grave. Si vous voulez une
-initialisation automatique du système après réparation, ils pourraient avoir une
-certaine valeur. Mais peu de personnes en ont besoin ou le souhaitent. Si un
-système de fichiers sur les disques durs est corrompu, quel intérêt auront les
-scripts de montage ? Certains scripts pourraient être utile, comme l'accès au
-réseau pour copier des données sauvegardées une fois que les systèmes de fichier
-sont de nouveau utilisables. Le but est que vous devez copier seulement les
-parties que vous pouvez utiliser parce que l'espace disque est le point
-critique.</para>
-
-<para>Ici, seul <filename>fstab</filename> sera inclus. Il facilite le montage
-des partitions qui pourraient être utiles et peut être utilisé comme guide sur
-les partitions disponibles et pouvant avoir besoin d'être reconstruites. Comme
-il pourrait être plus gros que nécessaire, vous devez l'éditre pour supprimer
-toute entrée inutile et pour minimiser les commentaires. Aucune autre édition
-n'est nécessaire parce que les scripts de démarrage ne sont pas inclus et
-qu'aucun montage automatique ne sera fait en utilisant <filename>fstab</filename>.
-Si vous décidez d'inclure certains scripts de démarrage qui pourraient essayer
-de monter quelque chose, modifiez les entrées de <filename>fstab</filename> avec
-l'option <command>noauto</command> dans le champ des options pour qu'ils
-n'essaient pas de monter une partition potentiellement corrompue. Copiez-le dans
-<filename class="directory">/tmp</filename>, éditez-le puis faites:</para>
-
-<screen><userinput><command>cp -a /tmp/fstab /mnt/loop1/etc</command></userinput></screen>
-
-<para>Maintenant, le script d'initialisation va être ajouté. Comme mentionné
-ci-dessus, <command>linuxrc</command> est lié symboliquement à <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox
-</ulink></application>.
-Après le chargement du noyau et du disque ram initial, le noyau donne le
-contrôle à <command>linuxrc</command> (<application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox
-</ulink></application>). Il veut lancer un script <filename class="directory">/etc/init.d/rcS</filename>
-pour réaliser la configuration initiale.</para>
-
-<para>Si vous utilisez devfsd, vous aurez besoin de configurer le script
-<filename>rcS</filename> pour gérer le lancement de devfsd. Placez les commandes
-suivantes dans <filename class="directory">/mnt/loop1/etc/init.d/rcS</filename>.
-Vous pouvez aussi ajouter quelques-unes des étapes montrées dans la version non devfs
-qui suit.</para>
-
-<screen><userinput>#!/bin/sh
-mount -t devfs devfs /dev
-/sbin/devfsd /dev</userinput></screen>
-
-<para>Si vous ne voulez pas utiliser devfsd, mais que vous souhaitez créer un
-répertoire <filename class="directory">/dev</filename> statique en utilisant
-<command>MAKEDEV</command>, ou tout autre outil, le script
-<filename>rcS</filename> fera les choses d'une façon légèrement différente. De
-même, n'oubliez pas qu'il crée les fichiers <filename>/etc/passwd</filename> et
-<filename>/etc/group</filename> sauvant ainsi de l'espace sur la disquette.</para>
-
-<para>Ensuite, le script montera <filename class="directory">/proc</filename>,
-activera le swap (aucun problème si cela échoue), crée les fichiers
-<filename>/etc/passwd</filename> et <filename>/etc/group</filename>, crée un
-répertoire de traces. Créez le script avec:</para>
-
-<screen><userinput><command>mkdir -p /mnt/loop1/etc/init.d
-cat &gt;/mnt/loop1/etc/init.d/rcS &lt;&lt; EOD</command>
-#!/bin/sh
-mount -t proc proc /proc
-swapon -a
-
-echo "root:x:0:0:root:/root:/bin/bash" &gt; /etc/passwd
-
-<command>cat &gt; /etc/group &lt;&lt;EOF</command>
-root:x:0:
-bin:x:1:
-sys:x:2:
-kmem:x:3:
-tty:x:4:
-tape:x:5:
-daemon:x:6:
-floppy:x:7:
-disk:x:8:
-lp:x:9:
-dialout:x:10:
-audio:x:11:
-<command>EOF
-chmod 644 /etc/passwd /etc/group</command>
-
-mkdir /var/log
-
-<command>EOD
-chmod u+x /mnt/loop1/etc/init.d/rcS</command></userinput></screen>
-
-<para>Sauf si vous ajoutez beaucoup de commandes dans ce script, ce qui
-<emphasis>est</emphasis> encouragé, ce qui se trouve ci-dessus est
-raisonnablement proche de ce dont vous avez besoin.</para>
-
-<para><emphasis>Installer les packages</emphasis></para>
-
-<para>Deux packages doivent êtres installés. Le package <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox</ulink></application>
-incorpore les fonctions de base fournissant un shell et beaucoup d'outils
-basiques. Un package pour le système de fichiers, comme <application><ulink
-url="http://freshmeat.net/projects/e2fsprogs/">e2fsprogs</ulink></application>, ou
-le package pour le système de fichiers que vous utilisez, fournira un ensemble
-minimal d'outils pour la vérification et la reconstruction du système de
-fichiers. Le package complet ne sera pas installé car nous n'avons besoin que de
-certains composants.</para>
-
-<para>Si vous utilisez devfsd, vous aurez aussi besoin d'installer ce logiciel.</para>
-
-<para>Installez <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox</ulink></application>
-dans l'image du disque ram initial. Busybox incorpore un grand nombre d'outils
-Unix en un seul petit exécutable.</para>
-
-<screen><userinput><command>make &amp;&amp;
-make PREFIX=/mnt/loop1 install &amp;&amp;
-&gt; /mnt/loop1/var/utmp</command></userinput></screen>
-
-<para>Un fichier <filename>var/utmp</filename> est créé parce que <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox</ulink></application>
-en a besoin pour que la commande de redémarrage fonctionne correctement. Si ce
-fichier n'existe pas lorsque <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox</ulink></application>
-est démarré, la commande <command>reboot</command> ne fonctionnera pas. Ceci
-serait une mauvaise chose pour les personnes ne disposant pas du bouton de
-réinitialisation.</para>
-
-<para>Si vous utilisez devfs pour créer les périphériques à la volée et libérer
-ainsi quelques précieuses inodes sur la disquette, vous installerez aussi devfsd
-pour faciliter l'usage des périphériques que <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox</ulink></application>
-s'attend à trouver. Utilisez les commandes suivantes pour faire l'installation.</para>
-
-<screen><userinput><command>mv GNUmakefile Makefile &amp;&amp;
-make &amp;&amp;
-make PREFIX=/mnt/loop1 install</command></userinput></screen>
-
-<para><emphasis>Installez une partie de <application>e2fsprogs</application></emphasis></para>
-
-<para>Si vous utilisez le système de fichiers ext2 ou ext3 (journalisé), vous
-pouvez utiliser les commandes ci-dessous pour installer les fonctionnalités
-minimales qui devraient vous permettre de ré-utiliser vos disques durs. Si vous
-utilisez ext3, gardez en tête qu'il fait partie du package <application>e2fsprogs</application>
-et que vous pouvez obtenir les composants qui ne sont pratiquement que des liens
-physiques à partir des mêmes endroits montrés ci-dessous. Si vous utilisez un
-autre système de fichiers, tel que reiserfs, vous deviez appliquer le
-<emphasis>principal</emphasis> de ce que vous voyez ici pour installler les
-parties de votre package.</para>
-
-<screen><userinput><command>LDFLAGS='-s'
-mkdir build &amp;&amp;
-cd build &amp;&amp;
-../configure --prefix=/mnt/loop1/usr --with-root-prefix="" \
-    --disable-swapfs --disable-debugfs \
-    --enable-dynamic-e2fsck --disable-nls --disable-evms \
-    --disable-rpath &amp;&amp;
-make LDFLAGS="$LDFLAGS" &amp;&amp;
-strip -p --strip-unneeded --remove-section=.comment \
-    -o /mnt/loop1/sbin/mke2fs misc/mke2fs &amp;&amp;
-strip -p --strip-unneeded --remove-section=.comment \
-    -o /mnt/loop1/sbin/e2fsck e2fsck/e2fsck &amp;&amp;
-chmod 555 /mnt/loop1/sbin/{mke2fs,e2fsck}
-</command></userinput></screen>
-
-<para><emphasis>Deux outils bien utiles</emphasis></para>
-
-<para>Voici deux outils que devrait posséder toute disquette de dépannage. Le
-premier est un outil de partitionnement. Le programme <command>sfdisk</command>
-est utilisé ici à cause de sa petite taille et de ses grandes capacités. Faites
-attention - il n'est pas considéré comme étant très facile d'utilisation. Mais
-les programmes <command>fdisk</command> et <command>cfdisk</command> sont bien
-plus gros et requièrent bien plus d'objets partagés comme
-<application>ncurses</application>.</para>
-
-<para>Le second outil est un éditeur. La plupart des éditeurs graphiques sont
-très gros et nécessitent aussi des objets partagés supplémentaires. Pour cette
-raison, <command>ed</command> est utilisé ici. Il est petit, requiert aucun
-objet partagé et est un éditeur basé sur les expressions régulières, ancêtre de
-pratiquement tous les éditeurs suivants supportant l'édition basée sur les
-expressions régulières, graphiques ou non. C'est un éditeur contextuel et offre
-des fonctionnalités d'édition puissantes, mais non graphiques. Il existe plein
-d'autres éditeurs qui pourraient convenir - vous pouvez choisir un d'entre eux à
-la place.</para>
-
-<para>Lisez les fichiers <filename>INSTALL</filename> et
-<filename>README</filename> de <application>busybox</application> pour voir
-comment inclure un éditeur <command>vi</command>. Cela n'a pas encore été testé,
-donc cela pourrait tenir ou pas dans une seule image de disquette.</para>
-
-<para>Vous pouvez les installer ou non, mais il est important pour vous d'avoir
-certaines des capacités qu'ils offrent. La façon exacte de l'installation des
-outils que vous avez choisi devra être déterminé par vous.</para>
-
-<para><command>Sfdisk</command> et <command>ed</command> sont installés
-essentiellement par une copie depuis votre hôte. Strip est utilisé uniquement
-pour s'assurer qu'ils font le point minimum, même si l'installation de base de
-<acronym>LFS</acronym> devrait déjà les avoir passé sur cette commande. Utilisez
-les commandes suivantes:</para>
-
-<screen><userinput><command>strip -p --strip-unneeded --remove-section=.comment \
-    -o /mnt/loop1/sbin/sfdisk /sbin/sfdisk
-strip -p --strip-unneeded --remove-section=.comment \
-    -o /mnt/loop1/bin/ed /bin/ed
-chmod 555 /mnt/loop1/sbin/sfdisk /mnt/loop1/bin/ed</command></userinput></screen>
-
-<para>De même, gardez en tête vos limitations en espace disque, copiez tous les
-autres binaires et bibliothèques dont vous avez besoin sur l'image. Utilisez la
-commande <command>ldd</command> pour savoir de quelles bibliothèques vous aurez
-besoin pour utiliser ces exécutables. N'oubliez pas de lancer
-<command>strip</command> <emphasis>avant</emphasis> de les copier sur l'image
-du disque ram ou d'utiliser <command>strip</command>, comme ci-dessus, pour les
-"copier".</para>
-
-<para><emphasis>Configurer le répertoire lib</emphasis></para>
-
-<para>Une fois que vous avez installé tous les outils ci-dessus et y compris
-ceux que vous souhaitez, utilisez la commande <command>ldd</command> command,
-comme indiquée co-dessus, sur ceux qui n'ont pas été donné dans ce document. Si
-des bibliothèques supplémentaires sont nécessaires, ajoutez-les aux commandes de
-configuration montrées ci-dessous.</para>
-
-<para>Si vous avez installé seulement ceux du document, les objets partagés
-nécessaires seront minimes. Vous pouvez les ajouter au disque ram avec:</para>
-
-<screen><userinput><command>strip -p --strip-unneeded --remove-section=.comment \
-&nbsp;&nbsp;&nbsp;&nbsp;-o /mnt/loop1/lib/libc.so.6 /lib/libc-2.3.3.so &amp;&amp;
-strip -p --strip-unneeded --remove-section=.comment \
-&nbsp;&nbsp;&nbsp;&nbsp;-o /mnt/loop1/lib/ld-linux.so.2 /lib/ld-2.3.3.so &amp;&amp;
-strip -p --strip-unneeded --remove-section=.comment \
-&nbsp;&nbsp;&nbsp;&nbsp;-o /mnt/loop1/lib/libdl.so.2 /lib/libdl-2.3.3.so &amp;&amp;
-chmod 555 /mnt/loop1/lib/{libc.so.6,ld-linux.so.2,libdl.so.2}</command></userinput></screen>  
-
-<para>Notez que les commandes ci-dessus modifient le nom des bibliothèques,
-supprimant le besoin des liens symboliques habituels. Si vous ajoutez des objets
-partagés supplémentaires, profitez des opportunités similaires mais faites
-attention aux problèmes qui pourraient se présenter.</para>
-
-<para><emphasis>Créer le fichier initrd compressé</emphasis></para>
-
-<para>Démontez le fichier loopback. Si vous utilisez l'option <option>-o
-loop</option> de la commande <command>mount</command>, le lien entre le
-périphérique loop et le fichier sera supprimé lorsque le démontage sera terminé.
-Omettez simplement le <command>losetup -d /dev/loop1</command> de la séquence
-suivante. Le paramètre <userinput>-9</userinput> est utilisé avec
-<command>gzip</command> pour compresser au maximum l'image. Pour s'assurer
-qu'elle tient sur la disquette, affichez la taille du fichier.</para>
-
-<screen><userinput><command>umount /mnt/loop1 &amp;&amp;
-losetup -d /dev/loop1 &amp;&amp;  # Oubliez l'option -o loop de mount a été utilisé
-gzip -9 &lt; /tmp/rfloppy &gt; /tmp/rootfs.gz
-ls -l /tmp/rootfs.gz</command></userinput></screen>  
-
-<para><emphasis>Joindre l'image de dépannage et le disque ram initial sur une disquette</emphasis></para>
-
-<para>Maintenant, l'image de dépannage et le disque ram initial vont être écrit
-sur une disquette démarrable. Avant de le faire, calculez le nombre de blocs
-nécessaires pour l'image de dépannage et pour <filename>/tmp/rootfs.gz</filename>
-(le disque ram initial), individuellement, en divisant leur taille par 1024 et
-en ajoutant un s'il y a un reste. Additionnez ces deux résultats. Ils doivent
-avoir un total de maximum 1440 blocs. Si le résultat est plus important, ne
-vous inquiétez pas trop. Les modifications nécessaires pour créer un ensemble de
-deux disquettes sont présentées plus tard. Bien sûr, vous pouvez ré-examiner vos
-choix et essayer de diminuer soit le disque de dépannage soit l'image de disque
-ram initial.</para>
-
-<para>Pour créer une disquette de dépannage, utilisant devfs, utilisez les
-commandes suivantes. Si vous utilisez la configuration du
-<filename class="directory">/dev</filename> statique, utilisez
-<filename>/dev/fd0</filename> au lieu de /dev/floppy/0.</para>
-
-<screen><userinput><command>dd if=rescueimage of=/dev/floppy/0 bs=1k
-rdev /dev/floppy/0 0,0
-rdev -R /dev/floppy/0 0</command></userinput></screen>
-
-<para><emphasis>Explication des commandes</emphasis></para>
-
-<para><command>rdev /dev/floppy/0 0,0</command>: initialise le système de
-fichiers racine que le noyau utilisera au démarrage. Parce qu'il charge le
-disque ram initial, il configurera automatiquement le périphérique root. Donc,
-<option>0,0</option> lui donnera "sans valeur", indiquant au noyau de ne pas
-monter les autres périphériques. Certains donnent <filename>/dev/fd0</filename> ou
-quelque chose de similaire. Mais, ceci a un effet <emphasis>seulement</emphasis>
-lorsque <command>linuxrc</command> (en fait <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox
-</ulink></application>) quitte et que les processus <command>init</command>
-normaux sont appelés. Comme cela n'est pas le cas ici et que la disquette n'est
-<emphasis>pas</emphasis> un système de fichiers valide, cela serait inutile ici.
-Un disque dur serait un meilleur choix si vous cherchez à relancer
-automatiquement le système après réparation. Comme <application><ulink
-url="http://www.busybox.net/downloads/busybox-0.60.4.tar.bz2">busybox
-</ulink></application> fournit la commande <command>reboot</command>, une
-initialisation automatique n'est pas nécessaire.</para>
-
-<para><command>rdev -R /dev/floppy/0 0</command> initialisera les options de la
-racine à zéro. Elles n'ont pas d'utilité dans cette application.</para>
-
-<para>La commande <command>dd</command> ci-dessus affichera quelques résultats
-du type</para>
-
-<screen>        480+1 records in
-        480+1 records out</screen>
-
-<para>Dans cet exemple, l'image de dépannage (noyau) faisait une taille de 480+1 blocs.
-Assurez-vous que ce nombre, qui pourrait être différent pour vous, correspond à
-vos calculs ci-dessus. Vous avez besoin de calculer le "nombre magique" qui sera
-inséré dans l'image de dépannage. La valeur consiste en trois parties
-distinctes. Deux sont discutées ici. La troisième est abordée plus tard.</para>
-
-<para>Les bits 0 - 10 contiendront la taille de l'image de dépannage en blocs
-que vous avez calculé ci-dessus et qui doit correspondre au résultat du dd. Le
-bit 14 (le 15è, qui est 2 puissant 14, soit 16,384) est un drapeau qui,
-initialisé à 1, indique au noyau que le disque ram initial doit être chargé.
-Donc, pour la disquette de dépannage, les deux nombres
-16384 et 481 (ou quelque soit le bon nombre pour votre taille d'image de
-dépannage) sont ajoutés ensemble pour produire une valeur décimale, comme 16865.
-Cette valeur est insérée à sa bonne place dans l'image de dépannage par la
-commande <command>rdev</command> exécutée tout de suite après.</para>
-
-<para>Insérez le "nombre magique" dans l'image de dépannage puis écrivez le
-système de fichiers racine juste après l'image de dépannage sur la disquette en
-exécutant les commandes suivantes avec les bons nombres insérés. Notez que le
-numéro de paramètre de <command>seek</command> doit être la taille, en blocs, de
-votre image de dépannage. Si vous utilisez la configuration du <filename
-class="directory">/dev</filename> statique, utilisez
-<filename>/dev/fd0</filename> dans la commande ci-dessous, au lieu de
-<filename>/dev/floppy/0</filename>.</para>
-
-<screen><userinput><command>rdev -r /dev/floppy/0 <replaceable>16865</replaceable>
-dd if=/tmp/rootfs.gz of=/dev/floppy/0 bs=1k seek=<replaceable>481</replaceable></command></userinput></screen>
-
-<para>Dans cette commande, <command>seek</command> a été utilisé pour
-positionner le bloc suivant la fin de l'image de dépannage (480+1) et commencé
-l'écriture du système de fichiers racine sur la disquette.</para>
-</sect3>
-</sect2>
-
-<sect2>
-<title>Configurer un ensemble de deux disquettes de dépannage</title>
-
-<para>Si vous ne pouvez pas vivre avec un système à seule disquette de
-dépannage, voici comment faire un système à deux disquettes. Notez que les
-possibilités infinies présentés par la disponibilité de
-<command>linuxrc</command> et d'autres composants ne sont pas adressées ici.
-Ici, vous utiliserez seulement la capacité du noyau à demander une seconde
-disquette contenant l'image du disque ram initial pour le charger.</para>
-
-<para>Modifiez les instructions ci-dessus de la façon suivante. Tout d'abord, un
-nombre magique différent est nécessaire. Le quinzième bit est toujours
-nécessaire mais la taille de l'image du disque ram est remplacé par un zéro. Le
-troisième composant, qui n'a pas été discuté ci-dessus, est maintenant utilisé.
-C'est le seizième bit (bit 15) du nombre magique. Une fois activé, il
-indique au noyau  de demander à l'utiliser d'insérer la disquette "root". Il
-charge ensuite l'image du disque ram initial à partir de cette disquette. Comme
-la taille de l'image de dépannage a été diminué à zéro, le noyau commence à
-charger à partir du bloc zéro (le premier) de la seconde disquette.</para>
-
-<para>Le seizième bit (bit 15) représente 2 à la puissance 15, soit
-32768. Donc le nouveau nombre magique est 32768 + 16384, ce qui vaut 49152.
-Cette valeur indique au noyau de réclamer puis de charger l'image du disque ram
-initiale à partir du premier bloc de la disquette insérée. Donc votre première
-modification concerne la commande d'écriture du nombre magique sur l'image de
-dépannage de la disquette.</para>
-
-<screen><userinput><command>rdev -r /dev/floppy/0 <replaceable>49152</replaceable></command></userinput></screen>
-
-<para>Notez que l'image du disque ram initial n'est <emphasis>pas</emphasis>
-encore copiée sur la disquette. Supprimez la disquette de démarrage et insérez
-une autre disquette qui contiendra votre système de fichiers racine. Lancez
-cette commande modifiée (n'oubliez pas d'utiliser <filename>/dev/fd0</filename>
-si vous n'utilisez pas devfs). Notez qu'aucun paramètre <command>seek</command>
-n'est utilisé.</para>
-
-<screen><userinput><command>dd if=/tmp/rootfs.gz of=/dev/floppy/0 bs=1k</command></userinput></screen>
-
-<para>Voici tout ce qu'il y avait à faire. Les possibilités à partir de là sont
-limitées seulement par votre imagination et par votre ténacité à poursuivre vos
-améliorations. Et par votre volonté de rechercher la documentation disponible.
-Un bon point de départ est le répertoire Documentation du répertoire des sources
-du noyau. Plus d'aide sont disponibles dans les <ulink
-url="http://linuxfromscratch.org/hints/news.html">astuces <acronym>LFS </acronym></ulink>
-(merci d'utiliser un miroir convenable) et au
-<ulink url="http://www.tldp.org">TLDP</ulink>.</para>
-
-</sect2>
-</sect1>	
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="postlfs-config-bootdisk" xreflabel="Creating a Custom Boot Device">
+  <?dbhtml filename="bootdisk.html"?>
+
+  <sect1info>
+    <othername>$LastChangedBy: randy $</othername>
+    <date>$Date: 2008-03-12 17:05:41 +0100 (mer, 12 mar 2008) $</date>
+  </sect1info>
+
+  <title>Creating a Custom Boot Device</title>
+
+  <sect2>
+    <title>Decent Rescue Boot Device Needs</title>
+
+    <para>This section is really about creating a <emphasis>rescue</emphasis>
+    device.  As the name <emphasis>rescue</emphasis> implies, the host
+    system has a problem, often lost partition information or corrupted file
+    systems, that prevents it from booting et/or operating normally.  For
+    this reason, you <emphasis>must not</emphasis> depend on resources from
+    the host being "rescued".  To presume that any given partition or hard
+    drive <emphasis>will</emphasis> be available is a risky presumption.</para>
+
+    <para>In a modern system, there are many devices that can be
+    used as a rescue device: floppy, cdrom, usb drive, or even a network card.
+    Which one you use depends on your hardware et your BIOS.  In the past,
+    we usually thought of rescue device as a floppy disk.  Today, many
+    systems do not even have a floppy drive.</para>
+
+    <para>Building a complete rescue device is a challenging task.  In many
+    ways, it is equivalent to building an entire LFS system.
+    In addition, it would be a repetition of information already available.
+    For these reasons, the procedures for a rescue device image are not
+    presented here.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Creating a Rescue Floppy</title>
+
+    <para>The software of today's systems has grown large.  Linux 2.6 no longer
+    supports booting directly from a floppy.  In spite of this, there are solutions
+    available using older versions of Linux.  One of the best is Tom's Root/Boot
+    Disk available at <ulink url='http://www.toms.net/rb/'/>.  This will provide a
+    minimal Linux system on a single floppy disk et provides the ability to
+    customize the contents of your disk if necessary.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Creating a Bootable CD-ROM</title>
+
+    <para>There are several sources that can be used for a rescue CD-ROM.
+    Just about any commercial distribution's installation CD-ROMs or
+    DVDs will work.  These include RedHat, Mandrake, et SuSE.  One
+    very popular option is Knoppix.</para>
+
+    <para>Also, the LFS Community has developed its own LiveCD available at
+    <ulink url='http://www.&lfs-domainname;/livecd/'/>.  This LiveCD, in
+    addition to having boot et rescue capabilities, is capable of building an
+    entire LFS/BLFS system.  A copy of this CD-ROM is available with the
+    printed version of the Linux From Scratch book.  If you download the ISO
+    image, use <xref linkend="cdrecord"/> to copy the image to a CD-ROM.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Creating a Bootable USB Drive</title>
+
+    <para>A USB Pen drive, sometimes called a Thumb drive, is recognized by Linux as
+    a SCSI device.  Using one of these devices as a rescue device has the advantage
+    that it is usually large enough to hold more than a minimal boot image.  You
+    can save critical data to the drive as well as use it to diagnose et recover
+    a damaged system.  Booting such a drive requires BIOS support, but building the
+    system consists of formatting the drive, adding <application>GRUB</application>
+    as well as the Linux kernel et supporting files.</para>
+
+    <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
+    <ulink url='&blfs-wiki;/CreatingaCustomBootDevice'/></para>
+
+  </sect2>
+</sect1>
