@@ -1,347 +1,661 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
-   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 ]>
 
-<sect1 id="x-setup">
-<sect1info>
-<othername>$LastChangedBy: randy $</othername>
-<date>$Date: 2005-06-15 06:05:15 $</date>
-</sect1info>
-<?dbhtml filename="xfree86-setup.html"?>
-<title>X Window System Components</title>
+<sect1 id="x-setup" xreflabel="X Window System Components">
+  <?dbhtml filename="x-setup.html"?>
 
-<sect2 id='dri'>
-<title>Checking Direct Rendering Infrastructure (<acronym>DRI</acronym>) 
-Installation</title>
+  <sect1info>
+    <othername>$LastChangedBy: gdalziel $</othername>
+    <date>$Date: 2009-07-06 21:12:40 +0200 (lun 06 jui 2009) $</date>
+  </sect1info>
 
-<indexterm zone="x-setup dri">
-  <primary sortas="g-DRI">DRI</primary>
-</indexterm>
+  <title>X Window System Components</title>
 
-<para><acronym>DRI</acronym> is a framework for allowing software to access 
-graphics hardware in a safe and efficient manner. It is installed in
-<application>X</application> by default if you have a supported video card. 
-To check if <acronym>DRI</acronym> is installed properly, check the log file 
-<filename>/var/log/XFree86.0.log</filename> or
-<filename>/var/log/Xorg.0.log</filename> for statements like:</para>
+  <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
+  <ulink url='&blfs-wiki;/XWindowSystemComponents'/></para>
 
-<screen>(II) R128(0): Direct rendering enabled</screen>
+  <sect2 role="configuration" id='X11R6-compat-symlink'
+         xreflabel="Creating an X11R6 Compatibility Symlink">
 
-<para>From an <command>xterm</command>, run <command>glxinfo</command> and 
-look for the phrase:</para> 
+    <title>Creating an X11R6 Compatibility Symlink</title>
+
+    <para>Until recently (relatively speaking) almost every
+    <application>X Window</application> installation you performed or came
+    across was installed in the
+    <filename class='directory'>/usr/X11R6</filename> directory. That was the
+    standard for years. Developers picked up on this et wrote their package
+    installation scripts looking for <application>X</application> in the
+    standard location. Things have changed et the trend is to now install
+    <application>X</application> in
+    <filename class='directory'>/usr</filename>. Some people want to install
+    it in a custom location.</para>
+
+    <para>Many package developers have not caught up to the change et their
+    packages are still trying to find <application>X</application> in
+    <filename class='directory'>/usr/X11R6</filename> et subsequently fail
+    when you try to build the package. Though for most packages it is not
+    difficult to 'hack' the installation script to fix the problem, that is not
+    the long term solution to the problem. Upstream developers need to modernize
+    their installation scripts et eliminate the problem altogether.</para>
+
+    <para>Until then, you can create a symbolic link to satisfy the
+    <filename class='directory'>/usr/X11R6</filename> requirement so that you
+    won't be inconvenienced with a package build failure due to this known
+    issue. If you wish to create the symlink, issue the following command as
+    the <systemitem class="username">root</systemitem> user (ensure you modify
+    <replaceable>&lt;$XORG_PREFIX&gt;</replaceable> appropriately)&nbsp;:</para>
+
+<screen role="root"><userinput>ln -vsf <replaceable>&lt;$XORG_PREFIX&gt;</replaceable> /usr/X11R6</userinput></screen>
+
+    <para>Packages in Xorg store their configuration files in
+    <filename class="directory">$XORG_PREFIX/lib/X11</filename> by default.
+    This is strictly against FHS guidelines.  Correct the installation
+    <filename class="directory">/etc/X11</filename> et create symlinks
+    in the original location with the commands as the
+    <systemitem class="username">root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>for file in $XORG_PREFIX/{lib/X11/xinit,share/X11/{app-defaults,twm,xkb}}
+do
+     mv -v $file /etc/X11/ 2&gt; /dev/null &amp;&amp;
+     ln -v -s /etc/X11/$(basename $file) $file
+done
+</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="configuration" id='xconfig'>
+    <title>Configuration de The X Window System</title>
+
+    <para>If you've installed the X Window System in any prefix other than
+    <filename>/usr</filename>, become the <systemitem
+    class="username">root</systemitem> user et update the library linker's
+    cache by adding <filename class='directory'>/usr/X11R6/lib</filename>
+    to <filename>/etc/ld.so.conf</filename> et running
+    <command>ldconfig</command>.</para>
+
+    <para>Additionally, while still the <systemitem
+    class="username">root</systemitem> user, ensure
+    <filename class="directory">/usr/X11R6/bin</filename> et
+    <filename class="directory">/usr/X11R6/lib/pkgconfig</filename> are added
+    to the <envar>PATH</envar> et <envar>PKG_CONFIG_PATH</envar>
+    environment variables, respectively. Instructions for doing this are
+    described in the section <xref linkend="postlfs-config-profile"/>.</para>
+
+    <para>Ensure you replace
+    <filename class="directory">/usr/X11R6</filename> with
+    <envar>$XORG_PREFIX</envar> in the previous two paragraphs if you did not
+    create the compatibility symlink in the previous step.</para>
+
+    <para>As the <systemitem class="username">root</systemitem> user
+    create a basic X Window System configuration file with the following
+    command:</para>
+
+<screen><userinput>cd ~ &amp;&amp;
+Xorg -configure</userinput></screen>
+
+    <indexterm zone="x-setup xconfig">
+      <primary sortas="e-etc-X11-xorg-conf">/etc/X11/xorg.conf</primary>
+    </indexterm>
+
+    <para>The screen will go blank et you may hear some clicking of the
+    monitor.  This command will create a file,
+    <filename>xorg.conf.new</filename>, in your home directory.</para>
+
+    <para>Recent versions of <application>xorg-server</application> force the
+    use of the evdev input driver, et ignore legacy input devices defined in
+    <filename>xorg.conf</filename>.  This will result in an X display that
+    seems to lock up if you are using legacy input devices et do not have the
+    proper input configuration files in place (added later).  Add the following
+    lines to the new <application>Xorg</application> configuration file to
+    overcome this lancez&nbsp;:</para>
+
+<screen><userinput>cat &gt;&gt; ~/xorg.conf.new &lt;&lt; "EOF"
+Section "ServerFlags"
+	Option "AllowEmptyInput" "false"
+EndSection
+EOF</userinput></screen>
+
+    <para>Edit the newly created configuration file to suit your system. The
+    details of the files are located in the <filename>xorg.conf.5x</filename>
+    man page.  Some things you may want to do are:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Section "Files". Change the order of the font paths searched.
+        You may want to put 100dpi fonts ahead of 75dpi fonts if your system
+        normally comes up closer to 100 dots per inch. You may want to remove
+        some font directories completely.</para>
+      </listitem>
+      <listitem>
+        <para>Section "Module". If you are going to install NVIDIA
+        drivers, remove the "dri" line.</para>
+      </listitem>
+      <listitem>
+        <para>Sections "InputDevice". You may want to change the
+        keyboard autorepeat rate by adding
+        <option>Option "Autorepeat" "250 30"</option>.</para>
+      </listitem>
+      <listitem>
+        <para>Section "Monitor". Specify the <option>VertRefresh</option>
+        et <option>HorizSync</option> values if the system does not
+        automatically detect the monitor et its values.</para>
+      </listitem>
+      <listitem>
+        <para>Section "Device". You may want to set some of the options
+        available for your selected video driver. A description of the driver
+        parameters is in the man page for your driver.</para>
+      </listitem>
+      <listitem><para>Section "Screen". Add a DefaultDepth statement such as:
+        <option>DefaultDepth 24</option>. In the SubSection for your
+        default depth, add a modes line such as:
+        <option>Modes "1600x1200" "1280x1024" "1024x768"</option>. The first
+        mode listed will normally be the starting resolution.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Test the system with the following command:</para>
+
+<screen><userinput>X -config ~/xorg.conf.new</userinput></screen>
+
+    <para>You will only get a gray background with an X-shaped mouse cursor,
+    but it confirms the system is working. Exit with
+    <keycap>Control+Alt+Backspace</keycap>. If the system does not work, take
+    a look at <filename>/var/log/Xorg.0.log</filename> to see what went
+    wrong.</para>
+
+    <para>As the <systemitem class="username">root</systemitem> user, create
+    the configuration directory et move the configuration file to the new
+    directory:</para>
+
+<screen role="root"><userinput>install -v -m644 -D ~/xorg.conf.new /etc/X11/xorg.conf</userinput></screen>
+
+    <para>As the <systemitem class="username">root</systemitem> user, create
+    <filename>.xinitrc</filename>:</para>
+
+<screen><userinput>cat &gt; ~/.xinitrc &lt;&lt; "EOF"
+<literal># Begin .xinitrc file
+xterm  -g 80x40+0+0   &amp;
+xclock -g 100x100-0+0 &amp;
+twm</literal>
+EOF</userinput></screen>
+
+    <para>This provides an initial screen with a small clock that is
+    managed by a simple window manager, Tab Window Manager. For details of
+    <command>twm</command>, see the man page.</para>
+
+    <indexterm zone="x-setup xconfig">
+      <primary sortas="e-AA.xinitrc">~/.xinitrc</primary>
+    </indexterm>
+
+    <note>
+      <para>Both the default, et the BLFS configuration for
+      <application>Xorg</application> include <application>xterm</application>.
+      <application>Xorg</application>'s modular distribution no longer includes
+      <application>xterm</application> et
+      as a result, the <command>startx</command> command will fail if you have
+      not installed <xref linkend="xterm2"/> when using the modular X Window
+      System.  You can remove the <application>xterm</application> line in the
+      above config file to test the xserver, or install one of the other
+      terminal emulators et make appropriate changes.</para>
+    </note>
+
+    <para>When needed, the X Window System creates the directory
+    <filename class='directory'>/tmp/.ICE-unix</filename> if it does not
+    exist. If this directory is not owned by
+    <systemitem class="username">root</systemitem>,
+    the X Window System delays startup by a few seconds et also
+    appends a warning to the logfile. This also affects startup of other
+    applications. To improve performance, it is advisable to manually create
+    the directory before the X Window System uses it. Add the file creation
+    to <filename>/etc/sysconfig/createfiles</filename> that is sourced by
+    the <filename>/etc/rc.d/init.d/cleanfs</filename> startup script.</para>
+
+<screen role="root"><userinput>cat &gt;&gt; /etc/sysconfig/createfiles &lt;&lt; "EOF"
+/tmp/.ICE-unix dir 1777 root root
+EOF</userinput></screen>
+
+    <indexterm zone="x-setup xconfig">
+      <primary
+      sortas="e-etc-sysconfig-createfiles">/etc/sysconfig/createfiles</primary>
+    </indexterm>
+
+    <para>Start <application>X</application> with:</para>
+
+<screen><userinput>startx</userinput></screen>
+
+    <para>and a basic functional <application>X Window
+    System</application> should be displayed.</para>
+
+  </sect2>
+
+  <sect2 id='dri'>
+    <title>Checking Direct Rendering Infrastructure (DRI) Installation</title>
+
+    <indexterm zone="x-setup dri">
+      <primary sortas="g-DRI">DRI</primary>
+    </indexterm>
+
+    <para>DRI is a framework for allowing software to access graphics hardware
+    in a safe et efficient manner. It is installed in
+    <application>X</application> by default if you have a supported video card.
+    To enable direct rendering using the OpenGL implementation from
+    <xref linkend="mesalib"/> (built separately with <xref linkend="xorg7"/>
+    the "glx" et "dri" modules must be loaded.  Additionally, the created
+    device nodes in <filename class="directory">/dev/dri</filename> must
+    have proper permissions for your users.  A sample
+    <filename>xorg.conf</filename> file might look like this:</para>
+
+<screen><literal>Section "Module"
+    ...
+    Load  "glx"
+    Load  "dri"
+    ...
+EndSection
+...
+Section "DRI"
+    Group "video"
+    Mode  0660
+EndSection</literal></screen>
+
+    <para>The DRI devices are not accessible for any user except
+      <systemitem class="username">root</systemitem> et members of the
+      <systemitem class="groupname">video</systemitem> group. Add any users
+      that might use X to that group:</para>
+
+<screen role="root"><userinput>usermod -a -G video <replaceable>&lt;username&gt;</replaceable></userinput></screen>
+
+    <note><para>DRI configuration may differ if you are using alternate
+    drivers, such as those from
+    <ulink url="http://www.nvidia.com/page/home.html">NVIDIA</ulink> or
+    <ulink url="http://www.ati.com/">ATI</ulink>.</para>
+    </note>
+
+    <para>To check if DRI is installed properly, check the log file
+    <filename>/var/log/Xorg.0.log</filename> for statements like:</para>
+
+<screen><literal>(II) R128(0)&nbsp;: Direct rendering enabled</literal></screen>
+
+    <para>If you elected to install the Mesa-Demos package when installing
+    <xref linkend="mesalib"/>, from an <command>xterm</command>, run
+    <command>glxinfo</command> et look for the phrase:</para>
 
 <screen><computeroutput>direct rendering: Yes</computeroutput></screen>
 
-<para>You can also run the test program <command>glxgears</command>.
-This program brings up a window with three gears turning.  The
-<command>xterm</command> will display how many frames were drawn every
-five seconds, so this is a reasonable benchmark.  The window is scalable, and
-the frames drawn per second is highly dependent on the size of
-the window.</para>
+    <para>If direct rendering is not enabled, you can add verbosity by
+    running <command>LIBGL_DEBUG=verbose glxinfo</command>.  This will
+    show the drivers, device nodes et files used by the DRI system.</para>
 
-<indexterm zone="x-setup dri">
-  <primary sortas="b-glxgears">glxgears</primary>
-</indexterm>
+    <para>Again, if you have added the Mesa-Demos package, you can also
+    run the test program <command>glxgears</command>.
+    This program brings up a window with three gears turning.  The
+    <command>xterm</command> will display how many frames were drawn every
+    five seconds, so this is a reasonable benchmark.  The window is scalable,
+    et the frames drawn per second is highly dependent on the size of
+    the window.</para>
 
-<indexterm zone="x-setup dri">
-  <primary sortas="b-glxinfo">glxinfo</primary>
-</indexterm>
+    <indexterm zone="x-setup dri">
+      <primary sortas="b-glxgears">glxgears</primary>
+    </indexterm>
 
-<para>For troubleshooting problems, check the <acronym>DRI</acronym> Users 
-Guide at 
-<ulink url="http://dri.sourceforge.net/doc/DRIuserguide.html"/>.</para>
+    <indexterm zone="x-setup dri">
+      <primary sortas="b-glxinfo">glxinfo</primary>
+    </indexterm>
 
-</sect2>
+    <para>For troubleshooting problems, check the DRI Users Guide at
+    <ulink url="http://dri.sourceforge.net/doc/DRIuserguide.html"/>.</para>
+
+  </sect2>
+
+<!-- ================================================== -->
+
+  <sect2 id='fonts'>
+    <title>Setting up Fonts</title>
+
+    <para>There are two font systems in the
+    <application>X Window System</application>.  The first is the
+    core X font protocol, et the second is Xft.  Toolkits that use the core
+    X font protocol include Xt, Xaw, Motif clones et GTK+-1.2.  Toolkits that
+    use Xft include GTK+-2 et Qt and use <application>Fontconfig</application>
+    for control.  Both font systems should be configured for proper font
+    coverage in the <application>X Window System</application>.</para>
+
+    <indexterm zone="x-setup fonts">
+      <primary sortas="e-etc-X11-xorg-conf">/etc/X11/xorg.conf</primary>
+    </indexterm>
+
+    <sect3>
+      <title>Core X Font Protocol</title>
+
+      <indexterm zone="x-setup fonts">
+        <primary sortas="g-core-x-font">Core X Font Protocol</primary>
+      </indexterm>
+
+      <para>The core X font protocol finds fonts from the server configuration
+      file (<filename>xorg.conf</filename>).
+      If no font paths exist in the configuration file, the server will fall
+      back to an internal hard-coded path.  Assuming the prefix for your
+      <application>X</application> installation is
+      <filename class="directory">/usr/X11R6</filename>, the core fonts will
+      reside in subdirectories of <filename
+      class="directory">/usr/X11R6/lib/X11/fonts</filename>.  For each
+      directory in the path, the server reads three files:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><filename>fonts.dir</filename> - maps font files to font
+          names&semi; updated with <command>mkfontdir</command></para>
+        </listitem>
+        <listitem>
+          <para><filename>fonts.alias</filename> - defines aliases (such as
+          "9x18") for existing fonts</para>
+        </listitem>
+        <listitem>
+          <para><filename>fonts.scale</filename> - lists scalable fonts&semi;
+          updated with <command>mkfontscale</command></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>The core X fonts protocol uses names such as
+      <systemitem>-misc-fixed-medium-r-normal--13-120-75-75-c-80-iso8859-1</systemitem>.
+      These fonts are rendered by the <application>X</application> server
+      without antialiasing.  The server itself uses the "cursor" font for
+      painting the mouse cursor, et the protocol specification requires the
+      font "fixed" to be available.</para>
+
+      <para>Scalable fonts, such as Type1 et TrueType, are read from
+      <filename>fonts.scale</filename> files by the server.  The core X font
+      system uses the "freetype" module for non-antialiased rendering of these
+      fonts.  Ensure that the "freetype" module is loaded in the
+      <filename>xorg.conf</filename> file by adding it to the "Module"
+      section:</para>
+
+<screen><literal>Section "Module"
+    ...
+    Load  "freetype"
+    ...
+EndSection</literal></screen>
+
+      <para>The character set used is part of the font name, e.g. "-iso8859-1".
+      It is important that applications which support a non-English interface
+      specify the character set correctly so that the proper glyphs are used.
+      This can be controlled through the <application>X</application>
+      resources, which will be described later.</para>
+
+      <para>In some cases, applications rely upon the fonts named "fixed" or
+      something like "9x18".  In these cases, it is important that the
+      <filename>fonts.alias</filename> file specifies the correct character
+      set.  Users of ISO-8859-<replaceable>X</replaceable> encodings where
+      <replaceable>X</replaceable> != 1 should modify the
+      <filename>/usr/lib/X11/fonts/misc/fonts.alias</filename> file by
+      replacing the "iso8859-1" string with the proper encoding name.  This is
+      accomplished en lançant les commandes command en tant qu'utilisateur <systemitem
+      class="username">root</systemitem> user, substituting the proper value
+      for <replaceable>&lt;X&gt;</replaceable>:</para>
+
+<screen role="root"><userinput>sed -i 's,iso8859-1\( \|$\),iso8859-<replaceable>&lt;X&gt;</replaceable>\1,g' \
+    /usr/lib/X11/fonts/{75dpi,100dpi,misc}/fonts.alias</userinput></screen>
+
+      <para>Users of Cyrillic fonts have properly defined aliases in
+      <filename>/usr/lib/X11/fonts/cyrillic/fonts.alias</filename>.  However,
+      this file will not be used unless the <filename
+      class="directory">/usr/lib/X11/fonts/cyrillic</filename> directory is
+      first in the font search path.  Otherwise, the
+      <filename>/usr/lib/X11/fonts/misc/fonts.alias</filename> file will be
+      used.</para>
+
+    </sect3>
+
+    <sect3 id="xft-font-protocol"  xreflabel="Xft Font Protocol">
+      <title>Xft Font Protocol</title>
+
+      <indexterm zone="x-setup fonts">
+        <primary sortas="g-truetype">TrueType Fonts</primary>
+      </indexterm>
+
+      <para>Xft provides antialiased font rendering through
+      <application>Freetype</application> et fonts are controlled from the
+      client side using <application>Fontconfig</application>.  The default
+      search path is <filename class="directory">/usr/share/fonts</filename>
+      et <filename class="directory">~/.fonts</filename>.
+      <application>Fontconfig</application> searches directories in its
+      path recursively et maintains a cache of the font characteristics in
+      <filename>fonts.cache-1</filename> files in each directory.  If the cache
+      appears to be out of date, it is ignored, et information is (slowly)
+      fetched from the fonts themselves.  This cache
+      can be regenerated using the <command>fc-cache</command> command at any
+      time. You can see the list of fonts known by
+      <application>Fontconfig</application> by running the command
+      <command>fc-list</command>.</para>
+
+      <para>The <application>X</application> fonts were not installed in a
+      location known to <application>Fontconfig</application>. This prevents
+      <application>Fontconfig</application> from using the poorly rendered
+      Type 1 fonts or the non-scalable bitmapped fonts. Symlinks were created
+      from the <filename class="directory">OTF</filename> et <filename
+      class="directory">TTF</filename> <application>X</application> font
+      directories to <filename
+      class="directory">/usr/share/fonts/X11-{OTF,TTF}</filename>. This allows
+      <application>Fontconfig</application> to use the OpenType et TrueType
+      fonts provided by <application>X</application> (which are scalable et
+      of higher quality).</para>
+
+      <para><application>Fontconfig</application> uses names such as
+      "Monospace 12" to define fonts.  Applications generally use generic font
+      names such as "Monospace", "Sans" et "Serif".
+      <application>Fontconfig</application> resolves these names to a font that
+      has all characters that cover the orthography of the language indicated
+      by the locale settings.  Knowledge of these font names is included in
+      <filename>/etc/fonts/fonts.conf</filename>. Fonts that are not listed
+      in this file are still usable by <application>Fontconfig</application>,
+      but they will not be accessible by the generic family names.</para>
+
+      <para>Standard scalable fonts that come with <application>X</application>
+      provide very poor Unicode coverage.  You may notice in applications that
+      use <application>Xft</application> that some characters appear as a box
+      with four binary digits inside.  In this case, a font set with the
+      available glyphs has not been found.  Other times, applications that
+      don't use other font families by default et don't accept substitutions
+      from <application>Fontconfig</application> will display blank lines when
+      the default font doesn't cover the orthography of the user's language.
+      This happens, e.g., with <application>Fluxbox</application> in the
+      ru_RU.KOI8-R locale.</para>
+
+      <para>In order to provide greater Unicode coverage, it is recommended
+      that you install these fonts:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><ulink url="http://dejavu.sourceforge.net/">DejaVu fonts</ulink>
+          - These fonts are replacements for the Bitstream Vera fonts et
+          provide Latin-based scripts with accents et Cyrillic glyphs.
+          The DejaVu fonts by are not aliased to the generic family names
+          by default, so <filename>/etc/fonts/fonts.conf</filename> will
+          have to be edited for it to be recognized by the generic names such
+          as "Sans".  This will be described below.</para>
+        </listitem>
+        <listitem>
+          <para><ulink
+          url="http://download.savannah.nongnu.org/releases/freefont/">FreeFont</ulink>
+          - This set of fonts covers nearly every non-CJK character, but is not
+          visually pleasing.  <application>Fontconfig</application> will use it
+          as a last resort to substitute generic font family names.</para>
+        </listitem>
+        <listitem>
+          <para><ulink
+          url="http://corefonts.sourceforge.net/">Microsoft Core fonts</ulink>
+          - These fonts provide slightly worse Unicode coverage than FreeFont,
+          but are better hinted.  Be sure to read the license before using
+          them. These fonts are listed in the
+          <filename>/etc/fonts/fonts.conf</filename> aliases by default.</para>
+        </listitem>
+        <listitem>
+          <para><ulink
+          url="http://cle.linux.org.tw/fonts/FireFly">Firefly New Sung font</ulink>
+          - This font provides Chinese coverage. This font is not listed in
+          the <filename>/etc/fonts/fonts.conf</filename> aliases by default.
+          </para>
+        </listitem>
+        <listitem>
+          <para><ulink
+          url="http://cle.linux.org.tw/fonts/Arphic">Arphic fonts</ulink> -
+          A similar set of Chinese fonts to the Firefly New Sung font.
+          These fonts are listed in the
+          <filename>/etc/fonts/fonts.conf</filename> aliases by default.
+          </para>
+        </listitem>
+        <listitem>
+          <para><ulink
+          url="http://sourceforge.jp/projects/efont/">Kochi fonts</ulink> -
+          These provide Japanese characters, et they are listed in the aliases
+          in <filename>/etc/fonts/fonts.conf</filename> by default.</para>
+        </listitem>
+        <listitem>
+          <para><ulink
+          url="http://kldp.net/projects/baekmuk/">Baekmuk fonts</ulink>
+          - These fonts provide Korean coverage, et they are listed in the
+          aliases in <filename>/etc/fonts/fonts.conf</filename> by default.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>The list above will not provide complete Unicode coverage.  For
+      more information, please visit the <ulink
+      url="http://unifont.org/fontguide/">Unicode Font Guide</ulink>.</para>
+
+      <para>As an example, consider the installation of the DejaVu fonts.  From
+      the unpacked source directory, run the following commands as the
+      <systemitem class="username">root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>install -v -d -m755 /usr/share/fonts/dejavu &amp;&amp;
+install -v -m644 *.ttf /usr/share/fonts/dejavu &amp;&amp;
+fc-cache -v /usr/share/fonts/dejavu</userinput></screen>
+
+    </sect3>
+
+  </sect2>
 
 <!-- ================================================== -->
 
-<sect2 id='fonts'>
-<title>Adding <application>TrueType</application> fonts to
-<application>X</application></title>
+  <sect2>
+    <title>Setting up Keyboards</title>
 
-<para><application>TrueType</application> font support is built into
-<application>X</application>.  The following items need to 
-be completed to make the fonts available. Each item is described in 
-detail after the list.</para>
+    <para>In this version of <application>X</application>, non-Latin
+    keyboard layouts do not include Latin configurations as was previous
+    practice. To set up a keyboard for Latin et non-Latin input, change
+    the XkbLayout keyboard driver option in the InputDevice section
+    of the <filename>xorg.conf</filename> file. For example:</para>
 
-<indexterm zone="x-setup fonts">
-  <primary sortas="g-truetype">TrueType</primary>
-</indexterm>
+<screen><literal>Section "InputDevice"
+    Identifier          "Keyboard0"
+    Driver              "kbd"
+    Option "XkbModel"   "pc105"
+    Option "XkbLayout"  "en_US,ru"
+    Option "XkbOptions" "grp:switch,grp:alt_shift_toggle,grp_led:scroll"
+EndSection</literal></screen>
 
-<itemizedlist>
-<listitem><para>Establish a directory for the fonts and move any 
-<application>TrueType</application> fonts you want into that directory. 
-Ensure that any fonts you install are world readable. Incorrect
-permissions on fonts have been known to cause problems with some 
-<application>X</application> applications.</para></listitem>
+    <para>In this example, you can use the <keycap>Alt+Shift</keycap>
+    combination to switch between keyboard layouts et use the Scroll Lock
+    LED to indicate when the second layout is active.</para>
 
-<listitem><para>Download the fonts.</para></listitem>
-
-<listitem><para>Create the <filename>fonts.scale</filename> and 
-<filename>fonts.dir</filename> files in the 
-<application>TrueType</application> font 
-directory.</para></listitem>
-
-<listitem><para>Ensure the <application>TrueType</application> module is 
-loaded in the <filename>XF86Config</filename> or 
-<filename>xorg.conf</filename>.</para></listitem>
-
-<listitem><para>Ensure the <parameter>FontPath</parameter> in 
-<filename>XF86Config</filename> or <filename>xorg.conf</filename> contains the
-<application>TrueType</application> font directory.</para></listitem>
-
-<listitem><para>Update the font cache files</para></listitem>
-</itemizedlist>
-
-<indexterm zone="x-setup fonts">
-  <primary sortas="e-etc-X11-xorg-conf">/etc/X11/xorg.conf</primary>
-</indexterm>
-
-<indexterm zone="x-setup fonts">
-  <primary sortas="e-etc-X11-XF86Config">/etc/X11/XF86Config</primary>
-</indexterm>
-
-<sect3><title>Establish a <application>TrueType</application> font 
-directory</title>
-
-<para>The build of <application>X</application> as given above automatically 
-creates a <application>TrueType</application> font directory: 
-<filename class="directory">/usr/X11R6/lib/X11/fonts/TTF</filename>. This 
-directory already has some <application>TrueType</application> fonts and is 
-set up correctly. If this directory is satisfactory, copy any other 
-<application>TrueType</application> fonts you want into that directory. If 
-not, create a new directory, preferably in the 
-<filename class="directory">/usr/X11R6/lib/X11/fonts/</filename> directory and 
-put your <application>TrueType</application> fonts there.</para>
-</sect3>
-
-<sect3><title>Download the fonts</title>
-
-<para>There are two known high quality free font resources:
-<ulink url="ftp://ftp.gnu.org/savannah/files/freefont/"/> and 
-<ulink url="http://corefonts.sourceforge.net/"/>. Copy the fonts (files with 
-the <filename>.ttf</filename> suffix) to the directory you've just
-created.</para>
-    
-</sect3>
-
-<sect3 id="fonts-scale-dir"><title>Create <filename>fonts.scale</filename> and 
-<filename>fonts.dir</filename></title>
-<indexterm zone="x-setup fonts-scale-dir">
-  <primary sortas="g-fonts.scale">fonts.scale</primary>
-</indexterm>
-<indexterm zone="x-setup fonts-scale-dir">
-  <primary sortas="g-fonts.dir">fonts.dir</primary>
-</indexterm>
-
-<para>Now change to the directory where you have your
-<application>TrueType</application> fonts and run:
-<screen><userinput><command>mkfontscale &amp;&amp;
-mkfontdir</command></userinput></screen></para>
-<indexterm zone="x-setup fonts-scale-dir">
-  <primary sortas="b-mkfontscale">mkfontscale</primary>
-</indexterm>
-<indexterm zone="x-setup fonts-scale-dir">
-  <primary sortas="b-mkfontdir">mkfontdir</primary>
-</indexterm>
-</sect3>
-
-<sect3><title>Ensure <application>TrueType</application> is loaded in 
-<filename>XF86Config</filename> or <filename>xorg.conf</filename></title> 
-<para>The "Module" section should look like:
-<screen>Section "Module"
-        ...
-        Load  "freetype"
-        ...
-EndSection</screen></para>
-</sect3>
-
-<sect3><title>Ensure the <parameter>FontPath</parameter> in
-<filename>XF86Config</filename> or <filename>xorg.conf</filename> points to the
-<application>TrueType</application> font directory</title>
-<para>The "Files" section should look like:
-<screen>Section "Files"
-        ...
-        FontPath "/usr/X11R6/lib/X11/fonts/<replaceable>[TrueTypeDir]</replaceable>/"
-        ...
-EndSection</screen></para>
-</sect3>
-
-<sect3><title>Update the font cache files</title> 
-
-<para>Ensure you have the following directory entries in
-<filename>/etc/fonts/local.conf</filename>, inside the fontconfig
-tags:</para>
-
-<indexterm zone="x-setup fonts">
-  <primary sortas="e-etc-fonts-local.conf">/etc/fonts/local.conf</primary>
-</indexterm>
-
-<screen><userinput><command>sed -i -e '/^&lt;\/fontconfig&gt;/i\
-&lt;dir&gt;/usr/X11R6/lib/X11/fonts/TTF&lt;/dir&gt;\
-&lt;dir&gt;/usr/X11R6/lib/X11/fonts/Type1&lt;/dir&gt;' /etc/fonts/local.conf</command></userinput></screen>
-
-<para>The <command>fc-cache</command> program will automatically search
-the above directories and all subdirectories for needed fonts.</para>
-    
-<para>Finally, to update all the font cache files, run</para>
-
-<screen><userinput><command>fc-cache</command></userinput></screen>
-
-<indexterm zone="x-setup fonts">
-  <primary sortas="b-fc-cache">fc-cache</primary>
-</indexterm>
-
-<para><application>X</application> will now be able to use
-<application>TrueType</application> fonts when it is restarted.
-You can check to see if the new fonts are available with the
-<command>xlsfonts</command>  or <command>xfontsel</command> 
-program.</para>
-
-<note><para>You should rerun <command>mkfontscale</command> and  
-<command>mkfontdir</command> any time you add or delete
-<application>TrueType</application> fonts.
-You should also rerun <command>fc-cache</command> each time
-you add or remove any fonts.</para></note>
-
-</sect3>
-</sect2>
+  </sect2>
 
 <!-- ================================================== -->
-<sect2>
-<title>Setting up keyboards</title>
-<para>In this version of <application>X</application>, non-Latin
-keyboard layouts do not include Latin configurations as was previous
-practice. To set up a keyboard for Latin and non-Latin input, 
-change the XkbLayout keyboard driver option in the InputDevice section
-of the <filename>XF86Config</filename> or <filename>xorg.conf</filename> file. 
-For example:</para>
+<!--
+  <sect2 id='xdm'>
+    <title>Setting up XDM</title>
 
-<screen>   Section "InputDevice"
-     Identifier          "Keyboard0"
-     Driver              "Keyboard"
-     Option "XkbModel"   "pc105"
-     Option "XkbLayout"  "en_US,ru"
-     Option "XkbOptions" "grp:switch,grp:alt_shift_toggle,grp_led:scroll"
-   EndSection</screen>
+    <para><command>xdm</command> provides a graphical logon capability et
+    is normally set up in <filename>/etc/inittab</filename>. Most of the
+    information you need to customize <command>xdm</command> is found in
+    its man page. To execute <command>xdm</command> during bootup, change
+    the initdefault level to 5 et add the following lines to
+    <filename>/etc/inittab</filename>:</para>
 
-<para>In this example, you can use the Alt-Shift combination to switch
-between keyboard layouts and use the Scroll Lock <acronym>LED</acronym> to 
-indicate when the second layout is active.</para>
-</sect2>
+    <indexterm zone="x-setup xdm">
+      <primary sortas="b-xdm">xdm</primary>
+    </indexterm>
 
-<!-- ================================================== -->
-<sect2>
-<title>Setting up fonts</title>
+<screen><literal># Run xdm as a separate service
+x:5:respawn:/usr/X11R6/bin/xdm -nodaemon</literal></screen>
 
-<para>Users using character sets other than <acronym>ISO</acronym>-8859-1 have 
-to make a few adjustments to their font settings in order to make sure that 
-fonts with the correct encoding are used for "fixed", "variable", "10x20" and
-similar aliases:</para>
-    
-<para>For Cyrillic alphabet, it is sufficient to put the following line
-into the top of the "Files" section in <filename>XF86Config</filename>
-or <filename>xorg.conf</filename> because this directory already contains 
-the needed bitmap fonts and their aliases:</para>
+    <para>If <application>Linux-PAM</application> is installed on your
+    system, you should create a PAM entry for <command>xdm</command> by
+    duplicating the <command>login</command> entry using the following
+    command:</para>
 
-<screen>FontPath     "/usr/X11R6/lib/X11/fonts/cyrillic/"</screen>
+    <indexterm zone="x-setup xdm">
+      <primary sortas="e-etc-pam.d/xdm">/etc/pam.d/xdm</primary>
+    </indexterm>
 
-<para>For ISO-8859-<replaceable>[X]</replaceable> based locales, use the
-following command instead:</para>
+<screen role="root"><userinput>cp -v /etc/pam.d/login /etc/pam.d/xdm</userinput></screen>
 
-<screen><userinput><command>sed -i 's,iso8859-1\( \|$\),iso8859-<replaceable>[X]</replaceable>\1,g' \
-    /usr/X11R6/lib/X11/fonts/{75dpi,100dpi,misc}/fonts.alias</command></userinput></screen>
-
-</sect2>
+  </sect2>
+-->
 
 <!-- ================================================== -->
-<sect2 id='xdm'>
-<title>Setting up XDM</title>
-<para><command>xdm</command> provides a graphical logon capability and is
-normally set up in <filename>/etc/inittab</filename>.  Most of the information 
-you need to customize <command>xdm</command> is found in its man page.  To 
-execute <command>xdm</command> during bootup, change the initdefault level to 5 
-and add the following lines to <filename>/etc/inittab</filename>:</para>
 
-<indexterm zone="x-setup xdm">
-  <primary sortas="b-xdm">xdm</primary>
-</indexterm>
+  <sect2 id='x-resources'>
+    <title>Using X Resources</title>
 
-<para><screen><userinput># Run xdm as a separate service
-x:5:respawn:/usr/X11R6/bin/xdm -nodaemon</userinput></screen></para>
+    <para>There are many options that can be set in
+    <application>X</application> et <application>X</application>
+    clients via resources. Typically resources are set in the
+    <filename>~/.Xresources</filename> file.</para>
 
-<para>If Linux-PAM is installed on your system, you should 
-create a PAM entry for xdm by duplicating the login entry
-using the following command:</para>
+    <para>The layout of the <filename>~/.Xresources</filename> file
+    consists of a list of specifications in the form of</para>
 
-<para><screen><userinput>cp /etc/pam.d/login /etc/pam.d/xdm</userinput></screen></para>
-<indexterm zone="x-setup xdm">
-  <primary sortas="e-etc-pam.d/xdm">/etc/pam.d/xdm</primary>
-</indexterm>
+    <indexterm zone="x-setup x-resources">
+      <primary sortas="e-AA.xresources">~/.Xresources</primary>
+    </indexterm>
 
-</sect2>
+<screen><literal>object.subobject[.subobject...].attribute: value</literal></screen>
 
-<!-- ================================================== -->
-<sect2 id='x-resources'>
-<title>Using <application>X</application> Resources</title>
-<para>There are many options that can be set in
-<application>X</application> and <application>X</application> clients via
-resources.  Typically resources are set in the 
-<filename>~/.Xresources</filename> file.</para>
+    <para>Components of a resource specification are linked together by
+    either <emphasis>tight</emphasis>, represented by a dot (.), or
+    <emphasis>loose</emphasis>, represented by an asterisk (*), bindings.
+    A tight binding indicates that the components on either side of the
+    dot must be directly next to each other as defined in a specific
+    implementation. An asterisk is a wildcard character that means that
+    any number of levels in a defined hierarchy can be between the components.
+    For example, X offers two special cursors: redglass et whiteglass. To
+    use one of these resources, you need to add the following line:</para>
 
-<para>The layout of the <filename>~/.Xresources</filename> file consists
-of a list of specifications in the form of</para>
+<screen><literal>Xcursor.theme: whiteglass</literal></screen>
 
-<indexterm zone="x-setup x-resources">
-  <primary sortas="e-AA.xresources">~/.Xresources</primary>
-</indexterm>
+    <para>However, you can specify the background for all clients with:</para>
 
-<screen>object.subobject[.subobject...].attribute: value</screen>
+<screen><literal>*background: blue</literal></screen>
 
-<para>Components of a resource specification are linked together 
-by either <emphasis>tight</emphasis>, represented by a dot (.),
-or <emphasis>loose</emphasis>, represented by an asterisk (*),  bindings.
-A tight binding indicates that the components on either side of the dot must
-be directly next to each other as defined in a specific implementation.  An
-asterisk is a wildcard character that means that any number of levels in
-a defined hierarchy can be between the components. 
-For example, X offers two special cursors: redglass and whiteglass.  To
-use one of these resources, you need to add the following line:</para>
+    <para>More specific resource variables will override less specific
+    names.</para>
 
-<screen>Xcursor.theme: whiteglass</screen>
+    <para>Resource definitions can be found in the man pages for each
+    respective client.</para>
 
-<para>However, you can specify the background for all clients with:</para>
+    <para>In order to load your resources, the <command>xrdb</command>
+    program must be called with the appropriate parameters. Typically,
+    the first time resources are loaded, you use:</para>
 
-<screen>*background: blue</screen>
+<screen><userinput>xrdb -load &lt;filename&gt;</userinput></screen>
 
-<para>More specific resource variables will override less specific names.</para>
+    <para>To add resources to <application>X</application>'s database
+    in memory, use:</para>
 
-<para>Resource definitions can be found in the man pages for each
-respective client.</para>
+<screen><userinput>xrdb -merge &lt;filename&gt;</userinput></screen>
 
-<para>In order to load your resources, the <command>xrdb</command> program 
-must be called with the appropriate parameters. Typically, the first time 
-resources are loaded, you use:</para>
+    <para>The <command>xrdb</command> instruction is usually placed in
+    <filename>~/.xinitrc</filename> or <filename>~/.xsession</filename>.
+    To get more information, see the <command>xrdb</command> man page.</para>
 
-<screen><userinput><command>xrdb -load &lt;filename&gt;</command></userinput></screen>
+    <indexterm zone="x-setup x-resources">
+      <primary sortas="b-xrdb">xrdb</primary>
+    </indexterm>
 
-<para>To add resources to <application>X</application>'s database in memory, 
-use:</para>
-
-<screen><userinput><command>xrdb -merge &lt;filename&gt;</command></userinput></screen>
-
-<para>The <command>xrdb</command> instruction is usually placed in 
-<filename>~/.xinitrc</filename> or <filename>~/.xsession</filename>.
-To get more information, see the xrdb man page.</para>
-
-<indexterm zone="x-setup x-resources">
-  <primary sortas="b-xrdb">xrdb</primary>
-</indexterm>
-
-</sect2>
+  </sect2>
 
 </sect1>
-
