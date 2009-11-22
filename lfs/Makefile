@@ -15,6 +15,7 @@ endif
 lfs: maketar validxml profile-html
 	@echo "Generating chunked XHTML files..."
 	$(Q)xsltproc --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
+	  -stringparam paper.type A4 \
 	  -stringparam rootid "$(ROOT_ID)" -stringparam base.dir $(BASEDIR)/ \
 	  stylesheets/lfs-chunked.xsl $(RENDERTMP)/lfs-html.xml
 
@@ -43,11 +44,13 @@ lfs: maketar validxml profile-html
 pdf: validxml
 	@echo "Generating profiled XML for PDF..."
 	$(Q)xsltproc --nonet --stringparam profile.condition pdf \
+		--stringparam paper.type A4 \
 	  --output $(RENDERTMP)/lfs-pdf.xml stylesheets/lfs-xsl/profile.xsl \
 	  $(RENDERTMP)/lfs-full.xml
 
 	@echo "Generating FO file..."
 	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
+		-stringparam paper.type A4 \
 	  --output $(RENDERTMP)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
 	  $(RENDERTMP)/lfs-pdf.xml
 	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/lfs-pdf.fo
