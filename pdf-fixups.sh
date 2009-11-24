@@ -1,4 +1,4 @@
-#!/bin/bash --verbose
+#!/bin/bash
 
 if [ $# -lt 1 ] ; then 
   echo "This script needs the location of the fo file to update"
