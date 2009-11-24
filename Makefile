@@ -51,6 +51,7 @@ pdf: validxml
 	  --output $(RENDERTMP)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
 	  $(RENDERTMP)/lfs-pdf.xml
 	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/lfs-pdf.fo
+	$(Q)bash pdf-fixups.sh $(RENDERTMP)/lfs-pdf.fo
 
 	@echo "Generating PDF file..."
 	$(Q)if [ ! -e $(BASEDIR) ]; then \
