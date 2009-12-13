@@ -95,6 +95,7 @@ hr {
         <hr/>
       </div>
       <div class="toc">
+<!--
         <h3>
           <xsl:text>Native Build</xsl:text>
         </h3>
@@ -117,6 +118,7 @@ hr {
             </h4>
           </li>
         </ul>
+-->
         <h3>
           <xsl:text>32 Bit Builds</xsl:text>
         </h3>
