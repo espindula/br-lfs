@@ -1,0 +1,259 @@
+AUTEUR :        Bruce Dubbs <bdubbs@linuxfromscratch.org>
+
+TRADUCTEUR :    Emmanuel Trillaud <etrillaud@gmail.com>
+
+DATE :          28-05-2009
+
+LICENCE :       Licence MIT 
+
+SYNOPSIS :      Considérations sur la configuration du noyau Linux
+
+PREREQUIS :     Aucun
+
+
+DESCRIPTION :
+    Lors de la construction d'un système LFS, le dernier paquet construit est le
+    noyau lui-même. C'est le paquet de LFS le plus complexe à configurer et
+    c'est celui qui varie le plus selon l'utilisateur. Cette astuce est fournie
+    afin d'aider les utilisateurs à configurer leur noyau.
+
+RÉFÉRENCES : 
+    Dans l'archive du noyau : 
+    Documentation/kbuild/kconfig.txt 
+    Documentation/cdrom/
+    Documentation/devices.txt
+    Documentation/filesystems/
+    Documentation/laptops/
+    Documentation/pcmcia/
+    Documentation/sound/
+    Documentation/networking/
+    Documentation/scsi/
+
+    De nombreux autres fichiers dans l'arborescence de la documentation peuvent
+    fournir des informations détaillées sur les options du noyau.
+
+
+ASTUCE :
+
+    La procédure de construction du noyau est décrite dans le chapitre 8 du
+    livre LFS. Cependant, des informations détaillées sur la configuration du
+    noyau dépendent de nombreux facteurs. Cette astuce s'efforce de guider
+    les nouveaux utilisateurs à travers la procédure complexe de sélection
+    des paramètres de configuration.
+
+    La première étape de la configuration est la création du fichier .config.
+    Même si un fichier .config est présent dans l'arborescence du paquet Linux,
+    un des processus de configuration doit être exécuté afin de mettre en
+    place d'autres fichiers nécessaires à l'achèvement correct du processus de
+    construction.
+
+    Une règle d'or à respecter lors de la sélection des options de configuration
+    est que, si vous êtes dans le doute, utilisez le paramétrage par défaut de
+    cette option.
+
+1.  Commencer la procédure de configuration
+
+    Le fichier de configuration est à la racine du répertoire Linux et son nom
+    est .config. C'est un fichier texte dont les entrées sont comme ceci : 
+
+    #
+    # General setup
+    #
+    CONFIG_LOCALVERSION=""
+    CONFIG_LOCALVERSION_AUTO=y
+    # CONFIG_IPC_NS is not set
+
+    a.  make menuconfig
+
+    C'est l'interface utilisateur de base pour la configuration du noyau. C'est
+    une application basée sur ncurses qui génère un menu arborescent permettant
+    à l'utilisateur de sélectionner des options de configuration. Avec les
+    touches Entrée et les flèches, vous pouvez consulter chaque option, y compris une
+    page d'aide.
+    
+    La touche "Entrée" sélectionne une option depuis le bas de la page. L'item
+    sélectionné est contrôlée par les touches flèches droite et gauche. <Select>
+    descend dans un sous-menu si la ligne sélectionnée se termine par le symbole
+    --->. <Exit> monte d'un niveau dans l'arborescence des menus. Si on est dans
+    le menu le plus haut, le programme se termine. <Help> affiche une page
+    détaillant l'option courante.
+
+    L'option courante est sélectionnée avec les flèches haut et bas. La barre
+    d'espace inverse la sélection entre 'compiler en dur dans le noyau' notée avec
+    [*], 'compiler comme un module chargeable' notée [M] ou 'ne pas compiler du
+    tout' notée [ ].
+
+    b.  make xconfig
+
+    C'est une interface graphique utilisateur (GUI) basée sur Qt présentant les
+    menus. Elle utilise la souris pour effectuer les sélections et faire défiler
+    la fenêtre. Cliquer sur un item effectue la même action que la barre
+    d'espace dans menuconfig.
+
+    c.  make oldconfig
+
+    Cette interface en ligne de commande est disponible pour adapter un vieux
+    fichier de configuration à un nouveau noyau. Pour l'utiliser, lancez :
+
+       cp user/some/old.config .config
+       make oldconfig
+
+    Ce programme affichera une invite pour chaque option manquante ou modifiée.
+    L'invite se finit par quelque chose comme :
+
+       Group CPU scheduler (GROUP_SCHED) [N/y/?] (NEW)
+
+    Répondre par <Entrée> choisit la première option (celle en majuscule). Dans
+    certains cas, le choix peut ressembler à :
+
+       PCI slot detection driver (ACPI_PCI_SLOT) [N/m/y/?] (NEW)
+
+    si la compilation en tant que module est disponible. Pour remplacer le choix
+    par défaut, il suffit de taper la lettre appropriée.
+     
+    Les nouvelles version du noyau introduisent souvent de nouveaux symboles de
+    configuration. Mais plus important encore, les nouvelles version du noyau 
+    peuvent changer le nom d'un symbole de configuration. Quand ceci arrive,
+    l'utilisation d'un ancien fichier .config et l'exécution de "make oldconfig" ne
+    produiront pas forcément un nouveau noyau opérationnel pour vous, vous devrez donc
+    chercher quels NOUVEAUX symboles ont été introduits.
+
+    Pour voir une liste des nouveaux symboles de configuration lors de
+    l'utilisation de "make oldconfig", utilisez
+
+        cp user/some/old.config .config
+        yes "" | make oldconfig > conf.new
+        grep "(NEW)" conf.new
+
+2.  A propos des modules
+
+    La plupart des distribution commerciales compilent autant d'options que possible
+    comme module. Cela permet au noyau de seulement charger ce dont il a besoin,
+    quand il en a besoin. Ceci prend aussi beaucoup d'espace et augmente le
+    temps de démarrage en essayant virtuellement tout les pilotes disponibles. Par
+    exemple, un système Ubuntu contient 97 Mio de modules.
+
+    Autoriser l'utilisation des modules n'est pas requis. Leur utilisation peut
+    être supprimée via une option du noyau. Si c'est fait, ceci interdira le
+    chargement de modules propriétaire comme les pilotes Nvidia ou VMware. 
+
+    Étant donné que LFS n'utilise pas d'initrd, certains pilote comme les
+    pilotes du disque et du système de fichiers de la partition racine doivent
+    être compilés en dur dans le noyau. La plupart du temps se sont les pilotes
+    SATA (CONFIG_ATA) ou PATA (CONFIG_IDE) et le pilote ext3 (CONFIG_EXT3_FS).
+
+    Sur un système LFS, vous connaissez sans doute (ou pouvez trouver avec des
+    outils comme lspci) le matériel qui compose votre système. Je vous
+    recommande de minimiser le nombre de modules que vous compilez. Après tout,
+    vous pouvez toujours revenir en arrière et recompiler avec d'autres options.
+
+    Le chargement des modules peut être contrôlé via /etc/modprobe.conf. Pour
+    plus de détails, voir man 5 modprobe.conf. De plus, les modules peuvent être
+    chargés automatiquement par le script de démarrage LFS modules quand ceci est
+    indiqué dans son fichier de configuration : /etc/sysconfig/modules.
+
+3.  Sections de la configuration
+
+    Le menu principal des programmes de configuration est divisé selon les sections
+    suivantes :
+
+     a.  General setup  
+      
+         Contient les options générales.
+
+     b.  Enable loadable module support 
+
+         Fournit la possibilité de charger les modules du noyau. Les sous-options
+         fournissent des possibilités supplémentaires relatives aux modules.
+
+     c.  Enable the block layer 
+
+         Ceci doit être activé pour pouvoir monter n'importe quel disque.
+
+     d.  Processor type and features  
+
+         La plupart des réglages par défaut seront certainement adaptés à votre matériel,
+         mais vous pouvez vouloir désactiver des options qui ne vous serviront
+         pas comme le support pour un ordonnanceur multi-coeur. Vous pouvez aussi
+         régler le nombre de processeurs que le noyau pourra gérer.
+
+         Vous pouvez aussi activer la prise en charge de marques spécifiques
+         d'ordinateurs portables.
+
+     e.  Power management and ACPI options 
+
+         Contrôle la prise en charge de l'ACPI (Advanced Configuration and Power
+         Interface) ou de l'APM (Advanced Power Management) par le BIOS. Ces
+         options sont surtout utiles sur les ordinateurs portables.
+
+     f.  Bus options (PCI etc)
+         
+         Généralement seule la prise en charge du bus PCI est ici nécessaire sur les
+         systèmes récents. Utilisez les réglages par défaut.
+
+     g.  Executable file formats / Emulations
+
+         Généralement, seul le support pour ELF est nécessaire.
+
+     h.  Networking support 
+
+         C'est ici que sont gérés les fonctionnalités réseau (y compris sans
+         fil). Les fonctionnalités Netfilter (pare-feu) sont gérées ici. Les
+         réglages par défaut sont généralement satisfaisants.
+
+     i.  Device Drivers 
+
+         C'est une des sections de configuration les plus importantes. Si vous
+         voulez que votre matériel fonctionne, il doit être activé par un
+         pilote. Vérifiez les périphériques connectés sur un système en marche
+         avec `lspci -v`. Activez tout les périphériques réseaux ou usb que vous
+         possédez. Les pilotes des cartes son et cartes graphiques sont aussi
+         activés ici.
+
+         Prenez votre temps dans cette section et assurez-vous d'ajouter les pilotes
+         pour tout le matériel que vous voulez utiliser.
+
+     j.  Firmware Drivers
+
+         Les réglages par défaut sont généralement bons ici.
+
+     k.  File systems
+
+         Si vous voulez prendre en charge reiser, ext4, jfs, xfs, le support
+         de l'automontage du noyau ou nfs, c'est ici que vous devez sélectionner ces
+         fonctionnalités.
+
+     l.  Kernel hacking
+
+         Si vous modifiez des choses ici, vous devriez savoir pourquoi.
+
+     m.  Security options
+
+         Les réglages par défaut sont généralement bons ici aussi.
+
+     n.  Cryptographic API
+
+         Fonctionnalités cryptographiques. Les réglages par défaut sont
+         généralement bons ici.
+
+     o.  Virtualization (NEW)
+
+         Permet d'utiliser votre hôte Linux pour faire tourner d'autres systèmes
+         d'exploitation dans des machines virtuelles (invités).
+
+     p.  Library routines 
+
+         Diverses routines CRC ('Code Correcteur'). Les réglages par défaut sont
+         appropriés à moins que vous n'ayez des besoins particuliers.
+
+HISTORIQUE DES CHANGEMENTS :
+   [2009-05-28]
+      Version initiale
+   [2009-05-29]
+      Corrections de fautes de frappe.  Ajout d'un pointeur vers 
+      /etc/sysconfig/modules.
+      Merci à Trent Shea.
+
+HISTORIQUE DE LA TRADUCTION : 
+   [2009-06-21]
+      Traduction initiale de l'astuce.

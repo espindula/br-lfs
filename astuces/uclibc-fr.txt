@@ -1,0 +1,626 @@
+AUTEUR : Robert Connolly <robert@linuxfromscratch.org>
+
+TRADUCTEUR : Emmanuel Trillaud <emmanuel.trillaud@gmail.com> 
+
+DATE : 11-03-2005
+
+LICENCE : Domaine Public
+
+SYNOPSIS : Bibliothèque C/C++ uClibc
+
+DESCRIPTION :
+Les bibliothèques uClibc sont conçues pour être petite, pour les systèmes embarqués,
+tout en possédant la plupart des fonctionnalités de Glibc. De cette façon, la
+majorité des logiciels seront capables d'utiliser uClibc, même Xorg et KDE.
+uClibc fournit même un "menuconfig" similaire au noyau Linux, afin que les
+fonctionnalités puissent être configurées pour que la bibliothèque soit taillée à
+vos besoin spécifique. uClibc est un excellent choix pour les petits systèmes,
+mais peut aussi bien être utilisée sur un ordinateur de bureau.
+
+Voir aussi :
+http://www.uclibc.org/
+http://cxx.uclibc.org/
+http://www.linuxfromscratch.org/hlfs/view/unstable/uclibc/
+http://busybox.net/
+http://buildroot.uclibc.org/
+
+PREREQUIS : Sed version 4 (ou supérieure)
+
+ASTUCE :
+
+# Cette astuce montrera comment installer uClibc, soit comme partie d'une
+# construction LFS soit aux côtés d'un système existant. Si vous choisissez
+# de l'installer sur un système existant, vous aurez simplement besoin de
+# modifier vos variables d'environnement CC et CXX pour l'utiliser.
+
+# Cette astuce peut être un peu délicate à suivre car elle couvre deux types
+# d'installations. Assurez-vous de prendre votre temps pour être sûr de suivre
+# les parties vous concernant. Prévoyez de rater votre premier essai (comme
+# pour n'importe quelle construction LFS typique).
+
+# Paquet(s) nécessaire(s) :
+
+# http://www.uclibc.org/downloads/uClibc-0.9.28.tar.bz2
+
+# Locales (optionnelles) :
+
+# http://www.uclibc.org/downloads/uClibc-locale-030818.tgz
+
+# La bibliothèque C++ uClibc (optionnelle) :
+
+# http://cxx.uclibc.org/src/uClibc++-0.1.11.tbz2
+
+# Correctifs nécessaires :
+
+# http://www.linuxfromscratch.org/patches/downloads/uClibc/uClibc-0.9.28-config-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/uClibc/\
+#	uClibc-0.9.28-libc_stack_end-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/binutils/\
+#	binutils-2.16.1-uClibc_conf-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/gcc/gcc-3.4.4-uClibc_conf-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/gcc/gcc-3.4.4-no_fixincludes-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/gcc/gcc-3.4.4-specs_x86-1.patch
+
+# Pour g++ (et non pas uClibc++) :
+# http://www.linuxfromscratch.org/patches/downloads/gcc/\
+#	gcc-3.4.3-uClibc_libstdc++-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/gcc/gcc-3.4.3-uClibc_conf-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/gcc/gcc-3.4.3-uClibc_locale-1.patch
+
+# Pour utiliser uClibc avec le support de SSP (optionnel) :
+# Voir aussi : http://www.linuxfromscratch.org/hints/downloads/files/ssp.txt
+# http://www.linuxfromscratch.org/patches/downloads/linux-libc-headers/\
+#	linux-libc-headers-2.6.11.2-pseudo_random-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/gcc/gcc-3.4.4-ssp-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/uClibc/\
+#	uClibc-0.9.28-arc4random-2.patch
+# http://www.linuxfromscratch.org/patches/downloads/linux/\
+#	linux-2.6.11.12-pseudo_random-1.patch
+
+# Correctifs supplémentaires :
+# http://www.linuxfromscratch.org/patches/downloads/sed/sed-4.1.4-uClibc-1.patch
+# http://www.linuxfromscratch.org/patches/downloads/shadow/shadow-4.0.13-uClibc-1.patch
+# http://www.linuxfromscratch.org/patches/hlfs/svn/psmisc-21.6-rpmatch-1.patch
+
+# Attention :
+# N'espérez pas que beaucoup de suites de tests réussissent :
+
+# Si vous installez à côté un système existant, ajoutez un utilisateur uclibc et un
+# répertoire uclibc dédié. Après l'installation, cet utilisateur pourra être
+# supprimé. Si vous installez un nouveau système LFS, ignorez cela. Si vous
+# voulez installer un ensemble d'outils i386 ou i486, utilisez
+# "i386-pc-linux-uclibc" ou "i486-pc-linux-uclibc". La compilation pour i386
+# produit des programmes plus petits.
+
+groupadd uclibc &&
+useradd -g uclibc -s /bin/bash -d /home/uclibc -m uclibc &&
+install -d -o uclibc /usr/i386-pc-linux-uclibc/
+
+# Si vous installez ceci aux côtés d'un système existant, alors vous avez
+# probablement prévu d'utiliser les bibliothèques uClibc sur un autre système comme
+# une disquette ou un cdrom. Le mieux est de lier à / et non pas à
+# /usr/i386-pc-linux-uclibc/lib, car ce serait maladroit.
+# Pour faire cela, sans perturber le système existant, nous allons lier
+# symboliquement /usr/i386-pc-linux-uclibc/lib à /ulib. Les fichiers d'en-tête,
+# le compilateur et l'éditeur de liens seront installés dans
+# /usr/i386-pc-linux-uclibc/lib, mais le compilateur fera des liens vers /ulib.
+# Cela permettra de construire et tester les paquets liés à uClibc, sans chroot.
+
+# J'ai décidé de ne pas essayer de lier
+# /usr/i386-pc-linux-uclibc/lib/ld-uClibc.so.0 à /lib pour qu'il n'y ait pas de
+# conflits avec mon système hôte, qui utilise aussi uClibc. 
+
+ln -s /usr/i386-pc-linux-uclibc/lib /ulib
+
+# Si vous installez LFS-uClibc, changez l'utilisateur à uclibc et n'ajustez pas
+# le $PATH. Si vous installez sur un système existant, changer l'utilisateur à
+# uclibc :
+
+su - uclibc
+export PATH=/usr/i386-pc-linux-uclibc/bin:$PATH
+
+# Nous allons utiliser la variable $prefix dans cette astuce. Si vous installez
+# sur un système existant, elle pointera vers /usr. Nous allons aussi
+# initialiser le répertoire ldso à /ulib :
+
+export prefix=/usr/i386-pc-linux-uclibc &&
+export ldso_dir=/ulib
+
+# Si vous installez un nouveau système LFS alors $prefix sera /tools et le
+# répertoire ldso sera /tools/lib :
+
+export prefix=/tools &&
+export ldso_dir=/tools/lib
+
+# Nous allons aussi utiliser la variable $target. Ce sera la même quelque soit
+# le type d'installation :
+
+export target=i386-pc-linux-uclibc
+
+# Maintenant, nous commençons l'installation.
+
+### Chapitre 5 ###
+
+# Premièrement, installez linux-libc-headers :
+
+# Si vous prévoyez d'utiliser SSP, appliquez ce correctif :
+
+patch -Np1 -i ../linux-libc-headers-2.6.11.2-pseudo_random-1.patch
+
+# Puis, installez les en-têtes du noyau :
+
+install -d ${prefix}/include &&
+cp -R include/asm-i386 ${prefix}/include/asm &&
+cp -R include/linux ${prefix}/include
+
+# Deuxièmement, installez les en-têtes de uClibc :
+
+patch -Np1 -i ../uClibc-0.9.28-config-1.patch &&
+make KERNEL_SOURCE=${prefix} headers &&
+rm include/{asm,asm-generic,linux} &&
+make DEVEL_PREFIX=${prefix}/ install_dev
+
+# Ne vous inquiétez pas du message "lib/: No such file or directory".
+
+# Troisièmement, installez l'éditeur de liens croisé ("Cross Linker") de Binutils :
+
+patch -Np1 -i ../binutils-2.16.1-uClibc_conf-1.patch &&
+mkdir ../binutils-build &&
+cd ../binutils-build &&
+../binutils-2.16.1/configure --prefix=${prefix} \
+	--disable-shared  --disable-nls --target=${target} &&
+make &&
+make install &&
+make -C ld clean &&
+make -C ld LIB_PATH=${ldso_dir}
+
+# Ne supprimez pas encore les répertoires binutils-2.26.1/ et binutils-build :
+
+# Quatrièmement, installez le compilateur croisé GCC (seulement pour le langage
+# C) :
+
+# GCC essaiera d'utiliser ${prefix}/${target}/include car GCC est un compilateur
+# croisé. Corrigez ceci avec cette commande :
+
+sed -e "s@\(^CROSS_SYSTEM_HEADER_DIR =\).*@\1 ${prefix}/include@g" \
+	-i gcc/Makefile.in
+
+# Ajoutez ce correctif pour que nous puissions spécifier où se trouvera notre
+# bibliothèque ld.so :
+
+patch -Np1 -i ../gcc-3.4.4-specs_x86-1.patch
+
+# Par défaut, GCC utilisera le préfixe ${prefix}/${target}/lib pour ces fichiers
+# de démarage car GCC est ici un compilateur croisé. Corrigez ceci
+# avec la commande suivante :
+
+echo "
+#undef STARTFILE_PREFIX_SPEC
+#define STARTFILE_PREFIX_SPEC \"${prefix}/lib/\"" >> gcc/config/linux.h
+
+# Construisez et installez GCC :
+
+patch -Np1 -i ../gcc-3.4.4-uClibc_conf-1.patch &&
+touch ${ldso_dir}/ld-uClibc.so.0 &&
+mkdir ../gcc-build &&
+cd ../gcc-build &&
+../gcc-3.4.4/configure --prefix=${prefix} --target=${target} \
+	--disable-nls --disable-shared --enable-languages=c \
+	--with-dynamic-linker=${ldso_dir}/ld-uClibc.so.0 --with-nostdinc &&
+make &&
+make install
+
+# Installez maintenant uClibc :
+
+# Pour utiliser SSP :
+
+patch -Np1 -i ../uClibc-0.9.28-arc4random-2.patch
+
+# Si vous voulez les locales :
+
+install -m444 ../uClibc-locale-030818.tgz extra/locale/
+
+# Ajoutez un fichier de configuration (avec seulement ce qu'il faut pour être
+# capable de construire n'importe quel paquet) :
+
+patch -Np1 -i ../uClibc-0.9.28-config-1.patch
+
+# Ce correctif est nécessaire pour corriger un bogue dans cette version
+# d'uClibc. C'est seulement nécessaire pour la première construction d'uClibc
+# (étape 1 du bootstrap):
+
+patch -Np1 -i ../uClibc-0.9.28-libc_stack_end-1.patch
+
+# Réinitialisez les chemins de l'installation :
+
+sed -e "s@.*SHARED_LIB_LOADER_P.*@SHARED_LIB_LOADER_PREFIX=\"${prefix}/lib\"@g" \
+	-i .config &&
+sed -e "s@.*RUNTIME_PREFIX.*@RUNTIME_PREFIX=\"${prefix}\"@g" \
+	-i .config &&
+sed -e "s@.*DEVEL_PREFIX.*@DEVEL_PREFIX=\"${prefix}/\"@g" \
+	-i .config &&
+sed -e "s@.*KERNEL_SOURCE.*@KERNEL_SOURCE=\"${prefix}\"@g" -i .config
+
+# Vous pouvez maintenant exécuter "make menuconfig". Les réglages par défaut du
+# correctif de la configuration vous permettront de construire presque n'importe
+# quoi. Si vous ne voulez pas prendre en charge les locales, vous devez
+# désactiver l'option UCLIBC_HAS_LOCALE du menu "String and Stdio Support".  Si
+# vous ne voulez pas utiliser SSP, désactivez l'option UCLIBC_HAS_SSP du menu
+# "uClibc security related options".
+
+# Si vous effectuez l'installation à côté d'un système existant et si vous
+# avez modifié la configuration, vous devriez sauvegarder votre fichier .config
+# pour plus tard car make menuconfig ne marchera pas sans ncurses. Si vous 
+# installez un nouveau système LFS, make menuconfig marchera dans le chapitre 6.
+
+# Construisez uClibc :
+
+make CROSS=${target}- all
+
+# puis installez uClibc (après avoir supprimé certains liens symboliques) :
+
+rm include/{asm,asm-generic,linux} &&
+make install
+
+# uClibc ne fournit pas libintl.so. Si vous avez installé des locales, vous devriez
+# installer la bibliothèque libintl de Gettext :
+
+cd gettext-runtime/ &&
+env CC=${target}-gcc \
+	./configure --prefix=${prefix} --with-included-gettext \
+	--without-csharp --disable-libasprintf &&
+make -C intl/ &&
+make -C intl/ install
+
+# Puis faites en sorte que GCC lie tous les programme à libintl (ceci corrige des
+# bogues dans plusieurs paquets). Pour désactiver l'édition de liens sur des
+# paquets particuliers, utilisez CFLAGS="-nointl" :
+
+sed -e 's/%{shared:-lc}/%{!nointl: -lintl} &/' \
+	-i `${target}-gcc --print-file specs`
+
+# Maintenant, ajustez l'ensemble d'outils :
+
+install ld/ld-new ${prefix}/bin/${target}-ld 
+ln -f ${prefix}/bin/${target}-ld ${prefix}/${target}/bin/ld
+
+# Et testez-le :
+
+echo 'main(){}' | ${prefix}/bin/${target}-gcc -x c -
+readelf -l a.out | grep ": ${prefix}"
+
+# Cela devrait renvoyer : 
+# Requesting program interpreter:
+# /usr/i386-pc-linux-uclibc/lib/ld-uClibc.so.0] ou Requesting program
+# interpreter: /tools/lib/ld-uClibc.so.0]
+
+# Maintenant, supprimez les répertoires binutils-2.16.1/ et binutils-build/ .
+
+# Si vous installez LFS-uclibc, alors installez TCL, Expect et DejaGNU.
+
+# L'éditeur de liens natif de Binutils :
+
+patch -Np1 -i ../binutils-2.16.1-uClibc_conf-1.patch &&
+mkdir ../binutils-build &&
+cd ../binutils-build &&
+env CC=${target}-gcc \
+../binutils-2.16.1/configure --prefix=${prefix} \
+    --host=${target} --build=${target} --target=${target} \
+    --enable-shared --with-lib-path=${ldso_dir} &&
+make &&
+make install &&
+make -C ld clean &&
+make -C ld LIB_PATH=/usr/lib:/lib
+
+# Si vous installez LFS-uClibc, ne supprimer pas les répertoires
+# binutils-2.16.1/ et binutils-build, jusqu'au réajustement du chapitre 6. Si
+# vous faites l'installation à côté d'un système existant, ces répertoires peuvent
+# être supprimés.
+
+# Compilateur GCC natif (C et C++) :
+
+# Pour utiliser SSP :
+
+patch -Np1 -i ../gcc-3.4.4-ssp-1.patch &&
+sed -e 's@gcc.gnu.org/bugs.html@bugs.linuxfromscratch.org/@' \
+	-e 's/3.4.4/3.4.4 (ssp)/' -i gcc/version.c
+
+# Pour lier libintl à tout les programmes :
+
+sed -e 's/%{shared:-lc}/%{!nointl: -lintl} &/' \
+        -i gcc/config/linux.h
+
+# Maintenant, corrigez, construisez et installez GCC :
+
+patch -Np1 -i ../gcc-3.4.4-uClibc_conf-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-uClibc_libstdc++-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-uClibc_locale-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-specs_x86-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-no_fixincludes-1.patch &&
+mkdir ../gcc-build &&
+cd ../gcc-build &&
+env CC=${target}-gcc \
+../gcc-3.4.4/configure --prefix=${prefix} \
+	--host=${target} --build=${target} --target=${target} \
+	--libexecdir=${ldso_dir} --with-local-prefix=${prefix} \
+	--enable-shared --enable-threads=posix \
+	--enable-__cxa_atexit --enable-languages=c,c++ \
+	--disable-libstdcxx-pch --enable-clocale \
+	--with-dynamic-linker=${ldso_dir}/ld-uClibc.so.0 --with-nostdinc \
+	--enable-multilib=no &&
+make &&
+make install &&
+ln -s gcc ${prefix}/bin/cc
+
+# Pour activer SSP par défaut et le tester, voir les sections 5.12.2 et 5.12.3 de :
+# http://www.linuxfromscratch.org/hlfs/view/unstable/uclibc-2.6/chapter05/gcc.html
+
+# Si vous construisez LFS-uclibc, achevez la construction du chapitre 5
+# normalement, en partant de la seconde construction de GCC.
+
+# Si vous avez installé uClibc aux côtés d'un système existant, reconstruisez
+# uClibc pour qu'elle soit bootstrappée. Le correctif libc_stack_end ne devrait
+# plus être nécessaire.
+
+# Pour utiliser SSP :
+
+patch -Np1 -i ../uClibc-0.9.28-arc4random-2.patch
+
+# Pour utiliser les locales :
+
+install -m444 ../uClibc-locale-030818.tgz extra/locale/
+
+# Ajoutez le correctif de config (ou copiez celui que vous avez sauvegardé
+# précédemment) :
+
+patch -Np1 -i ../uClibc-0.9.28-config-1.patch
+
+# Réinitialisez les chemins d'installation :
+
+sed -e "s@.*SHARED_LIB_LOADER_P.*@SHARED_LIB_LOADER_PREFIX=\"${prefix}/lib\"@g" \
+        -i .config &&
+sed -e "s@.*RUNTIME_PREFIX.*@RUNTIME_PREFIX=\"${prefix}\"@g" \
+        -i .config &&
+sed -e "s@.*DEVEL_PREFIX.*@DEVEL_PREFIX=\"${prefix}/\"@g" \
+        -i .config &&
+sed -e "s@.*KERNEL_SOURCE.*@KERNEL_SOURCE=\"${prefix}\"@g" -i .config
+
+# Rendez uClibc un peu plus rapide et petite :
+
+sed -e 's/^OPTIMIZATION:=.*$/& -fomit-frame-pointer/' -i Rules.mak
+
+# Puis construisez et installez uClibc de nouveau :
+
+make CROSS=${target}- all &&
+rm include/{asm,asm-generic,linux} &&
+make install
+
+# si vous voulez installer aussi ldconfig :
+
+make headers &&
+make CC="gcc -Wl,--dynamic-linker,${ldso_dir}/ld-uClibc.so.0 ${ldso_dir}/libc.so.0" \
+	-C utils &&
+make -C utils install
+
+# Puis déplacez ldconfig :
+
+mv ${prefix}/sbin/ldconfig ${prefix}/bin &&
+rmdir ${prefix}/sbin/
+
+# et réinstallez aussi Gettext (l'en-tête libintl.h a été supprimée uClibc lors de la
+# réinstallation de uClibc) :
+
+cd gettext-runtime/ &&
+env CC=${target}-gcc \
+        ./configure --prefix=${prefix} --with-included-gettext \
+        --without-csharp --disable-libasprintf &&
+make -C intl/ &&
+make -C intl/ install
+
+# Si vous faites l'installation aux côtés d'un système existant, vous avez presque
+# fini. Sautez la section du chapitre 6 ci-dessous, et allez directement à la section
+# "Installer uClibc++".
+
+### Chapitre 6 ###
+(Installer un nouveau système LFS-uClibc)
+
+# Installez Linux-libc-headers :
+
+patch --no-backup-if-mismatch -Np1 -i \
+	../linux-libc-headers-2.6.11.2-pseudo_random-1.patch &&
+cp -R include/asm-i386 /usr/include/asm &&
+cp -R include/linux /usr/include &&
+chown -R root:root /usr/include/{asm,linux} &&
+find /usr/include/{asm,linux} -type d -exec chmod 755 {} \; &&
+find /usr/include/{asm,linux} -type f -exec chmod 644 {} \;
+
+# Installez Man-pages...
+
+# Installez uClibc :
+
+# Avec SSP :
+
+patch -Np1 -i ../uClibc-0.9.28-arc4random-2.patch &&
+install -m644 libc/stdlib/man/arc4random.3 /usr/share/man/man3
+
+# Avec les locales :
+
+install -m444 ../uClibc-locale-030818.tgz extra/locale/
+
+# Corrigez le fichier config :
+
+patch -Np1 -i ../uClibc-0.9.28-config-1.patch
+
+# Exécutez menuconfig si vous voulez :
+
+make menuconfig
+
+# Corriger les chemins d'installation (ceci installera sur /) :
+
+sed -e 's@.*SHARED_LIB_LOADER_PREFIX.*@SHARED_LIB_LOADER_PREFIX="/lib"@g' \
+	-i .config &&
+sed -e 's@.*RUNTIME_PREFIX.*@RUNTIME_PREFIX="/"@g' -i .config &&
+sed -e 's@.*DEVEL_PREFIX.*@DEVEL_PREFIX="/usr/"@g' -i .config &&
+sed -e 's@.*KERNEL_SOURCE.*@KERNEL_SOURCE="/usr"@g' -i .config
+
+# Rendez uClibc un peu plus petite et plus rapide :
+
+sed -e 's/^OPTIMIZATION:=.*$/& -fomit-frame-pointer/' -i Rules.mak
+
+# Puis compilez et installez uClibc :
+
+make &&
+rm include/{asm,asm-generic,linux} &&
+make install &&
+make headers &&
+make CC="gcc -Wl,--dynamic-linker,/lib/ld-uClibc.so.0 /lib/libc.so.0" \
+	-C utils &&
+make -C utils install &&
+echo "/usr/local/lib" > ld.so.conf.new &&
+install -m644 ld.so.conf.new /etc/ld.so.conf
+
+# Ajustez votre fuseau horaire :
+# Voir : http://leaf.sourceforge.net/doc/guide/buci-tz.html#id25991 (ERRATA [2])
+
+echo "EST5EDT" > TZ.new
+install -m644 TZ.new /etc/TZ
+
+# Si vous avez installé uClibc avec la prise en charge des locales, installez
+# Gettext maintenant :
+
+cd gettext-runtime/
+./configure --prefix=/usr --libdir=/lib --with-included-gettext \
+	--disable-static --enable-relocatable --disable-rpath
+make -C intl/ &&
+make -C intl/ install &&
+rm /lib/libintl.so &&
+ln -sf ../../lib/libintl.so.3 /usr/lib/libintl.so
+
+# Réajustez l'ensemble d'outils :
+
+install ld/ld-new /tools/bin/ld &&
+perl -pi -e 's: /tools/lib/ld-uClibc.so.0: /lib/ld-uClibc.so.0:g;' \
+	-e 's@\*startfile_prefix_spec:\n@$_/usr/lib/@g;' \
+	$(gcc --print-file specs)
+
+# Testez-le :
+
+echo 'main(){}' > dummy.c
+cc dummy.c
+readelf -l a.out | grep ': /lib'
+
+# Installez Binutils:
+
+patch -Np1 -i ../binutils-2.16.1-uClibc_conf-1.patch &&
+mkdir ../binutils-build &&
+cd ../binutils-build &&
+../binutils-2.16.1/configure --prefix=/usr --enable-shared \
+	--host=i386-pc-linux-uclibc --build=i386-pc-linux-uclibc \
+	--target=i386-pc-linux-uclibc &&
+make tooldir=/usr &&
+make tooldir=/usr install &&
+install -m644 ../binutils-2.16.1/include/libiberty.h /usr/include
+
+# Installez GCC :
+
+# Pour utiliser SSP :
+
+patch -Np1 -i ../gcc-3.4.4-ssp-1.patch &&
+sed -e 's@gcc.gnu.org/bugs.html@bugs.linuxfromscratch.org/@' \
+	-e 's/3.4.4/3.4.4 (ssp)/' -i gcc/version.c
+
+# Puis corrigez GCC :
+
+patch -Np1 -i ../gcc-3.4.4-uClibc_conf-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-uClibc_libstdc++-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-uClibc_locale-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-specs_x86-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-no_fixincludes-1.patch &&
+patch -Np1 -i ../gcc-3.4.4-linkonce-1.patch &&
+sed -e 's/install_to_$(INSTALL_DEST) //' -i libiberty/Makefile.in &&
+mkdir ../gcc-build &&
+cd ../gcc-build &&
+../gcc-3.4.4/configure --prefix=/usr --host=i386-pc-linux-uclibc \
+	--build=i386-pc-linux-uclibc --target=i386-pc-linux-uclibc \
+	--libexecdir=/usr/lib --enable-threads=posix \
+	--enable-shared --enable-__cxa_atexit \
+	--with-dynamic-linker=/lib/ld-uClibc.so.0 --enable-clocale \
+	--enable-languages=c,c++ --enable-multilib=no &&
+make &&
+make install &&
+ln -s ../usr/bin/cpp /lib &&
+ln -s gcc /usr/bin/cc
+
+# Si vous utlisez SSP, ré-exécutez /tools/bin/hardened-specs.sh et relancez les
+# tests.
+
+# Maintenant, le reste du Chapitre 6 peut être construit normalement, et/ou
+# installez uClibc++ tout de suite.
+
+### Installer uClibc++ ###
+
+# Pour LFS-uClibc :
+
+export prefix=/usr
+
+# Pour l'installation aux côtés d'un système existant ne touchez pas à $prefix.
+
+# LFS-uClibc permet d'exécuter 'make menuconfig'. Pour une installation aux côtés
+# d'un système existant, vous ne trouverez pas la bibliothèque ncurses dans
+# ${prefix}, donc seul 'make config' marchera.
+
+# Pour tout activer :
+
+yes "" | make config
+
+# Réglez les chemins d'installation :
+
+sed -e "s@.*UCLIBCXX_RUNTIME_PREFIX.*@UCLIBCXX_RUNTIME_PREFIX=\"${prefix}\"@g" \
+	-i .config
+
+# Puis construisez et installez uClibc++ :
+
+make &&
+make install
+
+# Si vous faites l'installation aux côtés d'un système existant, alors faites en
+# sorte que "g++-uc" se lie à /ulib :
+
+sed -e 's@/usr/i386-pc-linux-uclibc/lib/@/ulib@g' -i ${prefix}/bin/g++-uc
+
+# Pour utiliser gcc++-uc, exécutez :
+
+export CXX="g++-uc"
+
+# uClibc++ peut ne pas marcher avec tout les paquets, reste donc à l'essayer.
+# uClibc++ dépend aussi de g++, il ne peut conc pas se bootstrapper lui-même.
+
+# Si vous installez aux côtés d'un système existant, exécutez aussi :
+
+export CC="/usr/i386-pc-linux-uclibc/bin/i386-pc-linux-uclibc-gcc"
+
+# Si vous avez installé uClibc aux côtés d'un système existant, vous pouvez
+# maintenant supprimer l'utilisateur uclibc et changer le propriétaire de 
+# /usr/i386-pc-linux-uclibc.
+
+chown -R 0:0 /usr/i386-pc-linux-uclibc
+
+# Tout ce que vous avez besoin de savoir ensuite devrait être se trouver dans
+# d'autres documents, comme "Boot Disk Howto", etc.
+
+# Vous pouvez m'envoyer vos remarques et questions.
+
+REMERCIEMENT :
+* Merci à l'équipe d'uClibc pour avoir créé ce logiciel.
+
+HISTORIQUE DES CHANGEMENTS :
+[2005-11-03]
+* Astuce initiale
+
+HISTORIQUE DE LA TRADUCTION :
+[2009-07-25]
+* Traduction de l'astuce
+
+ERRATA DU TRADUCTEUR : 
+[1] cette URL n'est plus valide, utilisez :
+[2] cette URL n'est plus valide

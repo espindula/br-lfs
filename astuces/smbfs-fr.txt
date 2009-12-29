@@ -1,0 +1,161 @@
+AUTEUR : JanJorre Laurens <darkrealm [dot] drjj [at] gmail [dot] com>
+TRADUCTEUR : appzer0 <appzer0@free.fr>
+
+DATE: 12/06/2006
+
+LICENCE : GNU Free Documentation License Version 1.2
+
+SYNOPSIS: Comment installer un système LFS lorsqu'on dispose de peu d'espace disque
+
+DESCRIPTION:
+  La présente astuce explique comment installer un système {nA}LFS si vous ne
+  disposez pas de beaucoup d'espace disque sur votre système LFS. Pour mettre
+  cette astuce en ½uvre, vous devez disposer d'un autre ordinateur (éventuellement sous Windows)
+  disposant de suffisamment d'espace disque pour compiler.
+
+PIÈCES JOINTES :
+Aucune
+
+PRÉ-REQUIS :
+  - Cette astuce requiert une bonne connnaissance de LinuxFromScratch.
+  
+  - Cette astuce requiert également que vous disposiez d'un autre ordinateur sous
+    Windows (XP de préférence) et une connexion réseau entre les 2
+    ordinateurs.
+
+  - Cette astuce présuppose que vous utilisez le LiveCD de LFS mais tout système
+    supportant smbfs / smbmount fera l'affaire.
+
+L'ASTUCE :
+                       -------------------------------
+                      | CONFIGURER LE SYSTÈME WINDOWS |
+                       -------------------------------
+
+  La première chose à faire est de configurer le système exécutant Windows.
+  Vu que je n'utilise que Windows XP, je n'expliquerai la configuration que pour
+  ce système d'exploitation. Si vous disposez d'une autre version, n'hésitez pas
+  à m'écrire afin de m'expliquer comment gérer une situation identique sur ce système d'exploitation.
+
+  Allons-y.
+
+  La première chose à faire est de trouver une partition d'au moins 6  
+  Go d'espace libre (10 Go sont recommandés).
+
+  Créer un répertoire appelé 'donnees_lfs'.
+  Activez le partage sur ce répertoire en faisant un clic droit sur ce répertoire
+  et en choisissant "Propriétés".
+  Sélectionnez l'onglet "Partage".
+  Assurez-vous que les cases à cocher à côté de "Partager ce dossier sur le réseau" 
+  et de "Permettre aux utilisateur de modifier ce dossier" sont bien activées.
+  Assurez-vous que ce partage est bien nommé "donnees_lfs"
+
+  Votre système Windows est prêt ! :-)
+
+           -----------------------------------------------------
+          | CRÉER ET MONTER LES DIFFÉRENTS SYSTÈMES DE FICHIERS |
+           -----------------------------------------------------
+
+  Bien, voici la partie la moins aisée. Créons d'abord un point de montage pour le
+  partage :
+
+	mkdir /mnt/donnees_lfs
+
+  Puis, montez le partage en utilisant  smbmount :
+	
+	smbmount //[IP_DE_VOTRE_SYSTÈME_WINDOWS]/donnees_lfs donnees_lfs
+
+  Nous allons maintenant devoir créer 3 fichiers formatés avec le système de fichiers
+  ext2. La raison en est simple : la compatibilité des droits. 
+  Utiliser un partage direct depuis Windows XP peut poser de sérieux problèmes si vous
+  utilisez {nA}LFS depuis un système de fichiers Windows XP (NdT: FAT ou NTFS).
+  
+  Bien ! Créons donc ces fichiers :
+
+	dd if=/dev/zero of=/mnt/donnees_lfs/root    bs=1M count=2045
+	dd if=/dev/zero of=/mnt/donnees_lfs/tools   bs=1M count=2045
+	dd if=/dev/zero of=/mnt/donnees_lfs/sources bs=1M count=2045
+
+  Puis créons le système de fichiers ext2 au sein de chacun de ces fichiers :
+
+	mkfs.ext2 /mnt/donnees_lfs/root
+	mkfs.ext2 /mnt/donnees_lfs/tools
+	mkfs.ext2 /mnt/donnees_lfs/sources
+
+  Ces 3 commandes provoqueront le message d'erreur suivant :
+
+	mke2fs 1.37 (21-Mar-2005)
+	root is not a block special device.
+	Proceed anyway? (y,n)
+
+  Tapez 'y' :-)
+  
+  L'étape suivante consiste à tout monter :
+      
+	mkdir /mnt/lfs
+	mount /mnt/donnees_lfs/root /mnt/lfs -o loop
+	
+	mkdir /mnt/lfs/tools
+	mount /mnt/donnees_lfs/tools /mnt/lfs/tools -o loop
+	
+	mkdir /mnt/lfs/tools/packages-6.1.1 
+    mount /mnt/donnees_lfs/sources /mnt/lfs/packages-6.1.1 -o loop
+
+		                ----------------
+		               | LISEZ LE LIVRE |
+                		----------------
+
+  Tout est dans le titre :-) Il est maintenant temps de se référer au livre ou 
+  de lancer le script {nA}LFS  et to1t ce que vo1s poulez
+  excepté les chapitres 2, 8 et 9 :-)
+
+		                -----------------
+        		       | DERNIÈRE ÉTAPE |
+                		-----------------
+
+  C'est presque terminé :-) Vous n'aurez ensuite qu'à copier tous les fichiers 
+  vers votre vraie partition racine. Il est maintenant temps de
+  modifier légèrement le chapitre 2 ;-)
+
+  D'abord, il vous faudra démonter tous les volumes inutiles, c'est-à-dire les répertoires 
+  /tools/packages-6.1.1 et /tools (et tous les volumes temporaires si vous en avez créés) :
+   
+	umount /mnt/lfs/tools/packages-6.1.1
+	umount /mnt/lfs/tools
+    
+    rmdir /mnt/lfs/tools
+
+  Créez ensuite une partition. Je suppose que vous savez le faire, sinon reportez-vous 
+  au chapitre 2 du livre LFS.
+
+  À partir de maintenant, je vais supposer que votre partition a le noeud de
+  périphérique nommé /dev/hda1. Modifiez les commandes selon vos propres noeuds.
+
+  Créeez maintenant un point de montage temporaire pour la partition hôte :
+	
+	mkdir /mnt/tmp
+	mount /dev/hda1 /mnt/tmp
+	
+  Puis copiez le contenu de /mnt/lfs dans /mnt/tmp:
+	
+	cp /mnt/lfs/* /mnt/tmp -pr
+
+  Enfin démontez les volumes lfs et tmp puis remontez /dev/hda1 dans /mnt/lfs
+  
+    umount /mnt/lfs
+	umount /mnt/tmp
+	
+	mount /dev/hda1 /mnt/lfs
+
+  Il est temps d'entrer dans l'environnement chroot /mnt/lfs et de se suivre les
+  chapitres 8 et 9.
+
+  C'est terminé :-) J'espère que cette astuce aura été utile à quelqu'un :-)
+
+REMERCIEMENTS :
+CHANGEMENTS :
+
+[12/02/2009]
+  * Traduction du document original en français de France
+  
+[12/06/2006]
+  * Astuce initiale

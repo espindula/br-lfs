@@ -1,0 +1,159 @@
+AUTEUR :        Hugo S. Cardozo <hugoa_c2004@yahoo.com>
+
+TRADUCTEUR :    Emmanuel Trillaud <emmanuel.trillaud@gmail.com>
+
+DATE :          31-03-2007
+
+LICENSE :       GNU Free Documentation License Version 1.2
+
+SYNOPSIS :      Logrotate: Conserve vos fichiers de journal en bon ordre
+
+DESCRIPTION :   Cette astuce vous aidera à installer et configurer logrotate
+                pour votre système (B)LFS
+
+PIECES JOINTES :   * logrotate-3.6.8
+                  <mirrordeslackware>/logrotate-3.6.8.tar.gz
+
+PREREQUIS : LFS doit être installé et opérationnel  
+                Popt-1.10.4
+                Eventuellement, (F)cron.
+
+ASTUCE :
+
+Introduction
+============
+
+Logrotate est un outil qui s'occupe des fichiers de journal de votre système. Il
+garde la trace de la taille des fichiers de journal et effectue une "rotation" quand
+c'est nécessaire. Cela signifie que l'outil vérifie la taille des fichiers et
+si l'un d'eux est plus grand qu'une certaine taille, le programme effectue
+certaines actions. Ces actions peuvent être : sauvegarder et compresser le
+fichier, le supprimer, l'envoyer à un utilisateur, créer un nouveau fichier de
+log vide ou autre chose.
+
+Installation
+============
+
+Tout d'abord, vous devez compiler et installer popt-1.10.4. Le livre BLFS
+contient les instructions pour cela. Mais si pour certaines raisons (curieuses)
+vous n'arrivez pas à obtenir l'archive de popt-1.10.4, vous pouvez utiliser
+popt-1.6.3 à la place ou (peut-être) une version supérieure.
+
+Maintenant vous pouvez compiler logrotate. Déballez l'archive et changez de
+répertoire courant :
+        tar xzf logrotate-3.6.8.tar.gz
+        cd logrotate-3.6.8
+
+Compilez :
+        make 
+Eventuellement, lancez la suite de tests : 
+        make test
+Installez :
+        make install
+
+Configuration
+=============
+
+La commande "logrotate" a besoin d'un fichier de configuration qui doit être
+donné en argument de la commande lors de l'exécution. Nous allons mettre ce fichier
+dans "/etc", et l'appeller "logrotate.conf".
+
+Créez le fichier avec la commande : 
+        cat >> /etc/logrotate.conf << EOF
+        # Début de /etc/logrotate.conf
+
+        # Effectue une rotation chaque semaine
+        weekly
+        
+        # N'envoie pas de mail
+        nomail
+
+        # Si le fichier de journal est vide, 
+        # on effectue pas de rotation 
+        notifempty
+
+        # Nombre de sauvegardes qui seront conservées
+        # Cela ne conservera que les 2 sauvegardes 
+        # les plus recentes.
+        rotate 2
+        
+        # Crée un nouveau fichier vide après avoir fait la 
+        # rotation des anciens
+        # Cela va créer un fichier de journal vide, dont le
+        # propriétaire est fixé à root, le groupe à sys et 
+        # les droits fixés à 644 
+        create 0664 root sys
+
+        # Compresse les sauvegardes avec gzip
+        compress
+
+        # Les paquets RPM installent les informations de rotation
+        # des journaux dans ce répertoire, on inclut donc les fichiers
+        # qu'il contient
+        include /etc/logrotate.d
+
+        # Fin de /etc/logrotate.conf
+        EOF
+
+Vous pouvez également utiliser le fichier "logrotate-default" qui se trouve dans
+le répertoire "examples" des sources de logrotate. J'ai utilisé certaines lignes
+de ce fichier dans l'exemple ci-dessus. 
+
+En installant sysklogd, le livre LFS a prédéfini certains fichiers de journal dans
+"/etc/syslog.conf". Nous pouvons effectuer la rotation de ces fichiers en
+ajoutant leurs définitions dans logrotate.conf. Ainsi, pour les ajouter, exécutez
+cette commande :
+        for logfile in $(find /var/log/* -type f); do
+                echo "$logfile {" >> /etc/logrotate.conf
+                echo "# Si ce fichier est plus grand" \
+                  "than 100kb, rotate it" >> /etc/logrotate.conf"
+                echo "  size=100k" >> /etc/logrotate.conf
+                echo "}" >> /etc/logrotate.conf
+                echo "" >> /etc/logrotate.conf
+        done
+
+Pour plus de détails sur l'édition de ce fichier, voir logrotate(8).
+
+
+Logrotate en tant que tâche planifiée ("cron job")
+==================================================
+
+
+Vous pouvez exécuter logrotate en lançant "/usr/sbin/logrotate
+/etc/logrotate.conf" mais dans ce cas, vous devrez exécuter cette commande vous-même, 
+chaque jour (semaine ou mois...) si vous voulez que le programme
+fonctionne correctement. Cela peut être ennuyeux :-).
+
+Sinon, vous pouvez l'exécuter en tant que tâche planifiée ("cron job").
+Pour la configuration ci-après, je supposerai que vous avez installé
+Fcron dans le livre BLFS.
+
+Créer un fichier /etc/fcrontab en lançant cette commande :
+        cat >> /etc/fcrontab << EOF
+        0 12 * * * 0    /usr/sbin/logrotate /etc/logrotate.conf
+        EOF
+
+Ainsi, fcron exécutera logrotate une fois par semaine le dimanche midi. Pour plus de
+détails sur l'édition de fcrontab, voir fcrontab(1).
+
+Vous aurez besoin du script "check_system_crontabs" présent dans les sources de
+fcrontab. Si vous ne l'avez pas installé, faites-le en lançant :
+        tar xzf fcron-3.0.1.tar.gz
+        cp -v fcron-3.0.1/scripts/check_system_crontabs /usr/sbin
+
+Exécutez ensuite le script :
+        check_system_crontabs -v
+Pour avoir de l'aide, tapez ceci :
+        check_system_crontabs -h
+
+
+REMERCIEMENTS :
+        * Alexander E. Patrakov, pour m'avoir indiqué la version de popt
+          présente dans BLFS (avant, j'utilisais la version de popt incluse dans
+          Slackware 10.1)
+
+VERSION :        1.1
+
+HISTORIQUE DES CHANGEMENTS :    1.00 Première publication
+                1.1 Correction de la section sur popt, correction de coquilles.
+

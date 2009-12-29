@@ -1,0 +1,187 @@
+AUTEUR :		Jim Gifford <lfs-hints at jg555.com>
+		A l'origine par Gerard Beekmans < gerard at linuxfromscratch.org >
+		A l'origine par Thomas -Balu-Walter < tw at itreff.de >
+		A l'origine par Eric Olinger <eric at supertux.com> optimization2.txt
+
+DATE :		30-10-2003
+
+DATE DE TRADUCTION :    29-05-2009   
+
+LICENSE :	GNU Free Documentation License Version 1.2
+
+SYNOPSIS :	Optimisation du compilateur
+
+DESCRIPTION :	Cette astuce joue le rôle d'un guide sur la marche à suivre ou
+sur ce qu'il ne faut pas faire à propos des optimisations du compilateur.
+
+PREREQUIS :	Aucun
+
+ASTUCE :
+
+L'origine de ce texte est la version 2.4.3 du livre LFS - Chapitre 6. Je l'ai
+modifié un peu pour créer cette astuce.
+
+La plupart des programmes et des bibliothèques sont compilés par défaut avec le
+niveau d'optimisation 2 (les options gcc sont -g et -O2) et pour un processeur
+particulier. Sur un système Intel, les logiciels sont compilés par défaut pour
+les processeurs i386. Si vous ne souhaitez pas exécuter de logiciels sur une
+autre machine que la vôtre, vous pourriez vouloir changer les options du
+compilateur par défaut pour qu'ils soient compilés avec un niveau d'optimisation
+plus élevé et que le code généré soit spécifique à votre architecture.
+
+Il y a plusieurs façons de modifier les options du compilateur par défaut. Une
+de ces façons est d'éditer tous les fichiers Makefile que vous pouvez trouver
+dans un paquet, d'y chercher les variables CFLAGS et CXXFLAGS (un paquet bien
+conçu utilisera la variable CFLAGS pour définir les options du compilateur gcc
+et CXXFLAGS pour les options du compilateur g++) et de changer leur valeur. Des
+paquets comme binutils, gcc, glibc et d'autres contiennent de nombreux fichiers
+Makefile dans de nombreux sous-répertoires, cela pourrait prendre beaucoup de
+temps. Au lieu de ça, il y a une façon plus simple de faire les choses : créer
+les variables d'environnement CFLAGS et CXXFLAGS. La plupart des scripts configure
+lisent les variables CFLAGS et CXXFLAGS et les utilisent dans les
+fichiers Makefile. Certains paquets ne suivent pas cette convention et
+nécessitent d'être édités à la main.
+
+Pour initialiser ces variables, vous pouvez exécuter les commandes suivantes
+dans bash (ou les ajouter à votre .bashrc si vous voulez qu'elles soient
+présentes tout le temps) :
+
+    export CFLAGS="-O3 -march=<architecture>" &&
+    CXXFLAGS=$CFLAGS
+
+C'est un ensemble minimal d'optimisation qui marche sur la plupart des systèmes.
+L'option march compilera les binaires avec des instructions spécifiques pour le
+processeur que vous avez précisé. Ceci signifie que vous ne pourrez pas copier ce
+binaire sur un processeur d'une gamme inférieure et l'exécuter. Ceci pourra soit
+être peu fiable ou alors ne marchera pas du tout (ça donnera des erreurs comme
+"Illegal Instruction, core dumped"). Vous devriez lire la page Info de GCC pour
+trouver d'autres drapeaux d'optimisation. Dans la variable d'environnement
+ci-dessus, vous devez remplacer <architecture> par un identifiant de processeur
+approprié comme i586, i686, powerpc ou autres. Je suggère de jetter un coup
+d'oeil au document gcc-manual disponible sur
+http://gcc.gnu.org/onlinedocs/gcc_toc.html, section "Hardware Models and
+Configurations".
+
+/*
+ * Note de l'éditeur 
+ * "Reboant" a laissé une note sur le fait que l'utilisation de -Os
+ * (Optimisation pour la taille) montre des résultats incroyablement bons. Si
+ * vous voulez des binaires de petite taille plutôt qu'un temps d'exécution
+ * rapide, vous pouvez vouloir jeter un coup d'oeil à cela.
+ */
+
+Gardez en tête que si vous trouvez un paquet qui ne se compile pas ou qui
+renvoie des erreurs comme "erreur de segmentation, core dumped", cela a certainement
+à voir avec les optimisations du compilateur. Essayez d'abaiser le niveau
+d'optimisation en remplaçant -O3 par -O2. Si cela ne marche pas, essayez -O ou
+laissez tout tel quel. Essayez aussi de changer l'option -march. Les
+compilateurs sont très sensibles à certains matériels. Une mémoire défectueuse
+peut causer des problèmes de compilation quand des niveaux d'optimisation
+élevés, comme -O3, sont utilisés. Le fait que je n'aie pas de problèmes en
+compilant tous mes paquets avec -O3 ne signifie pas que vous n'aurez pas de
+problèmes. Un autre problème peut être la version de Binutils installée sur
+votre système qui cause souvent des problèmes de compilation dans Glibc (ceci
+peut être observé surtout avec RedHat car RedHat utilise souvent des logiciels
+en version béta qui ne sont pas toujours très stables).
+
+"RedHat aime flirter avec le risque mais on vous laisse prendre le risque"
+("RedHat likes living on the bleeding edge, but leaves the bleeding up to you")
+(Citation d'une personne sur la liste de diffusion lfs-discuss).
+
+DEFINITIONS DES DRAPEAUX :
+
+Pour plus d'informations sur les drapeaux d'optimisation du compilateur,
+regardez les pages sur la commande gcc présente dans les docs en ligne de GCC
+3.3.1 : 
+
+http://gcc.gnu.org/onlinedocs/gcc-3.3.1/gcc/Optimize-Options.html#Optimize%20Options
+http://gcc.gnu.org/onlinedocs/gcc-3.3.1/gcc/i386-and-x86-64-Options.html#i386%20and%20x86-64%20Options
+
+-s
+        Une option de l'éditeur de liens qui supprime du binaire
+        toutes les tables de symboles et les informations de repositionnement.
+
+-O3
+        Ce drapeau initialise le niveau d'optimisation pour le binaire.
+                3	Le niveau le plus haut, du code machine spécifique est
+                    engendré. Ajoute auto-magiquement les drapeaux
+                    -finline-functions et -frename-registers. 
+                2   La plupart des Makefile spécifient ceci par défaut, procèdent
+                    à toutes les optimisations supportées qui n'impliquent pas de
+                    compromis temps-mémoire. Ajoute le drapeau -fforce-mem
+                    auto-magiquement.
+                1  	Un minimum d'optimisations sont effectuées. C'est ainsi par défaut
+                    si rien n'est spécifié.
+                0   N'optimise pas.
+                s   Comme O2 mais fait des optimisations supplémentaires pour
+                    la taille.
+
+-fomit-frame-pointer 
+        Dit au compilateur de ne pas sauvegarder le pointeur de frame dans un
+        registre pour les fonctions qui n'en ont pas besoin. Ceci supprime les
+        instructions de sauvegarde, d'initialisation et de restauration des
+        pointeurs de frame et libère un registre supplémentaire pour de
+        nombreuses fonctions. Cela rend le débogage impossible sur certaines
+        machines.
+
+-march=pentium3
+        Définit le jeu d'instructions à utiliser lors de la compilation. -mpcu
+        est implicitement identique à -march quand seul -march est spécifié.
+                i386            Processeur Intel 386 
+                i486            Processeur Intel/AMD 486 
+                pentium         Processeur Intel Pentium 
+                pentiumpro      Processeur Intel Pentium Pro 
+		        pentium2		Processeur Intel PentiumII/Celeron 
+		        pentium3		Processeur Intel PentiumIII/Celeron 
+                pentium4        Processeur Intel Pentium 4/Celeron 
+                k6              Processeur AMD K6 
+		        k6-2			Processeur AMD K6-2 
+		        K6-3			Processeur AMD K6-3 
+                athlon          Processeur AMD Athlon/Duron 
+		        athlon-tbird	Processeur AMD Athlon Thunderbird 
+		        athlon-4		Processeur AMD Athlon Version 4 
+		        athlon-xp		Processeur AMD Athlon XP 
+		        athlon-mp		Processeur AMD Athlon MP 
+		        winchip-c6		Processeur Winchip C6 
+		        winchip2		Processeur Winchip 2 
+		        c3			    Processeur VIA C3 Cyrix
+
+-mmmx
+-msse
+-msse2
+-m3dnow
+        Ces options activent ou désactivent l'utilisation des fonctions intégrées
+        qui permettent un accès direct aux extensions MMX, SSE, 3Dnow du jeu
+        d'instructions.  
+
+LIENS SUR L'OPTIMISATION :
+ 
+Drapeaux fiables à utiliser avec Gentoo 1.4
+http://www.freehackers.org/gentoo/gccflags/flag_gcc3.html
+
+Sécuriser & Optimiser Linux : la solution ultime 2.0
+http://www.openna.com/products/books/sol/solus.php
+
+EXPERIENCE PERSONNELLE :
+
+J'ai utilisé tous les niveaux d'optimisation possibles, mais à ma déception, les
+résultats varient suivant les paquets. Utiliser -O(un chiffre) avec GCC 3.3.1
+peut donner des résultats imprévisibles.
+
+Vous pouvez voir certains de ces résultats imprévisibles dans les bogues suivants
+envoyés à GCC :
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12590
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=10655
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=8440
+
+VERSION:	1.2
+
+HISTORIQUE DES CHANGEMENTS :
+        1.2 Corrections de fautes de frappe
+		1.1 Corrections de fautes de frappe et d'erreurs de copier-coller
+		1.0 Adoption par Jim Gifford
+
+ Vous pouvez consulter les nouvelles versions de ce document sur http://cvs.jg555.com/viewcvs.cgi/lfs-hints
+
+HISTORIQUE DE LA TRADUCTION : 
+        29-05-2009 - Traduction de la version 1.2

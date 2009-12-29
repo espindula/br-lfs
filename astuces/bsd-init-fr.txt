@@ -1,0 +1,579 @@
+AUTEUR : Leslie Polzer <leslie.polzer@gmx.net>
+AUTEUR : Marc Heerdink <marc@koelkast.net>
+TRADUCTEUR : appzer0 <appzer0@free.fr>
+
+DATE : 01-08-2005
+DATE DE TRADUCTION : 25 février 2008
+
+LICENCE : GNU Free Documentation License Version 1.2
+
+SYNOPSIS : Paramétrer LFS avec un style d'initialisation BSD/Slackware
+
+DESCRIPTION:
+Le « style » BSD est souvent perçu comme plus simple (en opposition à SysVInit) pour
+démarrer un système et garder le contrôle sur les niveaux d'exécution.
+
+PRÉ-REQUIS :
+LFS 2.4 ou ultérieur.
+
+L'ASTUCE :
+
+Sommaire
+--------
+1 Introduction
+2 Préparatifs
+	2.1 Définition des niveaux d'exécution
+	2.2 Structure de répertoire
+	2.3 Paramétrer /etc/inittab
+3 Créer les scripts d'initialisation
+	3.1 Créer les scripts essentiels au démarrage
+	3.2 Créer des scripts supplémentaires
+4 Le mot de la fin
+
+
+1 Introduction
+==============
+
+   LFS utilisant des scripts d'initialisation SysV par défaut, la plupart des 
+ utilisateurs de systèmes LFS utilisent également ce type de scripts. Cependant, 
+ j'ai lu il y a quelques jours sur la liste de diffusion qu'un utilisateur voulait
+ installer des scripts d'initialisation à la façon BSD. Étant moi-même un utilisateur
+ de ce type de scripts depuis le début, j'ai décidé d'écrire une astuce pour ceux désirant les 
+ installer, ou voulant simplement les essayer.
+
+   L'initialisation à la façon BSD utilise le programme standard 'init' de SysV, mais en se
+ servant d'un fichier inittab différent et en réarrangeant les scripts.
+ Les scripts à la façon BSD amorcent le système d'une façon beaucoup moins compliquée que SysV
+ et sont plus faciles à maintenir. Je pense que tout le monde devrait lire 
+ cette astuce avant d'installer un autre système d'initialisation car il
+ vaut mieux qu'il se décide avant le premier démarrage.
+   Cette astuce ne sera jamais exhaustive ! Vous pouvez m'envoyer tout 
+   commentaire (NdT: en anglais) à <leslie.polzer@gmx.net>.
+
+
+2 Préparatifs
+=============
+
+2.1 Définitions des niveaux d'exécution
+---------------------------------------
+
+   Les niveaux d'exécution sont pratiques pour modifier les tâches en cours 
+ du système grâce à l'arrêt et au démarrage groupés des programmes au même
+ moment. Si vous n'êtes pas à l'aise concernant les niveaux d'exécution et
+ le processus 'init', il est recommandé de se renseigner qur la question
+ auparavant en cherchant sur le Web ou en lisant la page de manuel de init(8). 
+
+   Vous allez d'abord devoir définir quels sont les niveaux d'exécution que vous
+ désirez utiliser.
+ Les niveaux d'exécution standard sont généralement agencés ainsi :
+
+
+ NIVEAU  : | DESCRIPTION :
+ ----------+-----------------------------------------
+         0 | Arrêt de la machine
+         S | Mode mono-utilisateur
+         1 | Synonyme de S
+         2 | Mode multi-utilisateur en mode console
+         3 | Synonyme de 2
+         4 | Synonyme de 2
+         5 | Mode multi-utilisateur en mode graphique
+         6 | Redémarrage de la machine
+ ----------+-----------------------------------------
+
+   Il est déconseillé de changer le but des niveaux d'exécution 0, 6 et S, de
+ nombreux programmes les utilisant déjà en standard ; nous n'y toucherons donc
+ pas dans la présente astuce. Je n'utilise que 3 modes au démarrage (mono-util-
+ isateur, multi-utilisateur en mode console et multi-utilisateur en mode graphique).
+ Les niveaux d'exécution 4 et 5 étant des synonymes du niveau 2 (niveau par défaut),
+ reliés par des liens symboliques. Vous pouvez modifier ce comportement selon vos
+ désirs, bien qu'il vaille mieux le modifier après avoir lu cette astuce.
+
+
+2.2 Structure de répertoire
+---------------------------
+
+   Afin de vous faire une idée du fonctionnement de 'init' à la façon BSD, voici la
+ la structure finale du répertoire résultant de l'installation :
+ 
+ /etc/rc.d
+    + rc.sysinit # Initialisation du système
+    + rc.0		 # Arrêt de la machine
+    + rc.1		 # Mode mono-utilisateur
+    + rc.2		 # Mode multi-utilisateur
+    + rc.3		 # Lien symbolique vers rc.2
+    + rc.4		 # Lien symbolique vers rc.2
+    + rc.5		 # Mode multi-utilisateur en mode graphique
+    + rc.6		 # Redémarrage de la machine, relié à rc.0
+    + rc.local	 # Post-exécution de rc.sysinit
+
+ Et éventuellement, plus tard et à votre convenance :
+    + rc.firewall
+    + rc.daemons 
+    + rc.netdaemons
+    + rc.nfs
+    + rc.nis
+
+ Je suggère de créer le répertoire ainsi que les fichiers de base (ceux de la
+ première liste ci-dessus) maintenant.
+
+   Dans la section qui suit, nous allons passer en revue le contenu de chaque
+ fichier. Ils ressemblent beaucoup aux miens mais les parties plus spécifiques
+ ont été commentées tel qu'elle le seraient dans un shell avec un '#'. Lisez
+ attentivement ces lignes afin de décider si vous les utiliserez ou pas.
+
+
+2.3 Paramétrer /etc/inittab
+---------------------------
+
+   Le fichier 'inittab' réside dans le répertoire /etc et sert à paramétrer le
+ programme 'init'. Avant de commencer à l'écrire, gardez à l'esprit qu'un 
+ inittab incorrect peut mener, dans le pire des cas, à un "kernel panic" ou
+ dumoins à de nombreux problèmes au démarrage de la machine.
+
+   C'est parti ! Entrez ce qui suit dans votre fichier /etc/inittab :
+
+
+-------------------------------/etc/inittab----------------------------------
+id:2:initdefault:
+
+si:S:sysinit:/etc/rc.d/rc.sysinit
+
+l0:0:wait:/etc/rc.d/rc.0
+l1:1:wait:/etc/rc.d/rc.1
+l2:2:wait:/etc/rc.d/rc.2
+l3:3:wait:/etc/rc.d/rc.3
+l4:4:wait:/etc/rc.d/rc.4
+l5:5:wait:/etc/rc.d/rc.5
+l6:6:wait:/etc/rc.d/rc.6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -r now
+
+su:S1:respawn:/sbin/sulogin
+
+c1:2345:respawn:/sbin/agetty tty1 38400 linux
+c2:2345:respawn:/sbin/agetty tty2 38400 linux
+c3:2345:respawn:/sbin/agetty tty3 38400 linux
+c4:2345:respawn:/sbin/agetty tty4 38400 linux
+c5:2345:respawn:/sbin/agetty tty5 38400 linux
+c6:2345:respawn:/sbin/agetty tty6 38400 linux
+----------------------------Fin de /etc/inittab------------------------------
+
+   Cette configuration est basique mais devrait correspondre aux besoins de chacun.
+ Comme vous pouvez le remarquer, 'init' lance d'abord /etc/rc.d/rc.sysinit
+ puis charge le fichier nécessaire (/etc/rc.d/rc.2) pour le niveau d'exécution
+ par défaut (le niveau 2).
+
+
+3 Créer les scripts d'initialisation
+====================================
+
+3.1 Créer les scripts essentiels au démarrage
+---------------------------------------------
+
+   Créons d'abord le fichier /etc/rc.d/rc.sysinit :
+
+
+-----------------------------/etc/rc.d/rc.sysinit----------------------------
+#!/bin/sh
+echo "Montage de la racine en lecture seule..."
+/bin/mount -n -o remount,ro /
+
+### C'est aussi un bon emplacement pour hdparm car
+### l'ensemble du processus de démarrage pourra en bénéficier!
+
+echo "Initialisation des partitions d'échange swap..."
+/sbin/swapon -a
+
+/sbin/fsck -A -a -C
+if [ $? -gt 1 ]; then
+   echo
+   echo "ERREUR :"
+   echo "Votre système de fichiers a été sérieusement endommagé. Vous pouvez"
+   echo "certainement corriger cela en invoquant manuellement e2fsck (par exemple"
+   echo "avec les paramètres -v et -y ). Après vous être déconnecté, le système"
+   echo "redémarrera." 
+   echo
+   PS1="(mode maintenance)# "
+   export PS1
+   /sbin/sulogin
+   /bin/umount -a -r
+   /sbin/reboot -f
+fi
+
+echo "Remontage du système de fichiers racine en mode lecture et écriture..."
+/bin/mount -n -v -o remount,rw /
+
+echo "" >/etc/mtab
+/bin/mount -f -o remount,rw /
+
+echo "Montage des autres systèmes de fichiers locaux..."
+/bin/mount -a -v -tnonfs
+
+echo "Définition du nom d'hôte..."
+/bin/hostname `cat /etc/HOSTNAME |cut -d . -f1`
+/bin/domainname `cat /etc/HOSTNAME |cut -d . -f2-`
+
+if [ -f "/etc/random-seed" ]; then
+  echo "Initialisation du générateur de nombres aléatoires..."
+  /bin/cat /etc/random-seed >/dev/urandom
+  rm -f /etc/random-seed
+fi
+
+### Supprimer les fichiers processus est une bonne chose
+# echo "Suppression des fichiers processus (.pid)..."
+# /bin/rm /var/run/*.pid
+# /bin/rm /etc/dhcpc/*.pid
+
+echo "Chargement de la disposition des touches du clavier..."
+/usr/bin/loadkeys -d
+
+### Je suggère également de définir ici la répétition et le délai du clavier :
+# echo "Définition de la répétition (30) et du délai (250) des touches du clavier..."
+# /usr/bin/kbdrate -r 30 -d 250
+
+### Ainsi que la police de la console :
+# echo "Définition de la police de la console..."
+# /usr/bin/setfont lat9u-12.psfu.g
+
+### Si vous désirez activer le verrouillage numérique :
+# echo "Activation du verrouillage numérique sur les terminaux 1 à 12..."
+# for tty in /dev/tty{1,2,3,4,5,6,7,8,9,10,11,12}; do
+# 	/usr/bin/setleds +num < $tty
+# done
+
+### MPlayer a besoin de ceci...
+# echo "Configuration de l'horloge en temps réel (RTC)..."
+# echo 1024 > /proc/sys/dev/rtc/max-user-freq
+
+echo "Définition de l'horloge système selon l'horloge matérielle..."
+/sbin/hwclock --hctosys --utc
+
+echo "Lancement des démons de journalisation (système + noyau)..."
+/usr/sbin/syslogd
+/usr/sbin/klogd -c3
+
+### Vous utilisez des modules ? Si oui, décommentez ceci :
+# echo "Mise à jour des dépendances des modules..."
+# /sbin/depmod -a
+
+### Ceci peut vous servir si vous disposez de démons (non orientés réseau)
+### et de fichiers rc. supplémentaires les concernant :
+# echo "Démarrage des démons..."
+# if [ -x /etc/rc.d/rc.daemons ]; then
+# 	/etc/rc.d/rc.daemons
+# fi
+-------------------------Fin de /etc/rc.d/rc.sysinit-------------------------
+
+
+   Pour que les lignes concernant le nom d'hôte fonctionnent comme prévu, créez
+ un fichier /etc/HOSTNAME contenant votre nom de domaine complet
+ (FQDN, Full Qualified Domain Name). Par exemple,
+ truc.bidule.com ou moi.chez-moi.net. Une dernière remarque concernant la 
+ commande hwclock : si votre horloge système n'est pas configfurée pour se régler
+ sur l'UTC, signifiant par là que vous
+ êtes réglé sur une heure locale, vous devez enlever le paramètre --utc figurant
+ sur cette ligne. Lisez l'astuce 'time' pour en savoir plus.
+
+$  Créons à présent le script pour le mode mono-utilisateur. Comme ce niveau ne sera 
+ pas souvent défini comme niveau d'exécution par défaut mais sera plutôt appelé
+ depuis un niveau d'exécution "supérieur", nous allons tuer tous les programmes en cours
+ d'exécution afin de pouvoir travailler dans l'environnement le plus propre possible.
+ 
+
+--------------------------------/etc/rc.d/rc.1-------------------------------
+#!/bin/sh
+echo "Démontage des systèmes de fichiers distants..."
+/bin/umount -a -tnfs
+
+# Insérez une ligne pour chaque carte réseau que vous utilisez. Voici un 
+#  exemple pour une seule carte réseau (configurée sur l'interface eth0):
+#
+# echo "Désactivation de l'interface réseauBringing down network interface eth0..."
+# /sbin/ifconfig eth0 down
+
+echo "Envoi du signal TERM aux processus..."
+/sbin/killall5 -15
+sleep 1
+
+echo "Envoi du signal KILL aux processus..."
+/sbin/killall5 -9
+----------------------------Fin de /etc/rc.d/rc.1----------------------------
+
+
+   Si ce script est exécuté, aucun démon ne subsiste excepté les démons du noyau
+ et le processus 'init'. Une fois terminé, le script appelle sulogin (c'est la
+ ligne "su:S1:respawn:/sbin/sulogin" d'inittab :)) afin que root soit le seul
+ utilisateur autorisé à utiliser le système. Tous les terminaux virtuels sont
+ alors désactivés.
+
+   Passons au script suivant, /etc/rc.d/rc.2. Ce fichier contient de
+ nombreuses commandes, comme le paramétrage du réseau ou le lancement des démons
+ orientés réseau. Supprimez les lignes qui ne vous serviront pas mais n'ajoutez
+ pas de commandes supplémentaires avant d'avoir lu le chapitre 4.
+
+
+--------------------------------/etc/rc.d/rc.2-------------------------------
+#!/bin/sh
+# Dans cet exemple, la carte réseau aura l'adresse IP 192.168.0.2 avec un
+# masque de sous-réseau 255.255.255.0. Cette carte utilise une passerelle
+# par défaut ayant l'IP 192.168.0.1. C'est la configuration que vous 
+# utiliseriez si la box 192.168.0.1 était la passerelle.
+
+### Vous voudrez certainement ajouter des commandes à sysctl comme par exemple :
+# echo 1 > /proc/sys/net/ipv4/ip_forward	# enable IP forwarding
+# echo 1 > /proc/sys/net/ipv4/tcp_syncookies	# defend against SYN flood
+
+echo "Paramétrage du loopback..."
+/sbin/ifconfig lo 127.0.0.1
+/sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo
+
+echo "Configuration de l'interface eth0..."
+/sbin/ifconfig eth0 192.168.0.1 broadcast 192.168.0.255 netmask 255.255.255.0
+/sbin/route add -net default gw 192.168.0.1 netmask 0.0.0.0
+
+echo "Montage des systèmes de fichiers distants..."
+/bin/mount -a -v -tnfs
+
+### Vous pouvez ajouter des scripts pour des tâches supplémentaires en rapport
+### avec les réseaux comme par exmple NFS, lequel requiert de nombreux démons
+### (voir la section 3.2) ou bien un script pour votre pare-feu :
+
+# if [ -x /etc/rc.d/rc.firewall ]; then
+#	echo "Activation des règles du pare-feu..."
+#	/etc/rc.d/rc.firewall
+# fi
+
+# if [ -x /etc/rc.d/rc.netdaemons ]; then
+#	echo "Lancement des démons pour le réseau..."
+#	/etc/rc.d/rc.netdaemons
+# fi
+
+
+if [ -x /etc/rc.d/rc.local ]; then
+	/etc/rc.d/rc.local
+fi
+----------------------------Fin de /etc/rc.d/rc.2----------------------------
+
+
+   Copiez à présent /etc/rc.d/rc.2 en tant que /etc/rc.d/rc.5 et liez les
+ alias du niveau 2 :
+ 
+ 	ln -sf /etc/rc.d/rc.2 /etc/rc.d/rc.3
+	ln -sf /etc/rc.d/rc.2 /etc/rc.d/rc.4
+	cp /etc/rc.d/rc.2 /etc/rc.d/rc.5
+
+ ...puis ajoutez ce qui suit à la fin du fichier /etc/rc.d/rc.5 :
+
+
+------------------------------------couic------------------------------------
+echo "Lancement du gestionnaire de connexion graphique..."
+
+if [ -x /opt/kde/bin/kdm ]; then
+	/opt/kde/bin/kdm -nodaemon
+elif [ -x /usr/bin/gdm ]; then
+	/usr/bin/gdm -nodaemon
+elif [ -x /usr/X11R6/bin/xdm ]; then
+	/usr/X11R6/bin/xdm -nodaemon
+else
+	echo "Vous avez choisi de démarrer le mode de connexion graphique mais ni KDM, "
+	echo "ni GDM ou XDM ne sont installés. Le présent script recherche ces gestionnaires"
+	echo "aux emplacement suivants :"
+	echo
+	echo " Pour KDM : /opt/kde/bin/kdm"
+	echo " Pour GDM : /usr/bin/gdm"
+	echo " Pour XDM : /usr/X11R6/bin/xdm"
+	echo
+	echo "Ce message va disparaître dans 10 secondes, après quoi vous retournerez au"
+	echo "niveau d'exécution 2."
+	sleep 10
+	/sbin/telinit 2 
+fi
+----------------------------Fin de /etc/rc.d/rc.5----------------------------
+
+
+   Ce script est assez parlant : il recherche les gestionnaires de connexion
+ graphique les plus utilisés à leur emplacement par défaut. Si aucun n'est trouvé
+ un avertissement s'affiche puis le système passe en niveau d'exécution 2, présentant
+ un écran de connexion normal en mode console. Si vous disposez d'un gestionnaire
+ de connexion spécifique, n'insérez pas ce bloc, bien évidemment.
+
+   Nous disposons maintenant de tous les scripts de démarrage, sauf /etc/rc.d/rc.0
+ et /etc/rc.d/rc.6. Comme ils ont à peu près la même fonction, nous allons les créer
+ mais en une seule fois :
+
+
+--------------------------------/etc/rc.d/rc.0-------------------------------
+#!/bin/sh
+echo "Envoi du signal TERM aux processus..."
+/sbin/killall5 -15
+sleep 1
+
+echo "Envoi du signal KILL aux processus..."
+/sbin/killall5 -9
+sleep 1
+
+echo "Desactivation des partitions d'échange swap..."
+/sbin/swapoff -a
+
+echo "Enregistrement de la graine de génération aléatoire dans un fichier temporaire..."
+/bin/dd if=/dev/urandom of=/etc/random-seed count=1 bs=512 2>/dev/null
+
+echo "Enregistrement de l'horloge système..."
+/sbin/hwclock --systohc --utc
+
+echo "Démontage des systèmes de fichiers distants..."
+/bin/umount -a -f -tnfs
+
+case "$0" in
+	*6)
+		/sbin/reboot -w
+	;;
+	
+	*0)
+		/sbin/halt -w
+	;;
+esac
+
+echo "Remontage de la racine en lecture seule..."
+/bin/mount -n -o remount,ro /
+
+echo "Vidage des tampons des systèmes de fichiers..."
+/bin/sync
+
+echo "Démontage des systèmes de fichiers locaux..."
+/bin/umount -a -tnonfs
+
+case "$0" in
+	*6)
+		echo "Veuillez patienter pendant le redémarrage..."
+		/sbin/reboot -d -f -i
+	;;
+	
+	*0)
+		echo "Au revoir."
+		/sbin/halt -d -f -p
+	;;
+esac
+----------------------------Fin de /etc/rc.d/rc.0----------------------------
+
+
+   Quelques remarques concernant ce fichier : la commande hwclock doit être 
+ configurée comme celle dans /etc/rc.d/rc.sysinit (donc sans le paramètre --utc
+ si votre horloge matérielle est à l'heure locale). La structure:
+
+    case "$0" in
+  	*6)
+		  /sbin/reboot -w
+	  ;;
+  	
+  	*0)
+		  /sbin/halt -w
+	  ;;
+    esac
+
+ ...va écrire certaines informations dans le fichier /etc/wtmp. C'est une bonne chose
+ de le faire mais vous pouvez supprimer ce paramètre en toute sécurité.
+ Aux deux-tiers du fichier, on appelle /bin/sync. Ce programme vide les mémoires tampons
+ des systèmes de fichiers. Ainsi, aucune donnée ne sera perdue. C'est également optionnel,
+ tout comme la structure mais je vous le recommande. 
+
+   Tous les fichiers requis étant maintenant créés, il faut les rendre fonctionnels.
+ Exécutez les commande suivantes à cet effet :
+
+	chmod 754 /etc/rc.d/rc.0 /etc/rc.d/rc.1 /etc/rc.d/rc.2
+	chmod 754 /etc/rc.d/rc.3 /etc/rc.d/rc.sysinit
+	ln -s /etc/rc.d/rc.2 /etc/rc.d/rc.4
+	ln -s /etc/rc.d/rc.0 /etc/rc.d/rc.6
+
+   C'est prêt ! Prenez une bonne bouffée d'oxygène, tapez (en tant que root) "reboot" et
+ admirez votre système démarrer avec vos scripts à la BSD ! Si vous avez des problèmes
+ à l'utilisation de cesl sscripts, laissez-moi un mot à l'adresse : leslie.polzer@gmx.net
+ (NdT: en anglais).
+
+3.2 Créer des scripts supplémentaires
+-------------------------------------
+
+   Comme vous le savez sûrement, il est fréquent de placer des commandes dans un fichier
+ /etc/rc.d/rc.local afin de les exécuter à la toute fin du processus de démarrage.
+ Vous pouvez vous en servir pour créer des journaux très récents ou pour générer un
+ message du jour au hasard. Mais comme vous avez créé vos scripts d'initialisation
+ vous-même, vous pouvez également les changer à votre convenance et ne même pas avoir
+ besoin de ce script au final ! Alors qu'allons-nous faire ?
+
+   Je recommande personnellement de créer ce script dans un souci de portabilité.
+ De nombreux démons écrivent quelques lignes dans ce fichier. L'avoir, c'est s'épargner
+ des problèmes. 
+
+   Entrez ceci dans un fichier /etc/rc.d/rc.local :
+
+-------------------------------/etc/rc.d/rc.local----------------------------
+#!/bin/sh
+-----------------------------end /etc/rc.d/rc.local--------------------------
+
+  Et rendez-le exécutable :
+
+	chmod 754 /etc/rc.d/rc.local
+
+   Il est aisé de désactiver le fichier /etc/rc.d/rc.local au démarrage :
+ supprimez simplement le droit d'exécution de ce fichier et il sera ignoré
+ au moment du démarrage.
+
+   Lors de la synopsis du répertoire rc.d/, je vous ai aussi indiqué que vous
+ pouviez créer des fichiers suplémentaires. Vous pourriez y placer vos règles
+ iptables ou ipchains pour votre pare-feu dans rc.firewall et appeler ce script
+ depuis les scripts rc.{2,3}, ou bien insérer toutes les lignes concernant les
+ démons indispensables à NFS dans rc.nfs et appeler ce fichier via un autre
+ script appelé rc.netdaemons, dans lequels vous lanceriez tous les démons en
+ rapport avec les réseaux.
+ 
+   Faites selon vos préférences - l'initialisation à la BSD est à mon humble
+ avis plus proche du cerveau humain que l'initialisation à la SysV.
+ 
+   Comme astuce finale pourl cette  section, j'aimerais vous faire remarquer que j'ai souvent à
+ travailler en mode multi-utilisateurs, mais sans prise en charge du réseau.
+ Ce serait un bon entraînement pour vous de paramétrer ce type d'environnement,
+ par exemple dans le niveau d'exécution 5, et ce de façon sécurisée. Cela 
+ implique de savoir quels sont les services dont vous avez réellement besoin 
+ pour éviter tout danger potentiel lié aux réseaux et qui serait causé 
+ seulement car "vous ne saviez pas" !
+
+
+4 Le mot de la fin
+==================
+
+   J'espère vous avoir appris beaucoup à propos du fonctionnement de l'initalisation
+ à la BSD. Bien que cette mise en place ne soit pas la même que celle de
+ Slackware ou bien des systèmes BSD, l'idée est fondamentalement la même. 
+ 
+   Si vous avez des commentaires sur cette astuce, positifs ou négatifs, écrivez-moi
+ à l'adresse :  leslie.polzer@gmx.net (NdT: en anglais).
+   
+   J'aimerais remercier tous ceux qui m'ont écrit pour résoudre les bogues de cette astuce.
+
+
+CHANGEMENTS:
+
+[12/02/2009]
+ * Traduction du document original en français de France
+ 
+[16/02/2005]
+ * Réorganisation des niveaux d'exécution
+
+[01/08/2005]
+ * Changement des permissions 755 en 754 (merci à Randy McMurchy)
+ * Suppression du lien rc.2 en rc.5 - ces fichiers sont différents
+   (merci à George Boudreau de DIY Linux)
+ * Déplacement de la commande sync _avant_ le démontage (merci à Noturno)
+
+[10/09/2004]
+ * Changement de /tmp/random-seed en /etc/random-seed au cas où /tmp serait
+   monté en tant que système de fichiers tmpfs (mereci à C. T. Waley)
+
+[05/06/2004]
+ * Correction d'une coquille
+ * Correction d'une erreur où le niveau 3 devait être 5
+
+[02/10/2003]
+ * Nouveau mainteneur 
+ * Conversion au nouveau format des astuces
+ 
