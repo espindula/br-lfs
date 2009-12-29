@@ -1,0 +1,457 @@
+AUTEUR : Lars Bamberger <Lars.Bamberger at gmx dot de>
+
+TRADUCTEUR : Emmanuel Trillaud <etrillaud at gmail dot com>
+
+DATE : 2009-11-20
+
+LICENCE : GNU Free Documentation License Version 1.2
+
+SYNOPSIS : Comment chiffrer un système de fichier y compris rootfs.
+
+DESCRIPTION :
+Ce document décrit un moyen de chiffrer votre disque dur, y compris le système
+de fichier racine. Il est destiné aux utilisateurs expérimentés et tente
+d'éviter les difficultés du chiffrement du système de fichier racine de façon
+direct.
+
+
+PREREQUIS :
+Cette astuce nécessite une connaissance suffisante de BeyongLinuxFromScratch
+ainsi que des logiciels assez à jour. Vous devez être à l'aise pour
+construire un logiciel, trouver, lire et comprendre toute autre documentation
+pertinente. Vous devez savoir comment configurer un initramfs. (Voir
+'filesystems/ramfs-rootfs-initramfs.txt' dans la documentation du kernel.)
+Vous devez être au courant de pourquoi vous voudriez un système de fichier
+chiffré et vous devez comprendre les menaces contre lesquelles vous essayer de
+vous protéger. Vous devez aussi comprendre les insuffisances et les problèmes
+de sécurité si vous suivez les instructions contenues dans cette astuce.
+
+Vous devez avoir une sauvegarde de votre système dans un endroit sûr! Ceci
+inclus un périphérique de démarrage alternatif.
+
+Vous DEVEZ ABSOLUMENT LIRE ET COMPRENDRE CETTE ASTUCE AVANT DE MODIFIER VOTRE
+SYSTÈME.
+
+
+ASTUCE :
+
+1. À Propos
+===========
+
+Cette astuce parle du chiffrement de toutes les partitions de votre disque dur
+sauf une en utilisant LUKS pour dm-crypt. Nous démarrerons à partir d'une
+petite partition non chiffrée en utilisant initramfs pour déchiffrer rootfs
+(système de fichier racine).  Cette astuce suppose la présence d'un petite
+partition disponible servant à démarrer (10 MB devraient être suffisants.)
+
+
+2. Logiciels nécessaires et dépendances
+=======================================
+
+2.1 Logiciels présents dans BLFS
+
+Vous avez besoin d'installer 'Popt', car 'cryptsetup' en dépend.Vous aurez
+également besoin de 'uuencode' pour créer les fichiers contenant les clefs.
+'uuencode' est inclus dans 'GMime' qui a d'autres dépendances listées dans le
+livre BLFS.
+
+2.2 Logiciels absents du livre BLFS
+
+2.2.1 devmapper
+
+Obtenez-le sur http://packages.debian.org/stable/source/devmapper 
+Compilez et installez-le. Nécessaire à 'cryptsetup'.
+
+
+2.2.2 cryptsetup avec l'extension LUKS 
+
+Obtenez-le sur http://code.google.com/p/cryptsetup/ 
+Compilez et installez-le. Nécessaire pour gérer les partitions chiffrées.
+
+
+2.2.3 busybox
+
+Obtenez-le sur http://www.busybox.net/
+La configuration minimum requise comprend :
+* cp
+* hush (shell interactif non requis)
+* mount (avec le support pour de nombreux drapeaux -o ) et
+* switch_root.
+
+Compilez-le, mais NE L'INSTALLEZ PAS. Conservez l'exécutable et nommez-le
+"busybox-minimum". Ensuite, Re-configurez busybox pour un environnement de
+bureau complet. Vous aurez besoin de tous les outils et utilitaires standards
+pour le chiffrement initial de votre partition racine et pour cibler les
+problèmes éventuels. Nommez cet exécutable "busybox-large" ou quelque chose
+d'approchant. De même, il n'est pas nécessaire de l'installer.
+
+
+3. Recompilez le noyau
+======================
+
+Choisissez l'algorithme que vous voudriez utiliser pour chiffrer votre disque
+dur. Notez que c'est une décision cruciale et vous devriez vous renseignez
+plus avant. (Voir la section REMERCIEMENTS). Les modules appropriés doivent
+être compilés (en dur, pas comme modules) dans le noyau. Par exemple, vous
+pouvez utilisé la méthode "twofish-cbc-essiv:sha256".
+
+Également, sélectionnez l'option 'Device mapper support' du menu 'Multiple
+devices driver support' dans la configuration du noyau, ainsi que l'option
+'crypto target'.
+
+Sélectionnez 'Initial RAM filesystem and RAM disk' sous la section 'general
+setup' et 'RAM block device support' sous 'Block devices'.
+
+NOTE : vous devez démarrer ce nouveau noyau avant d'aller plus loin.
+
+
+4. Chiffrer les partitions autres que rootfs et autre que swap
+==============================================================
+
+Vous devez modifier votre système pour qu'il puisse gérer les partitions
+chiffrées. Dans un premier temps, nous modifions le système pour qu'il puisse
+gérer les partitions AUTRES que le rootfs. Il est fortement recommandé que
+vous conserviez une sauvegarde de tous les fichiers que vous modifierez par la
+suite.
+
+4.1 Chiffrer les partitions
+
+NOTE :	Ce document décrit comment chiffrer chaque partition séparément. Si
+        vous avez plus d'un disque dur dans votre système, vous pourriez
+        vouloir chiffrer tout le périphérique, y compris la table des
+        partitions. Utiliser la méthode décrite dans ce document laissera la
+        table des partitions en clair, vous exposant à une attaque. Considérez
+        ceci comme un risque potentiel pour votre sécurité.
+
+*** PIÈGE ***
+Si /usr est une partition séparée, cryptsetup et toutes les bibliothèques
+nécessaires à son exécution doivent être placé sur la partition racine.
+Utilisez 'ldd cryptsetup' pour les trouver. Il peut être nécessaire de changer
+le niveau d'exécution à 1 pour pouvoir démonter /usr. Assurez-vous également
+que le shell de root n'utilise pas de bibliothèques sur cette partition. Si
+nécessaire, compilez un shell statique à l'usage de root.
+
+La procédure pour chaque partition est la suivante :
+
+1) Créez autant de clefs que vous voulez pour la partition, par exemple :
+   head -c 2880 /dev/urandom | uuencode -m - | head -n-1 | tail -n+2 > keyfile
+   ou utiliser une phrase de passe facile à retenir.
+
+2) Faites une sauvegarde sécurisée de votre clef et sécurisez le fichier de
+   la clef par 'chmod 0400' ou autre. Votre clef de sauvegarde doit être
+   sécurisée (i.e. pas sur votre ordinateur). Souvenez-vous, si vous perdez
+   votre clé, vous ne serez définitivement PLUS capable d'accéder à vos
+   données.
+
+3) Faites une sauvegarde des données présentes sur la partition.
+
+4) Démontez la partition.
+
+5) Créez une partition chiffrée (Toutes les données présentes sur cette
+   partition seront perdues). Lancez
+   cryptsetup -c $algorithme-chiffrement luksFormat /dev/sd?? $keyfile
+   Remplacez '$algorithme-chiffrement', '/dev/sd??' and '$keyfile' avec les
+   valeur correspondantes.
+
+6) Optionnellement, ajoutez d'autres clefs à la partition. Lancez
+   cryptsetup -y -d $keyfile luksAddKey /dev/sd??
+   Remplacez '$keyfile' de la même façon que plus haut et '/dev/sd??' par la
+   partition correspondante.
+
+7) Ouvrez la partition. Lancez
+   cryptsetup -d $keyfile luksOpen /dev/sd?? sd??
+   Remplacez '$keyfile' et '/dev/sd??' par les valeurs correspondantes.
+   Remplacez 'sd??' par un nom ayant du sens. Si tout c'est bien passé, la
+   partition apparaîtra comme '/dev/mapper/sd??' où 'sd??' est le nom que vous
+   avez choisi.
+
+8) Créez un système de fichier sur la partition. Lancez 
+   mkefs.$WHATEVER /dev/mapper/sd??  
+   Remplacez '$WHATEVER' par le type de système de fichier que vous voulez
+   utiliser (e.g. ext2) et '/dev/mapper/sd??' par la partition correspondante.
+
+9) Modifier /etc/fstab
+   Puisque le point de montage de la partition chiffrée a changé, vous devez
+   dire au système de fichier où la trouver. Modifiez le point de montage en
+   insérant "mapper/" dans le champ du périphérique.
+
+   Exemple :
+   /dev/sda4         /home ext2 defaults 1 2
+   devient
+   /dev/mapper/sda4  /home ext2 defaults 1 2
+
+10) Monter le système de fichier avec 'mount /dev/mapper/sd??'
+    
+11) Copier les données sur la partition.
+
+
+4.2 Configurer le système pour qu'il monte et déchiffre automatiquement le(s)
+    partition(s)
+
+Créez un script de démarrage qui déchiffrera automatiquement vos partitions
+chiffrées. On suppose que les phrases des passes sont stockées dans /etc/crypt
+par exemple. Notez que conserver des phrases de passes sur le disque peut
+poser des problèmes de sécurité. Utilisez le modèle pour les scripts de
+démarrages qui est inclus dans BLFS et faites le exécuter :
+
+/sbin/cryptsetup -d /etc/crypt/$PARTITION.key luksOpen \
+   /dev/$PARTITION $PARTITION
+
+pour chaque partition chiffrée autre que la partition racine et le(s)
+partition(s) swap.
+
+Exemple :
+
+#!/bin/sh
+########################################################################
+# Début $rc_base/init.d/cryptsetup
+#
+# Description : Rends disponible les système de fichiers chiffrés pour être
+#				monter et nettoyer après
+#
+# Auteur      : Lars Bamberger
+#
+# Version     : 00.01
+#
+# Notes       : Il ne devrait pas être exécuter automatiquement avec un autre
+#				argument que "start". Durant l'arrêt et le redémarrage, il est
+#				suffisant de démonter les systèmes de fichier. /dev/mapper/*
+#				disparaît quand le noyau s'arrête ou redémarre.
+#
+########################################################################
+
+. /etc/sysconfig/rc
+. ${rc_functions}
+PROC=/sbin/cryptsetup
+
+case "${1}" in
+	start)
+		boot_mesg "luksOpen Home..."
+		$PROC -d /etc/crypt/home.key luksOpen /dev/sda4 sda4
+		evaluate_retval
+	stop)
+		boot_mesg "luksClose Home..."
+		$PROC luksClose sda4
+		evaluate_retval
+		;;
+	reload)
+		boot_mesg "Reloading home..."
+		$PROC reload sda4
+		evaluate_retval
+		;;
+	restart)
+		${0} stop
+		sleep 1
+		${0} start
+		;;
+	status)
+		$PROC status sda4
+		;;
+	*)
+		echo "Usage: ${0} {start|stop|reload|restart|status}"
+		exit 1
+		;;
+esac
+# Fin $rc_base/init.d/cryptsetup
+
+Tout d'abord, avant de procéder, assurez-vous que tout ce qui a été fait
+jusqu'à présent fonctionne comme prévu. Familiarisez-vous avec cette manière
+de chiffrer vos partitions.
+Créez un lien symbolique pour que le script soit lancé au démarrage :
+
+# cd /etc/rc.d/rcsysinit.d
+# ln -s ../init.d/cryptsetup S19cryptsetup
+
+Vérifiez une nouvelle fois que le démarrage, le redémarrage, l'arrêt etc
+fonctionnent normalement.
+
+
+5. Un mot sur le chiffrement de(s) partition(s) de swap
+=======================================================
+
+N'oubliez pas de chiffrer vos partitions swap. Beaucoup de données
+intéressantes se trouvent sur ces partitions. Ne considérez pas que vos
+données sont en sûreté si vous n'utilisez pas des espaces swap chiffrés. 
+
+En théorie, les données présentent sur le(s) partition(s) swap n'ont pas
+besoin d'être conservé entre les redémarrages. Cela signifie que nous
+pourrions créer un nouvelle espace de swap au démarrage en utilisant une clé
+de chiffrement aléatoire (donc différente) à chaque démarrage. De cette façon
+vous n'avez pas à vous soucier de la gestion des clefs de chiffrement pour
+l'espace de swap et vous n'avez pas à la stocker (sauf en mémoire). On pourrai
+considérer cela comme une sécurité supplémentaire.
+Néanmoins, si vous suspendez votre système (en RAM ou sur disque), les
+données de l'espace de swap doit rester consistantes. Vous devrez donc traiter
+le(s) partition(s) swap comme si c'était des partitions standards. Dans ce
+cas, vous devrez les chiffrer comme expliqué plus haut.
+
+
+6. Chiffrer rootfs
+==================
+
+Il n'est pas possible de chiffrer rootfs comme les autres partitions, car le
+système s'exécute dessus. L'idée est de créer un initramfs contenant tous
+le nécessaire pour chiffrer (et déchiffrer) rootfs (Voir la documentation du
+noyau pour les détails : 'filesystems/ramfs-rootfs-initramfs.txt').
+
+Vous aurez besoin de tous les répertoires standards (bin, sbin,
+usr/{bin,sbin}, proc, sys, dev, lib). Dans bin, nous mettons busybox-large
+(renommé en busybox), ainsi qu'un lien symbolique vers busybox appelé hush.
+Copiez cryptsetup vers sbin.  Placez quelques périphérique utiles dans dev :
+console, null, sd??, ainsi qu'un répertoire 'mapper' contenant 'control'. Puis
+faites une copie de dev :
+cp -a dev init-dev
+Dans lib (et dev) placez tout ce qui est nécessaire à l'exécution de busybox
+et cryptsetup.
+
+Le script d'initialisation est le suivant :
+#!/bin/hush
+/bin/busybox mount -t proc proc /proc
+/bin/busybox mount -t sysfs sysfs /sys
+/bin/busybox mount -t tmpfs tmpfs /dev
+/bin/busybox cp -a /init-dev/* /dev
+/bin/busybox --install -s
+exec /bin/busybox hush
+
+Placez tout cela dans un répertoire (init y sera et non pas dans sbin), puis
+créez l'image avec : 
+find . | cpio --quiet -H newc -o | gzip -9 -n > /boot/imagefile.img 
+Transmettez l'argument initrd approprié au noyau lors du démarrage et vous
+atterrirez dans un shell hush après le démarrage du système.
+
+*** PIÈGES ***
+cryptsetup a besoin que proc et sys soient monté. Il requiert aussi le
+répertoire dev. Puisque nous voulons sauvegarder dev quand nous lançons
+switch_root dans a suite, nous le montons comme tmpfs. Cela signifie que les
+périphériques de dev seront absent, il faut qu'on les copier dans dev. Notez
+bien que vous avez besoin que 'null' et 'console' soient présent dans dev
+avant de monter tmpfs sur dev.
+
+Une fois le shell a disposition, chiffrez votre rootfs comme n'importe qu'elle
+autre partitions comme décrit plus haut. N'oubliez pas la sauvegarde!
+Assurez-vous ABSOLUMENT d'être capable À COUP SÛR de monter et d'accéder à
+la sauvegarde non chiffrée de rootfs depuis le shell hush!
+
+Ensuite, créez la partition racine chiffrée. Notez que la phrase de passe ne
+sera stockée nul part que le disk, donc lancez :
+
+cryptsetup -y -c $cipher-algorithm luksFormat /dev/sd??
+
+pour créer le rootfs chiffré. Remplacez '$cipher-algorithm' et '/dev/sd??' par
+leur valeurs respectives. Ensuite, ouvrez la partition, formatez là, et
+restaurez la sauvegarde :
+
+cryptsetup luksOpen /dev/sd?? sd??
+$BAKUROOTFS/mkefs.$TYPE /dev/mapper/sd??
+mkdir /new-root
+mount -t $FSTYPE /dev/mapper/sd?? /new-root
+cp -a $BACKUPROOTFS /new-root
+
+*** PIÈGE ***
+Puique votre ancien rootfs n'est pas monté, vous ne devriez pas être capable
+d'exécuter mkefs à cause de bibliothèques manquantes. Soit copiez ce qui est
+nécessaire à un emplacement accessible à l'éditeur de lien, soit utilisez la
+version de mkfs fourni avec busybox. Assurez vous que busybox est configuré en
+conséquence.
+
+Ensuite, modifier /etc/fstab (sur /new-root) pour prendre en compte le nouveau
+périphérique de rootfs. Modifiez aussi le script cryptsetup comme décrit plus
+bas (7. PIÈGE).
+
+
+7. Déchiffrer rootfs lors des démarrages suivants
+=================================================
+
+Comme dans 6., créez un initramfs. La différence est que nous utiliserons
+l'exécutable "busybox-minimum" et que vous aurez besoin du répertoire
+supplémentaire new-root. N'oubliez pas le lien symbolique 'hush'.
+L'initialisation est comme suit : (remplacez 'sd??' par le périphérique racine
+et ajustez le type de système de fichier).
+
+#!/bin/hush
+/bin/busybox mount -t proc proc /proc
+/bin/busybox mount -t sysfs sysfs /sys
+/bin/busybox mount -t tmpfs tmpfs /dev
+/bin/busybox cp -a /init-dev/* /dev
+/sbin/cryptsetup luksOpen /dev/sd?? sd??
+/bin/busybox mount -r -t ext2 /dev/mapper/sd?? /new-root
+/bin/busybox mount --move /proc /new-root/proc
+/bin/busybox mount --move /sys /new-root/sys
+/bin/busybox mount --move /dev /new-root/dev 
+exec /bin/busybox switch_root /new-root /sbin/init $@
+
+*** PIÈGE ***
+Vous voulez conserver /proc /sys and /dev après switch_root car cryptsetup les
+utilise. D'où la commande 'mount --move'. Notez que /dev/mapper/sd?? (le
+périphérique racine) ne sera plus là quand vous aurez monté la vrai partition
+racine, exécuter switch_root et que rootfs aura démarré udev. C'est pour cela
+que ce périphérique doit être recréé. Modifiez donc le script d'initialisation
+cryptsetup en ajoutant :
+
+		if [[ ! -b /dev/mapper/sd?? ]];
+		then
+			boot_mesg "Making device for rootfs..."
+			/bin/mknod -m 0600 /dev/mapper/sd?? b 254 0
+			evaluate_retval;
+		fi
+
+à la section 'start' du script
+
+
+8. S'assurer que la sécurité n'est pas compromise
+=================================================
+
+Une fois que tout marche comme il le devrait, supprimez la sauvegarde non
+chiffrée de votre rootfs. Protégez votre chargeur de démarrage par un mot de
+passe pour supprimer la possibilité de modifier les paramètres de démarrage
+sans autorisation.
+Créez un script de démarrage (checkbootfs) qui s'assure que la partition non
+chiffrée utilisée pour démarrer n'est pas compromise. Utilisez quelque-chose
+comme :
+
+		boot_mesg "Checking integrity of boot FS..."
+		if
+		[[ $(/bin/md5sum -b /dev/sd??) == \
+		"$whatevermd5sum */dev/sd??" ]] \
+			&& \
+		[[ $(/bin/sha1sum -b /dev/sd??) == \
+		"$whatevensha1sum */dev/sd??" ]];
+		then
+			echo_ok;
+		else
+			echo_failure
+boot_mesg -n "FAILURE:\n\nThe boot file system seems to have been
+altered!\n\n" ${FAILURE}
+        boot_mesg -n " DO NOT TRUST THIS SYSTEM!\n\n"
+        boot_mesg_flush
+
+*** PIÈGE ***
+Assurez-vous que c'est la dernière chose que vous implémenterez, car les
+sommes de contrôle changerons lors de la mise en œuvre. Les sommes de
+contrôle changerons aussi si vous exécutez fsck sur la partition de démarrage.
+
+
+REMERCIEMENTS :
+  * Various pour les pages de wiki 
+    http://de.gentoo-wiki.com/Cryptsetup-luks_initramfs
+    et
+    http://en.gentoo-wiki.com/wiki/SECURITY_System_Encryption_DM-Crypt_with_LUKS
+  * Clemens Fruhwirth (http://clemens.endorphin.org/) 
+    pour LUKS et dm-crypt: http://luks.endorphin.org/dm-crypt
+
+HISTORIQUE DES CHANGEMENTS :
+[2009-11-23]
+  * lister les dépendances du livre BLFS
+[2009-11-20]
+  * cryptsetup a besoin de /dev/urandom
+  * mkefs pourrai ne pas fonctionner dans initramfs
+  * mise à jour de certaines URLs
+  * changements mineurs
+[2009-02-15]
+  * Réécriture basique.
+[2008-02-17]
+  * Astuce initiale.
+
+HISTORIQUE DE LA TRADUCTION :
+[2009-12-16]
+  * traduction de la version du [2009-11-23]
