@@ -413,7 +413,7 @@ $Date$
     <xsl:param name="position">1</xsl:param>
     <xsl:variable name="tokens" select="count($scope/varlistentry)"/>
     <xsl:variable name="token" select="$scope/varlistentry[$position]/term/token"/>
-    <xsl:variable name="size" select="substring-before($token,' KB')"/>
+    <xsl:variable name="size" select="substring-before($token,' Kio')"/>
     <xsl:variable name="rawsize">
       <xsl:choose>
         <xsl:when test="contains($size,',')">
