@@ -436,13 +436,13 @@ $Date$
         <xsl:choose>
           <xsl:when test="$total &lt; '1000'">
             <xsl:value-of select="$total"/>
-            <xsl:text>  KB</xsl:text>
+            <xsl:text>  Kio</xsl:text>
           </xsl:when>
           <xsl:when test="$total &gt; '1000' and $total &lt; '5000'">
             <xsl:value-of select="substring($total,1,1)"/>
             <xsl:text>,</xsl:text>
             <xsl:value-of select="substring($total,2)"/>
-            <xsl:text>  KB</xsl:text>
+            <xsl:text>  Kio</xsl:text>
           </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="round($total div 1024)"/>
