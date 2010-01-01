@@ -8,7 +8,7 @@ ROOT_ID         :=
 S		:= -
 
 ARCHS		:= x86 x86_64 x86_64-64 sparc sparc64 sparc64-64 mips mips64 mips64-64 \
-		   ppc ppc64 alpha native native64
+		   ppc ppc64 alpha
 
 ARCHS_HTML	:= $(ARCHS:%=%$(S)html)
 ARCHS_NOCHUNKS	:= $(ARCHS:%=%$(S)nochunks)
