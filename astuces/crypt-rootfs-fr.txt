@@ -36,13 +36,17 @@ SYSTÈME !
 ASTUCE :
 
 1. C'est à quel sujet ?
-===========
+=======================
 
 Cette astuce parle du chiffrement de toutes les partitions de votre disque dur
 sauf une en utilisant LUKS pour dm-crypt. Nous démarrerons à partir d'une
 petite partition non chiffrée en utilisant initramfs pour déchiffrer
 le système de fichiers racine.  Cette astuce suppose la présence d'une petite
-partition disponible pour démarrer (10 Mio devraient être suffisants).
+partition disponible pour démarrer. La taille de cette partition devrait être
+entre 10 et 15 Mio afin qu'elle puisse contenir plus d'un noyau et plus d'une
+image initramfs pour les tests et les mises à jour. Evitez de créer une
+partition plus grande car à chaque démarrage une somme de contrôle de cette
+partition est calculée, et c'est un processus long. 
 
 
 2. Logiciels nécessaires et dépendances
@@ -50,9 +54,11 @@ partition disponible pour démarrer (10 Mio devraient être suffisants).
 
 2.1 Logiciels présents dans le livre BLFS
 
-Vous avez besoin d'installer 'Popt', car 'cryptsetup' en dépend. Vous aurez également besoin de 'uuencode' pour créer les fichiers contenant les clés.
-'uuencode' est inclus dans 'GMime' qui a d'autres dépendances listées dans le
-livre BLFS.
+Vous avez besoin d'installer 'Popt', car 'cryptsetup' en dépend. Vous aurez
+également besoin de 'uuencode' pour créer les fichiers contenant les clés.
+'uuencode' est inclus dans 'shareutils' et 'GMime' qui a d'autres dépendances
+listées dans le livre BLFS. Pour créer l'initramfs, vous aurez besoin de
+'Cpio'.
 
 2.2 Logiciels absents du livre BLFS
 
@@ -78,11 +84,12 @@ La configuration minimum requise comprend :
 * switch_root.
 
 Compilez-le, mais NE L'INSTALLEZ PAS. Conservez l'exécutable et nommez-le
-"busybox-minimum". Ensuite, Re-configurez busybox pour un environnement de
+'busybox-minimum'. Ensuite, Re-configurez busybox pour un environnement de
 bureau complet. Vous aurez besoin de tous les outils et utilitaires standards
 pour le chiffrement initial de votre partition racine et pour cibler les
-problèmes éventuels. Nommez cet exécutable "busybox-large" ou quelque chose
-d'approchant. De même, il n'est pas nécessaire de l'installer.
+problèmes éventuels (N'oubliez pas 'mkefs'). Nommez cet exécutable
+"busybox-large" ou quelque chose d'approchant. De même, il n'est pas
+nécessaire de l'installer.
 
 
 3. Recompiler le noyau
@@ -94,24 +101,25 @@ plus avant. (Voir la section REMERCIEMENTS). Les modules appropriés doivent
 être compilés (en dur, pas comme modules) dans le noyau. Par exemple, vous
 pouvez utiliser la méthode "twofish-cbc-essiv:sha256".
 
-Également, sélectionnez l'option 'Device mapper support' du menu 'Multiple
-devices driver support' dans la configuration du noyau, ainsi que l'option
-'crypto target'.
+A Partir du menu 'Device Drivers' -> 'Multiple devices driver support'
+de la configuration du noyau, sélectionnez aussi les options 
+'Device mapper support' et 'crypto target'.
 
-Sélectionnez 'Initial RAM filesystem and RAM disk' sous la section 'general
-setup' et 'RAM block device support' sous 'Block devices'.
+Dans la section 'Device Drivers' -> 'Block Devices', sélectionnez 
+'RAM block device support' , et dans 'General setup', sélectionnez 
+'Initial RAM filesystem'.
 
 NOTE : vous devez démarrer ce nouveau noyau avant d'aller plus loin.
 
 
 4. Chiffrer les partitions autres que le système de fichiers racine et autre que celle d'échange
-==============================================================
+================================================================================================
 
 Vous devez modifier votre système pour qu'il puisse gérer les partitions
 chiffrées. Dans un premier temps, nous modifions le système pour qu'il puisse
-gérer les partitions AUTRES que le système de fichiers racine. Il est fortement recommandé que
-vous conserviez une sauvegarde de tous les fichiers que vous modifierez par la
-suite.
+gérer les partitions AUTRES que le système de fichiers racine. Il est
+fortement recommandé que vous conserviez une sauvegarde de tous les fichiers
+que vous modifierez par la suite.
 
 4.1 Chiffrer les partitions
 
@@ -161,17 +169,17 @@ La procédure pour chaque partition est la suivante :
    cryptsetup -d $fichier_de_clés luksOpen /dev/sd?? sd??
    Remplacez '$fichier_de_clés' et '/dev/sd??' par les valeurs correspondantes.
    Remplacez 'sd??' par un nom ayant du sens. Si tout s'est bien passé, la
-   partition apparaîtra comme '/dev/mapper/sd??' où 'sd??' est le nom que vous
-   avez choisi.
+   partition non chiffrée apparaîtra comme '/dev/mapper/sd??' où 'sd??' est le
+   nom que vous avez choisi.
 
-8) Créez un système de fichiers sur les partitions. Lancez 
+8) Créez un système de fichiers sur la partition. Lancez 
    mkefs.$QUELQUECHOSE /dev/mapper/sd??  
    Remplacez '$QUELQUECHOSE' par le type de système de fichiers que vous voulez
    utiliser (par exemple ext2) et '/dev/mapper/sd??' par la partition correspondante.
 
 9) Modifiez /etc/fstab
-   Puisque les points de montage des partitions chiffrées a changé, vous devez
-   dire au système de fichiers où les trouver. Modifiez les points de montage en
+   Puisque le périphérique de la partition chiffrée a changé, vous devez
+   préciser au système de fichiers où les trouver. Modifiez les points de montage en
    insérant "mapper/" dans le champ du périphérique.
 
    Exemple :
@@ -187,10 +195,11 @@ La procédure pour chaque partition est la suivante :
 4.2 Configurer le système pour qu'il monte et déchiffre automatiquement le(s)
     partition(s)
 
-Créez un script de démarrage qui déchiffrera vos partitions
-chiffrées. On suppose que les phrases des passe sont stockées dans /etc/crypt
-par exemple. Notez que conserver des phrases de passe sur le disque peut
-poser des problèmes de sécurité ! Utilisez le modèle pour les scripts de démarrage fournis dans BLFS et faites les exécuter :
+Créez un script de démarrage qui déchiffrera votre partition chiffrée. On
+suppose que les phrases de passe sont stockées dans /etc/crypt par exemple.
+Notez que conserver des phrases de passe sur le disque peut poser des
+problèmes de sécurité ! Utilisez le modèle pour les scripts de démarrage
+fournis dans BLFS et faites-les exécuter :
 
 /sbin/cryptsetup -d /etc/crypt/$PARTITION.key luksOpen \
    /dev/$PARTITION $PARTITION
@@ -285,19 +294,19 @@ signifie que vous devrez les chiffrer comme expliqué plus haut.
 
 
 6. Chiffrer le système de fichiers racine
-==================
+=========================================
 
 Il n'est pas possible de chiffrer le système de fichiers racine comme les autres partitions, car le
 système s'exécute dessus. L'idée est de créer un initramfs contenant tous
 le nécessaire pour chiffrer (et déchiffrer) le système de fichiers racine (Voir la documentation du
 noyau pour les détails : 'filesystems/ramfs-rootfs-initramfs.txt').
 
-Vous aurez besoin de tous les répertoires standards (bin, sbin,
-usr/{bin,sbin}, proc, sys, dev, lib). Dans bin, nous mettons busybox-large
-(renommé en busybox), ainsi qu'un lien symbolique vers busybox appelé hush.
-Copiez cryptsetup vers sbin.  Placez quelques périphérique utiles dans dev :
-console, null, sd??, ainsi qu'un répertoire 'mapper' contenant 'control'. Puis
-faites une copie de dev :
+Vous aurez besoin des répertoires standards (bin, sbin, usr/{bin,sbin}, proc,
+sys, dev, lib). Dans bin, nous mettons busybox-large (renommé en busybox),
+ainsi qu'un lien symbolique vers busybox appelé hush.  Copiez cryptsetup vers
+sbin.  Placez quelques périphériques utiles dans dev : console, null, sd??,
+ainsi qu'un répertoire 'mapper' contenant 'control'. Puis faites une copie de
+dev :
 cp -a dev init-dev
 Dans lib (et dev) placez tout ce qui est nécessaire à l'exécution de busybox
 et cryptsetup.
@@ -311,45 +320,48 @@ Le script d'initialisation est le suivant :
 /bin/busybox --install -s
 exec /bin/busybox hush
 
-Placez tout cela dans un répertoire (init y sera et non pas dans sbin), puis
-créez l'image en utilisant : 
+Placez tout cela dans un répertoire (init y sera et non pas dans sbin),
+placez-vous dans ce répertoire puis créez l'image en utilisant : 
 find . | cpio --quiet -H newc -o | gzip -9 -n > /boot/imagefile.img 
-Transmettez l'argument initrd approprié au noyau lors du démarrage et vous
-atterrirez dans un shell hush après le démarrage du système.
+Transmettez l'argument initrd (e.g. initrd (hd0,0)/initramfs.img) approprié au
+noyau lors du démarrage et vous atterrirez dans un shell hush après le
+démarrage du système.
 
 *** PIÈGES ***
-cryptsetup a besoin que proc et sys soient montés. Il requiert aussi le
-répertoire dev. Puisque nous voulons sauvegarder dev quand nous lancerons
+Cryptsetup a besoin que /proc et /sys soient montés. Il requiert aussi le
+répertoire /dev. Puisque nous voulons sauvegarder dev quand nous lancerons
 switch_root plus tard, nous le monterons comme tmpfs. Cela signifie que les
-périphériques de dev seront absents, il faut qu'on les copie dans dev. Notez
-bien que vous avez besoin que 'null' et 'console' soient présents dans dev
-avant de monter tmpfs dans dev.
+périphériques de /dev seront absents, il faut qu'on les copie dans /dev. Notez
+bien que vous avez besoin que 'null' et 'console' soient présents dans /dev
+avant de monter tmpfs dans /dev.
 
-Une fois dans le shell, chiffrez votre système de fichiers racine comme n'importe quel
-autre partition comme décrit plus haut. N'oubliez pas la sauvegarde !
-Assurez-vous ABSOLUMENT d'être capable À COUP SÛR de monter et d'accéder à
-la sauvegarde non chiffrée du syptème de fichiers racine depuis le shell hush !
+Une fois dans le shell, chiffrez votre système de fichiers racine comme
+n'importe quel autre partition comme décrit plus haut. N'oubliez pas la
+sauvegarde !  Assurez-vous ABSOLUMENT d'être capable À COUP SÛR de monter et
+d'accéder à la sauvegarde non chiffrée du système de fichiers racine depuis le
+shell hush !
 
 Ensuite, créez la partition racine chiffrée. Notez que la phrase de passe ne
 sera stockée nul part sur le disque, donc lancez :
 
 cryptsetup -y -c $algorithme_de_chiffrement luksFormat /dev/sd??
 
-pour créer le système de fichiers racine chiffré. Remplacez '$algorithme_de_chiffrement' et '/dev/sd??' par
-leurs valeurs respectives. Ensuite, ouvrez la partition, formatez là, et
-restaurez la sauvegarde :
+pour créer le système de fichiers racine chiffré. Remplacez
+'$algorithme_de_chiffrement' et '/dev/sd??' par leurs valeurs respectives.
+Ensuite, ouvrez la partition, formatez-la et restaurez la sauvegarde :
 
 cryptsetup luksOpen /dev/sd?? sd??
-$BAKUROOTFS/mkefs.$TYPE /dev/mapper/sd??
+$BACKUPROOTFS/mkefs.$TYPE /dev/mapper/sd??
 mkdir /new-root
 mount -t $FSTYPE /dev/mapper/sd?? /new-root
 cp -a $BACKUPROOTFS /new-root
 
-PIÈGES : Puique votre ancien système de fichiers racine n'est pas monté, vous ne devriez pas être capable
-d'exécuter mkefs à cause de bibliothèques manquantes. Soit copiez ce qui est
-nécessaire à un emplacement accessible à l'éditeur de liens, soit utilisez la
-version de mkfs fournie avec busybox. Assurez vous que busybox est configuré en
-conséquence.
+*** PIÈGES ***
+Puique votre ancien système de fichiers racine n'est pas monté, vous ne
+devriez pas être capable d'exécuter mkefs à cause de bibliothèques manquantes.
+Vous pouvez, soit copier ce qui est nécessaire à un emplacement accessible à
+l'éditeur de liens, soit utiliser la version de mkfs fournie avec busybox.
+Assurez-vous que busybox est configuré en conséquence.
 
 Ensuite, modifiez /etc/fstab (sur /new-root) pour prendre en compte le nouveau
 périphérique de système de fichiers racine. Modifiez aussi le script cryptsetup comme décrit plus
@@ -377,12 +389,13 @@ et ajustez le type de système de fichiers).
 /bin/busybox mount --move /dev /new-root/dev 
 exec /bin/busybox switch_root /new-root /sbin/init $@
 
-PIÈGEs : Vous voulez conserver /proc /sys et /dev après switch_root car cryptsetup les
+*** PIÈGES ***
+Vous voulez conserver /proc /sys et /dev après switch_root car cryptsetup les
 utilise. D'où la commande 'mount --move'. Notez que /dev/mapper/sd?? (le
 périphérique racine) ne sera plus là quand vous aurez monté la vraie partition
-racine, exécuté switch_root et quand le système de fichiers racine aura démarré udev. C'est pour cela
-que ce périphérique doit être recréé. Modifiez donc le script d'initialisation
-cryptsetup en ajoutant :
+racine, exécuté switch_root et quand le système de fichiers racine aura
+démarré udev. C'est pour cela que ce périphérique doit être recréé. Modifiez
+donc le script d'initialisation cryptsetup en ajoutant :
 
 		if [[ ! -b /dev/mapper/sd?? ]];
 		then
@@ -421,20 +434,24 @@ altered!\n\n" ${FAILURE}
         boot_mesg -n " DO NOT TRUST THIS SYSTEM!\n\n"
         boot_mesg_flush
 
-PIÈGES : Assurez-vous que c'est la dernière chose que vous implémenterez, car les
-sommes de contrôle changeront lors de la mise en ½uvre. Les sommes de
+*** PIÈGES ***
+Assurez-vous que c'est la dernière chose que vous implémenterez, car les
+sommes de contrôle changeront lors de la mise en oeuvre. Les sommes de
 contrôle changeront aussi si vous exécutez fsck sur la partition de démarrage.
 
 
 REMERCIEMENTS :
+  * Emmanuel Trillaud pour les suggestion et les liens.
   * Various pour les pages de wiki sur
-    http://de.gentoo-wiki.com/Cryptsetup-luks_initramfs
-    (plus en ligne) et
     http://en.gentoo-wiki.com/wiki/SECURITY_System_Encryption_DM-Crypt_with_LUKS
   * Clemens Fruhwirth (http://clemens.endorphin.org/) 
     pour LUKS pour dm-crypt: http://luks.endorphin.org/dm-crypt
 
 HISTORIQUE DES CHANGEMENTS :
+[2009-12-30]
+  * Intégration des suggestion (typos, format et autre) d'Emmanuel Trillaud
+  * Plus de détails sur la taille de la partition de démarrage
+  * Reformatage
 [2009-11-23]
   * listage les dépendances du livre BLFS
 [20-11-2009]
@@ -448,12 +465,12 @@ HISTORIQUE DES CHANGEMENTS :
   * Astuce initiale.
 
 HISTORIQUE DE LA TRADUCTION :
-[16-12-2009]
-  * traduction de la version du [2009-11-23]
-
-[18-12-2009]
-  * première relecture par appzer0
-
+[04-01-2010]
+  * mise à jour suite à la version du [2009-12-30]
 [30-12-2009]
   * Relecture par JPM et publication
+[18-12-2009]
+  * première relecture par appzer0
+[16-12-2009]
+  * traduction de la version du [2009-11-23]
 
