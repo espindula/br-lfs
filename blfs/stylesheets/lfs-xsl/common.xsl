@@ -413,7 +413,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     <xsl:param name="position">1</xsl:param>
     <xsl:variable name="tokens" select="count($scope/varlistentry)"/>
     <xsl:variable name="token" select="$scope/varlistentry[$position]/term/token"/>
-    <xsl:variable name="size" select="substring-before($token,' KB')"/>
+    <xsl:variable name="size" select="substring-before($token,' Kio')"/>
     <xsl:variable name="rawsize">
       <xsl:choose>
         <xsl:when test="contains($size,',')">
@@ -436,13 +436,13 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
         <xsl:choose>
           <xsl:when test="$total &lt; '1000'">
             <xsl:value-of select="$total"/>
-            <xsl:text>  KB</xsl:text>
+            <xsl:text>  Kio</xsl:text>
           </xsl:when>
           <xsl:when test="$total &gt; '1000' et $total &lt; '5000'">
             <xsl:value-of select="substring($total,1,1)"/>
             <xsl:text>,</xsl:text>
             <xsl:value-of select="substring($total,2)"/>
-            <xsl:text>  KB</xsl:text>
+            <xsl:text>  Kio</xsl:text>
           </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="round($total div 1024)"/>
