@@ -5,8 +5,7 @@ RULES_DIR = /etc/udev/rules.d
 INSTALL = install
 INSTALL_DATA = $(INSTALL) -m644
 RULES_FILES = \
-	55-lfs.rules \
-	61-cdrom.rules
+	55-lfs.rules
 DOC_FILES = $(RULES_FILES:.rules=.txt)
 
 EXTRA_DOC_FILES = \
