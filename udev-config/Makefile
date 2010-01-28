@@ -8,13 +8,6 @@ RULES_FILES = \
 	55-lfs.rules
 DOC_FILES = $(RULES_FILES:.rules=.txt)
 
-EXTRA_DOC_FILES = \
-	05-udev-early.txt \
-	60-persistent-input.txt \
-	60-persistent-storage.txt \
-	80-drivers.txt \
-	95-udev-late.txt
-
 # Location to install the docs
 DOC_DIR = $(PREFIX)/share/doc/udev-config
 
@@ -31,11 +24,5 @@ install-rules:
 install-doc:
 	$(INSTALL) -d $(DESTDIR)$(DOC_DIR)
 	for doc in $(DOC_FILES); do \
-		$(INSTALL_DATA) doc/$$doc $(DESTDIR)$(DOC_DIR) || exit 1; \
-	done
-
-install-extra-doc:
-	$(INSTALL) -d $(DESTDIR)$(DOC_DIR)
-	for doc in $(EXTRA_DOC_FILES); do \
 		$(INSTALL_DATA) doc/$$doc $(DESTDIR)$(DOC_DIR) || exit 1; \
 	done
