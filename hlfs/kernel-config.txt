@@ -1,0 +1,85 @@
+This page needs to add additional information about what is needed to get the
+Glibc test suite to pass, such as the SysV module.
+
+Enable extended attributes for your file system, for file system Posix
+capabilities, Access Control Lists, and security markings:
+	CONFIG_EXT2_FS_XATTR
+	CONFIG_EXT3_FS_XATTR
+	CONFIG_REISERFS_FS_XATTR
+	CONFIG_EXT2_FS_POSIX_ACL
+	CONFIG_EXT3_FS_POSIX_ACL
+	CONFIG_REISERFS_FS_POSIX_ACL
+	CONFIG_EXT2_FS_SECURITY
+	CONFIG_EXT3_FS_SECURITY
+	CONFIG_REISERFS_FS_SECURITY
+
+Enable Linux capabilities, and filesystem capabilities:
+	CONFIG_SECURITY_CAPABILITIES
+	CONFIG_SECURITY_FILE_CAPABILITIES
+
+Enable Loop-AES for encrypted swap:
+	BLK_DEV_LOOP_AES
+	BLK_DEV_LOOP_KEYSCRUB
+
+All the Grsec and PaX options can be enabled, but some should be disabled for
+the best security. 
+
+Do _NOT_ enable the following (we don't need, or use, them): 
+	CONFIG_PAX_SOFTMODE
+	CONFIG_PAX_EI_PAX
+	CONFIG_PAX_EMUTRAMP
+
+The SOFTMODE means settings will not be enforced; this is for curious users or
+for debugging problems. EI_PAX is for supporting legacy markings which we do
+not have (see below). PAX_EMUTRAMP is usefull for Glibc's localedef if it is
+not modified, but in general the PAX_EMUTRAMP option should be avoided if
+possible. These three options reduce security.
+
+Do enable the following:
+	CONFIG_PAX_PT_PAX_FLAGS
+
+This option tells the PaX kernel that we have PaX elf header markings, which
+are placed by our patched version of Binutils. This is the preferred method
+which replaces EI_PAX.
+
+Under "Grsecurity -> Executable Protections -> Trusted Path Execution" you may
+want to enable:
+	CONFIG_GRKERNSEC_TPE
+
+This option enables 'Trusted Path Execution'. Like the help says, this option
+is used to restrict which programs users can run depending on the program
+ownership and permissions. This can disallow users from running programs they
+build or install.
+
+Most administrators will not want to enable this option. This slightly loosens
+the 'Trusted Path Execution' restrictions, allowing users to run thier own
+programs, but not programs in another user's directory.
+
+	CONFIG_GRKERNSEC_TPE_ALL
+
+To only allow selected users to run their own programs enable:
+	CONFIG_GRKERNSEC_TPE_INVERT
+
+Choose the numeric GID for your trusted group. Users in this group will be able
+to run programs that are not in a directory owned by root, or programs that are
+world or group writtable. Generally this means these users can run their own
+programs. If you compile software as a non-root user, then that user will need
+to be added to this group. Alternately you could set this to GID 0, and add
+your trusted users to the root group. Otherwise you will probably need to run
+something like groupadd -g 1005 trusted.
+
+If you plan to use the X11 windowing system, then the options
+CONFIG_GRKERNSEC_KMEM and CONFIG_GRKERNSEC_IO, in the Grsecurity "Address Space
+Protection" menu, should be disabled. See the help for those options for more
+details.
+
+Be warned that the CONFIG_GRKERNSEC_IO option, which disallows modifying the
+kernel in memory while its loaded, breaks pnpdump(8) from Isatools.
+
+All the rest of the options will increase system security.
+
+The kernel will build with -D_FORTIFY_SOURCE=2, and will disable SSP
+automatically. There is a performance penalty when building the kernel with
+-D_FORTIFY_SOURCE=2, which can be disabled by building with make
+CC="gcc -U_FORTIFY_SOURCE".
+
