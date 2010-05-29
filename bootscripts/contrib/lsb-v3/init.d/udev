@@ -37,7 +37,9 @@ case "${1}" in
 		# made or removed during this boot don't affect the next one.
 		# The reason we don't write to mtab is because we don't ever
 		# want /dev to be unavailable (such as by `umount -a').
-		mount -n -t tmpfs tmpfs /dev -o mode=755
+		if ! mountpoint /dev > /dev/null; then
+			mount -n -t tmpfs tmpfs /dev -o mode=755
+		fi
 		if [ ${?} != 0 ]; then
 			echo_failure
 			boot_mesg -n "FAILURE:\n\nCannot mount a tmpfs" ${FAILURE}
@@ -63,7 +65,7 @@ case "${1}" in
 
 		# Now traverse /sys in order to "coldplug" devices that have
 		# already been discovered
-		/sbin/udevadm trigger
+		/sbin/udevadm trigger --action=add
 
 		# Now wait for udevd to process the uevents we triggered
 		/sbin/udevadm settle
