@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+<sect1 id="ch-system-sysvinit" role="wrap">
+  <?dbhtml filename="sysvinit.html"?>
+
+  <title>Sysvinit-&sysvinit-version;</title>
+
+  <indexterm zone="ch-system-sysvinit">
+    <primary sortas="a-Sysvinit">Sysvinit</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>The Sysvinit package contains programs for controlling the startup,
+    running, and shutdown of the system.</para>
+
+  </sect2>
+
+  &env-target;
+
+  <sect2 role="installation">
+    <title>Installation of Sysvinit</title>
+
+    <para os="p1">The following patch contains a number of updates to the
+    &sysvinit-version;:</para>
+
+<screen os="p2"><userinput>patch -Np1 -i ../&sysvinit-fixes-patch;</userinput></screen>
+
+    <para os="s1">The following sed makes changes in the Makefile required for cross-compiling:</para>
+
+<screen os="s2"><userinput>cp -v src/Makefile src/Makefile.orig
+sed -e 's@/dev/initctl@$(ROOT)&amp;@g' \
+    -e 's@\(mknod \)-m \([0-9]* \)\(.* \)p@\1\3p; chmod \2\3@g' \
+    -e '/^ifeq/s/$(ROOT)//' \
+    -e 's@/usr/lib@$(ROOT)&amp;@' \
+    src/Makefile.orig &gt; src/Makefile</userinput></screen>
+
+    <para os="c">Compile the package:</para>
+
+<screen os="d"><userinput>make -C src clobber
+make -C src ROOT=${CLFS} CC="${CC}"</userinput></screen>
+
+    <para os="e">Install the package:</para>
+
+<screen os="f"><userinput>make -C src ROOT=${CLFS} INSTALL="install" install</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="conf-sysvinit" role="configuration">
+    <title>Configuring Sysvinit</title>
+
+    <indexterm zone="conf-sysvinit">
+      <primary sortas="a-Sysvinit">Sysvinit</primary>
+    <secondary>configuring</secondary></indexterm>
+
+    <indexterm zone="conf-sysvinit">
+      <primary sortas="e-/etc/inittab">/etc/inittab</primary>
+    </indexterm>
+
+    <para>Create a new file <filename>/etc/inittab</filename> by running the
+    following:</para>
+
+<screen><userinput>cat &gt; ${CLFS}/etc/inittab &lt;&lt; "EOF"
+<literal># Begin /etc/inittab
+
+id:3:initdefault:
+
+si::sysinit:/etc/rc.d/init.d/rc sysinit
+
+l0:0:wait:/etc/rc.d/init.d/rc 0
+l1:S1:wait:/etc/rc.d/init.d/rc 1
+l2:2:wait:/etc/rc.d/init.d/rc 2
+l3:3:wait:/etc/rc.d/init.d/rc 3
+l4:4:wait:/etc/rc.d/init.d/rc 4
+l5:5:wait:/etc/rc.d/init.d/rc 5
+l6:6:wait:/etc/rc.d/init.d/rc 6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+su:S016:once:/sbin/sulogin
+</literal>
+EOF</userinput></screen>
+
+    <para>The following command adds the standard virtual terminals to
+    <filename>/etc/inittab</filename>. If your system only has a serial
+    console skip the following command:</para>
+
+<screen><userinput>cat &gt;&gt; ${CLFS}/etc/inittab &lt;&lt; "EOF"
+<literal>1:2345:respawn:/sbin/agetty -I '\033(K' tty1 9600
+2:2345:respawn:/sbin/agetty -I '\033(K' tty2 9600
+3:2345:respawn:/sbin/agetty -I '\033(K' tty3 9600
+4:2345:respawn:/sbin/agetty -I '\033(K' tty4 9600
+5:2345:respawn:/sbin/agetty -I '\033(K' tty5 9600
+6:2345:respawn:/sbin/agetty -I '\033(K' tty6 9600
+</literal>
+EOF</userinput></screen>
+
+    <para>If your system has a serial console run the following command to add
+    the entry to <filename>/etc/inittab</filename>:</para>
+
+<screen><userinput>cat &gt;&gt; ${CLFS}/etc/inittab &lt;&lt; "EOF"
+<literal>c0:12345:respawn:/sbin/agetty 115200 ttyS0 vt100
+</literal>
+EOF</userinput></screen>
+
+   <para>Finally, Add the end line to <filename>/etc/inittab</filename>:</para>
+
+<screen><userinput>cat &gt;&gt; ${CLFS}/etc/inittab &lt;&lt; "EOF"
+<literal># End /etc/inittab</literal>
+EOF</userinput></screen>
+
+    <para>The <parameter>-I '\033(K'</parameter> option tells
+    <command>agetty</command> to send this escape sequence to the terminal
+    before doing anything else. This escape sequence switches the console
+    character set to a user-defined one, which can be modified by running
+    the <command>setfont</command> program. The <command>console</command>
+    initscript from the CLFS-Bootscripts package calls the
+    <command>setfont</command> program during system startup. Sending this
+    escape sequence is necessary for people who use non-ISO 8859-1 screen
+    fonts, but it does not affect native English speakers.</para>
+
+  </sect2>
+
+  <sect2 id="contents-sysvinit" role="content">
+    <title>Contents of Sysvinit</title>
+
+    <segmentedlist>
+      <segtitle>Installed programs</segtitle>
+
+      <seglistitem>
+        <seg>bootlogd, halt, init, killall5, last, lastb (link to last), mesg,
+        mountpoint, pidof (link to killall5), poweroff (link to halt),
+        reboot (link to halt), runlevel, shutdown, sulogin,
+        telinit (link to init), utmpdump, and wall</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="bootlogd">
+        <term><command>bootlogd</command></term>
+        <listitem>
+          <para>Logs boot messages to a log file</para>
+          <indexterm zone="ch-system-sysvinit bootlogd">
+            <primary sortas="b-bootlogd">bootlogd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="halt">
+        <term><command>halt</command></term>
+        <listitem>
+          <para>Normally invokes <command>shutdown</command> with the
+          <parameter>-h</parameter> option, except when already in run-level 0,
+          then it tells the kernel to halt the system; it notes in the
+          file <filename>/var/log/wtmp</filename> that the system is being
+          brought down</para>
+          <indexterm zone="ch-system-sysvinit halt">
+            <primary sortas="b-halt">halt</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="init">
+        <term><command>init</command></term>
+        <listitem>
+          <para>The first process to be started when the kernel has initialized
+          the hardware which takes over the boot process and starts all the
+          proceses it is instructed to</para>
+          <indexterm zone="ch-system-sysvinit init">
+            <primary sortas="b-init">init</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="killall5">
+        <term><command>killall5</command></term>
+        <listitem>
+          <para>Sends a signal to all processes, except the processes in its own
+          session so it will not kill the shell running the script that called
+          it</para>
+          <indexterm zone="ch-system-sysvinit killall5">
+            <primary sortas="b-killall5">killall5</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="last">
+        <term><command>last</command></term>
+        <listitem>
+          <para>Shows which users last logged in (and out), searching back
+          through the <filename>/var/log/wtmp</filename> file; it also shows
+          system boots, shutdowns, and run-level changes</para>
+          <indexterm zone="ch-system-sysvinit last">
+            <primary sortas="b-last">last</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="lastb">
+        <term><command>lastb</command></term>
+        <listitem>
+          <para>Shows the failed login attempts, as logged in
+          <filename>/var/log/btmp</filename></para>
+          <indexterm zone="ch-system-sysvinit lastb">
+            <primary sortas="b-lastb">lastb</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mesg">
+        <term><command>mesg</command></term>
+        <listitem>
+          <para>Controls whether other users can send messages to the current
+          user's terminal</para>
+          <indexterm zone="ch-system-sysvinit mesg">
+            <primary sortas="b-mesg">mesg</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="mountpoint">
+        <term><command>mountpoint</command></term>
+        <listitem>
+          <para>Tells you whether or not a directory is a mount point.</para>
+          <indexterm zone="ch-system-sysvinit mountpoint">
+            <primary sortas="b-mountpoint">mountpoint</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="pidof">
+        <term><command>pidof</command></term>
+        <listitem>
+          <para>Reports the PIDs of the given programs</para>
+          <indexterm zone="ch-system-sysvinit pidof">
+            <primary sortas="b-pidof">pidof</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="poweroff">
+        <term><command>poweroff</command></term>
+        <listitem>
+          <para>Tells the kernel to halt the system and switch off the computer
+          (see <command>halt</command>)</para>
+          <indexterm zone="ch-system-sysvinit poweroff">
+            <primary sortas="b-poweroff">poweroff</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="reboot">
+        <term><command>reboot</command></term>
+        <listitem>
+          <para>Tells the kernel to reboot the system (see
+          <command>halt</command>)</para>
+          <indexterm zone="ch-system-sysvinit reboot">
+            <primary sortas="b-reboot">reboot</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="runlevel">
+        <term><command>runlevel</command></term>
+        <listitem>
+          <para>Reports the previous and the current run-level, as noted in
+          the last run-level record in <filename>/var/run/utmp</filename></para>
+          <indexterm zone="ch-system-sysvinit runlevel">
+            <primary sortas="b-runlevel">runlevel</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="shutdown">
+        <term><command>shutdown</command></term>
+        <listitem>
+          <para>Brings the system down in a secure way, signaling all processes
+          and notifying all logged-in users</para>
+          <indexterm zone="ch-system-sysvinit shutdown">
+            <primary sortas="b-shutdown">shutdown</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="sulogin">
+        <term><command>sulogin</command></term>
+        <listitem>
+          <para>Allows <emphasis>root</emphasis> to log in; it is normally
+          invoked by <command>init</command> when the system goes into single
+          user mode</para>
+          <indexterm zone="ch-system-sysvinit sulogin">
+            <primary sortas="b-sulogin">sulogin</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="telinit">
+        <term><command>telinit</command></term>
+        <listitem>
+          <para>Tells <command>init</command> which run-level to change to</para>
+          <indexterm zone="ch-system-sysvinit telinit">
+            <primary sortas="b-telinit">telinit</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="utmpdump">
+        <term><command>utmpdump</command></term>
+        <listitem>
+          <para>Displays the content of the given login file in a more
+          user-friendly format</para>
+          <indexterm zone="ch-system-sysvinit utmpdump">
+            <primary sortas="b-utmpdump">utmpdump</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="wall">
+        <term><command>wall</command></term>
+        <listitem>
+          <para>Writes a message to all logged-in users</para>
+          <indexterm zone="ch-system-sysvinit wall">
+            <primary sortas="b-wall">wall</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

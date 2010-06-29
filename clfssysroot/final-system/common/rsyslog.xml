@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-rsyslog" xreflabel="rsyslog" role="wrap">
+  <?dbhtml filename="rsyslog.html"?>
+
+  <title>Rsyslog-&rsyslog-version;</title>
+
+  <indexterm zone="ch-system-rsyslog">
+    <primary sortas="a-rsyslog">rsyslog</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>The rsyslog package contains programs for logging system messages,
+    such as those given by the kernel when unusual things happen.</para>
+
+  </sect2>
+
+  &env-target;
+
+  <sect2 role="installation">
+    <title>Installation of Rsyslog</title>
+
+    <para os="cc1">When Cross Compiling the configure script does not
+    does not determine the correct values for the following, Set the values
+    manually:</para>
+
+<screen os="cc1"><userinput>cat &gt; config.cache &lt;&lt; EOF
+ac_cv_func_malloc_0_nonnull=yes
+ac_cv_func_realloc_0_nonnull=yes
+EOF</userinput></screen>
+
+    <para os="a">Prepare Rsyslog for compilation:</para>
+
+<screen os="b"><userinput>./configure --build=${CLFS_HOST} --host=${CLFS_TARGET} \
+    --prefix=/usr --sbindir=/sbin \
+    --cache-file=config.cache</userinput></screen>
+
+    <para os="c">Compile the package:</para>
+
+<screen os="d"><userinput>make</userinput></screen>
+
+    <para os="e">This package does not come with a test suite.</para>
+
+    <para os="f">Install the package:</para>
+
+<screen os="g"><userinput>make DESTDIR=${CLFS} install</userinput></screen>
+
+    <para os="h">Create a directory for expansion snippets:</para>
+
+<screen os="i"><userinput>install -dv ${CLFS}/etc/rsyslog.d</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="conf-rsyslog" role="configuration">
+    <title>Configuring rsyslog</title>
+
+    <indexterm zone="conf-rsyslog">
+      <primary sortas="a-rsyslog">rsyslog</primary>
+    <secondary>configuring</secondary></indexterm>
+
+    <indexterm zone="conf-rsyslog">
+      <primary sortas="e-/etc/rsyslog.conf">/etc/rsyslog.conf</primary>
+    </indexterm>
+
+    <para>Create a new <filename>/etc/rsyslog.conf</filename> file by running
+    the following:</para>
+
+<screen><userinput>cat &gt; ${CLFS}/etc/rsyslog.conf &lt;&lt; "EOF"
+<literal># Begin /etc/rsyslog.conf
+
+# CLFS configuration of rsyslog. For more info use man rsyslog.conf
+
+#######################################################################
+# Rsyslog Modules
+
+# Support for Local System Logging
+$ModLoad imuxsock.so
+
+# Support for Kernel Logging
+$ModLoad imklog.so
+
+#######################################################################
+# Global Options
+
+# Use traditional timestamp format.
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+
+# Set the default permissions for all log files.
+$FileOwner root
+$FileGroup root
+$FileCreateMode 0640
+$DirCreateMode 0755
+
+# Provides UDP reception
+$ModLoad imudp
+$UDPServerRun 514
+
+# Disable Repating of Entries
+$RepeatedMsgReduction on
+
+#######################################################################
+# Include Rsyslog Config Snippets
+
+$IncludeConfig /etc/rsyslog.d/*.conf
+
+#######################################################################
+# Standard Log Files
+
+auth,authpriv.*                        /var/log/auth.log
+*.*;auth,authpriv.none                -/var/log/syslog
+daemon.*                        -/var/log/daemon.log
+kern.*                                -/var/log/kern.log
+lpr.*                                -/var/log/lpr.log
+mail.*                                -/var/log/mail.log
+user.*                                -/var/log/user.log
+
+# Catch All Logs
+*.=debug;\
+        auth,authpriv.none;\
+        news.none;mail.none        -/var/log/debug
+*.=info;*.=notice;*.=warn;\
+        auth,authpriv.none;\
+        cron,daemon.none;\
+        mail,news.none                -/var/log/messages
+
+# Emergency are shown to everyone
+*.emerg                                *
+
+# End /etc/rsyslog.conf</literal>
+EOF</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-rsyslog" role="content">
+    <title>Contents of rsyslog</title>
+
+    <segmentedlist>
+      <segtitle>Installed programs</segtitle>
+
+      <seglistitem>
+        <seg>rsyslogd</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="rsyslogd">
+        <term><command>rsyslogd</command></term>
+        <listitem>
+          <para>Logs the messages that system programs offer for logging.
+          Every logged message contains at least a date stamp and a hostname,
+          and normally the program's name too, but that depends on how
+          trusting the logging daemon is told to be.</para>
+          <indexterm zone="ch-system-rsyslog rsyslogd">
+            <primary sortas="b-rsyslogd">syslogd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

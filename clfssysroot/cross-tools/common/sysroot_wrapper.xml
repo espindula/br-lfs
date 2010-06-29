@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-cross-tools-sysroot-wrapper" role="wrap">
+  <?dbhtml filename="sysroot_wrapper.html"?>
+
+  <title>Creating a Sysroot Wrapper</title>
+
+  <indexterm zone="ch-cross-tools-sysroot-wrapper">
+    <primary sortas="a-File">Sysroot Wrapper</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>The Sysroot Wrapper is used to wrap certain binaries that have
+    hardcoded paths to libraries or are architecture specific.</para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation of The Sysroot Wrapper</title>
+
+    <para os="a">Create the source file:</para>
+
+<screen os="b"><userinput>cat &gt; sysroot_wrapper.c &lt;&lt; "EOF"
+#include &lt;sys/wait.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+
+char *sysrootdir = "";
+
+int main(int argc, char *argv[]) {
+  sysrootdir = getenv("CLFS");
+  if (!sysrootdir)
+    sysrootdir="";
+
+  int stdout_pipe[2];
+  pipe(stdout_pipe);
+
+  pid_t pid = fork();
+
+  if (pid == 0) {
+    /* Redirect stdout to our pipe */
+    close(1);
+    dup(stdout_pipe[1]);
+    close(stdout_pipe[0]);
+    close(stdout_pipe[1]);
+
+    char *name = strdup(argv[0]);
+    strcat(name, ".sysroot");
+
+    execvp(name, argv);
+
+    free(name);
+
+    exit(0);
+  } else {
+    /* Close stdout for write */
+    close(stdout_pipe[1]);
+
+    /* redirect our stdout pipe from the child to our stdin */
+    close(0);
+    dup(stdout_pipe[0]);
+    close(stdout_pipe[0]);
+
+    char c, lc;
+    char *d = malloc(1);
+    int d_len = 0;
+
+    while ((c = fgetc(stdin)) != EOF) {
+      d_len++;
+      d = realloc(d, d_len + 1);
+      *(d + d_len - 1) = c;
+      *(d + d_len) = '\0';
+
+      if ((lc == '-')&amp;&amp;((c == 'L')||(c == 'I'))) {
+        d_len = d_len + strlen(sysrootdir);
+        d = realloc(d, d_len + 1);
+        strcat(d, sysrootdir);
+      }
+
+      lc = c;
+    }
+
+    printf ("%s", d);
+    free(d);
+
+    exit(0);
+  }
+
+  return 0;
+}
+EOF</userinput></screen>
+
+    <para os="c">Compile and Install the Sysroot Wrapper:</para>
+
+<screen os="d"><userinput>gcc ${BUILD64} sysroot_wrapper.c -o ${CLFS}/cross-tools/bin/sysroot_wrapper</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-sysroot-wrapper" role="content">
+    <title>Contents of The Sysroot Wrapper</title>
+
+    <segmentedlist>
+      <segtitle>Installed programs</segtitle>
+
+      <seglistitem>
+        <seg>sysroot_wrapper</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="sysroot_wrapper">
+        <term><command>sysroot_wrapper</command></term>
+        <listitem>
+          <para>Description Needed</para>
+          <indexterm zone="ch-cross-tools-sysroot-wrapper sysroot_wrapper">
+            <primary sortas="b-sysroot_wrapper">sysroot_wrapper</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

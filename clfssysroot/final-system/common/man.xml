@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-man" role="wrap">
+  <?dbhtml filename="man.html"?>
+
+  <title>Man-&man-version;</title>
+
+  <indexterm zone="ch-system-man">
+    <primary sortas="a-Man">Man</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>The Man package contains programs for finding and viewing man
+    pages.</para>
+
+  </sect2>
+
+  &env-target;
+
+  <sect2 role="installation">
+    <title>Installation of Man</title>
+
+    <para os="p1">This patch adds support for Internationalization:</para>
+
+<screen os="p2"><userinput>patch -Np1 -i ../&man-i18n-patch;</userinput></screen>
+
+    <para os="p3">The following patch will add support for new compressors like XZ Utils:</para>
+
+<screen os="p4"><userinput>patch -Np1 -i ../&man-new_compressors-patch;</userinput></screen>
+
+    <para os="a">A few adjustments need to be made to the sources of Man.</para>
+
+    <para os="b">First, a <command>sed</command> substitution is needed to
+    modify <command>configure</command>'s default search path for executables.
+    It cycles through the values in <envar>PREPATH</envar> until it finds the
+    program it is looking for. The <option>-R</option> switch is also added to
+    the <envar>PAGER</envar> variable so that escape sequences are properly
+    handled by Less:</para>
+
+<screen os="c"><userinput>cp configure{,.orig}
+sed -e "/PREPATH=/s@=.*@=\"$(eval echo ${CLFS}/{,usr/}{sbin,bin})\"@g" \
+    -e 's@-is@&amp;R@g' configure.orig &gt; configure</userinput></screen>
+
+    <para os="d">Another couple of <command>sed</command> substitutions
+    comment out the <quote>MANPATH /usr/man</quote> and
+    <quote>MANPATH /usr/local/man</quote> lines in the
+    <filename>man.conf</filename> file to prevent redundant
+    results when using programs such as <command>whatis</command>:</para>
+
+<screen os="e"><userinput>cp src/man.conf.in{,.orig}
+sed -e 's@MANPATH./usr/man@#&amp;@g' \
+    -e 's@MANPATH./usr/local/man@#&amp;@g' \
+    src/man.conf.in.orig &gt; src/man.conf.in</userinput></screen>
+
+    <para os="f">Prepare Man for compilation:</para>
+
+<screen os="g"><userinput>./configure -confdir=/etc</userinput></screen>
+
+    <variablelist os="h">
+      <title>The meaning of the configure options:</title>
+
+      <varlistentry>
+      <term><parameter>-confdir=/etc</parameter></term>
+      <listitem>
+        <para>This tells the <command>man</command> program to look for the
+        <filename>man.conf</filename> configuration file in the <filename
+        class="directory">/etc</filename> directory.</para>
+      </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para os="i">Configure was modified to look in <filename
+    class="directory">${CLFS}</filename> for the paths of helper
+    programs. Right now all of the programs have <filename
+    class="directory">${CLFS}</filename> as a prefix. Remove that prefix
+    with the following command:</para>
+
+<screen os="j"><userinput>cp conf_script{,.orig}
+sed "s@${CLFS}@@" conf_script.orig &gt; conf_script</userinput></screen>
+
+    <para os="k">The <command>makemsg</command> program, in Man's source, is
+    executed during the build. Compile it using the host's <command>gcc</command>:</para>
+
+<screen os="l"><userinput>gcc src/makemsg.c -o src/makemsg</userinput></screen>
+
+    <para os="m">Compile the package:</para>
+
+<screen os="n"><userinput>make</userinput></screen>
+
+    <para os="o">Install the package:</para>
+
+<screen os="p"><userinput>make DESTDIR=${CLFS} install</userinput></screen>
+
+    <note os="q">
+      <para>If you will be working on a terminal that does not support
+      text attributes such as color and bold, you can disable Select
+      Graphic Rendition (SGR) escape sequences by editing the
+      <filename>man.conf</filename> file and adding the <option>-c</option>
+      option to the <envar>NROFF</envar> variable. If you use multiple
+      terminal types for one computer it may be better to selectively add
+      the <envar>GROFF_NO_SGR</envar> environment variable for the terminals
+      that do not support SGR.</para>
+    </note>
+
+    <para os="r">If the character set of the locale uses 8-bit characters, search
+    for the line beginning with <quote>NROFF</quote> in
+    <filename>/etc/man.conf</filename>, and verify that it matches the
+    following:</para>
+
+<screen os="s">NROFF /usr/bin/nroff -Tlatin1 -mandoc</screen>
+
+    <para os="t">Note that <quote>latin1</quote> should be used even if it is not
+    the character set of the locale. The reason is that, according to the
+    specification, <command>groff</command> has no means of typesetting
+    characters outside International Organization for Standards (ISO) 8859-1
+    without some strange escape codes. When formatting man pages,
+    <command>groff</command> thinks that they are in the ISO 8859-1 encoding
+    and this <parameter>-Tlatin1</parameter> switch tells
+    <command>groff</command> to use the same encoding for output. Since
+    <command>groff</command> does no recoding of input characters, the f
+    ormatted result is really in the same encoding as input, and therefore
+    it is usable as the input for a pager.</para>
+
+    <para os="u">This does not solve the problem of a non-working
+    <command>man2dvi</command> program for localized man pages in
+    non-ISO 8859-1 locales. Also, it does not work with multibyte
+    character sets. The first problem does not currently have a solution.
+    The second issue is not of concern because the CLFS installation does
+    not support multibyte character sets.</para>
+
+  </sect2>
+
+  <sect2 id="contents-man" role="content">
+    <title>Contents of Man</title>
+
+    <segmentedlist>
+      <segtitle>Installed programs</segtitle>
+
+      <seglistitem>
+        <seg>apropos, makewhatis, man, man2dvi, man2html, and whatis</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="apropos">
+        <term><command>apropos</command></term>
+        <listitem>
+          <para>Searches the <command>whatis</command> database and
+          displays the short descriptions of system commands that contain
+          a given string</para>
+          <indexterm zone="ch-system-man apropos">
+            <primary sortas="b-apropos">apropos</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="makewhatis">
+        <term><command>makewhatis</command></term>
+        <listitem>
+          <para>Builds the <command>whatis</command> database; it reads all
+          the man pages in the <envar>MANPATH</envar> and writes the name
+          and a short description in the <command>whatis</command> database
+          for each page</para>
+          <indexterm zone="ch-system-man makewhatis">
+            <primary sortas="b-makewhatis">makewhatis</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="man">
+        <term><command>man</command></term>
+        <listitem>
+          <para>Formats and displays the requested on-line man page</para>
+          <indexterm zone="ch-system-man man">
+            <primary sortas="b-man">man</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="man2dvi">
+        <term><command>man2dvi</command></term>
+        <listitem>
+          <para>Converts a man page into dvi format</para>
+          <indexterm zone="ch-system-man man2dvi">
+            <primary sortas="b-man2dvi">man2dvi</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="man2html">
+        <term><command>man2html</command></term>
+        <listitem>
+          <para>Converts a man page into HTML</para>
+          <indexterm zone="ch-system-man man2html">
+            <primary sortas="b-man2html">man2html</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="whatis">
+        <term><command>whatis</command></term>
+        <listitem>
+          <para>Searches the <command>whatis</command> database and
+          displays the short descriptions of system commands that
+          contain the given keyword as a separate word</para>
+          <indexterm zone="ch-system-man whatis">
+            <primary sortas="b-whatis">whatis</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

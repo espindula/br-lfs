@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-gcc" role="wrap">
+  <?dbhtml filename="gcc.html"?>
+
+  <title>GCC-&gcc-version;</title>
+
+  <indexterm zone="ch-system-gcc">
+    <primary sortas="a-GCC">GCC</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>The GCC package contains the GNU compiler collection, which includes
+    the C and C++ compilers.</para>
+
+  </sect2>
+
+  &env-target;
+
+  <sect2 role="installation">
+    <title>Installation of GCC</title>
+
+    <para os="p3">The following patch contains a number of updates to the
+    &gcc-version; branch by the GCC developers:</para>
+
+<screen os="p4"><userinput>patch -Np1 -i ../&gcc-branch_update-patch;</userinput></screen>
+
+    <para os="a">Apply a <command>sed</command> substitution that will suppress the
+    installation of <filename class="libraryfile">libiberty.a</filename>. The
+    version of <filename class="libraryfile">libiberty.a</filename> provided by
+    Binutils will be used instead:</para>
+
+<screen os="b"><userinput>cp libiberty/Makefile.in{,.orig}
+sed 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in.orig &gt; \
+    libiberty/Makefile.in</userinput></screen>
+
+    <para os="e1">GCC provides a <command>gccbug</command> script which detects at
+    compile time whether <command>mktemp</command> is present, and hardcodes
+    the result in a test. If <command>mktemp</command> is not found, the
+    script will fall back to using less random names for temporary files.
+    <command>mktemp</command> will be installed as part of Coreutils
+    later, so the following <command>sed</command> will simulate its presence:</para>
+
+<screen os="e2"><userinput>cp gcc/gccbug.in{,.orig}
+sed 's/@have_mktemp_command@/yes/' gcc/gccbug.in.orig &gt; gcc/gccbug.in</userinput></screen>
+
+    <para os="s1">The <command>fixincludes</command> script attempts to "fix"
+    the system headers installed so far. Since GCC is cross-compiled expecting
+    the system headers to be in <filename class="directory">/usr/include</filename>,
+    the script will be looking at the host system's headers. The following sed
+    prevents <command>fixincludes</command> from running:</para>
+
+<screen os="s2"><userinput>cp gcc/Makefile.in{,.orig}
+sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userinput></screen>
+
+    <para os="c">The GCC documentation recommends building GCC outside of the source
+    directory in a dedicated build directory:</para>
+
+<screen os="d"><userinput>mkdir -v ../gcc-build
+cd ../gcc-build</userinput></screen>
+
+    <para os="e">Prepare GCC for compilation:</para>
+
+<screen os="f"><userinput>LDFLAGS="-Wl,-rpath-link,${CLFS}/cross-tools/${CLFS_TARGET}/lib" \
+    ../gcc-&gcc-version;/configure --prefix=/usr --libexecdir=/usr/lib \
+    --build=${CLFS_HOST} --host=${CLFS_TARGET} --target=${CLFS_TARGET} \
+    --enable-shared --enable-threads=posix --enable-__cxa_atexit \
+    --enable-c99 --enable-long-long --enable-clocale=gnu \
+    --enable-languages=c,c++ --disable-libstdcxx-pch</userinput></screen>
+
+    <para os="ts1">The following will prevent GCC from looking in the wrong
+    directories for headers and libraries:</para>
+
+<screen os="ts2"><userinput>cp Makefile{,.orig}
+sed "/^HOST_\(GMP\|PPL\|CLOOG\)\(LIBS\|INC\)/s:-[IL]/\(lib\|include\)::" \
+    Makefile.orig &gt; Makefile</userinput></screen>
+
+    <para os="g">Compile the package:</para>
+
+<screen os="h"><userinput>make</userinput></screen>
+
+    <para os="i">Install the package:</para>
+
+<screen os="j"><userinput>make DESTDIR=${CLFS} install</userinput></screen>
+
+    <para os="k">Some packages expect the C preprocessor to be installed in the
+    <filename class="directory">/lib</filename> directory.
+    To support those packages, create this symlink:</para>
+
+<screen os="l"><userinput>ln -sfv ../usr/bin/cpp ${CLFS}/lib</userinput></screen>
+
+    <para os="m">Many packages use the name <command>cc</command> to call the C
+    compiler. To satisfy those packages, create a symlink:</para>
+
+<screen os="o"><userinput>ln -sfv gcc ${CLFS}/usr/bin/cc</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-gcc" role="content">
+    <title>Contents of GCC</title>
+
+    <segmentedlist>
+      <segtitle>Installed programs</segtitle>
+      <segtitle>Installed libraries</segtitle>
+
+      <seglistitem>
+        <seg>c++, cc (link to gcc), cpp, g++, gcc, gccbug, and gcov</seg>
+        <seg>libgcc.a, libgcc_eh.a, libgcc_s.so, libgomp.[a,so], libmudflap.[a,so],
+        libmudflapth.[a,so], libssp.[a,so], libstdc++.[a,so], and
+        libsupc++.a</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Short Descriptions</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="cc">
+        <term><command>cc</command></term>
+        <listitem>
+          <para>The C compiler</para>
+          <indexterm zone="ch-system-gcc cc">
+            <primary sortas="b-cc">cc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="cpp">
+        <term><command>cpp</command></term>
+        <listitem>
+          <para>The C preprocessor; it is used by the compiler to expand the
+          #include, #define, and similar statements in the source files</para>
+          <indexterm zone="ch-system-gcc cpp">
+            <primary sortas="b-cpp">cpp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="c">
+        <term><command>c++</command></term>
+        <listitem>
+          <para>The C++ compiler</para>
+          <indexterm zone="ch-system-gcc c">
+            <primary sortas="b-c++">c++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="g">
+        <term><command>g++</command></term>
+        <listitem>
+          <para>The C++ compiler</para>
+          <indexterm zone="ch-system-gcc g">
+            <primary sortas="b-g++">g++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcc">
+        <term><command>gcc</command></term>
+        <listitem>
+          <para>The C compiler</para>
+          <indexterm zone="ch-system-gcc gcc">
+            <primary sortas="b-gcc">gcc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gccbug">
+        <term><command>gccbug</command></term>
+        <listitem>
+          <para>A shell script used to help create useful bug reports</para>
+          <indexterm zone="ch-system-gcc gccbug">
+            <primary sortas="b-gccbug">gccbug</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcov">
+        <term><command>gcov</command></term>
+        <listitem>
+          <para>A coverage testing tool; it is used to analyze programs to
+          determine where optimizations will have the most effect</para>
+          <indexterm zone="ch-system-gcc gcov">
+            <primary sortas="b-gcov">gcov</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libgcc">
+        <term><filename class="libraryfile">libgcc</filename></term>
+        <listitem>
+          <para>Contains run-time support for <command>gcc</command></para>
+          <indexterm zone="ch-system-gcc libgcc">
+            <primary sortas="c-libgcc*">libgcc*</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libmudflap">
+        <term><filename class="libraryfile">libmudflap</filename></term>
+        <listitem>
+          <para>The libmudflap libraries are used by GCC for instrumenting
+          pointer and array dereferencing operations.</para>
+          <indexterm zone="ch-system-gcc libmudflap">
+            <primary sortas="c-libmudflap*">libmudflap*</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libstdc">
+        <term><filename class="libraryfile">libstdc++</filename></term>
+        <listitem>
+          <para>The standard C++ library</para>
+          <indexterm zone="ch-system-gcc libstdc">
+            <primary sortas="c-libstdc++">libstdc++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libsupc">
+        <term><filename class="libraryfile">libsupc++</filename></term>
+        <listitem>
+          <para>Provides supporting routines for the C++ programming
+          language</para>
+          <indexterm zone="ch-system-gcc libsupc">
+            <primary sortas="c-libsupc++">libsupc++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>
