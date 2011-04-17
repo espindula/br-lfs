@@ -39,13 +39,31 @@
       l'Unicode, du coup libiconv n'est pas requis sur un système CLFS.</para>
     </note>
 
-    <para os="l3">Le sed suivant s'assure que l'EGLIBC construit sera testé pendant le make install et non celui qu'on a
-    préalablement construit&nbsp;:</para>
+    <para os="l1">À la fin de l'installation, le système de construction
+    exécutera un test de propreté pour s'assurer que tout s'est installé
+    correctement. Ce script essaiera de tester la présence d'une bibliothèque
+    utilisée uniquement pour la suite de tests, et elle n'est jamais installée.
+    Empêchez le script de tester la présence de cette bibliothèque avec la
+    commande suivante&nbsp;:</para>
 
-<screen os="l4"><userinput>LINKER=$(readelf -l $(file /tools/lib/libc-* | cut -f1 -d:) | sed -n 's@.*interpret.*/tools\(.*\)]$@\1@p')
+<screen os="l2"><userinput>sed -i 's/\(&amp;&amp; $name ne\) "db1"/ &amp; \1 "nss_test1"/' scripts/test-installation.pl</userinput></screen>
+
+    <para os="l3">Ce même script effectue ses tests en essayant de compiler
+    des programmes de test contre certaines bibliothèques. Cependant, il ne
+    spécifie pas le ld.so, or notre ensemble d'outils est configuré pour utiliser
+    celui de /tools. L'ensemble de commandes suivant obligera le script à
+    utiliser le chemin complet du nouveau ld.so qu'on vient d'installer&nbsp;:</para>
+ 
+<screen os="l4"><userinput>LINKER=$(readelf -l /tools/bin/bash | sed -n 's@.*interpret.*/tools\(.*\)]$@\1@p')
 sed -i "s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=${LINKER} -o|" \
-  scripts/test-installation.pl
+   scripts/test-installation.pl
 unset LINKER</userinput></screen>
+
+    <para os="p1">Le correctif suivant corrige un problème où EGLIBC gèrera mal
+    une condition au terme de laquelle un binaire elf a des dépendances 
+    manquantes&nbsp;:</para>
+
+<screen os="p2"><userinput>patch -Np1 -i ../&eglibc-dl_dep_fix-patch;</userinput></screen>
 
     <para os="b">Le système de construction d'EGLIBC est autosuffisant et s'installe
     parfaitement, même si notre fichier specs pour le compilateur et l'éditeur de
@@ -94,7 +112,7 @@ cd ../eglibc-build</userinput></screen>
 
 
 <screen os="n"><userinput>cp -v ../eglibc-&eglibc-version;/iconvdata/gconv-modules iconvdata
-make -k check &gt;eglibc-check-log 2&gt;&amp;1 ; grep Error eglibc-check-log</userinput></screen>
+make -k check 2&gt;&amp;1 | tee eglibc-check-log; grep Error eglibc-check-log</userinput></screen>
 
     <para os="o">La suite de tests EGLIBC est très dépendante de certaines fonctions du système hôte, en particulier du noyau. 
     Normalement, le test posix/annexc échoue et vous devriez voir <literal>Error 1 (ignored)</literal> dans la sortie. 
