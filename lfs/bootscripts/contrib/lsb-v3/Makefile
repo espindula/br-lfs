@@ -35,7 +35,7 @@ install: create-dirs create-service-dir create-boottemp-dir
 	install -m ${MODE} init.d/localnet              ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/modules               ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/mountfs               ${EXTDIR}/init.d/
-	install -m ${MODE} init.d/mountkernfs           ${EXTDIR}/init.d/
+	install -m ${MODE} init.d/mountvirtfs           ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/network               ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/rc                    ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/reboot                ${EXTDIR}/init.d/
@@ -67,7 +67,7 @@ install: create-dirs create-service-dir create-boottemp-dir
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/localnet
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/modules
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/mountfs
-	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/mountkernfs
+	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/mountvirtfs
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/network
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/reboot
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/sendsignals
@@ -85,7 +85,7 @@ minimal: create-dirs create-service-dir create-boottemp-dir
 	install -m ${MODE} init.d/halt              ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/localnet          ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/mountfs           ${EXTDIR}/init.d/
-	install -m ${MODE} init.d/mountkernfs       ${EXTDIR}/init.d/
+	install -m ${MODE} init.d/mountvirtfs       ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/rc                ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/reboot            ${EXTDIR}/init.d/
 	install -m ${MODE} init.d/sendsignals       ${EXTDIR}/init.d/
@@ -103,7 +103,7 @@ minimal: create-dirs create-service-dir create-boottemp-dir
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/halt
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/localnet
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/mountfs
-	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/mountkernfs
+	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/mountvirtfs
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/reboot
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/sendsignals
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/setclock
