@@ -1,14 +1,14 @@
 TOP		:= $(PWD)
-RENDERDIR	:= $(TOP)/../render
+RENDERDIR	:= /home/jp/tmp
 
 VALIDATEDIR	:= $(RENDERDIR)/validate
 PROFILEDIR	:= $(RENDERDIR)/profile
 
-HTMLDIR		:= $(RENDERDIR)/html
-NOCHUNKDIR	:= $(RENDERDIR)/nochunk
+HTMLDIR		:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs
+NOCHUNKDIR	:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs
 
 FODIR		:= $(RENDERDIR)/fo
-PDFDIR		:= $(RENDERDIR)/pdf
+PDFDIR		:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs
 
 TROUBLEDIR	:= $(RENDERDIR)/trouble
 DUMPDIR		:= $(RENDERDIR)/commands
