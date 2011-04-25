@@ -6,9 +6,9 @@
 
   <!ENTITY guile-download-http "http://ftp.gnu.org/pub/gnu/guile/guile-&guile-version;.tar.gz">
   <!ENTITY guile-download-ftp  "ftp://ftp.gnu.org/pub/gnu/guile/guile-&guile-version;.tar.gz">
-  <!ENTITY guile-md5sum        "a4b64a992deae0532f8015bcc6c40784">
-  <!ENTITY guile-size          "3.7 Mio">
-  <!ENTITY guile-buildsize     "49 Mio (additional 40 Mio to install all the docs)">
+  <!ENTITY guile-md5sum        "991b5b3efcbbc3f7507d05bc42f80a5e">
+  <!ENTITY guile-size          "3.9 Mio">
+  <!ENTITY guile-buildsize     "47 Mio (additional 40 Mio to install all the docs)">
   <!ENTITY guile-time          "1.2 SBU (includes building all documentation)">
 ]>
 
@@ -16,8 +16,8 @@
 <?dbhtml filename="guile.html"?>
 
   <sect1info>
-    <othername>$LastChangedBy: gdalziel $</othername>
-    <date>$Date: 2009-07-06 21:12:40 +0200 (lun 06 jui 2009) $</date>
+    <othername>$LastChangedBy: randy $</othername>
+    <date>$Date: 2011-01-18 01:13:43 +0100 (mar 18 jan 2011) $</date>
   </sect1info>
 
   <title>Guile-&guile-version;</title>
@@ -55,17 +55,13 @@
       </listitem>
     </itemizedlist>
 
-    <!-- <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>Correctif requis&nbsp;: <ulink
-        url="&patch-root;/guile-&guile-version;-gcc4-1.patch"/></para>
+        url="&patch-root;/guile-&guile-version;-snarf-1.patch"/></para>
       </listitem>
-      <listitem>
-        <para>Correctif requis&nbsp;: <ulink
-        url="&patch-root;/guile-&guile-version;-slib-1.patch"/></para>
-      </listitem>
-    </itemizedlist> -->
+    </itemizedlist> 
 
     <bridgehead renderas="sect3">Dépendances de Guile</bridgehead>
 
@@ -73,7 +69,7 @@
     <para role="required"><xref linkend="gmp"/></para> -->
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
-    <para role="required"><xref linkend="emacs"/></para>
+    <para role="optional"><xref linkend="emacs"/></para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/guile"/></para>
@@ -86,27 +82,31 @@
     <para>Installez <application>Guile</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>sed -i -e '20,$ d' \
-       -e 's|slib)|&amp;)\n(load-from-path "slib/guile.init")|' \
-    ice-9/slib.scm &amp;&amp;
+<!-- <screen><userinput>./configure -prefix=/usr -enable-posix \
+    -disable-static -enable-networking -enable-regex &amp;&amp;
+make</userinput></screen> -->
+<screen><userinput>patch -Np1 -i ../guile-&guile-version;-snarf-1.patch &amp;&amp;
 ./configure --prefix=/usr &amp;&amp;
-make</userinput></screen>
+make &amp;&amp;
+makeinfo --plaintext -o doc/goops/goops.txt doc/goops/goops.texi &amp;&amp;
+makeinfo --plaintext -o doc/r5rs/r5rs.txt   doc/r5rs/r5rs.texi   &amp;&amp;
+makeinfo --plaintext -o doc/ref/guile.txt   doc/ref/guile.texi   &amp;&amp;
+makeinfo --plaintext -o doc/tutorial/guile-tut.txt \
+                        doc/tutorial/guile-tut.texi              &amp;&amp;
+for DIRNAME in goops r5rs ref tutorial
+do
+  make -k -C doc/${DIRNAME} html
+done &amp;&amp;
+unset DIRNAME</userinput></screen>
 
-    <para>Si vous avez installé <xref linkend="tetex"/> et si vous souhaitez 
-    construire des formats de documentation alternatifs, lancez les commandes
-    suivantes&nbsp;:</para>
+    <para>Si vous avez installé <xref linkend="tetex"/> ou <xref linkend="texlive"/>
+    et si vous construire d'autres formats (PDF et postscript) de la
+    documentation, lancez les commandes suivantes&nbsp;:</para>
 
 <screen><userinput>for DIRNAME in goops r5rs ref tutorial
 do
-  make -k -C doc/$DIRNAME pdf ps html
+  make -k -C doc/${DIRNAME} pdf ps 
 done &amp;&amp;
-
-makeinfo --plaintext -o doc/goops/goops.txt doc/goops/goops.texi &amp;&amp;
-makeinfo --plaintext -o doc/r5rs/r5rs.txt doc/r5rs/r5rs.texi &amp;&amp;
-makeinfo --plaintext -o doc/ref/guile.txt doc/ref/guile.texi &amp;&amp;
-makeinfo --plaintext -o doc/tutorial/guile-tut.txt \
-    doc/tutorial/guile-tut.texi &amp;&amp;
-
 unset DIRNAME</userinput></screen>
 
     <para>Pour tester les résultats, lancez&nbsp;: <command>make check</command>.</para>
@@ -117,40 +117,35 @@ unset DIRNAME</userinput></screen>
 
 find examples -name "Makefile*" -exec rm {} \; &amp;&amp;
 install -v -m755 -d /usr/share/doc/guile-&guile-version; &amp;&amp;
-cp -v -R examples   /usr/share/doc/guile-&guile-version;</userinput></screen>
+cp -v -R examples   /usr/share/doc/guile-&guile-version; &amp;&amp;
+
+for DIRNAME in goops r5rs ref tutorial
+do
+  install -v -m755 -d /usr/share/doc/guile-&guile-version;/${DIRNAME} &amp;&amp;
+  install -v -m644    doc/${DIRNAME}/*.txt \
+                      /usr/share/doc/guile-&guile-version;/${DIRNAME} &amp;&amp;
+  if [ -d             doc/${DIRNAME}/${DIRNAME}.html ]; then
+    cp -v -R          doc/${DIRNAME}/${DIRNAME}.html \
+                      /usr/share/doc/guile-&guile-version;/${DIRNAME}
+  fi &amp;&amp;
+done &amp;&amp;
+
+install -v -m644  doc/goops/hierarchy.* \
+                  /usr/share/doc/guile-&guile-version;/goops          &amp;&amp;
+cp -v -R          doc/ref/guile.html \
+                  /usr/share/doc/guile-&guile-version;/ref            &amp;&amp;
+cp -v -R          doc/tutorial/guile-tut.html \
+                  /usr/share/doc/guile-&guile-version;/tutorial       &amp;&amp;
+unset DIRNAME</userinput></screen>
 
     <para>Si vous avez construit les formats alternatifs de la documentation, installez-les
     en utilisant les commandes suivantes, exécutées par l'utilisateur
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>for DIRNAME in goops r5rs ref tutorial
-do
-  install -v -m755 -d /usr/share/doc/guile-&guile-version;/$DIRNAME/html
-  install -v -m644 doc/$DIRNAME/*.{pdf,ps,dvi,txt} \
-      /usr/share/doc/guile-&guile-version;/$DIRNAME
-  if [ -d doc/$DIRNAME/$DIRNAME.html ]; then
-    install -v -m644 doc/$DIRNAME/$DIRNAME.html/* \
-        /usr/share/doc/guile-&guile-version;/$DIRNAME/html
-  fi
-done &amp;&amp;
-
-install -v -m644 doc/goops/hierarchy.{eps,png} \
-    /usr/share/doc/guile-&guile-version;/goops &amp;&amp;
-install -v -m644 doc/ref/guile.html/* \
-    /usr/share/doc/guile-&guile-version;/ref/html &amp;&amp;
-install -v -m644 doc/tutorial/guile-tut.html/* \
-    /usr/share/doc/guile-&guile-version;/tutorial/html</userinput></screen>
-  </sect2>
-
-  <sect2 role="commands">
-    <title>Explication des commandes</title>
-
-    <para><command>sed -i -e '20,$ d' -e '...' ice-9/slib.scm</command>&nbsp;:
-    Cette commande est utilisée pour modifier le script d'initialisation
-    <application>SLIB</application> de <application>Guile</application>. Il y a
-    des incompatibilités avec les versions récentes de <application>SLIB</application>
-    et cette commande modifie le script pour utiliser le script
-    <application>SLIB</application> installé.</para>
+  install -v -m644 doc/${DIRNAME}/*.{pdf,ps,dvi} \
+                   /usr/share/doc/guile-&guile-version;/${DIRNAME}
+done</userinput></screen>
 
   </sect2>
 
@@ -192,8 +187,8 @@ install -v -m644 doc/tutorial/guile-tut.html/* \
         <listitem>
           <para>est un script <application>Guile</application> qui fournit
           les informations nécessaires pour lier vos programmes à la bibliothèque
-          <application>Guile</application>, de la même manière que
-          <xref linkend="pkgconfig"></xref> does.</para>
+          <application>Guile</application>, de la même manière que ne le fait
+          PkgConfig.</para>
           <indexterm zone="guile guile-config">
             <primary sortas="b-guile-config">guile-config</primary>
           </indexterm>
