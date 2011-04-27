@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -41,8 +41,8 @@
 	<xsl:otherwise>
 	  <xsl:apply-templates select="*[not(self::indexentry)]"/>
 	  <!-- Because it's actually valid for Index to have neither any -->
-	  <!-- Indexdivs nor any Indexentries, we need to check et make -->
-	  <!-- sure that at least one Indexentry exists, et generate a -->
+	  <!-- Indexdivs nor any Indexentries, we need to check and make -->
+	  <!-- sure that at least one Indexentry exists, and generate a -->
 	  <!-- wrapper dl if there is at least one; otherwise, do nothing. -->
 	  <xsl:if test="indexentry">
 	    <!-- The indexentry template assumes a parent dl wrapper has -->
@@ -57,7 +57,7 @@
 	</xsl:otherwise>
       </xsl:choose>
 
-      <xsl:if test="count(indexentry) = 0 et count(indexdiv) = 0">
+      <xsl:if test="count(indexentry) = 0 and count(indexdiv) = 0">
         <xsl:call-template name="generate-index">
           <xsl:with-param name="scope" select="(ancestor::book|/)[last()]"/>
         </xsl:call-template>
@@ -91,7 +91,7 @@
       <xsl:call-template name="setindex.titlepage"/>
       <xsl:apply-templates/>
 
-      <xsl:if test="count(indexentry) = 0 et count(indexdiv) = 0">
+      <xsl:if test="count(indexentry) = 0 and count(indexdiv) = 0">
         <xsl:call-template name="generate-index">
           <xsl:with-param name="scope" select="/"/>
         </xsl:call-template>

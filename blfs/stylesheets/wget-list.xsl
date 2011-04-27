@@ -5,7 +5,7 @@ $LastChangedBy: manuel $
 $Date: 2007-01-25 20:55:05 +0100 (jeu, 25 jan 2007) $
 -->
 
-<!-- Create a list of upstream URLs for packages et patches to be used
+<!-- Create a list of upstream URLs for packages and patches to be used
      with wget. -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -32,10 +32,10 @@ $Date: 2007-01-25 20:55:05 +0100 (jeu, 25 jan 2007) $
 
   <xsl:template match="itemizedlist">
     <xsl:choose>
-      <!-- If both http et ftp URLs are available, output the ftp one if not empty,
+      <!-- If both http and ftp URLs are available, output the ftp one if not empty,
            otherwise output the http URL.-->
       <xsl:when test="contains(listitem[1]/para,'(HTTP)')
-                      et contains(listitem[2]/para,'(FTP)')">
+                      and contains(listitem[2]/para,'(FTP)')">
         <xsl:choose>
           <xsl:when test="string-length(listitem[2]/para/ulink/@url) &gt; '10'">
             <xsl:apply-templates select="listitem[2]/para/ulink"/>
@@ -45,7 +45,7 @@ $Date: 2007-01-25 20:55:05 +0100 (jeu, 25 jan 2007) $
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
-      <!-- Additional packages et patches.-->
+      <!-- Additional packages and patches.-->
       <xsl:otherwise>
         <xsl:apply-templates select="listitem/para/ulink"/>
       </xsl:otherwise>
@@ -60,7 +60,7 @@ $Date: 2007-01-25 20:55:05 +0100 (jeu, 25 jan 2007) $
                   or contains(@url, '.tgz') or contains(@url, '.tar')
                   or contains(@url, 'patch.txt') or contains(@url, '.zip')
                   or contains(@url, '.patch') or contains(@url, '/patch.'))
-                  et not(ancestor-or-self::*/@condition = 'pdf')">
+                  and not(ancestor-or-self::*/@condition = 'pdf')">
       <xsl:choose>
         <!-- Fix SourceForge links-->
         <xsl:when test="contains(@url,'?download')">
@@ -84,10 +84,10 @@ $Date: 2007-01-25 20:55:05 +0100 (jeu, 25 jan 2007) $
                   or contains(@url, '.zip') or contains(@url, '.patch')
                   or contains(@url, '/patch.') or contains(@url, 'md5sums')
                   or contains(@url, 'mozconfig'))
-                  et not(contains(@url, '?url'))
-                  et not(ancestor-or-self::*/@condition = 'pdf')">
-      <!-- To list all URls, included html files, wiki pages, home pages, et
-      mailto: links, comment-out the above xsl:if et uncomment the next one. -->
+                  and not(contains(@url, '?url'))
+                  and not(ancestor-or-self::*/@condition = 'pdf')">
+      <!-- To list all URls, included html files, wiki pages, home pages, and
+      mailto: links, comment-out the above xsl:if and uncomment the next one. -->
     <!--
     <xsl:if test="not(ancestor-or-self::*/@condition = 'pdf')">
     -->

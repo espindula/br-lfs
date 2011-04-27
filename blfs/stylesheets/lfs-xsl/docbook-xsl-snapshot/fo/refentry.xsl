@@ -10,7 +10,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -197,7 +197,7 @@
 
   <xsl:choose>
     <xsl:when test="not(parent::*) or
-                    (parent::reference et $refentry.pagebreak != 0) or
+                    (parent::reference and $refentry.pagebreak != 0) or
                     parent::part">
       <!-- make a page sequence -->
       <fo:page-sequence hyphenate="{$hyphenate}"
@@ -312,7 +312,7 @@
               <!-- that the template still basically "expects" to be -->
               <!-- processing that kind of a node, when we call the -->
               <!-- template to process generated titles, we must call it -->
-              <!-- with values for the "offset" et "section" parameters -->
+              <!-- with values for the "offset" and "section" parameters -->
               <!-- that are different from the default values in the -->
               <!-- format.refentry.subheading template itself. Because -->
               <!-- those defaults are the values appropriate for processing -->
@@ -459,7 +459,7 @@
         <!-- that the template still basically "expects" to be -->
         <!-- processing that kind of a node, when we call the -->
         <!-- template to process generated titles, we must call it -->
-        <!-- with values for the "offset" et "section" parameters -->
+        <!-- with values for the "offset" and "section" parameters -->
         <!-- that are different from the default values in the -->
         <!-- format.refentry.subheading template itself. Because -->
         <!-- those defaults are the values appropriate for processing -->
@@ -545,14 +545,14 @@
 
 <xsl:template name="format.refentry.subheading">
 <!-- This template is now called to process generated titles for -->
-<!-- Refnamediv et Refsynopsisdiv, as well as "real" titles for -->
-<!-- Refsynopsisdiv, Refsection, et Refsect[1-3]. -->
+<!-- Refnamediv and Refsynopsisdiv, as well as "real" titles for -->
+<!-- Refsynopsisdiv, Refsection, and Refsect[1-3]. -->
 <!-- -->
 <!-- But the contents of this template were formerly intended to be used -->
 <!-- only to process those subsections of Refentry that have "real" title -->
 <!-- children. So as a kludge to get around the fact that the template -->
 <!-- still basically "expects" to be processing that kind of a node, the -->
-<!-- "offset" parameter was added et the "section" variable was changed to -->
+<!-- "offset" parameter was added and the "section" variable was changed to -->
 <!-- a parameter so that when called for a generated title on a Refnamediv -->
 <!-- or Refsynopsisdiv, we can call it like this: -->
 <!-- -->

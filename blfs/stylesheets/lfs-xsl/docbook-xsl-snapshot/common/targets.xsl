@@ -10,7 +10,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -27,10 +27,10 @@ a set of target database elements that can be used by
 the olink mechanism to resolve external cross references.
 The collection process is controlled by the <literal>
 collect.xref.targets</literal> parameter, which can be
-<literal>yes</literal> to collect targets et process
+<literal>yes</literal> to collect targets and process
 the document for output, <literal>only</literal> to
-only collect the targets, et <literal>no</literal>
-(default) to not collect the targets et only process the document.
+only collect the targets, and <literal>no</literal>
+(default) to not collect the targets and only process the document.
 </para>
 <para>
 A <literal>targets.filename</literal> parameter must be
@@ -47,7 +47,7 @@ document output.
 
 <xsl:template match="*" mode="collect.targets">
   <xsl:choose>
-    <xsl:when test="$collect.xref.targets = 'yes' et $targets.filename = ''">
+    <xsl:when test="$collect.xref.targets = 'yes' and $targets.filename = ''">
       <xsl:message>
         Must specify a $targets.filename parameter when
         $collect.xref.targets is set to 'yes'.

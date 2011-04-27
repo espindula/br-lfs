@@ -11,8 +11,8 @@
 <!ENTITY lang 'concat(/*/@lang, /*/@xml:lang)'>
 
 <!ENTITY scope 'count(ancestor::node()|$scope) = count(ancestor::node())
-                et ($role = @role or $type = @type or
-                (string-length($role) = 0 et string-length($type) = 0))'>
+                and ($role = @role or $type = @type or
+                (string-length($role) = 0 and string-length($type) = 0))'>
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
@@ -26,7 +26,7 @@
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -91,7 +91,7 @@
                 select="//indexterm[count(.|key('k-group',
                    k:getIndexGroupKey(&lang;, &primary;))
                    [&scope;][1]) = 1
-                   et not(@class = 'endofrange')]"/>
+                   and not(@class = 'endofrange')]"/>
 
   <xsl:variable name="alphabetical"
                 select="$terms[not(starts-with(

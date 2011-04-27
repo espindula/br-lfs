@@ -10,7 +10,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      This file contains localization templates (for internationalization)
      ******************************************************************** -->
@@ -323,8 +323,8 @@
                 select="($l10n.xml/l:i18n/l:l10n[@language=$lang])[1]"/>
 
   <xsl:if test="count($localization.node) = 0
-                et count($local.localization.node) = 0
-                et $verbose != 0">
+                and count($local.localization.node) = 0
+                and $verbose != 0">
     <xsl:message>
       <xsl:text>No "</xsl:text>
       <xsl:value-of select="$lang"/>
@@ -339,8 +339,8 @@
                 select="$localization.node/l:context[@name=$context]"/>
 
   <xsl:if test="count($context.node) = 0
-                et count($local.context.node) = 0
-                et $verbose != 0">
+                and count($local.context.node) = 0
+                and $verbose != 0">
     <xsl:message>
       <xsl:text>No context named "</xsl:text>
       <xsl:value-of select="$context"/>
@@ -352,17 +352,17 @@
 
   <xsl:variable name="local.template.node"
                 select="($local.context.node/l:template[@name=$name
-                                                        et @style
-                                                        et @style=$xrefstyle]
+                                                        and @style
+                                                        and @style=$xrefstyle]
                         |$local.context.node/l:template[@name=$name
-                                                        et not(@style)])[1]"/>
+                                                        and not(@style)])[1]"/>
 
   <xsl:variable name="template.node"
                 select="($context.node/l:template[@name=$name
-                                                  et @style
-                                                  et @style=$xrefstyle]
+                                                  and @style
+                                                  and @style=$xrefstyle]
                         |$context.node/l:template[@name=$name
-                                                  et not(@style)])[1]"/>
+                                                  and not(@style)])[1]"/>
 
   <xsl:choose>
     <xsl:when test="$local.template.node/@text">

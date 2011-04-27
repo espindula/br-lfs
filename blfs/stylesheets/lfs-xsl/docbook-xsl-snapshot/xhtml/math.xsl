@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -246,7 +246,7 @@
 
 <xsl:template match="text()" mode="collect.tex.math.latex"/>
 
-<!-- Extracting image filename from mediaobject et graphic elements -->
+<!-- Extracting image filename from mediaobject and graphic elements -->
 
 <xsl:template name="select.mediaobject.filename">
   <xsl:param name="olist" select="imageobject|imageobjectco                      |videoobject|audioobject|textobject"/>
@@ -274,7 +274,7 @@
   <xsl:variable name="result">
     <xsl:choose>
       <xsl:when test="$pi.delims = 'no'">0</xsl:when>
-      <xsl:when test="$pi.delims = '' et $tex.math.delims = 0">0</xsl:when>
+      <xsl:when test="$pi.delims = '' and $tex.math.delims = 0">0</xsl:when>
       <xsl:otherwise>1</xsl:otherwise>
     </xsl:choose>
   </xsl:variable>

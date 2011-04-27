@@ -11,7 +11,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -140,7 +140,7 @@
 
   <xsl:if test="$generate.meta.abstract != 0">
     <xsl:variable name="info" select="(articleinfo                                       |bookinfo                                       |prefaceinfo                                       |chapterinfo                                       |appendixinfo                                       |sectioninfo                                       |sect1info                                       |sect2info                                       |sect3info                                       |sect4info                                       |sect5info                                       |referenceinfo                                       |refentryinfo                                       |partinfo                                       |info                                       |docinfo)[1]"/>
-    <xsl:if test="$info et $info/abstract">
+    <xsl:if test="$info and $info/abstract">
       <meta name="description">
         <xsl:attribute name="content">
           <xsl:for-each select="$info/abstract[1]/*">
@@ -154,7 +154,7 @@
     </xsl:if>
   </xsl:if>
 
-  <xsl:if test="($draft.mode = 'yes' or                 ($draft.mode = 'maybe' et                 ancestor-or-self::*[@status][1]/@status = 'draft'))                 and $draft.watermark.image != ''">
+  <xsl:if test="($draft.mode = 'yes' or                 ($draft.mode = 'maybe' and                 ancestor-or-self::*[@status][1]/@status = 'draft'))                 and $draft.watermark.image != ''">
     <style type="text/css"><xsl:text>
 body { background-image: url('</xsl:text>
 <xsl:value-of select="$draft.watermark.image"/><xsl:text>');
@@ -226,7 +226,7 @@ body { background-image: url('</xsl:text>
   <xsl:apply-templates select="docinfo/keywordset" mode="html.header"/>
   <xsl:apply-templates select="info/keywordset" mode="html.header"/>
 
-  <xsl:if test="$inherit.keywords != 0                 et parent::*">
+  <xsl:if test="$inherit.keywords != 0                 and parent::*">
     <xsl:apply-templates select="parent::*" mode="head.keywords.content"/>
   </xsl:if>
 </xsl:template>
@@ -240,7 +240,7 @@ body { background-image: url('</xsl:text>
               in this chunk should be referenced. I don't think it
               does any harm to reference them all, but it adds
               unnecessary bloat to each chunk. -->
-  <xsl:if test="$annotation.support != 0 et //annotation">
+  <xsl:if test="$annotation.support != 0 and //annotation">
     <xsl:call-template name="add.annotation.links"/>
     <script type="text/javascript">
       <xsl:text>
@@ -278,7 +278,7 @@ var popup_</xsl:text>
 <!-- ============================================================ -->
 
 <xsl:template name="user.preroot">
-  <!-- Pre-root output, can be used to output comments et PIs. -->
+  <!-- Pre-root output, can be used to output comments and PIs. -->
   <!-- This must not output any element content! -->
 </xsl:template>
 
@@ -310,10 +310,10 @@ var popup_</xsl:text>
   </xsl:variable>
   <xsl:choose>
     <!-- Hack! If someone hands us a DocBook V5.x or DocBook NG document,
-         toss the namespace et continue.  Use the docbook5 namespaced
+         toss the namespace and continue.  Use the docbook5 namespaced
          stylesheets for DocBook5 if you don't want to use this feature.-->
     <!-- include extra test for Xalan quirk -->
-    <xsl:when test="(function-available('exsl:node-set') or                      contains(system-property('xsl:vendor'),                        'Apache Software Foundation'))                     et (*/self::ng:* or */self::db:*)">
+    <xsl:when test="(function-available('exsl:node-set') or                      contains(system-property('xsl:vendor'),                        'Apache Software Foundation'))                     and (*/self::ng:* or */self::db:*)">
       <xsl:call-template name="log.message">
         <xsl:with-param name="level">Note</xsl:with-param>
         <xsl:with-param name="source" select="$doc.title"/>

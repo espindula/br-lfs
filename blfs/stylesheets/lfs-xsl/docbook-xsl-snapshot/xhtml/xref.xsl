@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -28,7 +28,7 @@
   <xsl:param name="xhref" select="@xlink:href"/>
   <!-- is the @xlink:href a local idref link? -->
   <xsl:param name="xlink.idref">
-    <xsl:if test="starts-with($xhref,'#')                   et (not(contains($xhref,'('))                   or starts-with($xhref, '#xpointer(id('))">
+    <xsl:if test="starts-with($xhref,'#')                   and (not(contains($xhref,'('))                   or starts-with($xhref, '#xpointer(id('))">
       <xsl:call-template name="xpointer.idref">
         <xsl:with-param name="xpointer" select="$xhref"/>
       </xsl:call-template>
@@ -40,7 +40,7 @@
 
   <xsl:variable name="xrefstyle">
     <xsl:choose>
-      <xsl:when test="@role et not(@xrefstyle)                        and $use.role.as.xrefstyle != 0">
+      <xsl:when test="@role and not(@xrefstyle)                        and $use.role.as.xrefstyle != 0">
         <xsl:value-of select="@role"/>
       </xsl:when>
       <xsl:otherwise>
@@ -113,7 +113,7 @@
 <!-- ==================================================================== -->
 
 <!-- biblioref handled largely like an xref -->
-<!-- To be done: add support for begin, end, et units attributes -->
+<!-- To be done: add support for begin, end, and units attributes -->
 <xsl:template match="biblioref">
   <xsl:variable name="targets" select="key('id',@linkend)"/>
   <xsl:variable name="target" select="$targets[1]"/>
@@ -200,7 +200,7 @@
           <xsl:with-param name="referrer" select="."/>
           <xsl:with-param name="xrefstyle">
             <xsl:choose>
-              <xsl:when test="@role et not(@xrefstyle) and $use.role.as.xrefstyle != 0">
+              <xsl:when test="@role and not(@xrefstyle) and $use.role.as.xrefstyle != 0">
                 <xsl:value-of select="@role"/>
               </xsl:when>
               <xsl:otherwise>
@@ -239,9 +239,9 @@
 <xsl:template match="*" mode="remove-ids">
   <xsl:choose>
     <!-- handle html or xhtml -->
-    <xsl:when test="local-name(.) = 'a'                     et (namespace-uri(.) = ''                          or namespace-uri(.) = 'http://www.w3.org/1999/xhtml')">
+    <xsl:when test="local-name(.) = 'a'                     and (namespace-uri(.) = ''                          or namespace-uri(.) = 'http://www.w3.org/1999/xhtml')">
       <xsl:choose>
-        <xsl:when test="(@name et count(@*) = 1)                         or (@id and count(@*) = 1)                         or (@xml:id and count(@*) = 1)                         or (@xml:id and @name and count(@*) = 2)                         or (@id and @name and count(@*) = 2)">
+        <xsl:when test="(@name and count(@*) = 1)                         or (@id and count(@*) = 1)                         or (@xml:id and count(@*) = 1)                         or (@xml:id and @name and count(@*) = 2)                         or (@id and @name and count(@*) = 2)">
           <xsl:message>suppress anchor</xsl:message>
           <!-- suppress the whole thing -->
         </xsl:when>
@@ -249,7 +249,7 @@
           <xsl:copy>
             <xsl:for-each select="@*">
               <xsl:choose>
-                <xsl:when test="local-name(.) != 'name' et local-name(.) != 'id'">
+                <xsl:when test="local-name(.) != 'name' and local-name(.) != 'id'">
                   <xsl:copy/>
                 </xsl:when>
                 <xsl:otherwise>
@@ -441,7 +441,7 @@
   <xsl:param name="xrefstyle"/>
   <xsl:param name="verbose" select="1"/>
 
-  <!-- handles both biblioentry et bibliomixed -->
+  <!-- handles both biblioentry and bibliomixed -->
   <xsl:choose>
     <xsl:when test="string(.) = ''">
       <xsl:variable name="bib" select="document($bibliography.collection,.)"/>
@@ -808,7 +808,7 @@
 </xsl:template>
 
 <xsl:template match="biblioentry|bibliomixed" mode="xref-title">
-  <!-- handles both biblioentry et bibliomixed -->
+  <!-- handles both biblioentry and bibliomixed -->
   <xsl:variable name="title">
     <xsl:text>[</xsl:text>
     <xsl:choose>
@@ -887,7 +887,7 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:message>
-          <xsl:text>Link element has no content et no Endterm. </xsl:text>
+          <xsl:text>Link element has no content and no Endterm. </xsl:text>
           <xsl:text>Nothing to show in the link to </xsl:text>
           <xsl:value-of select="(@xlink:href|@linkend)[1]"/>
         </xsl:message>
@@ -952,15 +952,15 @@
   <xsl:variable name="localinfo" select="@localinfo"/>
 
   <xsl:choose>
-    <!-- olinks resolved by stylesheet et target database -->
-    <xsl:when test="@targetdoc or @targetptr or                     (@xlink:role=$xolink.role et                      contains(@xlink:href, '#') )">
+    <!-- olinks resolved by stylesheet and target database -->
+    <xsl:when test="@targetdoc or @targetptr or                     (@xlink:role=$xolink.role and                      contains(@xlink:href, '#') )">
 
       <xsl:variable name="targetdoc.att">
         <xsl:choose>
           <xsl:when test="@targetdoc != ''">
             <xsl:value-of select="@targetdoc"/>
           </xsl:when>
-          <xsl:when test="@xlink:role=$xolink.role et                        contains(@xlink:href, '#')">
+          <xsl:when test="@xlink:role=$xolink.role and                        contains(@xlink:href, '#')">
             <xsl:value-of select="substring-before(@xlink:href, '#')"/>
           </xsl:when>
         </xsl:choose>
@@ -971,7 +971,7 @@
           <xsl:when test="@targetptr != ''">
             <xsl:value-of select="@targetptr"/>
           </xsl:when>
-          <xsl:when test="@xlink:role=$xolink.role et                        contains(@xlink:href, '#')">
+          <xsl:when test="@xlink:role=$xolink.role and                        contains(@xlink:href, '#')">
             <xsl:value-of select="substring-after(@xlink:href, '#')"/>
           </xsl:when>
         </xsl:choose>
@@ -1216,7 +1216,7 @@
 
   <xsl:choose>
     <!-- FIXME: what about the case where titleabbrev is inside the info? -->
-    <xsl:when test="$purpose = 'xref' et titleabbrev">
+    <xsl:when test="$purpose = 'xref' and titleabbrev">
       <xsl:apply-templates select="." mode="titleabbrev.markup"/>
     </xsl:when>
     <xsl:otherwise>

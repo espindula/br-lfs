@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -260,7 +260,7 @@
     </xsl:if>
 
     <xsl:choose>
-      <xsl:when test="parent::article et $ischunk = 0">
+      <xsl:when test="parent::article and $ischunk = 0">
         <xsl:call-template name="section.heading">
           <xsl:with-param name="level" select="1"/>
           <xsl:with-param name="title">

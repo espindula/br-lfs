@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -126,7 +126,7 @@
         <xsl:with-param name="table" select="normalize-space($generate.toc)"/>
       </xsl:call-template>
     </xsl:variable>
-    <xsl:if test="not(partintro) et contains($toc.params, 'toc')">
+    <xsl:if test="not(partintro) and contains($toc.params, 'toc')">
       <xsl:call-template name="division.toc"/>
     </xsl:if>
     <xsl:apply-templates/>

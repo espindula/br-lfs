@@ -9,13 +9,13 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
 <!-- formal.object creates a basic block containing the
      result of processing the object, including its title
-     et any keep-together properties.
+     and any keep-together properties.
      The template calling formal.object may wrap these results in a
      float or pgwide block. -->
 
@@ -45,7 +45,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <!-- tables have their own templates et
+    <!-- tables have their own templates and
          are not handled by formal.object -->
     <xsl:when test="self::figure">
       <fo:block id="{$id}"
@@ -131,7 +131,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <!-- informaltables have their own templates et
+    <!-- informaltables have their own templates and
          are not handled by formal.object -->
     <xsl:when test="local-name(.) = 'equation'">
       <fo:block id="{$id}"
@@ -360,14 +360,14 @@
 
 </xsl:template>
 
-<!-- Unified handling of CALS et HTML tables, formal and not -->
+<!-- Unified handling of CALS and HTML tables, formal and not -->
 <!-- Creates a hierarchy of nested containers:
      - Outer container does a float.
      - Nested container does block-container for rotation
-     - Nested block contains title, layout table et footnotes
+     - Nested block contains title, layout table and footnotes
      - Nested layout table placeholder template supports extensions.
      - fo:table is innermost.
-     Created from the innermost et working out.
+     Created from the innermost and working out.
      Not all layers apply to every table.
 -->
 <xsl:template match="table|informaltable">
@@ -381,7 +381,7 @@
                select="(tgroup//tr)[1]"/>
     </xsl:message>
   </xsl:if>
-  <xsl:if test="not(tgroup) et .//row">
+  <xsl:if test="not(tgroup) and .//row">
     <xsl:message terminate="yes">
       <xsl:text>Broken table: row descendent of HTML table.</xsl:text>
       <xsl:text>The text in the first row is:&#10;</xsl:text>
@@ -402,7 +402,7 @@
     </xsl:call-template>
   </xsl:variable>
 
-  <!-- fo:block contains title, layout table, et footnotes  -->
+  <!-- fo:block contains title, layout table, and footnotes  -->
   <xsl:variable name="table.block">
     <xsl:call-template name="table.block">
       <xsl:with-param name="table.layout" select="$table.layout"/>
@@ -516,7 +516,7 @@
 </xsl:template>
 
 <xsl:template name="floatstyle">
-  <xsl:if test="(@float et @float != '0') or @floatstyle != ''">
+  <xsl:if test="(@float and @float != '0') or @floatstyle != ''">
     <xsl:choose>
       <xsl:when test="@floatstyle != ''">
         <xsl:value-of select="@floatstyle"/>

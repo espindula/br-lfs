@@ -24,7 +24,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -38,16 +38,16 @@
 
   <xsl:choose>
     <xsl:when test="$xhref
-                    et (not($node/@xlink:type) or
+                    and (not($node/@xlink:type) or
                          $node/@xlink:type='simple')">
 
       <!-- Is it a local idref? -->
       <xsl:variable name="is.idref">
         <xsl:choose>
-          <!-- if the href starts with # et does not contain an "(" -->
+          <!-- if the href starts with # and does not contain an "(" -->
           <!-- or if the href starts with #xpointer(id(, it's just an ID -->
           <xsl:when test="starts-with($xhref,'#')
-                          et (not(contains($xhref,'&#40;'))
+                          and (not(contains($xhref,'&#40;'))
                           or starts-with($xhref,
                                      '#xpointer&#40;id&#40;'))">1</xsl:when>
           <xsl:otherwise>0</xsl:otherwise>
@@ -58,8 +58,8 @@
       <xsl:variable name="is.olink">
         <xsl:choose>
 	  <!-- If xlink:role="http://docbook.org/xlink/role/olink" -->
-          <!-- et if the href contains # -->
-          <xsl:when test="contains($xhref,'#') et
+          <!-- and if the href contains # -->
+          <xsl:when test="contains($xhref,'#') and
 	       @xlink:role = $xolink.role">1</xsl:when>
           <xsl:otherwise>0</xsl:otherwise>
         </xsl:choose>
@@ -456,7 +456,7 @@
 <xsl:template match="function">
   <xsl:choose>
     <xsl:when test="$function.parens != '0'
-                    et (parameter or function or replaceable)">
+                    and (parameter or function or replaceable)">
       <xsl:variable name="nodes" select="text()|*"/>
       <xsl:call-template name="inline.monoseq">
         <xsl:with-param name="content">
@@ -764,7 +764,7 @@
   <xsl:param name="firstterm" select="0"/>
 
   <xsl:choose>
-    <xsl:when test="($firstterm.only.link = 0 or $firstterm = 1) et @linkend">
+    <xsl:when test="($firstterm.only.link = 0 or $firstterm = 1) and @linkend">
       <xsl:variable name="targets" select="key('id',@linkend)"/>
       <xsl:variable name="target" select="$targets[1]"/>
 
@@ -782,9 +782,9 @@
     </xsl:when>
 
     <xsl:when test="not(@linkend)
-                    et ($firstterm.only.link = 0 or $firstterm = 1)
-                    et ($glossterm.auto.link != 0)
-                    et $glossary.collection != ''">
+                    and ($firstterm.only.link = 0 or $firstterm = 1)
+                    and ($glossterm.auto.link != 0)
+                    and $glossary.collection != ''">
       <xsl:variable name="term">
         <xsl:choose>
           <xsl:when test="@baseform"><xsl:value-of select="@baseform"/></xsl:when>
@@ -819,8 +819,8 @@
     </xsl:when>
 
     <xsl:when test="not(@linkend)
-                    et ($firstterm.only.link = 0 or $firstterm = 1)
-                    et $glossterm.auto.link != 0">
+                    and ($firstterm.only.link = 0 or $firstterm = 1)
+                    and $glossterm.auto.link != 0">
       <xsl:variable name="term">
         <xsl:choose>
           <xsl:when test="@baseform">
@@ -1044,7 +1044,7 @@
 
   <xsl:variable name="mm.separator">
     <xsl:choose>
-      <xsl:when test="($fop.extensions != 0 or $fop1.extensions != 0 ) et
+      <xsl:when test="($fop.extensions != 0 or $fop1.extensions != 0 ) and
                 contains($menuchoice.menu.separator, '&#x2192;')">
         <fo:inline font-family="Symbol">
           <xsl:copy-of select="$menuchoice.menu.separator"/>
@@ -1100,7 +1100,7 @@
 
   <xsl:choose>
     <!-- try automatic linking based on match to abbrev -->
-    <xsl:when test="$target et not(xref) and not(link)">
+    <xsl:when test="$target and not(xref) and not(link)">
 
       <xsl:text>[</xsl:text>
       <fo:basic-link>

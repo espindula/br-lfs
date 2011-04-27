@@ -9,13 +9,13 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
 <!-- ==================================================================== -->
 <!-- OBSOLETE. The templates from this file were moved to                 -->
-<!-- chunk-common.xsl et chunk-code.xsl.                                 -->
+<!-- chunk-common.xsl and chunk-code.xsl.                                 -->
 <!-- ==================================================================== -->
 
 

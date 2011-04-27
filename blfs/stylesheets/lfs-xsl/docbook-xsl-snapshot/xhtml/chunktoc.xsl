@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -356,7 +356,7 @@
 
   <xsl:if test="string($lots) != ''">
     <xsl:choose>
-      <xsl:when test="$chunk.tocs.and.lots != 0 et not(parent::*)">
+      <xsl:when test="$chunk.tocs.and.lots != 0 and not(parent::*)">
         <xsl:call-template name="write.chunk">
           <xsl:with-param name="filename">
             <xsl:call-template name="make-relative-filename">

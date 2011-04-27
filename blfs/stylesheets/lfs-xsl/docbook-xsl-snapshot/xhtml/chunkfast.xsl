@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -24,7 +24,7 @@
 
 <xsl:template name="process-chunk-element">
   <xsl:choose>
-    <xsl:when test="$chunk.fast != 0 et function-available('exsl:node-set')">
+    <xsl:when test="$chunk.fast != 0 and function-available('exsl:node-set')">
       <xsl:variable name="genid" select="generate-id()"/>
 
       <xsl:variable name="div" select="$chunks[@id=$genid or @xml:id=$genid]"/>
@@ -36,7 +36,7 @@
       <xsl:variable name="next" select="key('genid', ($nextdiv/@id|$nextdiv/@xml:id)[1])"/>
 
       <xsl:choose>
-        <xsl:when test="$onechunk != 0 et parent::*">
+        <xsl:when test="$onechunk != 0 and parent::*">
           <xsl:apply-imports/>
         </xsl:when>
         <xsl:otherwise>
@@ -49,7 +49,7 @@
     </xsl:when>
     <xsl:otherwise>
       <xsl:choose>
-        <xsl:when test="$onechunk != 0 et not(parent::*)">
+        <xsl:when test="$onechunk != 0 and not(parent::*)">
           <xsl:call-template name="chunk-all-sections"/>
         </xsl:when>
         <xsl:when test="$onechunk != 0">

@@ -12,7 +12,7 @@
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -25,7 +25,7 @@
 
 <!-- insert.fo.fnum mode templates insert a particular RTF at the beginning
      of the first paragraph in the primary RTF. In fact, they are inserting
-     a footnote-number, so we tinker a few other things too, like spacing et
+     a footnote-number, so we tinker a few other things too, like spacing and
      font-sizes. -->
 
 <xsl:template match="/" mode="insert.fo.fnum">

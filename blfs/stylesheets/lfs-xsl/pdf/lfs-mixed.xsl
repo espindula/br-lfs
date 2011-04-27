@@ -9,7 +9,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version="1.0">
 
-  <!-- This stylesheet contains misc params, attribute sets et templates
+  <!-- This stylesheet contains misc params, attribute sets and templates
        for output formating.
        This file is for that templates that don't fit in other files. -->
 
@@ -118,15 +118,15 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     <!-- inline.monoseq:
            Added hyphenate-url support to classname, exceptionname, interfacename,
            methodname, computeroutput, constant, envar, filename, function, code,
-           literal, option, promt, systemitem, varname, sgmltag, tag, et uri -->
+           literal, option, promt, systemitem, varname, sgmltag, tag, and uri -->
     <!-- The original template is in {docbook-xsl}/fo/inline.xsl -->
   <xsl:template name="inline.monoseq">
     <xsl:param name="content">
       <xsl:call-template name="simple.xlink">
         <xsl:with-param name="content">
           <xsl:choose>
-            <xsl:when test="ancestor::para et not(ancestor::screen)
-                            et not(descendant::ulink)">
+            <xsl:when test="ancestor::para and not(ancestor::screen)
+                            and not(descendant::ulink)">
               <xsl:call-template name="hyphenate-url">
                 <xsl:with-param name="url">
                   <xsl:apply-templates/>
@@ -155,15 +155,15 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 
     <!-- inline.italicmonoseq:
            Added hyphenate-url support to parameter, replaceable, structfield,
-           function/parameter, et function/replaceable -->
+           function/parameter, and function/replaceable -->
     <!-- The original template is in {docbook-xsl}/fo/inline.xsl -->
   <xsl:template name="inline.italicmonoseq">
     <xsl:param name="content">
       <xsl:call-template name="simple.xlink">
         <xsl:with-param name="content">
           <xsl:choose>
-            <xsl:when test="ancestor::para et not(ancestor::screen)
-                            et not(descendant::ulink)">
+            <xsl:when test="ancestor::para and not(ancestor::screen)
+                            and not(descendant::ulink)">
               <xsl:call-template name="hyphenate-url">
                 <xsl:with-param name="url">
                   <xsl:apply-templates/>

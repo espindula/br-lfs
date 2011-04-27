@@ -10,7 +10,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      The original code for processing bibliography in ISO690 style
      was provided by Jana Dvorakova <jana4u@seznam.cz>
@@ -54,17 +54,17 @@
     </xsl:when>
 
     <!-- CONTRIBUTIONS TO MONOGRAPHS -->
-    <xsl:when test="./@role='contribution' or (./biblioset/@relation='part' et ./biblioset/@relation='book')">
+    <xsl:when test="./@role='contribution' or (./biblioset/@relation='part' and ./biblioset/@relation='book')">
       <xsl:call-template name="iso690.paper.mon"/>
     </xsl:when>
 
     <!-- ARTICLES, ETC., IN SERIALS -->
-    <xsl:when test="./@role='article' or (./biblioset/@relation='journal' et ./biblioset/@relation='article')">
+    <xsl:when test="./@role='article' or (./biblioset/@relation='journal' and ./biblioset/@relation='article')">
       <xsl:call-template name="iso690.article"/>
     </xsl:when>
 
     <!-- PATENT DOCUMENTS -->
-    <xsl:when test="./@role='patent' or (./bibliomisc[@role='patenttype'] et ./bibliomisc[@role='patentnum'])">
+    <xsl:when test="./@role='patent' or (./bibliomisc[@role='patenttype'] and ./bibliomisc[@role='patentnum'])">
       <xsl:call-template name="iso690.patent"/>
     </xsl:when>
 
@@ -82,7 +82,7 @@
 <xsl:template name="iso690.monogr">
   <!-- Primary responsibility -->
   <xsl:call-template name="iso690.primary"/>
-  <!-- Title et Type of medium -->
+  <!-- Title and Type of medium -->
   <xsl:call-template name="iso690.title"/>
   <!-- Subordinate responsibility -->
   <xsl:call-template name="iso690.secondary"/>
@@ -96,7 +96,7 @@
   <xsl:call-template name="iso690.serie"/>
   <!-- Notes -->
   <xsl:call-template name="iso690.notice"/>
-  <!-- Avaibility et access -->
+  <!-- Avaibility and access -->
   <xsl:call-template name="iso690.access"/>
   <!-- Standard number -->
   <xsl:call-template name="iso690.isbn"/>
@@ -104,7 +104,7 @@
 
 <!-- SERIALS -->
 <xsl:template name="iso690.serial">
-  <!-- Title et Type of medium -->
+  <!-- Title and Type of medium -->
   <xsl:call-template name="iso690.title"/>
   <!-- Responsibility [nonEL] -->
   <xsl:if test="not(./bibliomisc[@role='medium'])">
@@ -114,7 +114,7 @@
   <xsl:call-template name="iso690.edition">
     <xsl:with-param name="after" select="./bibliomisc[@role='issuing']"/>
   </xsl:call-template>
-  <!-- Issue designation (date et/or num) [nonEL] -->
+  <!-- Issue designation (date and/or num) [nonEL] -->
   <xsl:if test="not(./bibliomisc[@role='medium'])">
     <xsl:call-template name="iso690.issuing"/>
   </xsl:if>
@@ -124,7 +124,7 @@
   <xsl:call-template name="iso690.serie"/>
   <!-- Notes -->
   <xsl:call-template name="iso690.notice"/>
-  <!-- Avaibility et access -->
+  <!-- Avaibility and access -->
   <xsl:call-template name="iso690.access"/>
   <!-- Standard number -->
   <xsl:call-template name="iso690.issn"/>
@@ -134,7 +134,7 @@
 <xsl:template name="iso690.monogr.part">
   <!-- Primary responsibility of host document -->
   <xsl:call-template name="iso690.primary"/>
-  <!-- Title et Type of medium of host document -->
+  <!-- Title and Type of medium of host document -->
   <xsl:call-template name="iso690.title"/>
   <!-- Subordinate responsibility of host document [EL] -->
   <xsl:if test="./bibliomisc[@role='medium']">
@@ -158,7 +158,7 @@
   <!-- Numeration within host document [EL] -->
   <!-- Notes [EL] -->
     <xsl:call-template name="iso690.notice"/>
-  <!-- Avaibility et access [EL] -->
+  <!-- Avaibility and access [EL] -->
     <xsl:call-template name="iso690.access"/>
   <!-- Standard number [EL] -->
     <xsl:call-template name="iso690.isbn"/>
@@ -189,7 +189,7 @@
 <!-- Host -->
   <!-- Primary responsibility -->
   <xsl:call-template name="iso690.primary"/>
-  <!-- Title et Type of medium -->
+  <!-- Title and Type of medium -->
   <xsl:call-template name="iso690.title"/>
   <!-- Subordinate responsibility [EL] -->
   <xsl:if test="./bibliomisc[@role='medium']">
@@ -205,7 +205,7 @@
   <xsl:if test="./bibliomisc[@role='medium']">
   <!-- Notes [EL] -->
     <xsl:call-template name="iso690.notice"/>
-  <!-- Avaibility et access [EL] -->
+  <!-- Avaibility and access [EL] -->
     <xsl:call-template name="iso690.access"/>
   <!-- Standard number [EL] -->
     <xsl:call-template name="iso690.isbn"/>
@@ -236,7 +236,7 @@
 
 <xsl:template match="biblioset" mode="iso690.article.jour">
 <!-- Serial -->
-  <!-- Title et Type of medium -->
+  <!-- Title and Type of medium -->
   <xsl:call-template name="iso690.title"/>
   <!-- Edition -->
   <xsl:call-template name="iso690.edition">
@@ -248,7 +248,7 @@
   <xsl:if test="./bibliomisc[@role='medium']">
   <!-- Notes [EL] -->
     <xsl:call-template name="iso690.notice"/>
-  <!-- Avaibility et access [EL] -->
+  <!-- Avaibility and access [EL] -->
     <xsl:call-template name="iso690.access"/>
   <!-- Standard number [EL] -->
     <xsl:call-template name="iso690.issn"/>
@@ -326,30 +326,30 @@
     <xsl:when test="$count &gt; $person.count"/>
     <xsl:otherwise>
       <xsl:choose>
-        <xsl:when test="$person.count &lt; 4 et not($group)">
+        <xsl:when test="$person.count &lt; 4 and not($group)">
           <xsl:call-template name="iso690.author">
             <xsl:with-param name="node" select="$person.list[position()=$count]"/>
           </xsl:call-template>
           <xsl:choose>
-            <xsl:when test="$person.count = 2 et $count = 1 and $biblioentry.alt.primary.seps != 0">
+            <xsl:when test="$person.count = 2 and $count = 1 and $biblioentry.alt.primary.seps != 0">
               <xsl:call-template name="gentext.template"><xsl:with-param name="context" select="'iso690'"/><xsl:with-param name="name" select="'alt.person.two.sep'"/></xsl:call-template>
             </xsl:when>
-            <xsl:when test="$person.count = 2 et $count = 1">
+            <xsl:when test="$person.count = 2 and $count = 1">
               <xsl:call-template name="gentext.template">
                 <xsl:with-param name="context" select="'authorgroup'"/>
                 <xsl:with-param name="name" select="'sep2'"/>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$person.count &gt; 2 et $count+1 = $person.count and $biblioentry.alt.primary.seps != 0">
+            <xsl:when test="$person.count &gt; 2 and $count+1 = $person.count and $biblioentry.alt.primary.seps != 0">
               <xsl:call-template name="gentext.template"><xsl:with-param name="context" select="'iso690'"/><xsl:with-param name="name" select="'alt.person.last.sep'"/></xsl:call-template>
             </xsl:when>
-            <xsl:when test="$person.count &gt; 2 et $count+1 = $person.count">
+            <xsl:when test="$person.count &gt; 2 and $count+1 = $person.count">
               <xsl:call-template name="gentext.template">
                 <xsl:with-param name="context" select="'authorgroup'"/>
                 <xsl:with-param name="name" select="'seplast'"/>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$count &lt; $person.count et $biblioentry.alt.primary.seps != 0">
+            <xsl:when test="$count &lt; $person.count and $biblioentry.alt.primary.seps != 0">
               <xsl:call-template name="gentext.template"><xsl:with-param name="context" select="'iso690'"/><xsl:with-param name="name" select="'alt.person.more.sep'"/></xsl:call-template>
             </xsl:when>
             <xsl:when test="$count &lt; $person.count">
@@ -401,7 +401,7 @@
 
         <xsl:otherwise>
           <xsl:choose>
-            <xsl:when test="($biblioentry.primary.count&gt;=3) et ($person.count&gt;=3)">
+            <xsl:when test="($biblioentry.primary.count&gt;=3) and ($person.count&gt;=3)">
               <xsl:call-template name="iso690.author.list">
                 <xsl:with-param name="person.list" select="$person.list[1]|$person.list[2]|$person.list[3]"/>
                 <xsl:with-param name="person.count" select="3"/>
@@ -410,7 +410,7 @@
                 <xsl:with-param name="group"/>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="($biblioentry.primary.count&gt;1) et  ($person.count&gt;1)">
+            <xsl:when test="($biblioentry.primary.count&gt;1) and  ($person.count&gt;1)">
               <xsl:call-template name="iso690.author.list">
                 <xsl:with-param name="person.list" select="$person.list[1]|$person.list[2]"/>
                 <xsl:with-param name="person.count" select="2"/>
@@ -445,7 +445,7 @@
       <span style="text-transform:uppercase">
         <xsl:apply-templates mode="iso690.mode" select="$node//surname[1]"/>
       </span>
-      <xsl:if test="$node//surname et $node//firstname">
+      <xsl:if test="$node//surname and $node//firstname">
         <xsl:value-of select="$lastfirst.sep"/>
       </xsl:if>
       <xsl:apply-templates mode="iso690.mode" select="$node//firstname[1]"/>
@@ -462,7 +462,7 @@
   <xsl:apply-templates mode="iso690.mode"/>
 </xsl:template>
 
-<!-- Title et Type of medium -->
+<!-- Title and Type of medium -->
 <xsl:template name="iso690.title">
   <xsl:param name="medium" select="./bibliomisc[@role='medium']"/>
   <xsl:param name="italic" select="1"/>
@@ -590,7 +590,7 @@
   </xsl:call-template>
 </xsl:template>
 
-<!-- Issue designation (date et/or num) -->
+<!-- Issue designation (date and/or num) -->
 <xsl:template name="iso690.issuing">
   <xsl:param name="issuing.div">
     <xsl:call-template name="gentext.template"><xsl:with-param name="context" select="'iso690'"/><xsl:with-param name="name" select="'issuing.div'"/></xsl:call-template>
@@ -602,7 +602,7 @@
     <xsl:call-template name="gentext.template"><xsl:with-param name="context" select="'iso690'"/><xsl:with-param name="name" select="'issuing.sep'"/></xsl:call-template>
   </xsl:param>
   <xsl:choose>
-    <xsl:when test="./pubdate[@role='issuing'] et ./volumenum[2] and ./issuenum[2]">
+    <xsl:when test="./pubdate[@role='issuing'] and ./volumenum[2] and ./issuenum[2]">
       <xsl:call-template name="iso690.issuedate"/>
       <xsl:apply-templates mode="iso690.mode" select="./volumenum[1]">
         <xsl:with-param name="sep" select="$issuing.div"/>
@@ -617,7 +617,7 @@
         <xsl:with-param name="sep" select="$issuing.sep"/>
       </xsl:apply-templates>
     </xsl:when>
-    <xsl:when test="./pubdate[@role='issuing'] et ./volumenum[2]">
+    <xsl:when test="./pubdate[@role='issuing'] and ./volumenum[2]">
       <xsl:call-template name="iso690.issuedate"/>
       <xsl:apply-templates mode="iso690.mode" select="./volumenum[1]">
         <xsl:with-param name="sep" select="$issuing.range"/>
@@ -626,7 +626,7 @@
         <xsl:with-param name="sep" select="$issuing.sep"/>
       </xsl:apply-templates>
     </xsl:when>
-    <xsl:when test="./pubdate[@role='issuing'] et ./volumenum and ./issuenum">
+    <xsl:when test="./pubdate[@role='issuing'] and ./volumenum and ./issuenum">
       <xsl:apply-templates mode="iso690.mode" select="./pubdate[@role='issuing']">
         <xsl:with-param name="sep" select="$issuing.div"/>
       </xsl:apply-templates>
@@ -848,13 +848,13 @@
     </xsl:choose>
   </xsl:if>
   <xsl:choose>
-    <xsl:when test="../date[@role='cit']|../../date[@role='cit'] et $upd!=0">
+    <xsl:when test="../date[@role='cit']|../../date[@role='cit'] and $upd!=0">
       <xsl:call-template name="iso690.endsep">
         <xsl:with-param name="text" select="$datecit2"/>
         <xsl:with-param name="sep" select="$sep"/>
       </xsl:call-template>
     </xsl:when>
-    <xsl:when test="../date[@role='upd']|../../date[@role='upd'] et $upd!=0">
+    <xsl:when test="../date[@role='upd']|../../date[@role='upd'] and $upd!=0">
       <xsl:call-template name="iso690.endsep">
         <xsl:with-param name="text" select="string(../date[@role='upd'])"/>
         <xsl:with-param name="sep" select="$sep"/>
@@ -1013,12 +1013,12 @@
     <xsl:call-template name="gentext.template"><xsl:with-param name="context" select="'iso690'"/><xsl:with-param name="name" select="'location.sep'"/></xsl:call-template>
   </xsl:param>
   <xsl:choose>
-    <xsl:when test="./volumenum et not(./issuenum) and not(./pagenums)">
+    <xsl:when test="./volumenum and not(./issuenum) and not(./pagenums)">
       <xsl:apply-templates mode="iso690.mode" select="./volumenum">
         <xsl:with-param name="sep" select="$location.sep"/>
       </xsl:apply-templates>
     </xsl:when>
-    <xsl:when test="./issuenum et not(./pagenums)">
+    <xsl:when test="./issuenum and not(./pagenums)">
       <xsl:apply-templates mode="iso690.mode" select="./volumenum"/>
       <xsl:apply-templates mode="iso690.mode" select="./issuenum">
         <xsl:with-param name="sep" select="$location.sep"/>
@@ -1086,7 +1086,7 @@
   </xsl:call-template>
 </xsl:template>
 
-<!-- Avaibility et access -->
+<!-- Avaibility and access -->
 <xsl:template name="iso690.access">
   <xsl:for-each select="./biblioid[@class='uri']|./bibliomisc[@role='access']">
     <xsl:choose>
@@ -1228,8 +1228,8 @@
   <xsl:apply-templates mode="iso690.mode" select="./address/country"/>
   <xsl:apply-templates mode="iso690.mode" select="./bibliomisc[@role='patenttype']"/>
   <xsl:choose>
-    <xsl:when test="./biblioid[@class='other' et @otherclass='patentnum']">
-      <xsl:apply-templates mode="iso690.mode" select="./biblioid[@class='other' et @otherclass='patentnum']"/>
+    <xsl:when test="./biblioid[@class='other' and @otherclass='patentnum']">
+      <xsl:apply-templates mode="iso690.mode" select="./biblioid[@class='other' and @otherclass='patentnum']"/>
     </xsl:when>
     <xsl:otherwise>
       <xsl:apply-templates mode="iso690.mode" select="./bibliomisc[@role='patentnum']"/>
@@ -1263,7 +1263,7 @@
 </xsl:template>
 
 <!-- Number -->
-<xsl:template match="biblioid[@class='other' et @otherclass='patentnum']|bibliomisc[@role='patentnum']" mode="iso690.mode">
+<xsl:template match="biblioid[@class='other' and @otherclass='patentnum']|bibliomisc[@role='patentnum']" mode="iso690.mode">
   <xsl:param name="patnum.sep">
     <xsl:call-template name="gentext.template"><xsl:with-param name="context" select="'iso690'"/><xsl:with-param name="name" select="'patnum.sep'"/></xsl:call-template>
   </xsl:param>

@@ -11,7 +11,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -32,15 +32,15 @@ $Id: ebnf.xsl 6840 2007-07-07 10:25:55Z manuel $
 <section><title>Introduction</title>
 
 <para>This is technical reference documentation for the DocBook XSL
-Stylesheets; it documents (some of) the parameters, templates, et
+Stylesheets; it documents (some of) the parameters, templates, and
 other elements of the stylesheets.</para>
 
-<para>This reference describes the templates et parameters relevant
+<para>This reference describes the templates and parameters relevant
 to formatting EBNF markup.</para>
 
 <para>This is not intended to be <quote>user</quote> documentation.
 It is provided for developers writing customization layers for the
-stylesheets, et for anyone who's interested in <quote>how it
+stylesheets, and for anyone who's interested in <quote>how it
 works</quote>.</para>
 
 <para>Although I am trying to be thorough, this documentation is known

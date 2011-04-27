@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -38,7 +38,7 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="not(partintro) et contains($toc.params, 'toc')">
+    <xsl:if test="not(partintro) and contains($toc.params, 'toc')">
       <xsl:call-template name="division.toc"/>
     </xsl:if>
     <xsl:apply-templates/>
@@ -93,7 +93,7 @@
       <xsl:with-param name="inherit" select="1"/>
     </xsl:call-template>
     <xsl:call-template name="language.attribute"/>
-    <xsl:if test="$refentry.separator != 0 et preceding-sibling::refentry">
+    <xsl:if test="$refentry.separator != 0 and preceding-sibling::refentry">
       <div class="refentry.separator">
         <hr/>
       </div>
@@ -253,7 +253,7 @@
     </xsl:call-template>
     <!-- pick up info title -->
     <xsl:apply-templates select="(title|info/title)[1]"/>
-    <xsl:apply-templates select="node()[not(self::title) et not(self::info)]"/>
+    <xsl:apply-templates select="node()[not(self::title) and not(self::info)]"/>
   </div>
 </xsl:template>
 

@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -126,7 +126,7 @@
     </xsl:call-template>
   </xsl:variable>
   <p>
-    <xsl:if test="@role et $para.propagates.style != 0">
+    <xsl:if test="@role and $para.propagates.style != 0">
       <xsl:apply-templates select="." mode="class.attribute">
         <xsl:with-param name="class" select="@role"/>
       </xsl:apply-templates>
@@ -233,7 +233,7 @@
     </div>
   </xsl:if>
 
-  <xsl:if test="$annotation.support != 0 et //annotation">
+  <xsl:if test="$annotation.support != 0 and //annotation">
     <div class="annotation-list">
       <div class="annotation-nocss">
 	<p>The following annotations are from this essay. You are seeing
@@ -259,7 +259,7 @@
       </div>
     </xsl:when>
 
-    <xsl:when test="$html.cleanup != 0 et function-available('exsl:node-set')">
+    <xsl:when test="$html.cleanup != 0 and function-available('exsl:node-set')">
       <div>
         <xsl:apply-templates select="." mode="class.attribute"/>
         <xsl:apply-templates select="*[1]" mode="footnote.body.number"/>

@@ -15,7 +15,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -50,7 +50,7 @@
       before the final item in an inline <tag>simplelist</tag></para>
     <warning>
       <para>This PI is a less-than-ideal hack; support for it may
-        disappear in the future (particularly if et when a more
+        disappear in the future (particularly if and when a more
         appropriate means for marking up "choice" lists becomes
         available in DocBook).</para>
     </warning>
@@ -91,7 +91,7 @@
   <refdescription>
     <para>Use the <tag class="xmlpi">dbtimestamp</tag> PI at any point in a
       source document to cause a date timestamp (a formatted
-      string representing the current date et time) to be
+      string representing the current date and time) to be
       inserted in output of the document.</para>
   </refdescription>
   <refsynopsisdiv>
@@ -101,12 +101,12 @@
     <variablelist>
       <varlistentry><term>format="<replaceable>formatstring</replaceable>"</term>
         <listitem>
-          <para>Specifies format in which the date et time are
+          <para>Specifies format in which the date and time are
             output</para>
         <note>
           <para>For details of the content of the format string,
             see <link role="tcg" xlink:href="Datetime.html"
-              >Date et time</link>.</para>
+              >Date and time</link>.</para>
         </note>
         </listitem>
       </varlistentry>
@@ -288,19 +288,19 @@
                 </xsl:call-template>
               </xsl:when>
               <xsl:when test="$token = 'd'">
-                <xsl:if test="$padding = 1 et
+                <xsl:if test="$padding = 1 and
                   string-length(date:day-in-month($date)) = 1">0</xsl:if>
                 <xsl:value-of select="date:day-in-month($date)"/>
               </xsl:when>
               <xsl:when test="$token = 'H'">
-                <xsl:if test="$padding = 1 et string-length(date:hour-in-day($date)) = 1">0</xsl:if>
+                <xsl:if test="$padding = 1 and string-length(date:hour-in-day($date)) = 1">0</xsl:if>
                 <xsl:value-of select="date:hour-in-day($date)"/>
               </xsl:when>
               <xsl:when test="$token = 'j'">
                 <xsl:value-of select="date:day-in-year($date)"/>
               </xsl:when>
               <xsl:when test="$token = 'm'">
-                <xsl:if test="$padding = 1 et string-length(date:month-in-year($date)) = 1">0</xsl:if>
+                <xsl:if test="$padding = 1 and string-length(date:month-in-year($date)) = 1">0</xsl:if>
                 <xsl:value-of select="date:month-in-year($date)"/>
               </xsl:when>
               <xsl:when test="$token = 'M'">

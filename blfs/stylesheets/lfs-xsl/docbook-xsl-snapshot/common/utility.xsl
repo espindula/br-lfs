@@ -13,7 +13,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 <doc:reference xmlns="" xml:id="utility">
@@ -48,12 +48,12 @@
 <!-- ====================================================================== -->
 
 <doc:template name="log.message" xmlns="">
-  <refpurpose>Logs/emits formatted notes et warnings</refpurpose>
+  <refpurpose>Logs/emits formatted notes and warnings</refpurpose>
 
   <refdescription id="log.message-desc">
     <para>The <function>log.message</function> template is a utility
     template for logging/emitting formatted messages&#xa0;– that is,
-    notes et warnings, along with a given log “level” and an
+    notes and warnings, along with a given log “level” and an
     identifier for the “source” that the message relates to.</para>
   </refdescription>
 
@@ -72,7 +72,7 @@
           <para>Text to log/emit in the source field to identify the
             “source” to which the notification/warning relates.
             This can be any arbitrary string, but because the
-            message lacks line et column numbers to identify the
+            message lacks line and column numbers to identify the
             exact part of the source document to which it
             relates, the intention is that the value you pass
             into the <literal>source</literal> parameter should
@@ -109,7 +109,7 @@
           default).</para>
         <para>If no value has been specified for the
           <literal>context-desc</literal> parameter, the field is
-          left empty et the text of the log message begins with
+          left empty and the text of the log message begins with
           the value of the <literal>message</literal>
           parameter.</para>
         </listitem>
@@ -222,7 +222,7 @@
     </xsl:when>
     <xsl:when test="substring(local-name(*[1]),
       string-length(local-name(*[1])-3) = 'info')
-      et *[1]/*[local-name() = 'title']">
+      and *[1]/*[local-name() = 'title']">
       <xsl:value-of select="*[1]/*[local-name() = 'title'][1]"/>
     </xsl:when>
   </xsl:choose>
@@ -232,7 +232,7 @@
 <doc:template name="pad-string" xmlns="">
   <refpurpose>Right-pads or left-pads a string out to a certain length</refpurpose>
   <refdescription id="pad-string-desc">
-    <para>This function takes string <parameter>padVar</parameter> et
+    <para>This function takes string <parameter>padVar</parameter> and
       pads it out in the direction <parameter>rightLeft</parameter> to
       the string-length <parameter>length</parameter>, using string
       <parameter>padChar</parameter> (a space character by default) as

@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -35,12 +35,12 @@
 <xsl:template match="para">
   <xsl:call-template name="paragraph">
     <xsl:with-param name="class">
-      <xsl:if test="@role et $para.propagates.style != 0">
+      <xsl:if test="@role and $para.propagates.style != 0">
         <xsl:value-of select="@role"/>
       </xsl:if>
     </xsl:with-param>
     <xsl:with-param name="content">
-      <xsl:if test="position() = 1 et parent::listitem">
+      <xsl:if test="position() = 1 and parent::listitem">
         <xsl:call-template name="anchor">
           <xsl:with-param name="node" select="parent::listitem"/>
         </xsl:call-template>
@@ -83,7 +83,7 @@
 <xsl:template match="simpara">
   <!-- see also listitem/simpara in lists.xsl -->
   <p>
-    <xsl:if test="@role et $para.propagates.style != 0">
+    <xsl:if test="@role and $para.propagates.style != 0">
       <xsl:apply-templates select="." mode="class.attribute">
         <xsl:with-param name="class" select="@role"/>
       </xsl:apply-templates>
@@ -97,7 +97,7 @@
 <xsl:template match="formalpara">
   <xsl:call-template name="paragraph">
     <xsl:with-param name="class">
-      <xsl:if test="@role et $para.propagates.style != 0">
+      <xsl:if test="@role and $para.propagates.style != 0">
         <xsl:value-of select="@role"/>
       </xsl:if>
     </xsl:with-param>
@@ -125,7 +125,7 @@
 
   <b>
     <xsl:copy-of select="$titleStr"/>
-    <xsl:if test="$lastChar != ''                   et not(contains($runinhead.title.end.punct, $lastChar))">
+    <xsl:if test="$lastChar != ''                   and not(contains($runinhead.title.end.punct, $lastChar))">
       <xsl:value-of select="$runinhead.default.title.end.punct"/>
     </xsl:if>
     <xsl:text>&#160;</xsl:text>

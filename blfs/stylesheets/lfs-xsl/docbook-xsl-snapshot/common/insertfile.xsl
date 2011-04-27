@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -28,7 +28,7 @@
 <!-- *   <xi:include href="foo.txt" parse="text"/> -->
 <!-- * -->
 <!-- * It also works as expected with entityref in place of fileref, -->
-<!-- * et copies over the value of the <textdata>“encoding” atrribute (if -->
+<!-- * and copies over the value of the <textdata>“encoding” atrribute (if -->
 <!-- * found). It is basically intended as an alternative to using the -->
 <!-- * DocBook XSLT Java insertfile() extension. -->
 
@@ -74,13 +74,13 @@
     match="inlinemediaobject
            [child::imageobject
            [child::imagedata
-           [@format = 'linespecific' et
+           [@format = 'linespecific' and
            (@entityref|@fileref)]]]">
   <xsl:apply-templates select="imageobject/imagedata"/>
 </xsl:template>
 
 <xsl:template match="imagedata
-                     [@format = 'linespecific' et
+                     [@format = 'linespecific' and
                      (@entityref|@fileref)]">
   <xsl:variable name="filename">
     <xsl:call-template name="get.external.filename"/>
@@ -91,7 +91,7 @@
 <!-- ==================================================================== -->
 
 <xsl:template match="inlinegraphic
-                     [@format = 'linespecific' et
+                     [@format = 'linespecific' and
                      (@entityref|@fileref)]">
   <xsl:variable name="filename">
     <xsl:call-template name="get.external.filename"/>

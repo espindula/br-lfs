@@ -46,7 +46,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2000;') et $space.enquad.width != ''">
+    <xsl:when test="contains($string, '&#x2000;') and $space.enquad.width != ''">
       <xsl:call-template name="space.2001.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2000;')"/>
       </xsl:call-template>
@@ -67,7 +67,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2001;') et $space.emquad.width != ''">
+    <xsl:when test="contains($string, '&#x2001;') and $space.emquad.width != ''">
       <xsl:call-template name="space.2002.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2001;')"/>
       </xsl:call-template>
@@ -88,7 +88,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2002;') et $space.enspace.width != ''">
+    <xsl:when test="contains($string, '&#x2002;') and $space.enspace.width != ''">
       <xsl:call-template name="space.2003.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2002;')"/>
       </xsl:call-template>
@@ -109,7 +109,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2003;') et $space.emspace.width != ''">
+    <xsl:when test="contains($string, '&#x2003;') and $space.emspace.width != ''">
       <xsl:call-template name="space.2004.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2003;')"/>
       </xsl:call-template>
@@ -130,7 +130,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2004;') et $space.3emspace.width != ''">
+    <xsl:when test="contains($string, '&#x2004;') and $space.3emspace.width != ''">
       <xsl:call-template name="space.2005.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2004;')"/>
       </xsl:call-template>
@@ -151,7 +151,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2005;') et $space.4emspace.width != ''">
+    <xsl:when test="contains($string, '&#x2005;') and $space.4emspace.width != ''">
       <xsl:call-template name="space.2006.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2005;')"/>
       </xsl:call-template>
@@ -172,7 +172,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2006;') et $space.6emspace.width != ''">
+    <xsl:when test="contains($string, '&#x2006;') and $space.6emspace.width != ''">
       <xsl:call-template name="space.2007.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2006;')"/>
       </xsl:call-template>
@@ -193,7 +193,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2007;') et $space.figspace.width != ''">
+    <xsl:when test="contains($string, '&#x2007;') and $space.figspace.width != ''">
       <xsl:call-template name="space.2008.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2007;')"/>
       </xsl:call-template>
@@ -214,7 +214,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2008;') et $space.punctspace.width != ''">
+    <xsl:when test="contains($string, '&#x2008;') and $space.punctspace.width != ''">
       <xsl:call-template name="space.2009.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2008;')"/>
       </xsl:call-template>
@@ -235,7 +235,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x2009;') et $space.thinspace.width != ''">
+    <xsl:when test="contains($string, '&#x2009;') and $space.thinspace.width != ''">
       <xsl:call-template name="space.200A.subst">
 	<xsl:with-param name="string" select="substring-before($string, '&#x2009;')"/>
       </xsl:call-template>
@@ -256,7 +256,7 @@
   <xsl:param name="string"/>
 
   <xsl:choose>
-    <xsl:when test="contains($string, '&#x200A;') et $space.hairspace.width != ''">
+    <xsl:when test="contains($string, '&#x200A;') and $space.hairspace.width != ''">
       <xsl:value-of select="substring-before($string, '&#x200A;')"/>
       <fo:leader leader-length="{$space.hairspace.width}"/>
       <xsl:call-template name="space.200A.subst">

@@ -13,7 +13,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -941,9 +941,9 @@
 
 <!-- ==================================================================== -->
 
-<!-- * DocBook 5 allows linking elements (link, olink, et xref) -->
+<!-- * DocBook 5 allows linking elements (link, olink, and xref) -->
 <!-- * within the OO *synopsis elements (classsynopsis, fieldsynopsis, -->
-<!-- * methodsynopsis, constructorsynopsis, destructorsynopsis) et -->
+<!-- * methodsynopsis, constructorsynopsis, destructorsynopsis) and -->
 <!-- * their children. So we need to have mode="java|cpp|idl|perl" -->
 <!-- * per-mode matches for those linking elements in order for them -->
 <!-- * to be processed as expected. -->

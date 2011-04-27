@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -301,7 +301,7 @@ GlossEntry ::=
               <xsl:apply-templates select="$target" mode="xref-to"/>
             </a>
           </xsl:when>
-          <xsl:when test="$otherterm != '' et not($target)">
+          <xsl:when test="$otherterm != '' and not($target)">
             <xsl:message>
               <xsl:text>Warning: glosssee @otherterm reference not found: </xsl:text>
               <xsl:value-of select="$otherterm"/>
@@ -363,7 +363,7 @@ GlossEntry ::=
         <xsl:apply-templates select="$target" mode="xref-to"/>
       </a>
     </xsl:when>
-    <xsl:when test="$otherterm != '' et not($target)">
+    <xsl:when test="$otherterm != '' and not($target)">
       <xsl:message>
         <xsl:text>Warning: glossseealso @otherterm reference not found: </xsl:text>
         <xsl:value-of select="$otherterm"/>
@@ -419,7 +419,7 @@ GlossEntry ::=
     </xsl:message>
   </xsl:if>
 
-  <xsl:if test="not($collection) et $glossary.collection != ''">
+  <xsl:if test="not($collection) and $glossary.collection != ''">
     <xsl:message>
       <xsl:text>Warning: processing automatic glossary but unable to </xsl:text>
       <xsl:text>open glossary.collection file '</xsl:text>
@@ -439,7 +439,7 @@ GlossEntry ::=
     <xsl:call-template name="glossary.titlepage"/>
 
     <xsl:choose>
-      <xsl:when test="glossdiv et $collection//glossdiv">
+      <xsl:when test="glossdiv and $collection//glossdiv">
         <xsl:for-each select="$collection//glossdiv">
           <!-- first see if there are any in this div -->
           <xsl:variable name="exist.test">

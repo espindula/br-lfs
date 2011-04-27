@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -48,7 +48,7 @@
   </xsl:param>
 
   <xsl:choose>
-    <xsl:when test="$chunk.fast != 0 et function-available('exsl:node-set')">
+    <xsl:when test="$chunk.fast != 0 and function-available('exsl:node-set')">
       <xsl:variable name="chunks" select="exsl:node-set($chunk.hierarchy)//cf:div"/>
       <xsl:variable name="genid" select="generate-id()"/>
 
@@ -61,7 +61,7 @@
       <xsl:variable name="next" select="key('genid', ($nextdiv/@id|$nextdiv/@xml:id)[1])"/>
 
       <xsl:choose>
-        <xsl:when test="$onechunk != 0 et parent::*">
+        <xsl:when test="$onechunk != 0 and parent::*">
           <xsl:copy-of select="$content"/>
         </xsl:when>
         <xsl:otherwise>
@@ -75,7 +75,7 @@
     </xsl:when>
     <xsl:otherwise>
       <xsl:choose>
-        <xsl:when test="$onechunk != 0 et not(parent::*)">
+        <xsl:when test="$onechunk != 0 and not(parent::*)">
           <xsl:call-template name="chunk-all-sections">
             <xsl:with-param name="content" select="$content"/>
           </xsl:call-template>
@@ -149,20 +149,20 @@
   </xsl:param>
 
   <!-- These xpath expressions are really hairy. The trick is to pick sections -->
-  <!-- that are not first children et are not the children of first children -->
+  <!-- that are not first children and are not the children of first children -->
 
   <!-- Break these variables into pieces to work around
        http://nagoya.apache.org/bugzilla/show_bug.cgi?id=6063 -->
 
-  <xsl:variable name="prev-v1" select="(ancestor::sect1[$chunk.section.depth &gt; 0                                et preceding-sibling::sect1][1]               |ancestor::sect2[$chunk.section.depth &gt; 1                                and preceding-sibling::sect2                                and parent::sect1[preceding-sibling::sect1]][1]               |ancestor::sect3[$chunk.section.depth &gt; 2                                and preceding-sibling::sect3                                and parent::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |ancestor::sect4[$chunk.section.depth &gt; 3                                and preceding-sibling::sect4                                and parent::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |ancestor::sect5[$chunk.section.depth &gt; 4                                and preceding-sibling::sect5                                and parent::sect4[preceding-sibling::sect4]                                and ancestor::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |ancestor::section[$chunk.section.depth &gt; count(ancestor::section)                                 and not(ancestor::section[not(preceding-sibling::section)])][1])[last()]"/>
+  <xsl:variable name="prev-v1" select="(ancestor::sect1[$chunk.section.depth &gt; 0                                and preceding-sibling::sect1][1]               |ancestor::sect2[$chunk.section.depth &gt; 1                                and preceding-sibling::sect2                                and parent::sect1[preceding-sibling::sect1]][1]               |ancestor::sect3[$chunk.section.depth &gt; 2                                and preceding-sibling::sect3                                and parent::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |ancestor::sect4[$chunk.section.depth &gt; 3                                and preceding-sibling::sect4                                and parent::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |ancestor::sect5[$chunk.section.depth &gt; 4                                and preceding-sibling::sect5                                and parent::sect4[preceding-sibling::sect4]                                and ancestor::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |ancestor::section[$chunk.section.depth &gt; count(ancestor::section)                                 and not(ancestor::section[not(preceding-sibling::section)])][1])[last()]"/>
 
-  <xsl:variable name="prev-v2" select="(preceding::sect1[$chunk.section.depth &gt; 0                                et preceding-sibling::sect1][1]               |preceding::sect2[$chunk.section.depth &gt; 1                                and preceding-sibling::sect2                                and parent::sect1[preceding-sibling::sect1]][1]               |preceding::sect3[$chunk.section.depth &gt; 2                                and preceding-sibling::sect3                                and parent::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |preceding::sect4[$chunk.section.depth &gt; 3                                and preceding-sibling::sect4                                and parent::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |preceding::sect5[$chunk.section.depth &gt; 4                                and preceding-sibling::sect5                                and parent::sect4[preceding-sibling::sect4]                                and ancestor::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |preceding::section[$chunk.section.depth &gt; count(ancestor::section)                                  and preceding-sibling::section                                  and not(ancestor::section[not(preceding-sibling::section)])][1])[last()]"/>
+  <xsl:variable name="prev-v2" select="(preceding::sect1[$chunk.section.depth &gt; 0                                and preceding-sibling::sect1][1]               |preceding::sect2[$chunk.section.depth &gt; 1                                and preceding-sibling::sect2                                and parent::sect1[preceding-sibling::sect1]][1]               |preceding::sect3[$chunk.section.depth &gt; 2                                and preceding-sibling::sect3                                and parent::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |preceding::sect4[$chunk.section.depth &gt; 3                                and preceding-sibling::sect4                                and parent::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |preceding::sect5[$chunk.section.depth &gt; 4                                and preceding-sibling::sect5                                and parent::sect4[preceding-sibling::sect4]                                and ancestor::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |preceding::section[$chunk.section.depth &gt; count(ancestor::section)                                  and preceding-sibling::section                                  and not(ancestor::section[not(preceding-sibling::section)])][1])[last()]"/>
 
   <xsl:variable name="prev" select="(preceding::book[1]              |preceding::preface[1]              |preceding::chapter[1]              |preceding::appendix[1]              |preceding::part[1]              |preceding::reference[1]              |preceding::refentry[1]              |preceding::colophon[1]              |preceding::article[1]              |preceding::bibliography[parent::article or parent::book or parent::part][1]              |preceding::glossary[parent::article or parent::book or parent::part][1]              |preceding::index[$generate.index != 0]                                [parent::article or parent::book or parent::part][1]              |preceding::setindex[$generate.index != 0][1]              |ancestor::set              |ancestor::book[1]              |ancestor::preface[1]              |ancestor::chapter[1]              |ancestor::appendix[1]              |ancestor::part[1]              |ancestor::reference[1]              |ancestor::article[1]              |$prev-v1              |$prev-v2)[last()]"/>
 
-  <xsl:variable name="next-v1" select="(following::sect1[$chunk.section.depth &gt; 0                                et preceding-sibling::sect1][1]               |following::sect2[$chunk.section.depth &gt; 1                                and preceding-sibling::sect2                                and parent::sect1[preceding-sibling::sect1]][1]               |following::sect3[$chunk.section.depth &gt; 2                                and preceding-sibling::sect3                                and parent::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |following::sect4[$chunk.section.depth &gt; 3                                and preceding-sibling::sect4                                and parent::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |following::sect5[$chunk.section.depth &gt; 4                                and preceding-sibling::sect5                                and parent::sect4[preceding-sibling::sect4]                                and ancestor::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |following::section[$chunk.section.depth &gt; count(ancestor::section)                                  and preceding-sibling::section                                  and not(ancestor::section[not(preceding-sibling::section)])][1])[1]"/>
+  <xsl:variable name="next-v1" select="(following::sect1[$chunk.section.depth &gt; 0                                and preceding-sibling::sect1][1]               |following::sect2[$chunk.section.depth &gt; 1                                and preceding-sibling::sect2                                and parent::sect1[preceding-sibling::sect1]][1]               |following::sect3[$chunk.section.depth &gt; 2                                and preceding-sibling::sect3                                and parent::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |following::sect4[$chunk.section.depth &gt; 3                                and preceding-sibling::sect4                                and parent::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |following::sect5[$chunk.section.depth &gt; 4                                and preceding-sibling::sect5                                and parent::sect4[preceding-sibling::sect4]                                and ancestor::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |following::section[$chunk.section.depth &gt; count(ancestor::section)                                  and preceding-sibling::section                                  and not(ancestor::section[not(preceding-sibling::section)])][1])[1]"/>
 
-  <xsl:variable name="next-v2" select="(descendant::sect1[$chunk.section.depth &gt; 0                                et preceding-sibling::sect1][1]               |descendant::sect2[$chunk.section.depth &gt; 1                                and preceding-sibling::sect2                                and parent::sect1[preceding-sibling::sect1]][1]               |descendant::sect3[$chunk.section.depth &gt; 2                                and preceding-sibling::sect3                                and parent::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |descendant::sect4[$chunk.section.depth &gt; 3                                and preceding-sibling::sect4                                and parent::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |descendant::sect5[$chunk.section.depth &gt; 4                                and preceding-sibling::sect5                                and parent::sect4[preceding-sibling::sect4]                                and ancestor::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |descendant::section[$chunk.section.depth &gt; count(ancestor::section)                                  and preceding-sibling::section                                  and not(ancestor::section[not(preceding-sibling::section)])])[1]"/>
+  <xsl:variable name="next-v2" select="(descendant::sect1[$chunk.section.depth &gt; 0                                and preceding-sibling::sect1][1]               |descendant::sect2[$chunk.section.depth &gt; 1                                and preceding-sibling::sect2                                and parent::sect1[preceding-sibling::sect1]][1]               |descendant::sect3[$chunk.section.depth &gt; 2                                and preceding-sibling::sect3                                and parent::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |descendant::sect4[$chunk.section.depth &gt; 3                                and preceding-sibling::sect4                                and parent::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |descendant::sect5[$chunk.section.depth &gt; 4                                and preceding-sibling::sect5                                and parent::sect4[preceding-sibling::sect4]                                and ancestor::sect3[preceding-sibling::sect3]                                and ancestor::sect2[preceding-sibling::sect2]                                and ancestor::sect1[preceding-sibling::sect1]][1]               |descendant::section[$chunk.section.depth &gt; count(ancestor::section)                                  and preceding-sibling::section                                  and not(ancestor::section[not(preceding-sibling::section)])])[1]"/>
 
   <xsl:variable name="next" select="(following::book[1]              |following::preface[1]              |following::chapter[1]              |following::appendix[1]              |following::part[1]              |following::reference[1]              |following::refentry[1]              |following::colophon[1]              |following::bibliography[parent::article or parent::book or parent::part][1]              |following::glossary[parent::article or parent::book or parent::part][1]              |following::index[$generate.index != 0]                                [parent::article or parent::book or parent::part][1]              |following::article[1]              |following::setindex[$generate.index != 0][1]              |descendant::book[1]              |descendant::preface[1]              |descendant::chapter[1]              |descendant::appendix[1]              |descendant::article[1]              |descendant::bibliography[parent::article or parent::book or parent::part][1]              |descendant::glossary[parent::article or parent::book or parent::part][1]              |descendant::index[$generate.index != 0]                                [parent::article or parent::book or parent::part][1]              |descendant::colophon[1]              |descendant::setindex[$generate.index != 0][1]              |descendant::part[1]              |descendant::reference[1]              |descendant::refentry[1]              |$next-v1              |$next-v2)[1]"/>
 
@@ -323,7 +323,7 @@
 
   <xsl:if test="string($lots) != ''">
     <xsl:choose>
-      <xsl:when test="$chunk.tocs.and.lots != 0 et not(parent::*)">
+      <xsl:when test="$chunk.tocs.and.lots != 0 and not(parent::*)">
         <xsl:call-template name="write.chunk">
           <xsl:with-param name="filename">
             <xsl:call-template name="make-relative-filename">
@@ -595,7 +595,7 @@
               in this chunk should be referenced. I don't think it
               does any harm to reference them all, but it adds
               unnecessary bloat to each chunk. -->
-  <xsl:if test="$annotation.support != 0 et //annotation">
+  <xsl:if test="$annotation.support != 0 and //annotation">
     <div class="annotation-list">
       <div class="annotation-nocss">
         <p>The following annotations are from this essay. You are seeing
@@ -667,30 +667,30 @@
   <xsl:choose>
     <xsl:when test="not($node/parent::*)">1</xsl:when>
 
-    <xsl:when test="local-name($node) = 'sect1'                     et $chunk.section.depth &gt;= 1                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect1) &gt; 0)">
+    <xsl:when test="local-name($node) = 'sect1'                     and $chunk.section.depth &gt;= 1                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect1) &gt; 0)">
       <xsl:text>1</xsl:text>
     </xsl:when>
-    <xsl:when test="local-name($node) = 'sect2'                     et $chunk.section.depth &gt;= 2                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect2) &gt; 0)">
+    <xsl:when test="local-name($node) = 'sect2'                     and $chunk.section.depth &gt;= 2                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect2) &gt; 0)">
       <xsl:call-template name="chunk">
         <xsl:with-param name="node" select="$node/parent::*"/>
       </xsl:call-template>
     </xsl:when>
-    <xsl:when test="local-name($node) = 'sect3'                     et $chunk.section.depth &gt;= 3                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect3) &gt; 0)">
+    <xsl:when test="local-name($node) = 'sect3'                     and $chunk.section.depth &gt;= 3                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect3) &gt; 0)">
       <xsl:call-template name="chunk">
         <xsl:with-param name="node" select="$node/parent::*"/>
       </xsl:call-template>
     </xsl:when>
-    <xsl:when test="local-name($node) = 'sect4'                     et $chunk.section.depth &gt;= 4                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect4) &gt; 0)">
+    <xsl:when test="local-name($node) = 'sect4'                     and $chunk.section.depth &gt;= 4                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect4) &gt; 0)">
       <xsl:call-template name="chunk">
         <xsl:with-param name="node" select="$node/parent::*"/>
       </xsl:call-template>
     </xsl:when>
-    <xsl:when test="local-name($node) = 'sect5'                     et $chunk.section.depth &gt;= 5                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect5) &gt; 0)">
+    <xsl:when test="local-name($node) = 'sect5'                     and $chunk.section.depth &gt;= 5                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::sect5) &gt; 0)">
       <xsl:call-template name="chunk">
         <xsl:with-param name="node" select="$node/parent::*"/>
       </xsl:call-template>
     </xsl:when>
-    <xsl:when test="local-name($node) = 'section'                     et $chunk.section.depth &gt;= count($node/ancestor::section)+1                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::section) &gt; 0)">
+    <xsl:when test="local-name($node) = 'section'                     and $chunk.section.depth &gt;= count($node/ancestor::section)+1                     and ($chunk.first.sections != 0                          or count($node/preceding-sibling::section) &gt; 0)">
       <xsl:call-template name="chunk">
         <xsl:with-param name="node" select="$node/parent::*"/>
       </xsl:call-template>
@@ -703,14 +703,14 @@
     <xsl:when test="local-name($node)='part'">1</xsl:when>
     <xsl:when test="local-name($node)='reference'">1</xsl:when>
     <xsl:when test="local-name($node)='refentry'">1</xsl:when>
-    <xsl:when test="local-name($node)='index' et ($generate.index != 0 or count($node/*) &gt; 0)                     and (local-name($node/parent::*) = 'article'                     or local-name($node/parent::*) = 'book'                     or local-name($node/parent::*) = 'part'                     )">1</xsl:when>
-    <xsl:when test="local-name($node)='bibliography'                     et (local-name($node/parent::*) = 'article'                     or local-name($node/parent::*) = 'book'                     or local-name($node/parent::*) = 'part'                     )">1</xsl:when>
-    <xsl:when test="local-name($node)='glossary'                     et (local-name($node/parent::*) = 'article'                     or local-name($node/parent::*) = 'book'                     or local-name($node/parent::*) = 'part'                     )">1</xsl:when>
+    <xsl:when test="local-name($node)='index' and ($generate.index != 0 or count($node/*) &gt; 0)                     and (local-name($node/parent::*) = 'article'                     or local-name($node/parent::*) = 'book'                     or local-name($node/parent::*) = 'part'                     )">1</xsl:when>
+    <xsl:when test="local-name($node)='bibliography'                     and (local-name($node/parent::*) = 'article'                     or local-name($node/parent::*) = 'book'                     or local-name($node/parent::*) = 'part'                     )">1</xsl:when>
+    <xsl:when test="local-name($node)='glossary'                     and (local-name($node/parent::*) = 'article'                     or local-name($node/parent::*) = 'book'                     or local-name($node/parent::*) = 'part'                     )">1</xsl:when>
     <xsl:when test="local-name($node)='colophon'">1</xsl:when>
     <xsl:when test="local-name($node)='book'">1</xsl:when>
     <xsl:when test="local-name($node)='set'">1</xsl:when>
     <xsl:when test="local-name($node)='setindex'">1</xsl:when>
-    <xsl:when test="local-name($node)='legalnotice'                     et $generate.legalnotice.link != 0">1</xsl:when>
+    <xsl:when test="local-name($node)='legalnotice'                     and $generate.legalnotice.link != 0">1</xsl:when>
     <xsl:otherwise>0</xsl:otherwise>
   </xsl:choose>
 </xsl:template>
@@ -741,13 +741,13 @@
   <!-- * If $toc-context contains some node other than the current node, -->
   <!-- * it means we're processing a link in a TOC. In that case, to -->
   <!-- * ensure the link will work correctly, we need to take a look at -->
-  <!-- * where the file containing the TOC will get written, et where -->
+  <!-- * where the file containing the TOC will get written, and where -->
   <!-- * the file that's being linked to will get written. -->
   <xsl:variable name="toc-output-dir">
     <xsl:if test="not($toc-context = .)">
-      <!-- * Get the $toc-context node et all its ancestors, look down -->
+      <!-- * Get the $toc-context node and all its ancestors, look down -->
       <!-- * through them to find the last/closest node to the -->
-      <!-- * toc-context node that has a "dbhtml dir" PI, et get the -->
+      <!-- * toc-context node that has a "dbhtml dir" PI, and get the -->
       <!-- * directory name from that. That's the name of the directory -->
       <!-- * to which the current toc output file will get written. -->
       <xsl:call-template name="dbhtml-dir">
@@ -757,9 +757,9 @@
   </xsl:variable>
   <xsl:variable name="linked-file-output-dir">
     <xsl:if test="not($toc-context = .)">
-      <!-- * Get the current node et all its ancestors, look down -->
+      <!-- * Get the current node and all its ancestors, look down -->
       <!-- * through them to find the last/closest node to the current -->
-      <!-- * node that has a "dbhtml dir" PI, et get the directory name -->
+      <!-- * node that has a "dbhtml dir" PI, and get the directory name -->
       <!-- * from that.  That's the name of the directory to which the -->
       <!-- * file that's being linked to will get written. -->
       <xsl:call-template name="dbhtml-dir">
@@ -988,7 +988,7 @@
       </xsl:if>
     </xsl:if>
     <!-- optionally turn off frag for PDF references -->
-    <xsl:if test="not($insert.olink.pdf.frag = 0 et           translate(substring($baseuri, string-length($baseuri) - 3),                     'PDF', 'pdf') = '.pdf'           and starts-with($target.href, '#') )">
+    <xsl:if test="not($insert.olink.pdf.frag = 0 and           translate(substring($baseuri, string-length($baseuri) - 3),                     'PDF', 'pdf') = '.pdf'           and starts-with($target.href, '#') )">
       <xsl:value-of select="$target.href"/>
     </xsl:if>
   </xsl:if>
@@ -1130,11 +1130,11 @@
       </xsl:for-each>
     </xsl:if>
 
-    <!-- * if we have a legalnotice et user wants it output as a -->
-    <!-- * separate page et $html.head.legalnotice.link.types is -->
+    <!-- * if we have a legalnotice and user wants it output as a -->
+    <!-- * separate page and $html.head.legalnotice.link.types is -->
     <!-- * non-empty, we generate a link or links for each value in -->
     <!-- * $html.head.legalnotice.link.types -->
-    <xsl:if test="//legalnotice                   et not($generate.legalnotice.link = 0)                   and not($html.head.legalnotice.link.types = '')">
+    <xsl:if test="//legalnotice                   and not($generate.legalnotice.link = 0)                   and not($html.head.legalnotice.link.types = '')">
       <xsl:call-template name="make.legalnotice.head.links"/>
     </xsl:if>
 
@@ -1153,9 +1153,9 @@
   <xsl:variable name="up" select="parent::*"/>
 
   <xsl:variable name="row1" select="$navig.showtitles != 0"/>
-  <xsl:variable name="row2" select="count($prev) &gt; 0                                     or (count($up) &gt; 0                                          et generate-id($up) != generate-id($home)                                         and $navig.showtitles != 0)                                     or count($next) &gt; 0"/>
+  <xsl:variable name="row2" select="count($prev) &gt; 0                                     or (count($up) &gt; 0                                          and generate-id($up) != generate-id($home)                                         and $navig.showtitles != 0)                                     or count($next) &gt; 0"/>
 
-  <xsl:if test="$suppress.navigation = '0' et $suppress.header.navigation = '0'">
+  <xsl:if test="$suppress.navigation = '0' and $suppress.header.navigation = '0'">
     <div class="navheader">
       <xsl:if test="$row1 or $row2">
         <table width="100%" summary="Navigation header">
@@ -1186,7 +1186,7 @@
               </td>
               <th width="60%" align="center">
                 <xsl:choose>
-                  <xsl:when test="count($up) &gt; 0                                   et generate-id($up) != generate-id($home)                                   and $navig.showtitles != 0">
+                  <xsl:when test="count($up) &gt; 0                                   and generate-id($up) != generate-id($home)                                   and $navig.showtitles != 0">
                     <xsl:apply-templates select="$up" mode="object.title.markup"/>
                   </xsl:when>
                   <xsl:otherwise>&#160;</xsl:otherwise>
@@ -1230,9 +1230,9 @@
 
   <xsl:variable name="row1" select="count($prev) &gt; 0                                     or count($up) &gt; 0                                     or count($next) &gt; 0"/>
 
-  <xsl:variable name="row2" select="($prev et $navig.showtitles != 0)                                     or (generate-id($home) != generate-id(.)                                         or $nav.context = 'toc')                                     or ($chunk.tocs.and.lots != 0                                         and $nav.context != 'toc')                                     or ($next and $navig.showtitles != 0)"/>
+  <xsl:variable name="row2" select="($prev and $navig.showtitles != 0)                                     or (generate-id($home) != generate-id(.)                                         or $nav.context = 'toc')                                     or ($chunk.tocs.and.lots != 0                                         and $nav.context != 'toc')                                     or ($next and $navig.showtitles != 0)"/>
 
-  <xsl:if test="$suppress.navigation = '0' et $suppress.footer.navigation = '0'">
+  <xsl:if test="$suppress.navigation = '0' and $suppress.footer.navigation = '0'">
     <div class="navfooter">
       <xsl:if test="$footer.rule != 0">
         <hr/>
@@ -1259,7 +1259,7 @@
               </td>
               <td width="20%" align="center">
                 <xsl:choose>
-                  <xsl:when test="count($up)&gt;0                                   et generate-id($up) != generate-id($home)">
+                  <xsl:when test="count($up)&gt;0                                   and generate-id($up) != generate-id($home)">
                     <a accesskey="u">
                       <xsl:attribute name="href">
                         <xsl:call-template name="href.target">
@@ -1313,14 +1313,14 @@
                         <xsl:with-param name="direction" select="'home'"/>
                       </xsl:call-template>
                     </a>
-                    <xsl:if test="$chunk.tocs.and.lots != 0 et $nav.context != 'toc'">
+                    <xsl:if test="$chunk.tocs.and.lots != 0 and $nav.context != 'toc'">
                       <xsl:text>&#160;|&#160;</xsl:text>
                     </xsl:if>
                   </xsl:when>
                   <xsl:otherwise>&#160;</xsl:otherwise>
                 </xsl:choose>
 
-                <xsl:if test="$chunk.tocs.and.lots != 0 et $nav.context != 'toc'">
+                <xsl:if test="$chunk.tocs.and.lots != 0 and $nav.context != 'toc'">
                   <a accesskey="t">
                     <xsl:attribute name="href">
                       <xsl:apply-templates select="/*[1]" mode="recursive-chunk-filename">
@@ -1402,7 +1402,7 @@
 <!-- * Actually, it may generate multiple link instances in each chunk, -->
 <!-- * because it walks through the space-separated list of link -->
 <!-- * types specified in the $html.head.legalnotice.link.types param, -->
-<!-- * popping off link types et generating links for them until it -->
+<!-- * popping off link types and generating links for them until it -->
 <!-- * depletes the list. -->
 
 <xsl:template name="make.legalnotice.head.links">

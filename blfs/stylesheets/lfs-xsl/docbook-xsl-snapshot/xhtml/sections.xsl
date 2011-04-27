@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -34,7 +34,7 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="contains($toc.params, 'toc')                   et $depth &lt;= $generate.section.toc.level">
+    <xsl:if test="contains($toc.params, 'toc')                   and $depth &lt;= $generate.section.toc.level">
       <xsl:call-template name="section.toc">
         <xsl:with-param name="toc.title.p" select="contains($toc.params, 'title')"/>
       </xsl:call-template>
@@ -122,7 +122,7 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="contains($toc.params, 'toc')                   et $generate.section.toc.level &gt;= 1">
+    <xsl:if test="contains($toc.params, 'toc')                   and $generate.section.toc.level &gt;= 1">
       <xsl:call-template name="section.toc">
         <xsl:with-param name="toc.title.p" select="contains($toc.params, 'title')"/>
       </xsl:call-template>
@@ -171,7 +171,7 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="contains($toc.params, 'toc')                   et $generate.section.toc.level &gt;= 2">
+    <xsl:if test="contains($toc.params, 'toc')                   and $generate.section.toc.level &gt;= 2">
       <xsl:call-template name="section.toc">
         <xsl:with-param name="toc.title.p" select="contains($toc.params, 'title')"/>
       </xsl:call-template>
@@ -220,7 +220,7 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="contains($toc.params, 'toc')                   et $generate.section.toc.level &gt;= 3">
+    <xsl:if test="contains($toc.params, 'toc')                   and $generate.section.toc.level &gt;= 3">
       <xsl:call-template name="section.toc">
         <xsl:with-param name="toc.title.p" select="contains($toc.params, 'title')"/>
       </xsl:call-template>
@@ -269,7 +269,7 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="contains($toc.params, 'toc')                   et $generate.section.toc.level &gt;= 4">
+    <xsl:if test="contains($toc.params, 'toc')                   and $generate.section.toc.level &gt;= 4">
       <xsl:call-template name="section.toc">
         <xsl:with-param name="toc.title.p" select="contains($toc.params, 'title')"/>
       </xsl:call-template>
@@ -318,7 +318,7 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="contains($toc.params, 'toc')                   et $generate.section.toc.level &gt;= 5">
+    <xsl:if test="contains($toc.params, 'toc')                   and $generate.section.toc.level &gt;= 5">
       <xsl:call-template name="section.toc">
         <xsl:with-param name="toc.title.p" select="contains($toc.params, 'title')"/>
       </xsl:call-template>
@@ -435,13 +435,13 @@
         <xsl:attribute name="style">clear: both</xsl:attribute>
       </xsl:if>
     </xsl:if>
-    <xsl:if test="$allow-anchors != 0 et $generate.id.attributes = 0">
+    <xsl:if test="$allow-anchors != 0 and $generate.id.attributes = 0">
       <xsl:call-template name="anchor">
         <xsl:with-param name="node" select="$section"/>
         <xsl:with-param name="conditional" select="0"/>
       </xsl:call-template>
     </xsl:if>
-    <xsl:if test="$generate.id.attributes != 0 et not(local-name(.) = 'appendix')">
+    <xsl:if test="$generate.id.attributes != 0 and not(local-name(.) = 'appendix')">
       <xsl:attribute name="id"><xsl:value-of select="$id"/></xsl:attribute>
     </xsl:if>
     <xsl:copy-of select="$title"/>

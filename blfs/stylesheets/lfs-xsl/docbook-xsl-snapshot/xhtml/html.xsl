@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -178,13 +178,13 @@
 </xsl:template>
 
 <xsl:template name="id.warning">
-  <xsl:if test="$id.warnings != 0 et not(@id) and not(@xml:id) and parent::*">
+  <xsl:if test="$id.warnings != 0 and not(@id) and not(@xml:id) and parent::*">
     <xsl:variable name="title">
       <xsl:choose>
         <xsl:when test="title">
           <xsl:value-of select="title[1]"/>
         </xsl:when>
-        <xsl:when test="substring(local-name(*[1]),                                   string-length(local-name(*[1])-3) = 'info')                         et *[1]/title">
+        <xsl:when test="substring(local-name(*[1]),                                   string-length(local-name(*[1])-3) = 'info')                         and *[1]/title">
           <xsl:value-of select="*[1]/title[1]"/>
         </xsl:when>
         <xsl:when test="refmeta/refentrytitle">

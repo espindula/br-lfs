@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -44,13 +44,13 @@
             xsl:use-attribute-sets="formal.object.properties">
     <xsl:call-template name="anchor"/>
 
-    <xsl:if test="title et $placement = 'before'">
+    <xsl:if test="title and $placement = 'before'">
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
 
     <xsl:apply-templates select="$preamble"/>
 
-    <xsl:if test="title et $placement != 'before'">
+    <xsl:if test="title and $placement != 'before'">
       <xsl:call-template name="formal.object.heading"/>
     </xsl:if>
   </fo:block>

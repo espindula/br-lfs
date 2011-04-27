@@ -9,7 +9,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  <!-- This stylesheet contains common params et templates for all outputs. -->
+  <!-- This stylesheet contains common params and templates for all outputs. -->
 
     <!-- This file contains our localization strings (for internationalization) -->
   <xsl:param name="local.l10n.xml" select="document('lfs-l10n.xml')"/>
@@ -25,7 +25,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 
     <!-- The Index title:
            We create this param to can have gentext support in both
-           the Index page title et links that point to the Index page.
+           the Index page title and links that point to the Index page.
            It also allow us to change the title, if wanted.
            Note: To change the title involves creating the appropiate
            entries in lfs-l10n.xml -->
@@ -41,7 +41,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
   </xsl:template>
 
     <!-- indexterm:
-           Dropping unneeded anchors et fo:wraper elemments. -->
+           Dropping unneeded anchors and fo:wraper elemments. -->
     <!-- The original templates are in {docbook-xsl}/{xhtml,fo}/index.xsl -->
   <xsl:template match="indexterm"/>
 
@@ -67,7 +67,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     </xsl:variable>
     <xsl:variable name="component.label">
       <xsl:if test="$section.label.includes.component.label != 0
-                    et $parent.is.component != 0">
+                    and $parent.is.component != 0">
         <xsl:variable name="parent.label">
           <xsl:apply-templates select=".." mode="label.markup"/>
         </xsl:variable>
@@ -98,7 +98,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     <!-- sect2 label.markup:
            Skip numeration for sect2 with empty title. -->
     <!-- The original template is in {docbook-xsl}/common/labels.xsl
-         It match also sect3, sect4, et sect5, that are unchanged. -->
+         It match also sect3, sect4, and sect5, that are unchanged. -->
   <xsl:template match="sect2" mode="label.markup">
       <!-- label the parent -->
       <xsl:variable name="parent.section.label">
@@ -140,7 +140,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
       <xsl:call-template name="label.this.section"/>
     </xsl:variable>
     <xsl:choose>
-      <xsl:when test="$is.numbered != 0 et not(ancestor::preface/sect1)">
+      <xsl:when test="$is.numbered != 0 and not(ancestor::preface/sect1)">
         <xsl:call-template name="gentext.template">
           <xsl:with-param name="context" select="'title-numbered'"/>
           <xsl:with-param name="name">
@@ -193,12 +193,12 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    <xsl:if test="$template = '' et $verbose != 0">
+    <xsl:if test="$template = '' and $verbose != 0">
       <xsl:message>
         <xsl:text>object.xref.markup: empty xref template</xsl:text>
         <xsl:text> for linkend="</xsl:text>
         <xsl:value-of select="@id|@xml:id"/>
-        <xsl:text>" et @xrefstyle="</xsl:text>
+        <xsl:text>" and @xrefstyle="</xsl:text>
         <xsl:value-of select="$xrefstyle"/>
         <xsl:text>"</xsl:text>
       </xsl:message>
@@ -413,7 +413,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     <xsl:param name="position">1</xsl:param>
     <xsl:variable name="tokens" select="count($scope/varlistentry)"/>
     <xsl:variable name="token" select="$scope/varlistentry[$position]/term/token"/>
-    <xsl:variable name="size" select="substring-before($token,' Kio')"/>
+    <xsl:variable name="size" select="substring-before($token,' KB')"/>
     <xsl:variable name="rawsize">
       <xsl:choose>
         <xsl:when test="contains($size,',')">
@@ -436,13 +436,13 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
         <xsl:choose>
           <xsl:when test="$total &lt; '1000'">
             <xsl:value-of select="$total"/>
-            <xsl:text>  Kio</xsl:text>
+            <xsl:text>  KB</xsl:text>
           </xsl:when>
-          <xsl:when test="$total &gt; '1000' et $total &lt; '5000'">
+          <xsl:when test="$total &gt; '1000' and $total &lt; '5000'">
             <xsl:value-of select="substring($total,1,1)"/>
             <xsl:text>,</xsl:text>
             <xsl:value-of select="substring($total,2)"/>
-            <xsl:text>  Kio</xsl:text>
+            <xsl:text>  KB</xsl:text>
           </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="round($total div 1024)"/>

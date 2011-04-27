@@ -17,18 +17,18 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
        in xref tags.
        This hack may not work with xref flavours not used in the book.
        For other languages, just remove the xref @role attributes
-       in the book XML sources et/or comment-out the inclusion of
+       in the book XML sources and/or comment-out the inclusion of
        this file in lfs-pdf.xsl -->
 
      <!--  xref:
-           Added role variable et use it when calling mode xref-to.-->
+           Added role variable and use it when calling mode xref-to.-->
     <!-- The original template is in {docbook-xsl}/fo/xref.xsl -->
   <xsl:template match="xref" name="xref">
     <xsl:param name="xhref" select="@xlink:href"/>
     <!-- is the @xlink:href a local idref link? -->
     <xsl:param name="xlink.idref">
       <xsl:if test="starts-with($xhref,'#')
-                    et (not(contains($xhref,'&#40;'))
+                    and (not(contains($xhref,'&#40;'))
                     or starts-with($xhref, '#xpointer&#40;id&#40;'))">
         <xsl:call-template name="xpointer.idref">
           <xsl:with-param name="xpointer" select="$xhref"/>
@@ -43,8 +43,8 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     <xsl:variable name="role" select="@role"/>
     <xsl:variable name="xrefstyle">
       <xsl:choose>
-        <xsl:when test="@role et not(@xrefstyle)
-                        et $use.role.as.xrefstyle != 0">
+        <xsl:when test="@role and not(@xrefstyle)
+                        and $use.role.as.xrefstyle != 0">
           <xsl:value-of select="@role"/>
         </xsl:when>
         <xsl:otherwise>
@@ -112,14 +112,14 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
         <!-- page numbers only for local targets -->
       </xsl:when>
       <xsl:when test="starts-with(normalize-space($xrefstyle), 'select:')
-                    et contains($xrefstyle, 'nopage')">
+                    and contains($xrefstyle, 'nopage')">
         <!-- negative xrefstyle in instance turns it off -->
       </xsl:when>
       <!-- positive xrefstyle already handles it -->
       <xsl:when test="not(starts-with(normalize-space($xrefstyle), 'select:')
-                    et (contains($xrefstyle, 'page')
+                    and (contains($xrefstyle, 'page')
                         or contains($xrefstyle, 'Page')))
-                    et ( $insert.xref.page.number = 'yes'
+                    and ( $insert.xref.page.number = 'yes'
                       or $insert.xref.page.number = '1')
                     or local-name($target) = 'para'">
         <xsl:apply-templates select="$target" mode="page.citation">
@@ -156,7 +156,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     <xsl:param name="title"/>
     <xsl:param name="role"/>
     <xsl:choose>
-      <xsl:when test="$purpose = 'xref' et titleabbrev">
+      <xsl:when test="$purpose = 'xref' and titleabbrev">
         <xsl:apply-templates select="." mode="titleabbrev.markup"/>
       </xsl:when>
       <xsl:otherwise>

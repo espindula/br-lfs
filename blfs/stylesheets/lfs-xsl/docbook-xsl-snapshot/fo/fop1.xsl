@@ -47,7 +47,7 @@
       </xsl:variable>
 
       <xsl:if test="contains($toc.params, 'toc')
-                    et (book|part|reference|preface|chapter|appendix|article
+                    and (book|part|reference|preface|chapter|appendix|article
                          |glossary|bibliography|index|setindex
                          |refentry
                          |sect1|sect2|sect3|sect4|sect5|section)">

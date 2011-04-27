@@ -3,7 +3,7 @@
                 exclude-result-prefixes="saxon"
                 version="1.0">
 
-<!-- Should be base URI for imagedata et so on fixed? -->
+<!-- Should be base URI for imagedata and so on fixed? -->
 <xsl:param name="profile.baseuri.fixup" select="true()"/>
 
 <!-- Copy all non-element nodes -->
@@ -184,33 +184,33 @@
                         @*[local-name()=$profile.attribute] = '' or
                         not($profile.attribute)"/>
 
-  <xsl:if test="$arch.ok et
-                $audience.ok et
-                $condition.ok et
-                $conformance.ok et
-                $lang.ok et
-                $os.ok et
-                $revision.ok et
-                $revisionflag.ok et
-                $role.ok et
-                $security.ok et
-                $status.ok et
-                $userlevel.ok et
-                $vendor.ok et
-                $wordsize.ok et
+  <xsl:if test="$arch.ok and
+                $audience.ok and
+                $condition.ok and
+                $conformance.ok and
+                $lang.ok and
+                $os.ok and
+                $revision.ok and
+                $revisionflag.ok and
+                $role.ok and
+                $security.ok and
+                $status.ok and
+                $userlevel.ok and
+                $vendor.ok and
+                $wordsize.ok and
                 $attribute.ok">
     <xsl:copy>
       <xsl:copy-of select="@*"/>
 
       <!-- Entity references must be replaced with filereferences for temporary tree -->
-      <xsl:if test="@entityref et $profile.baseuri.fixup">
+      <xsl:if test="@entityref and $profile.baseuri.fixup">
         <xsl:attribute name="fileref">
           <xsl:value-of select="unparsed-entity-uri(@entityref)"/>
         </xsl:attribute>
       </xsl:if>
 
       <!-- xml:base is eventually added to the root element -->
-      <xsl:if test="not(../..) et $profile.baseuri.fixup">
+      <xsl:if test="not(../..) and $profile.baseuri.fixup">
         <xsl:call-template name="add-xml-base"/>
       </xsl:if>
 

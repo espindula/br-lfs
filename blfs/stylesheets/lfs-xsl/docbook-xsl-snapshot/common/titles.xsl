@@ -10,7 +10,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -719,7 +719,7 @@ title of the element. This does not include the label.
         <xsl:with-param name="referrer" select="."/>
         <xsl:with-param name="xrefstyle">
           <xsl:choose>
-            <xsl:when test="@role et not(@xrefstyle) and $use.role.as.xrefstyle != 0">
+            <xsl:when test="@role and not(@xrefstyle) and $use.role.as.xrefstyle != 0">
               <xsl:value-of select="@role"/>
             </xsl:when>
             <xsl:otherwise>

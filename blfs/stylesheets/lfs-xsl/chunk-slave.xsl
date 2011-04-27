@@ -10,7 +10,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
                 version="1.0">
 
    <!-- Second level chunked output template.
-        Sets global params et include customized elements templates. -->
+        Sets global params and include customized elements templates. -->
 
     <!-- Upstream XHTML presentation templates -->
   <xsl:import href="docbook-xsl-snapshot/xhtml/docbook.xsl"/>
@@ -45,7 +45,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     <!-- No XML declaration -->
   <xsl:param name="chunker.output.omit-xml-declaration" select="'yes'"/>
 
-    <!-- Control generation of ToCs et LoTs -->
+    <!-- Control generation of ToCs and LoTs -->
   <xsl:param name="generate.toc">
     book      toc,title
     preface   toc

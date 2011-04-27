@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -123,8 +123,8 @@
     <para><parameter>html.cellpadding</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="CellSpacing.html">Cell spacing et cell padding</link>,
-      <link role="tcg" xlink:href="QandAformat.html">Q et A formatting</link></para>
+    <para><link role="tcg" xlink:href="CellSpacing.html">Cell spacing and cell padding</link>,
+      <link role="tcg" xlink:href="QandAformat.html">Q and A formatting</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_cellpadding">
@@ -159,8 +159,8 @@
     <para><parameter>html.cellspacing</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="CellSpacing.html">Cell spacing et cell padding</link>,
-      <link role="tcg" xlink:href="QandAformat.html">Q et A formatting</link></para>
+    <para><link role="tcg" xlink:href="CellSpacing.html">Cell spacing and cell padding</link>,
+      <link role="tcg" xlink:href="QandAformat.html">Q and A formatting</link></para>
     </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_cellspacing">
@@ -176,7 +176,7 @@
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
     <para>Use the <tag class="xmlpi">dbhtml class</tag> PI as a child of a
       <tag>row</tag> to specify a <literal>class</literal>
-      attribute et value in the HTML output for that row.</para>
+      attribute and value in the HTML output for that row.</para>
   </refdescription>
   <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
     <synopsis><tag class="xmlpi">dbhtml class="<replaceable>name</replaceable>"</tag></synopsis>
@@ -368,7 +368,7 @@
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="QandAformat.html">Q et A formatting</link></para>
+    <para><link role="tcg" xlink:href="QandAformat.html">Q and A formatting</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_label-width">
@@ -421,7 +421,7 @@
     <para>Use the <tag class="xmlpi">dbhtml linenumbering.separator</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
       <tag>screen</tag>, <tag>synopsis</tag> &#8212; to specify
-      the separator text output between the line numbers et content.</para>
+      the separator text output between the line numbers and content.</para>
   </refdescription>
   <refsynopsisdiv xmlns="http://www.w3.org/1999/xhtml">
     <synopsis><tag class="xmlpi">dbhtml linenumbering.separator="<replaceable>text</replaceable>"</tag></synopsis>
@@ -830,8 +830,8 @@
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="QandAtoc.html">Q et A list of questions</link>,
-      <link role="tcg" xlink:href="QandAformat.html">Q et A formatting</link></para>
+    <para><link role="tcg" xlink:href="QandAtoc.html">Q and A list of questions</link>,
+      <link role="tcg" xlink:href="QandAformat.html">Q and A formatting</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_toc">
@@ -1151,7 +1151,7 @@
 
 <!-- There are two templates matching this PI in htmlhelp-common.xsl -->
 <doc:pi xmlns="" name="dbhh">
-  <refpurpose xmlns="http://www.w3.org/1999/xhtml">Sets topic name et topic id for context-sensitive HTML Help</refpurpose>
+  <refpurpose xmlns="http://www.w3.org/1999/xhtml">Sets topic name and topic id for context-sensitive HTML Help</refpurpose>
   <refdescription xmlns="http://www.w3.org/1999/xhtml">
     <para>Use the <tag class="xmlpi">dbhh</tag> PI as a child of components
       that should be used as targets for context-sensitive help requests.</para>

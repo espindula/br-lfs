@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -138,7 +138,7 @@
   <xsl:attribute name="hyphenate">false</xsl:attribute>
   <xsl:attribute name="text-align">
     <xsl:choose>
-      <xsl:when test="((parent::article | parent::articleinfo | parent::info/parent::article) et not(ancestor::book) and not(self::bibliography))         or (parent::slides | parent::slidesinfo)">center</xsl:when>
+      <xsl:when test="((parent::article | parent::articleinfo | parent::info/parent::article) and not(ancestor::book) and not(self::bibliography))         or (parent::slides | parent::slidesinfo)">center</xsl:when>
       <xsl:otherwise>left</xsl:otherwise>
     </xsl:choose>
   </xsl:attribute>

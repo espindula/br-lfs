@@ -14,7 +14,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     <!-- make.toc:
            Using h3 for TOC title.
            Using ul for TOC list style.
-           Removed code for $manual.toc et $qanda.in.toc -->
+           Removed code for $manual.toc and $qanda.in.toc -->
     <!-- The original template is in {docbook-xsl}/xhtml/autotoc.xsl -->
   <xsl:template name="make.toc">
     <xsl:param name="toc-context" select="."/>
@@ -62,15 +62,15 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
       <xsl:call-template name="toc.line">
         <xsl:with-param name="toc-context" select="$toc-context"/>
       </xsl:call-template>
-      <xsl:if test="$toc.section.depth &gt; $depth et count($nodes)&gt;0
-                    et $toc.max.depth &gt; $depth.from.context">
+      <xsl:if test="$toc.section.depth &gt; $depth and count($nodes)&gt;0
+                    and $toc.max.depth &gt; $depth.from.context">
         <xsl:copy-of select="$subtoc"/>
       </xsl:if>
     </li>
   </xsl:template>
 
     <!-- toc.line:
-           Adding the h* tags et dropping unneded links.
+           Adding the h* tags and dropping unneded links.
            This template is a full re-made version of the original one. -->
     <!-- The original template is in {docbook-xsl}/xhtml/autotoc.xsl -->
   <xsl:template name="toc.line">
@@ -96,7 +96,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
-        <!-- For part, preface, et chapter, use hX and add the label.
+        <!-- For part, preface, and chapter, use hX and add the label.
              For BLFS, make it a link. -->
       <xsl:when test="local-name(.) = 'part' or local-name(.) = 'preface'
                       or local-name(.) = 'chapter'">
@@ -115,7 +115,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
-        <!-- For appendix , create a link et add the label.
+        <!-- For appendix , create a link and add the label.
              For BLFS, use hX. -->
       <xsl:when test="local-name(.) = 'appendix'">
         <xsl:choose>
@@ -132,7 +132,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
-        <!-- For other targets like Index, use hX, create a link, et label it. -->
+        <!-- For other targets like Index, use hX, create a link, and label it. -->
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="add.hX">
           <xsl:with-param name="toc-context" select="$toc-context"/>
@@ -179,7 +179,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     </a>
   </xsl:template>
 
-    <!-- Self-made template to write the target title et label it. -->
+    <!-- Self-made template to write the target title and label it. -->
   <xsl:template match="*" mode="label.and.title">
     <xsl:variable name="label">
       <xsl:apply-templates select="." mode="label.markup"/>

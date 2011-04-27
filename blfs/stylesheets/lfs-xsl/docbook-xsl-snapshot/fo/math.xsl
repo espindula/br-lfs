@@ -11,13 +11,13 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
 <xsl:template match="inlineequation">
   <xsl:choose>
-    <xsl:when test="$passivetex.extensions != 0 et $tex.math.in.alt != ''">
+    <xsl:when test="$passivetex.extensions != 0 and $tex.math.in.alt != ''">
       <xsl:apply-templates select="alt[@role='tex'] | inlinemediaobject/textobject[@role='tex']">
         <xsl:with-param name="output.delims">
           <xsl:call-template name="tex.math.output.delims"/>
@@ -68,7 +68,7 @@
 <xsl:template match="inlineequation/alt[@role='tex'] |
                      inlineequation/inlinemediaobject/textobject[@role='tex']" priority="1">
   <xsl:param name="output.delims" select="1"/>
-  <xsl:if test="$passivetex.extensions != 0 et $tex.math.in.alt != ''">
+  <xsl:if test="$passivetex.extensions != 0 and $tex.math.in.alt != ''">
     <xsl:processing-instruction name="xmltex">
       <xsl:if test="$output.delims != 0">
         <xsl:text>$</xsl:text>
@@ -87,7 +87,7 @@
   <xsl:variable name="output.delims">
     <xsl:call-template name="tex.math.output.delims"/>
   </xsl:variable>
-  <xsl:if test="$passivetex.extensions != 0 et $tex.math.in.alt != ''">
+  <xsl:if test="$passivetex.extensions != 0 and $tex.math.in.alt != ''">
     <xsl:processing-instruction name="xmltex">
       <xsl:if test="$output.delims != 0">
         <xsl:text>$$</xsl:text>
@@ -101,7 +101,7 @@
 </xsl:template>
 
 <xsl:template match="alt[@role='tex']">
-  <xsl:if test="$passivetex.extensions != 0 et $tex.math.in.alt != ''">
+  <xsl:if test="$passivetex.extensions != 0 and $tex.math.in.alt != ''">
     <xsl:message>
       Your equation is misplaced. It should be in inlineequation, equation or informalequation.
     </xsl:message>
@@ -118,7 +118,7 @@
   <xsl:variable name="result">
     <xsl:choose>
       <xsl:when test="$pi.delims = 'no'">0</xsl:when>
-      <xsl:when test="$pi.delims = '' et $tex.math.delims = 0">0</xsl:when>
+      <xsl:when test="$pi.delims = '' and $tex.math.delims = 0">0</xsl:when>
       <xsl:otherwise>1</xsl:otherwise>
     </xsl:choose>
   </xsl:variable>

@@ -42,7 +42,7 @@ $Date: 2007-01-18 20:38:19 +0100 (jeu, 18 jan 2007) $
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-      <!-- Creating dirs et files -->
+      <!-- Creating dirs and files -->
     <exsl:document href="{$dirname}/{$order}-{$filename}" method="text">
       <xsl:apply-templates select=".//screen"/>
     </exsl:document>

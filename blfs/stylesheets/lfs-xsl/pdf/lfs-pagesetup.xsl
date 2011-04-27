@@ -10,7 +10,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
                 version="1.0">
 
   <!-- This stylesheet controls page margins, sections page break,
-       header content et titles size. -->
+       header content and titles size. -->
 
     <!-- The inner page margin. -->
   <xsl:param name="page.margin.inner" select="'0.32in'"/>
@@ -64,7 +64,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
       <xsl:choose>
         <xsl:when test="((parent::article | parent::articleinfo |
                           parent::info/parent::article)
-                          et not(ancestor::book) and not(self::bibliography))
+                          and not(ancestor::book) and not(self::bibliography))
                         or (parent::slides | parent::slidesinfo)
                         or self::index">center</xsl:when>
         <xsl:otherwise>left</xsl:otherwise>
@@ -120,7 +120,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
   </xsl:template>
 
     <!-- book title:
-          Centered the title et removed unused code.
+          Centered the title and removed unused code.
           Removed book.titlepage.separator. -->
     <!-- The original template is in {docbook-xsl}/fo/titlepage.templates.xsl -->
   <xsl:template name="book.titlepage">
@@ -137,7 +137,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
   </xsl:template>
 
     <!-- book titlepage verso:
-           Added missing bibliosource et revhistory support.
+           Added missing bibliosource and revhistory support.
            Removed unused code. -->
     <!-- The original template is in {docbook-xsl}/fo/titlepage.templates.xsl -->
   <xsl:template name="book.titlepage.verso">
@@ -164,7 +164,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
   </xsl:template>
 
     <!-- part title:
-           Centered the title et removed unused code. -->
+           Centered the title and removed unused code. -->
     <!-- The original template is in {docbook-xsl}/fo/titlepage.templates.xsl -->
   <xsl:template name="part.titlepage">
     <fo:block>
@@ -181,7 +181,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
   </xsl:template>
 
     <!-- chapter title:
-           Small font size et left alignament. -->
+           Small font size and left alignament. -->
     <!-- The original template is in {docbook-xsl}/fo/titlepage.templates.xsl -->
   <xsl:template match="title" mode="chapter.titlepage.recto.auto.mode">
     <fo:block xsl:use-attribute-sets="chapter.titlepage.recto.style"
@@ -229,7 +229,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
   </xsl:template>
 
     <!-- header.content
-           Re-made template to show the book title et version on all pages. -->
+           Re-made template to show the book title and version on all pages. -->
     <!-- The original template is in {docbook-xsl}/fo/pagesetup.xsl -->
   <xsl:template name="header.content">
     <xsl:param name="sequence" select="''"/>

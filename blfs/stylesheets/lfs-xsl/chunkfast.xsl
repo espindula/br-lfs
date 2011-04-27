@@ -31,7 +31,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 
   <xsl:template name="process-chunk-element">
     <xsl:choose>
-      <xsl:when test="$chunk.fast != 0 et function-available('exsl:node-set')">
+      <xsl:when test="$chunk.fast != 0 and function-available('exsl:node-set')">
         <xsl:variable name="genid" select="generate-id()"/>
 
         <xsl:variable name="div" select="$chunks[@id=$genid or @xml:id=$genid]"/>
@@ -43,7 +43,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
         <xsl:variable name="next" select="key('genid', ($nextdiv/@id|$nextdiv/@xml:id)[1])"/>
 
         <xsl:choose>
-          <xsl:when test="$onechunk != 0 et parent::*">
+          <xsl:when test="$onechunk != 0 and parent::*">
             <xsl:apply-imports/>
           </xsl:when>
           <xsl:otherwise>
@@ -56,7 +56,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
       </xsl:when>
       <xsl:otherwise>
         <xsl:choose>
-          <xsl:when test="$onechunk != 0 et not(parent::*)">
+          <xsl:when test="$onechunk != 0 and not(parent::*)">
             <xsl:call-template name="chunk-all-sections"/>
           </xsl:when>
           <xsl:when test="$onechunk != 0">

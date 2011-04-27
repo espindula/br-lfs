@@ -10,7 +10,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -127,7 +127,7 @@
 
 <xsl:template name="component.toc.separator">
   <!-- Customize to output something between
-       component.toc et first output -->
+       component.toc and first output -->
 </xsl:template>
 
 <xsl:template name="section.toc">
@@ -179,7 +179,7 @@
 
 <xsl:template name="section.toc.separator">
   <!-- Customize to output something between
-       section.toc et first output -->
+       section.toc and first output -->
 </xsl:template>
 <!-- ==================================================================== -->
 
@@ -250,7 +250,7 @@
 
 <xsl:template name="qandaset.toc.separator">
   <!-- Customize to output something between
-       qandaset.toc et first output -->
+       qandaset.toc and first output -->
 </xsl:template>
 
 <xsl:template match="qandadiv" mode="toc">
@@ -323,7 +323,7 @@
       <fo:basic-link internal-destination="{$id}">
         <xsl:if test="$label != ''">
           <xsl:copy-of select="$label"/>
-          <xsl:if test="$deflabel = 'number' et not(label)">
+          <xsl:if test="$deflabel = 'number' and not(label)">
             <xsl:value-of select="$autotoc.label.separator"/>
           </xsl:if>
 	  <xsl:text> </xsl:text>
@@ -371,8 +371,8 @@
   <xsl:variable name="depth.from.context" select="count(ancestor::*)-count($toc-context/ancestor::*)"/>
 
   <xsl:if test="$toc.section.depth > 0
-                et $toc.max.depth > $depth.from.context
-                et $nodes">
+                and $toc.max.depth > $depth.from.context
+                and $nodes">
     <fo:block id="toc.{$cid}.{$id}">
       <xsl:attribute name="margin-left">
         <xsl:call-template name="set.toc.indent"/>
@@ -409,8 +409,8 @@
   <xsl:variable name="depth.from.context" select="count(ancestor::*)-count($toc-context/ancestor::*)"/>
 
   <xsl:if test="$toc.section.depth > 0
-                et $toc.max.depth > $depth.from.context
-                et $nodes">
+                and $toc.max.depth > $depth.from.context
+                and $nodes">
     <fo:block id="toc.{$cid}.{$id}">
       <xsl:attribute name="margin-left">
         <xsl:call-template name="set.toc.indent"/>
@@ -443,8 +443,8 @@
   </xsl:call-template>
 
   <xsl:if test="$toc.section.depth > 0
-                et $toc.max.depth > $depth.from.context
-                et refentry">
+                and $toc.max.depth > $depth.from.context
+                and refentry">
     <fo:block id="toc.{$cid}.{$id}">
       <xsl:attribute name="margin-left">
         <xsl:call-template name="set.toc.indent"/>
@@ -491,8 +491,8 @@
   <xsl:variable name="depth.from.context" select="count(ancestor::*)-count($toc-context/ancestor::*)"/>
 
   <xsl:if test="$toc.section.depth > 0
-                et $toc.max.depth > $depth.from.context
-                et $nodes">
+                and $toc.max.depth > $depth.from.context
+                and $nodes">
     <fo:block id="toc.{$cid}.{$id}">
       <xsl:attribute name="margin-left">
         <xsl:call-template name="set.toc.indent"/>
@@ -525,8 +525,8 @@
   <xsl:variable name="depth.from.context" select="count(ancestor::*)-count($toc-context/ancestor::*)"/>
 
   <xsl:if test="$toc.section.depth > 1
-                et $toc.max.depth > $depth.from.context
-                et sect2">
+                and $toc.max.depth > $depth.from.context
+                and sect2">
     <fo:block id="toc.{$cid}.{$id}">
       <xsl:attribute name="margin-left">
         <xsl:call-template name="set.toc.indent"/>
@@ -563,8 +563,8 @@
   <xsl:variable name="depth.from.context" select="count(ancestor::*)-count($toc-context/ancestor::*)"/>
 
   <xsl:if test="$toc.section.depth > 2
-                et $toc.max.depth > $depth.from.context
-                et sect3">
+                and $toc.max.depth > $depth.from.context
+                and sect3">
     <fo:block id="toc.{$cid}.{$id}">
       <xsl:attribute name="margin-left">
         <xsl:call-template name="set.toc.indent">
@@ -603,8 +603,8 @@
   <xsl:variable name="depth.from.context" select="count(ancestor::*)-count($toc-context/ancestor::*)"/>
 
   <xsl:if test="$toc.section.depth > 3
-                et $toc.max.depth > $depth.from.context
-                et sect4">
+                and $toc.max.depth > $depth.from.context
+                and sect4">
     <fo:block id="toc.{$cid}.{$id}">
       <xsl:attribute name="margin-left">
         <xsl:call-template name="set.toc.indent">
@@ -643,8 +643,8 @@
   <xsl:variable name="depth.from.context" select="count(ancestor::*)-count($toc-context/ancestor::*)"/>
 
   <xsl:if test="$toc.section.depth > 4
-                et $toc.max.depth > $depth.from.context
-                et sect5">
+                and $toc.max.depth > $depth.from.context
+                and sect5">
     <fo:block id="toc.{$cid}.{$id}">
       <xsl:attribute name="margin-left">
         <xsl:call-template name="set.toc.indent">
@@ -718,8 +718,8 @@
     </xsl:call-template>
 
     <xsl:if test="$toc.section.depth > $depth
-                  et $toc.max.depth > $depth.from.context
-                  et section">
+                  and $toc.max.depth > $depth.from.context
+                  and section">
       <fo:block id="toc.{$cid}.{$id}">
         <xsl:attribute name="margin-left">
           <xsl:call-template name="set.toc.indent">
@@ -834,8 +834,8 @@
     </xsl:call-template>
 
     <xsl:if test="$toc.section.depth > $depth
-                  et $toc.max.depth > $depth.from.context
-                  et (child::qandadiv or child::qandaentry)">
+                  and $toc.max.depth > $depth.from.context
+                  and (child::qandadiv or child::qandaentry)">
       <fo:block id="toc.{$cid}.{$id}">
         <xsl:attribute name="margin-left">
           <xsl:call-template name="set.toc.indent">

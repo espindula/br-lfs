@@ -13,7 +13,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -26,7 +26,7 @@
 
   <xsl:choose>
     <xsl:when test="$use.extensions != '0'
-                    et $callouts.extension != '0'">
+                    and $callouts.extension != '0'">
       <xsl:variable name="rtf">
         <xsl:apply-templates select="$verbatim">
           <xsl:with-param name="suppress-numbers" select="'1'"/>
@@ -52,7 +52,7 @@
 
       <xsl:choose>
         <xsl:when test="$verbatim/@linenumbering = 'numbered'
-                        et $linenumbering.extension != '0'">
+                        and $linenumbering.extension != '0'">
           <xsl:call-template name="number.rtf.lines">
             <xsl:with-param name="rtf" select="$rtf-with-callouts"/>
             <xsl:with-param name="pi.context"
@@ -134,7 +134,7 @@
   <xsl:choose>
     <!-- Draw callouts as images -->
     <xsl:when test="$callout.graphics != '0'
-                    et $conum &lt;= $callout.graphics.number.limit">
+                    and $conum &lt;= $callout.graphics.number.limit">
       <xsl:variable name="filename"
                     select="concat($callout.graphics.path, $conum,
 		                   $callout.graphics.extension)"/>
@@ -159,7 +159,7 @@
     </xsl:when>
 
     <xsl:when test="$callout.unicode != 0
-                    et $conum &lt;= $callout.unicode.number.limit">
+                    and $conum &lt;= $callout.unicode.number.limit">
       <xsl:variable name="comarkup">
         <xsl:choose>
           <xsl:when test="$callout.unicode.start.character = 10102">

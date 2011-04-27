@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -133,9 +133,9 @@
     </xsl:if>
 
     <xsl:apply-templates select="*[not(self::blockinfo)
-                                   et not(self::info)
-                                   et not(self::title)
-                                   et not(self::titleabbrev)]"/>
+                                   and not(self::info)
+                                   and not(self::title)
+                                   and not(self::titleabbrev)]"/>
   </fo:block>
 </xsl:template>
 

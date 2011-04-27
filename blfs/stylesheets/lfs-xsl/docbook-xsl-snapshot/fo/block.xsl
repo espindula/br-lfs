@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -72,7 +72,7 @@
              padding-end="1em">
     <xsl:copy-of select="$titleStr"/>
     <xsl:if test="$lastChar != ''
-                  et not(contains($runinhead.title.end.punct, $lastChar))">
+                  and not(contains($runinhead.title.end.punct, $lastChar))">
       <xsl:value-of select="$runinhead.default.title.end.punct"/>
     </xsl:if>
     <xsl:text>&#160;</xsl:text>
@@ -95,7 +95,7 @@
         </fo:block>
       </xsl:if>
       <xsl:apply-templates select="*[local-name(.) != 'title'
-                                   et local-name(.) != 'attribution']"/>
+                                   and local-name(.) != 'attribution']"/>
     </fo:block>
     <xsl:if test="attribution">
       <fo:block text-align="right">
@@ -171,7 +171,7 @@
         </fo:float>
       </xsl:variable>
       <xsl:choose>
-        <xsl:when test="$axf.extensions != 0 et self::sidebar">
+        <xsl:when test="$axf.extensions != 0 and self::sidebar">
           <fo:block xsl:use-attribute-sets="normal.para.spacing"
                     space-after="0pt"
                     space-after.precedence="force"
@@ -179,7 +179,7 @@
             <xsl:copy-of select="$float"/>
           </fo:block>
         </xsl:when>
-        <xsl:when test="$axf.extensions != 0 et
+        <xsl:when test="$axf.extensions != 0 and
                         ($position = 'left' or $position = 'start')">
           <fo:float float="{$position}"
                     clear="{$clear}">
@@ -204,7 +204,7 @@
           </fo:float>
 
         </xsl:when>
-        <xsl:when test="$axf.extensions != 0 et
+        <xsl:when test="$axf.extensions != 0 and
                         ($position = 'right' or $position = 'end')">
           <!-- Special case for handling inline floats in Antenna House-->
           <fo:float float="{$position}"
@@ -221,7 +221,7 @@
           </fo:float>
 
         </xsl:when>
-        <xsl:when test="$xep.extensions != 0 et self::sidebar">
+        <xsl:when test="$xep.extensions != 0 and self::sidebar">
           <!-- float needs some space above  to line up with following para -->
           <fo:block xsl:use-attribute-sets="normal.para.spacing">
             <xsl:copy-of select="$float"/>
@@ -260,8 +260,8 @@
         <fo:block xsl:use-attribute-sets="sidebar.properties"
                   id="{$id}">
           <xsl:call-template name="sidebar.titlepage"/>
-          <xsl:apply-templates select="node()[not(self::title) et
-                                         not(self::info) et
+          <xsl:apply-templates select="node()[not(self::title) and
+                                         not(self::info) and
                                          not(self::sidebarinfo)]"/>
         </fo:block>
       </xsl:variable>

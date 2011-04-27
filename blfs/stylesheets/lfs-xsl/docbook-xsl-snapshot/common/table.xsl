@@ -10,7 +10,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -211,7 +211,7 @@ or 0 (the empty string)</para>
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$namest != '' et $nameend != ''">
+    <xsl:when test="$namest != '' and $nameend != ''">
       <xsl:choose>
         <xsl:when test="number($ecol) &gt;= number($scol)">
           <xsl:value-of select="number($ecol) - number($scol) + 1"/>
@@ -352,9 +352,9 @@ or 0 (the empty string)</para>
   </xsl:variable>
 
   <xsl:variable name="default.value">
-    <!-- This section used to say that rowsep et colsep have defaults based -->
-    <!-- on the frame setting. Further reflection et closer examination of the -->
-    <!-- CALS spec reveals I was mistaken. The default is "1" for rowsep et colsep. -->
+    <!-- This section used to say that rowsep and colsep have defaults based -->
+    <!-- on the frame setting. Further reflection and closer examination of the -->
+    <!-- CALS spec reveals I was mistaken. The default is "1" for rowsep and colsep. -->
     <!-- For everything else, the default is the tgroup value -->
     <xsl:choose>
       <xsl:when test="$tgroup.value != ''">

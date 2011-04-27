@@ -39,7 +39,7 @@ $Date: 2007-01-30 21:25:59 +0100 (mar, 30 jan 2007) $
     <xsl:text>cd </xsl:text>
     <xsl:value-of select="$dest.dir"/>
     <xsl:text> &amp;&amp;&#x0a;&#x0a;</xsl:text>
-      <!-- Remove old patches et possible list of missing patches-->
+      <!-- Remove old patches and possible list of missing patches-->
     <xsl:text>rm -f *.patch copyerrs &amp;&amp;&#x0a;&#x0a;</xsl:text>
     <xsl:apply-templates/>
       <!-- Ensure correct ownership -->
@@ -53,9 +53,9 @@ fi</xsl:text>
   <xsl:template match="//text()"/>
 
   <xsl:template match="//ulink">
-      <!-- Match only local patches links et skip duplicated URLs splitted for PDF output-->
-    <xsl:if test="contains(@url, '.patch') et contains(@url, '&patch-root;')
-            et not(ancestor-or-self::*/@condition = 'pdf')">
+      <!-- Match only local patches links and skip duplicated URLs splitted for PDF output-->
+    <xsl:if test="contains(@url, '.patch') and contains(@url, '&patch-root;')
+            and not(ancestor-or-self::*/@condition = 'pdf')">
       <xsl:variable name="patch.name" select="substring-after(@url, '&patch-root;')"/>
       <xsl:text>copy /srv/www/www.linuxfromscratch.org/patches/downloads</xsl:text>
       <xsl:choose>

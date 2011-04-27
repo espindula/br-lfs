@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -39,8 +39,8 @@
   -->
 
   <!-- 2003-11-25 by ndw:
-       The following test used to read test="$ischunk != 0 et $fn != ''"
-       I've removed the ischunk part of the test so that href.to.uri et
+       The following test used to read test="$ischunk != 0 and $fn != ''"
+       I've removed the ischunk part of the test so that href.to.uri and
        href.from.uri will be fully qualified even if the source or target
        isn't a chunk. I *think* that if $fn != '' then it's appropriate
        to put the directory on the front, even if the element isn't a
@@ -73,15 +73,15 @@
         <xsl:value-of select="$dbhtml-filename"/>
       </xsl:when>
       <!-- if this is the root element, use the root.filename -->
-      <xsl:when test="not(parent::*) et $root.filename != ''">
+      <xsl:when test="not(parent::*) and $root.filename != ''">
         <xsl:value-of select="$root.filename"/>
         <xsl:value-of select="$html.ext"/>
       </xsl:when>
       <!-- Special case -->
-      <xsl:when test="self::legalnotice et not($generate.legalnotice.link = 0)">
+      <xsl:when test="self::legalnotice and not($generate.legalnotice.link = 0)">
         <xsl:choose>
-          <xsl:when test="(@id or @xml:id) et not($use.id.as.filename = 0)">
-            <!-- * if this legalnotice has an ID, then go ahead et use -->
+          <xsl:when test="(@id or @xml:id) and not($use.id.as.filename = 0)">
+            <!-- * if this legalnotice has an ID, then go ahead and use -->
             <!-- * just the value of that ID as the basename for the file -->
             <!-- * (that is, without prepending an "ln-" too it) -->
             <xsl:value-of select="(@id|@xml:id)[1]"/>
@@ -94,14 +94,14 @@
               <xsl:call-template name="object.id"/>
             </xsl:variable>
             <!-- * ...and then we take that generated ID, prepend an -->
-            <!-- * "ln-" to it, et use that as the basename for the file -->
+            <!-- * "ln-" to it, and use that as the basename for the file -->
             <xsl:value-of select="concat('ln-',$id,$html.ext)"/>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
-      <!-- if there's no dbhtml filename, et if we're to use IDs as -->
+      <!-- if there's no dbhtml filename, and if we're to use IDs as -->
       <!-- filenames, then use the ID to generate the filename. -->
-      <xsl:when test="(@id or @xml:id) et $use.id.as.filename != 0">
+      <xsl:when test="(@id or @xml:id) and $use.id.as.filename != 0">
         <xsl:value-of select="(@id|@xml:id)[1]"/>
         <xsl:value-of select="$html.ext"/>
       </xsl:when>
@@ -123,7 +123,7 @@
       </xsl:choose>
     </xsl:when>
 
-    <xsl:when test="not($recursive) et $filename != ''">
+    <xsl:when test="not($recursive) and $filename != ''">
       <!-- if this chunk has an explicit name, use it -->
       <xsl:value-of select="$filename"/>
     </xsl:when>
@@ -402,10 +402,10 @@
   </xsl:variable>
   <xsl:choose>
     <!-- Hack! If someone hands us a DocBook V5.x or DocBook NG document,
-         toss the namespace et continue.  Use the docbook5 namespaced
+         toss the namespace and continue.  Use the docbook5 namespaced
 	 stylesheets for DocBook5 if you don't want to use this feature.-->
     <!-- include extra test for Xalan quirk -->
-    <xsl:when test="(function-available('exsl:node-set') or                      contains(system-property('xsl:vendor'),                        'Apache Software Foundation'))                     et (*/self::ng:* or */self::db:*)">
+    <xsl:when test="(function-available('exsl:node-set') or                      contains(system-property('xsl:vendor'),                        'Apache Software Foundation'))                     and (*/self::ng:* or */self::db:*)">
       <xsl:call-template name="log.message">
         <xsl:with-param name="level">Note</xsl:with-param>
         <xsl:with-param name="source" select="$doc.title"/>
@@ -496,7 +496,7 @@
 
 <xsl:template match="set|book|part|preface|chapter|appendix                      |article                      |reference|refentry                      |book/glossary|article/glossary|part/glossary                      |book/bibliography|article/bibliography|part/bibliography                      |colophon">
   <xsl:choose>
-    <xsl:when test="$onechunk != 0 et parent::*">
+    <xsl:when test="$onechunk != 0 and parent::*">
       <xsl:apply-imports/>
     </xsl:when>
     <xsl:otherwise>
@@ -624,7 +624,7 @@
   </xsl:variable>
   <xsl:variable name="mediaobject" select="."/>
 
-  <xsl:if test="$html.longdesc != 0 et $mediaobject/textobject[not(phrase)]">
+  <xsl:if test="$html.longdesc != 0 and $mediaobject/textobject[not(phrase)]">
     <xsl:call-template name="longdesc.uri">
       <xsl:with-param name="mediaobject" select="$mediaobject"/>
     </xsl:call-template>

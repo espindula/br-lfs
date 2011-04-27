@@ -14,7 +14,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -24,7 +24,7 @@
     <xsl:when test="self::ng:* or self::db:*">
       <xsl:element name="{local-name(.)}">
         <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                                et not(name(.) = 'version')]"/>
+                                and not(name(.) = 'version')]"/>
         <xsl:if test="@xml:id">
           <xsl:attribute name="id">
             <xsl:value-of select="@xml:id"/>
@@ -39,7 +39,7 @@
     <xsl:otherwise>
       <xsl:copy>
         <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                                et not(name(.) = 'version')]"/>
+                                and not(name(.) = 'version')]"/>
         <xsl:if test="@xml:id">
           <xsl:attribute name="id">
             <xsl:value-of select="@xml:id"/>
@@ -59,7 +59,7 @@
     <xsl:when test="self::ng:* or self::db:*">
       <xsl:element name="{local-name(.)}">
         <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                                et not(name(.) = 'version')]"/>
+                                and not(name(.) = 'version')]"/>
         <xsl:if test="@xml:id">
           <xsl:attribute name="id">
             <xsl:value-of select="@xml:id"/>
@@ -71,7 +71,7 @@
     <xsl:otherwise>
       <xsl:copy>
         <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                                et not(name(.) = 'version')]"/>
+                                and not(name(.) = 'version')]"/>
         <xsl:if test="@xml:id">
           <xsl:attribute name="id">
             <xsl:value-of select="@xml:id"/>
@@ -130,7 +130,7 @@
 
   <xsl:element name="{$info}">
     <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                         et not(name(.) = 'version')]"/>
+                         and not(name(.) = 'version')]"/>
     <xsl:if test="@xml:id">
       <xsl:attribute name="id">
         <xsl:value-of select="@xml:id"/>
@@ -139,8 +139,8 @@
     <xsl:apply-templates mode="stripNS"/>
   </xsl:element>
 
-  <xsl:if test="(not(../db:title) et not(../ng:title))
-                et ($info = 'prefaceinfo'
+  <xsl:if test="(not(../db:title) and not(../ng:title))
+                and ($info = 'prefaceinfo'
                      or $info = 'chapterinfo'
                      or $info = 'sectioninfo'
                      or $info = 'sect1info'
@@ -163,12 +163,12 @@
   <xsl:variable xmlns:xlink="http://www.w3.org/1999/xlink"
                 name="href" select="@xlink:href|@href"/>
   <xsl:choose>
-    <xsl:when test="$href != '' et not(starts-with($href,'#'))">
+    <xsl:when test="$href != '' and not(starts-with($href,'#'))">
       <ulink url="{$href}">
         <xsl:for-each select="@*">
           <xsl:if test="local-name(.) != 'href'
-                        et name(.) != 'version'
-                        et name(.) != 'xml:id'">
+                        and name(.) != 'version'
+                        and name(.) != 'xml:id'">
             <xsl:copy/>
           </xsl:if>
         </xsl:for-each>
@@ -180,12 +180,12 @@
         <xsl:apply-templates mode="stripNS"/>
       </ulink>
     </xsl:when>
-    <xsl:when test="$href != '' et starts-with($href,'#')">
+    <xsl:when test="$href != '' and starts-with($href,'#')">
       <link linkend="{substring-after($href,'#')}">
         <xsl:for-each select="@*">
           <xsl:if test="local-name(.) != 'href'
-                        et name(.) != 'version'
-                        et name(.) != 'xml:id'">
+                        and name(.) != 'version'
+                        and name(.) != 'xml:id'">
             <xsl:copy/>
           </xsl:if>
         </xsl:for-each>
@@ -200,7 +200,7 @@
     <xsl:otherwise>
       <link>
         <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                             et not(name(.) = 'version')]"/>
+                             and not(name(.) = 'version')]"/>
         <xsl:if test="@xml:id">
           <xsl:attribute name="id">
             <xsl:value-of select="@xml:id"/>
@@ -215,7 +215,7 @@
 <xsl:template match="ng:tag|db:tag" mode="stripNS">
   <sgmltag>
     <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                         et not(name(.) = 'version')]"/>
+                         and not(name(.) = 'version')]"/>
     <xsl:apply-templates mode="stripNS"/>
   </sgmltag>
 </xsl:template>
@@ -226,8 +226,8 @@
                      |ng:audiodata|db:audiodata" mode="stripNS">
   <xsl:element name="{local-name(.)}">
     <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                            et not(name(.) = 'version')
-                            et not(name(.) = 'entityref')]"/>
+                            and not(name(.) = 'version')
+                            and not(name(.) = 'entityref')]"/>
     <xsl:if test="@xml:id">
       <xsl:attribute name="id">
         <xsl:value-of select="@xml:id"/>
@@ -275,12 +275,12 @@
             <!-- file: seems to confuse some processors. -->
             <xsl:choose>
               <!-- however, windows paths must use file:///c:/path -->
-              <xsl:when test="starts-with($base, 'file:///') et
+              <xsl:when test="starts-with($base, 'file:///') and
                               substring($base, 10, 1) = ':'">
                 <xsl:value-of select="$base"/>
               </xsl:when>
               <xsl:when test="starts-with($base, 'file:/')
-                              et substring($base, 8, 1) = ':'">
+                              and substring($base, 8, 1) = ':'">
                 <xsl:value-of select="concat('file:///',
                                       substring-after($base,'file:/'))"/>
               </xsl:when>
@@ -325,7 +325,7 @@
     <xsl:when test="(function-available('exsl:node-set') or
                      contains(system-property('xsl:vendor'),
                        'Apache Software Foundation'))
-                    et (*/self::ng:* or */self::db:*)">
+                    and (*/self::ng:* or */self::db:*)">
       <xsl:message>Stripping namespace from DocBook 5 document.</xsl:message>
       <xsl:variable name="nons">
         <xsl:apply-templates mode="stripNS"/>

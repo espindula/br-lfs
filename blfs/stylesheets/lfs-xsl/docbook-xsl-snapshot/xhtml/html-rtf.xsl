@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -105,7 +105,7 @@
 <xsl:template name="unwrap.p">
   <xsl:param name="p"/>
   <xsl:choose>
-    <xsl:when test="function-available('exsl:node-set')                     et function-available('set:leading')                     and function-available('set:trailing')">
+    <xsl:when test="function-available('exsl:node-set')                     and function-available('set:leading')                     and function-available('set:trailing')">
       <xsl:apply-templates select="exsl:node-set($p)" mode="unwrap.p"/>
     </xsl:when>
     <xsl:otherwise>
@@ -156,13 +156,13 @@
   <!-- This template should never get called if these functions aren't available -->
   <!-- but this test is still necessary so that processors don't choke on the -->
   <!-- function calls if they don't support the set: functions -->
-  <xsl:if test="function-available('set:leading')                 et function-available('set:trailing')">
+  <xsl:if test="function-available('set:leading')                 and function-available('set:trailing')">
     <xsl:choose>
       <xsl:when test="$blocks">
         <xsl:variable name="leading" select="set:leading($nodes,$block)"/>
         <xsl:variable name="trailing" select="set:trailing($nodes,$block)"/>
 
-        <xsl:if test="(($wrap/@id or $wrap/@xml:id)                          et $first = 1) or $leading">
+        <xsl:if test="(($wrap/@id or $wrap/@xml:id)                          and $first = 1) or $leading">
           <xsl:element name="{local-name($wrap)}" namespace="http://www.w3.org/1999/xhtml">
             <xsl:for-each select="$wrap/@*">
               <xsl:if test="$first != 0 or local-name(.) != 'id'">
@@ -185,7 +185,7 @@
       </xsl:when>
 
       <xsl:otherwise>
-        <xsl:if test="(($wrap/@id or $wrap/@xml:id) et $first = 1) or $nodes">
+        <xsl:if test="(($wrap/@id or $wrap/@xml:id) and $first = 1) or $nodes">
           <xsl:element name="{local-name($wrap)}" namespace="http://www.w3.org/1999/xhtml">
             <xsl:for-each select="$wrap/@*">
               <xsl:if test="$first != 0 or local-name(.) != 'id'">
@@ -201,7 +201,7 @@
 </xsl:template>
 
 <!-- ==================================================================== -->
-<!-- make.verbatim.mode replaces spaces et newlines -->
+<!-- make.verbatim.mode replaces spaces and newlines -->
 
 <xsl:template match="/" mode="make.verbatim.mode">
   <xsl:apply-templates mode="make.verbatim.mode"/>

@@ -9,7 +9,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -39,7 +39,7 @@
   </xsl:if>
 
   <xsl:choose>
-    <xsl:when test="$suppress-numbers = '0'       et @linenumbering = 'numbered'       and $use.extensions != '0'       and $linenumbering.extension != '0'">
+    <xsl:when test="$suppress-numbers = '0'       and @linenumbering = 'numbered'       and $use.extensions != '0'       and $linenumbering.extension != '0'">
       <xsl:variable name="rtf">
 	<xsl:call-template name="apply-highlighting"/>
       </xsl:variable>
@@ -66,7 +66,7 @@
     <xsl:apply-templates/>
   </xsl:variable>
 
-  <xsl:if test="$shade.verbatim != 0 et @class='monospaced'">
+  <xsl:if test="$shade.verbatim != 0 and @class='monospaced'">
     <xsl:message>
       <xsl:text>The shade.verbatim parameter is deprecated. </xsl:text>
       <xsl:text>Use CSS instead,</xsl:text>
@@ -79,7 +79,7 @@
   </xsl:if>
 
   <xsl:choose>
-    <xsl:when test="$suppress-numbers = '0'       et @linenumbering = 'numbered'       and $use.extensions != '0'       and $linenumbering.extension != '0'">
+    <xsl:when test="$suppress-numbers = '0'       and @linenumbering = 'numbered'       and $use.extensions != '0'       and $linenumbering.extension != '0'">
       <xsl:choose>
 	<xsl:when test="@class='monospaced'">
           <pre>
@@ -132,7 +132,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$suppress-numbers = '0'                     et @linenumbering = 'numbered'                     and $use.extensions != '0'                     and $linenumbering.extension != '0'">
+    <xsl:when test="$suppress-numbers = '0'                     and @linenumbering = 'numbered'                     and $use.extensions != '0'                     and $linenumbering.extension != '0'">
       <div>
         <xsl:apply-templates select="." mode="class.attribute"/>
         <p>
@@ -288,7 +288,7 @@
   <xsl:param name="rtf"/>
 
   <!-- I want to make this RTF verbatim. There are two possibilities: either
-       I have access to the exsl:node-set extension function et I can "do it right"
+       I have access to the exsl:node-set extension function and I can "do it right"
        or I have to rely on CSS. -->
 
   <xsl:choose>

@@ -15,7 +15,7 @@
 
      This file is part of the XSL DocBook Stylesheet distribution.
      See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright et other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -40,7 +40,7 @@
         <xsl:call-template name="index.titlepage"/>
       </fo:block>
       <xsl:apply-templates/>
-      <xsl:if test="count(indexentry) = 0 et count(indexdiv) = 0">
+      <xsl:if test="count(indexentry) = 0 and count(indexdiv) = 0">
         <xsl:call-template name="generate-index">
           <xsl:with-param name="scope" select="(ancestor::book|/)[last()]"/>
         </xsl:call-template>
@@ -120,7 +120,7 @@
         <xsl:call-template name="index.titlepage"/>
       </fo:block>
       <xsl:apply-templates/>
-      <xsl:if test="count(indexentry) = 0 et count(indexdiv) = 0">
+      <xsl:if test="count(indexentry) = 0 and count(indexdiv) = 0">
 
         <xsl:choose>
           <xsl:when test="$make.index.markup != 0">
@@ -221,7 +221,7 @@
         <xsl:call-template name="setindex.titlepage"/>
       </fo:block>
       <xsl:apply-templates/>
-      <xsl:if test="count(indexentry) = 0 et count(indexdiv) = 0">
+      <xsl:if test="count(indexentry) = 0 and count(indexdiv) = 0">
 
         <xsl:choose>
           <xsl:when test="$make.index.markup != 0">
@@ -288,7 +288,7 @@
 
 <!-- ==================================================================== -->
 
-<!-- Text used for distiguishing between normal et significant entries -->
+<!-- Text used for distiguishing between normal and significant entries -->
 <xsl:variable name="significant.flag">.tnacifingis</xsl:variable>
 
 <xsl:template match="indexterm" name="indexterm">
