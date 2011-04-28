@@ -6,18 +6,18 @@
 
   <!ENTITY gdm-download-http "&gnome-download-http;/gdm/&gnome-version;/gdm-&gdm-version;.tar.bz2">
   <!ENTITY gdm-download-ftp  "&gnome-download-ftp;/gdm/&gnome-version;/gdm-&gdm-version;.tar.bz2">
-  <!ENTITY gdm-md5sum        "08555fce34d247062625c1a451a4d5a6">
-  <!ENTITY gdm-size          "3.4 Mio">
-  <!ENTITY gdm-buildsize     "64 Mio">
-  <!ENTITY gdm-time          "0.6 SBU">
+  <!ENTITY gdm-md5sum        "ba35f9f750b50be572952195989df2c5">
+  <!ENTITY gdm-size          "2.3 Mio">
+  <!ENTITY gdm-buildsize     "51 Mio">
+  <!ENTITY gdm-time          "0.8 SBU">
 ]>
 
 <sect1 id="gdm" xreflabel="GDM-&gdm-version;">
   <?dbhtml filename="gdm.html"?>
 
   <sect1info>
-    <othername>$LastChangedBy: randy $</othername>
-    <date>$Date: 2007-07-26 20:58:49 +0200 (jeu, 26 jui 2007) $</date>
+    <othername>$LastChangedBy: wblaszcz $</othername>
+    <date>$Date: 2010-08-29 13:49:21 +0200 (dim 29 aoû 2010) $</date>
   </sect1info>
 
   <title>GDM-&gdm-version;</title>
@@ -32,6 +32,8 @@
     <para>Le paquet <application>GDM</application> contient le démon du
     gestionnaire d'affichage de <application>GNOME</application>. C'est
     utile pour permettre des connexions graphiques configurables.</para>
+
+    &lfs65_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -55,25 +57,31 @@
       </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Correctif requis&nbsp;: <ulink
+        url="&patch-root;/gdm-&gdm-version;-fixes-1.patch"/></para>
+      </listitem>
+    </itemizedlist>
+
     <bridgehead renderas="sect3">Dépendances de GDM</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
-    <para role="required"><xref linkend="libgnomecanvas"/>,
-    <xref linkend="gnome-doc-utils"/> et
-    <xref linkend="librsvg"/></para>
+    <para role="required"><xref linkend="gnome-panel"/> et
+    <xref linkend="xorg7-lib"/></para>
+
+    <bridgehead renderas="sect4">Recommandées</bridgehead>
+    <para role="recommended"><xref linkend="consolekit"/>
+    (Requis pour la fonitionnalité Shutdown/Restart) et
+    <xref linkend="polkit-gnome"/></para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
-    <para role="optional"><xref linkend="intltool"/>,
-    <xref linkend="zenity"/>,
-    <xref linkend="linux-pam"/>,
-    <xref linkend="tcpwrappers"/>,
-    <ulink url="http://people.freedesktop.org/~mccann/dist/">ConsoleKit</ulink> et
-    <ulink url="http://www.openafs.org/">OpenAFS</ulink></para>
-
-    <para>If you configure <application>GDM</application> pour offrir des
-    connexions sécurisées auxmachines distantes, vous devrez installer
-    <xref linkend="zenity"/>, <xref linkend="openssh"/> et
-    <xref linkend="which"/>.</para>
+    <para role="optional">
+    <ulink url="http://check.sourceforge.net/">Check</ulink>,
+    <xref linkend="upower"/>,
+    <xref linkend="libxklavier"/>, et
+    <xref linkend="tcpwrappers"/></para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/gdm"/></para>
@@ -88,49 +96,50 @@
     a été démarré. Lancez les commandes suivantes en tant qu'utilisateur
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role='root'><userinput>groupadd -g 21 gdm &amp;&amp;
-useradd -c "GDM Daemon Owner" -d /dev/null \
-        -g gdm -s /bin/bash -u 21 gdm</userinput></screen>
+<screen role='root'><userinput>groupadd -fg 21 gdm &amp;&amp;
+useradd -c "GDM Daemon Owner" -d /var/lib/gdm -u 21 \
+    -g gdm -s /bin/false gdm  || [ $? == 9 ]</userinput></screen>
 
     <para>Installez <application>GDM</application> en lançant les commandes
     suivantes en tant qu'utilisateur non privilégié&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=$(pkg-config --variable=prefix ORBit-2.0) \
-            --sysconfdir=&gnome-etc-dir; \
-            --localstatedir=/var/lib \
-            --libexecdir=$(pkg-config \
-                --variable=prefix ORBit-2.0)/lib/gdm \
-            --mandir=$(pkg-config \
-                --variable=prefix ORBit-2.0)/share/man \
-            --with-pam-prefix=/etc &amp;&amp;
+<screen><userinput>patch -Np1 -i ../gdm-&gdm-version;-fixes-1.patch &amp;&amp;
+./configure --prefix=$(pkg-config --variable=prefix ORBit-2.0) \
+             --sysconfdir=&gnome-etc-dir; \
+             --localstatedir=/var \
+             --libexecdir=$(pkg-config \
+             --variable=prefix ORBit-2.0)/lib/gdm \
+             --with-pam-prefix=/etc &amp;&amp;
 make</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
 
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role='root'><userinput>make install</userinput></screen>
+<screen role='root'><userinput>make install &amp;&amp;
+ln -fsv $(pkg-config --variable=prefix \
+    ORBit-2.0)/lib/gnome-settings-daemon-2.0/gnome-settings-daemon $(pkg-config \
+    --variable=prefix ORBit-2.0)/lib/gdm &amp;&amp;
+ln -fsv /usr/lib/ConsoleKit/ck-get-x11-display-device $(pkg-config \
+    --variable=prefix ORBit-2.0)/lib/gdm &amp;&amp;
+ln -fsv /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 $(pkg-config \
+    --variable=prefix ORBit-2.0)/lib/gdm
+</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gnome-prefix.xml"/>
 
-    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gnome-sysconfdir.xml"/>
 
-    <para><parameter>--localstatedir=/var/lib</parameter>&nbsp;: Cette commande
-    met les fichiers dans <filename class="directory">/var/lib</filename> au
-    lieu de
-    <filename class="directory">$GNOME_PREFIX/var</filename>. Cela modifie
-    malheureusement également l'utilisation de
-    <filename class='directory'>/var/lib/log/gdm</filename> en tant que
-    répertoire journal. Voir la section <quote>Informations de configuration</quote> 
-    ci-dessous pour des instructions pour replacer le répertoire du fichier 
-    journa.</para>
+    <para><parameter>--localstatedir=/var</parameter>&nbsp;: Cette commande
+    met les fichiers dans <filename class="directory">/var</filename> et non
+    dans <filename class="directory">$GNOME_PREFIX/var</filename>.</para>
 
     <para><parameter>--libexecdir=$(pkg-config
     --variable=prefix ORBit-2.0)/lib/gdm</parameter>&nbsp;: Ce paramètre est
@@ -138,9 +147,6 @@ make</userinput></screen>
     <application>GDM</application> s'installent à l'endroit préféré de 
     <filename class='directory'>$GNOME_PREFIX/lib/gdm</filename> au lieu de
     <filename class='directory'>$GNOME_PREFIX/libexec</filename>.</para>
-
-    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
-    href="../../xincludes/gnome-mandir.xml"/>
 
     <para><parameter>--with-pam-prefix=/etc</parameter>&nbsp;: Cette commande
     met les fichiers de configuration de <application>PAM</application> dans
@@ -180,20 +186,6 @@ make</userinput></screen>
       <filename>&gnome-etc-dir;/gdm/custom.conf</filename>. Les paramètres
       de ce fichier remplaceront ceux cu fichier statique. Les mêmes paramètres
       du fichier statique sont utilisés dans le fichier de configuration.</para>
-
-      <para>Changez le répertoire contenant les fichiers journaux de 
-      <application>GDM</application> vers la hiérarchie
-      <filename class='directory'>/var/log</filename> en créant un répertoire
-      et en modifiant le fichier de configuration
-      <filename>&gnome-etc-dir;/gdm/custom.conf</filename>. Lancez les commandes
-      suivantes en tant qu'utilisateur
-      <systemitem class="username">root</systemitem>&nbsp;:</para>
-
-<screen role="root"><userinput>install -v -m755 -d /var/log/gdm &amp;&amp;
-sed -i.orig "/\[daemon\]/ a LogDir=/var/log/gdm" \
-    &gnome-etc-dir;/gdm/custom.conf &amp;&amp;
-rmdir -v /var/lib/log/gdm &amp;&amp;
-rmdir -v /var/lib/log</userinput></screen>
 
       <para>Les fichiers de configuration <application>PAM</application> de
       <application>GDM</application> contiennent des modules non présents dans
@@ -289,14 +281,11 @@ chmod -v 644 $GNOME_PREFIX/share/xsessions/gnome-dbus.desktop</userinput></scree
 
 <screen role="root"><userinput>make install-gdm</userinput></screen>
 
-      <para>Maintenant éditez <filename>/etc/inittab</filename> pour que la
-      ligne contienne&nbsp;:</para>
+      <para>Maintenant éditez <filename>/etc/inittab</filename> avec les
+      commandes suivantes.</para>
 
-<screen><literal>id:3:initdefault:</literal></screen>
-
-      <para>devient&nbsp;:</para>
-
-<screen><literal>id:5:initdefault:</literal></screen>
+<screen role="root"><userinput>sed -i 's/id:3:initdefault:/id:5:initdefault:/' \
+    /etc/inittab</userinput></screen>
 
     </sect3>
 
@@ -311,15 +300,18 @@ chmod -v 644 $GNOME_PREFIX/share/xsessions/gnome-dbus.desktop</userinput></scree
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>gdm, gdm-binary, gdm-dmx-reconnect-proxy, gdm-restart,
-        gdm-safe-restart, gdm-stop, gdmXnest, gdmXnestchooser, gdmdynamic,
-        gdmflexiserver, gdmphotosetup, gdmsetup, et gdmthemetester</seg>
-        <seg>lib*mouselistener.{so,a} GTK+ modules</seg>
-        <seg>&gnome-etc-dir;/{,g}dm,
-        /var/lib/gdm,
-        /var/log/gdm et the following directories in
-        <envar>$GNOME_PREFIX</envar>/:
-        share/{,gnome/help/ ,omf/}gdm</seg>
+        <seg>Default, Default.sample, Default, Default, Xsession, gdm,
+        gdm-screenshot, gdmflexiserver, gdm-crash-logger, gdm-factory-slave,
+        gdm-host-chooser, gdm-product-slave, gdm-session-worker,
+        gdm-simple-chooser, gdm-simple-greeter, gdm-simple-slave,
+        gdm-user-switch-applet, gdm-xdmcp-chooser-slave, gdm, gdm-binary,
+        gdm-restart, gdm-safe-restart, et gdm-stop</seg>
+        <seg>None</seg>
+        <seg>&gnome-etc-dir;/gdm/{Init,PostLogin,PostSession,PreSession},
+        <envar>$GNOME_PREFIX</envar>/{lib/gdm,share/{gnome/help/gdm/*,omf/gdm,
+        pixmaps/faces}},
+        /var/{cache/gdm,gdm,lib/gdm/.gconf.mandatory,log/gdm,
+        run/gdm/greeter}</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -327,6 +319,27 @@ chmod -v 644 $GNOME_PREFIX/share/xsessions/gnome-dbus.desktop</userinput></scree
       <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="gdmflexiserver">
+        <term><command>gdmflexiserver</command></term>
+        <listitem>
+          <para>est le mécanisme de serveur flexi qui permet de lancer des sessions
+          GDM à la demande, dans une nouvelle console virtuelle.</para>
+          <indexterm zone="gdm gdmflexiserver">
+            <primary sortas="b-gdmflexiserver">gdmflexiserver</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gdm-screenshot">
+        <term><command>gdm-screenshot</command></term>
+        <listitem>
+          <para>est un outil d'impression écran.</para>
+          <indexterm zone="gdm gdm-screenshot">
+            <primary sortas="b-gdm-screenshot">gdm-screenshot</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
       <varlistentry id="gdm-prog">
         <term><command>gdm</command></term>
@@ -336,6 +349,16 @@ chmod -v 644 $GNOME_PREFIX/share/xsessions/gnome-dbus.desktop</userinput></scree
           basé sur <application>GNOME</application>.</para>
           <indexterm zone="gdm gdm-prog">
             <primary sortas="b-gdm">gdm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gdm-binary">
+        <term><command>gdm-binary</command></term>
+        <listitem>
+          <para>est l'invite de connexion basé sur <application>GNOME</application>.</para>
+          <indexterm zone="gdm gdm-binary">
+            <primary sortas="b-gdm-binary">gdm-binary</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -364,16 +387,18 @@ chmod -v 644 $GNOME_PREFIX/share/xsessions/gnome-dbus.desktop</userinput></scree
         </listitem>
       </varlistentry>
 
-      <varlistentry id="gdmsetup">
-        <term><command>gdmsetup</command></term>
+      <varlistentry id="gdm-stop">
+        <term><command>gdm-stop</command></term>
         <listitem>
-          <para>est une interface graphique pour éditer le fichier
-          <filename>gdm.conf</filename>.</para>
-          <indexterm zone="gdm gdmsetup">
-            <primary sortas="b-gdmsetup">gdmsetup</primary>
+          <para>envoie le signal TERM au démon <application>GDM</application>
+          pour qu'il s'arrête. Il est utilisé après que le fichier de 
+          configuration a été édité.</para>
+          <indexterm zone="gdm gdm-stop">
+            <primary sortas="b-gdm-stop">gdm-stop</primary>
           </indexterm>
         </listitem>
       </varlistentry>
+
     </variablelist>
 
   </sect2>
