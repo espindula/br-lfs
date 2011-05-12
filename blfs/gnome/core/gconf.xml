@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY GConf-download-http "&gnome-download-http;/GConf/&gnome-version;/GConf-&GConf-version;.tar.bz2">
-  <!ENTITY GConf-download-ftp  "&gnome-download-http;/GConf/&gnome-version;/GConf-&GConf-version;.tar.bz2">
-  <!ENTITY GConf-md5sum        "aa0e0a0729fb021bab72b4166fd392f9">
-  <!ENTITY GConf-size          "1.3 Mio">
-  <!ENTITY GConf-buildsize     "32 Mio">
-  <!ENTITY GConf-time          "0.4 SBU">
+  <!ENTITY GConf-download-http "&gnome-download-http;/GConf/2.28/GConf-&GConf-version;.tar.bz2">
+  <!ENTITY GConf-download-ftp  "&gnome-download-ftp;/GConf/2.28/GConf-&GConf-version;.tar.bz2">
+  <!ENTITY GConf-md5sum        "27663faf0af4f6a6d534de9270f6d24a">
+  <!ENTITY GConf-size          "1.4 Mio">
+  <!ENTITY GConf-buildsize     "41 Mio">
+  <!ENTITY GConf-time          "0.5 SBU">
 ]>
 
 <sect1 id="GConf" xreflabel="GConf-&GConf-version;">
@@ -17,7 +17,7 @@
 
   <sect1info>
     <othername>$LastChangedBy: randy $</othername>
-    <date>$Date: 2007-07-25 16:48:30 +0200 (mer, 25 jui 2007) $</date>
+    <date>$Date: 2010-12-05 19:45:16 +0100 (dim 05 déc 2010) $</date>
   </sect1info>
 
   <title>GConf-&GConf-version;</title>
@@ -31,6 +31,8 @@
 
     <para>Le paquet <application>GConf</application> contient un système de
     base de données de configuration.</para>
+
+    &lfs65_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -54,16 +56,27 @@
       </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Téléchargement additionnel</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Patch requis>&nbsp;: <ulink
+        url="&patch-root;/GConf-&GConf-version;-sysconfdir-1.patch"/></para>
+      </listitem>
+    </itemizedlist>
+
     <bridgehead renderas="sect3">Dépendances de GConf</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required"><xref linkend="ORBit2"/> et
-    <xref linkend="libxml2"/></para>
+    <xref linkend="polkit"/></para>
+
+    <bridgehead renderas="sect4">Recommandées</bridgehead>
+    <para role="recommended"><xref linkend="gtk2"/> (Requis pour la construction d'un bureau
+    <application>GNOME</application>.
+    <command>gconf-sanity-check-2</command> ne construira pas autrement.)</para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
-    <para role="optional"><xref linkend="gtk2"/>,
-    <xref linkend="openldap"/>,
-    <xref linkend="intltool"/> et
+    <para role="optional"><xref linkend="openldap"/> et
     <xref linkend="gtk-doc"/></para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
@@ -77,7 +90,8 @@
     <para>Installez <application>GConf</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=$(pkg-config --variable=prefix ORBit-2.0) \
+<screen><userinput>patch -Np1 -i ../GConf-&GConf-version;-sysconfdir-1.patch &amp;&amp;
+./configure --prefix=$(pkg-config --variable=prefix ORBit-2.0) \
             --sysconfdir=&gnome-etc-dir; \
             --libexecdir=$(pkg-config \
                 --variable=prefix ORBit-2.0)/lib/GConf \
@@ -89,14 +103,68 @@ make</userinput></screen>
 
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>make install</userinput></screen>
+<screen role="root"><userinput>make install &amp;&amp;
+install -v -m755 -d &gnome-etc-dir;/gconf/gconf.xml.system</userinput></screen>
+
+    <para>En tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;,
+    configurez <application>D-Bus</application> pour qu'il puisse chercher le fichier <application>GNOME</application>
+    <filename class='extension'>.conf</filename> installé (ceci suppose que <filename>/etc/dbus-1/system-local.conf</filename> n'existe pas encore.
+    S'il existe, alors il faudra ajouter les modifications). Si
+    <envar>$GNOME_PREFIX</envar> n'est pas
+    <filename class='directory'>/usr</filename>, vous devez décommenter la ligne
+    <quote>servicedir</quote> :</para>
+
+<screen role="root"><userinput>cat &gt; /etc/dbus-1/system-local.conf &lt;&lt; "EOF"
+<literal>&lt;!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd"&gt;
+&lt;busconfig&gt;
+
+  &lt;!-- Search for .conf files in &gnome-etc-dir;/dbus-1/system.d --&gt;
+  &lt;includedir&gt;&gnome-etc-dir;/dbus-1/system.d&lt;/includedir&gt;
+
+  &lt;!-- Search for .service files in $GNOME_PREFIX/share/dbus-1/system-services --&gt;
+  &lt;!-- &lt;servicedir&gt;$GNOME_PREFIX/share/dbus-1/system-services&lt;/servicedir&gt; --&gt;
+
+&lt;/busconfig&gt;
+EOF</literal>
+</userinput></screen>
+
+    <para>Si <envar>$GNOME_PREFIX</envar> n'est pas
+    <filename class='directory'>/usr</filename>, vous aurez alors besoin de configurer
+    <application>D-Bus</application> pour qu'il puisse chercher le fichier
+    <application>GNOME</application> <quote>session</quote>
+    <filename class='extension'>.service</filename> installé. (Ceci suppose
+    que <filename>/etc/dbus-1/session-local.conf</filename> n'existe pas
+    encore. S'il existe, alors il faudra ajouter les modifications). De plus,
+    si <application>polkit</application> est installé, créer un lien symbolique
+    dans <filename class='directory'>/usr/share/polkit-1/actions</filename> pour
+    le fichier <quote>action</quote> installé par
+    <application>GConf</application>. Exécutez les commandes suivantes en tant que
+    <systemitem class="username">root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>cat &gt; /etc/dbus-1/session-local.conf &lt;&lt; "EOF"
+<literal>&lt;!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd"&gt;
+&lt;busconfig&gt;
+
+  &lt;!-- Search for .service files in $GNOME_PREFIX/share/dbus-1/session-services --&gt;
+  &lt;servicedir&gt;$GNOME_PREFIX/share/dbus-1/session-services&lt;/servicedir&gt;
+
+&lt;/busconfig&gt;
+EOF</literal>
+
+ln -s -v <envar>$GNOME_PREFIX</envar>/share/polkit-1/actions/org.gnome.gconf.defaults.policy \
+         /usr/share/polkit-1/actions
+</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gnome-prefix.xml"/>
 
     <para><parameter>--sysconfdir=&gnome-etc-dir;</parameter>&nbsp;: Ce paramètre
@@ -117,10 +185,10 @@ make</userinput></screen>
     <filename class="directory">$GNOME_PREFIX/lib/GConf</filename> au lieu de
     <filename class="directory">$GNOME_PREFIX/libexec</filename>.</para>
 
-    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gnome-mandir.xml"/>
 
-    <xi:include xmlns:xi="http://www.w3.org/2003/XInclude"
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gtk-doc-rebuild.xml"/>
 
   </sect2>
@@ -130,17 +198,18 @@ make</userinput></screen>
 
     <segmentedlist>
       <segtitle>Programmes installés</segtitle>
-      <segtitle>Bibliothèque installée</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>gconf-merge-tree et gconftool-2</seg>
-        <seg>libgconf-2.{so,a}</seg>
-        <seg>&gnome-etc-dir;/gconf et the following subdirectories of
-        <envar>$GNOME_PREFIX</envar>/:
-        include/gconf,
-        lib/GConf et
-        share/{GConf, gtk-doc/html/gconf, sgml/gconf}</seg>
+        <seg>gconf-merge-tree, gconftool-2, gconf-defaults-mechanism,
+        gconf-sanity-check-2, et gconfd-2</seg>
+        <seg>libgconf-2.{so,a}, libgconfbackend-xml.{so,a}, et
+        libgconfbackend-oldxml.{so,a}</seg>
+        <seg>&gnome-etc-dir;/gconf/{2,gconf.xml.defaults,gconf.xml.mandatory,
+        gconf.xml.system}, <envar>$GNOME_PREFIX</envar>/{include/gconf/2/gconf,
+        lib/GConf/2,share/{gtk-doc/html/gconf,sgml/gconf}}</seg>
+
       </seglistitem>
     </segmentedlist>
 
