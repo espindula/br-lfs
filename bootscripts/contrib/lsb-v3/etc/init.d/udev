@@ -33,10 +33,11 @@ case "${1}" in
 			/etc/rc.d/init.d/halt stop
 		fi
 
-		# Mount a temporary file system over /dev, so that any devices
-		# made or removed during this boot don't affect the next one.
-		# The reason we don't write to mtab is because we don't ever
-		# want /dev to be unavailable (such as by `umount -a').
+		# If not using DEVTMPFS mount a temporary file system over
+		# /dev, so that any devices made or removed during this boot
+		# don't affect the next one. The reason we don't write to mtab
+		# is because we don't ever want /dev to be unavailable (such as
+		# by `umount -a').
 		if ! mountpoint /dev > /dev/null; then
 			mount -n -t tmpfs tmpfs /dev -o mode=755
 		fi
@@ -57,11 +58,14 @@ case "${1}" in
 
 		# Udev handles uevents itself, so we don't need to have
 		# the kernel call out to any binary in response to them
+		# This is a failsafe and should be done in kernel config
 		echo > /proc/sys/kernel/hotplug
 
 		# Copy the only static device node that Udev >= 155 doesn't
-		# handle to /dev
-		cp -a /lib/udev/devices/null /dev
+		# handle to /dev (handled by default with DEVTMPFS)
+		if [ ! -f /dev/null ]; then
+			cp -a /lib/udev/devices/null /dev
+		fi
 
 		# Start the udev daemon to continually watch for, and act on,
 		# uevents

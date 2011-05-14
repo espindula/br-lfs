@@ -3,7 +3,7 @@
 
 # Get the configuration file
 # All changes are to occur in the config file
-. /etc/sysconfig/rc
+. /etc/default/rc
 
 # These 3 signals will not cause our script to exit
 trap "" INT QUIT TSTP
@@ -25,9 +25,9 @@ if [ "${prevlevel}" = "" ]; then
     prevlevel="N"
 fi
 
-# Mount a tmpfs to store boot accounting information
-if [ "${runlevel}" = "S" -a "${TEMPFS_MOUNT}" != "" ]; then
-    mount -n -t tmpfs tmpfs "${TEMPFS_MOUNT}" -o mode=600
+# Mount /run
+if [ "${runlevel}" = "S" ]; then
+    mount -n -t tmpfs tmpfs /run
 fi
 
 # Provide an interactive prompt (if requested)
@@ -52,7 +52,7 @@ if [ "${runlevel}" = "S" -a "${iprompt}" = "yes" ]; then
         if [ "${interactive}" = "I" -o "${interactive}" = "i" ]; then
             echo -n -e "${CURS_UP}"
             echo -e "${INFO}Interactive boot selected...${NORMAL}"
-            echo "interactive=I" > "${TEMPFS_MOUNT}/.interactive-start"
+            echo "interactive=I" > /run/.interactive-start
         fi
     fi
 fi
@@ -66,8 +66,8 @@ if [ ! -d "${RC_BASE}/rc${runlevel}.d" ]; then
 fi
 
 # Source the interactive state file if it exists
-if [ "${runlevel}" != "S" -a -f "${TEMPFS_MOUNT}/.interactive-start" ]; then
-    . "${TEMPFS_MOUNT}/.interactive-start"
+if [ "${runlevel}" != "S" -a -f /run/.interactive-start ]; then
+    . /run/.interactive-start
 fi
 
 # Prompt for interactive startup after completing S
@@ -180,17 +180,22 @@ done
 
 # Strip apply time to the logs, strip out any color codes and dump 
 # the log to /var/log/boot.log
-if [ -f "${TEMPFS_MOUNT}/.bootlog" -a "${runlevel}" != "S" ]; then
+if [ -f /run/.bootlog -a "${runlevel}" != "S" ]; then
     # Remove any color codes from the temp log file
-    sed -i 's@\\033\[[0-9];[0-9][0-9]m@@g' "${TEMPFS_MOUNT}/.bootlog"
+    sed -i 's@\\033\[[0-9];[0-9][0-9]m@@g' /run/.bootlog
     #Fix the time and hostname
     BTIMESPEC=$(echo `date +"%b %d %T"` `hostname`)
-    sed -i "s@^bootlog:@${BTIMESPEC} bootlog:@" "${TEMPFS_MOUNT}/.bootlog"
+    sed -i "s@^bootlog:@${BTIMESPEC} bootlog:@" /run/.bootlog
     # Don't try and write in 0 and 6, this is a 'boot' log
     if [ "${runlevel}" != "0" -a "${runlevel}" != "6" ]; then
-        cat "${TEMPFS_MOUNT}/.bootlog" >> /var/log/boot.log
-        rm -f "${TEMPFS_MOUNT}/.bootlog"
+        cat /run/.bootlog >> /var/log/boot.log
+        rm -f /run/.bootlog
     fi
+fi
+
+# Remove interactive boot temp file
+if [ -f /run/.interactive-start -a "${runlevel}" != "S" ]; then
+    rm -f /run/.interactive-start
 fi
 
 # End $RC_BASE/init.d/rc

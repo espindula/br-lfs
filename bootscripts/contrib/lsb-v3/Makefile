@@ -17,6 +17,7 @@ create-dirs:
 	install -d -m ${DIRMODE} ${EXTDIR}/rcS.d
 	install -d -m ${DIRMODE} ${EXTDIR}/init.d
 	install -d -m ${DIRMODE} ${EXTDIR}/default
+	install -d -m ${DIRMODE} ${EXTDIR}/network
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/lsb
 	install -d -m ${DIRMODE} ${EXTDIR}/lsb/state
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/network-services

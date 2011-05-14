@@ -45,7 +45,9 @@ for file in ${FILES}; do
     fi
 
     (
-        . ${file}
+        if [ ! -d "${file}" ]; then
+            . ${file}
+        fi
 
         # Will not process this service if started by boot, and ONBOOT
         # is not set to yes
@@ -58,7 +60,7 @@ for file in ${FILES}; do
              continue
         fi
 
-        if [ -n "${SERVICE}" -a -x "${NETWORK_DEVICES}/services/${SERVICE}" ]; then
+        if [ -n "${SERVICE}" -a -x "/lib/network-services/${SERVICE}" ]; then
             if [ -z "${CHECK_LINK}" -o "${CHECK_LINK}" = "y" -o "${CHECK_LINK}" = "yes" -o "${CHECK_LINK}" = "1" ]; then
                 if ip link show ${1} > /dev/null 2>&1; then
                     link_status=`ip link show ${1}`
@@ -73,7 +75,15 @@ for file in ${FILES}; do
                     log_warning_msg
                 fi
             fi
-            IFCONFIG=${file} ${NETWORK_DEVICES}/services/${SERVICE} ${1} up
+            IFCONFIG=${file} /lib/network-services/${SERVICE} ${1} up
+            if [ "${?}" -eq "0" ]; then
+                if [ ! -d "${file}" -a "${file}" != "${NETWORK_DEVICES}/ifconfig.${1}" ]; then
+                    mkdir -p "/run/network/ifconfig.${1}"
+                    cp "${file}" "/run/network/ifconfig.${1}"
+                elif [ ! -d "${file}" ]; then
+                    cp "${file}" "/run/network/"
+                fi
+            fi
         else
             echo -e "${FAILURE}Unable to process ${file}.  Either"
             echo -e "${FAILURE}the SERVICE variable was not set,"

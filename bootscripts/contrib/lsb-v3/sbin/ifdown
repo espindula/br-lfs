@@ -20,12 +20,12 @@
 # Collect a list of configuration files for our interface
 if [ -n "${2}" ]; then
     for file in ${@#$1}; do # All parameters except $1
-        FILES="${FILES} ${NETWORK_DEVICES}/ifconfig.${1}/${file}"
+        FILES="${FILES} /run/network/ifconfig.${1}/${file}"
     done
-elif [ -d "${NETWORK_DEVICES}/ifconfig.${1}" ]; then
-    FILES=`echo ${NETWORK_DEVICES}/ifconfig.${1}/*`
+elif [ -d "/run/network/ifconfig.${1}" ]; then
+    FILES=`echo /run/network/ifconfig.${1}/*`
 else
-    FILES="${NETWORK_DEVICES}/ifconfig.${1}"
+    FILES="/run/network/ifconfig.${1}"
 fi
 
 # Reverse the order configuration files are processed in
@@ -46,7 +46,9 @@ for file in ${FILES}; do
         log_warning_msg
     fi
     (
-        . ${file}
+        if [ ! -d "${file}" ]; then
+            . ${file}
+        fi
 
         # Will not process this service if started by boot, and ONBOOT
         # is not set to yes
@@ -61,10 +63,13 @@ for file in ${FILES}; do
         fi
     
         # This will run the service script, if SERVICE is set
-        if [ -n "${SERVICE}" -a -x "${NETWORK_DEVICES}/services/${SERVICE}" ]; then
+        if [ -n "${SERVICE}" -a -x "/lib/network-services/${SERVICE}" ]; then
             if ip link show ${1} > /dev/null 2>&1
             then
-                IFCONFIG=${file} ${NETWORK_DEVICES}/services/${SERVICE} ${1} down
+                IFCONFIG=${file} /lib/network-services/${SERVICE} ${1} down &&
+                if [ -f "${file}" ]; then
+                    rm ${file}
+                fi
             else
                 message="Interface ${1} doesn't exist."
                 log_warning_msg
