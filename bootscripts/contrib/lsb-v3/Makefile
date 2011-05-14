@@ -71,7 +71,6 @@ install: create-dirs create-service-dir create-boottemp-dir
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/network
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/reboot
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/sendsignals
-	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/setclock
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/sysklogd
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/swap
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/sysctl
