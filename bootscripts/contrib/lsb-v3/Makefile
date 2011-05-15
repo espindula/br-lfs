@@ -7,6 +7,7 @@ CONFMODE=644
 all: install
 
 create-dirs:
+	if test ! -d /${DESTDIR}; then install -d -m ${DIRMODE} ${EXTDIR}; fi
 	install -d -m ${DIRMODE} ${EXTDIR}/rc0.d
 	install -d -m ${DIRMODE} ${EXTDIR}/rc1.d
 	install -d -m ${DIRMODE} ${EXTDIR}/rc2.d
@@ -18,6 +19,7 @@ create-dirs:
 	install -d -m ${DIRMODE} ${EXTDIR}/init.d
 	install -d -m ${DIRMODE} ${EXTDIR}/default
 	install -d -m ${DIRMODE} ${EXTDIR}/network
+	install -d -m ${DIRMODE} ${DESTDIR}/sbin
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/lsb
 	install -d -m ${DIRMODE} ${EXTDIR}/lsb/state
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/network-services
