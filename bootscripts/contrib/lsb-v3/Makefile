@@ -21,7 +21,6 @@ create-dirs:
 	install -d -m ${DIRMODE} ${EXTDIR}/network
 	install -d -m ${DIRMODE} ${DESTDIR}/sbin
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/lsb
-	install -d -m ${DIRMODE} ${EXTDIR}/lsb/state
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/network-services
 
 install: create-dirs
@@ -46,8 +45,6 @@ install: create-dirs
 	install -m ${MODE} etc/init.d/udev                  ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/udev_retry            ${EXTDIR}/init.d/
 	install -m ${CONFMODE} lib/lsb/init-functions       ${DESTDIR}/lib/lsb/
-	install -m ${CONFMODE} lib/lsb/manage-functions     ${DESTDIR}/lib/lsb/
-	install -m ${CONFMODE} etc/lsb-config           ${EXTDIR}/lsb/
 	if [ ! -f ${EXTDIR}/default/createfiles ]; then install -m ${CONFMODE} etc/default/createfiles ${EXTDIR}/default/; fi
 	if [ ! -f ${EXTDIR}/default/modules     ]; then install -m ${CONFMODE} etc/default/modules     ${EXTDIR}/default/; fi
 	if [ ! -f ${EXTDIR}/default/rc          ]; then install -m ${CONFMODE} etc/default/rc          ${EXTDIR}/default/; fi
@@ -90,8 +87,6 @@ minimal: create-dirs
 	install -m ${MODE} etc/init.d/swap              ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/udev              ${EXTDIR}/init.d/
 	install -m ${CONFMODE} lib/lsb/init-functions   ${DESTDIR}/lib/lsb/
-	install -m ${CONFMODE} lib/lsb/manage-functions ${DESTDIR}/lib/lsb/
-	install -m ${CONFMODE} etc/lsb-config       ${EXTDIR}/lsb/
 	if [ ! -f ${EXTDIR}/default/rc          ]; then install -m ${CONFMODE} default/rc          ${EXTDIR}/default/; fi
 	if [ -f   ${EXTDIR}/inittab               ]; then install -m ${CONFMODE} ${EXTDIR}/inittab     ${EXTDIR}/inittab.bak; fi
 	install                   -m ${CONFMODE} etc/inittab ${EXTDIR}/
