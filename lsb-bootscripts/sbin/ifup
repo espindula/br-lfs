@@ -1,97 +1,160 @@
 #!/bin/sh
 ########################################################################
-# Begin $NETWORK_DEVICES/ifup
+# Begin /sbin/ifdown
 #
 # Description : Interface Up
 #
-# Authors     : Nathan Coulson - nathan@linuxfromscratch.org
-#               Kevin P. Fleming - kpfleming@linuxfromscratch.org
+# Authors     : DJ Lucas - dj@linuxfromscratch.org
 #
-# Version     : 00.00
-#
-# Notes       : the IFCONFIG variable is passed to the scripts found
-#               in the services directory, to indicate what file the
-#               service should source to get environmental variables.
+# Version     : 00.02
 #
 ########################################################################
 
-. /lib/lsb/init-functions 
+. /lib/lsb/init-functions
 
-# Collect a list of configuration files for our interface
-if [ -n "${2}" ]; then
-    for file in ${@#$1} # All parameters except $1
-  do
-        FILES="${FILES} ${NETWORK_DEVICES}/ifconfig.${1}/${file}"
-    done
-elif [ -d "${NETWORK_DEVICES}/ifconfig.${1}" ]; then
-    FILES=`echo ${NETWORK_DEVICES}/ifconfig.${1}/*`
-else 
-    FILES="${NETWORK_DEVICES}/ifconfig.${1}"
+function get_args()
+    {
+        if test -z "${1}" ; then
+            showhelp
+            exit 1
+        fi
+
+        while test -n "${1}" ; do
+            case "${1}" in
+                -c | --configfile)
+                    check_arg $1 $2
+                    CONFIGFILE="${2}"
+                    shift 2
+                ;;
+                eth* | iw* | wlan*)
+                     INTERFACE="${1}"
+                     shift 1
+                ;;
+                -h | --help)
+                     showhelp
+                     exit 0
+                ;;
+                *)
+                   showhelp
+                   echo "ERROR: '${1}' unknown argument"
+                   echo ""
+                   exit 2
+                ;;
+            esac
+        done
+    }
+
+function check_arg()
+    {
+        echo "${2}" | grep -v "^-" > /dev/null
+        if [ -z "${?}" -o ! -n "${2}" ]; then
+            echo "Error:  ${1} requires a valid argument."
+            exit 2
+        fi
+    }
+
+function showhelp()
+    {
+        echo "`/usr/bin/basename ${0}` brings up a valid network interface."
+        echo ""
+        echo "Options:"
+        echo "          -c  --configfile    The path to an interface configuration file"
+        echo "                              If no configuration file is given, all files"
+        echo "                              listed in ${NETWORK_DEVICES}/ifconfig.<int> will"
+        echo "                              be processed, regarless of the value of ONBOOT"
+        echo "          -h  --help          Show this help message and exit."
+        echo ""
+        echo "Examples:"
+        echo "          `/usr/bin/basename ${0}` eth0 -c ${NETWORK_DEVICES}/ifconfig.eth0/ipv4"
+        echo "          `/usr/bin/basename ${0}` eth0"
+        echo ""
+        echo ""
+    }
+
+# Intialize empty variables so that the shell does not polute the script
+CONFIGFILE=""
+CONFIGDIR=""
+INTERFACE=""
+
+# Process command line arguments
+get_args ${@}
+
+# Handle common errors - No need to account for bootscripts, this should not
+# happen during boot or shutdown.
+if [ "${CONFIGFILE}x" != "x" -a ! -f "${CONFIGFILE}" ]; then
+    echo "ERROR: ${CONFIGFILE} is not a valid network configuration file."
+    echo ""
+    exit 2
 fi
 
-message="Bringing up the ${1} interface..."
-
-# Process each configruation file
-for file in ${FILES}; do
-    # skip backup files
-    if [ "${file}" != "${file%""~""}" ]; then
-        continue
+if [ "${INTERFACE}x" == "x" ]; then
+    echo "ERROR: No interface was given"
+    echo ""
+    exit 2
+else
+    if ! grep "${INTERFACE}" /proc/net/dev 2>&1 > /dev/null; then
+        echo "ERROR: ${INTERFACE} is not a valid network interface."
+        echo ""
+        exit 2
     fi
+fi
 
-    if [ ! -f "${file}" ]; then
-        log_warning_msg
-        message="${file} is not a network configuration file or directory."
-        log_warning_msg
+# If a configuration file is present, use it
+if [ "${CONFIGFILE}x" != "x" ]; then
+    . "${CONFIGFILE}"
+    if [ -x "/lib/network-services/${SERVICE}" ]; then
+        # do the work
+        # Check to make sure the interface is up
+        link_status=`/sbin/ip link show "${INTERFACE}" | \
+            grep -o "state UP"`
+        if [ "${link_status}" != "state UP" ]; then
+            message="Bringing up the ${INTERFACE} interface..."
+            /sbin/ip link set ${INTERFACE} up
+            evaluate_retval standard
+        fi
+        if IFCONFIG=${CONFIGFILE} \
+            /lib/network-services/${SERVICE} ${INTERFACE} up; then
+            mkdir -p "/run/network/ifconfig.${INTERFACE}"
+            cp "${CONFIGFILE}" "/run/network/ifconfig.${INTERFACE}/"
+        fi
+    else
+        echo "ERROR: Service '${SERVICE}' is not a valid service."
+        echo ""
+        exit 2
     fi
-
-    (
-        if [ ! -d "${file}" ]; then
-            . ${file}
-        fi
-
-        # Will not process this service if started by boot, and ONBOOT
-        # is not set to yes
-        if [ "${IN_BOOT}" = "1" -a "${ONBOOT}" != "yes" ]; then
-            continue
-        fi
-        # Will not process this service if started by hotplug, and 
-        # ONHOTPLUG is not set to yes
-        if [ "${IN_HOTPLUG}" = "1" -a "${ONHOTPLUG}" != "yes" -a "${HOSTNAME}" != "(none)" ]; then
-             continue
-        fi
-
-        if [ -n "${SERVICE}" -a -x "/lib/network-services/${SERVICE}" ]; then
-            if [ -z "${CHECK_LINK}" -o "${CHECK_LINK}" = "y" -o "${CHECK_LINK}" = "yes" -o "${CHECK_LINK}" = "1" ]; then
-                if ip link show ${1} > /dev/null 2>&1; then
-                    link_status=`ip link show ${1}`
-                    if [ -n "${link_status}" ]; then
-                        if ! echo "${link_status}" | grep -q UP; then
-                            ip link set ${1} up
-                            evaluate_retval standard
-                        fi
+# No interface configuration file was given
+else
+    # Process all available interface configuration files
+    CONFIGDIR="/etc/network/ifconfig.${INTERFACE}"
+    if [ -d "${CONFIGDIR}" ]; then
+        FILES=`ls "${CONFIGDIR}"`
+        for CONFIGFILE in ${FILES}
+        do
+            (
+                . "${CONFIGDIR}/${CONFIGFILE}"
+                if [ -x "/lib/network-services/${SERVICE}" ]; then
+                    # Check to make sure the interface is up
+                    link_status=`/sbin/ip link show "${INTERFACE}" | \
+                        grep -o "state UP"`
+                    if [ "${link_status}" != "state UP" ]; then
+                        message="Bringing up the ${INTERFACE} interface..."
+                        /sbin/ip link set ${INTERFACE} up
+                        evaluate_retval standard
+                    fi
+                    if IFCONFIG="${CONFIGDIR}/${CONFIGFILE}" \
+                        /lib/network-services/${SERVICE} ${INTERFACE} up; then
+                        mkdir -p "/run/network/ifconfig.${INTERFACE}"
+                        cp "${CONFIGDIR}/${CONFIGFILE}" \
+                            "/run/network/ifconfig.${INTERFACE}/"
                     fi
                 else
-                    message="${message}Interface ${1} doesn't exist."
-                    log_warning_msg
+                    echo "ERROR: Service '${SERVICE}' is not a valid service."
+                    echo ""
+                    exit 2
                 fi
-            fi
-            IFCONFIG=${file} /lib/network-services/${SERVICE} ${1} up
-            if [ "${?}" -eq "0" ]; then
-                if [ ! -d "${file}" -a "${file}" != "${NETWORK_DEVICES}/ifconfig.${1}" ]; then
-                    mkdir -p "/run/network/ifconfig.${1}"
-                    cp "${file}" "/run/network/ifconfig.${1}"
-                elif [ ! -d "${file}" ]; then
-                    cp "${file}" "/run/network/"
-                fi
-            fi
-        else
-            echo -e "${FAILURE}Unable to process ${file}.  Either"
-            echo -e "${FAILURE}the SERVICE variable was not set,"
-            echo -e "${FAILURE}or the specified service cannot be executed."
-            message=""
-            log_failure_msg
-        fi
-    )
-done
 
-# End $NETWORK_DEVICES/ifup
+            )
+        done
+    fi
+fi
+
