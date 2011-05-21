@@ -26,7 +26,6 @@ create-dirs:
 install: create-dirs
 	install -m ${MODE} etc/init.d/checkfs               ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/cleanfs               ${EXTDIR}/init.d/
-	install -m ${CONFMODE} etc/init.d/lfs-functions     ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/halt                  ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/console               ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/localnet              ${EXTDIR}/init.d/
@@ -75,7 +74,6 @@ install: create-dirs
 minimal: create-dirs
 	install -m ${MODE} etc/init.d/checkfs           ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/cleanfs           ${EXTDIR}/init.d/
-	install -m ${CONFMODE} etc/init.d/lfs-functions ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/halt              ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/localnet          ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/mountfs           ${EXTDIR}/init.d/
