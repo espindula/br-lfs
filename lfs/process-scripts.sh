@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Boot scripts
-for s in bootscripts/lfs/init.d/*                    \
-         bootscripts/lfs/sysconfig/*                 \
-         bootscripts/lfs/sysconfig/network-devices/* \
-         bootscripts/lfs/sysconfig/network-devices/services/*
+for s in lsb-bootscripts/etc/init.d/*                    \
+         lsb-bootscripts/etc/default/*                 \
+         lsb-bootscripts/sbin/* \
+         lsb-bootscripts/lib/network-services/*
 do
   script=$(basename $s)
   
   # Skip directories
-  [ $script == 'network-devices' ] && continue
-  [ $script == 'services'        ] && continue
+  [ $script == 'sbin' ] && continue
+  [ $script == 'network-services'        ] && continue
 
   # Disambiguate duplicate file names
-  [ $s == 'bootscripts/lfs/sysconfig/rc'      ] && script='rc-sysinit'; 
-  [ $s == 'bootscripts/lfs/sysconfig/modules' ] && script='modules-sysinit'; 
+  [ $s == 'lsb-bootscripts/etc/default/rc'      ] && script='rc-sysinit'; 
+  [ $s == 'lsb-bootscripts/etc/default/modules' ] && script='modules-sysinit'; 
   
   sed  -e 's/\&/\&amp\;/g' -e 's/</\&lt\;/g'   -e 's/>/\&gt\;/g' \
        -e "s/'/\&apos\;/g" -e 's/"/\&quot\;/g' -e 's/\t/    /g'  \

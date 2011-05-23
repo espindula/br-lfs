@@ -4,11 +4,11 @@ rm -f lfs-bootscripts*.tar.bz2
 
 # Get base file name and move bootscripts directory to that name
 version=`grep "ENTITY lfs-bootscripts-version" packages.ent |cut -d'"' -f2`
-mv bootscripts lfs-bootscripts-$version
+mv lsb-bootscripts lfs-bootscripts-$version
 
 # Create the tarball and clean up
 tar -cjf lfs-bootscripts-$version.tar.bz2 --exclude .svn lfs-bootscripts-$version
-mv lfs-bootscripts-$version bootscripts 
+mv lfs-bootscripts-$version lsb-bootscripts 
 
 rm -f udev-config*.bz2
 
