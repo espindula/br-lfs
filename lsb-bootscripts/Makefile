@@ -22,7 +22,7 @@ create-dirs:
 	install -d -m ${DIRMODE} ${DESTDIR}/sbin
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/lsb
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/network-services
-	if [ ${ETCDIR} != /etc ]; then ln -s ${DESTDIR}${ETCDIR}/init.d ${DESTDIR}/etc/init.d; fi
+	if [ ${ETCDIR} != /etc ]; then ln -s ${ETCDIR}/init.d ${DESTDIR}/etc/init.d; fi
 
 install: create-dirs
 	install -m ${MODE} etc/init.d/checkfs               ${EXTDIR}/init.d/
