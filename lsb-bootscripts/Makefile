@@ -1,4 +1,4 @@
-ETCDIR=/etc
+ETCDIR=/etc/rc.d
 EXTDIR=${DESTDIR}${ETCDIR}
 MODE=754
 DIRMODE=755
@@ -17,11 +17,12 @@ create-dirs:
 	install -d -m ${DIRMODE} ${EXTDIR}/rc6.d
 	install -d -m ${DIRMODE} ${EXTDIR}/rcS.d
 	install -d -m ${DIRMODE} ${EXTDIR}/init.d
-	install -d -m ${DIRMODE} ${EXTDIR}/default
-	install -d -m ${DIRMODE} ${EXTDIR}/network
+	install -d -m ${DIRMODE} ${DESTDIR}/etc/default
+	install -d -m ${DIRMODE} ${DESTDIR}/etc/network
 	install -d -m ${DIRMODE} ${DESTDIR}/sbin
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/lsb
 	install -d -m ${DIRMODE} ${DESTDIR}/lib/network-services
+	if [ ${ETCDIR} != /etc ]; then ln -s ${DESTDIR}${ETCDIR}/init.d ${DESTDIR}/etc/init.d; fi
 
 install: create-dirs
 	install -m ${MODE} etc/init.d/checkfs               ${EXTDIR}/init.d/
@@ -44,12 +45,10 @@ install: create-dirs
 	install -m ${MODE} etc/init.d/udev                  ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/udev_retry            ${EXTDIR}/init.d/
 	install -m ${CONFMODE} lib/lsb/init-functions       ${DESTDIR}/lib/lsb/
-	if [ ! -f ${EXTDIR}/default/createfiles ]; then install -m ${CONFMODE} etc/default/createfiles ${EXTDIR}/default/; fi
-	if [ ! -f ${EXTDIR}/default/modules     ]; then install -m ${CONFMODE} etc/default/modules     ${EXTDIR}/default/; fi
-	if [ ! -f ${EXTDIR}/default/rc          ]; then install -m ${CONFMODE} etc/default/rc          ${EXTDIR}/default/; fi
-	if [ ! -f ${EXTDIR}/default/rc.site     ]; then install -m ${CONFMODE} etc/default/rc.site     ${EXTDIR}/default/; fi
-	if [ -f   ${EXTDIR}/inittab               ]; then install -m ${CONFMODE} ${EXTDIR}/inittab     ${EXTDIR}/inittab.bak; fi
-	install                   -m ${CONFMODE} etc/inittab ${EXTDIR}/
+	if [ ! -f ${DESTDIR}/etc/default/createfiles ]; then install -m ${CONFMODE} etc/default/createfiles ${DESTDIR}/etc/default/; fi
+	if [ ! -f ${DESTDIR}/etc/default/modules     ]; then install -m ${CONFMODE} etc/default/modules     ${DESTDIR}/etc/default/; fi
+	if [ ! -f ${DESTDIR}/etc/default/rc          ]; then install -m ${CONFMODE} etc/default/rc          ${DESTDIR}/etc/default/; fi
+	if [ ! -f ${DESTDIR}/etc/default/rc.site     ]; then install -m ${CONFMODE} etc/default/rc.site     ${DESTDIR}/etc/default/; fi
 	install                   -m ${MODE} sbin/ifup   ${DESTDIR}/sbin/
 	install                   -m ${MODE} sbin/ifdown ${DESTDIR}/sbin/
 	install                   -m ${MODE} lib/network-services/ipv4-static       ${DESTDIR}/lib/network-services/
@@ -70,6 +69,7 @@ install: create-dirs
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/sysctl
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/udev
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/udev_retry
+	sed 's@ETCDIR@${ETCDIR}@' -i ${DESTDIR}/etc/default/rc
 
 minimal: create-dirs
 	install -m ${MODE} etc/init.d/checkfs           ${EXTDIR}/init.d/
@@ -85,9 +85,7 @@ minimal: create-dirs
 	install -m ${MODE} etc/init.d/swap              ${EXTDIR}/init.d/
 	install -m ${MODE} etc/init.d/udev              ${EXTDIR}/init.d/
 	install -m ${CONFMODE} lib/lsb/init-functions   ${DESTDIR}/lib/lsb/
-	if [ ! -f ${EXTDIR}/default/rc          ]; then install -m ${CONFMODE} default/rc          ${EXTDIR}/default/; fi
-	if [ -f   ${EXTDIR}/inittab               ]; then install -m ${CONFMODE} ${EXTDIR}/inittab     ${EXTDIR}/inittab.bak; fi
-	install                   -m ${CONFMODE} etc/inittab ${EXTDIR}/
+	if [ ! -f ${DESTDIR}/etc/default/rc          ]; then install -m ${CONFMODE} default/rc          ${DESTDIR}/etc/default/; fi
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/checkfs
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/cleanfs
 	/usr/lib/lsb/install_initd ${EXTDIR}/init.d/halt
