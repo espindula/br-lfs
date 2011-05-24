@@ -4,11 +4,11 @@ RENDERDIR	:= /home/jp/tmp
 VALIDATEDIR	:= $(RENDERDIR)/validate
 PROFILEDIR	:= $(RENDERDIR)/profile
 
-HTMLDIR		:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs
-NOCHUNKDIR	:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs
+HTMLDIR		:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs/clfs-svn
+NOCHUNKDIR	:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs/clfs-svn
 
 FODIR		:= $(RENDERDIR)/fo
-PDFDIR		:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs
+PDFDIR		:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs/clfs-svn
 
 TROUBLEDIR	:= $(RENDERDIR)/trouble
 DUMPDIR		:= $(RENDERDIR)/commands
