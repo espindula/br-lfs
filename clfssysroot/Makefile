@@ -1,21 +1,23 @@
-BASEDIR		:= ~/cross-lfs-sysroot-book
-DUMPDIR		:= ~/cross-lfs-sysroot-commands
-DLLISTDIR	:= ~/cross-lfs-sysroot-dllist
-RENDERTMP       := $(HOME)/tmp
-CHUNK_QUIET	:= 1
-ROOT_ID         :=
+TOP		:= $(PWD)
+RENDERDIR	:= $(TOP)/../render
 
-S		:= -
+VALIDATEDIR	:= $(RENDERDIR)/validate
+PROFILEDIR	:= $(RENDERDIR)/profile
+
+HTMLDIR		:= $(RENDERDIR)/html
+NOCHUNKDIR	:= $(RENDERDIR)/nochunk
+
+FODIR		:= $(RENDERDIR)/fo
+PDFDIR		:= $(RENDERDIR)/pdf
+
+TROUBLEDIR	:= $(RENDERDIR)/trouble
+DUMPDIR		:= $(RENDERDIR)/commands
+DLLISTDIR	:= $(RENDERDIR)/download-list
+
+CHUNK_QUIET	:= 1
+ROOT_ID		:=
 
 ARCHS		:= alpha arm hppa x86
-
-ARCHS_HTML	:= $(ARCHS:%=%$(S)html)
-ARCHS_NOCHUNKS	:= $(ARCHS:%=%$(S)nochunks)
-ARCHS_PDF	:= $(ARCHS:%=%$(S)pdf)
-ARCHS_VALIDATE	:= $(ARCHS:%=%$(S)validate)
-ARCHS_TROUBLE	:= $(ARCHS:%=%$(S)trouble)
-ARCHS_DUMP	:= $(ARCHS:%=%$(S)dump)
-ARCHS_DLLIST	:= $(ARCHS:%=%$(S)dllist)
 
 ifdef V
   Q =
@@ -23,169 +25,197 @@ else
   Q = @
 endif
 
-.PHONY: lfs tidy render titlepage $(ARCHS_HTML) nochunks $(ARCHS_NOCHUNKS) pdf \
-	$(ARCHS_PDF) validate $(ARCHS_VALIDATE) trouble $(ARCHS_TROUBLE) \
-	dump-commands $(ARCHS_DUMP) download-list $(ARCHS_DLLIST) tmpdir
+.PHONY: clfs lfs
+clfs lfs: html
 
-lfs: tmpdir render tidy
-
-tmpdir:
-	@echo "Creating and cleaning $(RENDERTMP)"
-	$(Q)[ -d $(RENDERTMP) ] || mkdir -p $(RENDERTMP)
-	$(Q)rm -f $(RENDERTMP)/*-{full,html,pdf}.xml
-	$(Q)rm -f $(RENDERTMP)/*.fo
-
+.PHONY: tidy tidy-f tidy-d
 ifeq ($(shell which tidy >/dev/null 2>&1 && echo yes),yes)
 tidy:
-	@echo "Running tidy on the created HTML"
-	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
-	  tidy -config $(PWD)/tidy.conf $$filename; \
-	  true; \
-	  sh $(PWD)/obfuscate.sh $$filename; \
-	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
-	done;
+	@$(MAKE) --no-print-directory tidy-d TIDY_DIR=$(HTMLDIR)
+
+tidy-f:
+	@echo "Running tidy on F:$(shell basename $(TIDY_FILE))"
+	@$(TOP)/tidy.sh "$(TIDY_FILE)"
+
+tidy-d:
+	@echo "Running tidy on D:$(shell basename $(TIDY_DIR))"
+	@$(TOP)/tidy.sh "$(TIDY_DIR)"
 else
-tidy:
+tidy tidy-f tidy-d:
 	@echo "Tidy is not installed on this system"
 endif
 
-render: $(ARCHS_HTML) titlepage
-
+.PHONY: titlepage
 titlepage:
-	@echo "Rendering Top Index"
-	$(Q)xsltproc --nonet --output $(BASEDIR)/index.html \
-	  $(PWD)/stylesheets/top-index.xsl $(PWD)/index.xml
+	@echo "Rendering the top-level index..."
+	$(Q)xsltproc --nonet --output $(HTMLDIR)/index.html \
+	  $(PWD)/stylesheets/top-index.xsl \
+	  $(PWD)/index.xml
+	@$(MAKE) --no-print-directory tidy-f TIDY_FILE=$(HTMLDIR)/index.html
 
-$(ARCHS_HTML): override html_arch = $(@:%$(S)html=%)
-$(ARCHS_HTML):
-	@echo "Validating $(html_arch) book..."
+ARCHS_VD_XML := $(ARCHS:%=%-validate_dump-xml)
+.PHONY: $(ARCHS_VD_XML)
+$(ARCHS_VD_XML): override arch = $(@:%-validate_dump-xml=%)
+$(ARCHS_VD_XML):
+	@echo "Validating $(arch) book..."
+	$(Q)mkdir -p $(VALIDATEDIR)
 	$(Q)xmllint --nonet --noent --xinclude --postvalid \
-	  -o $(RENDERTMP)/$(html_arch)-full.xml $(PWD)/$(html_arch)-index.xml
+	  -o $(VALIDATEDIR)/$(arch)-full.xml \
+	  $(PWD)/$(arch)-index.xml
 
-	@echo "Generating profiled $(html_arch) book for XHTML..."
+ARCHS_P_XML := $(ARCHS:%=%-profiled-xml)
+.PHONY: $(ARCHS_P_XML)
+$(ARCHS_P_XML): override arch = $(@:%-profiled-xml=%)
+$(ARCHS_P_XML):
+	@$(MAKE) --no-print-directory $(arch)-validate_dump-xml
+	@echo "Generating profiled $(arch) book..."
+	$(Q)mkdir -p $(PROFILEDIR)
 	$(Q)xsltproc --nonet --stringparam profile.condition html \
-	  --output $(RENDERTMP)/$(html_arch)-html.xml \
-	  $(PWD)/stylesheets/lfs-xsl/profile.xsl $(RENDERTMP)/$(html_arch)-full.xml
+	  --output $(PROFILEDIR)/$(arch)-html.xml \
+	  $(PWD)/stylesheets/lfs-xsl/profile.xsl \
+	  $(VALIDATEDIR)/$(arch)-full.xml
 
-	@echo "Rendering chunked XHTML of $(html_arch)..."
-	$(Q)mkdir -p $(BASEDIR)/$(html_arch)
+ARCHS_HTML := $(ARCHS:%=%-html)
+.PHONY: html render $(ARCHS_HTML)
+html render: $(ARCHS_HTML) titlepage
+$(ARCHS_HTML): override arch = $(@:%-html=%)
+$(ARCHS_HTML):
+	@$(MAKE) --no-print-directory $(arch)-profiled-xml
+
+	@echo "Rendering chunked XHTML of $(arch)..."
+	$(Q)mkdir -p $(HTMLDIR)/$(arch)
 	$(Q)xsltproc --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
 	  -stringparam rootid "$(ROOT_ID)" \
-	  -stringparam base.dir $(BASEDIR)/$(html_arch)/ \
-	  $(PWD)/stylesheets/clfs-chunked.xsl $(RENDERTMP)/$(html_arch)-html.xml
+	  -stringparam base.dir $(HTMLDIR)/$(arch)/ \
+	  $(PWD)/stylesheets/clfs-chunked.xsl \
+	  $(PROFILEDIR)/$(arch)-html.xml
 
-	@echo "Copying CSS code and images..."
-	$(Q)mkdir -p $(BASEDIR)/$(html_arch)/stylesheets
-	$(Q)cp $(PWD)/stylesheets/lfs-xsl/*.css $(BASEDIR)/$(html_arch)/stylesheets
-	$(Q)sed -i -e "s@../stylesheets@stylesheets@g" $(BASEDIR)/$(html_arch)/*.html
-	$(Q)mkdir -p $(BASEDIR)/$(html_arch)/images
-	$(Q)cp $(PWD)/images/*.png $(BASEDIR)/$(html_arch)/images
-	$(Q)sed -i -e "s@../images@images@g" $(BASEDIR)/$(html_arch)/*.html
+	@echo "Copying CSS code and images for $(arch)..."
+	$(Q)mkdir -p $(HTMLDIR)/$(arch)/stylesheets
+	$(Q)cp $(PWD)/stylesheets/lfs-xsl/*.css $(HTMLDIR)/$(arch)/stylesheets
+	$(Q)sed -i -e "s@../stylesheets@stylesheets@g" $(HTMLDIR)/$(arch)/*.html
+	$(Q)mkdir -p $(HTMLDIR)/$(arch)/images
+	$(Q)cp $(PWD)/images/*.png $(HTMLDIR)/$(arch)/images
+	$(Q)sed -i -e "s@../images@images@g" $(HTMLDIR)/$(arch)/*.html
 
-nochunks: tmpdir $(ARCHS_NOCHUNKS) tidy
+	@$(MAKE) --no-print-directory tidy-d TIDY_DIR=$(HTMLDIR)/$(arch)
 
-$(ARCHS_NOCHUNKS): override nochunk_arch = $(@:%$(S)nochunks=%)
+ARCHS_NOCHUNKS := $(ARCHS:%=%-nochunks)
+.PHONY: nochunks $(ARCHS_NOCHUNKS)
+nochunks: $(ARCHS_NOCHUNKS)
+$(ARCHS_NOCHUNKS): override arch = $(@:%-nochunks=%)
 $(ARCHS_NOCHUNKS):
-	@echo "Validating $(nochunk_arch) book..."
-	$(Q)xmllint --nonet --noent --xinclude --postvalid \
-	  -o $(RENDERTMP)/$(nochunk_arch)-full.xml $(PWD)/$(nochunk_arch)-index.xml
+	@$(MAKE) --no-print-directory $(arch)-profiled-xml
 
-	@echo "Generating profiled $(nochunk_arch) book for XHTML..."
-	$(Q)xsltproc --nonet --stringparam profile.condition html \
-	  --output $(RENDERTMP)/$(nochunk_arch)-html.xml \
-	  $(PWD)/stylesheets/lfs-xsl/profile.xsl \
-	  $(RENDERTMP)/$(nochunk_arch)-full.xml
-
-	@echo "Rendering Single File HTML of $(nochunk_arch)..."
-	$(Q)mkdir -p $(BASEDIR)
+	@echo "Rendering Single File HTML of $(arch)..."
+	$(Q)mkdir -p $(NOCHUNKDIR)
 	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
-	  --output $(BASEDIR)/CLFS-SYSROOT-$(nochunk_arch).html \
-	  $(PWD)/stylesheets/clfs-nochunks.xsl $(RENDERTMP)/$(nochunk_arch)-html.xml
+	  --output $(NOCHUNKDIR)/CLFS-$(arch).html \
+	  $(PWD)/stylesheets/clfs-nochunks.xsl \
+	  $(PROFILEDIR)/$(arch)-html.xml
 
-	@echo "Running Tidy..."
-	$(Q)tidy -config $(PWD)/tidy.conf $(BASEDIR)/CLFS-SYSROOT-$(nochunk_arch).html || true
-	@echo "Running obfuscate.sh..."
-	$(Q)sh $(PWD)/obfuscate.sh $(BASEDIR)/CLFS-SYSROOT-$(nochunk_arch).html
-	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g"  \
-	  $(BASEDIR)/CLFS-SYSROOT-$(nochunk_arch).html
+	@$(MAKE) --no-print-directory tidy-f TIDY_FILE=$(NOCHUNKDIR)/CLFS-$(arch).html
 
-pdf: tmpdir $(ARCHS_PDF)
+ARCHS_FO := $(ARCHS:%=%-fo)
+.PHONY: fo $(ARCHS_FO)
+fo: $(ARCHS_FO)
+$(ARCHS_FO): override arch = $(@:%-fo=%)
+$(ARCHS_FO):
+	@$(MAKE) --no-print-directory $(arch)-profiled-xml
 
-$(ARCHS_PDF): override pdf_arch =  $(@:%$(S)pdf=%)
+	@echo "Generating FO file of $(arch)..."
+	@mkdir -p $(FODIR)
+	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
+	  --output $(FODIR)/$(arch).fo \
+	  $(PWD)/stylesheets/clfs-pdf.xsl \
+	  $(PROFILEDIR)/$(arch)-html.xml
+	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(FODIR)/$(arch).fo
+
+ARCHS_PDF := $(ARCHS:%=%-pdf)
+.PHONY: pdf $(ARCHS_PDF)
+pdf: $(ARCHS_PDF)
+$(ARCHS_PDF): override arch = $(@:%-pdf=%)
 $(ARCHS_PDF):
-	@echo "Validating $(pdf_arch) book..."
-	$(Q)xmllint --nonet --noent --xinclude --postvalid \
-	  -o $(RENDERTMP)/$(pdf_arch)-full.xml $(PWD)/$(pdf_arch)-index.xml
+	@$(MAKE) --no-print-directory $(arch)-fo
 
-	@echo "Generating profiled $(pdf_arch) book for PDF..."
-	$(Q)xsltproc --nonet --stringparam profile.condition pdf \
-	  --output $(RENDERTMP)/$(pdf_arch)-pdf.xml \
-	  $(PWD)/stylesheets/lfs-xsl/profile.xsl \
-	  $(RENDERTMP)/$(pdf_arch)-full.xml
+	@echo "Rendering PDF of $(arch)..."
+	$(Q)mkdir -p $(PDFDIR)
+	$(Q)fop $(FODIR)/$(arch).fo $(PDFDIR)/CLFS-$(arch).pdf
 
-	@echo "Generating FO file of $(pdf_arch)..."
-	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
-	  --output $(RENDERTMP)/$(pdf_arch).fo $(PWD)/stylesheets/clfs-pdf.xsl \
-	  $(RENDERTMP)/$(pdf_arch)-pdf.xml
-	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/$(pdf_arch).fo
-
-	@echo "Rendering PDF of $(pdf_arch)..."
-	$(Q)mkdir -p $(BASEDIR)
-	$(Q)fop $(RENDERTMP)/$(pdf_arch).fo $(BASEDIR)/CLFS-SYSROOT-$(pdf_arch).pdf
-
+ARCHS_VALIDATE := $(ARCHS:%=%-validate)
+.PHONY: validate $(ARCHS_VALIDATE)
 validate: $(ARCHS_VALIDATE)
-
-$(ARCHS_VALIDATE): override validate_arch =  $(@:%$(S)validate=%)
+$(ARCHS_VALIDATE): override arch =  $(@:%-validate=%)
 $(ARCHS_VALIDATE):
-	@echo "Validating $(validate_arch)..."
-	$(Q)xmllint --xinclude --noout --nonet --postvalid $(PWD)/$(validate_arch)-index.xml
+	@echo "Validating $(arch)..."
+	$(Q)xmllint --xinclude --noout \
+	  --nonet --postvalid \
+	  $(PWD)/$(arch)-index.xml
 
-trouble: tmpdir $(ARCHS_TROUBLE)
-
-$(ARCHS_TROUBLE): override trouble_arch =  $(@:%$(S)trouble=%)
+ARCHS_TROUBLE := $(ARCHS:%=%-trouble)
+.PHONY: trouble $(ARCHS_TROUBLE)
+trouble: $(ARCHS_TROUBLE)
+$(ARCHS_TROUBLE): override arch = $(@:%-trouble=%)
 $(ARCHS_TROUBLE):
-	@echo "Troubleshooting $(trouble_arch)..."
+	@echo "Troubleshooting $(arch)..."
+	@mkdir -p $(TROUBLEDIR)
 	$(Q)xmllint --xinclude --nonet --postvalid \
-	  -o $(RENDERTMP)/dump-$(trouble_arch) $(PWD)/$(trouble_arch)-index.xml
-	$(Q)xmllint --xinclude --noout --nonet --valid $(RENDERTMP)/dump-$(trouble_arch)
-	@echo "You can now look at $(RENDERTMP)/dump-$(trouble_arch) to see the errors"
+	  -o $(TROUBLEDIR)/dump-$(arch) \
+	  $(PWD)/$(arch)-index.xml
+	$(Q)xmllint --xinclude --noout --nonet --valid \
+	  $(TROUBLEDIR)/dump-$(arch)
+	@echo "You can now look at $(TROUBLEDIR)/dump-$(arch) to see the errors"
 
+ARCHS_DUMP := $(ARCHS:%=%-dump)
+.PHONY: dump-commands $(ARCHS_DUMP)
 dump-commands: $(ARCHS_DUMP)
-
-$(ARCHS_DUMP): override dump_arch =  $(@:%$(S)dump=%)
+$(ARCHS_DUMP): override arch = $(@:%-dump=%)
 $(ARCHS_DUMP):
-	@echo "Extracting commands from $(dump_arch)..."
-	$(Q)mkdir -p $(DUMPDIR)/$(dump_arch)
-	$(Q)xsltproc --xinclude --nonet --output $(DUMPDIR)/$(dump_arch)/ \
-	  $(PWD)/stylesheets/dump-commands.xsl $(PWD)/$(dump_arch)-index.xml
+	@echo "Extracting commands from $(arch)..."
+	$(Q)mkdir -p $(DUMPDIR)/$(arch)
+	$(Q)xsltproc --xinclude --nonet \
+	  --output $(DUMPDIR)/$(arch)/ \
+	  $(PWD)/stylesheets/dump-commands.xsl \
+	  $(PWD)/$(arch)-index.xml
 
+ARCHS_DLLIST := $(ARCHS:%=%-dllist)
+.PHONY: download-list $(ARCHS_DLLIST)
 download-list: $(ARCHS_DLLIST)
-
-$(ARCHS_DLLIST): override dllist_arch = $(@:%$(S)dllist=%)
+$(ARCHS_DLLIST): override arch = $(@:%-dllist=%)
 $(ARCHS_DLLIST):
-	@echo "Creating download list for $(dllist_arch)..."
+	@echo "Creating download list for $(arch)..."
 	$(Q)mkdir -p $(DLLISTDIR)
-	$(Q)xsltproc --xinclude --nonet --output $(DLLISTDIR)/$(dllist_arch).dl.list \
-	  $(PWD)/stylesheets/wget.xsl $(PWD)/$(dllist_arch)-index.xml
+	$(Q)xsltproc --xinclude --nonet \
+	  --output $(DLLISTDIR)/$(arch).list \
+	  $(PWD)/stylesheets/wget.xsl \
+	  $(PWD)/$(arch)-index.xml
 
+FG_GREEN := $(shell echo -e '\e[0;32m')
+FG_BLUE := $(shell echo -e '\e[0;34m')
+FG_DEFAULT := $(shell echo -e '\e[0;0m')
 help:
+	@echo "Output: $(RENDERDIR)"
+	@echo
 	@echo "HTML Targets"
-	@echo -e "  \e[0;32mlfs tidy render titlepage \e[0;34m$(ARCHS_HTML)\e[0;0m"
+	@echo "  $(FG_GREEN)clfs lfs tidy html render titlepage $(FG_BLUE)$(ARCHS_HTML)$(FG_DEFAULT)"
 	@echo
 	@echo "NoChunks Targets"
-	@echo -e "  \e[0;32mnochunks tidy \e[0;34m$(ARCHS_NOCHUNKS)\e[0;0m"
+	@echo "  $(FG_GREEN)nochunks tidy $(FG_BLUE)$(ARCHS_NOCHUNKS)$(FG_DEFAULT)"
+	@echo
+	@echo "FO Targets"
+	@echo "  $(FG_GREEN)fo $(FG_BLUE)$(ARCHS_FO)$(FG_DEFAULT)"
 	@echo
 	@echo "PDF Targets"
-	@echo -e "  \e[0;32mpdf \e[0;34m$(ARCHS_PDF)\e[0;0m"
+	@echo "  $(FG_GREEN)pdf $(FG_BLUE)$(ARCHS_PDF)$(FG_DEFAULT)"
 	@echo
 	@echo "Validate Targets"
-	@echo -e "  \e[0;32mvalidate \e[0;34m$(ARCHS_VALIDATE)\e[0;0m"
+	@echo "  $(FG_GREEN)validate $(FG_BLUE)$(ARCHS_VALIDATE)$(FG_DEFAULT)"
 	@echo
 	@echo "Trouble Targets"
-	@echo -e "  \e[0;32mtrouble \e[0;34m$(ARCHS_TROUBLE)\e[0;0m"
+	@echo "  $(FG_GREEN)trouble $(FG_BLUE)$(ARCHS_TROUBLE)$(FG_DEFAULT)"
 	@echo
 	@echo "Dump-Commands Targets"
-	@echo -e "  \e[0;32mdump-commands \e[0;34m$(ARCHS_DUMP)\e[0;0m"
+	@echo "  $(FG_GREEN)dump-commands $(FG_BLUE)$(ARCHS_DUMP)$(FG_DEFAULT)"
 	@echo
 	@echo "Download-List Targets"
-	@echo -e "  \e[0;32mdownload-list \e[0;34m$(ARCHS_DLLIST)\e[0;0m"
+	@echo "  $(FG_GREEN)download-list $(FG_BLUE)$(ARCHS_DLLIST)$(FG_DEFAULT)"
