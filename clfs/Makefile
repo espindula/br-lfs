@@ -1,14 +1,14 @@
-TOP		:= $(PWD)
-RENDERDIR	:= /home/jp/tmp
+TOP		:= $(shell pwd)
+RENDERDIR	:= /home/jp/clfsfr/render
 
 VALIDATEDIR	:= $(RENDERDIR)/validate
 PROFILEDIR	:= $(RENDERDIR)/profile
 
-HTMLDIR		:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs/clfs-svn
-NOCHUNKDIR	:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs/clfs-svn
+HTMLDIR		:= $(RENDERDIR)/clfs-svn
+NOCHUNKDIR	:= $(RENDERDIR)/nochunk
 
 FODIR		:= $(RENDERDIR)/fo
-PDFDIR		:= /home/jp/Documentations/Traductions/lfs/Français/trunk/clfs/clfs-svn
+PDFDIR		:= $(RENDERDIR)/pdf
 
 TROUBLEDIR	:= $(RENDERDIR)/trouble
 DUMPDIR		:= $(RENDERDIR)/commands
@@ -53,8 +53,8 @@ endif
 titlepage:
 	@echo "Rendering the top-level index..."
 	$(Q)xsltproc --nonet --output $(HTMLDIR)/index.html \
-	  $(PWD)/stylesheets/top-index.xsl \
-	  $(PWD)/index.xml
+	  $(TOP)/stylesheets/top-index.xsl \
+	  $(TOP)/index.xml
 	@$(MAKE) --no-print-directory tidy-f TIDY_FILE=$(HTMLDIR)/index.html
 
 ARCHS_VD_XML := $(ARCHS:%=%-validate_dump-xml)
@@ -66,7 +66,7 @@ $(ARCHS_VD_XML):
 	$(Q)xmllint --nonet --noent --xinclude \
 	  --relaxng $(TOP)/schema/docbook/4.5/rng/docbook.rng \
 	  -o $(VALIDATEDIR)/$(arch)-full.xml \
-	  $(PWD)/$(arch)-index.xml
+	  $(TOP)/$(arch)-index.xml
 
 ARCHS_P_XML := $(ARCHS:%=%-profiled-xml)
 .PHONY: $(ARCHS_P_XML)
@@ -77,7 +77,7 @@ $(ARCHS_P_XML):
 	$(Q)mkdir -p $(PROFILEDIR)
 	$(Q)xsltproc --nonet --stringparam profile.condition html \
 	  --output $(PROFILEDIR)/$(arch)-html.xml \
-	  $(PWD)/stylesheets/lfs-xsl/profile.xsl \
+	  $(TOP)/stylesheets/lfs-xsl/profile.xsl \
 	  $(VALIDATEDIR)/$(arch)-full.xml
 
 ARCHS_HTML := $(ARCHS:%=%-html)
@@ -92,15 +92,15 @@ $(ARCHS_HTML):
 	$(Q)xsltproc --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
 	  -stringparam rootid "$(ROOT_ID)" \
 	  -stringparam base.dir $(HTMLDIR)/$(arch)/ \
-	  $(PWD)/stylesheets/clfs-chunked.xsl \
+	  $(TOP)/stylesheets/clfs-chunked.xsl \
 	  $(PROFILEDIR)/$(arch)-html.xml
 
 	@echo "Copying CSS code and images for $(arch)..."
 	$(Q)mkdir -p $(HTMLDIR)/$(arch)/stylesheets
-	$(Q)cp $(PWD)/stylesheets/lfs-xsl/*.css $(HTMLDIR)/$(arch)/stylesheets
+	$(Q)cp $(TOP)/stylesheets/lfs-xsl/*.css $(HTMLDIR)/$(arch)/stylesheets
 	$(Q)sed -i -e "s@../stylesheets@stylesheets@g" $(HTMLDIR)/$(arch)/*.html
 	$(Q)mkdir -p $(HTMLDIR)/$(arch)/images
-	$(Q)cp $(PWD)/images/*.png $(HTMLDIR)/$(arch)/images
+	$(Q)cp $(TOP)/images/*.png $(HTMLDIR)/$(arch)/images
 	$(Q)sed -i -e "s@../images@images@g" $(HTMLDIR)/$(arch)/*.html
 
 	@$(MAKE) --no-print-directory tidy-d TIDY_DIR=$(HTMLDIR)/$(arch)
@@ -116,7 +116,7 @@ $(ARCHS_NOCHUNKS):
 	$(Q)mkdir -p $(NOCHUNKDIR)
 	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
 	  --output $(NOCHUNKDIR)/CLFS-$(arch).html \
-	  $(PWD)/stylesheets/clfs-nochunks.xsl \
+	  $(TOP)/stylesheets/clfs-nochunks.xsl \
 	  $(PROFILEDIR)/$(arch)-html.xml
 
 	@$(MAKE) --no-print-directory tidy-f TIDY_FILE=$(NOCHUNKDIR)/CLFS-$(arch).html
@@ -132,7 +132,7 @@ $(ARCHS_FO):
 	@mkdir -p $(FODIR)
 	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
 	  --output $(FODIR)/$(arch).fo \
-	  $(PWD)/stylesheets/clfs-pdf.xsl \
+	  $(TOP)/stylesheets/clfs-pdf.xsl \
 	  $(PROFILEDIR)/$(arch)-html.xml
 	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(FODIR)/$(arch).fo
 
@@ -155,7 +155,7 @@ $(ARCHS_VALIDATE):
 	@echo "Validating $(arch)..."
 	$(Q)xmllint --xinclude --noout --nonet \
 	  --relaxng $(TOP)/schema/docbook/4.5/rng/docbook.rng \
-	  $(PWD)/$(arch)-index.xml
+	  $(TOP)/$(arch)-index.xml
 
 ARCHS_TROUBLE := $(ARCHS:%=%-trouble)
 .PHONY: trouble $(ARCHS_TROUBLE)
@@ -167,7 +167,7 @@ $(ARCHS_TROUBLE):
 	$(Q)xmllint --xinclude --nonet \
 	  --relaxng $(TOP)/schema/docbook/4.5/rng/docbook.rng \
 	  -o $(TROUBLEDIR)/dump-$(arch) \
-	  $(PWD)/$(arch)-index.xml
+	  $(TOP)/$(arch)-index.xml
 	$(Q)xmllint --xinclude --noout --nonet \
 	  --relaxng $(TOP)/schema/docbook/4.5/rng/docbook.rng \
 	  $(TROUBLEDIR)/dump-$(arch)
@@ -182,8 +182,8 @@ $(ARCHS_DUMP):
 	$(Q)mkdir -p $(DUMPDIR)/$(arch)
 	$(Q)xsltproc --xinclude --nonet \
 	  --output $(DUMPDIR)/$(arch)/ \
-	  $(PWD)/stylesheets/dump-commands.xsl \
-	  $(PWD)/$(arch)-index.xml
+	  $(TOP)/stylesheets/dump-commands.xsl \
+	  $(TOP)/$(arch)-index.xml
 
 ARCHS_DLLIST := $(ARCHS:%=%-dllist)
 .PHONY: download-list $(ARCHS_DLLIST)
@@ -194,8 +194,8 @@ $(ARCHS_DLLIST):
 	$(Q)mkdir -p $(DLLISTDIR)
 	$(Q)xsltproc --xinclude --nonet \
 	  --output $(DLLISTDIR)/$(arch).list \
-	  $(PWD)/stylesheets/wget.xsl \
-	  $(PWD)/$(arch)-index.xml
+	  $(TOP)/stylesheets/wget.xsl \
+	  $(TOP)/$(arch)-index.xml
 
 FG_GREEN := $(shell echo -e '\e[0;32m')
 FG_BLUE := $(shell echo -e '\e[0;34m')
