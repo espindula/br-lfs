@@ -6,18 +6,18 @@
 
   <!ENTITY shadow-download-http " ">
   <!ENTITY shadow-download-ftp  "ftp://pkg-shadow.alioth.debian.org/pub/pkg-shadow/shadow-&shadow-version;.tar.bz2">
-  <!ENTITY shadow-md5sum        "f90f51908e9c3a62ac0eb6b3043421de">
-  <!ENTITY shadow-size          "1.6 Mio">
-  <!ENTITY shadow-buildsize     "25 Mio">
-  <!ENTITY shadow-time          "0.4 SBU">
+  <!ENTITY shadow-md5sum        "d593a9cab93c48ee0a6ba056db8c1997">
+  <!ENTITY shadow-size          "1.8 Mio">
+  <!ENTITY shadow-buildsize     "30 Mio">
+  <!ENTITY shadow-time          "0.3 SBU">
 ]>
 
 <sect1 id="shadow" xreflabel="Shadow-&shadow-version;">
   <?dbhtml filename="shadow.html"?>
 
   <sect1info>
-    <othername>$LastChangedBy: gdalziel $</othername>
-    <date>$Date: 2009-07-06 21:12:40 +0200 (lun 06 jui 2009) $</date>
+    <othername>$LastChangedBy: randy $</othername>
+    <date>$Date: 2010-11-02 00:13:37 +0100 (mar 02 nov 2010) $</date>
   </sect1info>
 
   <title>Shadow-&shadow-version;</title>
@@ -39,6 +39,8 @@
     <application>Linux-PAM</application>, la réinstallation de
     <application>Shadow</application> permettra à des programmes tels que
     <command>login</command> et <command>su</command> d'utiliser PAM.</para>
+
+    &lfs67_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -109,18 +111,6 @@
 find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \; &amp;&amp;
 sed -i -e 's/ ko//' -e 's/ zh_CN zh_TW//' man/Makefile.in       &amp;&amp;
 
-for i in de fi fr id it pt_BR; do
-    convert-mans UTF-8 ISO-8859-1 man/${i}/*.?
-done                                                            &amp;&amp;
-
-for i in cs hu pl; do
-    convert-mans UTF-8 ISO-8859-2 man/${i}/*.?
-done                                                            &amp;&amp;
-
-convert-mans UTF-8 EUC-JP man/ja/*.?                            &amp;&amp;
-convert-mans UTF-8 KOI8-R man/ru/*.?                            &amp;&amp;
-convert-mans UTF-8 ISO-8859-9 man/tr/*.?                        &amp;&amp;
-
 sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD MD5@' \
        -e 's@/var/spool/mail@/var/mail@' etc/login.defs         &amp;&amp;
 
@@ -153,10 +143,6 @@ mv -v /usr/bin/passwd /bin</userinput></screen>
     commande désactive l'installation des pages de manuel chinoises et coréennes,
     vu que <application>Man-DB</application> ne peut pas les formatter
     correctement.</para>
-
-    <para><command>convert-mans ...</command>&nbsp;: Ces commandes sont
-    utilisées pour convertir certaines des pages de man pour que
-    <application>Man-DB</application> les affichent dans les encodages attendus.</para>
 
     <para><command>sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD MD5@'
     -e 's@/var/spool/mail@/var/mail@' etc/login.defs</command>&nbsp;: Au lieu
@@ -248,7 +234,7 @@ mv -v /usr/bin/passwd /bin</userinput></screen>
       <itemizedlist spacing="compact">
       <listitem>
         <para><ulink
-        url="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam-6.html#ss6.3"/></para>
+        url="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/sag-pam_cracklib.html"/></para>
       </listitem>
       <listitem>
         <para><ulink
@@ -312,68 +298,48 @@ done</userinput></screen>
       </sect4>
 
       <sect4>
-        <title>'login' (avec CrackLib)</title>
+        <title>'system-account'</title>
 
-<screen role="root"><userinput>cat &gt; /etc/pam.d/login &lt;&lt; "EOF"
-<literal># Début de /etc/pam.d/login
-
-auth        requisite      pam_nologin.so
-auth        required       pam_securetty.so
-auth        required       pam_unix.so
-account     required       pam_access.so
+<screen role="root"><userinput>cat &gt; /etc/pam.d/system-account &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-account
+ 
 account     required       pam_unix.so
-session     required       pam_env.so
-session     required       pam_motd.so
-session     required       pam_limits.so
-session     optional       pam_mail.so      dir=/var/mail standard
-session     optional       pam_lastlog.so
-session     required       pam_unix.so
-password    required       pam_cracklib.so  retry=3
-password    required       pam_unix.so      md5 shadow use_authtok
 
-# Fin de /etc/pam.d/login</literal>
+# End /etc/pam.d/system-account</literal>
 EOF</userinput></screen>
 
       </sect4>
 
       <sect4>
-        <title>'login' (sans CrackLib)</title>
+        <title>'system-auth'</title>
 
-<screen role="root"><userinput>cat &gt; /etc/pam.d/login &lt;&lt; "EOF"
-<literal># Début de /etc/pam.d/login
+<screen role="root"><userinput>cat &gt; /etc/pam.d/system-auth &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-auth
 
-auth        requisite      pam_nologin.so
-auth        required       pam_securetty.so
-auth        required       pam_env.so
 auth        required       pam_unix.so
-account     required       pam_access.so
-account     required       pam_unix.so
-session     required       pam_motd.so
-session     required       pam_limits.so
-session     optional       pam_mail.so      dir=/var/mail standard
-session     optional       pam_lastlog.so
-session     required       pam_unix.so
-password    required       pam_unix.so      md5 shadow
 
-# Fin de /etc/pam.d/login</literal>
+# Fin de /etc/pam.d/system-auth</literal>
 EOF</userinput></screen>
 
       </sect4>
 
       <sect4>
-        <title>'passwd' (avec CrackLib)</title>
+        <title>'system-passwd' (avec CrackLib)</title>
 
-<screen role="root"><userinput>cat &gt; /etc/pam.d/passwd &lt;&lt; "EOF"
-<literal># Début de /etc/pam.d/passwd
+<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-password
+  
+# vérifie la force des nouveaux mots de passe (man pam_cracklib)
+password  required    pam_cracklib.so   type=Linux retry=3 difok=5 \
+                                        difignore=23 minlen=9 dcredit=1 \
+                                        ucredit=1 lcredit=1 ocredit=1 \
+                                        dictpath=/lib/cracklib/pw_dict
+# utilisation de sha512 hash pour le cryptage, et utilisation des jetons
+# d'authentication (chosen password) initialisé par pam_cracklib
+# (ou un des précédents modules)
+password  required    pam_unix.so       sha512 shadow use_authtok
 
-password    required       pam_cracklib.so  type=Linux retry=1 \
-                                            difok=5 diffignore=23 minlen=9 \
-                                            dcredit=1 ucredit=1 lcredit=1 \
-                                            ocredit=1 \
-                                            dictpath=/lib/cracklib/pw_dict
-password    required       pam_unix.so      md5 shadow use_authtok
-
-# Fin de /etc/pam.d/passwd</literal>
+# Fin de /etc/pam.d/system-password</literal>
 EOF</userinput></screen>
 
         <note><para>Dans sa configuration par défaut, en fonction des droits,
@@ -384,14 +350,96 @@ EOF</userinput></screen>
         de votre système.</para></note>
 
       </sect4>
+      
+      <sect4>
+        <title>'system-passwd' (without cracklib)</title>
+
+<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-password
+
+# utilisation de sha512 hash pour le cryptage, et essaie d'utiliser un des jetons d'authentification
+# défini précédement (chosen password) initialisé par un des modules anterieurs
+password  required    pam_unix.so       sha512 shadow try_first_pass
+
+# End /etc/pam.d/system-password</literal>
+EOF</userinput></screen>
+
+      </sect4>
 
       <sect4>
-        <title>'passwd' (sans CrackLib)</title>
+        <title>'system-session'</title>
+
+<screen role="root"><userinput>cat &gt; /etc/pam.d/system-session &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-session
+
+session   required    pam_unix.so
+
+# End /etc/pam.d/system-session</literal>
+EOF</userinput></screen>
+
+      </sect4>
+ 
+      <sect4>
+        <title>'login'</title>
+
+<screen role="root"><userinput>cat &gt; /etc/pam.d/login &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/login
+
+# Initialise le delai après un echec avant un nouveau prompt à 3 seconds
+auth      optional    pam_faildelay.so  delay=3000000
+
+# Vérifie pour être certain que l'utilisateur est autorisé à se loguer
+auth      requisite   pam_nologin.so
+
+# Vérifie pour être certain que root est autorisé à se loguer
+auth      required    pam_securetty.so
+
+# Appartenances aux groupes supplémentaires - désactivé par défaut
+#auth      optional    pam_group.so
+
+# Inclure les paramètres d'authentification par défaut
+auth      include     system-auth
+
+# Vérifie l'acces pour l'utilisateur
+account   required    pam_access.so
+
+# Inclure les paramètres pour le compte par défaut
+account   include     system-account
+
+# Initialise les variables d'environnement par défaut pour l'utilisateur
+session   required    pam_env.so
+
+# Initialise les limites de ressource pour l'utilisateur
+session   required    pam_limits.so
+
+# Affiche la date du dernier login - Désactivé par défaut
+#session   optional    pam_lastlog.so
+
+# Affiche le message du jour - Désactivé par défaut
+#session   optional    pam_motd.so
+
+# Vérifie les mails de l'utilisateur - Désactivé par défaut
+#session   optional    pam_mail.so      standard quiet
+
+# Utilisation des clefs xauth (si disponible)
+session   optional    pam_xauth.so
+
+# Inclure la session par defaut et les paramètres du mot de passe
+session   include     system-session
+password  include     system-password
+
+# End /etc/pam.d/login</literal>
+EOF</userinput></screen>
+
+      </sect4>
+
+      <sect4>
+        <title>'passwd'</title>
 
 <screen role="root"><userinput>cat &gt; /etc/pam.d/passwd &lt;&lt; "EOF"
 <literal># Début de /etc/pam.d/passwd
 
-password    required       pam_unix.so      md5 shadow
+password  include     system-password
 
 # Fin de /etc/pam.d/passwd</literal>
 EOF</userinput></screen>
@@ -404,13 +452,21 @@ EOF</userinput></screen>
 <screen role="root"><userinput>cat &gt; /etc/pam.d/su &lt;&lt; "EOF"
 <literal># Début de /etc/pam.d/su
 
-auth        sufficient      pam_rootok.so
-auth        required        pam_unix.so
-account     required        pam_unix.so
-session     optional        pam_mail.so     dir=/var/mail standard
-session     optional        pam_xauth.so
-session     required        pam_env.so
-session     required        pam_unix.so
+# Autorise toujours root
+auth      sufficient  pam_rootok.so
+auth      include     system-auth
+
+# Inclure les paramètres pour le compte par défaut
+account   include     system-account
+
+# Utilisation des clefs xauth (si disponible)
+session   optional    pam_xauth.so
+
+# Initialise les variables d'environnement par défaut pour l'utilisateur
+session   required    pam_env.so
+
+# Inclure la session par défaut
++session   include     system-session
 
 # Fin de /etc/pam.d/su</literal>
 EOF</userinput></screen>
@@ -423,11 +479,16 @@ EOF</userinput></screen>
 <screen role="root"><userinput>cat &gt; /etc/pam.d/chage &lt;&lt; "EOF"
 <literal># Début de /etc/pam.d/chage
 
-auth        sufficient      pam_rootok.so
-auth        required        pam_unix.so
-account     required        pam_unix.so
-session     required        pam_unix.so
-password    required        pam_permit.so
+# Autorise toujours root
+auth      sufficient  pam_rootok.so
+
+# Inclure les valeurs système par défaut pour l'authentification du compte et la session
+auth      include     system-auth
+account   include     system-account
+session   include     system-session
+
+# Permet toujours les mises à jour de l'authentification
+password  required    pam_permit.so
 
 # Fin de /etc/pam.d/chage</literal>
 EOF</userinput></screen>
@@ -483,14 +544,14 @@ done</userinput></screen>
 <screen role="root"><userinput>cat &gt; /etc/pam.d/other &lt;&lt; "EOF"
 <literal># Début de /etc/pam.d/other
 
-auth        required        pam_deny.so
 auth        required        pam_warn.so
-account     required        pam_deny.so
+auth        required        pam_deny.so
 account     required        pam_warn.so
-password    required        pam_deny.so
+account     required        pam_deny.so
 password    required        pam_warn.so
-session     required        pam_deny.so
+password    required        pam_deny.so
 session     required        pam_warn.so
+session	    required 	    pam_deny.so
 
 # Fin de /etc/pam.d/other</literal>
 EOF</userinput></screen>
@@ -558,9 +619,9 @@ echo 'PATH        DEFAULT='`echo "${ENV_PATH}"`\
 unset ENV_PATH</userinput></screen>
 
           <note>
-            <para>ENV_SUPATH n'est plus supporté.  Vous devez créer un fichier
-            <filename>/root/.bashrc</filename> valide pour fournir un chemin
-            modifié au super utilisateur.</para>
+            <para>L'option ENV_SUPATH utilisé pour modifier la path root par défaut ne fonctionne 
+	      pas avec PAM. Vous devez initialiser le path dans les scripts de login de root.
+	      </para>
           </note>
 
       </sect4>

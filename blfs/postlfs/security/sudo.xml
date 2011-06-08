@@ -5,19 +5,19 @@
   %general-entities;
 
   <!ENTITY sudo-download-http "http://www.sudo.ws/sudo/dist/sudo-&sudo-version;.tar.gz">
-  <!ENTITY sudo-download-ftp "ftp://ftp.twaren.net/Unix/Security/Sudo/sudo-&sudo-version;.tar.gz">
-  <!ENTITY sudo-md5sum "5fd96bba35fe29b464f7aa6ad255f0a6">
-  <!ENTITY sudo-size "732 Kio">
-  <!ENTITY sudo-buildsize "4.4 Mio">
-  <!ENTITY sudo-time "0.1 SBU">
+  <!ENTITY sudo-download-ftp  "ftp://ftp.twaren.net/Unix/Security/Sudo/sudo-&sudo-version;.tar.gz">
+  <!ENTITY sudo-md5sum        "4c8105507363371dea89ceb7c92187dd">
+  <!ENTITY sudo-size          "943 Kio">
+  <!ENTITY sudo-buildsize     "5 Mio">
+  <!ENTITY sudo-time          "0.1 SBU">
 ]>
 
 <sect1 id="sudo" xreflabel="sudo-&sudo-version;">
   <?dbhtml filename="sudo.html"?>
 
   <sect1info>
-    <othername>$LastChangedBy: bdubbs $</othername>
-    <date>$Date: 2008-12-27 01:43:41 +0100 (sam 27 déc 2008) $</date>
+    <othername>$LastChangedBy: thomas $</othername>
+    <date>$Date: 2011-01-15 14:47:45 +0100 (sam 15 jan 2011) $</date>
   </sect1info>
 
   <title>Sudo-&sudo-version;</title>
@@ -34,6 +34,8 @@
     la possibilité de lancer tout ou partie des commandes en tant qu'utilisateur
     <systemitem class="username">root</systemitem> ou qu'un autre utilisateur
     en enregistrant les commandes et les arguments.</para>
+
+    &lfs67_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -93,10 +95,15 @@
 
 <!-- <screen><userinput>patch -Np1 -i ../sudo-&sudo-version;-envvar_fix-1.patch &amp;&amp;
 -->
-<screen><userinput>./configure --prefix=/usr --libexecdir=/usr/lib \
-    --with-ignore-dot --with-all-insults \
-    --enable-shell-sets-home --disable-root-sudo \
-    --with-logfac=auth --without-pam --without-sendmail &amp;&amp;
+<screen><userinput>./configure --prefix=/usr \
+            --libexecdir=/usr/lib \
+            --with-ignore-dot \
+            --with-all-insults \
+            --enable-shell-sets-home \
+            --disable-root-sudo \
+            --with-logfac=auth \
+            --without-pam \
+            --without-sendmail &amp;&amp;
 make</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -200,8 +207,27 @@ ADMIN       ALL = NOPASSWD: ALL</screen>
       en tant qu'utilisateur <systemitem class="username">root</systemitem> user
       pour créer le fichier de configuration <application>PAM</application>&nbsp;:</para>
 
-<screen role="root"><userinput>sed -e 's@/su@/sudo@' -e '/pam_rootok/d' \
-    /etc/pam.d/su &gt; /etc/pam.d/sudo</userinput></screen>
+<screen role="root"><userinput>cat &gt; /etc/pam.d/sudo &lt;&lt; "EOF" &amp;&amp;
+# Begin /etc/pam.d/sudo
+
+# Inclure les paramètres d'authentification par défaut
+auth      include     system-auth
+
+# Inclure les paramètres du compte par défaut
+account   include     system-account
+
+# utilisation des clefs xauth (si disponible)
+session   optional    pam_xauth.so
+
+# Initialise les variables d'environnement pour l'utilisateur
+session   required    pam_env.so
+
+# Inclure les valeurs par défaut de la session système
+session   include     system-session
+
+# End /etc/pam.d/sudo
+EOF
+chmod 644 /etc/pam.d/sudo</userinput></screen>
 
     </sect3>
 

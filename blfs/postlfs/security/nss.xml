@@ -4,13 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY nspr-version      "4.6.7">
-  <!ENTITY nss-download-http "http://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_11_7_RTM/src/nss-&nss-version;-with-nspr-&nspr-version;.tar.gz">
-  <!ENTITY nss-download-ftp  "ftp://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_11_7_RTM/src/nss-&nss-version;-with-nspr-&nspr-version;.tar.gz">
-  <!ENTITY nss-md5sum        "0b0c6bdf63c442d68453e470b8747a9d">
-  <!ENTITY nss-size          "5.0 Mio">
-  <!ENTITY nss-buildsize     "71 Mio">
-  <!ENTITY nss-time          "0.8 SBU (additional 0.9 SBU to run the test suite)">
+  <!ENTITY nss-download-http "http://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_12_8_RTM/src/nss-&nss-version;.tar.gz">
+  <!ENTITY nss-download-ftp  "ftp://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_12_8_RTM/src/nss-&nss-version;.tar.gz">
+  <!ENTITY nss-md5sum        "40bf1bb0c7567827d3768d1fc6081100">
+  <!ENTITY nss-size          "5.7 Mio">
+  <!ENTITY nss-buildsize     "73 MB (plus du double pour exécuter la suite de tests)">
+  <!ENTITY nss-time          "0.9 SBU (ajouter au moins 3.5 SBU pour éxécuter la suite de tests)">
 ]>
 
 <sect1 id="nss" xreflabel="NSS-&nss-version;">
@@ -18,7 +17,7 @@
 
   <sect1info>
     <othername>$LastChangedBy: randy $</othername>
-    <date>$Date: 2007-07-15 17:53:33 +0200 (dim, 15 jui 2007) $</date>
+    <date>$Date: 2011-01-06 14:31:37 +0100 (jeu 06 jan 2011) $</date>
   </sect1info>
 
   <title>NSS-&nss-version;</title>
@@ -39,15 +38,7 @@
     standards de sécurité. C'est utile pour implémenter SSL et S/MIME ou d'autres
     standards de sécurité sur Internet dans une application.</para>
 
-    <para>Le paquet <application>NSS</application> a pour prérequis de 
-    construction les bibliothèques <foreignphrase>Netscape
-    Portable Runtime</foreignphrase> (d'exécution portables) (NSPR). L'archive
-    tar du paquet <application>NSS</application> contient le code nécessaire à la
-    construction des bibliothèques NSPR. Ces bibliothèques sont construites et 
-    installées en utilisant les instructions ci-dessous. Le paquet
-    <application>NSS</application> est essentiellement une installation combinée
-    de <application>NSS</application>/NSPR.</para>
-
+    &lfs67_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -75,9 +66,19 @@
     <itemizedlist spacing="compact">
       <listitem>
         <para>Correctif requis&nbsp;: <ulink
-        url="&patch-root;/nss-&nss-version;-with-nspr-&nspr-version;-fedora_fixes-1.patch"/></para>
+        url="&patch-root;/nss-&nss-version;-standalone-1.patch"/></para>
       </listitem>
     </itemizedlist>
+    
+    <bridgehead renderas="sect3">Dépendances de NSS</bridgehead>
+
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required"><xref linkend="nspr"/></para>
+
+    <bridgehead renderas="sect4">Recommandées</bridgehead>
+    <para role="recommended"><xref linkend="sqlite"/> (Le sqlite interne est incompatible 
+    avec une installation existante ou future)</para>
+
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/nss"/></para>
@@ -92,34 +93,35 @@
 
 <screen><userinput>bash
 
-export WORKINGDIR=$PWD &amp;&amp;
 export BUILD_OPT=1 &amp;&amp;
+export NSS_USE_SYSTEM_SQLITE=1 &amp;&amp;
+export NSPR_INCLUDE_DIR=/usr/include/nspr &amp;&amp;
+export USE_SYSTEM_ZLIB=1 &amp;&amp;
+export ZLIB_LIBS=-lz &amp;&amp;
+patch -Np1 -i ../nss-&nss-version;-standalone-1.patch &amp;&amp;
+make -C mozilla/security/nss nss_build_all</userinput></screen>
 
-patch -Np1 -i ../nss-&nss-version;-with-nspr-&nspr-version;-fedora_fixes-1.patch &amp;&amp;
+    <para>Si vous souhaitez tester les résultats, vous devez initialiser le nom de domaine de
+    votre systeme dans la variable d'environnement <envar>DOMSUF</envar>. La plupart des tests
+    échoueront si vous ne mettez pas le nom de domaine correct. La sortie volumineuse
+    indiquera combien des milliers de tests seront réussi, et si quelques uns echoue.
+    Pour revoir le détail des echecs, vous pouvez rediriger stdout et stderr dans un fichier.</para>
 
-cd mozilla/security/nss &amp;&amp;
-make nss_build_all &amp;&amp;
-cd ../.. &amp;&amp;
-
-export NSS_LINUXDIR=$(basename `ls -d $WORKINGDIR/mozilla/dist/Linux*`)</userinput></screen>
-
-    <para>Pour tester les résultats, vous devrez régler le nom de domaine de 
-    votre système dans la variable d'environnement <envar>DOMSUF</envar>. La
-    plupart des tests échoueront si vous ne fournissez pas le bon nom de 
-    domaine. Un fichier journal auto-généré sera parsé en fin de test pour 
-    afficher la façon dont les tests se sont passés. Il devrait retourner 800. 
-    Pour lancer les tests, assurez-vous de remplacer la commande 
+    <para>To run the tests, ensure you change the
     <command>export DOMSUF</command> ci-dessous avec la valeur adéquate, 
-    par exemple <parameter>mydomain.com</parameter> et lancez les commandes
+    par exemple <parameter>mydomain.com</parameter> ou si vous n'avez aucun domaine dans
+    votre <filename>/etc/hosts</filename> remplacez le selon la recommandation des developpeurs
+    par <command>"export HOST=localhost DOMSUF=localdomain"</command> et lancez les commandes
     suivantes&nbsp;:</para>
 
 <screen><userinput>bash
 
+export NSS_LINUXDIR=$(basename `ls -d $PWD/mozilla/dist/Linux*`) &amp;&amp;
 export DOMSUF=<replaceable>&lt;validdomain.name&gt;</replaceable> &amp;&amp;
-export PATH=$PATH:$WORKINGDIR/mozilla/dist/$NSS_LINUXDIR/bin &amp;&amp;
-export TEST_RESULTSDIR=$WORKINGDIR/mozilla/tests_results/security &amp;&amp;
+export PATH=$PATH:$PWD/mozilla/dist/$NSS_LINUXDIR/bin &amp;&amp;
+export TEST_RESULTSDIR=$PWD/mozilla/tests_results/security &amp;&amp;
 
-cd security/nss/tests &amp;&amp;
+cd mozilla/security/nss/tests &amp;&amp;
 sed -i 's/gmake/make/' common/init.sh &amp;&amp;
 ./all.sh &amp;&amp;
 
@@ -127,34 +129,17 @@ grep Passed $TEST_RESULTSDIR/$(hostname).1/results.html | wc -l &amp;&amp;
 
 exit</userinput></screen>
 
-    <caution>
-      <para>Si vous passez en utilisateur <systemitem class="username">root</systemitem>
-      par une méthode non issue de l'environnement de l'u!ilisateur non 
-      privilégié, assurez-vous que la variable d'environnement
-      <envar>NSS_LINUXDIR</envar> de 
-      <systemitem class="username">root</systemitem> est bien paramétrée avant
-      de lancer les commandes d'installation.</para>
-    </caution>
+   <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
-
-<screen role="root"><userinput>install -v -m755 nsprpub/$NSS_LINUXDIR/config/nspr-config \
-                 security/nss/cmd/config/nss-config \
-    /usr/bin &amp;&amp;
-install -v -m755 -d /usr/lib/pkgconfig &amp;&amp;
-install -v -m644 nsprpub/lib/pkgconfig/nspr.pc \
-                 security/nss/lib/pkgconfig/nss.pc \
-    /usr/lib/pkgconfig &amp;&amp;
-
-cd dist &amp;&amp;
-
+<screen role="root"><userinput>export NSS_LINUXDIR=$(basename `ls -d $PWD/mozilla/dist/Linux*`) &amp;&amp;
+cd mozilla/dist &amp;&amp;
 install -v -m755 $NSS_LINUXDIR/lib/*.so /usr/lib &amp;&amp;
 install -v -m644 $NSS_LINUXDIR/lib/{*.chk,libcrmf.a} /usr/lib &amp;&amp;
-
-install -v -m755 -d /usr/include/{nss,nspr} &amp;&amp;
-install -v -m644 {public,private}/nss/* /usr/include/nss &amp;&amp;
-cp -v -RL $NSS_LINUXDIR/include/* /usr/include/nspr &amp;&amp;
-chmod -v 644 /usr/include/nspr/prvrsion.h</userinput></screen>
+install -v -m755 -d /usr/include/nss &amp;&amp;
+install -v -m755 $NSS_LINUXDIR/bin/{certutil,nss-config,pk12util} /usr/bin &amp;&amp;
+install -v -m644 $NSS_LINUXDIR/lib/pkgconfig/nss.pc /usr/lib/pkgconfig &amp;&amp;
+cp -v -RL {public,private}/nss/* /usr/include/nss &amp;&amp;
+chmod 644 /usr/include/nss/*</userinput></screen>
 
     <para>Maintenant, en tant qu'utilisateur non privilégié, quittez le shell 
     <command>bash</command> ouvert au début de l'installation pour restaurer 
@@ -172,27 +157,35 @@ chmod -v 644 /usr/include/nspr/prvrsion.h</userinput></screen>
     shells a pour but de restaurer l'environnement et de revenir au répertoire
     de départ quand l'installation est finie.</para>
 
-    <para><command>export WORKINGDIR=$PWD</command>&nbsp;: Cette variable est
-    paramétrée car beaucoup de commandes dépendent de la connaissance du chemin
-    complet vers certains répertoires. <envar>WORKINGDIR</envar> établit un
-    chemin connu pour que les autres puissent être déterminés de façon relative.</para>
+    <para><command>export USE_64=1</command>:Cette commande est
+    <emphasis>requise pour x86_64</emphasis>, sinon la construction va essayer de créer des 
+    objets 32-bits et echouera dans un système non-multilib.</para>
 
     <para><command>export BUILD_OPT=1</command>&nbsp;: Cette variable est
     réglée pour que la construction se fasse sans symboles de débogage dans les
     binaires et pour que les optimisations du compilateur par défaut soient
     utilisées.</para>
 
+    <para><command>export NSPR_INCLUDE_DIR=/usr/include/nspr</command>: Cette comande
+    initialise l'emplacement des entêtes de nspr.</para>
+
+    <para><command>export USE_SYSTEM_*</command>: Ces commandes assurent que les bibliothèques
+    du système installé sont utilisés au lieu des versions de l'arborescence.</para>
+
+    <para><command>export ZLIB_LIBS=-lz</command>: Cette commande fournit le drapeau nécessaire pour
+    lier au systeme zlib.</para>
+
     <para><command>export NSS_LINUXDIR=...</command>&nbsp;: Cette variable est
     réglée pour pouvoir déterminer le nom exact des répertoires spécifiques à 
     l'architecture où sont stoclés les binaires dans l'arborescence des sources.</para>
 
-    <para><command>make nss_build_all</command>&nbsp;: Cette commande construit
-    les bibliothèques NSPR et <application>NSS</application> et crée un 
+    <para><command>make -C mozilla/security/nss nss_build_all</command>&nbsp;: Cette 
+    commande construit les bibliothèques NSPR et <application>NSS</application> et crée un 
     répertoire <filename class='directory'>dist</filename> qui abrite tous les
-    programmes, les bibliothèques et les en-têtes d'interface. Aucun programme cré
+    programmes, les bibliothèques et les en-têtes d'interface. Aucun programme créé par
     par ce processus n'est installé sur le système en utilisant les instructions
-    par défaut. Si un de ces programmes doit être installé, vous pouvez les 
-    trouver dans le répertoire
+    par défaut (exepté pour <application>nss-config</application>). Si un de ces programmes 
+    doit être installé, vous pouvez les trouver dans le répertoire
     <filename class='directory'>mozilla/dist/bin</filename> de l'arborescence des
     sources.</para>
 
@@ -215,11 +208,11 @@ chmod -v 644 /usr/include/nspr/prvrsion.h</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>nspr-config et nss-config</seg>
-        <seg>libcrmf.a, libfreebl3.so, libnspr4.so, libnss3.so, libnssckbi.so,
-        libplc4.so, libplds4.so, libsmime3.so, libsoftokn3.so et
-        libssl3.so</seg>
-        <seg>/usr/include/nspr et /usr/include/nss</seg>
+        <seg>nss-config</seg>
+        <seg>libcrmf.a, libfreebl3.so, libnss3.so, libnssckbi.so,
+        libnssdbm3.so, libnssutil3.so, libsmime3.so, libsoftokn3.so
+        et libssl3.so</seg>
+        <seg>/usr/include/nss</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -227,17 +220,6 @@ chmod -v 644 /usr/include/nspr/prvrsion.h</userinput></screen>
       <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
-
-      <varlistentry id="nspr-config">
-        <term><command>nspr-config</command></term>
-        <listitem>
-          <para>est utilisé pour déterminer les paramètres d'installation NSPR 
-          des bibliothèques  NSPR installées.</para>
-          <indexterm zone="nss nspr-config">
-            <primary sortas="b-nspr-config">nspr-config</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
 
       <varlistentry id="nss-config">
         <term><command>nss-config</command></term>
@@ -250,23 +232,6 @@ chmod -v 644 /usr/include/nspr/prvrsion.h</userinput></screen>
         </listitem>
       </varlistentry>
     </variablelist>
-
-      <para>Les bibliothèques <filename class='libraryfile'>libnspr4.so</filename>,
-      <filename class='libraryfile'>libplc4.so</filename> et
-      <filename class='libraryfile'>libplds4.so</filename> libraries make up the
-      Netscape Portable Runtime (NSPR). Ces bibliothèques offrent une API neutre
-      côté plateforme au niveau szstème et des fonctions de type libc. L'API est
-      utilisée dans le client Mozilla, dans la plupart des offres
-      Netscape/AOL/iPlanet et dans d'autres logiciels.</para>
-
-      <para>Les bibliothèques <filename class='libraryfile'>libcrmf.a</filename>,
-      <filename class='libraryfile'>libfreebl.so</filename>,
-      <filename class='libraryfile'>libnss3.so</filename>,
-      <filename class='libraryfile'>libnssckbi.so</filename>,
-      <filename class='libraryfile'>libsmime3.so</filename>,
-      <filename class='libraryfile'>libsoftokn3.so</filename> et
-      <filename class='libraryfile'>libnssl3.so</filename> activent les
-      bibliothèques <application>NSS</application>.</para>
 
   </sect2>
 
