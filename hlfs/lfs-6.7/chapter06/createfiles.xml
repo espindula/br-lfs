@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-createfiles">
+  <?dbhtml filename="createfiles.html"?>
+
+  <title>Créer les fichiers et les liens symboliques essentiels</title>
+
+  <indexterm zone="ch-system-createfiles">
+    <primary sortas="e-/etc/passwd">/etc/passwd</primary>
+  </indexterm>
+
+  <indexterm zone="ch-system-createfiles">
+    <primary sortas="e-/etc/group">/etc/group</primary>
+  </indexterm>
+
+  <indexterm zone="ch-system-createfiles">
+    <primary sortas="e-/var/run/utmp">/var/run/utmp</primary>
+  </indexterm>
+
+  <indexterm zone="ch-system-createfiles">
+    <primary sortas="e-/var/log/btmp">/var/log/btmp</primary>
+  </indexterm>
+
+  <indexterm zone="ch-system-createfiles">
+    <primary sortas="e-/var/log/lastlog">/var/log/lastlog</primary>
+  </indexterm>
+
+  <indexterm zone="ch-system-createfiles">
+    <primary sortas="e-/var/log/wtmp">/var/log/wtmp</primary>
+  </indexterm>
+
+  <para>Certains programmes stockent en dur des chemins vers des programmes qui
+  n'existent pas encore. Pour satisfaire ces programmes, créez un certain nombre
+  de liens symboliques qui seront remplacés par les vrais fichiers tout au long
+  de ce chapitre une fois que tous les logiciels seront installés&nbsp;:</para>
+
+<screen><userinput>ln -sv /tools/bin/{bash,cat,echo,pwd,stty} /bin
+ln -sv /tools/bin/perl /usr/bin
+ln -sv /tools/lib/libgcc_s.so{,.1} /usr/lib
+ln -sv /tools/lib/libstdc++.so{,.6} /usr/lib
+ln -sv bash /bin/sh</userinput></screen>
+
+  <para>Un bon système Linux garde une liste des systèmes de fichiers montés
+  dans le fichier <filename>/etc/mtab</filename>. Normalement, ce fichier est
+  créé quand un nouveau système de fichiers est monté. Comme nous ne monterons
+  aucun système de fichiers dans notre environnement chroot, créez un fichier
+  vide pour les utilitaires qui s'attendent à la présence de 
+ <filename>/etc/mtab</filename>&nbsp;:</para>
+
+<screen><userinput>touch /etc/mtab</userinput></screen>
+
+  <para>Afin que l'utilisateur <systemitem class="username">root</systemitem> 
+  puisse s'identifier et que le nom <quote>root</quote> soit reconnu, 
+  il doit y avoir des entrées cohérentes dans les fichiers
+  <filename>/etc/passwd</filename> et <filename>/etc/group</filename>.</para>
+
+  <para>Créez le fichier <filename>/etc/passwd</filename> en lançant
+  la commande suivante&nbsp;:</para>
+
+<screen><userinput>cat &gt; /etc/passwd &lt;&lt; "EOF"
+<literal>root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/dev/null:/bin/false
+nobody:x:99:99:Unprivileged User:/dev/null:/bin/false</literal>
+EOF</userinput></screen>
+
+  <para>Le mot de passe actuel pour
+  <systemitem class="username">root</systemitem> (le <quote>x</quote> utilisé
+  est seulement un exemple) sera paramétré plus tard.</para>
+
+  <para>Créez le fichier <filename>/etc/group</filename> en exécutant la
+  commande suivante&nbsp;:</para>
+
+<screen><userinput>cat &gt; /etc/group &lt;&lt; "EOF"
+<literal>root:x:0:
+bin:x:1:
+sys:x:2:
+kmem:x:3:
+tty:x:4:
+tape:x:5:
+daemon:x:6:
+floppy:x:7:
+disk:x:8:
+lp:x:9:
+dialout:x:10:
+audio:x:11:
+video:x:12:
+utmp:x:13:
+usb:x:14:
+cdrom:x:15:
+mail:x:34:
+nogroup:x:99:</literal>
+EOF</userinput></screen>
+
+  <para>Les groupes créés ne font partie d'aucun standard&mdash;ce sont 
+  des groupes décidés en partie en fonction des besoins de la configuration de
+  Udev dans ce chapitre, et en partie par la coutume utilisée par un certain
+  nombre de distributions Linux existantes. La base linux standard (Linux
+  Standard Base ou LSB, disponible sur
+  <ulink url="http://www.linuxbase.org"/>) recommande seulement cela,
+  ainsi que la présence d'un groupe
+  <systemitem class="groupname">root</systemitem> (GID 0) et d'un groupe 
+  <systemitem class="groupname">bin</systemitem> (GID 1).
+  Tous les autres noms de groupe et GID peuvent être librement choisis par
+  l'administrateur du système puisque les programmes bien écrits ne dépendent pas
+  des numéros GID, mais utilisent plutôt le nom du groupe.</para>
+
+  <para>Pour supprimer l'invite <quote>I have no name!</quote>, démarrez un
+  nouveau shell. Comme nous avons installé une Glibc complète dans le
+  <xref linkend="chapter-temporary-tools"/> et créé les fichiers
+  <filename>/etc/passwd</filename> et <filename>/etc/group</filename>, la
+  résolution du nom d'utilisateur et de groupe fonctionnera à présent&nbsp;:</para>
+
+<screen role="nodump"><userinput>exec /tools/bin/bash --login +h</userinput></screen>
+
+  <para>Remarquez l'utilisation du paramètre <parameter>+h</parameter>.
+  Il dit à <command>bash</command> de ne pas utiliser son hachage de chemin
+  interne. Sans ce paramètre, <command>bash</command> se rappelerait des
+  chemins vers les binaires qu'il a exécutés. Pour s'assurer que les
+  binaires nouvellement compilés seront utilisés dès qu'ils seront installés,
+  le paramètre <parameter>+h</parameter> sera utilisée durant toute le
+  chapitre.</para>
+
+  <para>Les programmes <command>login</command>, <command>agetty</command>, et
+  <command>init</command> (et d'autres) utilisent un nombre de journaux
+  applicatifs pour enregistrer des informations comme qui s'est connecté sur
+  le système et quand. Mais ces programmes n'écriront pas vers ces journaux
+  s'ils n'existent pas. Initialisez les journaux et donnez-leur les bons
+  droits&nbsp;:</para>
+
+<screen><userinput>touch /var/run/utmp /var/log/{btmp,lastlog,wtmp}
+chgrp -v utmp /var/run/utmp /var/log/lastlog
+chmod -v 664 /var/run/utmp /var/log/lastlog</userinput></screen>
+
+  <para>Le fichier <filename>/var/run/utmp</filename> enregistre les utilisateurs
+  qui sont actuellement connectés. Le fichier 
+  <filename>/var/log/wtmp</filename> enregistre toutes les connexions et les
+  déconnexions. Le fichier <filename>/var/log/lastlog</filename> enregistre
+  quand chaque utilisateur s'est connecté pour la dernière fois. Le fichier
+  <filename>/var/log/btmp</filename> enregistre les tentatives de connexion
+  échouées.</para>
+
+</sect1>

@@ -1,0 +1,93 @@
+#!/bin/sh
+########################################################################
+# Begin $NETWORK_DEVICES/ifdown
+#
+# Description : Interface Down
+#
+# Authors     : Nathan Coulson - nathan@linuxfromscratch.org
+#               Kevin P. Fleming - kpfleming@linuxfromscratch.org
+#
+# Version     : 00.01
+#
+# Notes       : the IFCONFIG variable is passed to the scripts found
+#               in the services directory, to indicate what file the
+#               service should source to get environmental variables.
+#
+########################################################################
+
+. /lib/lsb/init-functions
+
+# Collect a list of configuration files for our interface
+if [ -n "${2}" ]; then
+    for file in ${@#$1}; do # All parameters except $1
+        FILES="${FILES} ${NETWORK_DEVICES}/ifconfig.${1}/${file}"
+    done
+elif [ -d "${NETWORK_DEVICES}/ifconfig.${1}" ]; then
+    FILES=`echo ${NETWORK_DEVICES}/ifconfig.${1}/*`
+else
+    FILES="${NETWORK_DEVICES}/ifconfig.${1}"
+fi
+
+# Reverse the order configuration files are processed in
+for file in ${FILES}; do
+    FILES2="${file} ${FILES2}"
+done
+FILES=${FILES2}
+
+# Process each configuration file
+for file in ${FILES}; do
+    # skip backup files
+    if [ "${file}" != "${file%""~""}" ]; then
+        continue
+    fi
+
+    if [ ! -f "${file}" ]; then
+        message="${file} is not a network configuration file or directory."
+        log_warning_msg
+    fi
+    (
+        . ${file}
+
+        # Will not process this service if started by boot, and ONBOOT
+        # is not set to yes
+        if [ "${IN_BOOT}" = "1" -a "${ONBOOT}" != "yes" ]; then
+            continue
+        fi
+
+        # Will not process this service if started by hotplug, and 
+        # ONHOTPLUG is not set to yes
+        if [ "${IN_HOTPLUG}" = "1" -a "${ONHOTPLUG}" != "yes" ]; then
+            continue
+        fi
+    
+        # This will run the service script, if SERVICE is set
+        if [ -n "${SERVICE}" -a -x "${NETWORK_DEVICES}/services/${SERVICE}" ]; then
+            if ip link show ${1} > /dev/null 2>&1
+            then
+                IFCONFIG=${file} ${NETWORK_DEVICES}/services/${SERVICE} ${1} down
+            else
+                message="Interface ${1} doesn't exist."
+                log_warning_msg
+            fi
+        else
+            echo -e "${FAILURE}Unable to process ${file}.  Either"
+            echo -e "${FAILURE}the SERVICE variable was not set,"
+            echo -e "${FAILURE}or the specified service cannot be executed."
+            message=""
+            log_failure_msg
+        fi
+    )
+done
+
+if [ -z "${2}" ]; then
+    link_status=`ip link show $1`
+    if [ -n "${link_status}" ]; then
+        if echo "${link_status}" | grep -q UP; then
+            message="Bringing down the ${1} interface..."
+            ip link set ${1} down
+            evaluate_retval standard
+        fi
+    fi
+fi
+
+# End $NETWORK_DEVICES/ifdown

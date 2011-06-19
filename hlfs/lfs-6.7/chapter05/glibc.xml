@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-glibc" role="wrap">
+  <?dbhtml filename="glibc.html"?>
+
+  <sect1info condition="script">
+    <productname>glibc</productname>
+    <productnumber>&glibc-version;</productnumber>
+    <address>&glibc-url;</address>
+  </sect1info>
+
+  <title>Glibc-&glibc-version;</title>
+
+  <indexterm zone="ch-tools-glibc">
+    <primary sortas="a-Glibc">Glibc</primary>
+    <secondary>outils</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter06/glibc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&glibc-ch5-sbu;</seg>
+        <seg>&glibc-ch5-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de Glibc</title>
+
+   <para>Corrigez un bogue qui empêche Glibc de se construire avec
+   GCC-&gcc-version;&nbsp;:</para>
+   
+<screen><userinput remap="pre">patch -Np1 -i ../&glibc-gcc_fix-patch;</userinput></screen>
+
+    <para>Corrigez un bogue qui empêche Glibc de se construire avec les
+    versions de Make plus récentes que la 3.81.</para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../&glibc-makefile_fix-patch;</userinput></screen>
+
+   <para>La documentation de Glibc recommande de construire Glibc en dehors du
+    répertoire des sources, c'est-à-dire dans un répertoire dédié&nbsp;:</para>
+
+<screen><userinput remap="pre">mkdir -v ../glibc-build
+cd ../glibc-build</userinput></screen>
+
+    <para>Glibc ne supportant plus i386, ses développeurs disent d'utiliser
+    le commutateur du compilateur <parameter>-march=i486</parameter> lorsqu'on
+    le compile pour des machines x86. On peut faire cela de plusieurs manières,
+    mais des tests montrent que la meilleure place pour le commutateur est à
+    l'intérieur de la variable de compilation <quote>CFLAGS</quote>. Au lieu de
+    remplacer entièrement ce que le système de compilation interne de
+    Glibc utilise pour CFLAGS, ajoutez le nouveau commutateur au contenu 
+    existant de CFLAGS en utilisant le fichier spécial
+    <filename>configparms</filename>. Le commutateur -mtune=native est également
+    requis pour réinitialiser une valeur raisonnable pour -mtune, laquelle est
+    modifiée lors du paramétrage de -march.</para>
+    
+<screen><userinput remap="configure">case `uname -m` in
+  i?86) echo "CFLAGS += -march=i486 -mtune=native" > configparms ;;
+esac</userinput></screen>
+
+
+    <para>Ensuite, préparez la compilation de Glibc&nbsp;:</para>
+
+<screen><userinput remap="configure">../glibc-&glibc-version;/configure --prefix=/tools \
+    --host=$LFS_TGT --build=$(../glibc-&glibc-version;/scripts/config.guess) \
+    --disable-profile --enable-add-ons \
+    --enable-kernel=2.6.22.5 --with-headers=/tools/include \
+    libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification des options de configure&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--host=$LFS_TGT, --build=$(../glibc-&glibc-version;/scripts/config.guess)</parameter></term>
+        <listitem>
+          <para>L'effet combiné de ces commutateurs est que le système de
+          construction de Glibc se configure pour se compiler de manière
+          croisée en 1tilisant l'éditeur de liens croisé et le compilateur
+          croisé dans <filename class="directory">/tools</filename>.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>--disable-profile</parameter></term>
+        <listitem>
+          <para>Ceci construit les bibliothèques sans les informations de
+          profilage. Enlevez cette option si le profilage sur les outils 
+          temporaires est nécessaire.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-add-ons</parameter></term>
+        <listitem>
+          <para>Ceci indique à Glibc d'utiliser le composant NPTL comme
+          bibliothèque de threads.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-kernel=2.6.22.5</parameter></term>
+        <listitem>
+          <para>Ceci indique à Glibc de compiler la bibliothèque avec le support
+          des noyaux Linux 2.6.18 et supérieurs. Les environnements pour des noyaux plus anciens ne sont pas activés.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-headers=/tools/include</parameter></term>
+        <listitem>
+          <para>Ceci dit à Glibc de se compiler contre les en-têtes récemment
+          installées dans le répertoire tools, afin qu'il connaisse exactement les
+          fonctionnalités du noyau et puisse s'optimiser en conséquence.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>libc_cv_forced_unwind=yes</parameter></term>
+        <listitem>
+          <para>L'éditeur de liens installé lors de
+          <xref linkend="ch-tools-binutils-pass1"/> était construit de façon croisée
+          et, dans cet état, il ne peut pas être utilisé tant que Glibc n'a pas été
+          installé. Cela signifie que le test de configure du support
+          force-unwind échouera puisqu'il croit avoir à faire à un éditeur de liens
+          opérationnel. La variable libc_cv_forced_unwind=yes est
+          passée afin d'indiquer à <command>configure</command> que le
+          support de force-unwind est disponible sans qu'il n'ait à lancer le test.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>libc_cv_c_cleanup=yes</parameter></term>
+        <listitem>
+          <para>De la même façon, nous passons libc_cv_c_cleanup=yes au script
+          <command>configure</command> afin que le test soit sauté
+          et que le support de gestion du nettoyage C soit configuré.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Lors de cette étape, le message d'avertissement suivant peut
+    apparaître&nbsp;:</para>
+
+    <blockquote>
+<screen><computeroutput>configure: WARNING:
+*** These auxiliary programs are missing or
+*** incompatible versions: msgfmt
+*** some features will be disabled.
+*** Check the INSTALL file for required versions.</computeroutput></screen>
+    </blockquote>
+
+    <para>Le programme <command>msgfmt</command>, manquant ou incompatible, ne
+    pose généralement pas de problème. Ce programme <command>msgfmt</command>
+    fait partie du paquet Gettext que la distribution hôte
+    devrait fournir. Si <command>msgfmt</command> est présent mais semble
+    incompatible, mettez à jour le paquet Gettext du système hôte ou continuez sans
+    et voyez si la suite de tests continue son exécution sans problèmes.</para>
+
+    <para>Compilez le paquet&nbsp;:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Ce paquet est fourni avec une suite de test, cependant vous ne pouvez
+    pas l'exécuter à ce moment car nous n'avons pas encore de compilateur C++.</para>
+
+    <note>
+      <para>La suite de tests exige aussi que des données de locale soient installées afin de s'exécuter avec succès. Les 
+      données de locale fournissent au système des informations sur la date, l'heure et les formats normaux acceptés et fournis 
+      par les outils systèmes. Si les suites de tests ne seront pas exécutés dans ce chapitre
+      (suivant ainsi notre recommandation), il y a peu intérêt à installer les
+      locales maintenant. Les bonnes locales seront installées dans le chapitre
+      suivant.
+      Néanmoins, pour installer les locales Glibc, utilisez les instructions de
+      la section <xref linkend="ch-system-glibc" role="."/></para>
+    </note>
+
+    <para>Installez le paquet&nbsp;:</para>
+
+<screen><userinput remap="install">make install</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont situés dans
+    <xref linkend="contents-glibc" role="."/></para>
+
+  </sect2>
+
+</sect1>

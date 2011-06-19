@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-gcc-pass2" role="wrap">
+  <?dbhtml filename="gcc-pass2.html"?>
+
+  <sect1info condition="script">
+    <productname>gcc</productname>
+    <productnumber>&gcc-version;</productnumber>
+    <address>&gcc-url;</address>
+  </sect1info>
+
+  <title>GCC-&gcc-version; - Passe 2</title>
+
+  <indexterm zone="ch-tools-gcc-pass2">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>outils, passe 2</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter06/gcc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&gcc-ch5p2-sbu;</seg>
+        <seg>&gcc-ch5p2-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de GCC</title>
+
+    <para>Les versions de GCC supérieures à 4.3 vont gérer cette construction
+    comme si C était un compilateur placé à un nouvel endroit et interdire
+    la recherche de fichiers de démarrage (startfiles) dans l'emplacement
+    spécifié par <parameter>--prefix</parameter>. Comme ce ne sera pas un
+    compilateur placé à un nouvel endroit, et vu que les fichiers de 
+    démarrage dans <filename class="directory">/tools</filename> sont cruciaux
+    pour la construction d'un compilateur fonctionnel liés aux libs dans
+    <filename class="directory">/tools</filename>, appliquez le correctif suivant
+    qui ramène partiellement GCC vers son  ancien comportement&nbsp;:</para>
+    
+<screen><userinput remap="pre">patch -Np1 -i ../&gcc-startfiles-patch;</userinput></screen>
+
+    <para>Dans des circonstances normales, le script
+    <command>fixincludes</command> de GCC est exécuté
+    afin de réparer des fichiers d'en-tête potentiellement cassés. Comme
+    GCC-&gcc-version; et Glibc-&glibc-version; ont désormais déjà été installés, 
+    et vu que leur fichiers d'en-têtes respectifs sont connus comme n'ayant
+    pas besoin de réparation, le script <command>fixincludes</command> n'est
+    pas utile. En fait, il se peut que le script pollue
+    l'environnement de construction en installant des en-têtes corrigées du
+    système hôte dans le répertoire autonome include de GCC. L'exécution du
+    script <command>fixincludes</command> peut être supprimée en lançant les
+    commandes suivantes&nbsp;:</para>
+
+<screen><userinput remap="pre">cp -v gcc/Makefile.in{,.orig}
+sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userinput></screen>
+
+    <para>Pour les machines x86, une construction bootstrap de GCC utilise le drapeau
+    <option>-fomit-frame-pointer</option> du compilateur. Les constructions non-bootstrap suppriment ce drapeau par défaut, l'objectif 
+    serait d'obtenir un compilateur qui est exactement le même que si nous étions bootstrapés. Appliquez la commande
+    <command>sed</command> suivante pour obliger la construction à utiliser le drapeau&nbsp;:</para> 
+
+<screen><userinput remap="pre">cp -v gcc/Makefile.in{,.tmp}
+sed 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
+  &gt; gcc/Makefile.in</userinput></screen>
+
+    <para>La commande suivante modifiera l'emplacement par défaut de l'éditeur de lien
+    dynamique de GCC pour utiliser celui installé dans
+    <filename class="directory">/tools</filename>. Il supprime aussi
+    <filename class="directory">/usr/include</filename> du chemin de 
+    recherche des en-têtes de GCC.</para>
+
+    <para>Faire cela maintenant plutôt qu'ajuster le fichier specs après
+    l'installation nous assure que l'éditeur de liens dynamiques sera utilisé
+    lors de la construction de GCC. C'est-à-dire que tous les exécutables créés lors de la construction seront liés à la nouvelle Glibc.
+    Lancez&nbsp;:</para>
+    
+<screen><userinput remap="pre">for file in \
+ $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
+do
+   cp -uv $file{,.orig}
+   sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
+   -e 's@/usr@/tools@g' $file.orig &gt; $file
+   echo '
+#undef STANDARD_INCLUDE_DIR
+#define STANDARD_INCLUDE_DIR 0
+#define STANDARD_STARTFILE_PREFIX_1 ""
+#define STANDARD_STARTFILE_PREFIX_2 ""' &gt;&gt; $file
+   touch $file.orig
+done</userinput></screen>
+
+    <para>Si ce qui précède vous semble dur à suivre, décomposons-le un peu.
+    D'abord, nous trouvons tous les fichiers sous le répertoire <filename class="directory">gcc/config</filename> qui
+    sont nommés <filename>linux.h</filename> ou <filename>linux64.h</filename>.
+    Pour chaque fichier trouvé, nous le copions
+    vers un fichier du même nom mais avec en plus le suffixe <quote>.orig</quote>.
+    Puis la première expression sed préfixe chaque
+    occurrence de <quote>/lib/ld</quote>, <quote>/lib64/ld</quote> ou
+    <quote>/lib32/ld</quote> par  <quote>/tools</quote>, tandis que la deuxième remplace les occurrences de <quote>/usr</quote> codées en dur. Nous ajoutons alors nos déclarations define qui
+    modifient le chemin de recherche et le préfixe du fichier de démarrage
+    par défaut à la fin du fichier. Enfin, nous utilisons
+    <command>touch</command> pour mettre à jour l'horodatage des fichiers copiés.
+    Utilisé conjointement avec <command>cp -u</command>, cela empêche les
+    modifications inattendues des fichiers d'origine au cas où les commandes
+    seraient exécutées deux fois par inadvertence.</para>
+    
+    <para>En x86_64, le déparamétrage du spec multilib (multibibliothèque) pour GCC
+    assure qu'il ne s'efforcera pas de se lier aux bibliothèque sur le
+    système hôte&nbsp;:</para>
+    
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    for file in $(find gcc/config -name t-linux64) ; do \
+      cp -v $file{,.orig}
+      sed '/MULTILIB_OSDIRNAMES/d' $file.orig &gt; $file
+    done
+  ;;
+esac</userinput></screen>
+
+    <para>Comme dans la première construction de GCC, il a besoin de GMP,
+    de MPFR et MPC. Déballez les archives tar et déplacez-les dans les répertoires
+    nommés comme il le faut&nbsp;:</para>
+    
+<screen><userinput remap="pre">tar -jxf ../mpfr-&mpfr-version;.tar.bz2 
+mv -v mpfr-&mpfr-version; mpfr
+tar -jxf ../gmp-&gmp-version;.tar.bz2
+mv -v gmp-&gmp-version; gmp
+tar -zxf ../mpc-&mpc-version;.tar.gz
+mv -v mpc-&mpc-version; mpc</userinput></screen>
+
+    <para>De nouveau, créez un répertoire de construction
+    séparé&nbsp;:</para>
+
+<screen><userinput remap="pre">mkdir -v ../gcc-build
+cd ../gcc-build</userinput></screen>
+
+    <para>Avant de commencer la construction de GCC, rappelez-vous de désinitialiser
+    toute variable d'environnement surchargeant les options d'optimisation par
+    défaut.</para>
+
+    <para>Maintenant, préparez la compilation de GCC&nbsp;:</para>
+
+<screen><userinput remap="configure">CC="$LFS_TGT-gcc -B/tools/lib/" \
+    AR=$LFS_TGT-ar RANLIB=$LFS_TGT-ranlib \
+        ../gcc-&gcc-version;/configure --prefix=/tools \
+    --with-local-prefix=/tools --enable-clocale=gnu \
+    --enable-shared --enable-threads=posix \
+    --enable-__cxa_atexit --enable-languages=c,c++ \
+    --disable-libstdcxx-pch --disable-multilib \
+    --disable-bootstrap --disable-libgomp \
+    --with-gmp-include=$(pwd)/gmp --with-gmp-lib=$(pwd)/gmp/.libs \
+    --without-ppl --without-cloog</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification des nouvelles options de configure&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--enable-clocale=gnu</parameter></term>
+        <listitem>
+          <para>Cette option nous assure que le bon modèle de locale est
+          sélectionné pour les bibliothèques C++ sous toutes les circonstances. Si le
+          script configure trouve la locale <emphasis>de_DE</emphasis> installée, il
+          sélectionnera le bon modèle de locale gnu. Néanmoins, si la locale 
+          <emphasis>de_DE</emphasis> n'est pas installée, il existe un risque de
+          construire des bibliothèques C++ incompatibles avec ABI (Application
+          Binary Interface) à cause du choix d'un
+          mauvais modèle générique de locale.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-threads=posix</parameter></term>
+        <listitem>
+          <para>Ceci active la gestion des exceptions C++ pour le code
+          multi-threadé.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-__cxa_atexit</parameter></term>
+        <listitem>
+          <para>Cette option autorise l'utilisation de
+          <function>__cxa_atexit</function>, plutôt que
+          <function>atexit</function>, pour enregistrer les destructeurs C++ des objets statiques locaux et globaux.
+          Cette option est essentielle pour la gestion des destructeurs en compatibilité
+          complète avec les standards. Il affecte aussi l'ABI C++ et donc résulte en des
+          bibliothèques partagées et des programmes C++ interopérables avec les autres
+          distributions Linux.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-languages=c,c++</parameter></term>
+        <listitem>
+          <para>Cette option garantie que les compilateurs
+          C et C++ seront construits.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-libstdcxx-pch</parameter></term>
+        <listitem>
+          <para>Ce commutateur empêche la construction de l'en-tête précompilé
+          (PCH) de
+          <filename class="libraryfile">libstdc++</filename>. Il prend beaucoup
+          d'espace et nous n'en avons aucune utilité.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-bootstrap</parameter></term>
+        <listitem>
+          <para>Pour les constructions natives de GCC, on a par défaut une compilation "bootstrap". Elle ne fait pas que compiler GCC, mais 
+          elle le compile plusieurs fois. Elle utilise les programmes compilés dans une première étape pour se compiler une seconde fois, 
+          puis une troisième fois à nouveau. Les deuxième et troisième passages sont comparés pour garantir qu'elle peut se reproduire
+          facilement. Cela implique aussi qu'elle a été compilée correctement. Néanmoins, la méthode de compilation LFS devrait fournir un 
+          compilateur solide sans qu'il soit nécessaire de bootstraper chaque fois.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Compilez le paquet&nbsp;:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Installez le paquet&nbsp;:</para>
+
+<screen><userinput remap="install">make install</userinput></screen>
+
+    <para>En touche finale, créez un lien symbolique. Beaucoup de programmes
+    et de scripts lance <command>cc</command> au lieu de <command>gcc</command>,
+    qui est utilisé pour conserver des programmes génériques, utilisables donc
+    sur n'importe quel type de système où le compilateur C n'est pas toujours
+    installé. L'exécution de <command>cc</command> laisse l'administrateur du
+    système décider quel  compilateur C installer&nbsp;:</para>
+    
+<screen><userinput remap="install">ln -vs gcc /tools/bin/cc</userinput></screen>
+
+    <caution>
+    
+      <para>A ce stade, il est impératif de s'arrêter et de s'assurer que 
+      les fonctions de base (compilation et édition de liens) du nouvel ensemble
+      d'outils fonctionnent comme prévu. Pour effectuer un test de propreté,
+      lancez les commandes suivantes&nbsp;:</para>
+      
+<screen><userinput>echo 'main(){}' &gt; dummy.c
+cc dummy.c
+readelf -l a.out | grep ': /tools'</userinput></screen>
+ 
+      <para>Si tout fonctionne correctement, il ne devrait pas y avoir
+      d'erreurs et la sortie de la dernière commande aura la forme&nbsp;:</para>
+
+<screen><computeroutput>[Requesting program interpreter: /tools/lib/ld-linux.so.2]</computeroutput></screen>
+
+    <para>Remarquez que <filename class="directory">/tools/lib</filename> ou
+    <filename class="directory">/tools/lib64</filename> pour les machines
+    64 bits apparaît comme préfixe de l'éditeur de liens dynamique.</para>
+
+    <para>Si l'affichage diffère ou s'il n'y a aucun affichage, alors
+    quelque chose ne se passe pas bien. Enquêtez et tracez vos étapes pour
+    trouver où se cache le problème et comment le corriger. Ce problème doit
+    être corrigé avant de continuer. Tout d'abord, relancez la vérification
+    de propreté en utilisant
+    <command>gcc</command> au lieu de <command>cc</command>. Si cela fonctionne,
+    le lien symbolique <filename class="symlink">/tools/bin/cc</filename> est 
+    manquant. Installez le lien symbolique comme indiqué ci-dessus.
+    Ensuite, assurez-vous que le <envar>PATH</envar> est correct. Ceci se
+    vérifie en lançant <command>echo $PATH</command> et en vérifiant que
+    <filename class="directory">/tools/bin</filename> est en tête de la
+    liste. Si le <envar>PATH</envar> est mauvais, cela pourrait signifier
+    que vous n'êtes pas connecté en tant qu'utilisateur 
+    <systemitem class="username">lfs</systemitem> ou que quelque chose s'est mal passé dans 
+    <xref linkend="ch-tools-settingenviron" role="."/>.</para>
+
+    <para>Une fois que tout va bien, nettoyez les fichiers de test&nbsp;::</para>
+
+<screen><userinput>rm -v dummy.c a.out</userinput></screen>
+
+  </caution>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont situés dans
+    <xref linkend="contents-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>

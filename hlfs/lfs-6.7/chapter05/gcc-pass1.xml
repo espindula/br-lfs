@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-gcc-pass1" role="wrap">
+  <?dbhtml filename="gcc-pass1.html"?>
+
+<sect1info condition="script">
+     <productname>gcc</productname>
+     <productnumber>&gcc-version;</productnumber>
+     <address>&gcc-url;</address>
+</sect1info>
+
+  <title>GCC-&gcc-version; - Passe 1</title>
+
+  <indexterm zone="ch-tools-gcc-pass1">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>outils, passe 1</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter06/gcc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&gcc-ch5p1-sbu;</seg>
+        <seg>&gcc-ch5p1-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de GCC croisé</title>
+
+    <para>GCC exige maintenant les paquets GMP, MPFR et MPC. Comce il se peut que
+    ces paquets ne soient pas inclus dans votre distribution hôte, ils vont
+    être compilés avec GCC&nbsp;:</para>
+
+<screen><userinput remap="pre">tar -jxf ../mpfr-&mpfr-version;.tar.bz2
+mv -v mpfr-&mpfr-version; mpfr
+tar -jxf ../gmp-&gmp-version;.tar.bz2
+mv -v gmp-&gmp-version; gmp
+tar -zxf ../mpc-&mpc-version;.tar.gz
+mv -v mpc-&mpc-version; mpc</userinput></screen>
+
+    <para>La documentation de GCC recommande de ne pas construire GCC dans le
+    répertoire des sources mais dans un répertoire de construction dédié&nbsp;:</para>
+
+<screen><userinput remap="pre">mkdir -v ../gcc-build  
+cd ../gcc-build</userinput></screen>
+
+    <para>Préparez la compilation de GCC&nbsp;:</para>
+
+<screen><userinput remap="configure">../gcc-&gcc-version;/configure \
+    --target=$LFS_TGT --prefix=/tools \
+    --disable-nls --disable-shared --disable-multilib \
+    --disable-decimal-float --disable-threads \
+    --disable-libmudflap --disable-libssp \
+    --disable-libgomp --enable-languages=c \
+    --with-gmp-include=$(pwd)/gmp --with-gmp-lib=$(pwd)/gmp/.libs \
+    --without-ppl --without-cloog</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification des options de configure&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--disable-shared</parameter></term>
+        <listitem>
+          <para>Ce paramètre oblige GCC à lier ses bibliothèques internes de
+          manière statique. On procède ainsi pour éviter les problèmes avec
+          le système hôte.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-decimal-float, --disable-threads, --disable-libmudflap, --disable-libssp, --disable-libgomp</parameter></term>
+        <listitem>
+          <para>Ces paramètres désactivent le support de l'extension ayant un
+          point flottant décimal, du threading, respectivement de
+          libmudflap, libssp et libgomp. Ces fonctionnalités ne parviendront
+          pas à se construire lors de la construction d'un compilateur
+          croisé et ne sont pas nécessaires pour la tâche de compilation
+          croisée de la libc temporaire.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>--disable-multilib</parameter></term>
+        <listitem>
+          <para>Sur du x86_64, LFS ne supporte pas encore une configuration
+          multilib (plusieurs bibliothèques). Ce paramètre n'a pas
+          d'importance pour x86.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>--enable-languages=c</parameter></term>
+        <listitem>
+          <para>Cette option nous assure que seul le compilateur C sera
+          construit. C'est le seul langage actuellement nécessaire.</para>
+        </listitem>
+      </varlistentry>
+ 
+      <varlistentry>
+        <term><parameter>--with-gmp-include=...</parameter></term>
+        <listitem>
+          <para>Cette option dit à GCC où se situent les en-têtes de GMP.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-gmp-lib=...</parameter></term>
+        <listitem>
+          <para>Cette option dit à GCC où se trouve la bibliothèque de GMP.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-ppl, --without-cloog</parameter></term>
+        <listitem>
+          <para>Ces paramètres empêche GCC de se construire contre les bibliothèques
+          PPL et CLooG qui peuvent être présentes sur le système hôte, mais
+          qui ne seront pas disponibles dans l'environnement chroot.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Compilez GCC en lançant&nbsp;:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>La compilation est maintenant terminée. À ce point, la suite de tests
+    devrait être lancée. Mais, comme nous l'avons dit plus tôt, l'ensemble de
+    travail de la suite de tests n'est pas encore en place. Les bénéfices à lancer
+    les tests maintenant seraient minimes car les programmes de la première passe
+    seront bientôt remplacés.</para>
+
+    <para>Installez le paquet&nbsp;:</para>
+
+<screen><userinput remap="install">make install</userinput></screen>
+
+    <para>L'utilisation de <parameter>--disable-shared</parameter> signifie
+    que le fichier <filename>libgcc_eh.a</filename> n'est pas créé et installé.
+    Le paquet Glibc dépend de cette bibliothèque puisqu'il utilise
+    <parameter>-lgcc_eh</parameter> à l'intérieur de son système de construction.
+    On peut satisfaire cette dépendance en créant un lien symbolique vers
+    <filename>libgcc.a</filename>, puisque ce fichier va finir par contenir les
+    objets normalement contenus dans <filename>libgcc_eh.a</filename>:</para>
+
+<screen><userinput remap="install">ln -vs libgcc.a `$LFS_TGT-gcc -print-libgcc-file-name | \
+    sed 's/libgcc/&amp;_eh/'`</userinput></screen>
+    
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont disponibles dans
+    <xref linkend="contents-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>

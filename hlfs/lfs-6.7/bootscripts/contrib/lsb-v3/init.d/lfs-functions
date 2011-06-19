@@ -1,0 +1,214 @@
+# Begin /etc/init.d/lfs-functions
+# Provides LFS specific functions for LSB style bootscripts
+
+################################# chkstat() ###################################
+# chk_stat checks the status of a script by checking for both a binary file   #
+# to execute, and if set, a config file that may be needed for the program    #
+# to run successfully.  The calling script will exit with a return value of 5 #
+# if the binary does not exist, and a value of 6 if the needed config file is #
+# unavailable as per LSB requirements.  This function accepts zero, one, or   #
+# two string arguments.  If arguments are passed, the first must be a bin     #
+# file.  If a second argument is passed, it is interpreted as the config      #
+# file.  Optionally, zero arguments can be passed if BIN_FILE, and optinally  #
+# CONFIG_FILE are set in the calling script.                                  #
+###############################################################################
+chk_stat()
+{
+    if [ "${#}" -gt "0" -a "${#}" -lt "3" ]; then
+        BIN_FILE="${1}"
+        if [ -z "${2}" ]; then
+            CONFIG_FILE=""
+        else
+            CONFIG_FILE="${2}"
+        fi
+    elif [ -z "${BIN_FILE}" ]; then
+            echo "Usage: 'chk_stat BIN_FILE CONFIG_FILE'"
+            exit 1 # Generic Error
+    fi
+
+    if [ ! -e "${BIN_FILE}" ]; then
+        log_failure_msg "${BIN_FILE} not installed" &&
+        exit 5
+    fi
+
+    if [ ! -z "${CONFIG_FILE}" ]; then
+        if [ ! -e "${CONFIG_FILE}" ]; then
+            log_failure_msg "${CONFIG_FILE} does not exist" &&
+            exit 6
+        fi
+    fi
+}
+
+################################ loadproc() ###################################
+# loadproc is just a wraper to start_daemon for simple scripts, which will    #
+# require no arguments if $BIN_FILE is set.                                   #
+###############################################################################
+loadproc()
+{
+    start_daemon "${BIN_FILE}" "${@}"
+}
+
+################################ endproc() ####################################
+# endproc, like loadproc, is just a wraper to killproc for simplicity and is  #
+# dependent on $BIN_FILE being set.                                           #
+###############################################################################
+endproc()
+{
+    killproc "${BIN_FILE}" "${@}"
+}
+
+############################### statusproc() ##################################
+# statusproc checks the status of a particular binary and displays the        #
+# appropriate message (running or not running) and exits on the return value  #
+# of pidofproc.  This function accepts two string arguments or zero arguments #
+# if BIN_FILE and MESSAGE are set, else it requires the bin file as the first #
+# argument, and the message as the second.  Both must be enclosed in quotes.  #
+###############################################################################
+statusproc()
+{
+    if [ "${#}" -gt "0" -a "${#}" -lt "3" ]; then
+        BIN_FILE="${1}"
+        MESSAGE="${2}"
+    elif [ -z "${BIN_FILE}" -o -z "${MESSAGE}" ]; then
+        echo "Usage: 'statusproc BIN_FILE MESSAGE'"
+        exit 1 # Generic Error
+    fi
+
+    pidlist=`pidofproc "${BIN_FILE}"`
+    STATUS=$?
+    echo "Checking ${MESSAGE} status:"
+    if [ "${STATUS}" -eq "0" ]; then
+        log_success_msg "Running with PID(s) ${pidlist}"
+    else
+        log_warning_msg "Not running!"
+    fi
+
+    return "${STATUS}"
+}
+
+############################### reloadproc() ##################################
+# reloadproc sends a HUP signal to the running program (relaod configuration) #
+# It optionally, using the -force switch, checks the status of a particular   #
+# program and starts it if it is not already running. This function accepts   #
+# one optional switch (must be the first argument), and either two, or zero   #
+# string arguments.  If BIN_FILE and MESSAGE are set in the script's          #
+# environment, it will use those values,  else it requires the bin file as    #
+# the first argument (following -force if used), and the message as the       #
+# second. Both must be enclosed in quotes. If the force option is used, it    #
+# follows the LSB definition of 'force-reload' - the program is started if    #
+# not already running.                                                        #
+###############################################################################
+reloadproc()
+{
+    local force="0"
+    if [ "${#}" -gt "0" -a "${1}" = "-force" ]; then
+        force="1"
+        shift 1
+    fi
+
+    if [ "${#}" -gt "0" -a "${#}" -lt "3" ]; then
+        BIN_FILE="${1}"
+        MESSAGE="${2}"
+    elif [ -z "${BIN_FILE}" -o -z "${MESSAGE}" ]; then
+        echo "Usage: 'reloadproc BIN_FILE MESSAGE'"
+        exit 1 # Generic Error
+    fi
+
+    
+
+}
+
+############################## evaluate_retval() ###############################
+# evaluate_retval requires that you pass exactly one evaluation parameter of   #
+# (start, stop, other) based on the previous action that is being evaluated.   #
+# This function is intended for use with start_daemon and killproc to          #
+# interpret the LSB exit codes properly, othewise the checks only for success  #
+# or failure.                                                                  #
+################################################################################
+evaluate_retval()
+{
+    local error_value="${?}"
+
+    # Handle LSB defined return values
+    case "${1}" in
+
+      start)
+        case "${error_value}" in
+          0)
+            log_success_msg "Starting ${MESSAGE} "
+            return "${error_value}"
+          ;;
+          2)
+            log_failure_msg "Starting ${MESSAGE} Error: Invalid argument!"
+            return "${error_value}"
+          ;;
+          5)
+            log_failure_msg "Starting ${MESSAGE} Error: Not available!"
+            return "${error_value}"
+          ;;
+          *)
+            log_failure_msg "Starting ${MESSAGE} Error: General failure!"
+            return "${error_value}"
+          ;;
+        esac
+      ;;
+
+      stop)
+        case "${error_value}" in
+          0)
+            log_success_msg "Stopping ${MESSAGE} "
+            return "${error_value}"
+            ;;
+          2)
+            log_failure_msg "Stopping ${MESSAGE} Error: Invalid argument!"
+            return "${error_value}"
+            ;;
+          5)
+            log_failure_msg "Stopping ${MESSAGE} Error: Not available!"
+            return "${error_value}"
+            ;;
+          7)
+            log_warning_msg "Stopping ${MESSAGE} Warning: Not running!"
+            return "${error_value}"
+            ;;
+          *)
+            log_failure_msg "Stopping ${MESSAGE} Error: General failure!"
+            return "${error_value}"
+            ;;
+          esac
+       ;;
+
+       force-reload)
+         message="Forcefully reloading "
+       ;;
+
+       reload)
+         message="Reloading "
+       ;;
+
+       restart)
+         message="Restarting "
+       ;;
+
+       try-restart)
+         message="Trying restart "
+       ;;
+
+       standard)
+         # $message or $MESSAGE must be set, but not both in order
+         # to use the 'standard' target.
+       ;;
+    esac
+
+    # Print messages for the generic force-reload, reload, restart, 
+    # and try-restart targets
+    if [ "${error_value}" -eq "0" ]
+    then
+        log_success_msg "${message}${MESSAGE} "
+        return "${error_value}"
+    else
+        log_failure_msg "${message}${MESSAGE} "
+        return "${error_value}"
+    fi
+}
+
