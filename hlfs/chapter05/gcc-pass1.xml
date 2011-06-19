@@ -54,6 +54,20 @@ mv -v gmp-&gmp-version; gmp
 tar -zxf ../mpc-&mpc-version;.tar.gz
 mv -v mpc-&mpc-version; mpc</userinput></screen>
 
+    <para>Il faut activer le paramètre <parameter>-fPIC</parameter> par défaut
+    à cette étape, afin que Glibc détecte plus tard dans ce chapitre un 
+    compilateur PIC. Glibc activera du code selon que le compilateur est PIC
+    ou pas.</para>
+ 
+    <para>Modifiez GCC pour que <parameter>-fPIC</parameter> soit par défaut&nbsp;:</para>
+
+<screen><userinput remap="pre">cp -v gcc/config/i386/linux.h{,.orig}
+sed 's/^\(#define CC1_SPEC.*\)\("\)$/\1 %{fno-pic|fno-PIC|fpic|fPIC:;:-fPIC}\2/' \
+    gcc/config/i386/linux.h.orig > gcc/config/i386/linux.h
+cp -v gcc/config/i386/x86-64.h{,.orig}
+sed 's/^\(#define CC1_SPEC.*\)\("\)$/\1 %{fno-pic|fno-PIC|fpic|fPIC:;:-fPIC}\2/' \
+    gcc/config/i386/x86-64.h.orig > gcc/config/i386/x86-64.h</userinput></screen>
+
     <para>La documentation de GCC recommande de ne pas construire GCC dans le
     répertoire des sources mais dans un répertoire de construction dédié&nbsp;:</para>
 
@@ -136,7 +150,12 @@ cd ../gcc-build</userinput></screen>
 
     <para>Compilez GCC en lançant&nbsp;:</para>
 
-<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="make">make gcc_cv_libc_provides_ssp=yes</userinput></screen>
+
+    <para>La variable  <parameter>gcc_cv_libc_provides_ssp=yes</parameter> 
+    est nécessaires sur certains systèmes hôtes pour s'assurer que la fonction
+    SSP de Glibc soit utilisée à la place de celle de
+    <filename>libssp.so</filename>.</para>
 
     <para>La compilation est maintenant terminée. À ce point, la suite de tests
     devrait être lancée. Mais, comme nous l'avons dit plus tôt, l'ensemble de

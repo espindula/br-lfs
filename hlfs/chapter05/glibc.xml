@@ -43,16 +43,6 @@
   <sect2 role="installation">
     <title>Installation de Glibc</title>
 
-   <para>Corrigez un bogue qui empêche Glibc de se construire avec
-   GCC-&gcc-version;&nbsp;:</para>
-   
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-gcc_fix-patch;</userinput></screen>
-
-    <para>Corrigez un bogue qui empêche Glibc de se construire avec les
-    versions de Make plus récentes que la 3.81.</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-makefile_fix-patch;</userinput></screen>
-
    <para>La documentation de Glibc recommande de construire Glibc en dehors du
     répertoire des sources, c'est-à-dire dans un répertoire dédié&nbsp;:</para>
 
@@ -173,7 +163,58 @@ esac</userinput></screen>
     incompatible, mettez à jour le paquet Gettext du système hôte ou continuez sans
     et voyez si la suite de tests continue son exécution sans problèmes.</para>
 
-    <para>Compilez le paquet&nbsp;:</para>
+    <para>Le paquet Glibc se construit en deux phases. Dans la première, seules
+    les bibliothèques sont compilées avec notre <parameter>-fPIC</parameter> 
+    de GCC activé. Dans la seconde phase, les programmes sont compilés avec
+    les durcissements supplémentaires.</para>
+
+    <para>Préparez le fichier <filename>configparms</filename> pour construire
+    les bibliothèques de Glibc&nbsp;:</para>
+
+<screen><userinput remap="configure">cat &gt;&gt; configparms &lt;&lt; "EOF"
+<literal>build-programs=no
+LDFLAGS.so += -Wl,--warn-shared-textrel,--fatal-warnings</literal>
+EOF</userinput></screen>
+
+    <para>Compilez les bibliothèques&nbsp;:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+ 
+    <para>Dans cette prochaine étape, les options de durcissement sont ajoutées 
+    aux options du compilateur. Le programme <command>sln</command> est lié
+    de manière statique, donc l'option <parameter>-fPIE</parameter> est inversée
+    par l'option <parameter>-fno-PIE</parameter>. La variable
+    <parameter>+link</parameter> est redéfinie pour lier les programmes à
+    <parameter>-pie</parameter>, et elle se comporte essentiellement comme 
+    <parameter>+link-pie</parameter> qui se trouve dans le fichier
+    <filename>Makeconfig</filename>, mais avec en plus 
+    <parameter>--warn-shared-textrel --fatal-warnings</parameter> pour nous
+    avertir si les programmes n'ont pas été compilés correctement.</para>
+
+    <para>Préparez le fichier <filename>configparms</filename> pour construire
+    les programmes de Glibc&nbsp;:</para>
+
+<screen><userinput remap="configure">cat &gt; configparms &lt;&lt; "EOF"
+<literal>CC += -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2
+CXX += -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2
+CFLAGS-sln.c += -fno-PIC -fno-PIE
++link = $(CC) -pie -Wl,-O1 -nostdlib -nostartfiles -o $@ \
+    $(sysdep-LDFLAGS) $(config-LDFLAGS) $(LDFLAGS) $(LDFLAGS-$(@F)) \
+    $(combreloc-LDFLAGS) $(relro-LDFLAGS) $(hashstyle-LDFLAGS) \
+    -Wl,-z,now -Wl,--warn-shared-textrel,--fatal-warnings \
+    $(addprefix $(csu-objpfx),S$(start-installed-name)) \
+    $(+preinit) $(+prectorS) \
+    $(filter-out $(addprefix $(csu-objpfx),start.o \
+    S$(start-installed-name))\
+    $(+preinit) $(link-extra-libs) \
+    $(common-objpfx)libc% $(+postinit),$^) \
+    $(link-extra-libs) $(link-libc) $(+postctorS) $(+postinit)</literal>
+EOF
+case `uname -m` in
+  i?86) echo "CFLAGS += -march=i486 -mtune=native" &gt;&gt; configparms ;;
+esac</userinput></screen>
+
+    <para>Compilez les programmes&nbsp;:</para>
 
 <screen><userinput remap="make">make</userinput></screen>
 
