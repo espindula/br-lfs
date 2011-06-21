@@ -21,27 +21,30 @@
   <sect2>
     <title>Introduction</title>
 
-  <para>Le chargement au démarrage est un domaine complexe. Tout
-  d'abord, quelques mots de mise en garde sont nécessaires. Vous devez
-  vraiment connaître le chargeur actuel et tout autre système
-  d'exploitation présent sur le disque dur amorçable. Assurez-vous
-  d'avoir une disquette de démarrage de façon à pouvoir
+    <warning><para>Une mavvaise configuration de GRUB peut rendre votre système
+    inutilisable si vous n'avez pas de périphérique d'amorçage alternatif
+    comme un CD-ROM.  Cette section n'est pas obligatoire pour démarrer votre
+    système LFS. Il se peut que vous vouliez simplement modifier votre chargeur
+    de démarrage actuel, comme Grub-Legacy, GRUB2, ou LILO.</para></warning>
+
+    <para>Assurez-vous d'avoir un disque de démarrage de façon à pouvoir
   <quote>sauver</quote> l'ordinateur si, par malheur, celui-ci devenait
-  inutilisable (non amorçable).</para>
+  inutilisable (non amorçable). Si vous n'avez pas déjà de périphérique de 
+  démarrage, vous pouvez en créer un. Afin que la procédure ci-dessous fonctionne,
+  vous devez vers un tour du côté de BLFS et installer <ulink
+  url="http://www.linuxfromscratch.org/blfs/view/svn/multimedia/xorriso.html">
+  xorriso</ulink>.</para>
 
-  <para>La procédure implique d'écrire quelques fichiers GRUB spéciaux à des
-  endroits sur le disque dur. Nous vous recommandons hautement
-  de créer une disquette de démarrage GRUB de sauvegarde. Insérez une disquette
-  vierge et lancez les commandes suivantes&nbsp;:</para>
+<screen role="nodump"><userinput>cd /tmp &amp;&amp;
+grub-mkrescue --output=grub-img.iso &amp;&amp;
+xorriso -as cdrecord -v dev=/dev/cdrw blank=as_needed grub-img.iso</userinput></screen>
 
-<screen role="nodump"><userinput>cd /tmp
-grub-mkrescue --output=grub-img.iso
-dd if=grub-img.iso of=/dev/fd0 bs=1440 count=1</userinput></screen>
+  </sect2>
 
-  <para>Vous pouvez aussi créer un CD d'amorçage en utilisant le outils de gravure
-  de CD de votre système hôte pour graver <filename>grub-img.iso</filename> sur
-  un CD vierge.</para>
-  <para>Grub utilise sa propre structure de nommage des disques et
+  <sect2>
+    <title>Conventions de nommage de GRUB</title>
+
+  <para>GRUB utilise sa propre structure de nommage des disques et
   partitions, de la forme <emphasis>(hdn,m)</emphasis>, où
   <emphasis>n</emphasis> est le numéro du disque dur et
   <emphasis>m</emphasis> le numéro de la partition.
@@ -61,6 +64,16 @@ dd if=grub-img.iso of=/dev/fd0 bs=1440 count=1</userinput></screen>
 <screen role="nodump"><userinput>grub-mkdevicemap --device-map=device.map
 cat device.map</userinput></screen>
 
+  </sect2>
+  
+  <sect2>
+    <title>Réglage de la configuration</title>
+
+    <para>GRUB fonctionne en écrivant les données sur le premier secteur physique
+    du disque dur. Cet endroit ne fait partie d'aucun szstème de fichiers. Les
+    programmes accèdent alors aux modules de GRUB dans la partition de
+    démarrage. L'emplacement par défaut est /boot/grub/.</para>
+
     <para>L'emplacement de la partition de démarrage est un choix
     de l'utilisateur qui change la configuration. Une recommendation est d'avoir une petite
     (la taille suggérée est de 100 Mio) partition à part pour les informations d'amorçage. De cette
@@ -78,10 +91,6 @@ cat device.map</userinput></screen>
 
     <para>L'utilisation de la partition lfs actuelle fonctionnera également,
     mais la configuration pour plusieurs systèmes est plus difficile.</para>
-  </sect2>
-
-  <sect2>
-    <title>Paramétrage de la configuration</title>
 
     <para>En utilisant les informations ci-dessus, déterminez le nom adapté
     à la partition racine (ou partition de démarrage, s'il en existe une à part). Pour l'exemple
@@ -90,182 +99,63 @@ cat device.map</userinput></screen>
     class="partition">sda2</filename>.</para>
 
     <para>Installez les fichiers de GRUB dans <filename
-    class="directory">/boot/grub</filename>&nbsp;:</para> 
-
-<screen role="nodump"><userinput>grub-install --grub-setup=/bin/true /dev/sda</userinput></screen>
-
-
-    <para>Nous utilisons pour l'instant --grub-setup=/bin/true pour empêcher la mise à jour
-    du <foreignphrase>Master Boot Record</foreignphrase> (MBR). De cette façon, nous
-    pouvons tester notre installation avant de faire un changement
-    sur lequel il est difficile de revenir.</para>
-
-    <para>Générez <filename>/boot/grub/grub.cfg</filename>&nbsp;:</para>
-
-<screen role="nodump"><userinput>grub-mkconfig -o /boot/grub/grub.cfg</userinput></screen>
-
-    <para>Ici <command>grub-mkconfig</command> utilise les fichiers de <filename
-    class="directory">/etc/grub.d/</filename> pour déterminer le contenu
-    de ce fichier. Le fichier de configuration ressemblera à quelque chose
-    comme&nbsp;:</para>
-
-<screen><computeroutput>#
-# N'ÉDITEZ PAS CE FICHIER
-#
-# Il est généré automatiquement par /usr/sbin/grub-mkconfig en utilisant
-# les modèles de /etc/grub.d et les paramètres de /etc/default/grub
-
-### DÉBUT /etc/grub.d/00_header ###
-set default=0
-set timeout=5
-### FIN DE /etc/grub.d/00_header ###
-
-### DÉBUT DE /etc/grub.d/10_linux ###
-menuentry "GNU/Linux, Linux &linux-version;-lfs-&version;" {
-        insmod ext2
-        set root=(hd0,2)
-        search --no-floppy --fs-uuid --set 915852a7-859e-45a6-9ff0-d3ebfdb5cea2
-        linux   /boot/vmlinux-&linux-version;-lfs-&version; root=/dev/sda2 ro
-}
-menuentry "GNU/Linux, Linux &linux-version;-lfs-&version;" (recovery mode)" {
-        insmod ext2
-        set root=(hd0,2)
-        search --no-floppy --fs-uuid --set 915852a7-859e-45a6-9ff0-d3ebfdb5cea2
-        linux   /boot/vmlinux-&linux-version;-lfs-&version; root=/dev/sda2 ro single
-}
-menuentry "GNU/Linux, Linux 2.6.28-11-server" {
-        insmod ext2
-        set root=(hd0,2)
-        search --no-floppy --fs-uuid --set 6b4c0339-5501-4a85-8351-e398e5252be8
-        linux   /boot/vmlinuz-2.6.28-11-server root=UUID=6b4c0339-5501-4a85-8351-e398e5252be8 ro
-        initrd  /boot/initrd.img-2.6.28-11-server
-}
-menuentry "GNU/Linux, Linux 2.6.28-11-server (recovery mode)" {
-        insmod ext2
-        set root=(hd0,2)
-        search --no-floppy --fs-uuid --set 6b4c0339-5501-4a85-8351-e398e5252be8
-        linux   /boot/vmlinuz-2.6.28-11-server root=UUID=6b4c0339-5501-4a85-8351-e398e5252be8 ro single
-        initrd  /boot/initrd.img-2.6.28-11-server
-}
-### FIN DE /etc/grub.d/10_linux ###
-
-### DÉBUT DE /etc/grub.d/30_os-prober ###
-### FIN DE /etc/grub.d/30_os-prober ###
-
-### DÉBUT DE /etc/grub.d/40_custom ###
-# Ce fichier fournit une façon facile d'ajouter des
-# entrées de menu personnalisées. Tapez simlement 
-# les entrées de menu que vous voulez à ajouter après ce
-# commentaire. Prenez garde à ne pas modifier la ligne
-# 'exec tail' 
-### FIN DE /etc/grub.d/40_custom ###
-</computeroutput></screen>
-
-  <note>
-  <itemizedlist>
-      <listitem><para>Remarquez que même s'il y a un avertissement pour que vous
-      n'éditiez pas le fichier, vous pouvez le faire tant que vous ne relancez pas
-      <command>grub-mkconfig</command>.</para></listitem>
-
-      <listitem><para>Les lignes <emphasis>search</emphasis> ne servent en général à rien dans des systèmes LFS car
-      cette commande ne fait que paramétrer une une variable interne de GRUB 
-      utilisée pour trouver l'image du noyau. La commande <emphasis>set root</emphasis>
-      offre la même possibilité sans l'overhead de ;a recherche..</para></listitem>
-
-      <listitem><para>Vous pouvez déplacer les commandes <emphasis>set root</emphasis> et 
-      <emphasis>insmod ext2</emphasis> à l'extérieur des sections
-      <emphasis>menuentry</emphasis> pour l'appliquer à toutes les sections du
-      fichier. Cela conduit à une section simple comme&nbsp;:</para></listitem>
-
-      </itemizedlist>
-
-<screen><computeroutput>menuentry "Linux &linux-version;-lfs-&version;" {
-linux   /boot/vmlinux-&linux-version;-lfs-&version; root=/dev/sda2 ro
-}
-</computeroutput></screen>
-  
-  <itemizedlist>
-
-      <listitem><para>Passer un UUID au noyau exige un disque RAM initial
-      (initrd) qui n'est pas construit par LFS.</para></listitem>
-  
-      <listitem><para>Si la partition <filename>/boot</filename> est installée
-      sur une partition séparée, les lignes linux et initrd ne devraient pas avoir de
-      chaîne <emphasis>/boot</emphasis> en préfixe des noms de fichiers.</para></listitem> 
-  
-      <listitem><para>Dans cet exemple les fichiers du noyau pour une installation
-      Ubuntu se trouvent aussi dans <filename
-      class="directory">/boot</filename>.</para></listitem>
-
-   </itemizedlist>
-   </note>
-
-</sect2>
-
-  <sect2>
-     <title>Tester la configuration</title>
-
-
-     <para>L'image c&oelig;oeur de GRUB est aussi un noyau multiboot (multiamorçage),
-     donc si vous avez déjà chargé <emphasis>GRUB Legacy</emphasis>, vous pouvez
-     charger GRUB-&grub-version; à travers votre ancien chargeur de démarrage. Pour 
-     faire cela, vous devrez quitter l'environnement
-     <command>chroot</command> et revenez-y à la prochaine section pour finir
-     le peu qui reste à faire dans le livre.</para>
-
-<screen role="nodump"><userinput>/sbin/reboot
-...
-grub> root (hd0,1)
-grub> kernel /boot/grub/core.img
-grub> boot</userinput></screen>
-
-     <para>Remarquez que les commandes GRUB ci-dessus sont supposées liées à GRUB. À ce moment,
-     l'invite de GRUB apparaîtra (très semblable à GRUB Legacy) et
-     vous pourrez explorer l'interface ou démarrer sur un des systèmes du fichier
-     grub.cfg.</para>
-   
-   </sect2>
-
-  <sect2>
-     <title>Mettre à jour le <foreignphrase>Master Boot Record</foreignphrase></title>
-
-     <para>Si vous avez testé la configuration de GRUB comme indiqué ci-dessus,
-     ré-entrez dans l'environnement <command>chroot</command>.</para>
+    class="directory">/boot/grub</filename> et paramétrez le secteur
+    d'amorçage&nbsp;:</para> 
 
     <warning>
-      <para>La commande suivante va écraser le chargeur de démarrage actuel.
-      Ne lancez pas la commande si vous ne désirez pas cela, par exemple si vous
-      utilisez un gestionnaire de démarrage tiers pour gérer
-      le <foreignphrase>Master Boot Record</foreignphrase> (MBR).</para> 
+      <para>La commande suivante va écraser le chargeur de démarrage actuel. 
+      Ne lancez pas la commande si ce n'est pas ce que vous désirez, par exemple
+      si vous utilisez un gestionnaire de démarrage extérieur pour gérer la
+      <foreignphrase>Master Boot Record</foreignphrase> (MBR).</para> 
     </warning>
 
-    <para>Mettez à jour la MBR avec&nbsp;:</para>
-    
-<screen role="nodump"><userinput>grub-setup '&lt;DEVICE&gt;'</userinput></screen>
+<screen role="nodump"><userinput>grub-install /dev/sda</userinput></screen>
 
-    <para>Modifiez DEVICE ci-dessus selon votre disque d'amorçage, en principe '(hd0)' ou /dev/sda.  
-    Si vous utilisez (hd0) assurez-vous d'exclure l'interprétation des parenthèses
-     avec des anti-slashs ou des guillemets simples pour empêcher le shell de les voir comme
-     un sous-shell.</para>
+    <note><para><application>grub-install</application> est un script et il
+    appelle un autre programme, grub-probe, qui peut échouer avec un message 
+    "cannot stat `/dev/root'" (ne peut trouver /dev/root).  Dans un cas pareil,
+    créez un lien symbolique temporaire entre votre partition racine et 
+    /dev/root&nbsp;:</para>
 
-    <para>Ce programme utilise les paramètres par défaut suivant, qui sont corrects
-    si vous n'avez pas dévié des instructions ci-dessus&nbsp;:</para>
+<screen role="nodump"><userinput>ln -sv /dev/sda2 /dev/root</userinput></screen>
 
-    <itemizedlist>
-      <listitem><para>image de démarrage  - boot.img  </para></listitem>
-      <listitem><para>image principale  - core.img  </para></listitem>
-      <listitem><para>répertoire   - /boot/grub</para></listitem>
-      <listitem><para>plan de périphériques  - device.map</para></listitem>
-      <listitem><para>paramètre racine par défaut - deviné</para></listitem>
-    </itemizedlist>
+    <para>Le lien symbolique ne restera là que jusqu'au redémarrage du
+    système. Le lien ne sert qu'à la procédure d'installation. 
+    </para></note>
+   
+   </sect2>
+   
+   <sect2>
+     <title>Créer le fichier de configuration</title>
 
-   <note><para>Le paramètre racine est la valeur par défaut de si une instruction 'set root'
-   n'est pas trouvée dans grub.cfg. C'est la partition qui est explorée pour
-   trouver le noyau et d'autres fichiers de soutien. Il est différent du paramètre
-   'root=' de la ligne 'linux' dans la ligne configuration.  La dernière
-   est la partition que le noyau monte en tant que '/'.  Dans l'exemple de grub.cfg
-   ci-dessus, les deux valeurs pointent vers /dev/sda2, mais s'il y a une partition d'amorçage
-   distincte, elles seront différentes.</para></note>
+     <para>Générez <filename>/boot/grub/grub.cfg</filename>&nbsp;:</para>
+    <screen><userinput>cat &gt; /boot/grub/grub.cfg &lt;&lt; "EOF"
+<literal># Début de /boot/grub/grub.cfg
+set default=0
+set timeout=5
+insmod ext2
+set root=(hd0,2)
+
+menuentry "GNU/Linux, Linux &linux-version;-lfs-&version;" {
+        linux   /boot/vmlinux-&linux-version;-lfs-&version; root=/dev/sda2 ro
+}</literal>
+EOF</userinput></screen>
+
+    <para>GRUB est un programme extrêmement puissant et il offre un très grand
+    nombre d'options pour démarrer depuis une large gamme de périphériques, de
+    systèmes d'exploitation et de types de partition. Il y a aussi beaucoup 
+    d'options de personnalisation telles que les écrans flashies graphiques,
+    jouer des sons, l'entrée souris etc. Les détails de ces options vont au-delà
+    des objectifs de cette introduction.</para>
+
+    <note><para>Il existe une commande, <application>grub-mkconfig</application> 
+    qui peut écrire automatiquement un fichier de configuration. Elle utilise
+    un ensemble de scripts situés dans /etc/grub.d/ et elle détruira les
+    personnalisations que vous aurez faites. Ces scripts sont d'abord
+    conçus pour des distributions non basées sur les sources et ils ne sont
+    pas recommandés  pour LFS. Si vous installez une distribution Linux du marché,
+    il est fort probable que ce programme soit lancé. Assurez-vous de sauvegarder
+    votre fichier grub.cfg.</para></note> 
 
   </sect2>
 

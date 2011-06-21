@@ -8,8 +8,9 @@ fi
 
 FILE=$1
 
-LINE=$( grep -n "DITEZ PAS CE FICHIER" $FILE | cut -f1 -d: )
+LINE=$( grep -n "DO NOT EDIT" $FILE | cut -f1 -d: )
 LINE=$(( LINE - 1 ))
 
-sed -i -e "$LINE s/monospace/&\" font-size=\"9pt/" $FILE
+# Not needed
+#sed -i -e "$LINE s/monospace/&\" font-size=\"9pt/" $FILE
 
