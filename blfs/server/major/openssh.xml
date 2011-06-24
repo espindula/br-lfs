@@ -4,20 +4,20 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY openssh-download-http "http://sunsite.ualberta.ca/pub/OpenBSD/OpenSSH/portable/openssh-&openssh-version;.tar.gz">
+  <!ENTITY openssh-download-http "http://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-&openssh-version;.tar.gz">
   <!ENTITY openssh-download-ftp  "ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-&openssh-version;.tar.gz">
-  <!ENTITY openssh-md5sum        "03f2d0c1b5ec60d4ac9997a146d2faec">
-  <!ENTITY openssh-size          "1.0 Mio">
-  <!ENTITY openssh-buildsize     "29 Mio">
-  <!ENTITY openssh-time          "0.5 SBU (additional 1.3 SBU to run the test suite)">
+  <!ENTITY openssh-md5sum        "e6ee52e47c768bf0ec42a232b5d18fb0">
+  <!ENTITY openssh-size          "1.1 Mio">
+  <!ENTITY openssh-buildsize     "22 Mio">
+  <!ENTITY openssh-time          "0.5 SBU (ajouter 1.5 SBU pour lancer la suite de tests)">
 ]>
 
 <sect1 id="openssh" xreflabel="OpenSSH-&openssh-version;">
   <?dbhtml filename="openssh.html"?>
 
   <sect1info>
-    <othername>$LastChangedBy: gdalziel $</othername>
-    <date>$Date: 2009-07-06 21:12:40 +0200 (lun 06 jui 2009) $</date>
+    <othername>$LastChangedBy: dj $</othername>
+    <date>$Date: 2011-01-31 04:27:09 +0100 (lun 31 jan 2011) $</date>
   </sect1info>
 
   <title>OpenSSH-&openssh-version;</title>
@@ -73,7 +73,7 @@
     url="http://www.citi.umich.edu/projects/smartcard/sectok.html">libsectok</ulink></para>
 
     <bridgehead renderas="sect4">Facultatives Runtime (Used only to gather entropy)</bridgehead>
-    <para role="optional"><xref linkend="jdk"/>,
+    <para role="optional"><xref linkend="icedtea6"/> or <xref linkend="jdk"/>,
     <xref linkend="net-tools"/> et
     <xref linkend="sysstat"/>.</para>
 
@@ -110,9 +110,13 @@ useradd -c 'sshd PrivSep' -d /var/lib/sshd -g sshd \
     <para>Installez <application>OpenSSH</application> en lançant
     les commandes suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=/usr --sysconfdir=/etc/ssh --datadir=/usr/share/sshd \
-    --libexecdir=/usr/lib/openssh --with-md5-passwords \
-    --with-privsep-path=/var/lib/sshd &amp;&amp;
+<screen><userinput>sed -i.bak 's/ -ldes//' configure &amp;&amp;
+./configure --prefix=/usr \
+            --sysconfdir=/etc/ssh \
+            --datadir=/usr/share/sshd \
+            --libexecdir=/usr/lib/openssh \
+            --with-md5-passwords \
+            --with-privsep-path=/var/lib/sshd &amp;&amp;
 make</userinput></screen>
 
     <para>Si vous avez lié <application>tcp_wrappers</application> à la
@@ -143,6 +147,12 @@ install -v -m644 INSTALL LICENCE OVERVIEW README* WARNING.RNG \
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
+
+    <para><command>sed -i.bak 's/ -ldes//' configure</command>:
+    Cette commande corrige une erreur de construction si vous utilisez le paramètre
+    <option>--with-kerberos5</option> et que vous construisez le paquet
+    <application>Heimdal</application> en suivant les instructions de BLFS.
+    La commande est inoffencive dans tous les autres cas.</para>
 
     <para><parameter>--sysconfdir=/etc/ssh</parameter>&nbsp;: Ceci empêche
     les fichiers de configuration de s'installer dans
@@ -215,11 +225,13 @@ install -v -m644 INSTALL LICENCE OVERVIEW README* WARNING.RNG \
 
       <para>Si vous avez ajouté le support de <application>LinuxPAM</application>,
       vous devrez ajouter un fichier de configuration pour
-      <application>sshd</application>.  Effectuez les commandes suivantes en tant
-      qu'utilisatekr <systemitem class='username'>root</systemitem>&nbsp;:</para>
+      <application>sshd</application> et permettre l'utilisation de <application>LinuxPAM</application>.
+	  Effectuez les commandes suivantes en tant
+      qu'utilisateur <systemitem class='username'>root</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>sed 's@d/login@d/sshd@g' /etc/pam.d/login &gt; /etc/pam.d/sshd &amp;&amp;
-chmod 644 /etc/pam.d/sshd</userinput></screen>
+chmod 644 /etc/pam.d/sshd &amp;&amp;
+echo "USEPAM yes" &gt;&gt; /etc/ssh/sshd_config</userinput></screen>
 
       <para>Vous pouvez trouver des informations de configuration supplémentaires
       dans les pages de man de <command>sshd</command>, <command>ssh</command> et
