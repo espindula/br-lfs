@@ -6,15 +6,11 @@
 
   <!ENTITY x7libs-download-http "http://xorg.freedesktop.org/releases/individual/lib/">
   <!ENTITY x7libs-download-ftp  "ftp://ftp.x.org/pub/individual/lib/">
-  <!ENTITY x7libs-wget          "&files-anduin;/xorg/lib-&xorg7-version;.wget">
-  <!ENTITY x7libs-md5sum        "&files-anduin;/xorg/lib-&xorg7-version;.md5">
-  <!ENTITY x7libs-size          "11.4 Mio">
-  <!ENTITY x7libs-buildsize     "186 Mio">
-  <!ENTITY x7libs-time          "6.6 SBU">
-
-  <!-- Versions for patches -->
-  <!ENTITY libX11-version       "1.1.2">
-  <!ENTITY libXfont-version     "1.2.8">
+  <!ENTITY x7libs-wget          "&files-anduin;/xorg/lib-&xorg7-release;.wget">
+  <!ENTITY x7libs-md5sum        "&files-anduin;/xorg/lib-&xorg7-release;.md5">
+  <!ENTITY x7libs-size          "10.7 Mio">
+  <!ENTITY x7libs-buildsize     "336 Mio">
+  <!ENTITY x7libs-time          "4.2 SBU">
 
 ]>
 
@@ -23,7 +19,7 @@
 
   <sect1info>
     <othername>$LastChangedBy: dj $</othername>
-    <date>$Date: 2008-11-27 00:47:30 +0100 (jeu 27 nov 2008) $</date>
+    <date>$Date: 2011-01-23 22:07:50 +0100 (dim 23 jan 2011) $</date>
   </sect1info>
 
   <title>Bibliothèques Xorg</title>
@@ -38,6 +34,8 @@
     <para>Les bibliothèques <application>Xorg</application> fournissent
     des routines de bibliothèque utilisées dans touts les applications
     X Window.</para>
+
+    &lfs65_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -72,14 +70,18 @@
     <bridgehead renderas="sect3">Dépendances de Xorg Libraries</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
-    <para role="required"><xref linkend="ed"/>,
-    <xref linkend="fontconfig"/>,
-    <xref linkend="pkgconfig"/>,
-    <xref linkend="xorg7-proto"/> et
-    <xref linkend="libXdmcp"/></para>
+    <para role="required"><xref linkend="fontconfig"/>,
+    <xref linkend="xorg7-proto"/>,
+    <xref linkend="libXdmcp"/>, et
+    <xref linkend="libxcb"/></para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
-    <para role="optional"><xref linkend="libxcb"/></para>
+    <para role="optional"><xref linkend="xmlto"/> avec au moins un des suivants
+    >&nbsp;: <xref linkend="fop"/>,
+    <xref linkend="Links"/>,
+    <xref linkend="lynx"/>,
+    et <xref linkend="w3m"/> (pour générer le documentation supplémentaire en PDF ou texte
+    pour le paquet libXfont).</para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url='&blfs-wiki;/Xorg7Libraries'/></para>
@@ -94,9 +96,9 @@
 
 <screen><userinput>mkdir lib &amp;&amp;
 cd lib &amp;&amp;
-grep -v '^#' ../lib-&xorg7-version;.wget | wget -i- -c \
+grep -v '^#' ../lib-&xorg7-release;.wget | wget -i- -c \
     -B http://xorg.freedesktop.org/releases/individual/lib/ &amp;&amp;
-md5sum -c ../lib-&xorg7-version;.md5</userinput></screen>
+md5sum -c ../lib-&xorg7-release;.md5</userinput></screen>
 
   </sect2>
 
@@ -106,7 +108,18 @@ md5sum -c ../lib-&xorg7-version;.md5</userinput></screen>
     <para>Installez les bibliothèques en lançant les commandes suivantes pour
     chaque paquet&nbsp;:</para>
 
-<screen><userinput>./configure $XORG_CONFIG &amp;&amp;
+<screen><userinput>case $(basename "$PWD") in
+libXfont-[0-9]* )
+                 ./configure $XORG_CONFIG --disable-devel-docs
+                 ;;
+   libXt-[0-9]* )
+                 ./configure $XORG_CONFIG \
+                     --with-appdefaultdir=/etc/X11/app-defaults
+                 ;;
+              * )
+                 ./configure $XORG_CONFIG
+                 ;;
+esac &amp;&amp;
 make</userinput></screen>
 
     <para>Ces paquets ne fournissent pas de suites de tests.</para>
@@ -121,11 +134,14 @@ ldconfig</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><parameter>--without-xcb</parameter>&nbsp;: Par défaut, 
-    <application>libX11</application> utilisera <xref linkend="libxcb"/>
-    pour sa couche de transport. Ce paramètre est nécessaire dans la commande
-    <command>./configure</command> si <xref linkend="libxcb"/>
-    n'est pas installé.</para>
+    <para><parameter>--with-fop</parameter>: Utiliser <xref linkend="fop"/> pour
+    générer la documentation PDF (seulement pour le paquet libXfont).</para>
+ 
+    <para><parameter>--disable-devel-docs</parameter>: Désactive la génération de 
+    la documentation text dans le paquet libXfont si
+    <xref linkend="xmlto"/> est installé dans un navigateur de texte. Omettre ce parametre
+    (ou la condition <command>case</command> entière) si un navigateur de text
+    est installé.</para>
 
   </sect2>
 
@@ -136,12 +152,13 @@ ldconfig</userinput></screen>
     <filename class="directory">/usr</filename>, aucune
     configuration supplémentaire n'est nécessaire et vous pouvez passer le reste
     de cette section. Si vous avez opté pour un préfixe alternatif, vous devriez
-    créer deux liens symboliques pour satisfaire l'environnement attendu
+    créer trois liens symboliques pour satisfaire l'environnement attendu
     de plusieurs paquets. Exécutez les commandes suivantes en tant qu'utilisateur
      root&nbsp;:</para>
 
 <screen role="root"><userinput>ln -sv $XORG_PREFIX/lib/X11 /usr/lib/X11 &amp;&amp;
-ln -sv $XORG_PREFIX/include/X11 /usr/include/X11</userinput></screen>
+ln -sv $XORG_PREFIX/include/X11 /usr/include/X11 &amp;&amp;
+ln -sv $XORG_PREFIX /usr/X11R6</userinput></screen>
 
   </sect2>
 
@@ -154,18 +171,18 @@ ln -sv $XORG_PREFIX/include/X11 /usr/include/X11</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>cxpm, makestrs, sxpm, xft-config</seg>
-        <seg>libAppleWM.{so,a}, libdmx.{so,a}, libfontenc.{so,a},
+        <seg>cxpm, sxpm, xft-config</seg>
+        <seg>libdmx.{so,a}, libfontenc.{so,a},
         libFS.{so,a}, libICE.{so,a}, libpciaccess.{so,a}, libSM.{so,a},
-        libWindowsWM.{so,a}, libX11.{so,a}, libXaw6.{so,a}, libXaw7.{so,a},
+        libX11.{so,a}, libXaw6.{so,a}, libXaw7.{so,a},
         libXaw.{so,a}, libXcomposite.{so,a}, libXcursor.{so,a},
         libXdamage.{so,a}, libXext.{so,a}, libXfixes.{so,a},
-        libXfontcache.{so,a}, libXfont.{so,a}, libXft.{so,a},
-        libXinerama.{so,a}, libXi.{so,a}, libxkbfile.{so,a}, libXmu.{so,a},
-        libXmuu.{so,a}, libXpm.{so,a}, libXrandr.{so,a}, libXrender.{so,a},
-        libXRes.{so,a}, libXss.{so,a}, libXt.{so,a}, libXtst.{so,a},
-        libXvMC.{so,a}, libXvMCW.{so,a}, libXv.{so,a}, libXxf86dga.{so,a},
-        libXxf86misc.{so,a}, et libXxf86vm.{so,a}</seg>
+        libXfont.{so,a}, libXft.{so,a}, libXinerama.{so,a}, libXi.{so,a},
+        libxkbfile.{so,a}, libXmu.{so,a}, libXmuu.{so,a}, libXp.{so,a},
+        libXpm.{so,a}, libXrandr.{so,a}, libXrender.{so,a}, libXRes.{so,a},
+        libXss.{so,a}, libXt.{so,a}, libXtst.{so,a}, libXvMC.{so,a},
+        libXvMCW.{so,a}, libXv.{so,a}, libXxf86dga.{so,a}, et
+        libXxf86vm.{so,a}</seg>
         <seg>Aucun</seg>
       </seglistitem>
     </segmentedlist>
@@ -181,16 +198,6 @@ ln -sv $XORG_PREFIX/include/X11 /usr/include/X11</userinput></screen>
           <para>vérifie le format d'un fichier XPM.</para>
           <indexterm zone="xorg7-lib cxpm-x7">
             <primary sortas="b-cxpm">cxpm</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="makestrs-x7">
-        <term><command>makestrs</command></term>
-        <listitem>
-          <para>crée une/des en-tête(s) et des sources C de tableaux de chaînes.</para>
-          <indexterm zone="xorg7-lib makestrs-x7">
-            <primary sortas="b-makestrs">makestrs</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -213,16 +220,6 @@ ln -sv $XORG_PREFIX/include/X11 /usr/include/X11</userinput></screen>
           compilateur, de l'éditeur de liens, et/ou d'installation.</para>
           <indexterm zone="xorg7-lib xft-config-x7">
             <primary sortas="b-xft-config">xft-config</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="libAppleWM-x7">
-        <term><filename class='libraryfile'>libAppleWM.{so,a}</filename></term>
-        <listitem>
-          <para>est l'extension de gestion de fenêtre sans racine d'Apple.</para>
-          <indexterm zone="xorg7-lib libAppleWM-x7">
-            <primary sortas="c-libAppleWM">libAppleWM.{so,a}</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -284,16 +281,6 @@ ln -sv $XORG_PREFIX/include/X11 /usr/include/X11</userinput></screen>
           <para>est la bibliothèque de gestion de session X.</para>
           <indexterm zone="xorg7-lib libSM-x7">
             <primary sortas="c-libSM">libSM.{so,a}</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="libWindowsWM-x7">
-        <term><filename class='libraryfile'>libWindowsWM.{so,a}</filename></term>
-        <listitem>
-          <para>est la bibliothèque WindowsWM basée sur AppleWM.</para>
-          <indexterm zone="xorg7-lib libWindowsWM-x7">
-            <primary sortas="c-libWindowsWM">libWindowsWM.{so,a}</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -390,17 +377,6 @@ ln -sv $XORG_PREFIX/include/X11 /usr/include/X11</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libXfontcache-x7">
-        <term><filename class='libraryfile'>libXfontcache.{so,a}</filename></term>
-        <listitem>
-          <para>est la bibliothèque du client d'extension du cache de police 
-          X-TrueType.</para>
-          <indexterm zone="xorg7-lib libXfontcache-x7">
-            <primary sortas="c-libXfontcache">libXfontcache.{so,a}</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="libXfont-x7">
         <term><filename class='libraryfile'>libXfont.{so,a}</filename></term>
         <listitem>
@@ -468,6 +444,16 @@ ln -sv $XORG_PREFIX/include/X11 /usr/include/X11</userinput></screen>
           <para>est la bibliothèque Mini Xmu.</para>
           <indexterm zone="xorg7-lib libXmuu-x7">
             <primary sortas="c-libXmuu">libXmuu.{so,a}</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libXp-x7">
+        <term><filename class='libraryfile'>libXp.{so,a}</filename></term>
+        <listitem>
+          <para>est la bibliothèque d'impression X.</para>
+          <indexterm zone="xorg7-lib libXp-x7">
+           <primary sortas="c-libXp">libXp.{so,a}</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -580,16 +566,6 @@ ln -sv $XORG_PREFIX/include/X11 /usr/include/X11</userinput></screen>
           <para>est la bibliothèque client pour l'extension XFree86-DGA.</para>
           <indexterm zone="xorg7-lib libXxf86dga-x7">
             <primary sortas="c-libXxf86dga">libXxf86dga.{so,a}</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="libXxf86misc-x7">
-        <term><filename class='libraryfile'>libXxf86misc.{so,a}</filename></term>
-        <listitem>
-          <para>est la bibliothèque client de l'extension X XFree86-Misc.</para>
-          <indexterm zone="xorg7-lib libXxf86misc-x7">
-            <primary sortas="c-libXxf86misc">libXxf86misc.{so,a}</primary>
           </indexterm>
         </listitem>
       </varlistentry>
