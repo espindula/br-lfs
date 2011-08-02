@@ -37,7 +37,80 @@
 5: same as 4, it is usually used for GUI login (like X's <command>xdm</command> or KDE's <command>kdm</command>)
 6: reboot the computer</literallayout>
 
-  <para>The command used to change run-levels is <command>init
+  <sect2 id="conf-sysvinit" role="configuration">
+  <title>Configuring Sysvinit</title>
+
+  <indexterm zone="conf-sysvinit">
+    <primary sortas="a-Sysvinit">Sysvinit</primary>
+    <secondary>configuring</secondary>
+  </indexterm>
+
+  <indexterm zone="conf-sysvinit">
+    <primary sortas="e-/etc/inittab">/etc/inittab</primary>
+  </indexterm>
+
+  <para>During the kernel initialization, the first program that is run
+  is either specified on the command line or, by default 
+  <command>init</command>.  This program reads the initialization file
+  <filename>/etc/inittab</filename>.  Create this file with:</para>
+
+<screen><userinput>cat &gt; /etc/inittab &lt;&lt; "EOF"
+<literal># Begin /etc/inittab
+
+id:3:initdefault:
+
+si::sysinit:/etc/rc.d/init.d/rc sysinit
+
+l0:0:wait:/etc/rc.d/init.d/rc 0
+l1:S1:wait:/etc/rc.d/init.d/rc 1
+l2:2:wait:/etc/rc.d/init.d/rc 2
+l3:3:wait:/etc/rc.d/init.d/rc 3
+l4:4:wait:/etc/rc.d/init.d/rc 4
+l5:5:wait:/etc/rc.d/init.d/rc 5
+l6:6:wait:/etc/rc.d/init.d/rc 6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+su:S016:once:/sbin/sulogin
+
+1:2345:respawn:/sbin/agetty tty1 9600
+2:2345:respawn:/sbin/agetty tty2 9600
+3:2345:respawn:/sbin/agetty tty3 9600
+4:2345:respawn:/sbin/agetty tty4 9600
+5:2345:respawn:/sbin/agetty tty5 9600
+6:2345:respawn:/sbin/agetty tty6 9600
+
+# End /etc/inittab</literal>
+EOF</userinput></screen>
+
+  <para>An explanation of this initialization file is in the man page for
+  <emphasis>inittab</emphasis>.  For LFS, the key command that is run is
+  <command>rc</command>. The intialization file above will instruct
+  <command>rc</command> to run all the scripts starting with an S in the
+  <filename class="directory">/etc/rc.d/rcsysinit.d</filename> directory
+  followed by all the scripts starting with an S in the <filename
+  class="directory">/etc/rc.d/rc?.d</filename> directory where the question
+  mark is specified by the initdefault value.</para>
+
+  <para>As a convenience, the <command>rc</command> script reads a library of
+  functions in <filename class="directory">/lib/boot/functions</filename>.
+  This library also reads an optional configuration file,
+  <filename>/etc/sysconfig/init_params</filename>.  Any of the system
+  configuration file parameters described in subsequent sections can be
+  alternatively placed in this file allowing consolidation of all system
+  parameters in thsi one file.</para>
+
+  <para>As a debugging convenience, the functions script also logs all output
+  to <filename>/run/var/bootlog</filename>.  Since the <filename
+  class="directory">/run</filename> directory is a tmpfs, this file is not
+  persistent across boots.</para>
+
+  </sect2>
+
+  <sect2 id="init-levels" >
+  <title>Changing Run Levels</title>
+
+  <para>Changing run-levels is done with <command>init
   <replaceable>&lt;runlevel&gt;</replaceable></command>, where
   <replaceable>&lt;runlevel&gt;</replaceable> is the target run-level. For example, to
   reboot the computer, a user could issue the <command>init 6</command> command,
@@ -59,7 +132,7 @@
 
   <para>The real scripts are in <filename
   class="directory">/etc/rc.d/init.d</filename>. They do the actual work, and
-  the symlinks all point to them. Killing links and starting links point to
+  the symlinks all point to them. K links and S links point to
   the same script in <filename class="directory">/etc/rc.d/init.d</filename>.
   This is because the scripts can be called with different parameters like
   <parameter>start</parameter>, <parameter>stop</parameter>,
@@ -125,5 +198,7 @@
   <para>Feel free to modify the way the boot process works (after all,
   it is your own LFS system). The files given here are an example of how
   it can be done.</para>
+
+  </sect2>
 
 </sect1>

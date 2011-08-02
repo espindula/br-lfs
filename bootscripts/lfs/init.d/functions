@@ -1,17 +1,23 @@
 #!/bin/sh
 ########################################################################
-# Begin $rc_base/init.d/functions
+# Begin boot functions
 #
 # Description : Run Level Control Functions
 #
 # Authors     : Gerard Beekmans - gerard@linuxfromscratch.org
+# Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
-# Version     : 00.00
+# Version     : LFS 7.0
 #
 # Notes       : With code based on Matthias Benkmann's simpleinit-msb
-#		http://winterdrache.de/linux/newboot/index.html
+#               http://winterdrache.de/linux/newboot/index.html
+#
+#               The file should be located in /lib/boot
 #
 ########################################################################
+
+# Set any needed environment variables e.g. HEADLESS
+[ -r /etc/sysconfig/init_params ]  && . /etc/sysconfig/init_params
 
 ## Environmental setup
 # Setup default values for environment
@@ -27,13 +33,13 @@ KILLDELAY="3"
 ## Screen Dimensions
 # Find current screen size
 if [ -z "${COLUMNS}" ]; then
-	COLUMNS=$(stty size)
-	COLUMNS=${COLUMNS##* }
+   COLUMNS=$(stty size)
+   COLUMNS=${COLUMNS##* }
 fi
 
 # When using remote connections, such as a serial port, stty size returns 0
 if [ "${COLUMNS}" = "0" ]; then 
-	COLUMNS=80
+   COLUMNS=80
 fi
 
 ## Measurements for positioning result messages
@@ -43,12 +49,12 @@ WCOL=$((${COL} - 2))
 ## Provide an echo that supports -e and -n
 # If formatting is needed, $ECHO should be used
 case "`echo -e -n test`" in
-	-[en]*)
-		ECHO=/bin/echo
-		;;
-	*)
-		ECHO=echo
-		;;
+   -[en]*)
+      ECHO=/bin/echo
+      ;;
+   *)
+      ECHO=echo
+      ;;
 esac
 
 ## Set Cursor Position Commands, used via $ECHO
@@ -84,300 +90,282 @@ STRING_LENGTH="0"   # the length of the current message
 # Outputs:      Standard Output
 #
 # Dependencies: - sed for parsing strings.
-#	        - grep for counting string length.
+#          - grep for counting string length.
 #               
 # Todo:         
 #*******************************************************************************
 boot_mesg()
 {
-	local ECHOPARM=""
+   local ECHOPARM=""
 
-	while true
-	do
-		case "${1}" in
-			-n)
-				ECHOPARM=" -n "
-				shift 1
-				;;
-			-*)
-				echo "Unknown Option: ${1}"
-				return 1
-				;;
-			*)
-				break
-				;;
-		esac
-	done
+   while true
+   do
+      case "${1}" in
+         -n)
+            ECHOPARM=" -n "
+            shift 1
+            ;;
+         -*)
+            echo "Unknown Option: ${1}"
+            return 1
+            ;;
+         *)
+            break
+            ;;
+      esac
+   done
 
-	## Figure out the length of what is to be printed to be used
-	## for warning messages. 
-	STRING_LENGTH=$((${#1} + 1))
+   ## Figure out the length of what is to be printed to be used
+   ## for warning messages. 
+   STRING_LENGTH=$((${#1} + 1))
 
-	# Print the message to the screen
-	${ECHO} ${ECHOPARM} -e "${2}${1}"
-	
+   # Print the message to the screen
+   ${ECHO} ${ECHOPARM} -e "${2}${1}"
+
+   # Log the message 
+   ${ECHO} ${ECHOPARM} -e "${2}${1}" >> /run/var/bootlog
 }
 
 boot_mesg_flush()
 {
-	# Reset STRING_LENGTH for next message
-	STRING_LENGTH="0"
-}
-
-boot_log()
-{
-	# Left in for backwards compatibility
-	:
+   # Reset STRING_LENGTH for next message
+   STRING_LENGTH="0"
 }
 
 echo_ok()
 {
-	${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${SUCCESS}  OK  ${BRACKET}]"
-	${ECHO} -e "${NORMAL}"
+   ${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${SUCCESS}  OK  ${BRACKET}]"
+   ${ECHO} -e "${NORMAL}"
         boot_mesg_flush
+   ${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${SUCCESS}  OK  ${BRACKET}]" >> /run/var/bootlog
+   ${ECHO} -e "${NORMAL}" >> /run/var/bootlog
 }
 
 echo_failure()
 {
-	${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${FAILURE} FAIL ${BRACKET}]"
-	${ECHO} -e "${NORMAL}"
+   ${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${FAILURE} FAIL ${BRACKET}]"
+   ${ECHO} -e "${NORMAL}"
         boot_mesg_flush
+   ${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${FAILURE} FAIL ${BRACKET}]" >> /run/var/bootlog
+   ${ECHO} -e "${NORMAL}" >> /run/var/bootlog
 }
 
 echo_warning()
 {
-	${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${WARNING} WARN ${BRACKET}]"
-	${ECHO} -e "${NORMAL}"
+   ${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${WARNING} WARN ${BRACKET}]"
+   ${ECHO} -e "${NORMAL}"
         boot_mesg_flush
+   ${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${WARNING} WARN ${BRACKET}]" >> /run/var/bootlog
+   ${ECHO} -e "${NORMAL}" >> /run/var/bootlog
 }
 
-print_error_msg()
+echo_skipped()
 {
-	echo_failure
-	# $i is inherited by the rc script
-	boot_mesg -n "FAILURE:\n\nYou should not be reading this error message.\n\n" ${FAILURE}
-	boot_mesg -n " It means that an unforeseen error took"
-	boot_mesg -n " place in ${i}, which exited with a return value of"
-	boot_mesg " ${error_value}.\n"
-	boot_mesg_flush
-	boot_mesg -n "If you're able to track this"
-	boot_mesg -n " error down to a bug in one of the files provided by"
-	boot_mesg -n " the LFS book, please be so kind to inform us at"
-	boot_mesg " lfs-dev@linuxfromscratch.org.\n"
-	boot_mesg_flush
-	boot_mesg -n "Press Enter to continue..." ${INFO}
-	boot_mesg "" ${NORMAL}
-	read ENTER
+   ${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${WARNING} SKIP ${BRACKET}]"
+   ${ECHO} -e "${NORMAL}"
+        boot_mesg_flush
+   ${ECHO} -n -e "${CURS_UP}${SET_COL}${BRACKET}[${WARNING} SKIP ${BRACKET}]" >> /run/var/bootlog
+   ${ECHO} -e "${NORMAL}" >> /run/var/bootlog
 }
 
-check_script_status()
+wait_for_user()
 {
-	# $i is inherited by the rc script
-	if [ ! -f ${i} ]; then
-		boot_mesg "${i} is not a valid symlink." ${WARNING}
-		echo_warning
-		continue
-	fi
-
-	if [ ! -x ${i} ]; then
-		boot_mesg "${i} is not executable, skipping." ${WARNING}
-		echo_warning
-		continue
-	fi
+   # Wait for the user by default
+   [ "${HEADLESS=0}" = "0" ] && read ENTER
 }
 
 evaluate_retval()
 {
-	error_value="${?}"
+   error_value="${?}"
 
-	if [ ${error_value} = 0 ]; then
-		echo_ok
-	else
-		echo_failure
-	fi
+   if [ ${error_value} = 0 ]; then
+      echo_ok
+   else
+      echo_failure
+   fi
 
-	# This prevents the 'An Unexpected Error Has Occurred' from trivial
-	# errors.
-	return 0
+   # This prevents the 'An Unexpected Error Has Occurred' from trivial
+   # errors.
+   return 0
 }
 
 print_status()
 {
-	if [ "${#}" = "0" ]; then
-		echo "Usage: ${0} {success|warning|failure}"
-		return 1
-	fi
+   if [ "${#}" = "0" ]; then
+      echo "Usage: ${0} {success|warning|failure}"
+      return 1
+   fi
 
-	case "${1}" in
+   case "${1}" in
 
-		success)
-			echo_ok
-			;;
+      success)
+         echo_ok
+         ;;
 
-		warning)
-			# Leave this extra case in because old scripts
-			# may call it this way.
-			case "${2}" in
-				running)
-					${ECHO} -e -n "${CURS_UP}"
-					${ECHO} -e -n "\\033[${STRING_LENGTH}G   "
-					boot_mesg "Already running." ${WARNING}
-					echo_warning
-					;;
-				not_running)
-					${ECHO} -e -n "${CURS_UP}"
-					${ECHO} -e -n "\\033[${STRING_LENGTH}G   "
-					boot_mesg "Not running." ${WARNING}
-					echo_warning
-					;;
-				not_available)
-					${ECHO} -e -n "${CURS_UP}"
-					${ECHO} -e -n "\\033[${STRING_LENGTH}G   "
-					boot_mesg "Not available." ${WARNING}
-					echo_warning
-					;;
-				*)
-					# This is how it is supposed to
-					# be called
-					echo_warning
-					;;
-			esac
-		;;
+      warning)
+         # Leave this extra case in because old scripts
+         # may call it this way.
+         case "${2}" in
+            running)
+               ${ECHO} -e -n "${CURS_UP}"
+               ${ECHO} -e -n "\\033[${STRING_LENGTH}G   "
+               boot_mesg "Already running." ${WARNING}
+               echo_warning
+               ;;
+            not_running)
+               ${ECHO} -e -n "${CURS_UP}"
+               ${ECHO} -e -n "\\033[${STRING_LENGTH}G   "
+               boot_mesg "Not running." ${WARNING}
+               echo_warning
+               ;;
+            not_available)
+               ${ECHO} -e -n "${CURS_UP}"
+               ${ECHO} -e -n "\\033[${STRING_LENGTH}G   "
+               boot_mesg "Not available." ${WARNING}
+               echo_warning
+               ;;
+            *)
+               # This is how it is supposed to
+               # be called
+               echo_warning
+               ;;
+         esac
+      ;;
 
-		failure)
-			echo_failure
-		;;
+      failure)
+         echo_failure
+      ;;
 
-	esac
+   esac
 
 }
 
 reloadproc()
 {
-	local pidfile=""
-	local failure=0
+   local pidfile=""
+   local failure=0
 
-	while true
-	do
-		case "${1}" in
-			-p)
-				pidfile="${2}"
-				shift 2
-				;;
-			-*)
-				log_failure_msg "Unknown Option: ${1}"
-				return 2
-				;;
-			*)
-				break
-				;;
-		esac
-	done
+   while true
+   do
+      case "${1}" in
+         -p)
+            pidfile="${2}"
+            shift 2
+            ;;
+         -*)
+            log_failure_msg "Unknown Option: ${1}"
+            return 2
+            ;;
+         *)
+            break
+            ;;
+      esac
+   done
 
-	if [ "${#}" -lt "1" ]; then
-		log_failure_msg "Usage: reloadproc [-p pidfile] pathname"
-		return 2
-	fi
+   if [ "${#}" -lt "1" ]; then
+      log_failure_msg "Usage: reloadproc [-p pidfile] pathname"
+      return 2
+   fi
 
-	# This will ensure compatibility with previous LFS Bootscripts
-	if [ -n "${PIDFILE}" ];	then
-		pidfile="${PIDFILE}"
-	fi
+   # This will ensure compatibility with previous LFS Bootscripts
+   if [ -n "${PIDFILE}" ]; then
+      pidfile="${PIDFILE}"
+   fi
 
-	# Is the process running?
-	if [ -z "${pidfile}" ];	then
-		pidofproc -s "${1}"
-	else
-		pidofproc -s -p "${pidfile}" "${1}"
-	fi
+   # Is the process running?
+   if [ -z "${pidfile}" ]; then
+      pidofproc -s "${1}"
+   else
+      pidofproc -s -p "${pidfile}" "${1}"
+   fi
 
-	# Warn about stale pid file
-	if [ "$?" = 1 ]; then
-		boot_mesg -n "Removing stale pid file: ${pidfile}. " ${WARNING}
-		rm -f "${pidfile}"
-	fi
+   # Warn about stale pid file
+   if [ "$?" = 1 ]; then
+      boot_mesg -n "Removing stale pid file: ${pidfile}. " ${WARNING}
+      rm -f "${pidfile}"
+   fi
 
-	if [ -n "${pidlist}" ];	then
-		for pid in ${pidlist}
-		do
-			kill -"${RELOADSIG}" "${pid}" || failure="1"
-		done
+   if [ -n "${pidlist}" ]; then
+      for pid in ${pidlist}
+      do
+         kill -"${RELOADSIG}" "${pid}" || failure="1"
+      done
 
-		(exit ${failure})
-		evaluate_retval
+      (exit ${failure})
+      evaluate_retval
 
-	else
-		boot_mesg "Process ${1} not running." ${WARNING}
-		echo_warning
-	fi
+   else
+      boot_mesg "Process ${1} not running." ${WARNING}
+      echo_warning
+   fi
 }
 
 statusproc()
 {
-	local pidfile=""
-	local base=""
-	local ret=""
+   local pidfile=""
+   local base=""
+   local ret=""
 
-	while true
-	do
-		case "${1}" in
-			-p)
-				pidfile="${2}"
-				shift 2
-				;;
-			-*)
-				log_failure_msg "Unknown Option: ${1}"
-				return 2
-				;;
-			*)
-				break
-				;;
-		esac
-	done
+   while true
+   do
+      case "${1}" in
+         -p)
+            pidfile="${2}"
+            shift 2
+            ;;
+         -*)
+            log_failure_msg "Unknown Option: ${1}"
+            return 2
+            ;;
+         *)
+            break
+            ;;
+      esac
+   done
 
-	if [ "${#}" != "1" ]; then
-		shift 1
-		log_failure_msg "Usage: statusproc [-p pidfile] pathname"
-		return 2
-	fi
+   if [ "${#}" != "1" ]; then
+      shift 1
+      log_failure_msg "Usage: statusproc [-p pidfile] pathname"
+      return 2
+   fi
 
-	# Get the process basename
-	base="${1##*/}"
+   # Get the process basename
+   base="${1##*/}"
 
-	# This will ensure compatibility with previous LFS Bootscripts
-	if [ -n "${PIDFILE}" ];	then
-		pidfile="${PIDFILE}"
-	fi
+   # This will ensure compatibility with previous LFS Bootscripts
+   if [ -n "${PIDFILE}" ]; then
+      pidfile="${PIDFILE}"
+   fi
 
-	# Is the process running?
-	if [ -z "${pidfile}" ];	then
-		pidofproc -s "${1}"
-	else
-		pidofproc -s -p "${pidfile}" "${1}"
-	fi
+   # Is the process running?
+   if [ -z "${pidfile}" ]; then
+      pidofproc -s "${1}"
+   else
+      pidofproc -s -p "${pidfile}" "${1}"
+   fi
 
-	# Store the return status
-	ret=$?
+   # Store the return status
+   ret=$?
 
-	if [ -n "${pidlist}" ];	then
-		${ECHO} -e "${INFO}${base} is running with Process"\
-			"ID(s) ${pidlist}.${NORMAL}"
-	else
-		if [ -n "${base}" -a -e "/var/run/${base}.pid" ]; then
-			${ECHO} -e "${WARNING}${1} is not running but"\
-				"/var/run/${base}.pid exists.${NORMAL}"
-		else
-			if [ -n "${pidfile}" -a -e "${pidfile}" ]; then
-				${ECHO} -e "${WARNING}${1} is not running"\
-					"but ${pidfile} exists.${NORMAL}"
-			else
-				${ECHO} -e "${INFO}${1} is not running.${NORMAL}"
-			fi
-		fi
-	fi
+   if [ -n "${pidlist}" ]; then
+      ${ECHO} -e "${INFO}${base} is running with Process"\
+         "ID(s) ${pidlist}.${NORMAL}"
+   else
+      if [ -n "${base}" -a -e "/var/run/${base}.pid" ]; then
+         ${ECHO} -e "${WARNING}${1} is not running but"\
+            "/var/run/${base}.pid exists.${NORMAL}"
+      else
+         if [ -n "${pidfile}" -a -e "${pidfile}" ]; then
+            ${ECHO} -e "${WARNING}${1} is not running"\
+               "but ${pidfile} exists.${NORMAL}"
+         else
+            ${ECHO} -e "${INFO}${1} is not running.${NORMAL}"
+         fi
+      fi
+   fi
 
-	# Return the status from pidofproc
-	return $ret
+   # Return the status from pidofproc
+   return $ret
 }
 
 # The below functions are documented in the LSB-generic 2.1.0
@@ -405,82 +393,82 @@ statusproc()
 #*******************************************************************************
 pidofproc()
 {
-	local pidfile=""
-	local lpids=""
-	local silent=""
-	pidlist=""
-	while true
-	do
-		case "${1}" in
-			-p)
-				pidfile="${2}"
-				shift 2
-				;;
+   local pidfile=""
+   local lpids=""
+   local silent=""
+   pidlist=""
+   while true
+   do
+      case "${1}" in
+         -p)
+            pidfile="${2}"
+            shift 2
+            ;;
 
-			-s)
-				# Added for legacy opperation of getpids
-				# eliminates several '> /dev/null'
-				silent="1"
-				shift 1
-				;;
-			-*)
-				log_failure_msg "Unknown Option: ${1}"
-				return 2
-				;;
-			*)
-				break
-				;;
-		esac
-	done
+         -s)
+            # Added for legacy opperation of getpids
+            # eliminates several '> /dev/null'
+            silent="1"
+            shift 1
+            ;;
+         -*)
+            log_failure_msg "Unknown Option: ${1}"
+            return 2
+            ;;
+         *)
+            break
+            ;;
+      esac
+   done
 
-	if [ "${#}" != "1" ]; then
-		shift 1
-		log_failure_msg "Usage: pidofproc [-s] [-p pidfile] pathname"
-		return 2
-	fi
+   if [ "${#}" != "1" ]; then
+      shift 1
+      log_failure_msg "Usage: pidofproc [-s] [-p pidfile] pathname"
+      return 2
+   fi
 
-	if [ -n "${pidfile}" ]; then
-		if [ ! -r "${pidfile}" ]; then
-			return 3 # Program is not running
-		fi
+   if [ -n "${pidfile}" ]; then
+      if [ ! -r "${pidfile}" ]; then
+         return 3 # Program is not running
+      fi
 
-		lpids=`head -n 1 ${pidfile}`
-		for pid in ${lpids}
-		do
-			if [ "${pid}" -ne "$$" -a "${pid}" -ne "${PPID}" ]; then
-				kill -0 "${pid}" 2>/dev/null &&
-				pidlist="${pidlist} ${pid}"
-			fi
-			
-			if [ "${silent}" != "1" ]; then
-				echo "${pidlist}"
-			fi
+      lpids=`head -n 1 ${pidfile}`
+      for pid in ${lpids}
+      do
+         if [ "${pid}" -ne "$$" -a "${pid}" -ne "${PPID}" ]; then
+            kill -0 "${pid}" 2>/dev/null &&
+            pidlist="${pidlist} ${pid}"
+         fi
+         
+         if [ "${silent}" != "1" ]; then
+            echo "${pidlist}"
+         fi
 
-			test -z "${pidlist}" && 
-			# Program is dead, pidfile exists
-			return 1
-			# else
-			return 0
-		done
+         test -z "${pidlist}" && 
+         # Program is dead, pidfile exists
+         return 1
+         # else
+         return 0
+      done
 
-	else
-		pidlist=`pidof -o $$ -o $PPID -x "$1"`
-		if [ "${silent}" != "1" ]; then
-			echo "${pidlist}"
-		fi
+   else
+      pidlist=`pidof -o $$ -o $PPID -x "$1"`
+      if [ "${silent}" != "1" ]; then
+         echo "${pidlist}"
+      fi
 
-		# Get provide correct running status
-		if [ -n "${pidlist}" ]; then
-			return 0
-		else
-			return 3
-		fi
+      # Get provide correct running status
+      if [ -n "${pidlist}" ]; then
+         return 0
+      else
+         return 3
+      fi
 
-	fi
+   fi
 
-	if [ "$?" != "0" ]; then
-		return 3 # Program is not running
-	fi
+   if [ "$?" != "0" ]; then
+      return 3 # Program is not running
+   fi
 }
 
 #*******************************************************************************
@@ -510,74 +498,74 @@ pidofproc()
 #*******************************************************************************
 loadproc()
 {
-	local pidfile=""
-	local forcestart=""
-	local nicelevel="10"
+   local pidfile=""
+   local forcestart=""
+   local nicelevel="10"
 
 # This will ensure compatibility with previous LFS Bootscripts
-	if [ -n "${PIDFILE}" ];	then
-		pidfile="${PIDFILE}"
-	fi
+   if [ -n "${PIDFILE}" ]; then
+      pidfile="${PIDFILE}"
+   fi
 
   while true
-	do
-		case "${1}" in
-			-f)
-				forcestart="1"
-				shift 1
-				;;
-			-n)
-				nicelevel="${2}"
-				shift 2
-				;;
-			-p)
-				pidfile="${2}"
-				shift 2
-				;;
-			-*)
-				log_failure_msg "Unknown Option: ${1}"
-				return 2 #invalid or excess argument(s)
-				;;
-			*)
-				break
-				;;
-		esac
-	done
+   do
+      case "${1}" in
+         -f)
+            forcestart="1"
+            shift 1
+            ;;
+         -n)
+            nicelevel="${2}"
+            shift 2
+            ;;
+         -p)
+            pidfile="${2}"
+            shift 2
+            ;;
+         -*)
+            log_failure_msg "Unknown Option: ${1}"
+            return 2 #invalid or excess argument(s)
+            ;;
+         *)
+            break
+            ;;
+      esac
+   done
 
-	if [ "${#}" = "0" ]; then
-		log_failure_msg "Usage: loadproc [-f] [-n nicelevel] [-p pidfile] pathname [args]"
-		return 2 #invalid or excess argument(s)
-	fi
+   if [ "${#}" = "0" ]; then
+      log_failure_msg "Usage: loadproc [-f] [-n nicelevel] [-p pidfile] pathname [args]"
+      return 2 #invalid or excess argument(s)
+   fi
 
-	if [ -z "${forcestart}" ]; then
-		if [ -z "${pidfile}" ];	then
-			pidofproc -s "${1}"
-		else
-			pidofproc -s -p "${pidfile}" "${1}"
-		fi
+   if [ -z "${forcestart}" ]; then
+      if [ -z "${pidfile}" ]; then
+         pidofproc -s "${1}"
+      else
+         pidofproc -s -p "${pidfile}" "${1}"
+      fi
 
-		case "${?}" in
-			0)
-				log_warning_msg "Unable to continue: ${1} is running"
-				return 0 # 4
-				;;
-			1)
-				boot_mesg "Removing stale pid file: ${pidfile}" ${WARNING}
-				rm -f "${pidfile}"
-				;;
-			3)
-				;;
-			*)
-				log_failure_msg "Unknown error code from pidofproc: ${?}"
-				return 4
-				;;
-		esac
-	fi
+      case "${?}" in
+         0)
+            log_warning_msg "Unable to continue: ${1} is running"
+            return 0 # 4
+            ;;
+         1)
+            boot_mesg "Removing stale pid file: ${pidfile}" ${WARNING}
+            rm -f "${pidfile}"
+            ;;
+         3)
+            ;;
+         *)
+            log_failure_msg "Unknown error code from pidofproc: ${?}"
+            return 4
+            ;;
+      esac
+   fi
 
-	nice -n "${nicelevel}" "${@}"
-	evaluate_retval # This is "Probably" not LSB compliant,
+   nice -n "${nicelevel}" "${@}"
+   evaluate_retval # This is "Probably" not LSB compliant,
 #                         but required to be compatible with older bootscripts
-	return 0
+   return 0
 }
 
 #*******************************************************************************
@@ -603,106 +591,106 @@ loadproc()
 #*******************************************************************************
 killproc()
 {
-	local pidfile=""
-	local killsig=TERM # default signal is SIGTERM
-	pidlist=""
+   local pidfile=""
+   local killsig=TERM # default signal is SIGTERM
+   pidlist=""
 
-	# This will ensure compatibility with previous LFS Bootscripts
-	if [ -n "${PIDFILE}" ];	then
-		pidfile="${PIDFILE}"
-	fi
+   # This will ensure compatibility with previous LFS Bootscripts
+   if [ -n "${PIDFILE}" ]; then
+      pidfile="${PIDFILE}"
+   fi
 
-	while true
-	do
-		case "${1}" in
-			-p)
-				pidfile="${2}"
-				shift 2
-				;;
-			-*)
-				log_failure_msg "Unknown Option: ${1}"
-				return 2
-				;;
-			*)
- 				break
-				;;
-		esac
-	done
+   while true
+   do
+      case "${1}" in
+         -p)
+            pidfile="${2}"
+            shift 2
+            ;;
+         -*)
+            log_failure_msg "Unknown Option: ${1}"
+            return 2
+            ;;
+         *)
+            break
+            ;;
+      esac
+   done
 
-	if [ "${#}" = "2" ]; then
-		killsig="${2}"
-	elif [ "${#}" != "1" ];	then
-		shift 2
-		log_failure_msg "Usage: killproc  [-p pidfile] pathname [signal]"
-		return 2
-	fi
+   if [ "${#}" = "2" ]; then
+      killsig="${2}"
+   elif [ "${#}" != "1" ]; then
+      shift 2
+      log_failure_msg "Usage: killproc  [-p pidfile] pathname [signal]"
+      return 2
+   fi
 
-	# Is the process running?
-	if [ -z "${pidfile}" ];	then
-		pidofproc -s "${1}"
-	else
-		pidofproc -s -p "${pidfile}" "${1}"
-	fi
+   # Is the process running?
+   if [ -z "${pidfile}" ]; then
+      pidofproc -s "${1}"
+   else
+      pidofproc -s -p "${pidfile}" "${1}"
+   fi
 
-	# Remove stale pidfile
-	if [ "$?" = 1 ]; then
-		boot_mesg "Removing stale pid file: ${pidfile}." ${WARNING}
-		rm -f "${pidfile}"
-	fi
+   # Remove stale pidfile
+   if [ "$?" = 1 ]; then
+      boot_mesg "Removing stale pid file: ${pidfile}." ${WARNING}
+      rm -f "${pidfile}"
+   fi
 
     # If running, send the signal
     if [ -n "${pidlist}" ]; then
-	for pid in ${pidlist}
-	do
-		kill -${killsig} ${pid} 2>/dev/null
+   for pid in ${pidlist}
+   do
+      kill -${killsig} ${pid} 2>/dev/null
 
-		# Wait up to 3 seconds, for ${pid} to terminate
-		case "${killsig}" in
-		TERM|SIGTERM|KILL|SIGKILL)
-			# sleep in 1/10ths of seconds and
-			# multiply KILLDELAY by 10
-			local dtime="${KILLDELAY}0"
-			while [ "${dtime}" != "0" ]
-			do
-				kill -0 ${pid} 2>/dev/null || break
-				sleep 0.1
-				dtime=$(( ${dtime} - 1))
-			done
-			# If ${pid} is still running, kill it
-			kill -0 ${pid} 2>/dev/null && kill -KILL ${pid} 2>/dev/null
-			;;
-		esac
-	done
+      # Wait up to 3 seconds, for ${pid} to terminate
+      case "${killsig}" in
+      TERM|SIGTERM|KILL|SIGKILL)
+         # sleep in 1/10ths of seconds and
+         # multiply KILLDELAY by 10
+         local dtime="${KILLDELAY}0"
+         while [ "${dtime}" != "0" ]
+         do
+            kill -0 ${pid} 2>/dev/null || break
+            sleep 0.1
+            dtime=$(( ${dtime} - 1))
+         done
+         # If ${pid} is still running, kill it
+         kill -0 ${pid} 2>/dev/null && kill -KILL ${pid} 2>/dev/null
+         ;;
+      esac
+   done
 
-	# Check if the process is still running if we tried to stop it
-	case "${killsig}" in
-	TERM|SIGTERM|KILL|SIGKILL)
-		if [ -z "${pidfile}" ];	then
-			pidofproc -s "${1}"
-		else
-			pidofproc -s -p "${pidfile}" "${1}"
-		fi
+   # Check if the process is still running if we tried to stop it
+   case "${killsig}" in
+   TERM|SIGTERM|KILL|SIGKILL)
+      if [ -z "${pidfile}" ]; then
+         pidofproc -s "${1}"
+      else
+         pidofproc -s -p "${pidfile}" "${1}"
+      fi
 
-		# Program was terminated
-		if [ "$?" != "0" ]; then
-			# Remove the pidfile if necessary
-			if [ -f "${pidfile}" ];	then
-				rm -f "${pidfile}"
-			fi
-			echo_ok
-			return 0
-		else # Program is still running
-			echo_failure
-			return 4 # Unknown Status
-		fi
-		;;
-	*)
-		# Just see if the kill returned successfully
-		evaluate_retval
-		;;
-	esac
+      # Program was terminated
+      if [ "$?" != "0" ]; then
+         # Remove the pidfile if necessary
+         if [ -f "${pidfile}" ]; then
+            rm -f "${pidfile}"
+         fi
+         echo_ok
+         return 0
+      else # Program is still running
+         echo_failure
+         return 4 # Unknown Status
+      fi
+      ;;
+   *)
+      # Just see if the kill returned successfully
+      evaluate_retval
+      ;;
+   esac
     else # process not running
-	print_status warning not_running
+   print_status warning not_running
     fi
 }
 
@@ -723,9 +711,12 @@ killproc()
 #*******************************************************************************
 log_success_msg()
 {
-	${ECHO} -n -e "${BOOTMESG_PREFIX}${@}"
-	${ECHO} -e "${SET_COL}""${BRACKET}""[""${SUCCESS}""  OK  ""${BRACKET}""]""${NORMAL}"
-	return 0
+   ${ECHO} -n -e "${BOOTMESG_PREFIX}${@}"
+   ${ECHO} -e "${SET_COL}""${BRACKET}""[""${SUCCESS}""  OK  ""${BRACKET}""]""${NORMAL}"
+   ${ECHO} -n -e "${BOOTMESG_PREFIX}${@}" >> /run/var/bootlog
+   ${ECHO} -e "${SET_COL}""${BRACKET}""[""${SUCCESS}""  OK  ""${BRACKET}""]""${NORMAL}" \
+         >> /run/var/bootlog
+   return 0
 }
 
 #*******************************************************************************
@@ -743,9 +734,12 @@ log_success_msg()
 #
 #*******************************************************************************
 log_failure_msg() {
-	${ECHO} -n -e "${BOOTMESG_PREFIX}${@}"
-	${ECHO} -e "${SET_COL}""${BRACKET}""[""${FAILURE}"" FAIL ""${BRACKET}""]""${NORMAL}"
-	return 0
+   ${ECHO} -n -e "${BOOTMESG_PREFIX}${@}"
+   ${ECHO} -e "${SET_COL}""${BRACKET}""[""${FAILURE}"" FAIL ""${BRACKET}""]""${NORMAL}"
+   ${ECHO} -n -e "${BOOTMESG_PREFIX}${@}" >> /run/var/bootlog
+   ${ECHO} -e "${SET_COL}""${BRACKET}""[""${FAILURE}"" FAIL ""${BRACKET}""]""${NORMAL}" \
+         >> /run/var/bootlog
+   return 0
 }
 
 #*******************************************************************************
@@ -763,9 +757,35 @@ log_failure_msg() {
 #
 #*******************************************************************************
 log_warning_msg() {
-	${ECHO} -n -e "${BOOTMESG_PREFIX}${@}"
-	${ECHO} -e "${SET_COL}""${BRACKET}""[""${WARNING}"" WARN ""${BRACKET}""]""${NORMAL}"
-	return 0
+   ${ECHO} -n -e "${BOOTMESG_PREFIX}${@}"
+   ${ECHO} -e "${SET_COL}""${BRACKET}""[""${WARNING}"" WARN ""${BRACKET}""]""${NORMAL}"
+   ${ECHO} -n -e "${BOOTMESG_PREFIX}${@}" >> /run/var/bootlog
+   ${ECHO} -e "${SET_COL}""${BRACKET}""[""${WARNING}"" WARN ""${BRACKET}""]""${NORMAL}" \
+         >> /run/var/bootlog
+   return 0
 }
 
-# End $rc_base/init.d/functions
+#*******************************************************************************
+# Function - log_skipped_msg "message"
+#
+# Purpose: print a message that the script was skipped
+#
+# Inputs: $@ - Message
+#
+# Outputs: Text output to screen
+#
+# Dependencies: echo
+#
+# Todo: logging
+#
+#*******************************************************************************
+log_skipped_msg() {
+   ${ECHO} -n -e "${BOOTMESG_PREFIX}${@}"
+   ${ECHO} -e "${SET_COL}""${BRACKET}""[""${WARNING}"" SKIP ""${BRACKET}""]""${NORMAL}"
+   ${ECHO} -n -e "${BOOTMESG_PREFIX}${@}" >> /run/var/bootlog
+   ${ECHO} -e "${SET_COL}""${BRACKET}""[""${WARNING}"" SKIP ""${BRACKET}""]""${NORMAL}" \
+         >> /run/var/bootlog
+   return 0
+}
+
+# End boot functions
