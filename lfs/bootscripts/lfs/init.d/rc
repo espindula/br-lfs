@@ -1,19 +1,52 @@
 #!/bin/sh
 ########################################################################
-# Begin $rc_base/init.d/rc
+# Begin rc
 #
 # Description : Main Run Level Control Script
 #
 # Authors     : Gerard Beekmans  - gerard@linuxfromscratch.org
+# Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
-# Version     : 00.00
-#
-# Notes       :
+# Version     : LFS 7.0
 #
 ########################################################################
 
-. /etc/sysconfig/rc
-. ${rc_functions}
+. /lib/boot/functions
+
+print_error_msg()
+{
+   echo_failure
+   # $i is set when called
+   boot_mesg -n "FAILURE:\n\nYou should not be reading this error message.\n\n" ${FAILURE}
+   boot_mesg -n " It means that an unforeseen error took"
+   boot_mesg -n " place in ${i}, which exited with a return value of"
+   boot_mesg " ${error_value}.\n"
+   boot_mesg_flush
+   boot_mesg -n "If you're able to track this"
+   boot_mesg -n " error down to a bug in one of the files provided by"
+   boot_mesg -n " the LFS book, please be so kind to inform us at"
+   boot_mesg " lfs-dev@linuxfromscratch.org.\n"
+   boot_mesg_flush
+   boot_mesg -n "Press Enter to continue..." ${INFO}
+   boot_mesg "" ${NORMAL}
+   wait_for_user
+}
+
+check_script_status()
+{
+   # $i is set when called
+   if [ ! -f ${i} ]; then
+      boot_mesg "${i} is not a valid symlink." ${WARNING}
+      echo_warning
+      continue
+   fi
+
+   if [ ! -x ${i} ]; then
+      boot_mesg "${i} is not executable, skipping." ${WARNING}
+      echo_warning
+      continue
+   fi
+}
 
 # This sets a few default terminal options.
 stty sane
@@ -24,76 +57,77 @@ trap "" INT QUIT TSTP
 [ "${1}" != "" ] && runlevel=${1}
 
 if [ "${runlevel}" = "" ]; then
-	echo "Usage: ${0} <runlevel>" >&2
-	exit 1
+   echo "Usage: ${0} <runlevel>" >&2
+   exit 1
 fi
 
 previous=${PREVLEVEL}
 [ "${previous}" = "" ] && previous=N
 
-if [ ! -d ${rc_base}/rc${runlevel}.d ]; then
-	boot_mesg "${rc_base}/rc${runlevel}.d does not exist." ${WARNING}
-	boot_mesg_flush
-	exit 1
+if [ ! -d /etc/rc.d/rc${runlevel}.d ]; then
+   boot_mesg "/etc/rc.d/rc${runlevel}.d does not exist." 
+   exit 1
 fi
 
-# Attempt to stop all service started by previous runlevel,
+# Attempt to stop all services started by the previous runlevel,
 # and killed in this runlevel
 if [ "${previous}" != "N" ]; then
-	for i in $(ls -v ${rc_base}/rc${runlevel}.d/K* 2> /dev/null)
-	do
-		check_script_status
+   for i in $(ls -v /etc/rc.d/rc${runlevel}.d/K* 2> /dev/null)
+   do
+      check_script_status
 
-		suffix=${i#$rc_base/rc$runlevel.d/K[0-9][0-9]}
-		prev_start=$rc_base/rc$previous.d/S[0-9][0-9]$suffix
-		sysinit_start=$rc_base/rcsysinit.d/S[0-9][0-9]$suffix
+      suffix=${i#/etc/rc.d/rc$runlevel.d/K[0-9][0-9]}
+      prev_start=/etc/rc.d/rc$previous.d/S[0-9][0-9]$suffix
+      sysinit_start=/etc/rc.d/rcsysinit.d/S[0-9][0-9]$suffix
 
-		if [ "${runlevel}" != "0" ] && [ "${runlevel}" != "6" ]; then
-			if [ ! -f ${prev_start} ] && [ ! -f ${sysinit_start} ]; then
-				boot_mesg -n "WARNING:\n\n${i} can't be" ${WARNING}
-				boot_mesg -n " executed because it was not"
-				boot_mesg -n " not started in the previous"
-				boot_mesg -n " runlevel (${previous})."
-				boot_mesg "" ${NORMAL}
-				boot_mesg_flush
-				continue
-			fi
-		fi
-		${i} stop
-		error_value=${?}
+      if [ "${runlevel}" != "0" ] && [ "${runlevel}" != "6" ]; then
+         if [ ! -f ${prev_start} ] && [ ! -f ${sysinit_start} ]; then
+            boot_mesg -n "WARNING:\n\n${i} can't be" ${WARNING}
+            boot_mesg -n " executed because it was not"
+            boot_mesg -n " not started in the previous"
+            boot_mesg -n " runlevel (${previous})."
+            boot_mesg "" ${NORMAL}
+            boot_mesg_flush
+            continue
+         fi
+      fi
+      ${i} stop
+      error_value=${?}
 
-		if [ "${error_value}" != "0" ]; then
-			print_error_msg
-		fi
-	done
+      if [ "${error_value}" != "0" ]; then
+         print_error_msg
+      fi
+   done
 fi
 
+[ "${previous}" = "N" ] && IN_BOOT=1
+
 #Start all functions in this runlevel
-for i in $( ls -v ${rc_base}/rc${runlevel}.d/S* 2> /dev/null)
+for i in $( ls -v /etc/rc.d/rc${runlevel}.d/S* 2> /dev/null)
 do
-	if [ "${previous}" != "N" ]; then
-		suffix=${i#$rc_base/rc$runlevel.d/S[0-9][0-9]}
-		stop=$rc_base/rc$runlevel.d/K[0-9][0-9]$suffix
-		prev_start=$rc_base/rc$previous.d/S[0-9][0-9]$suffix
+   if [ "${previous}" != "N" ]; then
+      suffix=${i#/etc/rc.d/rc$runlevel.d/S[0-9][0-9]}
+      stop=/etc/rc.d/rc$runlevel.d/K[0-9][0-9]$suffix
+      prev_start=/etc/rc.d/rc$previous.d/S[0-9][0-9]$suffix
 
-		[ -f ${prev_start} ] && [ ! -f ${stop} ] && continue
-	fi
+      [ -f ${prev_start} ] && [ ! -f ${stop} ] && continue
+   fi
 
-	check_script_status
+   check_script_status
 
-	case ${runlevel} in
-		0|6)
-			${i} stop
-			;;
-		*)
-			${i} start
-			;;
-	esac
-	error_value=${?}
+   case ${runlevel} in
+      0|6)
+         ${i} stop
+         ;;
+      *)
+         ${i} start
+         ;;
+   esac
+   error_value=${?}
 
-	if [ "${error_value}" != "0" ]; then
-		print_error_msg
-	fi
+   if [ "${error_value}" != "0" ]; then
+      print_error_msg
+   fi
 done
 
-# End $rc_base/init.d/rc
+# End rc

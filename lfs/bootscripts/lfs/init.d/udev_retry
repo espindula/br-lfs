@@ -1,45 +1,60 @@
 #!/bin/sh
 ########################################################################
-# Begin $rc_base/init.d/udev_retry
+# Begin udev_retry
 #
 # Description : Udev cold-plugging script (retry)
 #
 # Authors     : Alexander E. Patrakov
+# Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
-# Version     : 00.02
-#
-# Notes       :
+# Version     : LFS 7.0
 #
 ########################################################################
 
-. /etc/sysconfig/rc
-. ${rc_functions}
+### BEGIN INIT INFO
+# Provides:            udev_retry
+# Required-Start:      udev
+# Should-Start:        $local_fs
+# Required-Stop:
+# Should-Stop:
+# Default-Start:       S
+# Default-Stop:
+# Short-Description:   Replays failed uevents and creates additonal devices.
+# Description:         Replays any failed uevents that were skipped due to
+#                      slow hardware initialization, and creates those needed
+#                      device nodes
+# X-LFS-Provided-By:   LFS
+### END INIT INFO
+
+. /lib/boot/functions
 
 case "${1}" in
-	start)
-		boot_mesg "Retrying failed uevents, if any..."
+   start)
+      boot_mesg "Retrying failed uevents, if any..."
 
-		# From Debian: "copy the rules generated before / was mounted
-		# read-write":
-		for file in /dev/.udev/tmp-rules--*; do
-			dest=${file##*tmp-rules--}
-			[ "$dest" = '*' ] && break
-			cat $file >> /etc/udev/rules.d/$dest
-			rm -f $file
-		done
+      RUNDIR=$(/sbin/udevadm info --run)
+      # From Debian: "copy the rules generated before / was mounted
+      # read-write":
+    
+      for file in ${RUNDIR}/tmp-rules--*; do
+         dest=${file##*tmp-rules--}
+         [ "$dest" = '*' ] && break
+         cat $file >> /etc/udev/rules.d/$dest
+         rm -f $file
+      done
 
-		# Re-trigger the failed uevents in hope they will succeed now
-		/sbin/udevadm trigger --type=failed --action=add
-		
-		# Now wait for udevd to process the uevents we triggered
-		/sbin/udevadm settle
-		evaluate_retval
-		;;
+      # Re-trigger the failed uevents in hope they will succeed now
+      /sbin/udevadm trigger --type=failed --action=add
 
-	*)
-		echo "Usage ${0} {start}"
-		exit 1
-		;;
+      # Now wait for udevd to process the uevents we triggered
+      /sbin/udevadm settle
+      evaluate_retval
+      ;;
+
+   *)
+      echo "Usage ${0} {start}"
+      exit 1
+      ;;
 esac
 
-# End $rc_base/init.d/udev_retry
+# End udev_retry

@@ -8,7 +8,7 @@
 <sect1 id="ch-scripts-network">
   <?dbhtml filename="network.html"?>
 
-  <title>Configurer le script network</title>
+  <title>Configuration générale du réseau</title>
 
   <indexterm zone="ch-scripts-network">
     <primary sortas="d-network">network</primary>
@@ -28,6 +28,11 @@
 
   <sect2>
     <title>Création de noms stable pour les interfaces réseau</title>
+
+    <para>S'il n'y a qu'une interface réseau à configurer sur le système,
+    cette section est facultative, bien que cela ne fera pas de mal de l'appliquer.
+    Dans de nombreux cas (comme un portable avec une interface sans fil et
+    filaire), l'application de la configuration de cette section est nécessaire.</para>  
 
     <para>Avec Udev et les pilotes réseau modulaires, la numérotation 
     n'est pas constante au fur et à mesure des redémarrages par défaut,
@@ -130,24 +135,21 @@ done</userinput></screen>
     <title>Créer des fichiers de configuration des interfaces réseau</title>
 
     <para>Les interfaces activées et désactivées par le script network
-    dépendent des fichiers et des répertoires compris dans la hiérarchie
-    <filename
-    class="directory">/etc/sysconfig/network-devices</filename>. Ce
-    répertoire doit contenir un sous-répertoire pour chaque interface à
-    configurer, comme <filename>ifconfig.xyz</filename>, où
-    <quote>xyz</quote> est le nom de l'interface réseau. Dans ce
-    répertoire se trouvent des fichiers définissant les attributs de
-    cette interface, comme le(s) adresse(s) IP, masque de sous-réseau et
-    ainsi de suite.</para>
+    dépendent des fichiers compris dans <filename class="directory">/etc/sysconfig/</filename>.
+    Ce répertoire devrait contenir un fichier par interface à configurer, tel
+    que <filename>ifconfig.xyz</filename>, où <quote>xyz</quote> signifie,
+    pour l'administrateur, quelque chose comme le nom du périphérique (par 
+    exemple eth0). Dans ce fichier, il y a les attributs de cette interface, tels
+    que son/ses adresse(s) IP, ses masques de sous-réseau, et ainsi de suite.
+    Il faut que la fin du nom de fichier soit <emphasis>ifconfig</emphasis>.</para>
 
-    <para>La commande suivante crée un fichier <filename>ipv4</filename>
-    d'exemple pour le périphérique 
+    <para>La commande suivante crée un fichier modèle pour le périphérique
     <emphasis>eth0</emphasis>&nbsp;:</para>
 
-<screen><userinput>cd /etc/sysconfig/network-devices
-mkdir -v ifconfig.eth0
-cat &gt; ifconfig.eth0/ipv4 &lt;&lt; "EOF"
+<screen><userinput>cd /etc/sysconfig/
+cat &gt; ifconfig.eth0 &lt;&lt; "EOF"
 <literal>ONBOOT=yes
+IFACE=eth0
 SERVICE=ipv4-static
 IP=192.168.1.1
 GATEWAY=192.168.1.2
@@ -156,20 +158,27 @@ BROADCAST=192.168.1.255</literal>
 EOF</userinput></screen>
 
     <para>Les valeurs de ces variables doivent être modifiées dans
-    chaque fichier pour correspondre à la bonne configuration. Si la
-    variable <envar>ONBOOT</envar> est configurée à <quote>yes</quote>,
+    chaque fichier pour correspondre à la bonne configuration.</para>
+    
+    <para>Si la variable <envar>ONBOOT</envar> est configurée à <quote>yes</quote>,
     le script network configurera la carte réseau
     (<foreignphrase>Network Interface Card</foreignphrase>, NIC) pendant
     le démarrage du système. S'il est configuré avec toute autre valeur
     que <quote>yes</quote>, l'interface réseau sera ignorée par le
-    script network et non montée.</para>
+    script network et pas configurée automatiquement. On peut démarrer et
+    arrêter l'interface à la main avec les commandes <command>ifup</command> et
+    <command>ifdown</command>.</para>
+
+    <para>La variable <envar>IFACE</envar> définit le nom de l'interface,
+    par exemple, eth0.  Elle est nécessaire dans tous les fichiers de 
+    configuration des périphériques réseaux. </para>
 
     <para>La variable <envar>SERVICE</envar> définit la méthode utilisée
     pour obtenir une adresse IP. Les scripts de démarrage LFS ont un
     format d'affectation IP modulaire. Créer les fichier supplémentaires
     dans le répertoire
-    <filename class="directory">/etc/sysconfig/network-devices/services</filename>
-    autorise d'autres méthodes d'affectation. Ceci est habituellement
+    <filename class="directory">/lib/boot/</filename>
+    autorise d'autres méthodes d'affectation d'IP. Ceci est habituellement
     utilisé pour le DHCP (<foreignphrase>Dynamic Host Configuration
     Protocol</foreignphrase>, NdT&nbsp;:protocole de configuration de
     l'hôte dynamique), qui est adressé dans le livre BLFS.</para>
@@ -217,6 +226,10 @@ nameserver <replaceable>&lt;Adresse IP du DNS secodaire&gt;</replaceable>
 # End /etc/resolv.conf</literal>
 EOF</userinput></screen>
 
+    <para>Le paramètre <varname>domain</varname> peut être omis
+    ou remplacé par un paramètre <varname>search</varname>.  Voir la page de man
+    de resolv.conf pour plus de détails.</para>
+
     <para>Remplacez <replaceable>&lt;adresse IP du DNS&gt;</replaceable> avec l'adresse
     IP du DNS le plus approprié pour la configuration. Il y aura souvent plus d'une
     entrée (les conseils recommandent des serveurs DNS disposant de capacité de
@@ -224,6 +237,9 @@ EOF</userinput></screen>
     serveur DNS, supprimez la seconde ligne <emphasis>serveur de noms</emphasis> à
     partir du fichier. L'adresse IP pourrait aussi être un routeur sur le réseau
     local.</para>
+
+    <note><para>Les adresses de DNS publiques IPV4 de Google sont 8.8.8.8 et
+    8.8.4.4.</para></note>
 
   </sect2>
 

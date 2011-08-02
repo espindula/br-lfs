@@ -1,19 +1,32 @@
 #!/bin/sh
 ########################################################################
-# Begin $rc_base/init.d/cleanfs
+# Begin cleanfs
 #
 # Description : Clean file system
 #
 # Authors     : Gerard Beekmans - gerard@linuxfromscratch.org
+# Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
-# Version     : 00.00
-#
-# Notes       :
+# Version     : LFS 7.0
 #
 ########################################################################
 
-. /etc/sysconfig/rc
-. ${rc_functions}
+### BEGIN INIT INFO
+# Provides:            cleanfs
+# Required-Start:      $local_fs
+# Should-Start:
+# Required-Stop:
+# Should-Stop:
+# Default-Start:       S
+# Default-Stop:
+# Short-Description:   Cleans temporary directories early in the boot process.
+# Description:         Cleans temporary directories /var/run, /var/lock, and
+#                      optionally) /tmp.  cleanfs also creates /var/run/utmp 
+#                      and any files defined in /etc/sysconfig/createfiles.
+# X-LFS-Provided-By:   LFS
+### END INIT INFO
+
+. /lib/boot/functions
 
 # Function to create files/directory on boot.
 create_files() {
@@ -21,7 +34,6 @@ create_files() {
 	exec 9>&0 < /etc/sysconfig/createfiles
 		while read name type perm usr grp dtype maj min junk
 		do
-
 			# Ignore comments and blank lines.
        			case "${name}" in
 				""|\#*) continue ;;
@@ -73,10 +85,11 @@ case "${1}" in
 	start)
 		boot_mesg -n "Cleaning file systems:" ${INFO}
 
-		boot_mesg -n " /tmp" ${NORMAL}
-		cd /tmp &&
-		find . -xdev -mindepth 1 ! -name lost+found \
-			-delete || failed=1
+      if [ "${SKIPTMPCLEAN}" = "" ]; then
+		   boot_mesg -n " /tmp" ${NORMAL}
+		   cd /tmp &&
+		   find . -xdev -mindepth 1 ! -name lost+found -delete || failed=1
+      fi
 
 		> /var/run/utmp
 
@@ -100,4 +113,4 @@ case "${1}" in
 		;;
 esac
 
-# End $rc_base/init.d/cleanfs
+# End cleanfs

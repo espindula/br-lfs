@@ -50,6 +50,79 @@
 
 6: redémarre l'ordinateur</literallayout>
 
+  <sect2 id="conf-sysvinit" role="configuration">
+    <title>Configuration de Sysvinit</title>
+
+    <indexterm zone="conf-sysvinit">
+      <primary sortas="a-Sysvinit">Sysvinit</primary>
+      <secondary>configuration</secondary>
+    </indexterm>
+
+    <indexterm zone="conf-sysvinit">
+      <primary sortas="e-/etc/inittab">/etc/inittab</primary>
+    </indexterm>
+
+    <para>Lors de l'initialisation du noyau, le premier programme qui se lance 
+    est soit spécifié sur la ligne de commande, soit, par défaut,
+    <command>init</command>.  Ce programme lit le fichier d'initialisation
+    <filename>/etc/inittab</filename>. Créez ce fichier avec&nbsp;:</para>
+
+<screen><userinput>cat &gt; /etc/inittab &lt;&lt; "EOF"
+<literal># Begin /etc/inittab
+
+id:3:initdefault:
+
+si::sysinit:/etc/rc.d/init.d/rc sysinit
+
+l0:0:wait:/etc/rc.d/init.d/rc 0
+l1:S1:wait:/etc/rc.d/init.d/rc 1
+l2:2:wait:/etc/rc.d/init.d/rc 2
+l3:3:wait:/etc/rc.d/init.d/rc 3
+l4:4:wait:/etc/rc.d/init.d/rc 4
+l5:5:wait:/etc/rc.d/init.d/rc 5
+l6:6:wait:/etc/rc.d/init.d/rc 6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+su:S016:once:/sbin/sulogin
+
+1:2345:respawn:/sbin/agetty tty1 9600
+2:2345:respawn:/sbin/agetty tty2 9600
+3:2345:respawn:/sbin/agetty tty3 9600
+4:2345:respawn:/sbin/agetty tty4 9600
+5:2345:respawn:/sbin/agetty tty5 9600
+6:2345:respawn:/sbin/agetty tty6 9600
+
+# Fin de /etc/inittab</literal>
+EOF</userinput></screen>
+
+  <para>Vous trouverez une explication de ce fichier d'initialisation dans la
+  page de man de <emphasis>inittab</emphasis>. Pour LFS, la commande clé qui se
+  lance est <command>rc</command>. Le fichier d'initialisation ci-dessus demandera 
+  à <command>rc</command> de lancer tous les scripts commençant par un S et dans 
+  le répertoire <filename class="directory">/etc/rc.d/rcsysinit.d</filename>,
+  puis tous les scripts commençant par un S du répertoire <filename
+  class="directory">/etc/rc.d/rc?.d</filename> où le point d'interrogation
+  est spécifié par la valeur initdefault.</para>
+
+  <para>Par commodité, le script <command>rc</command> lit une bibliothèque
+  de fonctions dans <filename class="directory">/lib/boot/functions</filename>.
+  Cette bibliothèque lit aussi un fichier de configuration facultatif,
+  <filename>/etc/sysconfig/init_params</filename>.  Tous les paramètres du
+  fichier de configuration du système décrits dans les sections suivantes peuvent
+  être mis dans ce fichier, ce qui permet de rassembler tous les paramètres
+  systèmes dans un seul fichier.</para>
+
+  <para>Pour faciliter le débogage, le script functions enregistre aussi toute
+  la sortie dans <filename>/run/var/bootlog</filename>.  Le répertoire <filename
+  class="directory">/run</filename> étant un tmpfs, ce fichier n'est pas
+  persistant entre les redémarrages.</para>
+  
+  </sect2>
+  
+  <sect2 id="init-levels" >
+  <title>Modifier les niveaux d'exécution</title>
+
   <para>La commande utilisée pour modifier le niveau d'exécution est
   <command>init
   <replaceable>&lt;[niveau_exécution]&gt;</replaceable></command>, où
@@ -81,8 +154,8 @@
   <para>Les vrais scripts sont dans
 
   <filename class="directory">/etc/rc.d/init.d</filename>. Ils font le
-  vrai boulot et les liens symboliques pointent tous vers eux. Les liens
-  d'arrêt et de lancement pointent vers le même script dans 
+  vrai boulot et les liens symboliques pointent tous vers eux. Les liens K et 
+  les liens S pointent vers le même script dans 
 
   <filename class="directory">/etc/rc.d/init.d</filename>. Ceci est dû
   au fait que les scripts peuvent être appelés avec différents
@@ -100,7 +173,6 @@
 
   <filename class="directory">rc6.d</filename> ne lanceront aucun
   service. Ils seront
-
   appelés avec l'argument <parameter>stop</parameter> pour arrêter
   quelque chose.
 
@@ -109,7 +181,6 @@
   besoin d'être stoppé.</para>
 
   <para>Voici des descriptions de ce que font les arguments des
-
   scripts&nbsp;:</para>
 
   <variablelist>
@@ -157,5 +228,7 @@
   <para>Vous êtes libre de modifier la façon dont le processus de
   démarrage fonctionne (après tout, c'est votre système LFS). Les
   fichiers donnés ici sont un exemple d'une façon de faire.</para>
+
+  </sect2>
 
 </sect1>

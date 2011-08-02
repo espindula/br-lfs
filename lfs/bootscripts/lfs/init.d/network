@@ -1,73 +1,81 @@
 #!/bin/sh
 ########################################################################
-# Begin $rc_base/init.d/network
+# Begin network
 #
 # Description : Network Control Script
 #
 # Authors     : Gerard Beekmans - gerard@linuxfromscratch.org
-#		Nathan Coulson - nathan@linuxfromscratch.org
-#		Kevin P. Fleming - kpfleming@linuxfromscratch.org
+#               Nathan Coulson - nathan@linuxfromscratch.org
+#               Kevin P. Fleming - kpfleming@linuxfromscratch.org
+# Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
-# Version     : 00.00
-#
-# Notes       :
+# Version     : LFS 7.0
 #
 ########################################################################
 
-. /etc/sysconfig/rc
-. ${rc_functions}
-. /etc/sysconfig/network
+### BEGIN INIT INFO
+# Provides:            $network
+# Required-Start:      $local_fs swap localnet
+# Should-Start:        $syslog
+# Required-Stop:       $local_fs swap localnet
+# Should-Stop:         $syslog
+# Default-Start:       3 4 5
+# Default-Stop:        0 1 2 6
+# Short-Description:   Starts and configures network interfaces.
+# Description:         Starts and configures network interfaces.
+# X-LFS-Provided-By:   LFS
+### END INIT INFO
 
 case "${1}" in
-	start)
-		# Start all network interfaces
-		for file in ${network_devices}/ifconfig.*
-		do
-			interface=${file##*/ifconfig.}
+   start)
+      # Start all network interfaces
+      for file in /etc/sysconfig/ifconfig.*
+      do
+         interface=${file##*/ifconfig.}
 
-			# skip if $file is * (because nothing was found)
-			if [ "${interface}" = "*" ]
-			then
-				continue
-			fi
+         # skip if $file is * (because nothing was found)
+         if [ "${interface}" = "*" ]
+         then
+            continue
+         fi
 
-			IN_BOOT=1 ${network_devices}/ifup ${interface}
-		done
-		;;
+         /sbin/ifup ${interface}
+      done
+      ;;
 
-	stop)
-		# Reverse list
-		FILES=""
-		for file in ${network_devices}/ifconfig.*
-		do
-			FILES="${file} ${FILES}"
-		done
+   stop)
+      # Reverse list
+      FILES=""
+      for file in  /etc/sysconfig/ifconfig.*
+      do
+         FILES="${file} ${FILES}"
+      done
 
-		# Stop all network interfaces
-		for file in ${FILES}
-		do
-			interface=${file##*/ifconfig.}
+      # Stop all network interfaces
+      for file in ${FILES}
+      do
+         interface=${file##*/ifconfig.}
 
-			# skip if $file is * (because nothing was found)
-			if [ "${interface}" = "*" ]
-			then
-				continue
-			fi
+         # skip if $file is * (because nothing was found)
+         if [ "${interface}" = "*" ]
+         then
+            continue
+         fi
 
-			IN_BOOT=1 ${network_devices}/ifdown ${interface}
-		done
-		;;
+         /sbin/ifdown ${interface}
+      done
+      ;;
 
-	restart)
-		${0} stop
-		sleep 1
-		${0} start
-		;;
+   restart)
+      ${0} stop
+      sleep 1
+      ${0} start
+      ;;
 
-	*)
-		echo "Usage: ${0} {start|stop|restart}"
-		exit 1
-		;;
+   *)
+      echo "Usage: ${0} {start|stop|restart}"
+      exit 1
+      ;;
 esac
 
-# End /etc/rc.d/init.d/network
+# End network
