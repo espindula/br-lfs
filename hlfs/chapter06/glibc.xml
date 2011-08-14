@@ -92,6 +92,17 @@ unset DL</userinput></screen>
 <screen><userinput remap="pre">sed -i '195,213 s/PRIVATE_FUTEX/FUTEX_CLOCK_REALTIME/' \
         nptl/sysdeps/unix/sysv/linux/x86_64/pthread_rwlock_timed{rd,wr}lock.S</userinput></screen>
 
+    <para>Ajoutez le support de PaX à Glibc&nbsp;:</para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../&glibc-pt_pax-patch;
+patch -Np1 -i ../&glibc-dl_execstack-patch;
+patch -Np1 -i ../&glibc-localedef_trampoline-patch;</userinput></screen>
+
+    <para>Ajoutez les fonctions de bibliothèque <option>strlcpy</option> et
+    <option>strlcat</option> à Glibc&nbsp;:</para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../&glibc-strlcpy_strlcat-patch;</userinput></screen>
+
     <para>La documentation de Glibc recommande de construire Glibc en dehors du
     répertoire des sources dans un répertoire de construction dédié&nbsp;:</para>
 
@@ -121,7 +132,8 @@ EOF</userinput></screen>
 
 <screen><userinput remap="configure">../glibc-&glibc-version;/configure --prefix=/usr \
     --disable-profile --enable-add-ons \
-    --enable-kernel=2.6.22.5 --libexecdir=/usr/lib/glibc</userinput></screen>
+    --enable-kernel=2.6.22.5 --libexecdir=/usr/lib/glibc\
+    --enable-bind-now --enable-stackguard-randomization</userinput></screen>
 
     <variablelist>
       <title>Voici la signification des options de configure&nbsp;:</title>
@@ -133,6 +145,22 @@ EOF</userinput></screen>
           <command>pt_chown</command>, par défaut
           <filename class="directory">/usr/libexec</filename>, par
           <filename class="directory">/usr/lib/glibc</filename>.</para>
+        </listitem>
+      </varlistentry>
+ 
+      <varlistentry>
+        <term><parameter>--enable-bind-now</parameter></term>
+        <listitem>
+          <para>Ceci configure Glibc pour utiliser l'option <option>-z now</option>
+          de l'éditeur de liens.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-stackguard-randomization</parameter></term>
+        <listitem>
+          <para>Ceci configure Glibc pour utiliser <filename>/dev/urandom</filename>
+          avec <option>-fstack-protector</option>.</para>
         </listitem>
       </varlistentry>
 
@@ -240,6 +268,10 @@ grep Error glibc-check-log</userinput></screen>
     <para>Installez le paquet&nbsp;:</para>
 
 <screen><userinput remap="install">make install</userinput></screen>
+
+    <para>Installez la page de man de strlcpy&nbsp;:</para>
+
+<screen><userinput remap="install">cp -v ../glibc-&glibc-version;/manual/strlcpy.3 /usr/share/man/man3</userinput></screen>
 
     <para>Les locales qui permettent à votre système de répondre en une langue
     différente n'ont pas été installées avec la commande ci-dessus. Aucune
