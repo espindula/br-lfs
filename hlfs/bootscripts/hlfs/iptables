@@ -1,0 +1,60 @@
+#!/bin/sh
+# Begin $rc_base/init.d/iptables
+
+#$LastChangedBy: bdubbs $
+#$Date: 2005-08-01 15:29:19 -0400 (Mon, 01 Aug 2005) $
+
+. /etc/sysconfig/rc
+. $rc_functions
+
+case "$1" in
+    start)
+        if [ -x /etc/rc.d/rc.iptables ]; then
+          boot_mesg "Starting iptables..."
+          loadproc /etc/rc.d/rc.iptables
+        fi
+        ;;
+
+    lock)
+        boot_mesg "Locking system iptables firewall..."
+        /sbin/iptables --policy INPUT   DROP
+        /sbin/iptables --policy OUTPUT  DROP
+        /sbin/iptables --policy FORWARD DROP
+        /sbin/iptables           --flush
+        /sbin/iptables -t nat    --flush
+        /sbin/iptables -t mangle --flush
+        /sbin/iptables           --delete-chain
+        /sbin/iptables -t nat    --delete-chain
+        /sbin/iptables -t mangle --delete-chain
+        /sbin/iptables -A INPUT  -i lo -j ACCEPT
+        /sbin/iptables -A OUTPUT -o lo -j ACCEPT
+	boot_mesg_flush
+        ;;
+
+    clear)
+        boot_mesg "Clearing system iptables iptables..."
+        /sbin/iptables --policy INPUT   ACCEPT
+        /sbin/iptables --policy OUTPUT  ACCEPT
+        /sbin/iptables --policy FORWARD ACCEPT
+        /sbin/iptables           --flush
+        /sbin/iptables -t nat    --flush
+        /sbin/iptables -t mangle --flush
+        /sbin/iptables           --delete-chain
+        /sbin/iptables -t nat    --delete-chain
+        /sbin/iptables -t mangle --delete-chain
+	boot_mesg_flush
+        ;;
+
+    status)
+        /sbin/iptables           --numeric --list
+        /sbin/iptables -t nat    --numeric --list
+        /sbin/iptables -t mangle --numeric --list
+        ;;
+
+    *)
+        echo "Usage: $0 {start|clear|lock|status}"
+        exit 1
+        ;;
+esac
+
+# End $rc_base/init.d/iptables

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Boot scripts
-for s in bootscripts/lfs/init.d/*                    \
-         bootscripts/lfs/sysconfig/*                 \
-         bootscripts/lfs/sysconfig/network-devices/* \
-         bootscripts/lfs/sysconfig/network-devices/services/*
+for s in bootscripts/hlfs/init.d/*                    \
+         bootscripts/hlfs/sysconfig/*                 \
+         bootscripts/hlfs/sysconfig/network-devices/* \
+         bootscripts/hlfs/sysconfig/network-devices/services/*
 do
   script=$(basename $s)
   
@@ -13,8 +13,8 @@ do
   [ $script == 'services'        ] && continue
 
   # Disambiguate duplicate file names
-  [ $s == 'bootscripts/lfs/sysconfig/rc'      ] && script='rc-sysinit'; 
-  [ $s == 'bootscripts/lfs/sysconfig/modules' ] && script='modules-sysinit'; 
+  [ $s == 'bootscripts/hlfs/sysconfig/rc'      ] && script='rc-sysinit'; 
+  [ $s == 'bootscripts/hlfs/sysconfig/modules' ] && script='modules-sysinit'; 
   
   sed  -e 's/\&/\&amp\;/g' -e 's/</\&lt\;/g'   -e 's/>/\&gt\;/g' \
        -e "s/'/\&apos\;/g" -e 's/"/\&quot\;/g' -e 's/\t/    /g'  \
