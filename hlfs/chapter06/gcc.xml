@@ -315,6 +315,69 @@ SEARCH_DIR("/usr/lib");</computeroutput></screen>
     href="readjusting.xml"
     xpointer="xpointer(//*[@os='v'])"/>
 
+    <para>Vérifiez que <option>-D_FORTIFY_SOURCE=2</option> fonctionne&nbsp;:</para>
+
+<screen><userinput>cat &gt; memcpy.c &lt;&lt; "EOF"
+<literal>/* Issu de NetBSD usr/src/regress/lib/libc/ssp/memcpy/memcp.c */
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+
+int
+main(int argc, char *argv[])
+{
+  char b[10];
+  int len = atoi(argv[1]);
+  (void)memcpy(b, "1020202020202", len);
+  (void)printf("%*.*s\n", len, len, b);
+  return 0;
+}</literal>
+EOF
+gcc -o memcpy memcpy.c -Wall -O2
+./memcpy 10
+./memcpy 11
+rm -v memcpy memcpy.c</userinput></screen>
+
+    <para>Ceci devrait donner les résultats suivants&nbsp;:</para>
+
+<screen><computeroutput># ./memcpy 10
+1020202020
+# ./memcpy 11
+*** buffer overflow detected ***: ./memcpy terminated
+...</computeroutput></screen>
+
+    <para>Vérifiez que <option>-fstack-protector-all</option> fonctionne&nbsp;:</para>
+
+    <screen><userinput>cat &gt; ssptest.c &lt;&lt; "EOF"
+ <literal>/* Issu de Ashish http://old.nabble.com/gcc--fstack-protector-all-option-to5867717.html */
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+void buffer_overflow ( )
+{
+  long int        i = 0;
+  char    str[29];
+  for ( i = 0; i &lt; 50; i++){
+    str[i] = '\0';
+  }
+}
+int main ()
+{
+  buffer_overflow ( );
+  exit ( 0);
+} 
+</literal>
+EOF
+gcc -o ssptest ssptest.c -Wall
+./ssptest
+rm -v ssptest ssptest.c</userinput></screen>
+
+    <para>Ceci devrait donner les résultats suivants&nbsp;:</para>
+
+<screen><computeroutput># ./ssptest
+*** stack smashing detected ***: ./ssptest terminated
+...</computeroutput></screen>
+
   </sect2>
 
   <sect2 id="contents-gcc" role="content">
