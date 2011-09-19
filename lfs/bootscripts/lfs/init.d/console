@@ -6,13 +6,12 @@
 #
 # Authors     : Gerard Beekmans - gerard@linuxfromscratch.org
 #               Alexander E. Patrakov
+#               DJ Lucas - dj@linuxfromscratch.org
 # Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
 # Version     : LFS 7.0
 #
 ########################################################################
-
-. /lib/boot/functions
 
 ### BEGIN INIT INFO
 # Provides:            console
@@ -28,37 +27,43 @@
 # X-LFS-Provided-By:   LFS
 ### END INIT INFO
 
-# Native English speakers probably don't have /etc/sysconfig/console at all
-if [ -r /etc/sysconfig/console ]; then
-   . /etc/sysconfig/console
-else
-   exit 0
-fi
+. /lib/lsb/init-functions
 
-is_true() {
+# Native English speakers probably don't have /etc/sysconfig/console at all
+[ -r /etc/sysconfig/console ] && . /etc/sysconfig/console
+
+function is_true() 
+{
    [ "$1" = "1" ] || [ "$1" = "yes" ] || [ "$1" = "true" ]
 }
+
+# See if we need to do anything
+if [ -z "${KEYMAP}"         ] && [ -z "${KEYMAP_CORRECTIONS}" ] &&
+   [ -z "${FONT}"           ] && [ is_true "${UNICODE}"       ] &&
+   [ -z "${LEGACY_CHARSET}" ]; then 
+   exit 0
+fi
 
 failed=0
 
 case "${1}" in
    start)
-      boot_mesg "Setting up Linux console..."
       # There should be no bogus failures below this line!
+      log_info_msg "Setting up Linux console..."
 
       # Figure out if a framebuffer console is used
-      [ -d /sys/class/graphics/fb0 ] && USE_FB=1 || USE_FB=0
+      [ -d /sys/class/graphics/fb0 ] && use_fb=1 || use_fb=0
 
       # Figure out the command to set the console into the
       # desired mode
       is_true "${UNICODE}" &&
-         MODE_COMMAND="${ECHO} -en '\033%G' && kbd_mode -u" ||
-         MODE_COMMAND="${ECHO} -en '\033%@\033(K' && kbd_mode -a"
+         MODE_COMMAND="echo -en '\033%G' && kbd_mode -u" ||
+         MODE_COMMAND="echo -en '\033%@\033(K' && kbd_mode -a"
 
       # On framebuffer consoles, font has to be set for each vt in
       # UTF-8 mode. This doesn't hurt in non-UTF-8 mode also.
 
-      ! is_true "${USE_FB}" || [ -z "${FONT}" ] ||
+      ! is_true "${use_fb}" || [ -z "${FONT}" ] ||
          MODE_COMMAND="${MODE_COMMAND} && setfont ${FONT}"
 
       # Apply that command to all consoles mentioned in
@@ -66,8 +71,6 @@ case "${1}" in
       # happen before setfont, otherwise a kernel bug will
       # show up and the unicode map of the font will not be
       # used.
-      # FIXME: Fedora Core also initializes two spare consoles
-      # - do we want that?
 
       for TTY in `grep '^[^#].*respawn:/sbin/agetty' /etc/inittab |
          grep -o '\btty[[:digit:]]*\b'`
@@ -77,31 +80,33 @@ case "${1}" in
       done
 
       # Set the font (if not already set above) and the keymap
-      is_true "${USE_FB}" || [ -z "${FONT}" ] ||
-         setfont $FONT ||
-         failed=1
+      [ "${use_fb}" == "1" || [ -z "${FONT}" ] || setfont $FONT || failed=1
+
       [ -z "${KEYMAP}" ] ||
          loadkeys ${KEYMAP} >/dev/null 2>&1 ||
          failed=1
+      
       [ -z "${KEYMAP_CORRECTIONS}" ] ||
          loadkeys ${KEYMAP_CORRECTIONS} >/dev/null 2>&1 ||
          failed=1
 
       # Convert the keymap from $LEGACY_CHARSET to UTF-8
       [ -z "$LEGACY_CHARSET" ] ||
-         dumpkeys -c "$LEGACY_CHARSET" |
-         loadkeys -u >/dev/null 2>&1 ||
+         dumpkeys -c "$LEGACY_CHARSET" | loadkeys -u >/dev/null 2>&1 ||
          failed=1
 
       # If any of the commands above failed, the trap at the
       # top would set $failed to 1
-      ( exit $failed )
+      ( exit $failed ) 
       evaluate_retval
-      ;;
-   *)
-      echo $"Usage:" "${0} {start}"
-      exit 1
-      ;;
+
+      exit $failed
+      ;;              
+
+   *)                 
+      echo $"Usage:"  "${0} {start}"
+      exit 1          
+      ;;              
 esac
 
 # End console

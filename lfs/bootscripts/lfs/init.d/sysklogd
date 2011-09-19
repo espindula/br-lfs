@@ -5,6 +5,7 @@
 # Description : Sysklogd loader
 #
 # Authors     : Gerard Beekmans - gerard@linuxfromscratch.org
+#               DJ Lucas - dj@linuxfromscratch.org
 # Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
 # Version     : LFS 7.0
@@ -25,29 +26,35 @@
 # X-LFS-Provided-By:   LFS
 ### END INIT INFO
 
-. /lib/boot/functions
+. /lib/lsb/init-functions
 
 case "${1}" in
    start)
-      boot_mesg "Starting system log daemon..."
-      PARMS=${SYSKLOGD_PARMS-'-m 0'}
-      loadproc syslogd $PARMS
+      log_info_msg "Starting system log daemon..."
+      parms=${SYSKLOGD_PARMS-'-m 0'}
+      start_daemon /sbin/syslogd $parms
+      evaluate_retval
 
-      boot_mesg "Starting kernel log daemon..."
-      loadproc klogd
+      log_info_msg "Starting kernel log daemon..."
+      start_daemon /sbin/klogd
+      evaluate_retval
       ;;
 
    stop)
-      boot_mesg "Stopping kernel log daemon..."
-      killproc klogd
+      log_info_msg "Stopping kernel log daemon..."
+      killproc /sbin/klogd
+      evaluate_retval
 
-      boot_mesg "Stopping system log daemon..."
-      killproc syslogd
+      log_info_msg "Stopping system log daemon..."
+      killproc /sbin/syslogd
+      evaluate_retval
       ;;
 
    reload)
-      boot_mesg "Reloading system log daemon config file..."
-      reloadproc syslogd
+      log_info_msg "Reloading system log daemon config file..."
+      pid=`pidofproc syslogd`
+      kill -HUP "${pid}"
+      evaluate_retval
       ;;
 
    restart)
@@ -56,15 +63,12 @@ case "${1}" in
       ${0} start
       ;;
 
-   status)
-      statusproc syslogd
-      statusproc klogd
-      ;;
-
    *)
-      echo "Usage: ${0} {start|stop|reload|restart|status}"
+      echo "Usage: ${0} {start|stop|reload|restart}"
       exit 1
       ;;
 esac
+
+exit 0
 
 # End sysklogd

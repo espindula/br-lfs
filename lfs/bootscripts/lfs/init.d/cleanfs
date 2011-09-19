@@ -5,6 +5,7 @@
 # Description : Clean file system
 #
 # Authors     : Gerard Beekmans - gerard@linuxfromscratch.org
+#               DJ Lucas - dj@linuxfromscratch.org
 # Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
 # Version     : LFS 7.0
@@ -26,67 +27,70 @@
 # X-LFS-Provided-By:   LFS
 ### END INIT INFO
 
-. /lib/boot/functions
+. /lib/lsb/init-functions
 
 # Function to create files/directory on boot.
-create_files() {
-   # Read in the configuration file.
+function create_files() 
+{
+   # Input to file descriptor 9 and output to stdin (redirection)
    exec 9>&0 < /etc/sysconfig/createfiles
-      while read name type perm usr grp dtype maj min junk
-      do
-         # Ignore comments and blank lines.
-               case "${name}" in
-            ""|\#*) continue ;;
+
+   while read name type perm usr grp dtype maj min junk
+   do
+      # Ignore comments and blank lines.
+      case "${name}" in
+         ""|\#*) continue ;;
+      esac
+
+      # Ignore existing files.
+      if [ ! -e "${name}" ]; then
+         # Create stuff based on its type.
+         case "${type}" in
+            dir)
+               mkdir "${name}"
+               ;;
+            file)
+               :> "${name}"
+               ;;
+            dev)
+               case "${dtype}" in
+                  char)
+                     mknod "${name}" c ${maj} ${min}
+                     ;;
+                  block)
+                     mknod "${name}" b ${maj} ${min}
+                     ;;
+                  pipe)
+                     mknod "${name}" p
+                     ;;
+                  *) 
+                     log_warning_msg "\nUnknown device type: ${dtype}" 
+                     ;;
+               esac
+               ;;
+            *)
+               log_warning_msg "\nUnknown type: ${type}" 
+               continue
+               ;;
          esac
 
-         # Ignore existing files.
-         if [ ! -e "${name}" ]; then
-            # Create stuff based on its type.
-            case "${type}" in
-               dir)
-                  mkdir "${name}"
-                  ;;
-               file)
-                  :> "${name}"
-                  ;;
-               dev)
-                  case "${dtype}" in
-                     char)
-                        mknod "${name}" c ${maj} ${min}
-                        ;;
-                     block)
-                        mknod "${name}" b ${maj} ${min}
-                        ;;
-                     pipe)
-                        mknod "${name}" p
-                        ;;
-                     *) 
-                        boot_mesg -n "\nUnknown device type: ${dtype}" ${WARNING}
-                        boot_mesg "" ${NORMAL}
-                        ;;
-                  esac
-                  ;;
-               *)
-                  boot_mesg -n "\nUnknown type: ${type}" ${WARNING}
-                  boot_mesg "" ${NORMAL}
-                  continue
-                  ;;
-            esac
+         # Set up the permissions, too.
+         chown ${usr}:${grp} "${name}"
+         chmod ${perm} "${name}"
+      fi
+   done
 
-            # Set up the permissions, too.
-            chown ${usr}:${grp} "${name}"
-            chmod ${perm} "${name}"
-         fi
-      done
+   # Close file descriptor 9 (end redirection)
    exec 0>&9 9>&-
+   return 0
 }
 
 case "${1}" in
    start)
-      boot_mesg -n "Cleaning file systems:" ${INFO}
+      log_info_msg "Cleaning file systems:" 
 
       if [ "${SKIPTMPCLEAN}" = "" ]; then
-         boot_mesg -n " /tmp" ${NORMAL}
+         log_info_msg2 "\n /tmp" 
          cd /tmp &&
          find . -xdev -mindepth 1 ! -name lost+found -delete || failed=1
       fi
@@ -102,10 +106,12 @@ case "${1}" in
       evaluate_retval
 
       if egrep -qv '^(#|$)' /etc/sysconfig/createfiles 2>/dev/null; then
-         boot_mesg "Creating files and directories..."
-         create_files
+         log_info_msg "Creating files and directories... "
+         create_files      # Always returns 0
          evaluate_retval
       fi
+
+      exit $failed
       ;;
    *)
       echo "Usage: ${0} {start}"

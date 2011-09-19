@@ -5,6 +5,7 @@
 # Description : Module auto-loading script
 #
 # Authors     : Zack Winkles
+#               DJ Lucas - dj@linuxfromscratch.org
 # Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
 # Version     : LFS 7.0
@@ -24,23 +25,23 @@
 # X-LFS-Provided-By:   LFS
 ### END INIT INFO
 
-. /lib/boot/functions
-
 # Assure that the kernel has module support.
 [ -e /proc/ksyms -o -e /proc/modules ] || exit 0
+
+. /lib/lsb/init-functions
 
 case "${1}" in
    start)
       # Exit if there's no modules file or there are no
       # valid entries
-      [ -r /etc/sysconfig/modules ] &&
-         egrep -qv '^($|#)' /etc/sysconfig/modules ||
-         exit 0
+      [ -r /etc/sysconfig/modules ]                    || exit 0
+      [ $(egrep -qv '^($|#)' /etc/sysconfig/modules) ] || exit 0
 
-      boot_mesg -n "Loading modules:" ${INFO}
+      log_info_msg "Loading modules:" 
 
       # Only try to load modules if the user has actually given us
       # some modules to load.
+
       while read module args; do
 
          # Ignore comments and blank lines.
@@ -48,29 +49,25 @@ case "${1}" in
             ""|"#"*) continue ;;
          esac
 
-         # Attempt to load the module, making
-         # sure to pass any arguments provided.
+         # Attempt to load the module, passing any arguments provided.
          modprobe ${module} ${args} >/dev/null
 
-         # Print the module name if successful,
-         # otherwise take note.
+         # Print the module name if successful, otherwise take note.
          if [ $? -eq 0 ]; then
-            boot_mesg -n " ${module}" ${NORMAL}
+            log_info_msg2 " ${module}" 
          else
             failedmod="${failedmod} ${module}"
          fi
       done < /etc/sysconfig/modules
 
-      boot_mesg "" ${NORMAL}
-      # Print a message about successfully loaded
-      # modules on the correct line.
-      echo_ok
+      # Print a message about successfully loaded modules on the correct line.
+      log_success_msg2
 
-      # Print a failure message with a list of any
-      # modules that may have failed to load.
+      # Print a failure message with a list of any modules that 
+      # may have failed to load.
       if [ -n "${failedmod}" ]; then
-         boot_mesg "Failed to load modules:${failedmod}" ${FAILURE}
-         echo_failure
+         log_failure_msg "Failed to load modules:${failedmod}" 
+         exit 1
       fi
       ;;
 
@@ -79,5 +76,7 @@ case "${1}" in
       exit 1
       ;;
 esac
+
+exit 0
 
 # End modules
