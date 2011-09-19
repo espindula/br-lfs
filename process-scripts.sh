@@ -3,14 +3,14 @@
 # Boot scripts
 for s in bootscripts/lfs/init.d/*                    \
          bootscripts/lfs/sysconfig/*                 \
-         bootscripts/lfs/sysconfig/network-devices/* \
-         bootscripts/lfs/sysconfig/network-devices/services/*
+         bootscripts/lfs/lib/services/* \
+         bootscripts/lfs/sbin/*
 do
   script=$(basename $s)
   
   # Skip directories
   [ $script == 'network-devices' ] && continue
-  [ $script == 'services'        ] && continue
+  #[ $script == 'services'        ] && continue
 
   # Disambiguate duplicate file names
   [ $s == 'bootscripts/lfs/sysconfig/rc'      ] && script='rc-sysinit'; 

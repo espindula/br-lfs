@@ -5,6 +5,7 @@
 # Description : Udev cold-plugging script
 #
 # Authors     : Zack Winkles, Alexander E. Patrakov
+#               DJ Lucas - dj@linuxfromscratch.org
 # Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
 # Version     : LFS 7.0
@@ -25,19 +26,19 @@
 # X-LFS-Provided-By:   LFS
 ### END INIT INFO
 
-. /lib/boot/functions
+. /lib/lsb/init-functions
 
 case "${1}" in
    start)
-      boot_mesg "Populating /dev with device nodes..."
+      log_info_msg "Populating /dev with device nodes... "
       if ! grep -q '[[:space:]]sysfs' /proc/mounts; then
-         echo_failure
-         boot_mesg -n "FAILURE:\n\nUnable to create" ${FAILURE}
-         boot_mesg -n " devices without a SysFS filesystem"
-         boot_mesg -n "\n\nAfter you press Enter, this system"
-         boot_mesg -n " will be halted and powered off."
-         boot_mesg -n "\n\nPress Enter to continue..." ${INFO}
-         boot_mesg "" ${NORMAL}
+         log_failure_msg2
+         msg="FAILURE:\n\nUnable to create "
+         msg="${msg}devices without a SysFS filesystem\n\n"
+         msg="${msg}After you press Enter, this system "
+         msg="${msg}will be halted and powered off.\n\n"
+         log_info_msg "$msg"
+         log_info_msg "Press Enter to continue..."
          wait_for_user
          /etc/rc.d/init.d/halt stop
       fi
@@ -49,14 +50,15 @@ case "${1}" in
       if ! mountpoint /dev > /dev/null; then
          mount -n -t tmpfs tmpfs /dev -o mode=755
       fi
+
       if [ ${?} != 0 ]; then
-         echo_failure
-         boot_mesg -n "FAILURE:\n\nCannot mount a tmpfs" ${FAILURE}
-         boot_mesg -n " onto /dev, this system will be halted."
-         boot_mesg -n "\n\nAfter you press Enter, this system"
-         boot_mesg -n " will be halted and powered off."
-         boot_mesg -n "\n\nPress Enter to continue..." ${INFO}
-         boot_mesg "" ${NORMAL}
+         log_failure_msg2
+         msg="FAILURE:\n\nCannot mount a tmpfs "
+         msg="${msg}onto /dev, this system will be halted.\n\n"
+         msg="${msg}After you press Enter, this system "
+         msg="${msg}will be halted and powered off.\n\n"
+         log_failure_msg "$msg"
+         log_info_msg "Press Enter to continue..."
          wait_for_user
          /etc/rc.d/init.d/halt stop
       fi
@@ -82,7 +84,7 @@ case "${1}" in
 
       # Now wait for udevd to process the uevents we triggered
       /sbin/udevadm settle
-      evaluate_retval
+      log_success_msg2 
       ;;
 
    *)
@@ -90,5 +92,7 @@ case "${1}" in
       exit 1
       ;;
 esac
+
+exit 0
 
 # End udev

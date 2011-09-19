@@ -1,0 +1,110 @@
+#!/bin/sh
+########################################################################
+# Begin /sbin/ifup
+#
+# Description : Interface Up
+#
+# Authors     : Nathan Coulson - nathan@linuxfromscratch.org
+#               Kevin P. Fleming - kpfleming@linuxfromscratch.org
+# Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
+#
+# Version     : LFS 7.0
+#
+# Notes       : The IFCONFIG variable is passed to the SERVICE script
+#               in the /lib/services directory, to indicate what file the
+#               service should source to get interface specifications.
+#
+########################################################################
+
+RELEASE="7.0"
+
+USAGE="Usage: $0 [ -hV ] [--help] [--version] interface"
+VERSTR="LFS ifup, version ${RELEASE}"
+
+while [ $# -gt 0 ]; do
+   case "$1" in
+      --help | -h)     help="y"; break ;;
+
+      --version | -V)  echo "${VERSTR}"; exit 0 ;;
+   
+      -*)              echo "ifup: ${1}: invalid option" >&2
+                       echo "${USAGE}" >& 2
+                       exit 2 ;;
+                       
+      *)               break ;;
+   esac
+done
+
+if [ -n "$help" ]; then
+   echo "${VERSTR}"
+   echo "${USAGE}"
+   echo
+   cat << HERE_EOF
+ifup is used to bring up a network interface.  The interface
+parameter, e.g. eth0 or eth0:2, must match the trailing part of the
+interface specifications file, e.g. /etc/sysconfig/ifconfig.eth0:2.
+
+HERE_EOF
+   exit 0
+fi
+
+file=/etc/sysconfig/ifconfig.${1}
+
+# Skip backup files
+[ "${file}" = "${file%""~""}" ] || exit 0
+
+. /lib/lsb/init-functions
+
+log_info_msg "Bringing up the ${1} interface... "
+
+if [ ! -r "${file}" ]; then
+   log_warning_msg "\n${file} is missing or cannot be accessed." 
+   exit 1
+fi
+
+. $file
+
+if [ "$IFACE" = "" ]; then
+   log_failure_msg "\n${file} does not define an interface [IFACE]."
+   exit 1
+fi
+
+# Do not process this service if started by boot, and ONBOOT
+# is not set to yes
+if [ "${IN_BOOT}" = "1" -a "${ONBOOT}" != "yes" ]; then
+   log_info_msg2 "skipped\n"
+   exit 0
+fi
+
+if [ -n "${SERVICE}" -a -x "/lib/services/${SERVICE}" ]; then
+   if [ -z "${CHECK_LINK}"         -o \
+           "${CHECK_LINK}" = "y"   -o \
+           "${CHECK_LINK}" = "yes" -o \
+           "${CHECK_LINK}" = "1" ]; then
+
+      #  Bring up the interface
+      if ip link show ${IFACE} > /dev/null 2>&1; then
+         link_status=`ip link show ${IFACE}`
+
+         if [ -n "${link_status}" ]; then
+            if ! echo "${link_status}" | grep -q UP; then
+               ip link set ${IFACE} up
+            fi
+         fi
+
+      else
+         log_warning_msg "\nInterface ${IFACE} doesn't exist."
+      fi
+   fi
+
+   IFCONFIG=${file} /lib/services/${SERVICE} ${IFACE} up
+
+else
+   MSG="\nUnable to process ${file}.  Either " 
+   MSG="${MSG}the SERVICE variable was not set "
+   MSG="${MSG}or the specified service cannot be executed."
+   log_failure_msg "$MSG"
+   exit 1
+fi
+
+# End /sbin/ifup
