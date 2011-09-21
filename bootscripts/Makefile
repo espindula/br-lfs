@@ -55,17 +55,17 @@ files: create-dirs
 	install -m ${MODE} lfs/lib/services/ipv4-static        ${LIBDIR}
 	install -m ${CONFMODE} lfs/lib/services/init-functions ${LIBDIR}
 	if [ ! -f ${EXTDIR}/sysconfig/createfiles ]; then \
-     install -m ${CONFMODE} lfs/sysconfig/createfiles ${EXTDIR}/sysconfig/ ;\
-   fi
+          install -m ${CONFMODE} lfs/sysconfig/createfiles ${EXTDIR}/sysconfig/ ;\
+        fi
 	if [ ! -f ${EXTDIR}/sysconfig/modules     ]; then \
-     install -m ${CONFMODE} lfs/sysconfig/modules     ${EXTDIR}/sysconfig/ ;\
-   fi
+          install -m ${CONFMODE} lfs/sysconfig/modules     ${EXTDIR}/sysconfig/ ;\
+        fi
 	if [ ! -f ${EXTDIR}/sysconfig/rc          ]; then \
-     install -m ${CONFMODE} lfs/sysconfig/rc          ${EXTDIR}/sysconfig/ ;\
-   fi
+          install -m ${CONFMODE} lfs/sysconfig/rc          ${EXTDIR}/sysconfig/ ;\
+        fi
 	if [ ! -f ${EXTDIR}/sysconfig/rc.site     ]; then \
-     install -m ${CONFMODE} lfs/sysconfig/rc.site     ${EXTDIR}/sysconfig/ ;\
-   fi
+          install -m ${CONFMODE} lfs/sysconfig/rc.site     ${EXTDIR}/sysconfig/ ;\
+        fi
 
 links: rcS rc0 rc1 rc2 rc3 rc4 rc5 rc6
 
@@ -123,8 +123,8 @@ rc6: files
 
 uninstall:
 	rm -rf ${DESTDIR}/lib/services ${DESTDIR}/lib/lsb ${EXTDIR}/rc.d ${EXTDIR}/init.d \
-          ${SBIN}/ifup ${SBIN}/ifdown ${MAN8}/ifup.8 ${MAN8}/ifdown.8 \
-          ${EXTDIR}/sysconfig/rc 
+               ${SBIN}/ifup ${SBIN}/ifdown ${MAN8}/ifup.8 ${MAN8}/ifdown.8 \
+               ${EXTDIR}/sysconfig/rc 
 
 .PHONY: all create-dirs install files links rcS rc0 rc1 rc2 rc3 rc4 rc5 rc6 uninstall
 
