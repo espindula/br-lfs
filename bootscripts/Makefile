@@ -21,7 +21,9 @@ create-dirs:
 	install -d -m ${DIRMODE}  ${EXTDIR}/rc.d/rcS.d
 	install -d -m ${DIRMODE}  ${EXTDIR}/rc.d/init.d
 	install -d -m ${DIRMODE}  ${EXTDIR}/sysconfig
-	install -d -m ${DIRMODE}  ${LIBDIR}
+	install -d -m ${DIRMODE}  ${EXTDIR}/sysconfig
+	install -d -m ${DIRMODE}  ${MAN8}
+	install -d -m ${DIRMODE}  ${SBIN}
 	ln -svf       services    ${DESTDIR}/lib/lsb
 	ln -sf        rc.d/init.d ${EXTDIR}/init.d
 
