@@ -88,8 +88,10 @@ validxml: tmpdir
 	$(Q)./aux-file-data.sh $(RENDERTMP)/lfs-full.xml
 
 maketar:
-	@echo "Making tarballs..."
-	$(Q)sh make-aux-files.sh
+	$(Q)if [ "x$(MAKETAR)" == "x" ]; then \
+	   echo "Making tarballs..."; \
+	   sh make-aux-files.sh; \
+	fi;
 
 profile-html: validxml
 	@echo "Generating profiled XML for XHTML..."
