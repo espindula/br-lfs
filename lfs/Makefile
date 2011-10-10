@@ -15,7 +15,6 @@ endif
 lfs: maketar validxml profile-html
 	@echo "Generating chunked XHTML files..."
 	$(Q)xsltproc --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
-	  -stringparam paper.type A4 \
 	  -stringparam rootid "$(ROOT_ID)" -stringparam base.dir $(BASEDIR)/ \
 	  stylesheets/lfs-chunked.xsl $(RENDERTMP)/lfs-html.xml
 
@@ -44,13 +43,11 @@ lfs: maketar validxml profile-html
 pdf: validxml
 	@echo "Generating profiled XML for PDF..."
 	$(Q)xsltproc --nonet --stringparam profile.condition pdf \
-		--stringparam paper.type A4 \
 	  --output $(RENDERTMP)/lfs-pdf.xml stylesheets/lfs-xsl/profile.xsl \
 	  $(RENDERTMP)/lfs-full.xml
 
 	@echo "Generating FO file..."
 	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
-		-stringparam paper.type A4 \
 	  --output $(RENDERTMP)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
 	  $(RENDERTMP)/lfs-pdf.xml
 	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/lfs-pdf.fo
@@ -91,8 +88,10 @@ validxml: tmpdir
 	$(Q)./aux-file-data.sh $(RENDERTMP)/lfs-full.xml
 
 maketar:
-	@echo "Making tarballs..."
-	$(Q)sh make-aux-files.sh
+	$(Q)if [ "x$(MAKETAR)" == "x" ]; then \
+	   echo "Making tarballs..."; \
+	   sh make-aux-files.sh; \
+	fi;
 
 profile-html: validxml
 	@echo "Generating profiled XML for XHTML..."
@@ -106,6 +105,17 @@ wget-list:
 	$(Q)xsltproc --xinclude --nonet --output $(BASEDIR)/wget-list \
 	  stylesheets/wget-list.xsl chapter03/chapter03.xml
 
+md5sums:
+	@echo "Generating md5sum file..."
+	$(Q)mkdir -p $(BASEDIR)
+	$(Q)xsltproc --xinclude --nonet --output $(BASEDIR)/md5sums \
+	  stylesheets/md5sum.xsl chapter03/chapter03.xml
+	$(Q)sed -i -e "s/BOOTSCRIPTS-MD5SUM/$(shell md5sum lfs-bootscripts*.tar.bz2 | cut -d' ' -f1)/" \
+      $(BASEDIR)/md5sums
+	$(Q)sed -i -e "s/UDEV-MD5SUM/$(shell md5sum udev-config*.tar.bz2 | cut -d' ' -f1)/" \
+      $(BASEDIR)/md5sums
+
+
 dump-commands: validxml
 	@echo "Dumping book commands..."
 	$(Q)xsltproc --output $(DUMPDIR)/ \
@@ -114,7 +124,7 @@ dump-commands: validxml
 validate: maketar validxml
 	@echo "Validation complete."
 
-all: lfs nochunks pdf dump-commands
+all: lfs nochunks pdf dump-commands md5sums
 
 .PHONY : all dump-commands lfs nochunks pdf profile-html tmpdir validate \
-	 validxml wget-list maketar
+	 validxml wget-list maketar md5sums
