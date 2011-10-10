@@ -108,6 +108,9 @@ $Date$
           <xsl:otherwise>
             <xsl:choose>
               <xsl:when test="ancestor::appendix">auto</xsl:when>
+              <!-- Modified by Bruce Dubbs.  Allow user to specify 
+              automatic screen formatting to split across pages. -->
+              <xsl:when test="@role='auto'">auto</xsl:when>
               <xsl:otherwise>always</xsl:otherwise>
             </xsl:choose>
           </xsl:otherwise>
