@@ -417,7 +417,12 @@ pidofproc()
     if [ -z "${pidfile}" ]; then
         # Get the program's basename
         prefix=`echo "${program}" | sed 's/[^/]*$//'`
-        progname=`echo "${program}" | sed "s@${prefix}@@"`
+
+        if [ -z "${prefix}" ]; then 
+           progname="${program}"
+        else
+           progname=`echo "${program}" | sed "s@${prefix}@@"`
+        fi
 
         # If a PID file exists with that name, assume that is it.
         if [ -e "/var/run/${progname}.pid" ]; then
@@ -454,6 +459,55 @@ pidofproc()
         echo "${lpids}"
         return "${exitstatus}"
     fi
+}
+
+################################################################################
+# statusproc()                                                                 #
+# Usage: statusproc [-p pidfile] pathname                                      #
+#                                                                              #
+# Purpose: This function prints the status of a particular daemon to stdout    #
+#                                                                              #
+# Inputs: -p pidfile, use the specified pidfile instead of pidof               #
+#         pathname, path to the specified program                              #
+#                                                                              #
+# Return values:                                                               #
+#       0 - Status printed                                                     #
+#       1 - Input error. The daemon to check was not specified.                #
+################################################################################
+statusproc()
+{
+   if [ "${#}" = "0" ]; then
+      echo "Usage: statusproc {program}"
+      exit 1
+   fi
+
+   if [ -z "${PIDFILE}" ]; then
+      pidlist=`pidofproc -p "${PIDFILE}" $@`
+   else
+      pidlist=`pidofproc $@`
+   fi
+
+   # Trim trailing blanks
+   pidlist=`echo "${pidlist}" | sed -r 's/ +$//'`
+
+   base="${1##*/}"
+
+   if [ -n "${pidlist}" ]; then
+      echo -e "${INFO}${base} is running with Process" \
+         "ID(s) ${pidlist}.${NORMAL}"
+   else
+      if [ -n "${base}" -a -e "/var/run/${base}.pid" ]; then
+         echo -e "${WARNING}${1} is not running but" \
+            "/var/run/${base}.pid exists.${NORMAL}"
+      else
+         if [ -n "${PIDFILE}" -a -e "${PIDFILE}" ]; then
+            echo -e "${WARNING}${1} is not running" \
+               "but ${PIDFILE} exists.${NORMAL}"
+         else
+            echo -e "${INFO}${1} is not running.${NORMAL}"
+         fi
+      fi
+   fi
 }
 
 ################################################################################
