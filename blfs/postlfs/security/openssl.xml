@@ -39,7 +39,7 @@
     électronique et des navigateurs Internet (pour accéder à des sites
     commençant par HTTPS).</para>
 
-    &lfs65_checked;
+    &lfs70_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -54,21 +54,6 @@
       </listitem>
       <listitem>
         <para>Taille du téléchargement&nbsp;: &openssl-size;</para>
-      </listitem>
-      <listitem>
-        <para>CA Bundle Download: <ulink url="&ca-bundle-download;"/></para>
-      </listitem>
-      <listitem>
-        <para>CA Bundle size: &ca-bundle-size;</para>
-      </listitem>
-      <listitem>
-        <para>CA Bundle MD5 sum: &ca-bundle-md5sum;</para>
-      </listitem>
-      <listitem>
-        <para>Estimation de l'espace disque requis&nbsp;: &openssl-buildsize;</para>
-      </listitem>
-      <listitem>
-        <para>Estimation du temps de construction&nbsp;: &openssl-time;</para>
       </listitem>
     </itemizedlist>
 
@@ -99,7 +84,6 @@
     les commandes suivantes&nbsp;:</para>
 
 <screen><userinput>patch -Np1 -i ../openssl-&openssl-version;-fix_manpages-1.patch &amp;&amp;
-tar -vxf ../BLFS-ca-bundle-&ca-bundle-version;.tar.bz2 &amp;&amp;
 
 ./config --prefix=/usr         \
          --openssldir=/etc/ssl \
@@ -109,44 +93,18 @@ make</userinput></screen>
 
     <para>Pour tester les résultats, lancez&nbsp;: <command>make test</command>.</para>
 
-    <!-- <para>Pour tester les résultats, lancez&nbsp;: <command>make test</command>.  Note that the
-    test results/output depend on the availability of /etc/ssl/openssl.cnf.  If
-    running the tests for the first time run the following as the 
-    <systemitem class="username">root</systemitem> user before running the
-    tests:</para>
-
-<screen role="root"><userinput>install -v -m755 d /etc/ssl &amp;&amp;
-install -v ./apps/openssl.cnf /etc/ssl/</userinput></screen> -->
-
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>make MANDIR=/usr/share/man install                &amp;&amp;
-
-cp -v -r certs /etc/ssl                           &amp;&amp;
 
 install -v -d -m755 /usr/share/doc/openssl-&openssl-version; &amp;&amp;
 cp      -v -r       doc/{HOWTO,README,*.{txt,html,gif}} \
                     /usr/share/doc/openssl-&openssl-version;</userinput></screen>
 
-    <para>Tant que vous êtes en tant qu'utilisateur 
-    <systemitem class="username">root</systemitem>, créez un seul fichier qui
-    contient tous les certificats installés&nbsp;:</para>
-
-<screen role="root"><userinput>for pem in /etc/ssl/certs/*.pem
-do
-   cat $pem
-   echo ""
-done &gt; /etc/ssl/ca-bundle.crt</userinput></screen>
-
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
-
-    <para>
-    <command>tar -vxf ../BLFS-ca-bundle-&ca-bundle-version;.tar.bz2</command>>:nbsp;:
-      <application>OpenSSL</application> n'inclut plus de certificat root. Ce paquet
-      ajoute les certificats root fournis par mozilla.org.</para>
 
     <para><parameter>shared</parameter>&nbsp;: Ce paramètre oblige la création 
     des bibliothèques partagées ainsi que des bibliothèques statiques.</para>
@@ -172,20 +130,6 @@ done &gt; /etc/ssl/ca-bundle.crt</userinput></screen>
     virtual hosts in Apache, while using only one IP address et one port for
     all virtual hosts.</para> -->
 
-    <!-- <para><option>zlib-dynamic</option>>:nbsp;: When added to the
-    <command>./config</command> command, this switch will enable 
-    use of <filename>libz.so</filename> for compression/decompression.</para> -->
-
-    <para><command>cp -v -r certs /etc/ssl</command>&nbsp;: Ceci installe les
-      certificats échantillon et la documentation incluse avec <application>OpenSSL</application>
-      et les certificats extraits du paquet BLFS-ca-bundle-&ca-bundle-version;.</para>
-
-    <para><command>for pem in /etc/ssl/certs/*.pem...</command>&nbsp;: Cet
-    ensemble de commandes crée un bouquet de certificats en un seul fichier
-    (<filename>/etc/ssl/ca-bundle.crt</filename>) utilisable par de nombreux
-    autres paquets. <filename>ca-bundle.crt</filename> devrait être recréé
-    à chaque fois qu'un certificat nouveau ou modifié est ajouté à 
-    <filename class="directory">/etc/ssl/certs</filename>.</para>
 
   </sect2>
 
@@ -206,13 +150,20 @@ done &gt; /etc/ssl/ca-bundle.crt</userinput></screen>
     <sect3>
       <title>Informations de configuration</title>
 
-      <para>La plupart des gens qui veulent seulement utiliser <application>OpenSSL</application>
-      pour fournir des fonctions aux autres programmes tels que
-      <application>OpenSSH</application> et des navigateurs Internet n'auront
-      pas à s'inquiéter de la configuration de <application>OpenSSL</application>. 
-      La configuration d'<application>OpenSSL</application> est un thème avancé
-      qui ceux qui en font savent en principe ce qu'ils doivent faire ou ne pas
-      faire ou où trouver comment faire quelque chose.</para>
+      <para>La plupart utilisateurs voudront installer les certificats de 
+      l'Autorité des certificats pour valider les certificats téléchargés. Par 
+      exemple, ces certificats sont utilisés par <xref linkend='firefox'/> ou 
+      <xref linkend='wget'/> lors de l'accès [ des sites sécurisés (protocole 
+      https). Pour faire cela, suivez les instructions de la page
+      <xref linkend='cacerts'/>.</para>
+      
+      <para>Les utilisateurs qui veulent simplement utiliser <application>OpenSSL</application> 
+      pour offrir les fonctions à d'autres programmes tels que
+      <application>OpenSSH</application> et des navigateurs Internet n'ont pas
+      besoin de s'inquiéter de faire une configuration supplémentaire. C'est
+      un sujet avancé et ceux qui en ont vraiment besoin devraient, en principe,
+      soit savoir comment mettre à jour correctement <filename>/etc/ssl/openssl.cnf</filename>,
+      soit être en mesure de trouver la manière de le faire.</para>
 
     </sect3>
 
