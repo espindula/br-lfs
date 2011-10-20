@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+
+  <!ENTITY openssh-download-http "http://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-&openssh-version;.tar.gz">
+  <!ENTITY openssh-download-ftp  "ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-&openssh-version;.tar.gz">
+  <!ENTITY openssh-md5sum        "afe17eee7e98d3b8550cc349834a85d0">
+  <!ENTITY openssh-size          "1.1 Mio">
+  <!ENTITY openssh-buildsize     "44 Mio">
+  <!ENTITY openssh-time          "3.5 SBU (ajouter 1.5 SBU pour lancer la suite de tests)">
+]>
+
+<sect1 id="openssh" xreflabel="OpenSSH-&openssh-version;">
+  <?dbhtml filename="openssh.html"?>
+
+  <sect1info>
+    <othername>$LastChangedBy: bdubbs $</othername>
+    <date>$Date: 2011-10-20 01:44:14 +0200 (jeu 20 oct 2011) $</date>
+  </sect1info>
+
+  <title>OpenSSH-&openssh-version;</title>
+
+  <indexterm zone="openssh">
+    <primary sortas="a-OpenSSH">OpenSSH</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title>Introduction à OpenSSH</title>
+
+    <para>Le paquet <application>OpenSSH</application> contient des clients
+    <command>ssh</command> et le démon <command>sshd</command>. C'est utile
+    dans le cadre d'une authentication chiffrée et d'un trafic réseau consécutif 
+    sur un réseau. Les commandes <command>ssh</command> et <command>scp</command> 
+    sont des implémentions sécurisées, respectivement de <command>telnet</command> 
+    et de <command>rcp</command>.</para>
+
+  &lfs70_checked;
+
+    <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Téléchargement (HTTP)&nbsp;: <ulink url="&openssh-download-http;"/></para>
+      </listitem>
+      <listitem>
+        <para>Téléchargement (FTP)&nbsp;: <ulink url="&openssh-download-ftp;"/></para>
+      </listitem>
+      <listitem>
+        <para>Somme de contrôle MD5 du téléchargement&nbsp;: &openssh-md5sum;</para>
+      </listitem>
+      <listitem>
+        <para>Taille du téléchargement&nbsp;: &openssh-size;</para>
+      </listitem>
+      <listitem>
+        <para>Estimation de l'espace disque requis&nbsp;: &openssh-buildsize;</para>
+      </listitem>
+      <listitem>
+        <para>Estimation du temps de construction&nbsp;: &openssh-time;</para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3">Dépendances d'OpenSSH</bridgehead>
+
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required"><xref linkend="openssl"/></para>
+
+    <bridgehead renderas="sect4">Facultatives</bridgehead>
+    <para role="optional"><xref linkend="linux-pam"/>,
+    <xref linkend="tcpwrappers"/>,
+    <xref linkend="x-window-system"/>,
+    <xref linkend="mitkrb"/> or <xref linkend="heimdal"/>,
+    <ulink url="http://www.thrysoee.dk/editline/">libedit</ulink>
+    (offre une fonction d'historique de la ligne de commande à <command>sftp</command>),
+    <ulink url="http://www.opensc-project.org/">OpenSC</ulink> et
+    <ulink
+    url="http://www.citi.umich.edu/projects/smartcard/sectok.html">libsectok</ulink></para>
+
+    <bridgehead renderas="sect4">Facultatives Runtime (Used only to gather entropy)</bridgehead>
+    <para role="optional"><xref linkend="icedtea6"/> or <xref linkend="jdk"/>,
+    <xref linkend="net-tools"/> et
+    <xref linkend="sysstat"/>.</para>
+
+    <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
+    <ulink url='&blfs-wiki;/OpenSSH'/></para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation d'OpenSSH</title>
+
+    <para><application>OpenSSH</application> lance pas moins de deux processus
+    en se connectant à d'autres ordinateurs. Le premier processus est un
+    processus privilégié et il contrôle comme il faut l'émission de privilèges.
+    Le deuxième processus communique avec le réseau. Des étapes d'installation
+    supplémentaires sont nécessaires pour paramétrer le bon environnement, effectuées
+    en lançant les commandes suivantes en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>install -v -m700 -d /var/lib/sshd &amp;&amp;
+chown -v root:sys /var/lib/sshd &amp;&amp;
+groupadd -g 50 sshd &amp;&amp;
+useradd -c 'sshd PrivSep' -d /var/lib/sshd -g sshd \
+    -s /bin/false -u 50 sshd</userinput></screen>
+
+    <para><application>OpenSSH</application> est très sensible aux changements 
+    de bibliothèques <application>OpenSSL</application> liées. Si vous recompilez
+    <application>OpenSSL</application>, il se peut que
+    <application>OpenSSH</application> échoue pour démarrer. L'alternative est 
+    de le lier à la bibliothèque <application>OpenSSL</application> statique.
+    Pour se lier à la bibliothèque statique, exécutez la commande suivante&nbsp;:</para>
+
+<screen><userinput>sed -i 's@-lcrypto@/usr/lib/libcrypto.a -ldl@' configure</userinput></screen>
+
+    <para>Installez <application>OpenSSH</application> en lançant
+    les commandes suivantes&nbsp;:</para>
+
+<screen><userinput>sed -i.bak '/K5LIBS=/s/ -ldes//' configure &amp;&amp;
+./configure --prefix=/usr \
+            --sysconfdir=/etc/ssh \
+            --datadir=/usr/share/sshd \
+            --libexecdir=/usr/lib/openssh \
+            --with-md5-passwords \
+            --with-privsep-path=/var/lib/sshd &amp;&amp;
+make</userinput></screen>
+
+    <para>Si vous avez lié <application>tcp_wrappers</application> à la
+    construction en utilisant le paramètre <option>--with-tcp-wrappers</option>,
+    assurez-vous d'ajouter 127.0.0.1 à la ligne sshd dans <filename>/etc/hosts.allow</filename>
+    si vous avez un fichier <filename>/etc/hosts.deny</filename> restrictif,
+    sinon la suite de tests échouera. En outre, la suite de tests exige une
+    copie installée de <command>scp</command> pour réussir les tests de
+    multiplexing. Pour lancer la suite de tests, copiez d'abord le programme scp
+    vers <filename class="directory">/usr/bin</filename>, en vous assurant de
+    sauvegarder préalablement toute copie existante.</para>
+
+    <para>Pour lancer la suite de tests, exécutez les commandes suivantes&nbsp;:</para>
+
+<screen role="root"><userinput>make tests 2&gt;&amp;1 | tee check.log
+grep FATAL check.log</userinput></screen>
+
+    <para>Si la commande ci-dessus donne des erreurs 'FATAL', effectuez
+    l'installation, en tant qu'utilisateur
+    <systemitem class="username">root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>make install &amp;&amp;
+install -v -m755 -d /usr/share/doc/openssh-&openssh-version; &amp;&amp;
+install -v -m644 INSTALL LICENCE OVERVIEW README* \
+    /usr/share/doc/openssh-&openssh-version;</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="commands">
+    <title>Explication des commandes</title>
+
+    <para><command>sed -i.bak '/K5LIBS=/s/ -ldes//' configure</command>&nbsp;:
+    Cette commande corrige une erreur de construction si vous utilisez le paramètre
+    <option>--with-kerberos5</option> et que vous construisez le paquet
+    <application>Heimdal</application> en suivant les instructions de BLFS.
+    La commande est inoffencive dans tous les autres cas.</para>
+
+    <para><parameter>--sysconfdir=/etc/ssh</parameter>&nbsp;: Ceci empêche
+    les fichiers de configuration de s'installer dans
+    <filename class="directory">/usr/etc</filename>.</para>
+
+    <para><parameter>--datadir=/usr/share/sshd</parameter>&nbsp;: Ce
+    paramètre met le fichier Ssh.bin (utilisé pour l'authentication SmartCard)
+    dans <filename class="directory">/usr/share/sshd</filename>.</para>
+
+    <para><parameter>--with-md5-passwords</parameter>&nbsp;: C'est nécessaire
+    avec la configuration par défaut de la suite de mots de passe Shadow dans
+    LFS.</para>
+
+    <para><parameter>--libexecdir=/usr/lib/openssh</parameter>&nbsp;: Ce
+    paramètre modifie le chemin d'installation de certains programmes en
+    <filename class="directory">/usr/lib/openssh</filename> plutôt que
+    <filename class="directory">/usr/libexec</filename>.</para>
+
+    <para><parameter>--with-pam</parameter>&nbsp;: Ce paramètre active le
+    support de <application>Linux-PAM</application> dans la construction.</para>
+
+    <para><parameter>--with-xauth=/usr/bin/xauth</parameter>&nbsp;: Règle
+    l'emplacement par défaut du binaire <command>xauth</command> pour 
+    l'authentication X. Modifiez l'emplacement si <command>xauth</command> sera
+    installé à un autre endroit. Vous pouvez aussi contrôler cela depuis
+    <filename>sshd_config</filename> avec le mot-clé XAuthLocation. Vous pouvez
+    vous passer de cette option si <application>Xorg</application> est déjà
+    installé.
+    </para>
+
+    <para><parameter>--with-kerberos5=/usr</parameter>&nbsp;: Cette option est
+    utilisée pour inclure le support Heimdal dans la construction.</para>
+
+  </sect2>
+
+  <sect2 role="configuration">
+    <title>Configuration d'OpenSSH</title>
+
+    <para>Si vous n'allez utiliser que les clients <command>ssh</command> ou
+    <command>scp</command>, aucune configuration ni scripts de démarrage n'est
+    nécessaire.</para>
+
+    <sect3 id="openssh-config">
+      <title>Fichiers de configuration</title>
+
+      <para><filename>~/.ssh/*</filename>,
+      <filename>/etc/ssh/ssh_config</filename> et
+      <filename>/etc/ssh/sshd_config</filename></para>
+
+      <indexterm zone="openssh openssh-config">
+        <primary sortas="e-AA.ssh">~/.ssh/*</primary>
+      </indexterm>
+
+      <indexterm zone="openssh openssh-config">
+        <primary sortas="e-etc-ssh-ssh_config">/etc/ssh/ssh_config</primary>
+      </indexterm>
+
+      <indexterm zone="openssh openssh-config">
+        <primary sortas="e-etc-ssh-sshd_config">/etc/ssh/sshd_config</primary>
+      </indexterm>
+
+      <para>Aucune modification n'est nécessaire dans aucun fichier de ces
+      fichiers. Cependant, vous pourriez souhaiter relire les fichiers
+      <filename class='directory'>/etc/ssh/</filename> et effectuer les 
+      modifications adéquates pour la sécurité de votre système. Une des 
+      modifications recommandées est de désactiver la connexion en
+      <systemitem class='username'>root</systemitem> via
+      <command>ssh</command>. Exécutez la commande suivante en tant qu'utilisateur
+      <systemitem class='username'>root</systemitem> pour désactiver la connexion
+      <systemitem class='username'>root</systemitem> via
+      <command>ssh</command>&nbsp;:</para>
+
+<screen role="root"><userinput>echo "PermitRootLogin no" &gt;&gt; /etc/ssh/sshd_config</userinput></screen>
+
+      <para>Si vous avez ajouté le support de <application>LinuxPAM</application>,
+      vous devrez ajouter un fichier de configuration pour
+      <application>sshd</application> et permettre l'utilisation de <application>LinuxPAM</application>.
+	  Effectuez les commandes suivantes en tant
+      qu'utilisateur <systemitem class='username'>root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>sed 's@d/login@d/sshd@g' /etc/pam.d/login &gt; /etc/pam.d/sshd &amp;&amp;
+chmod 644 /etc/pam.d/sshd &amp;&amp;
+echo "USEPAM yes" &gt;&gt; /etc/ssh/sshd_config</userinput></screen>
+
+      <para>Vous pouvez trouver des informations de configuration supplémentaires
+      dans les pages de man de <command>sshd</command>, <command>ssh</command> et
+      de <command>ssh-agent</command>.</para>
+
+    </sect3>
+
+    <sect3  id="openssh-init">
+      <title>Script de démarrage</title>
+
+      <para>Pour lancer le serveur SSH au démarrage du système, installez le
+      script de démarrage <filename>/etc/rc.d/init.d/sshd</filename> fourni
+      dans le paquet <xref linkend="bootscripts"/>.</para>
+
+      <indexterm zone="openssh openssh-init">
+        <primary sortas="f-sshd">sshd</primary>
+      </indexterm>
+
+<screen role="root"><userinput>make install-sshd</userinput></screen>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title>Contenu</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Répertoires installés</segtitle>
+
+      <seglistitem>
+        <seg>scp, sftp, sftp-server, slogin, ssh, sshd, ssh-add, ssh-agent,
+        ssh-keygen, ssh-keyscan, et ssh-keysign</seg>
+        <seg>Aucune</seg>
+        <seg>/etc/ssh, /var/lib/sshd, /usr/lib/openssh, et
+        /usr/share/doc/openssh-&openssh-version;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="scp">
+        <term><command>scp</command></term>
+        <listitem>
+          <para>est un programme de copie de fichier agissant comme
+          <command>rcp</command> sauf qu'il utilise un protocole chiffré.</para>
+          <indexterm zone="openssh scp">
+            <primary sortas="b-scp">scp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="sftp">
+        <term><command>sftp</command></term>
+        <listitem>
+          <para>est un programme de genre FTP fonctionnant sur les protocoles
+          SSH1 et SSH2.</para>
+          <indexterm zone="openssh sftp">
+            <primary sortas="b-sftp">sftp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="sftp-server">
+        <term><command>sftp-server</command></term>
+        <listitem>
+          <para>est un sous-système de serveur SFTP. Ce programme n'est
+          en principe pas appelé directement par l'utilisateur.</para>
+          <indexterm zone="openssh sftp-server">
+            <primary sortas="b-sftp-server">sftp-server</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="slogin">
+        <term><command>slogin</command></term>
+        <listitem>
+          <para>est un lien symbolique vers <command>ssh</command>.</para>
+          <indexterm zone="openssh slogin">
+            <primary sortas="g-slogin">slogin</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ssh">
+        <term><command>ssh</command></term>
+        <listitem>
+          <para>est un client du type <command>rlogin</command>/<command>rsh</command>
+          sauf qu'il utilise un protocole chiffré.</para>
+          <indexterm zone="openssh ssh">
+            <primary sortas="b-ssh">ssh</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="sshd">
+        <term><command>sshd</command></term>
+        <listitem>
+          <para>est un démon qui écoute les requêtes de connexion
+          <command>ssh</command> login.</para>
+          <indexterm zone="openssh sshd">
+            <primary sortas="b-sshd">sshd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ssh-add">
+        <term><command>ssh-add</command></term>
+        <listitem>
+          <para>est un outil qui ajoute des clés à 
+          <command>ssh-agent</command>.</para>
+          <indexterm zone="openssh ssh-add">
+            <primary sortas="b-ssh-add">ssh-add</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ssh-agent">
+        <term><command>ssh-agent</command></term>
+        <listitem>
+          <para>est un agent d'authentication qui peut stocker des clés privées.</para>
+          <indexterm zone="openssh ssh-agent">
+            <primary sortas="b-ssh-agent">ssh-agent</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ssh-keygen">
+        <term><command>ssh-keygen</command></term>
+        <listitem>
+          <para>est un outil de génération de clés.</para>
+          <indexterm zone="openssh ssh-keygen">
+            <primary sortas="b-ssh-keygen">ssh-keygen</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ssh-keyscan">
+        <term><command>ssh-keyscan</command></term>
+        <listitem>
+          <para>est un outil pour réunir des de clés d'hôte publiques à partir 
+          d'un certain nombre d'hôtes.</para>
+          <indexterm zone="openssh ssh-keyscan">
+            <primary sortas="b-ssh-keyscan">ssh-keyscan</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ssh-keysign">
+        <term><command>ssh-keysign</command></term>
+        <listitem>
+          <para>est utilisé par <command>ssh</command> pour accéder aux clés
+          de l'hôte local et pour générer la signature numérique requise lors
+          d'une authentification basée sur l'hôte avec le protocole SSH version
+          2. Ce programme n'est pas, en principe, appelé directement par 
+          l'utilisateur.</para>
+          <indexterm zone="openssh ssh-keysign">
+            <primary sortas="b-ssh-keysign">ssh-keysign</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>
