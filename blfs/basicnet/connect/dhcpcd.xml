@@ -6,9 +6,9 @@
 
   <!ENTITY dhcpcd-download-http "http://roy.marples.name/downloads/dhcpcd/dhcpcd-&dhcpcd-version;.tar.bz2">
   <!ENTITY dhcpcd-download-ftp  "ftp://ftp.osuosl.org/pub/gentoo/distfiles/dhcpcd-&dhcpcd-version;.tar.bz2">
-  <!ENTITY dhcpcd-md5sum        "b9f1ccdaaf23ffea7dd6fd89e932f4ed">
-  <!ENTITY dhcpcd-size          "51 Kio">
-  <!ENTITY dhcpcd-buildsize     "0.3 Mio">
+  <!ENTITY dhcpcd-md5sum        "832e3cd6bfcaff64e9476e0ff7849e8f">
+  <!ENTITY dhcpcd-size          "76 Kio">
+  <!ENTITY dhcpcd-buildsize     "0.9 Mio">
   <!ENTITY dhcpcd-time          "less than 0.1 SBU">
 ]>
 
@@ -32,6 +32,8 @@
     <para><application>dhcpcd</application> est une implémentation du client DHCP
     spécifié dans RFC2131. Il est utile pour connecter votre ordinateur à un
     réseau qui utilise DHCP pour affecter les adresses réseau.</para>
+
+    &lfs70_checked;
 
     <bridgehead renderas="sect3">Package Information</bridgehead>
     <itemizedlist spacing="compact">
@@ -66,19 +68,16 @@
     <para>Installez <application>dhcpcd</application> en lançant
     les commandes suivantes&nbsp;:</para>
 
-<screen><userinput>make PREFIX= \
-      LIBEXECDIR=/lib/dhcpcd \
-      DBDIR=/var/lib/dhcpcd \
-      SYSCONFDIR=/etc/dhcpcd</userinput></screen>
+<screen><userinput>./configure --libexecdir=/lib/dhcpcd \
+            --dbdir=/run             \
+            --sysconfdir=/etc &amp;&amp;
+make</userinput></screen>
 
     <para>Ce paquet est fourni sans suite de tests.</para>
 
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen><userinput>make PREFIX= \
-      LIBEXECDIR=/lib/dhcpcd \
-      DBDIR=/var/lib/dhcpcd \
-      SYSCONFDIR=/etc/dhcpcd install</userinput></screen>
+<screen><userinput>make install</userinput></screen>
 
       <para>Par défaut, un fichier d'info des baux en texte brut n'est pas créé
       mais <application>dhcpcd</application> fournit un script
@@ -86,8 +85,7 @@
       le script en lançant les commandes suivantes en tant qu'utilisateur
       <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen><userinput>sed -i "s;/var/lib/dhcpcd-;/var/lib/dhcpcd/dhcpcd-;g" \
-       dhcpcd-hooks/50-dhcpcd-compat &amp;&amp;
+<screen><userinput>sed -i "s;/var/lib;/run;g" dhcpcd-hooks/50-dhcpcd-compat &amp;&amp;
 install -v -m 644 dhcpcd-hooks/50-dhcpcd-compat /lib/dhcpcd/dhcpcd-hooks/</userinput></screen>
 
   </sect2>
@@ -101,7 +99,7 @@ install -v -m 644 dhcpcd-hooks/50-dhcpcd-compat /lib/dhcpcd/dhcpcd-hooks/</useri
       <para><filename>/etc/dhcpcd/dhcpcd.conf</filename></para>
 
       <indexterm zone="dhcpcd dhcpcd-config">
-        <primary sortas="e-etc-dhcpcd-dhcpcd-conf">/etc/dhcpcd/dhcpcd.conf</primary>
+        <primary sortas="e-etc-sysconfig-dhcpcd">/etc/sysconfig/ifconfig.eth0 (dhcpcd)</primary>
       </indexterm>
 
     </sect3>
@@ -111,7 +109,7 @@ install -v -m 644 dhcpcd-hooks/50-dhcpcd-compat /lib/dhcpcd/dhcpcd-hooks/</useri
 
       <para>Pour configurer <command>dhcpcd</command>, vous avez tout d'abord besoin
       d'installer le script du service réseau,
-      <filename>/etc/sysconfig/network-devices/services/dhcpcd</filename> inclu dans
+      <filename>/lib/services/dhcpcd</filename> inclu dans
       le paquetage <xref linkend="bootscripts"/>  (comme utilisateur
       <systemitem class="username">root</systemitem>)&nbsp;:</para>
 
@@ -131,28 +129,19 @@ install -v -m 644 dhcpcd-hooks/50-dhcpcd-compat /lib/dhcpcd/dhcpcd-hooks/</useri
       <para id="dhcpcd-config2">Enfin, en tant qu'utilisateur 
       <systemitem       class="username">root</systemitem>, créez le fichier
       de configuration 
-      <filename>/etc/sysconfig/network-devices/ifconfig.eth0/dhcpcd</filename> en
+      <filename>/etc/sysconfig/ifconfig.eth0</filename> en
       utilisant les commandes suivantes. Ajustez de façon appropriée les interfaces
       supplémentaires.</para>
 
       <indexterm zone="dhcpcd dhcpcd-config2">
-        <primary sortas="e-etc-sysconfig-dhcpcd">/etc/sysconfig/.../dhcpcd</primary>
+        <primary sortas="e-etc-sysconfig-dhcpcd">/etc/sysconfig/ifconfig.eth0 (dhcpcd)</primary>
       </indexterm>
 
-<screen role='root'><userinput>install -v -d /etc/sysconfig/network-devices/ifconfig.eth0 &amp;&amp;
-cat &gt; /etc/sysconfig/network-devices/ifconfig.eth0/dhcpcd &lt;&lt; "EOF"
+<screen role='root'><userinput>cat &gt; /etc/sysconfig/ifconfig.eth0 &lt;&lt; "EOF"
 <literal>ONBOOT="yes"
 SERVICE="dhcpcd"
 DHCP_START="<replaceable>&lt;insérez ici les options supplémentaires de lancement adéquates&gt;</replaceable>"
-DHCP_STOP="-k <replaceable>&lt;insérez ici les options d'arrêt adéquates&gt;</replaceable>"
-
-# Mettez PRINTIP="yes" pour que le script affiche l'adresse IP assignée par le 
-# DHCP
-PRINTIP="no"
-
-# Mettez PRINTALL="yes" pour afficher les valeurs assignées pour le DHCP
-# IP, SM, DG et 1er NS. Ceci exige PRINTIP="yes".
-PRINTALL="no"</literal>
+DHCP_STOP="-k <replaceable>&lt;insérez ici les options d'arrêt supplémentaires&gt;</replaceable>"</literal>
 EOF</userinput></screen>
 
       <para>Pour plus d'informations sur les valeurs appropriées de
@@ -161,17 +150,16 @@ EOF</userinput></screen>
 
       <note>
         <para id="dhcpcd-config3">Le comportement par défaut de <command>dhcpcd</command>
-        est d'écraser (après avoir fait une sauvegarde) 
-        <filename>/etc/resolv.conf</filename>, <filename>/etc/yp.conf</filename>.
-        Toutes les modifications des fichiers de configuration système comme
-        <filename>/etc/resolv.conf</filename>, 
-        <filename>/etc/yp.conf</filename> et <filename>/etc/ntp.conf</filename> sont
-        faites par les scripts conservés dans 
+        est de régler le nom de l'hôte et les paramètres du MTU. Il écrasee
+        aussi <filename>/etc/resolv.conf</filename> et <filename>/etc/ntp.conf</filename>.
+        Toutes les modifications des fichiers de système et les paramétrages des
+        fichiers de configuration système sont faites par les scripts conservés dans 
         <filename class="directory">/lib/dhcpcd/dhcpcd-hooks</filename>.
         Paramétrez <command>dhcpcd</command> en supprimant ou en ajoutant
         des scripts dans ce répertoire. Vous pouvez désactiver
-        l'exécution des scripts en utilisation l'option
-        -C de la ligne de commande.</para>
+        l'exécution des scripts en utilisaant l'option
+        <option>--nohook</option> (<option>-C</option>) de la ligne de commande
+        ou via l'option <option>nohook</option> du fichier <filename>/etc/dhcpcd.conf</filename>.</para>
         <para>Voir la page de man de <command>dhcpcd</command> pour les paramètres à
         ajouter à la valeur de <envar>DHCP_START</envar>.</para>
       </note>
@@ -179,15 +167,6 @@ EOF</userinput></screen>
       <indexterm zone="dhcpcd dhcpcd-config3">
         <primary sortas="e-etc-resolv.conf">/etc/resolv.conf</primary>
       </indexterm>
-<!--  These are not modified by default with version 4 of dhcpcd
-      <indexterm zone="dhcpcd dhcpcd-config3">
-        <primary sortas="e-etc-yp.conf">/etc/yp.conf</primary>
-      </indexterm>
-
-      <indexterm zone="dhcpcd dhcpcd-config3">
-        <primary sortas="e-etc-ntp.conf">/etc/ntp.conf</primary>
-      </indexterm>
--->
     </sect3>
 
   </sect2>
@@ -203,7 +182,7 @@ EOF</userinput></screen>
       <seglistitem>
         <seg>dhcpcd</seg>
         <seg>Aucune</seg>
-        <seg>/lib/dhcpcd, /etc/dhcpcd</seg>
+        <seg>/lib/dhcpcd</seg>
       </seglistitem>
     </segmentedlist>
 
