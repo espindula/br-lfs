@@ -470,6 +470,8 @@ pidofproc()
 # Inputs: -p pidfile, use the specified pidfile instead of pidof               #
 #         pathname, path to the specified program                              #
 #                                                                              #
+# Note: Output to stdout.  Not logged.                                         #
+#                                                                              #
 # Return values:                                                               #
 #       0 - Status printed                                                     #
 #       1 - Input error. The daemon to check was not specified.                #
@@ -481,8 +483,22 @@ statusproc()
       exit 1
    fi
 
-   if [ -z "${PIDFILE}" ]; then
-      pidlist=`pidofproc -p "${PIDFILE}" $@`
+    local pidfile
+    local pidlist
+
+    # Process arguments
+    while true; do
+      case "${1}" in
+
+          -p)
+              pidfile="${2}"
+              shift 2
+              ;;
+      esac
+   done
+
+   if [ -z "${pidfile}" ]; then
+      pidlist=`pidofproc -p "${pidfile}" $@`
    else
       pidlist=`pidofproc $@`
    fi
@@ -500,9 +516,9 @@ statusproc()
          echo -e "${WARNING}${1} is not running but" \
             "/var/run/${base}.pid exists.${NORMAL}"
       else
-         if [ -n "${PIDFILE}" -a -e "${PIDFILE}" ]; then
+         if [ -z "${pidlist}" -a -n "${pidfile}" ]; then
             echo -e "${WARNING}${1} is not running" \
-               "but ${PIDFILE} exists.${NORMAL}"
+               "but ${pidfile} exists.${NORMAL}"
          else
             echo -e "${INFO}${1} is not running.${NORMAL}"
          fi
