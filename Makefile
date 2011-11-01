@@ -71,6 +71,9 @@ nochunks: maketar validxml profile-html
 	$(Q)bash obfuscate.sh $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g"  \
 	  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+	$(Q)sed -i -e "s@../wget-list@wget-list@"  \
+	  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+	$(Q)$(MAKE) wget-list
 
 tmpdir:
 	@echo "Creating and cleaning $(RENDERTMP)"
