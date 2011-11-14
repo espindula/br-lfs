@@ -43,6 +43,7 @@ WCOL=$((${COL} - 2))
 SET_COL="\\033[${COL}G"      # at the $COL char
 SET_WCOL="\\033[${WCOL}G"    # at the $WCOL char
 CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
+CURS_ZERO="\\033[0G"
 
 ## Set color commands, used via echo
 # Please consult `man console_codes for more information
@@ -59,6 +60,12 @@ WARNING="\\033[1;33m"        # Warnings are yellow
 FAILURE="\\033[1;31m"        # Failures are red
 INFO="\\033[1;36m"           # Information is light cyan
 BRACKET="\\033[1;34m"        # Brackets are blue
+
+# Use a colored prefix
+BMPREFIX="     "
+SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
+FAILURE_PREFIX="${FAILURE}*****${NORMAL}"
+WARNING_PREFIX="${WARNING} *** ${NORMAL}"
 
 BOOTLOG=/run/var/bootlog
 KILLDELAY=3
@@ -171,7 +178,6 @@ start_daemon()
     fi
 
     # Do the start!
-
     nice -n "${nice}" "${@}"
 }
 
@@ -470,31 +476,38 @@ pidofproc()
 # Inputs: -p pidfile, use the specified pidfile instead of pidof               #
 #         pathname, path to the specified program                              #
 #                                                                              #
-# Note: Output to stdout.  Not logged.                                         #
-#                                                                              #
 # Return values:                                                               #
 #       0 - Status printed                                                     #
 #       1 - Input error. The daemon to check was not specified.                #
 ################################################################################
 statusproc()
 {
+   local pidfile
+   local pidlist
+
    if [ "${#}" = "0" ]; then
-      echo "Usage: statusproc {program}"
+      echo "Usage: [-p pidfle] statusproc {program}"
       exit 1
    fi
 
-    local pidfile
-    local pidlist
+   # Process arguments
+   while true; do
+       case "${1}" in
 
-    # Process arguments
-    while true; do
-      case "${1}" in
+           -p)
+               pidfile="${2}"
+               shift 2
+               ;;
 
-          -p)
-              pidfile="${2}"
-              shift 2
-              ;;
-      esac
+           *)
+               if [ -n "${2}" ]; then
+                   echo "Too many arguments"
+                   return 1
+               else
+                   break
+               fi
+               ;;
+       esac
    done
 
    if [ -z "${pidfile}" ]; then
@@ -516,7 +529,7 @@ statusproc()
          echo -e "${WARNING}${1} is not running but" \
             "/var/run/${base}.pid exists.${NORMAL}"
       else
-         if [ -z "${pidlist}" -a -n "${pidfile}" ]; then
+         if [ -n "${pidfile}" -a -e "${pidfile}" ]; then
             echo -e "${WARNING}${1} is not running" \
                "but ${pidfile} exists.${NORMAL}"
          else
@@ -553,20 +566,25 @@ timespec()
 ################################################################################
 log_success_msg()
 {
-    echo -n -e "${@}"
-    echo -e "${SET_COL}${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
+    echo -n -e "${BMPREFIX}${@}"
+    echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
+
+    # Strip non-printable characters from log file
+    local logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
 
     timespec
-    echo -e "${STAMP} ${@} OK" >> ${BOOTLOG}
+    echo -e "${STAMP} ${logmessage} OK" >> ${BOOTLOG}
+    
     return 0
 }
 
 log_success_msg2()
 {
-    echo -n -e "${@}"
-    echo -e "${SET_COL}${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
+    echo -n -e "${BMPREFIX}${@}"
+    echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
 
     echo " OK" >> ${BOOTLOG}
+    
     return 0
 }
 
@@ -583,20 +601,25 @@ log_success_msg2()
 ################################################################################
 log_failure_msg()
 {
-    echo -n -e "${@}"
-    echo -e "${SET_COL}${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
+    echo -n -e "${BMPREFIX}${@}"
+    echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
+
+    # Strip non-printable characters from log file
 
     timespec
-    echo -e "${STAMP} ${@} FAIL" >> ${BOOTLOG}
+    local logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
+    echo -e "${STAMP} ${logmessage} FAIL" >> ${BOOTLOG}
+    
     return 0
 }
 
 log_failure_msg2()
 {
-    echo -n -e "${@}"
-    echo -e "${SET_COL}${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
+    echo -n -e "${BMPREFIX}${@}"
+    echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
 
     echo "FAIL" >> ${BOOTLOG}
+    
     return 0
 }
 
@@ -611,11 +634,14 @@ log_failure_msg2()
 ################################################################################
 log_warning_msg()
 {
-    echo -n -e "${@}"
-    echo -e "${SET_COL}${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
+    echo -n -e "${BMPREFIX}${@}"
+    echo -e "${CURS_ZERO}${WARNING_PREFIX}${SET_COL}${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
 
+    # Strip non-printable characters from log file
+    local logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
     timespec
-    echo -e "${STAMP} ${@} WARN" >> ${BOOTLOG}
+    echo -e "${STAMP} ${logmessage} WARN" >> ${BOOTLOG}
+    
     return 0
 }
 
@@ -630,10 +656,13 @@ log_warning_msg()
 ################################################################################
 log_info_msg()
 {
-    echo -n -e "${@}"
+    echo -n -e "${BMPREFIX}${@}"
 
+    # Strip non-printable characters from log file
+    local logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
     timespec
-    echo -n -e "${STAMP} ${@}" >> ${BOOTLOG}
+    echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
+    
     return 0
 }
 
@@ -641,7 +670,10 @@ log_info_msg2()
 {
     echo -n -e "${@}"
 
-    echo -n -e "${@}" >> ${BOOTLOG}
+    # Strip non-printable characters from log file
+    local logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
+    echo -n -e "${logmessage}" >> ${BOOTLOG}
+    
     return 0
 }
 

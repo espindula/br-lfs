@@ -93,20 +93,23 @@ trap "" INT QUIT TSTP
 
 [ "${1}" != "" ] && runlevel=${1}
 
-if [ "${runlevel}" = "" ]; then
+if [ "${runlevel}" == "" ]; then
    echo "Usage: ${0} <runlevel>" >&2
    exit 1
 fi
 
 previous=${PREVLEVEL}
-[ "${previous}" = "" ] && previous=N
+[ "${previous}" == "" ] && previous=N
 
 if [ ! -d /etc/rc.d/rc${runlevel}.d ]; then
    log_info_msg "/etc/rc.d/rc${runlevel}.d does not exist.\n" 
    exit 1
 fi
 
-if [ "$runlevel" == "6" ] || [ "$runlevel" == "0" ]; then IPROMPT="no"; fi
+if [ "$runlevel" == "6" -o "$runlevel" == "0" ]; then IPROMPT="no"; fi
+
+# Note: In ${LOGLEVEL:-7}, it is ':' 'dash' '7', not minus 7
+if [ "$runlevel" == "S" ]; then dmesg -n "${LOGLEVEL:-7}"; fi
 
 if [ "${IPROMPT}" == "yes" ]; then
    # dcol and icol are spaces before the message to center the
@@ -115,15 +118,19 @@ if [ "${IPROMPT}" == "yes" ]; then
    wcol=$(( ( ${COLUMNS} - ${wlen} ) / 2 ))
    icol=$(( ( ${COLUMNS} - ${ilen} ) / 2 ))
 
+   echo -e "\n\n"
    echo -e "\\033[${wcol}G${welcome_message}"
    echo -e "\\033[${icol}G${i_message}${NORMAL}"
    echo ""
    read -t "${itime}" -n 1 interactive 2>&1 > /dev/null
-
-   # Make lower case
-   [ "${interactive}" == "I" ] && interactive="i"
-   [ "${interactive}" != "i" ] && interactive=""
 fi
+
+# Make lower case
+[ "${interactive}" == "I" ] && interactive="i"
+[ "${interactive}" != "i" ] && interactive=""
+
+# Read the state file if it exists from runlevel S
+[ -r /var/run/interactive ] && source /var/run/interactive
 
 # Attempt to stop all services started by the previous runlevel,
 # and killed in this runlevel
@@ -136,8 +143,8 @@ if [ "${previous}" != "N" ]; then
       prev_start=/etc/rc.d/rc$previous.d/S[0-9][0-9]$suffix
       sysinit_start=/etc/rc.d/rcS.d/S[0-9][0-9]$suffix
 
-      if [ "${runlevel}" != "0" ]  && [ "${runlevel}" != "6" ]; then
-         if [ ! -f ${prev_start} ] && [ ! -f ${sysinit_start} ]; then
+      if [ "${runlevel}" != "0" -a "${runlevel}" != "6" ]; then
+         if [ ! -f ${prev_start} -a  ! -f ${sysinit_start} ]; then
             MSG="WARNING:\n\n${i} can't be "
             MSG="${MSG}executed because it was not "
             MSG="${MSG}not started in the previous "
@@ -156,7 +163,7 @@ fi
 
 if [ "${previous}" == "N" ]; then export IN_BOOT=1; fi
 
-if [ "$runlevel" == "6" ] && [ -n "${FASTBOOT}" ]; then
+if [ "$runlevel" == "6" -a -n "${FASTBOOT}" ]; then
    touch /fastboot
 fi
 
@@ -169,7 +176,7 @@ do
       stop=/etc/rc.d/rc$runlevel.d/K[0-9][0-9]$suffix
       prev_start=/etc/rc.d/rc$previous.d/S[0-9][0-9]$suffix
 
-      [ -f ${prev_start} ] && [ ! -f ${stop} ] && continue
+      [ -f ${prev_start} -a ! -f ${stop} ] && continue
    fi
 
    check_script_status
@@ -188,10 +195,23 @@ do
    if [ "${error_value}" != "0" ]; then print_error_msg; fi
 done
 
+# Store interactive variable on switch from runlevel S and remove if not
+if [ "${runlevel}" == "S" -a "${interactive}" == "i" ]; then
+    echo "interactive=\"i\"" > /var/run/interactive
+else
+    rm -f /var/run/interactive 2> /dev/null
+fi
+
 # Copy the boot log on initial boot only
 if [ "${previous}" == "N" ]; then
    cat /run/var/bootlog >> /var/log/boot.log
-   echo "--------" >> /var/log/boot.log  # Mark the end of boot
+
+   if [ "${runlevel}" != "S" ]; then
+      # Mark the end of boot
+      echo "--------" >> /var/log/boot.log
+      # Remove the temporary file
+      rm -f /run/var/bootlog 2> /dev/null
+   fi
 fi
 
 # End rc
