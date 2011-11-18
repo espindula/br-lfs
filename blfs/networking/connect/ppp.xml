@@ -6,9 +6,9 @@
 
   <!ENTITY ppp-download-http "http://samba.org/ftp/ppp/ppp-&ppp-version;.tar.gz">
   <!ENTITY ppp-download-ftp  "&gentoo-ftp-repo;/ppp-&ppp-version;.tar.gz">
-  <!ENTITY ppp-md5sum        "183800762e266132218b204dfb428d29">
-  <!ENTITY ppp-size          "673 Kio">
-  <!ENTITY ppp-buildsize     "5.6 Mio">
+  <!ENTITY ppp-md5sum        "4621bc56167b6953ec4071043fe0ec57">
+  <!ENTITY ppp-size          "920 Kio">
+  <!ENTITY ppp-buildsize     "6.4 Mio">
   <!ENTITY ppp-time          "0.1 SBU">
 ]>
 
@@ -35,6 +35,8 @@
     connecter à Internet via une connexion commutée ou via une connexion
     PPPoE vers un FAI.</para>
 
+    &lfs70_checked;
+
     <bridgehead renderas="sect3">Package Information</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
@@ -60,10 +62,12 @@
     <bridgehead renderas="sect3">Dépendancies de PPP</bridgehead>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
-    <para role="optional"><xref linkend="libpcap"/> (needed to do PPP filtering),
-    <xref linkend="linux-pam"/> (to authenticate incoming calls using PAM),
-    et <ulink url="http://linux-atm.sourceforge.net/">Linux ATM</ulink> (pour
-    construire le plugin pppoatm.so)</para>
+    <para role="optional"><xref linkend="libpcap"/> (nécessare pour faire du
+    du filtrage PPP) et <xref linkend="linux-pam"/> (pour authentifier les appels
+    entrant en utilisant PAM -
+    exigé seulement par le FAIs).
+    </para>
+
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/PPP"/></para>
@@ -80,8 +84,9 @@
       du protocole <foreignphrase>PPP over Ethernet</foreignphrase>
       (PPPoE) protocol driver (CONGIG_PPPOE)
       doivent être compilés dans le noyau ou être disponible comme un module du noyau.
-      Udev ne charge pas automatiquement les modules ppp_generic et pppoe,
-      ils doivent être mentionnés dans le fichier
+      Udev ne charge pas automatiquement les modules ppp_generic et pppoe. Si
+      vous les avez compilés en tant que modules, ils peuvent être chargés par 
+      le script de démarrage modules s'ils sont indiqués dans
       <filename>/etc/sysconfig/modules</filename>.</para>
     </note>
 
@@ -94,10 +99,11 @@
 
 <screen role="root"><userinput>groupadd -g 52 pppusers</userinput></screen>
 
-    <para>Installez <application>PPP</application> en lançant les
+    <para>Compilez <application>PPP</application> en lançant les
     commandes suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=/usr &amp;&amp;
+<screen><userinput>rm include/linux/if_pppol2tp.h &amp;&amp;
+./configure --prefix=/usr &amp;&amp;
 make</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -109,21 +115,22 @@ make</userinput></screen>
 The example configuration below overwrites two of three files, and
 already includes the "lock" option in each peer file
 -->make install-etcppp &amp;&amp;
-install -d /etc/ppp/peers &amp;&amp;
-install -m755 scripts/{pon,poff,plog} /usr/bin &amp;&amp;
-install -m644 scripts/pon.1 /usr/share/man/man1</userinput></screen>
+install -d /etc/ppp/peers</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><command>make install-etcppp</command>&nbsp;: Cette commande
-    met les fichiers d'exemples de configuration dans
-    <filename class="directory">/etc/ppp</filename>.</para>
+   <para><command>rm include/linux/if_pppol2tp.h</command>&nbsp;: ppp-2.4.5 
+   contient une copie obsolète de l'en-tête linux/if_pppol2tp.h du noyau. Il
+   faut la supprimer pour l'<emphasis>obliger</emphasis> à utiliser celui installé
+   dans /usr. Si vous ne supprimez pas ce fichier, la construction réussira
+   quand même grâce à un Makefile écrit à la hâte), mais elle ne parviendra pas à
+   compiler les plugins openl2tp.so, pppol2tp.so et rp-pppoe.so&nbsp;:</para>
 
     <para><command>install -d /etc/ppp/peers</command>&nbsp;: Cette commande crée
-    un répertoire pour les fichiers de description peer de PPP.</para>
+    un répertoire pour les fichiers de configuration peer de PPP.</para>
 
 <!-- FIXME: the three options below are taken from pppd/Makefile.linux file.
      They have not been tested. There are other options, such as USE_SRP=y,
@@ -161,74 +168,143 @@ install -m644 scripts/pon.1 /usr/share/man/man1</userinput></screen>
     <sect3>
       <title>Informations de configuration</title>
 
-      <para>Le démon <application>PPP</application> requiert
-      très peu de configuration. Le problème principal est de scripter la connexion.
-      Pour des connexions dialup et GPRS, ceci peut se faire soit en utilisant le programme <command>chat</command> qui vient avec
-      ce paquetage soit en utilisant des outils externes
-      comme <ulink url="http://alumnit.ca/wiki/?WvDial">WvDial</ulink>
-      ou <application>KPPP</application> de
-      <xref linkend="kdenetwork"/>. Le texte ci-dessous explique comment
-      paramétrer des connexions dialup, GPRS et PPPoE en n'utilisant que des outils fournis avec
-      le paquet <application>PPP</application>. Toutes les étapes de
-      configuration dans cette section sont exécutées en tant qu'utilisateur
-      <systemitem class="username">root</systemitem>.</para>
-
       <para>Ajoutez les utilisateurs qui peuvent lancer <application>PPP</application> au groupe
       <systemitem class="groupname">pppusers</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>usermod -a -G pppusers <replaceable>&lt;username&gt;</replaceable></userinput></screen>
+ 
+      <para>La plupart des fournisseurs d'accès à Internet qui utilisent ppp
+      vous donnent un nom d'utilisateur et un mot de passe pour vous authentifier
+      lorsque vous vous connectez à leurs serveurs. Ces secrets sont contenus
+      dans les fichiers 
+      <filename>/etc/ppp/pap-secrets</filename> ou
+      <filename>/etc/ppp/chap-secrets</filename>. Si vous ne savez pas
+      si votre fournisseur d'accès utilise CHAP ou PAP, créez les deux fichiers et
+      mettez dedans le même contenu.</para>
 
-    <sect4>
-      <title>Réglage des mots de passe</title>
+      <para>Si vous avez plus d'un compte chez un fournisseur d'accès, la
+      deuxième colonne (remotename) sert à différencier les noms d'utilisateur
+      et les mots de passe de chaque FAI. Si vous n'avez qu'un compte chez un
+      FAI, une astérisque ira très bien dans la deuxième colonne.</para>
 
-      <warning><para>Il résulte des instructions de cette section que vos mots
-      de passe apparaîtront à l'écran sous la forme de texte visible. Assurez-vous
-      que personne ne regarde l'écran.</para></warning>
+      <para>Dans cet exemple le nom d'utilisateur donné par le FAI est
+      <quote>jdoe</quote>, le mot de passe est <quote>guessit</quote>, le
+      FAI utilise PAP et l'utilisateur veut donner à son compte le nom distant
+      <quote>dialup</quote> pour le différencier des autres comptes PPP&nbsp;:</para>
 
-      <para>Les mots de passe sont conservés dans les fichiers
-      <filename>/etc/ppp/pap-secrets</filename>
-      et <filename>/etc/ppp/chap-secrets</filename>, selon la méthode
-      d'authentication utilisée par le FAI. Si vous doutez, mettez le mot de 
-      passe dans les deux fichiers. Par exemple, si le nom d'utilisateur donné
-      par le FAI est 
-      <quote>jdoe</quote>, si le mot de passe est <quote>guessit</quote>, le FAI
-      utilise PAP et si l'utilisateur veut nommer ce compte
-      <quote>dialup</quote> afin de le distinguer des autres comptes PPP, 
-      vous devez créer le fichier suivant&nbsp;:</para>
-
-<screen role="root"><userinput>touch /etc/ppp/pap-secrets
-chmod 600 /etc/ppp/pap-secrets
-cat &gt;&gt;/etc/ppp/pap-secrets &lt;&lt;"EOF"</userinput>
-<literal># nom_utilisateur      nom_serveur    mot_de_passe        IP pour le peer
-jdoe            dialup        guessit         *</literal>
-<userinput>EOF</userinput></screen>
-    </sect4>
+<screen role="root"><userinput>cat &gt;&gt;/etc/ppp/pap-secrets &lt;&lt;"EOF"</userinput>
+<literal># username      remotename    password
+jdoe            dialup        guessit</literal>
+<userinput>EOF
+chmod 600 /etc/ppp/pap-secrets</userinput></screen>
 
     <sect4>
       <title>Configuration du serveur DNS</title>
 
-      <para>Si vous ne lancez pas votre propre serveur de DNS, créez un simple script
-      <command>ip-up</command> (pour être appelé automatiquement par <command>pppd</command>
-      une fois que la connexion est établie) qui peuple le fichier
-      <filename>/etc/resolv.conf</filename> avec les noms de serveur
-      spécifiés par le FAI.</para>
+      <para>Si vous ne lancez pas votre propre serveur de DNS (comme
+      <xref linkend="bind"/>), pppd peut demander à votre FAI ses serveurs de 
+      nom de domaine pour les mettre dans /etc/ppp/resolv.conf. Si vous voulez
+      utiliser leurs serveurs de noms de domaine&nbsp;:</para>
+      
+<screen role="root"><userinput>mv /etc/resolv.conf{,.orig}
+ln -s ppp/resolv.conf /etc</userinput></screen>
 
-<screen role="root"><userinput>cat &gt;/etc/ppp/ip-up &lt;&lt;"EOF"</userinput>
-<literal>#!/bin/sh
-if [ "$USEPEERDNS" = "1" ] &amp;&amp; [ -s /etc/ppp/resolv.conf ]
-then
-        install -m 644 /etc/ppp/resolv.conf /etc/resolv.conf
-fi</literal>
+     </sect4>
+
+    <sect4>
+      <title>connexions PPPoE</title>
+
+      <para>Afin de configurer une connexion PPoE, créez un
+      fichier peer qui contient les détails de connexion&nbsp;:</para>
+
+<screen role="root"><userinput>cat &gt;/etc/ppp/peers/<replaceable>peername</replaceable> &lt;&lt;"EOF"</userinput>
+<literal>plugin rp-pppoe.so <replaceable>eth0</replaceable>
+
+# Votre nom d'utilisateur auprès du FAI. C'est le même que la première
+# colonne dans /etc/ppp/*-secrets:
+user "<replaceable>jdoe</replaceable>"
+
+# remotename n'est pas nécessaire si vous n'avez qu'un compte chez un FAI, d'où
+# l'astérisque dans la seconde colonne dans pap or chap-secrets:
+# remotename "<replaceable>adsl</replaceable>"
+
+# Si cela ne fonctionne pas et si vous voulez que pppd soit plus verbeux
+# dans /var/log/sys.log, ajoutez debug:
+# debug
+
+# Si vous avez une adresse IP statique(comme, 12.34.56.78) vous l'indiquer
+# en la faisant suivre de deux-points:
+# 12.34.56.78:
+
+# Sinon acceptez n'importe quelle adresse IP donnée par votre FAI:
+noipdefault
+
+# Les paramètres ci-dessous ne sont en principe pas à changer
+noauth
+hide-password
+updetach
+defaultroute
+# créez /etc/ppp/resolv.conf:
+usepeerdns
+
+### Pour plus de détails (et plus d'options)
+### lisez le man pppd</literal>
 <userinput>EOF
-chmod 755 /etc/ppp/ip-up</userinput></screen>
+chmod 600 /etc/ppp/peers/<replaceable>peername</replaceable></userinput></screen>
 
-      <para>Si vous utilisez un serveur DNS comme <xref linkend="bind"/>
-      ou <ulink url="http://www.phys.uu.nl/~rombouts/pdnsd.html">Pdnsd</ulink>,
-      le script ci-dessus n'est pas bon pour vous. Dans ce cas, écrivez votre propre
-      script qui dit à votre nom de serveur de faire suivre les requêtes vers
-      les serveurs de DNS en amont spécifiés dans les variables d'environnement
-      $DNS1 et $DNS2.</para>
-      <!-- FIXME: write the replacement script that works with Bind -->
+    </sect4>
+ 
+    <sect4>
+      <title>PConnexions PPoATM</title>
+
+      <para>Les connexions PPPoA ressemblent beaucoup à PPPoE, les principales
+      différences sont que vous utilisez le plugin pppoatm.so au lieu de rp-pppoe.so,
+      vous n'indiquez pas d'interface ethernet (elle utilise ppp0) et vous
+      devez VP/VC des numéros utilisés par votre FAI (il existe une liste des 
+      numéros VP/VC
+      <ulink url="http://www.linux-usb.org/SpeedTouch/faq/index.html#q12">ici
+      </ulink>)</para>
+
+<screen role="root"><userinput>cat &gt;/etc/ppp/peers/<replaceable>peername</replaceable> &lt;&lt;"EOF"</userinput>
+<literal>plugin pppoatm.so
+
+# Vos numéros VP/VC, par exemple en Grande-Bretagne, c'est 0.38, ien
+# France on utilise 8.35. Google est votre ami :)
+0.38
+
+# Votre nom d'utilisateur auprès du FAI. C'est le même que la première colonne
+# dans /etc/ppp/*-secrets:
+user "<replaceable>jdoe</replaceable>"
+
+# remotename n'est pas utile si vous n'avez qu'un compte auprès d'un FAI, d'où
+# l'astérisque dans la deuxième colonne de pap ou chap-secrets:
+# remotename "<replaceable>adsl</replaceable>"
+
+# Si cela ne fonctionne pas et si vous voulez que pppd soit plus verbeux
+# dans /var/log/sys.log, ajoutez debug:
+# debug
+
+
+# Si vous avez une adresse IP statique(comme, 12.34.56.78) vous l'indiquer
+# en la faisant suivre de deux-points:
+# 12.34.56.78:
+
+# Sinon acceptez n'importe quelle adresse IP donnée par votre FAI:
+noipdefault
+
+# Les paramètres ci-dessous ne sont en principe pas à changer
+noauth
+hide-password
+updetach
+defaultroute
+# créez /etc/ppp/resolv.conf:
+usepeerdns
+
+### Pour plus de détails (et plus d'options)
+### read man pppd</literal>
+<userinput>EOF
+chmod 600 /etc/ppp/peers/<replaceable>peername</replaceable></userinput></screen>
+
     </sect4>
 
     <sect4>
@@ -385,54 +461,6 @@ usepeerdns</literal>
 <userinput>EOF</userinput></screen>
     </sect4>
 
-    <sect4>
-      <title>connexions PPPoE</title>
-
-      <!-- This section has been tested with the "USI" ISP in Yekaterinburg,
-      Russia. Other editors can test it as described in
-      http://linuxfromscratch.org/pipermail/blfs-dev/2008-March/018290.html
-      - Alexander E. Patrakov -->
-
-      <para>Les connexions PPPoE sont établies par Ethernet, généralement entre
-      un ordinateur et un routeur ADSL (en principe installé dans la même pièce)
-      qui fait suivre les paquets à la ligne téléphonique en utilisant les 
-      fréquences
-      25-2500 kHz, n'interférant donc pas avec les appels vocaux. Bien que
-      le routeur puisse, en théorie, faire suivre tout paquet Ethernet, 
-      l'encapsulation PPP est utilisée
-      pour l'authentification par mot de passe, afin que le FAI puisse limiter
-      la bande passante et le coût financier selon le tarif choisi. La vitesse 
-      de transfert de données maximum par ADSL est de 24mégaoctets par seconde
-      et le délai de réponse de la passerelle est en général moins de 10 ms.
-      Afin de configurer une connexion PPPoE, il faut connaître le nom d'utilisateur,
-      le mot de passe et, parfois, le nom du service et/ou le nom du concentrateur
-      d'accès.</para>
-
-      <para>Afin de configurer une connexion PPoE, vous ne devez créer que
-      le fichier peer&nbsp;:</para>
-
-<screen role="root"><userinput>cat &gt;/etc/ppp/peers/<replaceable>adsl</replaceable> &lt;&lt;"EOF"</userinput>
-<literal>plugin rp-pppoe.so
-# Nom de interface Ethernet
-<replaceable>eth0</replaceable>
-# Votre nom d'utilisateur auprès du FAI
-user "<replaceable>jdoe</replaceable>"
-# Ce qui devrait être dans la seconde colonne dans /etc/ppp/*-secrets
-remotename "<replaceable>adsl</replaceable>"
-# Si besoin, spécifiez le service et le nom du concentrateur d'accès
-# rp_pppoe_service "<replaceable>internet</replaceable>"
-# rp_pppoe_ac "<replaceable>ac1</replaceable>"
-
-# Vous n'avez en général pas besoin de modifier les réglages ci-dessous
-noauth
-hide-password
-updetach
-debug
-defaultroute
-noipdefault
-usepeerdns</literal>
-<userinput>EOF</userinput></screen>
-    </sect4>
 
     <sect4>
       <title>Etablir manuellement la connexion</title>
@@ -442,56 +470,18 @@ usepeerdns</literal>
       lancez (en tant que <systemitem class="username">root</systemitem> ou en
       tant que membre du groupe 
       <systemitem class="groupname">pppusers</systemitem>)&nbsp;:</para>
-<screen><userinput>pon <replaceable>peername</replaceable></userinput></screen>
+<screen><userinput>pppd call <replaceable>peername</replaceable></userinput></screen>
 
-      <para>Afin de fermer la connexion, lancez&nbsp;:</para>
-<screen><userinput>poff <replaceable>peername</replaceable></userinput></screen>
+      <para>Afin d'arrêter la connexion, lancez&nbsp;:</para>
+<screen><userinput>killall pppd</userinput></screen>
 
     </sect4>
 
     <sect4>
       <title>Activer une connexion PPPoE au moment du démarrage</title>
 
-      <para>Si votre fournisseur d'accès ne facture pas à la minute,
-      il est intéressant que le script de démarrage gère la connexion pour vous.
-      Bien entendu, vous pouvez choisir de ne pas installer le script suivant et
-      de démarrer votre connexion manuellement avec la commande
-      <command>pon</command>, comme décrit ci-dessus. Si vous souhaitez que
-      votre connexion PPPoE soit activçe au moment du démarrage, lancez&nbsp;:</para>
-
-<screen role='root'><userinput>make install-service-pppoe</userinput></screen>
-
-      <para>La commande ci-dessus installe le script du service <filename>pppoe</filename>
-      et le fichier <filename>/etc/ppp/peers/pppoe</filename> avec quelques paramètres
-      valables pour la plupart des connexions PPPoE. Le script de
-      démarrage appelle <command>pppd</command> avec les
-      options suivantes&nbsp;:</para>
-
-<screen>pppd call pppoe ${1} linkname ${1} ${PPP_OPTS}</screen>
-
-      <para>Ici, <quote>${1}</quote> est le nom de l'interface réseau,
-      <quote>linkname ${1}</quote> est ajouté pour la création du fichier
-      <filename>/var/run/ppp-${1}.pid</filename> avec le numéro de processus
-      <command>pppd</command> (pour être utilisé lors de la désactivation de la
-      connexion) et la variable <quote>${PPP_OPTS}</quote> contient les
-      options spécifiques à l'utilisateur telles que
-      <quote>user</quote> et <quote>remotename</quote>.</para>
-
-      <para>Maintenant, créez le fichier de configuration pour l'utilisation avec le
-      script de service <filename>pppoe</filename>&nbsp;:</para>
-
-<screen role='root'><userinput>install -v -d /etc/sysconfig/network-devices/ifconfig.eth0 &amp;&amp;
-cat &gt; /etc/sysconfig/network-devices/ifconfig.eth0/pppoe &lt;&lt; "EOF"
-<literal>ONBOOT="yes"
-SERVICE="pppoe"
-PPP_OPTS="user <replaceable>jdoe</replaceable> remotename <replaceable>adsl</replaceable>"</literal>
-EOF</userinput></screen>
-
-      <note><para>Au lieu de spécifier des options supplémentaires dans la
-      variable $PPP_OPTS, vous pouvez aussi éditer le fichier 
-      <filename>/etc/ppp/peers/pppoe</filename>, mais votre
-      configuration sera alors perdue lors d'une mise à jour des scripts de
-      démarrage de BLFS.</para></note>
+      <para>Écrire un script de démarrage qui active la connexion lors du processus
+      de démarrage est un exercice que nous donnons au lecteur ;)</para>
 
     </sect4>
     </sect3>
@@ -507,7 +497,7 @@ EOF</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>chat, pon, poff, plog, pppd, pppdump, pppoe-discovery et pppstats</seg>
+        <seg>chat, pppd, pppdump, pppoe-discovery et pppstats</seg>
         <seg>Plusieurs modules de plugin installés dans
         <filename class='directory'>/usr/lib/pppd/&ppp-version;</filename></seg>
         <seg>/etc/ppp, /usr/include/pppd and /usr/lib/pppd</seg>
@@ -532,37 +522,6 @@ EOF</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="pon">
-        <term><command>pon</command></term>
-        <listitem>
-          <para>est le script qui établit une connexion PPP</para>
-          <indexterm zone="ppp pon">
-            <primary sortas="b-pon">pon</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-     <varlistentry id="poff">
-        <term><command>poff</command></term>
-        <listitem>
-          <para>est le script qui désactive une connexion PPP.</para>
-          <indexterm zone="ppp poff">
-            <primary sortas="b-poff">poff</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="plog">
-        <term><command>plog</command></term>
-        <listitem>
-          <para>est un script qui affiche un extrait du journal de PPP.</para>
-          <indexterm zone="ppp plog">
-            <primary sortas="b-plog">plog</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-
       <varlistentry id="pppd">
         <term><command>pppd</command></term>
         <listitem>
@@ -581,6 +540,17 @@ EOF</userinput></screen>
           format lisible.</para>
           <indexterm zone="ppp pppdump">
             <primary sortas="b-pppdump">pppdump</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="pppoe-discovery">
+        <term><command>pppoe-discovery</command></term>
+        <listitem>
+          <para>effectue le même processus de recherche que le plugin pppoe, mais
+          n'initialise pas de session <application>PPP</application>.</para>
+          <indexterm zone="ppp pppoe-discovery">
+            <primary sortas="b-pppoe-discovery">pppoe-discovery</primary>
           </indexterm>
         </listitem>
       </varlistentry>
