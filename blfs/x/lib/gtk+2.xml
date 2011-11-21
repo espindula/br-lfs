@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY gtk2-download-http "&gnome-download-http;/gtk+/2.20/gtk+-&gtk2-version;.tar.bz2">
-  <!ENTITY gtk2-download-ftp  "ftp://ftp.gtk.org/pub/gtk/2.20/gtk+-&gtk2-version;.tar.bz2">
-  <!ENTITY gtk2-md5sum        "53e6f3a93bd22934878fc4a4a34c68aa">
-  <!ENTITY gtk2-size          "18.2 Mio">
-  <!ENTITY gtk2-buildsize     "331 Mio">
-  <!ENTITY gtk2-time          "7.0 SBU">
+  <!ENTITY gtk2-download-http "&gnome-download-http;/gtk+/2.24/gtk+-&gtk2-version;.tar.xz">
+  <!ENTITY gtk2-download-ftp  "&gnome-download-ftp;/gtk+/2.24/gtk+-&gtk2-version;.tar.xz">
+  <!ENTITY gtk2-md5sum        "5408d4a70ac132f7c439d7de40e83aff">
+  <!ENTITY gtk2-size          "12.2 Mio">
+  <!ENTITY gtk2-buildsize     "337 Mio">
+  <!ENTITY gtk2-time          "2.7 SBU">
 ]>
 
 <sect1 id="gtk2" xreflabel="GTK+-&gtk2-version;">
@@ -33,7 +33,7 @@
     <application>GTK+</application>. Elles sont utiles pour créer des interfaces
     graphiques pour les applications.</para>
 
-    &lfs65_checked;
+    &lfs70_checked;
 	
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -60,31 +60,24 @@
     <bridgehead renderas="sect3">Dépendances de GTK+</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
-    <para role="required"><xref linkend="cairo"/>,
-    <xref linkend="pango"/> et
-    <xref linkend="atk"/></para>
+    <para role="required"><xref linkend="cairo"/> (compilé avec le support de
+    libX11), <xref linkend="gdk-pixbuf"/>, le
+    <xref linkend="x-window-system"/> (en particulier libX11, libXext et
+    libXrender), <xref linkend="pango"/> et <xref linkend="atk"/></para>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
-    <para role="recommended"><xref linkend="libtiff"/>,
-    <xref linkend="libjpeg"/>, et
-    <xref linkend="hicolor-icon-theme"/></para>
-
-    <!-- hicolor-icon-theme est requis pour la suite de tests -->
-
-    <para>Bien que facultatif, les développeurs de <application>GTK+</application> s'attendent à ce que
-    <application>libtiff</application>, <application>libjasper</application>
-    et <application>libjpeg</application> soient installés. D'autres paquets
-    s'attendent aussi à ce que <application>GTK+</application>-2 soit aussi
-    construit avec le support de ces paquets graphiques.</para>
+    <para role="recommended"><xref linkend="hicolor-icon-theme"/></para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional"><xref linkend="cups"/>,
-    <xref linkend="jasper"/>,
-    <xref linkend="docbook-utils"/>,
-    <ulink url="http://beagle-project.org/Main_Page">libbeagle</ulink>,
-    <xref linkend="gobject-introspection"/>,
-    <xref linkend="gtk-doc"/> et
-    <ulink url="http://www.tracker-project.org/">Tracker</ulink></para>
+    <!-- <ulink url="http://beagle-project.org/Main_Page">libbeagle</ulink>,
+    This beagle page appears to be just adverts -->
+    <!-- <ulink url="http://sourceforge.net/projects/openprinting/">papi</ulink>,
+    I think papi is just for solaris. It was a bugger to compile... -->
+    <!-- <ulink url="http://www.tracker-project.org/">Tracker</ulink>
+    This tracker page is a dead link -->
+    <xref linkend="gobject-introspection"/> and
+    <xref linkend="gtk-doc"/>.</para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/gtk+2"/></para>
@@ -92,12 +85,19 @@
   </sect2>
 
   <sect2 role="installation">
-    <title>Installation de GTK+</title>
+    <title>Installation de GTK+-2</title>
 
-    <para>Installez <application>GTK+</application> en lançant
+    <para>Installez <application>GTK+-2</application> en lançant
     les commandes suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=/usr --sysconfdir=/etc &amp;&amp;
+<screen><userinput>sed -i '/db2html/i@HAVE_DOCBOOK_TRUE@\t   mkdir gtk-tut; \\
+/gtk-tut html/i@HAVE_DOCBOOK_TRUE@\t   mv *.html gtk-tut; \\' \
+    docs/tutorial/Makefile.in &amp;&amp;
+sed -i '/db2html/i@HAVE_DOCBOOK_TRUE@\t   mkdir gtk-faq; \\
+/gtk-faq html/i@HAVE_DOCBOOK_TRUE@\t   mv *.html gtk-faq; \\' \
+    docs/faq/Makefile.in &amp;&amp;
+sed -i 's#^\(      gtk_icon_view_\)l#\1queue_l#' gtk/gtkiconview.c &amp;&amp;
+./configure --prefix=/usr --sysconfdir=/etc &amp;&amp;
 make</userinput></screen>
 
     <para>Pour tester les résultats, lancez&nbsp;: <command>make check</command>. 
@@ -110,31 +110,22 @@ make</userinput></screen>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>make install &amp;&amp;
-install -v -m755 -d /usr/share/doc/gtk+-&gtk2-version;/{faq,tutorial} &amp;&amp;
-cp -v -R docs/faq/html/* /usr/share/doc/gtk+-&gtk2-version;/faq &amp;&amp;
-cp -v -R docs/tutorial/html/* /usr/share/doc/gtk+-&gtk2-version;/tutorial &amp;&amp;
+sed -i 's/#man_MANS/man_MANS/' docs/reference/gtk/Makefile &amp;&amp;
+make -C docs/reference/gtk install-man &amp;&amp;
+install -v -m755 -d /usr/share/doc/gtk+-&gtk2-version; &amp;&amp;
+cp -v -R docs/faq/html /usr/share/doc/gtk+-&gtk2-version;/faq &amp;&amp;
+cp -v -R docs/tutorial/html /usr/share/doc/gtk+-&gtk2-version;/tutorial &amp;&amp;
 install -v -m644 docs/*.txt /usr/share/doc/gtk+-&gtk2-version;</userinput></screen>
 
     <warning>
       <para>Si vous avez installé le paquet sur votre système en utilisant la méthode
-      <quote>DESTDIR</quote>, des ficheirs importants ne seront pas installés et
-      devront être copiés et/ou générés. En premier, générez 2 fichiers en utilisant la commande
-	  suivante en tant qu'utilisateur <systemitem class="username">root</systemitem>
-     :</para>
+      <quote>DESTDIR</quote>, deux ficheirs importants ne seront pas installés et
+      devront être copiés et/ou générés. Générez-les en utilisant les commandes
+      suivantes en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>gdk-pixbuf-query-loaders >/etc/gtk-2.0/gdk-pixbuf.loaders &amp;&amp;
-gtk-query-immodules-2.0  >/etc/gtk-2.0/gtk.immodules</userinput></screen>
+<screen role="root"><userinput>gdk-pixbuf-query-loaders > /etc/gtk-2.0/gdk-pixbuf.loaders &amp;&amp;
+gtk-query-immodules-2.0  > /etc/gtk-2.0/gtk.immodules</userinput></screen>
 
-    <para>Il y a un bug dans le <filename>Makefile</filename> qui ignore l'installation
-	des fichiers man <filename class="extension">.1</filename>.
-    Installez les en utilisant la commande suivante en tant que 
-    <systemitem class="username">root</systemitem>&nbsp;:</para>
-<screen role="root"><userinput>install -m644 -v gdk-pixbuf/gdk-pixbuf-csource.1                      \
-                 docs/reference/gdk-pixbuf/gdk-pixbuf-query-loaders.1 \
-                 docs/reference/gtk/gtk-builder-convert.1             \
-                 docs/reference/gtk/gtk-query-immodules-2.0.1         \
-                 docs/reference/gtk/gtk-update-icon-cache.1           \
-                 /usr/share/man/man1</userinput></screen>
     </warning>
 
   </sect2>
@@ -142,9 +133,25 @@ gtk-query-immodules-2.0  >/etc/gtk-2.0/gtk.immodules</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
+    <para><command>sed -i '/db2html/i@HAVE_DOCBOOK...</command>&nbsp;: Si
+    vous avez installé 
+    <xref linkend="docbook-utils"/>, (notamment si configure trouve 
+    db2html) il essaiera de l'utiliser pour reconstruire certaines de ses
+    documentation html et il échouera du fait de bogues dans certains Makefiles.
+    Ces seds corrigent les Makefiles.</para>
+
+    <para><command>sed -i...gtk/gtkiconview.c</command>&nbsp;: Ceci corrige un
+    bogue dans gtk+-2.24.8 qui fait planter certaines applications (comme
+    lxappearance).</para>
+
     <para><parameter>--sysconfdir=/etc</parameter>&nbsp;: Ce paramètre installe
     les fichiers de configuration dans <filename class="directory">/etc</filename>
     et non dans <filename class="directory">/usr/etc</filename>.</para>
+
+    <para><command>sed -i 's/#man_MANS...</command> et
+    <command>make -C docs...install-man</command> ces commandes installent
+    les pages de man de gtk-builder-convert, gtk-query-immodules-2.0 et
+    gtk-update-icon-cache.</para>
 
     <para><option>--enable-gtk-doc</option>&nbsp;: Ce paramètre reconstruira
     la documentation de l'API pendant la commande <command>make</command>.
@@ -152,17 +159,60 @@ gtk-query-immodules-2.0  >/etc/gtk-2.0/gtk.immodules</userinput></screen>
     que vous n'êtes pas satisfait de ce qui est déjà inclu dans l'arborescence
     des sources) car cela prend beaucoup de temps.</para>
 
-    <para><option>--without-libtiff</option>&nbsp;: Utilisez ce paramètre si vous
-    n'avez pas installé <application>libtiff</application>.</para>
+  </sect2>
 
-    <para><option>--without-libjpeg</option>&nbsp;: Utilisez ce paramètre si vous
-    n'avez pas installé <application>libjpeg</application>.</para>
+  <sect2 role="configuration">
+    <title>Configuration de GTK+-2</title>
 
-    <para><option>--with-libjasper</option>>:nbsp;: Utilisez ce paramètre si vous
-    avez installé <application>libjasper</application>.</para>
+    <sect3 id="gtk2-config">
+      <title>Fichiers de config</title>
+      <para><filename>~/.gtkrc-2.0</filename> and
+      <filename>/etc/gtk-2.0/gtkrc</filename></para>
 
-    <para><parameter>--disable-static</parameter>&nbsp;: Ce paramètre empêche
-    les bibliothèques statiques de se construire.</para>
+      <indexterm zone="gtk2 gtk2-config">
+        <primary sortas="e-AA.gtkrc-2.0">~/.gtkrc-2.0</primary>
+      </indexterm>
+
+      <indexterm zone="gtk2 gtk2-config">
+        <primary sortas="e-etc-path-gtkrc">/etc/gtk-2.0/gtkrc</primary>
+      </indexterm>
+    </sect3>
+
+    <sect3><title>Informations de configuration</title>
+
+      <para>Les thèmes Gtk changent l'aspect des applications gtk. On peut
+      utiliser un thème d'icône de Gtk pour modifier l'aspect des icônes qui
+      apparaissent sur la barre d'outils de l'application. Si vous avez installé 
+      un thème Gtk (comme 
+       <xref linkend="gnome-themes"/>) ou un thème d'icône Gtk (tel que
+       <xref linkend="gnome-icon-theme"/>) vous pouvez régler vos préférnces 
+       dans
+       <filename>~/.gtkrc-2.0</filename>:</para>
+
+<screen><userinput>cat &gt; ~/gtkrc-2.0 &lt;&lt; "EOF"
+include "/usr/share/themes/<replaceable>Glider</replaceable>/gtk-2.0/gtkrc"
+gtk-icon-theme-name = "<replaceable>hicolor</replaceable>"
+EOF</userinput></screen>
+
+      <para>Beaucoup plus d'autres thèmes sont disponibles sur 
+      <ulink url="http://gnome-look.org/">Gnome-Look.org</ulink> and other
+      places.</para>
+      <para>Une fois que vous vous êtes décidé sur un thème, vous pouvez (en
+      tant qu'utilisateur
+      <systemitem class="username">root</systemitem>) en faire celui par défaut
+      pour tout le système&nbsp;:</para>
+
+<screen role="root"><userinput>cat &gt; /etc/gtk-2.0/gtkrc &lt;&lt; "EOF"
+include "/usr/share/themes/<replaceable>Clearlooks</replaceable>/gtk-2.0/gtkrc"
+gtk-icon-theme-name = "<replaceable>elementary</replaceable>"
+EOF</userinput></screen>
+
+      <para>
+      <ulink url="http://sourceforge.net/projects/lxde/files/LXAppearance/">
+      LXAppearance</ulink> est une application GTK+-2 qui peut vous aider à 
+      choisir vos thèmes préférés.</para>
+
+    </sect3>
 
   </sect2>
 
@@ -175,27 +225,21 @@ gtk-query-immodules-2.0  >/etc/gtk-2.0/gtk.immodules</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>gdk-pixbuf-csource, gdk-pixbuf-query-loaders, gtk-builder-convert,
-        gtk-demo, gtk-query-immodules-2.0, et gtk-update-icon-cache</seg>
+         <seg>gdk-pixbuf-csource, gdk-pixbuf-query-loaders, gtk-builder-convert,
+         gtk-demo, gtk-query-immodules-2.0, and gtk-update-icon-cache</seg>
         <seg>libpixmap.so, im-am-et.so, im-cedilla.so, im-cyrillic-translit.so,
         im-inuktitut.so, im-ipa.so, im-multipress.so, im-thai.so, im-ti-er.so,
-        im-ti-et.so, im-viqr.so, im-xim.so, libpixbufloader-ani.so,
-        libpixbufloader-bmp.so, libpixbufloader-gif.so, libpixbufloader-icns.so,
-        libpixbufloader-ico.so, libpixbufloader-jpeg.so, libpixbufloader-pcx.so,
-        libpixbufloader-png.so, libpixbufloader-pnm.so, libpixbufloader-qtif.so,
-        libpixbufloader-ras.so, libpixbufloader-tga.so, libpixbufloader-tiff.so,
-        libpixbufloader-wbmp.so, libpixbufloader-xbm.so, libpixbufloader-xpm.so,
+        im-ti-et.so, im-viqr.so, im-xim.so, libprintbackend-cups.so
         libprintbackend-file.so, libprintbackend-lpr.so,
-        libferret.so, libgail.so, libgailutil.so, libgdk-x11-2.0.so,
-        libgdk_pixbuf-2.0.so, libgdk_pixbuf_xlib-2.0.so, et
+        libferret.so, libgail.so, libgailutil.so, libgdk-x11-2.0.so and
         libgtk-x11-2.0.so</seg>
-        <seg>/etc/gtk-2.0, /usr/{include/{gail-1.0/{gail,libgail-util},
-        gtk-2.0/{gdk-pixbuf-xlib,gtk},gtk-unix-print-2.0/gtk},
-        lib/gtk-2.0/{2.10.0/{engines,immodules,loaders,printbackends},include,
-        modules},share/{doc/gtk+-&gtk2-version;/{faq/stylesheet-images,
-        tutorial/{images,stylesheet-images}},gtk-2.0/demo,
-        gtk-doc/html/{gail-libgail-util,gdk-pixbuf,gtk},
-        themes/{Default/gtk-2.0-key,Emacs/gtk-2.0-key,Raleigh/gtk-2.0}}}</seg>
+        <seg>/etc/gtk-2.0, /usr/include/gail-1.0,
+        /usr/include/gtk-2.0, /usr/include/gtk-unix-print-2.0},
+        /usr/lib/gtk-2.0, /usr/share/doc/gtk+-&gtk2-version;,
+        /usr/share/gtk-doc/html/gail-libgail-util,
+        /usr/share/gtk-doc/html/gdk-pixbuf, /usr/share/gtk-doc/html/gtk,
+        /usr/share/themes/Default, /usr/share/themes/Emacs and
+        /usr/share/themes/Raleigh</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -203,29 +247,6 @@ gtk-query-immodules-2.0  >/etc/gtk-2.0/gtk.immodules</userinput></screen>
       <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
-
-      <varlistentry id="gdk-pixbuf-csource">
-        <term><command>gdk-pixbuf-csource</command></term>
-        <listitem>
-          <para>génère du code C contenant des images, utile pour compiler des
-          images directement dans des programmes.</para>
-          <indexterm zone="gtk2 gdk-pixbuf-csource">
-            <primary sortas="b-gdk-pixbuf-csource">gdk-pixbuf-csource</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="gdk-pixbuf-query-loaders">
-        <term><command>gdk-pixbuf-query-loaders</command></term>
-        <listitem>
-          <para>rassemble des informations sur les modules chargeables pour
-          gdk-pixbuf et l'écrit sur la sortie standard.</para>
-          <indexterm zone="gtk2 gdk-pixbuf-query-loaders">
-            <primary
-            sortas="b-gdk-pixbuf-query-loaders">gdk-pixbuf-query-loaders</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
 
       <varlistentry id="gtk-builder-convert">
         <term><command>gtk-builder-convert</command></term>
