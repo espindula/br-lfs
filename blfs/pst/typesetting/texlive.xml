@@ -5,14 +5,14 @@
   %general-entities;
 
   <!ENTITY texlive-source-download-http " ">
-  <!ENTITY texlive-source-download-ftp  "ftp://tug.org/texlive/historic/2010/texlive-&texlive-version;-source.tar.xz">
-  <!ENTITY texlive-source-md5sum        "156fa34c56acb901fdc687b8d9860f1f">
-  <!ENTITY texlive-source-size          "32 MB">
+  <!ENTITY texlive-source-download-ftp  "ftp://tug.org/texlive/historic/2011/texlive-&texlive-version;-source.tar.xz">
+  <!ENTITY texlive-source-md5sum        "968d238949e8a34a1fd74c374ddfe6f1">
+  <!ENTITY texlive-source-size          "126 MB">
 
   <!ENTITY texlive-texmf-download-http  " ">
-  <!ENTITY texlive-texmf-download-ftp   "ftp://tug.org/texlive/historic/2010/texlive-&texlive-version;-texmf.tar.xz">
-  <!ENTITY texlive-texmf-md5sum         "12dec3a323c4eb75b98a3160c62dc865">
-  <!ENTITY texlive-texmf-size           "1.1 GB">
+  <!ENTITY texlive-texmf-download-ftp   "ftp://tug.org/texlive/historic/2011/texlive-&texlive-version;-texmf.tar.xz">
+  <!ENTITY texlive-texmf-md5sum         "ed7b558be35adf00a6c2e69609cd679a">
+  <!ENTITY texlive-texmf-size           "1.2 Gio">
 
   <!ENTITY texlive-buildsize            "~5 GB">
   <!ENTITY texlive-time                 "10 SBU">
@@ -40,11 +40,6 @@
 	Donald Knuth. Les deux paquets ont été maintenu et supporté par 
 	<ulink url="http://www.tug.org/">TeX Users Group</ulink>, bien que
 	<application>teTeX</application> n'est plus maintenu depuis quelques années maintenant.</para>
-
-    <para>Le script Perl <command>texi2html</command> précédemment livré avec le paquet
-    <application>teTeX</application> n'est plus livré. vous pouvez utliser le programme 
-    <command>makeinfo</command> en remplacement, ou installer le paquet autonome
-    <ulink url="http://www.nongnu.org/texi2html/">Texi2HTML</ulink>.</para>
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -90,6 +85,7 @@
     <para role="optional"><xref linkend="gs"/>,
     <xref linkend="poppler"/>,
     <xref linkend="freetype2"/>,
+    <xref linkend="fontconfig"/>,
     <xref linkend="libpng"/>,
     <xref linkend="x-window-system"/>,
     <xref linkend="recode"/>,
@@ -112,7 +108,7 @@
   <sect2 role="installation">
     <title>Installation de TeX Live</title>
 
-    <para>Avant la construction de <application>TeX Live</application>, les macros et paquet
+<!--    <para>Avant la construction de <application>TeX Live</application>, les macros et paquet
     de fonts (archive <filename>texmf</filename>) doivent être installé et
     deux liens symboliques temporaires doivent être créés. Installer les macros, fonts
     and liens symboliques en utilisant les commandes suivantes en tant qu'utilisateur
@@ -122,56 +118,86 @@
     -C /usr/share --strip-components=1 &amp;&amp;
 
 ln -v -s share/texmf      /usr &amp;&amp;
-ln -v -s share/texmf-dist /usr</userinput></screen>
+ln -v -s share/texmf-dist /usr</userinput></screen>-->
 
-    <para>Installer <application>TeX Live</application> en éxecutant les commandes
-	suivantes:</para>
+    <para>Installer <application>TeX Live</application> en éxecutant les 
+    commandes suivantes&nbsp;:</para>
 
-<screen><userinput>sed -i -e 's|PARENT/\.\./texmf-local|PARENT/texmf-local|' \
-       -e 's|\$TEXMFVAR/fonts|/var/lib/livetex/fonts|'    \
-          texk/kpathsea/texmf.cnf &amp;&amp;
+    <note>
+     <para>Si vous n'avez pas installé Xorg, ajoutez <userinput>--without-x</userinput> 
+      à la commande configure.</para>
 
-./configure --prefix=/usr                  \
+     <para>Si vous n'avez pas installé fontconfig, ajoutez 
+      <userinput>--disable-xdvipdfmx</userinput> à la commande configure.</para>
+    </note>
+
+<screen><userinput>./configure --prefix=/usr                  \
             --disable-native-texlive-build \
             --enable-shared                \
             --without-luatex               \
             --enable-mktextex-default      \
             --with-banner-add=" - BLFS"    &amp;&amp;
-
 make</userinput></screen>
 
-    <para>Pour tester le résultat, tapper: <command>make check</command>.</para>
+   <para>Les instructions <userinput>make install</userinput> ne respectent pas
+    les options de répertoire d'origine de l'installation de 
+    <command>configure</command>.  Elles peuvent également écraser /usr/bin/man.
+      Pour résoudre ce problème, installez le programme à un endroit temporaire
+      et effectuez quelques nettoyages&nbsp;:</para>
 
-    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :</para>
-
-<screen role="root"><userinput>make install &amp;&amp;
-
-rm      -v           /usr/texmf{,-dist}                         &amp;&amp;
-install -v -m1777 -d /var/lib/livetex/fonts                     &amp;&amp;
-install -v -m755  -d /usr/share/texmf-{config,var,local}        &amp;&amp;
-install -v -m755  -d /usr/share/doc/texlive-&texlive-version;            &amp;&amp;
-ln  -s  -v           ../../texmf/doc \
-                     /usr/share/doc/texlive-&texlive-version;/texmf      &amp;&amp;
-ln  -s  -v           ../../texmf-dist/doc \
-                     /usr/share/doc/texlive-&texlive-version;/texmf-dist &amp;&amp;
-
-for FN in `find /usr/bin -type l`; do
+<screen><userinput>
+make DESTDIR=$PWD/livetex-tmp install &amp;&amp;
+rm -v $PWD/livetex-tmp/usr/bin/man    &amp;&amp;
+for FN in $PWD/livetex-tmp/usr/bin `find  -type l`; do
     if [ `readlink $FN | grep "\.\./texmf"` ]; then
         ln -svf `readlink $FN | sed 's|\.\./texmf|../share/texmf|'` $FN
     fi
 done &amp;&amp;
 unset FN</userinput></screen>
 
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :</para>
+
+<screen><userinput>
+cp -dRv livetex-tmp//usr/include/* /usr/include          &amp;&amp;
+cp -dRv livetex-tmp/usr/lib/*      /usr/lib              &amp;&amp;
+cp -dRv livetex-tmp/usr/bin/*      /usr/bin              &amp;&amp;
+cp -dRv livetex-tmp/usr/doc/man/*  /usr/share/man        &amp;&amp;
+
+tar -xf ../texlive-20110705-texmf.tar.xz -C /usr/share \
+    --strip-components=1                                 &amp;&amp;
+
+cp -dRv livetex-tmp/usr/texmf      /usr/share/texmf      &amp;&amp;
+cp -dRv livetex-tmp/usr/texmf-dist /usr/share/texmf-dist &amp;&amp;
+
+for INFO in livetex-tmp/usr/texmf/doc/info/*.info; do
+  install -v -m0644 $INFO /usr/share/info
+  intall-info --info-dir=/usr/share/info $INFO
+done       &amp;&amp;
+unset INFO &amp;&amp;
+
+DOCDIR="/usr/share/doc/texlive-&texlive-version;" &amp;&amp;
+install -v -m755  -d $DOCDIR             &amp;&amp;
+
+for DOC in `find -name doc`; do
+  DIR=`echo $DOC | cut -d/ -f2-`
+  install -v -m755  -d $DOCDIR/$DIR
+  cp -dRv $DOC/* $DOCDIR/$DIR
+done          &amp;&amp;
+unset DOC DIR &amp;&amp;
+
+install -v -m1777 -d /var/lib/livetex/fonts                     &amp;&amp;
+install -v -m755  -d /usr/share/texmf-{config,var,local}        &amp;&amp;
+
+ln  -s  -v           ../../texmf/doc \
+                     /usr/share/doc/texlive-&texlive-version;/texmf      &amp;&amp;
+ln  -s  -v           ../../texmf-dist/doc \
+                     /usr/share/doc/texlive-&texlive-version;/texmf-dist &amp;&amp;
+                     /usr/share/doc/texlive-&texlive-version;/texmf-dist</userinput></screen>
+
   </sect2>
 
   <sect2 role="commands">
     <title>Explications des commandes</title>
-
-    <para><command>ln -v -s share/texmf /usr</command> &amp;
-    <command>ln -v -s share/texmf-dist /usr</command> &amp;
-    <command>rm -v /usr/texmf{,-dist}</command>: Ces commandes sont utilisées pour 
-    creer et ensuite effacer les liens symboliques temporaires pour que les fichiers ne soient
-	pas installés dans <filename class="directory">/usr/texmf{,-dist}</filename></para>
 
     <para><command>sed -i -e '...' -e '...' texk/kpathsea/texmf.cnf</command>:
     Cette commande est utilisée pour modifier les valeurs par défaut pour que les objets locaux
