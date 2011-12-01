@@ -3,12 +3,12 @@
    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
-  <!ENTITY dhcp-download-http "http://gd.tuwien.ac.at/infosys/servers/isc/dhcp/dhcp-&dhcp-version;.tar.gz">
-  <!ENTITY dhcp-download-ftp "ftp://ftp.isc.org/isc/dhcp/dhcp-&dhcp-version;.tar.gz">
-  <!ENTITY dhcp-md5sum "724bad21ad8b638abadd5fcc07df1a0f">
-  <!ENTITY dhcp-size "876 Kio">
-  <!ENTITY dhcp-buildsize "21 Mio">
-  <!ENTITY dhcp-time "0.1 SBU">
+  <!ENTITY dhcp-download-http "http://www.isc.org/software/dhcp/423/download/dhcp-423targz?download=">
+  <!ENTITY dhcp-download-ftp "ftp://ftp.isc.org/isc/dhcp/4.2.3/dhcp-&dhcp-version;.tar.gz">
+  <!ENTITY dhcp-md5sum "a06649ec5336d284fc86a0232c0edd63">
+  <!ENTITY dhcp-size "9.1 Mio">
+  <!ENTITY dhcp-buildsize "185 Mio">
+  <!ENTITY dhcp-time "0.7 SBU">
 ]>
 
 <sect1 id="dhcp" xreflabel="DHCP-&dhcp-version;">
@@ -33,6 +33,8 @@
     connecter votre ordinateur à un réseau utilisant DHCP pour attribuer des 
     adresses réseau. <command>dhcpd</command> (le serveur) est utile pour
     affecter des adresses réseau sur votre réseau privé.</para>
+
+    &lfs70_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -59,21 +61,21 @@
     <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
     <itemizedlist spacing='compact'>
       <listitem>
-        <para>Correctif requis&nbsp;:
-        <ulink url="&patch-root;/dhcp-&dhcp-version;-client_dns-1.patch"/></para>
+        <para>Correctif recommandé (pour le client)&nbsp;:
+        <ulink url="&patch-root;/dhcp-&dhcp-version;-iproute2-1.patch"/></para>
       </listitem>
       <listitem>
         <para>Correctif facultatif&nbsp;:
-        <ulink url="&patch-root;/dhcp-&dhcp-version;-iproute2-1.patch"/></para>
+        <ulink url="&patch-root;/dhcp-&dhcp-version;-missing_ipv6-1.patch"/></para>
       </listitem>
     </itemizedlist>
 
     <bridgehead renderas="sect3">Dépendances de DHCP</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
-    <para role="required"><xref linkend="net-tools"/> (you may omit
-    <application>net-tools</application> en utilisant le correctif facultatif 
-    pour utiliser <application>iproute2</application>.</para>
+    <para role="required"><xref linkend="net-tools"/> est requis lors de l'exécution
+    par <command>dhclient</command> si vous n'utilisez pas le correctif iproute2.</para>
+
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/dhcp"/></para>
@@ -83,8 +85,12 @@
   <sect2 role="kernel" id='dhcp-kernel'>
     <title>Configuration du noyau</title>
 
-    <para>Vous devez avoir compilé en dur le support de Packet Socket (Device Drivers &rArr; Networking
-    Support &rArr; Networking Options &rArr; Packet Socket).</para>
+    <para>Vous devez avoir compilé en dur le support de Packet Socket
+    (Networking Support &rArr; Networking Options &rArr; Packet Socket). Si vous
+    n'avez pas compilé en dur le support d'IPv6 (Networking Support &rArr;
+    Networking Options &rArr; The IPv6 Protocol), vous utilisez le correctif
+    missing_ipv6.</para>
+
 
     <indexterm zone="dhcp dhcp-kernel">
       <primary sortas="d-dhcp">DHCP</primary>
@@ -95,37 +101,99 @@
   <sect2 role="installation">
     <title>Installation de DHCP</title>
 
-    <para>Corrigez d'abord un problème de régénération de permanente de
-          /etc/resolv.conf, que le serveur DNS ait changé ou pas.</para>
+    <para>Si vous n'avez pas compilé en dur dans le noyau le support d'IPV6, 
+    appliquez le correctif missing_patch</para>
 
-<screen><userinput>patch -Np1 -i ../dhcp-&dhcp-version;-client_dns-1.patch</userinput></screen>
+<screen><userinput>patch -Np1 -i ../dhcp-&dhcp-version;-missing_ipv6-1.patch</userinput></screen>
 
-    <para>Si vous choisissez de ne pas installer net-tools, appliquez le
-    correctif iproute2&nbsp;:</para>
+    <para>Si vous n'installez que le client, appliquez le correctif iproute2
+    sauf si vous prévoyez d'installer <application>net-tools</application> et
+    si vous ne souhaitez utiliser que le client&nbsp;:</para>
 
 <screen><userinput>patch -Np1 -i ../dhcp-&dhcp-version;-iproute2-1.patch</userinput></screen>
 
     <para>Installez <application>DHCP</application> en lançant
     les commandes suivantes&nbsp;:</para>
 
-<screen><userinput>./configure &amp;&amp;
-make</userinput></screen>
+<screen><userinput>sed -i 's%\(^sbindir =\).*%\1 @prefix@@sbindir@%' server/Makefile.in &amp;&amp;
+./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+ --sbindir=/sbin \
+  --with-srv-lease-file=/var/state/dhcp/dhcpd.leases \
+   --with-srv6-lease-file=/var/state/dhcp/dhcpd6.leases \
+    --with-cli-lease-file=/var/state/dhclient.leases \
+     --with-cli6-lease-file=/var/state/dhclient6.leases  &amp;&amp;
+sed -i 's/-Werror//' {client,common,dst,omapip,relay,server,tests}/Makefile</userinput></screen>
 
-    <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
+    <para>Si vous ne souhaitez construire que le serveur, entrez&nbsp;:</para>
+    
+<screen><userinput>sed -i 's/ client//' Makefile</userinput></screen>
+
+    <para>Si vous ne souhaitez construire que le client, entrez&nbsp;:</para>
+    
+<screen><userinput>sed -i 's/ dhcpctl relay server//' Makefile</userinput></screen>
+
+    <para>Construisez la/les variante(s) choisie(s) avec&nbsp;:</para>
+    
+<screen><userinput>make</userinput></screen>
+
+    <para>Pour tester les résultats, lancez&nbsp;: <command>make check</command></para>
 
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>make LIBDIR=/usr/lib INCDIR=/usr/include install</userinput></screen>
+<screen role="root"><userinput>make install</userinput></screen>
+
+    <para>Le <filename>/etc/dhcpd.conf</filename> (serveur) et
+    <filename>/etc/dhclient.conf</filename> (client) fournis sont des exemples 
+    valant pour des systèmes <literal>BSD</literal> spécifiques. Il est peu 
+    probable qu'ils s'adaptent à vos besoins, mais vous pourriez souhaiter les 
+    lire pour pour récupérer des idées avant de les effacer ou de les déplacer 
+    vers un autre endroit.</para>
+
+ 
+   <para>Maintenant, créez le/les répertoire(s) pour les interfaces.</para>
+
+    <para>Pour le serveur&nbsp;:</para>
+
+<screen role="root"><userinput>mkdir -pv /var/state/dhcp</userinput></screen>
+
+    <para>Pour le client&nbsp;:</para>
+<screen role="root"><userinput>mkdir -pv /var/state</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><parameter>LIBDIR=/usr/lib INCDIR=/usr/include</parameter>&nbsp;: Cette
-    commande installe la bibliothèque et les fichiers include dans
-    <filename class="directory">/usr</filename> au lieu de
-    <filename class="directory">/usr/local</filename>.</para>
+    <para><command>sed -i 's%\(^sbindir =\).*%\1 @prefix@@sbindir@%' server/Makefile.in</command>
+    Cette commande déplace le programme <command>dhcp</command> vers
+    <filename class='directory'>/usr/sbin</filename> au lieu de
+    <filename class='directory'>/sbin</filename> car il est inutile pendant que
+    le serveur démarre.</para>
+
+    <para><command>--sbindir=/sbin</command> Déplace le programme <command>dhclient</command>
+    vers <filename class='directory'>/sbin</filename> au lieu de
+    <filename class='directory'>/usr/sbin</filename> pour qu'il soit disponible
+    au moment du démarrage, par exemple si <filename class='directory'>/usr</filename> 
+    sera un montage <literal>nfs</literal>.</para>
+
+    <para><command>--with-*-lease-files=...</command> Par défaut, les fichiers de lease
+    (interfaces) vont dans <filename class='directory'>/var/db</filename>, ce
+    qui est un anachronisme.</para>
+
+    <para><command>sed -i 's/-Werror//' {client,common,...}/Makefile</command> -
+    les Makefiles de ce paquet ajoutent <literal>-Werror</literal> à
+    <literal>CFLAGS</literal>.  Sur les versions récentes de <application>gcc</application>
+    davantage d'éléments, en particulier des variables inutiles, créent des
+    avertissements. Le drapeau <literal>-Werror</literal> fait casser la construction
+    par les avertissements, donc nous le supprimons là où il le faut.</para>
+
+    <para><command>sed -i 's/ something//' Makefile</command> - ceci arrête
+    la construction à l'entrée dans le/les répertoire(s) nommé(s) ici.</para>
+
+    <para><option>rm -v /usr/lib/lib{dhcpctl,dst,omapi}.a</option> - il n'y a
+    aucun moyen facile d'empêcher l'installation de ces bibliothèques statiques.
+    Mais on ne s'en sert que lors de la construction du paquet. <filename>libdhcpctl.a</filename>
+    n'est installé que si vous construisez le serveur.</para>
 
   </sect2>
 
@@ -182,7 +250,7 @@ make</userinput></screen>
 <screen role="root"><userinput>cat &gt; /etc/dhcpd.conf &lt;&lt; "EOF"
 <literal>default-lease-time 72000;
 max-lease-time 144000;
-ddns-update-style ad-hoc;
+
 
 subnet <replaceable>&lt;192.168.5.0&gt;</replaceable> netmask <replaceable>&lt;255.255.255.0&gt;</replaceable> {
   range <replaceable>&lt;192.168.5.10&gt; &lt;192.168.5.240&gt;</replaceable>;
@@ -208,7 +276,7 @@ EOF</userinput></screen>
 
       <seglistitem>
         <seg>dhcpd, dhcrelay, dhclient, dhclient-script, et omshell</seg>
-        <seg>bdhcpctl.a, libomapi.a</seg>
+        <seg>libbdhcpctl.a, libdst.a, libomapi.a</seg>
         <seg>/var/state/dhcp, /usr/include/omapip, et /usr/include/isi-dhcp</seg>
       </seglistitem>
     </segmentedlist>
@@ -224,6 +292,18 @@ EOF</userinput></screen>
           <para>est l'implémentation du client DHCP.</para>
           <indexterm zone="dhcp dhclient">
             <primary sortas="b-dhclient">dhclient</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="dhclient-script">
+        <term><command>dhclient-script</command></term>
+        <listitem>
+          <para>est utilisé par dhclient pour (re)configurer les interfaces. 
+          Il peut faire des modifications supplémentaires en appelant un
+          dhclient-{entry,exit}-hooks personnalisé.</para>
+          <indexterm zone="dhcp dhclient-script">
+            <primary sortas="b-dhclient-script">dhclient-script</primary>
           </indexterm>
         </listitem>
       </varlistentry>
