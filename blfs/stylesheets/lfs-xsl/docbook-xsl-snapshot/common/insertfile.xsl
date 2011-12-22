@@ -28,4 +28,84 @@
 <!-- *   <xi:include href="foo.txt" parse="text"/> -->
 <!-- * -->
 <!-- * It also works as expected with entityref in place of fileref, -->
-<!-- * and copies over the value of the <textdata>
+<!-- * and copies over the value of the <textdata>“encoding” atrribute (if -->
+<!-- * found). It is basically intended as an alternative to using the -->
+<!-- * DocBook XSLT Java insertfile() extension. -->
+
+<!-- ==================================================================== -->
+
+<xsl:template name="get.external.filename">
+  <xsl:choose>
+    <xsl:when test="@entityref">
+      <xsl:value-of select="unparsed-entity-uri(@entityref)"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="@fileref"/>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<xsl:template match="textobject[child::textdata[@entityref|@fileref]]">
+  <xsl:apply-templates select="textdata"/>
+</xsl:template>
+
+<xsl:template match="textdata[@entityref|@fileref]">
+  <xsl:variable name="filename">
+    <xsl:call-template name="get.external.filename"/>
+  </xsl:variable>
+  <xsl:variable name="encoding">
+    <xsl:choose>
+      <xsl:when test="@encoding">
+        <xsl:value-of select="@encoding"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$textdata.default.encoding"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
+  <xi:include href="{$filename}" parse="text" encoding="{$encoding}"/>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<xsl:template
+    match="inlinemediaobject
+           [child::imageobject
+           [child::imagedata
+           [@format = 'linespecific' and
+           (@entityref|@fileref)]]]">
+  <xsl:apply-templates select="imageobject/imagedata"/>
+</xsl:template>
+
+<xsl:template match="imagedata
+                     [@format = 'linespecific' and
+                     (@entityref|@fileref)]">
+  <xsl:variable name="filename">
+    <xsl:call-template name="get.external.filename"/>
+  </xsl:variable>
+  <xi:include href="{$filename}" parse="text" encoding="{$textdata.default.encoding}"/>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<xsl:template match="inlinegraphic
+                     [@format = 'linespecific' and
+                     (@entityref|@fileref)]">
+  <xsl:variable name="filename">
+    <xsl:call-template name="get.external.filename"/>
+  </xsl:variable>
+  <xi:include href="{$filename}" parse="text" encoding="{$textdata.default.encoding}"/>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<!-- * copy everything else into result tree as-is -->
+<xsl:template match="node() | @*">
+  <xsl:copy>
+    <xsl:apply-templates select="@* | node()"/>
+  </xsl:copy>
+</xsl:template>
+
+</xsl:stylesheet>
