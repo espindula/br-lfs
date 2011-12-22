@@ -114,4 +114,158 @@
     et commenter ou décommenter les options il faut.</para>
 
 <screen><?dbfo keep-together="auto"?><userinput>cat &gt; mozconfig &lt;&lt; "EOF"
-<literal># Si vous avez une machine multic
+<literal># Si vous avez une machine multicoeurs, vous pouvez accélérer la
+# construction en lançant plusieurs tâches en même temps, mais vous n'avez qu'un
+# coeur, effacez cette ligne :
+mk_add_options MOZ_MAKE_FLAGS="-j4"
+
+# Si vous avez installé Yasm effacez cette option :
+ac_add_options --disable-webm
+
+# Si vous avez installé DBus-Glib effacez cette option :
+ac_add_options --disable-dbus
+
+# Si vous avez installé wireless-tools effacez cette option :
+ac_add_options --disable-necko-wifi
+
+# Si vous avez installé libnotify effacez cette option :
+ac_add_options --disable-libnotify
+
+# Si vous n'avez pas installé nss effacez ces deux lignes :
+ac_add_options --with-system-nspr
+ac_add_options --with-system-nss
+
+# Décommentez ceci si vous les avez installés :
+# ac_add_options --enable-system-sqlite
+# ac_add_options --enable-system-lcms
+# ac_add_options --with-system-libvpx
+# ac_add_options --enable-startup-notification
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/xulrunner-build-dir
+ac_add_options --prefix=/usr
+ac_add_options --enable-application=xulrunner
+ac_add_options --enable-pthreads
+ac_add_options --enable-system-ffi
+ac_add_options --enable-system-jpeg
+ac_add_options --enable-system-png
+ac_add_options --enable-system-cairo
+ac_add_options --enable-system-zlib
+ac_add_options --enable-shared
+ac_add_options --disable-static
+ac_add_options --disable-debug
+ac_add_options --disable-crashreporter
+ac_add_options --disable-installer
+ac_add_options --disable-updater
+ac_add_options --disable-tests</literal>
+EOF</userinput></screen>
+<screen><userinput>sed -i '/Version/aRequires: nspr &gt;= 4.8.9' xulrunner/installer/libxul-embedding.pc.in &amp;&amp;
+make -f client.mk</userinput></screen>
+
+    <para>Installez <application>Xulrunner</application> en tapant les
+    commandes suivantes&nbsp;:</para>
+
+<screen><userinput>echo "Requires: nspr" >>xulrunner/installer/libxul-embedding.pc.in &amp;&amp;
+make -f client.mk build</userinput></screen>
+
+    <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
+
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>>:nbsp;:</para>
+
+<screen role="root"><userinput>make -C xulrunner-build-dir install &amp;&amp;
+mkdir -p /usr/lib/mozilla &amp;&amp;
+rm -rf /usr/lib/xulrunner-&xulrunner-version;/plugins &amp;&amp;
+ln -sv ../mozilla/plugins /usr/lib/xulrunner-&xulrunner-version; &amp;&amp;
+chown -Rv root:root /usr/{include,lib,share/idl}/xulrunner-*</userinput></screen>
+
+    <para>Si vous avez choisi d'utiliser les NSPR et NSS inclus (par exemple,
+    si vous <emphasis>n'avez pas</emphasis> installé <xref linkend="nspr"/> et
+    <xref linkend="nss"/>), en tant qu'utilisateur
+    <systemitem class="username">root</systemitem>, terminez l'instalaltion avec
+    les commandes suivantes&nbsp;:</para>
+
+<screen role="root"><userinput>for DL in libnss3.so libnssutil3.so libsmime3.so \
+  libssl3.so libsoftokn3.so  libplds4.so libplc4.so libnspr4.so
+do ln -sv xulrunner-&xulrunner-version;/${DL} /usr/lib
+done &amp;&amp;
+unset DL</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="commands">
+    <title>Explication des commandes</title>
+
+    <para><command>sed ... Requires: nspr</command>&nbsp;: Si vous essayez de
+    construire <application>Yelp</application> sans
+    cela, l'en-tête prtypes de nspr ne sera pas installée. On peut discuter
+    pour savoir si c'est un problème (le code fonctionne en principe sur les
+    geckos récents), mais cette correction est peu vraisemblablement à l'origine
+    de problèmes dans d'autres paquets.</para>
+
+    <para><command>make -f client.mk ...</command>&nbsp;: Les produits Mozilla
+    sont empaquetées pour permettre l'utilisation d'un fichier de configuration
+    qu'on peut utiliser pour passer les paramètres de configuration à la
+    commande <command>configure</command>. <command>make</command> utilise
+    le fichier <filename>client.mk</filename> pour obtenir la configuration de
+    départ et paramétrer les réglages.</para>
+
+    <para><command>for DL in ...</command>&nbsp;: Les bibliothèques NSPR et NSS
+    inclus avec ce paquet sont installés dans /usr/lib/xulrunner-&xulrunner-version;,
+    ce qui signifie qu'elles ne seront pas trouvées au moment de l'exécution. En
+    utilisant des liens symboliques issus de
+    <filename class="directory">/usr/lib</filename> les bibliothèques seront trouvées
+    et les liens pourront être modifiés facilement pour pointer vers une version plus
+    récente quand nous mettrons à jour.</para>
+
+    <para><command>ln -sv ../mozilla/plugins ...</command>&nbsp;: Certains paquets installeront des
+    plugins de navigateur dans <filename class='directory'>/usr/lib/mozilla/plugins</filename>.
+    En créant le lien symbolique, <application>Xulrunner</application> met
+    les plugins supplémentaires dans un répertoire classique.</para>
+
+   <note>
+    <para>Quand vous mettez à jour Xulrunner, rappelez-vous de mettre à jour les
+    liens symboliques.</para>
+   </note>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title>Contenu</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Répertoires installés</segtitle>
+
+      <seglistitem>
+        <seg>xulrunner, et optionally nspr-config</seg>
+        <seg>Numerous libraries, browser components, plugins, extensions, et
+        helper modules installed in <filename
+       class='directory'>/usr/lib/xulrunner-&xulrunner-version;</filename></seg>
+        <seg>/etc/gre.d, /usr/include/xulrunner-&xulrunner-version;,
+        /usr/lib/xulrunner-&xulrunner-version;,
+        /usr/lib/xulrunner-devel-&xulrunner-version;, et
+        /usr/share/idl/xulrunner-&xulrunner-version;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="xulrunner-prog">
+        <term><command>xulrunner</command></term>
+        <listitem>
+          <para>est un script shell, utile pour identifier la version
+          installée.</para>
+          <indexterm zone="xulrunner xulrunner-prog">
+            <primary sortas="b-xulrunner">xulrunner</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>
