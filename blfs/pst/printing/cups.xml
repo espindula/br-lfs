@@ -12,7 +12,8 @@
   <!ENTITY cups-time          "0.7 SBU">
 ]>
 
-<sect1 id="cups" xreflabel="CUPS-&cups-version;">
+<sect1 id="cups" xreflabel="Cups-&cups-version;">
+
   <?dbhtml filename="cups.html"?>
 
   <sect1info>
@@ -20,16 +21,16 @@
     <date>$Date: 2011-01-05 16:33:54 +0100 (mer 05 jan 2011) $</date>
   </sect1info>
 
-  <title>CUPS-&cups-version;</title>
+  <title>Cups-&cups-version;</title>
 
   <indexterm zone="cups">
-    <primary sortas="a-CUPS">CUPS</primary>
+    <primary sortas="a-Cups">Cups</primary>
   </indexterm>
 
   <sect2 role="package">
-    <title>Introduction à CUPS</title>
+    <title>Introduction à Cups</title>
 
-    <para>Le <foreignphrase>Common Unix Printing System</foreignphrase> (CUPS) 
+    <para>Le <foreignphrase>Common Unix Printing System</foreignphrase> (Cups) 
     (szstème d'impression Unix général) est un ensemble tampon d'imprimantes et
     d'outils associés. Il se base sur l'"Internet Printing
     Protocol" (protocole d'impression par Internet) et il offre des services 
@@ -59,17 +60,7 @@
       </listitem>
     </itemizedlist>
 
-<!--
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
-    <itemizedlist spacing="compact">
-      <listitem>
-        <para>Correctif requis&nbsp;: <ulink
-        url="&patch-root;/cups-&cups-version;-fix_broken_locking-1.patch"/></para>
-      </listitem>
-    </itemizedlist>
--->
-
-    <bridgehead renderas="sect3">Dépendances de CUPS</bridgehead>
+    <bridgehead renderas="sect3">Dépendances de Cups</bridgehead>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
@@ -86,7 +77,8 @@
       <xref linkend="acl"/>,
       <xref linkend="linux-pam"/>,
       <xref linkend="openldap"/>,
-      <xref linkend="gnutls"/> ou <xref linkend="openssl"/> (looked for in that order),
+      <xref linkend="gnutls"/> or <xref linkend="openssl"/> (recherché dans cet
+      ordre), <xref linkend="heimdal"/> ou <xref linkend="mitkrb"/>,
       <xref linkend="heimdal"/> ou <xref linkend="mitkrb"/>,
       <xref linkend="php"/>,
       <xref linkend="gs"/>,
@@ -94,7 +86,8 @@
       <xref linkend="icedtea6"/> ou <xref linkend="jdk"/>,
       <ulink url="http://portland.freedesktop.org/wiki/">Xdg-utils</ulink>,
       <ulink url="http://www.openslp.org/">OpenSLP</ulink>,
-      <ulink url="http://packages.debian.org/unstable/source/libpaper">libpaper</ulink>,
+      <ulink
+      url="http://packages.debian.org/unstable/source/libpaper">libpaper</ulink>,
       <ulink url="http://www.easysw.com/htmldoc/">HTMLDOC</ulink>, and
       <ulink url="http://valgrind.org/">Valgrind</ulink> (utilisé éventuellement
       si vous lancez les suites de tests)
@@ -105,41 +98,63 @@
 
   </sect2>
 
+  <sect2 role="kernel" id="cups-kernel">
+    <title>Configuration du noyau</title>
+
+    <para>Si vous avez une imprimante sur port parallèle, activez les options 
+    suivantes dans la configuration de votre noyau et recompilez le noyau&nbsp;:</para>
+
+<screen><literal>Device Drivers  ---&gt;
+  [*] Parallel port support  ---&gt;
+    [*]   PC-style hardware
+...
+  Character devices  ---&gt;
+    [*] Parallel printer support</literal></screen>
+
+    <note><para>Si vous avez une imprimante en port USB, il y a un conflit entre
+    le fond <application>libusb</application> de 
+    <application>Cups</application> et le pilote du noyau. Si vous voulez
+    utiliser <application>Cups</application> avec le support
+    <application>libusb</application>, <emphasis>n'activez pas</emphasis> USB 
+    Printer support dans votre noyau et supprimez <option>--disable-libusb</option> 
+    quand vous configurerez <application>Cups</application>.</para></note>
+
+    <para>Si vous voulez utiliser le pilote usblp du noyau, activez les options
+    suivantes dans la configuration de votre noyau et recompilez le noyau&nbsp;:</para>
+
+<screen>Device Drivers  ---&gt;
+  [*] USB support  ---&gt;
+...
+Enable support for either UHCI or OHCI, not both:
+    [*]   OHCI HCD support
+    [*]   UHCI HCD (most Intel and VIA) support
+...
+    [*]   USB Printer support</screen>
+
+    <indexterm zone="cups cups-kernel">
+      <primary sortas="d-cups">cups</primary>
+    </indexterm>
+
+  </sect2>
+
   <sect2 role="installation">
-    <title>Installation de CUPS</title>
+    <title>Installation de Cups</title>
 
     <para>Créez un utilisateur <systemitem class="username">lp</systemitem> car
-    <application>CUPS</application> va créer des fichiers appartenant à cet
+    <application>Cups</application> va créer des fichiers appartenant à cet
      utilisateur (l'utilisateur <systemitem class="username">lp</systemitem>
-     est celui utilisé par défaut par <application>CUPS</application>, mais il
+     est celui utilisé par défaut par <application>Cups</application>, mais il
      peut être modifié pour un utilisateur différent en passant un paramètre au
      script <command>configure</command>.) Utilisez la commande suivante
      en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>useradd -c "Print Service User" -d /dev/null -g lp -s /bin/false -u 9 lp</userinput></screen>
 
-    <note>
-      <para>Si vous prevoyez d'utiliser une imprimante USB avec
-      <application>CUPS</application>, n'activez par le driver
-      <quote>usblp</quote> intégré ou comme un module dans la configuration
-      du noyau car cela causera un échec dans le nouvel <application>CUPS</application> 
-	  USB backend.
-      <filename>/var/log/sys.log</filename> aura un contenu similaire à:</para>
-
-      <screen>kernel: [54631.796465] usb 4-1: usbfs: interface 0 claimed by usblp while 'usb' 
-sets config #1</screen>
-
-      <para>L'option de configuration du noyau est
-      <parameter>CONFIG_USB_PRINTER</parameter>
-      et peut être trouvé dans menuconfig sous
-      <quote>Device Drivers ---> USB support --->
-      USB Printer support</quote>.</para>
-    </note>
-
-    <para>Installez <application>CUPS</application> en lançant les commandes
+    <para>Installez <application>Cups</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=/usr &amp;&amp;
+<screen><userinput>sed -i 's#@CUPS_HTMLVIEW@#firefox#' desktop/cups.desktop.in &amp;&amp;
+./configure --localstatedir=/var --disable-libusb --with-rcdir=/tmp &amp;&amp;
 make</userinput></screen>
 
     <para>Pour tester les résultats, lancez&nbsp;: <command>make check</command>.
@@ -174,61 +189,53 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para>Le comportement par défaut de base de l'installation est adapté
-    aux systèmes LFS. Les fichiers <application>CUPS</application> sont
-    mis dans 
-	<filename class="directory">/usr/{bin,include,lib,sbin,share/cups}</filename>,
-    <filename class="directory">/var/{cache,log,run,spool}</filename>, et
-    <filename class="directory">/etc/{cups,pam.d,dbus-1/system.d}</filename></para>
+    <para><command>sed -i 's#@CUPS_HTMLVIEW@#firefox#' ...</command>&nbsp;: Ceci
+    modifie le navigateur utilisé par fichier de bureau 
+    <application>Cups</application> pour son interface web.</para>
+
+    <para><option>--localstatedir=/var</option>&nbsp;: Ceci modifie l'emplacement
+    des répertoires cache, log, run et spool de /usr/var en /var.</para>
+
+    <para><option>--disable-libusb</option>&nbsp;: Ceci désactive le fond
+    <application>libusb</application> de
+    <application>Cups</application>. Si vous souhaitez que <application>Cups</application> 
+    utilise <application>libusb</application>, enlevez cette option et
+    assurez-vous de compiler votre noyau avec&nbsp;: # CONFIG_USB_PRINTER is not set</para>
+
+    <para><option>--with-rcdir=/tmp</option>&nbsp;: Cette option lui fait
+    installer ses scripts de démarrage dans <filename class="directory">/tmp</filename>
+    au lieu de <filename class="directory">/etc/rc.d</filename>.</para>
+
   </sect2>
 
   <sect2 role="configuration">
-    <title>Configuration de CUPS</title>
+    <title>Configuration de Cups</title>
 
-    <para>La configuration de <application>CUPS</application> dépend du
+    <para>La configuration de <application>Cups</application> dépend du
     type d'imprimante et elle peut être complexe. En général, les imprimantes
     PostScript sont plus simples. Pour des instructions détaillées sur la 
-    configuration et l'utilisation de <application>CUPS</application>, voir
+    configuration et l'utilisation de <application>Cups</application>, voir
     <ulink url="http://www.cups.org/documentation.php"/>. Le
     <foreignphrase>Software Administrators Manual</foreignphrase> (manuel ges 
     administrateurs du logiciel) et le <foreignphrase>Software Users Manual</foreignphrase>
     (manuel des utilisateurs) sont particulièrement utiles.</para>
 
     <para>Pour que des imprimantes non PostScript impriment avec
-    <application>CUPS</application>, vous devez installer 
+    <application>Cups</application>, vous devez installer 
     <xref linkend="gs"/> pour convertir PostScript en images raster
-    et un pilote (comme ceux de from <xref linkend="gutenprint"/>) pour convertir
+    et un pilote (comme ceux de <xref linkend="gutenprint"/>) pour convertir
     les images raster résultantes sous une forme compréhensible par l'imprimante.
     Les pilotes de <ulink url="http://www.linuxprinting.org/foomatic.html">Foomatic</ulink>
     utilisent Ghostscript pour convertir du PostScript en forme directement
-    imprimable, mais les développeurs de <application>CUPS</application> 
+    imprimable, mais les développeurs de <application>Cups</application> 
     considèrent cela comme du bricolage.</para>
-
-<!-- Cela devrait être évident, pour ne pas mentionner le nouveau problème avec  usblp.
-      A omettre complètement pour l'instant.
-	
-    <sect3 role="kernel" id="cups-kernel">
-      <title>Configuration du noyau</title>
-
-      <para>Pour utiliser votre imprimante, vous devrez probablement besoin
-      d'activer des pilotes adéquats dans le noyau &mdash; par exemple, 
-      <quote>Parallel printer support</quote> si vous avez une imprimante en 
-      port parallèle ou <quote>USB Printer support</quote> pour une imprimante
-      USB.</para>
-
-    </sect3>
--->
 
     <sect3 id="cups-init">
       <title>Script de démarrage</title>
 
-      <para>Pendant l'installation, <application>CUPS</application> a ajouté des
-      fichiers de démarrage dans <filename class="directory">/etc/rc.d</filename>.
-      Ces scripts fonctionneront dans la plupart des cas, mais ils échoueront si
-      vous fournissez des imprimantes aux clients <application>Samba</application>. 
-      En outre, ils ne sont pas cohérents avec les scripts du type LSB standard.
-      Remplacez les scripts installés par les scripts et les liens symboliques 
-      inclus dans le paquet <xref linkend="bootscripts"/>&nbsp;:</para>
+      <para>Si vous voulez que <application>Cups</application> démarre
+      automatiquement lors du démarrage du système, installez le script 
+      de démarrage inclu dans le paquet <xref linkend="bootscripts"/>&nbsp;:</para>
 
       <indexterm zone="cups cups-init">
         <primary sortas="f-cups">cups</primary>
@@ -252,12 +259,14 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
          <seg>accept, cancel, cups-config, cupsaccept, cupsaddsmb, cupsctl,
         cupsd, cupsdisable, cupsenable, cupsfilter, cupsreject, cupstestdsc,
         cupstestppd, lp, lpadmin, lpc, lpinfo, lpmove, lpoptions, lppasswd,
-        lpq, lpr, lprm, lpstat, ppdc, ppdhtml, ppdi, ppdmerge, ppdpo, reject</seg>
-        <seg>libcups.{so,a}, libcupscgi.{so,a}, libcupsdriver.{so,a},
-        libcupsimage.{so,a}, libcupsmime.{so,a}, libcupsppdc.{so,a}, et
+        lpq, lpr, lprm, lpstat, ppdc, ppdhtml, ppdi, ppdmerge, ppdpo,
+        reject</seg>
+        <seg>libcups.so, libcupscgi.so, libcupsdriver.so,
+        libcupsimage.so, libcupsmime.so, libcupsppdc.so, and
         various filters et backend drivers</seg>
-        <seg>/etc/cups, /usr/{include,lib,share}/cups, /usr/share/doc/cups-&cups-version;, and
-        /var/{cache,log,run,spool}/cups</seg>
+        <seg>/etc/cups, /usr/include/cups, /usr/lib/cups, /usr/share/cups,
+        /usr/share/doc/cups-&cups-version;, /var/cache/cups, /var/log/cups,
+        /var/run/cups and /var/spool/cups.</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -291,7 +300,7 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
       <varlistentry id="cups-config">
         <term><command>cups-config</command></term>
         <listitem>
-          <para>est un outil de configuration <application>CUPS</application>.</para>
+          <para>est un outil de configuration <application>Cups</application>.</para>
           <indexterm zone="cups cups-config">
             <primary sortas="b-cups-config">cups-config</primary>
           </indexterm>
@@ -365,7 +374,7 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
         <term><command>lpadmin</command></term>
         <listitem>
           <para>configure les queues d'une imprimante ou d'une classe fournies par
-          <application>CUPS</application>.</para>
+          <application>Cups</application>.</para>
           <indexterm zone="cups lpadmin">
             <primary sortas="b-lpadmin">lpadmin</primary>
           </indexterm>
@@ -376,7 +385,7 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
         <term><command>lpc</command></term>
         <listitem>
           <para>offre un contrôle limité des queues d'imprimante ou de
-          classe fournies par <application>CUPS</application>.</para>
+          classe fournies par <application>Cups</application>.</para>
           <indexterm zone="cups lpc-cups">
             <primary sortas="b-lpc">lpc</primary>
           </indexterm>
@@ -387,7 +396,7 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
         <term><command>lpinfo</command></term>
         <listitem>
           <para>liste les périphériques ou les pilotes disponibles connus du
-          serveur <application>CUPS</application>.</para>
+          serveur <application>Cups</application>.</para>
           <indexterm zone="cups lpinfo">
             <primary sortas="b-lpinfo">lpinfo</primary>
           </indexterm>
