@@ -5,6 +5,7 @@ CHUNK_QUIET = 1
 ROOT_ID =
 PDF_OUTPUT = LFS-BOOK.pdf
 NOCHUNKS_OUTPUT = LFS-BOOK.html
+SHELL = /bin/bash
 
 ifdef V
   Q =
