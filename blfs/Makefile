@@ -2,7 +2,7 @@
 # By Tushar Teredesai <tushar@linuxfromscratch.org>
 # 2004-01-31
 # $LastChangedBy: bdubbs $
-# $Date: 2008-07-16 19:17:52 +0000 (mer, 16 jui 2008) $
+# $Date: 2012-01-07 18:48:20 +0100 (sam 07 jan 2012) $
 
 # Adjust these to suit your installation
 BASEDIR ?= $(HOME)/public_html/blfs-book-xsl
@@ -12,6 +12,7 @@ CHUNK_QUIET = 1
 ROOT_ID =
 PDF_OUTPUT = BLFS-BOOK.pdf
 NOCHUNKS_OUTPUT = BLFS-BOOK.html
+SHELL = /bin/bash
 
 ALLXML := $(filter-out $(RENDERTMP)/%, \
 	$(wildcard *.xml */*.xml */*/*.xml */*/*/*.xml */*/*/*/*.xml))
