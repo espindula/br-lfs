@@ -41,13 +41,24 @@ case "${1}" in
 
       if ! mountpoint /proc >/dev/null; then
          log_info_msg2 " ${INFO}/proc"
-         mount -n /proc || failed=1
+         mount -n -o nosuid,noexec,nodev /proc || failed=1
       fi
 
       if ! mountpoint /sys >/dev/null; then
          log_info_msg2 " ${INFO}/sys" 
-         mount -n /sys || failed=1
+         mount -n -o nosuid,noexec,nodev /sys || failed=1
       fi
+
+      if ! mountpoint /dev >/dev/null; then
+         log_info_msg2 " ${INFO}/dev" 
+         mount -n -o mode=0755,nosuid /dev  || failed=1
+      fi
+
+      ln -s /run/shm /dev/shm
+      
+      # Copy the only static device node that Udev >= 155 doesn't
+      # handle to /dev
+      cp -a /lib/udev/devices/null /dev
 
       (exit ${failed})
       evaluate_retval
