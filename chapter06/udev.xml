@@ -32,31 +32,18 @@
 
       <seglistitem>
         <seg>&udev-ch6-sbu;</seg>
-        <seg>&udev-ch6-du; plus &udev-testfiles-du; for testfiles</seg>
+        <seg>&udev-ch6-du;</seg>
       </seglistitem>
     </segmentedlist>
-
   </sect2>
 
   <sect2 role="installation">
     <title>Installation of Udev</title>
 
-    <para>Optionally remove an unneeded warning message that shows up in this
-    version of udev at boot time.</para>
-
-<screen><userinput remap="pre">sed -i -e '/deprecated/d' udev/udevadm-trigger.c</userinput></screen>
-
-
     <para>The udev-config tarball contains LFS-specific files used to configure
     Udev. Unpack it into the Udev source directory:</para>
 
 <screen><userinput remap="pre">tar -xvf ../&udev-config;.tar.bz2</userinput></screen>
-
-    <para>The udev-testfiles tarball contains files needed to test udev. The 
-    file expands to an apparent size of about 37MB but the actual disk usage
-    is less than 7MB.</para>
-
-<screen><userinput remap="pre">tar -xvf ../udev-&udev-version;-testfiles.tar.bz2 --strip-components=1</userinput></screen>
 
     <para>Create some devices and directories that Udev cannot handle due to
     them being required very early in the boot process, or by Udev itself:</para>
@@ -67,33 +54,23 @@ mknod -m0666 /lib/udev/devices/null c 1 3</userinput></screen>
     <para>Prepare the package for compilation:</para>
 
 <!-- Note that "libdir=/usr/lib64" would be required for multilib. -->
-<screen><userinput remap="configure">./configure --prefix=/usr \
-    --sysconfdir=/etc --sbindir=/sbin \
-    --with-rootlibdir=/lib --libexecdir=/lib/udev \
-    --disable-hwdb --disable-introspection \
-    --disable-keymap --disable-gudev</userinput></screen>
+<screen><userinput remap="configure">BLKID_CFLAGS="-I/usr/include/blkid" BLKID_LIBS="-L/lib -lblkid" \
+  KMOD_CFLAGS="-I/usr/include" KMOD_LIBS="-L/lib -lkmod" ./configure \
+  --prefix=/usr --bindir=/sbin --sysconfdir=/etc --libexecdir=/lib \
+  --enable-rule_generator --disable-introspection --disable-keymap \
+  --disable-gudev --with-usb-ids-path=no --with-pci-ids-path=no \
+  --with-systemdsystemunitdir=no</userinput></screen>
 
     <variablelist>
       <title>The meaning of the new configure options</title>
 
-      <varlistentry>
-        <term><parameter>--with-rootlibdir=/lib</parameter></term>
-        <listitem>
-          <para>This controls where the <filename
-          class="libraryfile">libudev</filename> library is installed.  The
-          library needs to be in <filename class="directory">/lib</filename>
-          because it's used by Udev at boot time, before <filename
-          class="directory">/usr</filename> might be available, and the default
-          --rootlibdir is <filename class="directory">/usr/lib</filename>.</para>
-        </listitem>
-      </varlistentry>
-
-      <!-- Note that libexecdir *MUST* stay /lib/udev, even on a 64-bit
-           / multilib system where udev is compiled for 64-bit.  Other
-           packages require this exact path; the udev maintainers have
+      <!-- Note that libexecdir *MUST* stay /lib, even on a 64-bit
+           / multilib system where udev is compiled for 64-bit.  The udev
+           configure system automatically adds "udev" onto this path, and other
+           packages require /lib/udev; the udev maintainers have
            said this is part of the udev API. -->
       <varlistentry>
-        <term><parameter>--libexecdir=/lib/udev</parameter></term>
+        <term><parameter>--libexecdir=/lib</parameter></term>
         <listitem>
           <para>This controls where Udev-internal rules and helper programs
           are installed.</para>
@@ -101,7 +78,15 @@ mknod -m0666 /lib/udev/devices/null c 1 3</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-*</parameter></term>
+        <term><parameter>--enable-rule_generator</parameter></term>
+        <listitem>
+          <para>This allows persistent rules to be generated for network and
+          optical media devices</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-* and --with-*</parameter></term>
         <listitem>
           <para>These options prevent Udev from installing helper programs and
           other extras which require more external libraries.  These libraries
