@@ -32,7 +32,7 @@
 
       <seglistitem>
         <seg>&udev-ch6-sbu;</seg>
-        <seg>&udev-ch6-du; et &udev-testfiles-du; pour les fichiers de test</seg>
+        <seg>&udev-ch6-du;</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -41,24 +41,13 @@
   <sect2 role="installation">
     <title>Installation d'Udev</title>
 
-    <para>Éventuellement, supprimez un message d'avertissement inutile affiché
-    dans cette version d'udev lors du démarrage.</para>
-
-<screen><userinput remap="pre">sed -i -e '/deprecated/d' udev/udevadm-trigger.c</userinput></screen>
-
     <para>L'archive tar udev-config contient des fichiers spécifiques à
     LFS utilisés pour configurer Udev. Déballez-la dans le
     répertoire des sources Udev&nbsp;:</para>
 
 <screen><userinput remap="pre">tar -xvf ../&udev-config;.tar.bz2</userinput></screen>
 
-    <para>L'archive tar udev-testfiles contient des fichiers nécessaires pour tester udev.
-    Le fichier occupe une taille apparente d'environ 37Pio, mais l'utilisation finale du disque
-    occupe moins de 7Mio.</para>
-
-<screen><userinput remap="pre">tar -xvf ../udev-&udev-version;-testfiles.tar.bz2 --strip-components=1</userinput></screen>
-
-    <para>Créez certains périphériques et répertoires qu'Udev ne peut pas
+      <para>Créez certains périphériques et répertoires qu'Udev ne peut pas
     gérer car ils sont nécessaires très tôt dans le processus de
     démarrage, ou Udev lui-même en a besoin&nbsp;:</para>
 
@@ -66,39 +55,35 @@
 mknod -m0666 /lib/udev/devices/null c 1 3</userinput></screen>
 
     <para>Préparez la construction du paquet&nbsp;:</para>
-    
-<screen><userinput remap="configure">./configure --prefix=/usr \
-    --sysconfdir=/etc --sbindir=/sbin \
-    --with-rootlibdir=/lib --libexecdir=/lib/udev \
-    --disable-hwdb --disable-introspection \
-    --disable-keymap --disable-gudev</userinput></screen>
+
+<screen><userinput remap="configure">BLKID_CFLAGS="-I/usr/include/blkid" BLKID_LIBS="-L/lib -lblkid" \
+  KMOD_CFLAGS="-I/usr/include" KMOD_LIBS="-L/lib -lkmod" ./configure \
+  --prefix=/usr --bindir=/sbin --sysconfdir=/etc --libexecdir=/lib \
+  --enable-rule_generator --disable-introspection --disable-keymap \
+  --disable-gudev --with-usb-ids-path=no --with-pci-ids-path=no \
+  --with-systemdsystemunitdir=no</userinput></screen>
 
     <variablelist>
       <title>Voici la signification des nouvelles options de configure</title>
 
       <varlistentry>
-        <term><parameter>--with-rootlibdir=/lib</parameter></term>
+        <term><parameter>--libexecdir=/lib</parameter></term>
         <listitem>
-          <para>Ceci gère l'endroit où  la bibliothèque <filename
-          class="libraryfile">libudev</filename> sera installée.
-          La bibliothèque doit être dans 
-          <filename class="directory">/lib</filename> parce qu'elle est utilisée
-          par Udev au moment du démarrage, avant 
-          <filename class="directory">/usr</filename> pourrait être disponible
-          et le --rootlibdir disponible est <filename class="directory">/usr/lib</filename>.</para>
+          <para>Ceci gère l'endroit où les programmes d'aide et les règles
+          internes à Udev sont installés.</para>
         </listitem>
      </varlistentry>
 
      <varlistentry>
-        <term><parameter>--libexecdir=/lib/udev</parameter></term>
+        <term><parameter>--enable-rule_generator</parameter></term>
         <listitem>
-          <para>Ceci gère l'endroit où les règles internes d'Udev et les
-          programmes d'aide seront installés.</para>
+          <para>Ceci permet la génçration de règles permanentes pour les
+          périphériques réseaux et les médias optiques.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-*</parameter></term>
+        <term><parameter>--disable-* and --with-*</parameter></term>
         <listitem>
           <para>Ces options empêchent Udev d'installer les programmes d'aide 
           et d'autres qui exigent davantage de bibliothèques externes. Ces
