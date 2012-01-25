@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY GConf-download-http "&gnome-download-http;/GConf/2.28/GConf-&GConf-version;.tar.bz2">
-  <!ENTITY GConf-download-ftp  "&gnome-download-ftp;/GConf/2.28/GConf-&GConf-version;.tar.bz2">
-  <!ENTITY GConf-md5sum        "27663faf0af4f6a6d534de9270f6d24a">
-  <!ENTITY GConf-size          "1.4 Mio">
-  <!ENTITY GConf-buildsize     "41 Mio">
-  <!ENTITY GConf-time          "0.5 SBU">
+  <!ENTITY GConf-download-http "&gnome-download-http;/GConf/&gnome-version;/GConf-&GConf-version;.tar.xz">
+  <!ENTITY GConf-download-ftp  "&gnome-download-ftp;/GConf/&gnome-version;/GConf-&GConf-version;.tar.xz">
+  <!ENTITY GConf-md5sum        "de9047c08d3f642c5b1990b0bef44577">
+  <!ENTITY GConf-size          "1.5 MB">
+  <!ENTITY GConf-buildsize     "47 MB">
+  <!ENTITY GConf-time          "0.3 SBU">
 ]>
 
 <sect1 id="GConf" xreflabel="GConf-&GConf-version;">
@@ -32,7 +32,7 @@
     <para>Le paquet <application>GConf</application> contient un système de
     base de données de configuration.</para>
 
-    &lfs65_checked;
+    &lfs70_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -56,24 +56,21 @@
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargement additionnel</bridgehead>
-    <itemizedlist spacing="compact">
-      <listitem>
-        <para>Patch requis>&nbsp;: <ulink
-        url="&patch-root;/GConf-&GConf-version;-sysconfdir-1.patch"/></para>
-      </listitem>
-    </itemizedlist>
-
+    
     <bridgehead renderas="sect3">Dépendances de GConf</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
-    <para role="required"><xref linkend="ORBit2"/> et
-    <xref linkend="polkit"/></para>
-
+    <para role="required"><xref linkend="dbus-glib"/>,
+    <xref linkend="intltool"/>, et
+    <xref linkend="libxml2"/><!--, et
+    <xref linkend="ORBit2"/>--></para>
+    
+    
     <bridgehead renderas="sect4">Recommandées</bridgehead>
-    <para role="recommended"><xref linkend="gtk2"/> (Requis pour la construction d'un bureau
+    <para role="recommended"><xref linkend="gtk3"/> (Requis pour la construction d'un bureau
     <application>GNOME</application>.
-    <command>gconf-sanity-check-2</command> ne construira pas autrement.)</para>
+    <command>gconf-sanity-check-2</command> ne construira pas autrement.) et
+    <xref linkend="polkit"/></para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional"><xref linkend="openldap"/> et
@@ -90,13 +87,12 @@
     <para>Installez <application>GConf</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../GConf-&GConf-version;-sysconfdir-1.patch &amp;&amp;
-./configure --prefix=$(pkg-config --variable=prefix ORBit-2.0) \
-            --sysconfdir=&gnome-etc-dir; \
-            --libexecdir=$(pkg-config \
-                --variable=prefix ORBit-2.0)/lib/GConf \
-            --mandir=$(pkg-config \
-                --variable=prefix ORBit-2.0)/share/man &amp;&amp;
+    <!-- with-gtk=3.0 is the default, and mandir goes to prefix/share/man -->
+
+<screen><userinput>./configure --prefix=$GNOME_PREFIX \
+            --sysconfdir=$GNOME_SYSCONFDIR \
+            --libexecdir=$GNOME_PREFIX/lib/GConf \
+            --disable-orbit &amp;&amp;
 make</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -104,7 +100,7 @@ make</userinput></screen>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>make install &amp;&amp;
-install -v -m755 -d &gnome-etc-dir;/gconf/gconf.xml.system</userinput></screen>
+install -v -m755 -d $GNOME_SYSCONFDIR/gconf/gconf.xml.system</userinput></screen>
 
     <para>En tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;,
     configurez <application>D-Bus</application> pour qu'il puisse chercher le fichier <application>GNOME</application>
@@ -120,8 +116,8 @@ install -v -m755 -d &gnome-etc-dir;/gconf/gconf.xml.system</userinput></screen>
  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd"&gt;
 &lt;busconfig&gt;
 
-  &lt;!-- Search for .conf files in &gnome-etc-dir;/dbus-1/system.d --&gt;
-  &lt;includedir&gt;&gnome-etc-dir;/dbus-1/system.d&lt;/includedir&gt;
+  &lt;!-- Search for .conf files in $GNOME_SYSCONFDIR/dbus-1/system.d --&gt;
+  &lt;includedir&gt;$GNOME_SYSCONFDIR/dbus-1/system.d&lt;/includedir&gt;
 
   &lt;!-- Search for .service files in $GNOME_PREFIX/share/dbus-1/system-services --&gt;
   &lt;!-- &lt;servicedir&gt;$GNOME_PREFIX/share/dbus-1/system-services&lt;/servicedir&gt; --&gt;
@@ -167,32 +163,31 @@ ln -s -v <envar>$GNOME_PREFIX</envar>/share/polkit-1/actions/org.gnome.gconf.def
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gnome-prefix.xml"/>
 
-    <para><parameter>--sysconfdir=&gnome-etc-dir;</parameter>&nbsp;: Ce paramètre
-    fait que la base de données de configuration de
-    <application>GConf-2</application> est construite dans
-    <filename class="directory">&gnome-etc-dir;</filename> au lieu de
-    <filename class="directory">$GNOME_PREFIX/etc</filename>. Cette installation
-    contrôle toutes les installations à venir des schémas
-    <application>GConf-2</application>. Si vous modifiez l'emplacement, (ce qui
-    implique d'éliminer ce paramètre), cela <emphasis role='strong'>doit</emphasis> 
-    être cohérent avec toutes les installations des paquets subséquents qui 
-    mettra à jour la base de données de configuration de
-    <application>GConf-2</application>.</para>
-
-    <para><parameter>--libexecdir=$(pkg-config --variable=prefix
-    ORBit-2.0)/lib/GConf</parameter>&nbsp;: Ce paramètre fait que les fichiers 
-    de libexec s'installent à l'emplacement préféré de
-    <filename class="directory">$GNOME_PREFIX/lib/GConf</filename> au lieu de
-    <filename class="directory">$GNOME_PREFIX/libexec</filename>.</para>
-
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-    href="../../xincludes/gnome-mandir.xml"/>
+    href="../../xincludes/gnome-sysconfdir.xml"/>
+
+    <para><parameter>--libexecdir=<envar>$GNOME_PREFIX</envar>/lib/GConf</parameter>:
+    Le paramètre permet aux fichiers libexec d'être installé dans l'endroit préféré
+    <filename class="directory">$GNOME_PREFIX/lib/GConf</filename>
+    au lieu de <filename
+    class="directory">$GNOME_PREFIX/libexec</filename>.</para>
+    
+    <para><parameter>--disable-orbit</parameter>: Ce paramètre est requis si
+    <application>ORBit2</application> n'est pas installé.
+    <application>ORBit2</application> est un paquet obsolète.</para>
+ 
+    <!--<xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../../xincludes/gnome-mandir.xml"/>-->
+
+    <para><option>--enable-static=no</option> : Ce paramètre empêche la construction
+    des bibliothèques statiques.</para>
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gtk-doc-rebuild.xml"/>
 
     <para><command>install -v -m755 -d
-    &gnome-etc-dir;/gconf/gconf.xml.system</command>: Crée un répertoire oublié.
+     $GNOME_SYSCONFDIR/gconf/gconf.xml.system</command> : Crée un répertoire oublié.
 	Sans ce répertoire, <command>gconf-sanity-check-2</command>
     échouera pendant le démarrage de  <application>GDM</application> et le login.</para>
 
@@ -207,13 +202,14 @@ ln -s -v <envar>$GNOME_PREFIX</envar>/share/polkit-1/actions/org.gnome.gconf.def
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>gconf-merge-tree, gconftool-2, gconf-defaults-mechanism,
-        gconf-sanity-check-2, et gconfd-2</seg>
-        <seg>libgconf-2.{so,a}, libgconfbackend-xml.{so,a}, et
-        libgconfbackend-oldxml.{so,a}</seg>
-        <seg>&gnome-etc-dir;/gconf/{2,gconf.xml.defaults,gconf.xml.mandatory,
-        gconf.xml.system}, <envar>$GNOME_PREFIX</envar>/{include/gconf/2/gconf,
-        lib/GConf/2,share/{gtk-doc/html/gconf,sgml/gconf}}</seg>
+        <seg>gconf-defaults-mechanism, gconf-merge-tree, gconf-sanity-check-2,
+        gconfd-2, gconftool-2, and gsettings-data-convert</seg>
+        <seg>libgconf-2.{so,a}, libgconfbackend-oldxml.{so,a},
+        libgconfbackend-xml.{so,a}, and libgsettingsgconfbackend.{so,a}</seg>
+        <seg><envar>$GNOME_SYSCONFDIR</envar>/{gconf/{2,gconf.xml.defaults,
+        gconf.xml.mandatory,gconf.xml.system},xdg/autostart}
+        <envar>$GNOME_PREFIX</envar>/{include/gconf/2/gconf,lib/GConf/2,
+        share/{gtk-doc/html/gconf,sgml/gconf}}</seg>
 
       </seglistitem>
     </segmentedlist>
@@ -244,7 +240,18 @@ ln -s -v <envar>$GNOME_PREFIX</envar>/share/polkit-1/actions/org.gnome.gconf.def
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libgconf-2">
+      <varlistentry id="gsettings-data-convert">
+        <term><command>gsettings-data-convert</command></term>
+        <listitem>
+          <para>lit les valeurs de la base de données utilisateur GConf et les enregistre dans
+          les GSettings.</para>
+          <indexterm zone="GConf gsettings-data-convert">
+            <primary sortas="b-gsettings-data-convert">gsettings-data-convert</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+       <varlistentry id="libgconf-2">
         <term><filename class='libraryfile'>libgconf-2.{so,a}</filename></term>
         <listitem>
           <para>fournit les fonctions nécessaires pour maintenir la base de
