@@ -42,8 +42,13 @@ fi
 
 case "${2}" in
    up)
-      if [ "$(ip addr show ${1} | grep ${IP})" == "" ]; then
-         log_info_msg2 "\n" # Terminate the previous message
+      if [ "$(ip addr show ${1} 2>/dev/null | grep ${IP})" == "" ]; then
+         
+         # Cosmetic output not needed for multiple services
+         if ! $(echo ${SERVICE} | grep -q " "); then 
+           log_info_msg2 "\n" # Terminate the previous message
+         fi
+         
          log_info_msg "Adding IPv4 address ${IP} to the ${1} interface..."
          ip addr add ${args} dev ${1}
          evaluate_retval
@@ -64,7 +69,7 @@ case "${2}" in
    ;;
 
    down)
-      if [ "$(ip addr show ${1} | grep ${IP})" != "" ]; then
+      if [ "$(ip addr show ${1} 2>/dev/null | grep ${IP})" != "" ]; then
          log_info_msg "Removing IPv4 address ${IP} from the ${1} interface..."
          ip addr del ${args} dev ${1}
          evaluate_retval
@@ -72,7 +77,7 @@ case "${2}" in
 
       if [ -n "${GATEWAY}" ]; then
          # Only remove the gateway if ther are no remaining ipv4 addresses
-         if [ "$(ip addr show ${1} | grep 'inet ')" != "" ]; then
+         if [ "$(ip addr show ${1} 2>/dev/null | grep 'inet ')" != "" ]; then
             log_info_msg "Removing default gateway..."
             ip route del default
             evaluate_retval

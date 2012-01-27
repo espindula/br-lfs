@@ -67,20 +67,26 @@ if [ "$IFACE" = "" ]; then
    exit 1
 fi
 
-# This will run the service script, if SERVICE is set
-if [ -n "${SERVICE}" -a -x "/lib/services/${SERVICE}" ]; then
-   if ip link show ${IFACE} > /dev/null 2>&1; then
-      IFCONFIG=${file} /lib/services/${SERVICE} ${IFACE} down
-   else
-      log_warning_msg "Interface ${1} doesn't exist."
-      echo_warning
-   fi
+# Reverse the order
+SERVICES=
+for S in ${SERVICE}; do SERVICES="${SERVICES} ${S}"; done
+
+# This will run the service scripts
+if ip link show ${IFACE} > /dev/null 2>&1; then
+   for S in ${SERVICES}; do
+
+     if [ -n "${S}" -a -x "/lib/services/${S}" ]; then
+       IFCONFIG=${file} /lib/services/${S} ${IFACE} down
+     else
+       MSG="Unable to process ${file}.  Either "
+       MSG="${MSG}the SERVICE variable was not set "
+       MSG="${MSG}or the specified service cannot be executed."
+       log_failure_msg "$MSG"
+       exit 1
+    fi
+  done
 else
-   MSG="Unable to process ${file}.  Either "
-   MSG="${MSG}the SERVICE variable was not set"
-   MSG="${MSG}or the specified service cannot be executed."
-   log_failure_msg "$MSG"
-   exit 1
+   log_warning_msg "Interface ${1} doesn't exist."
 fi
 
 link_status=`ip link show ${IFACE} 2>/dev/null`

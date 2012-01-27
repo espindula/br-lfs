@@ -55,7 +55,7 @@ file=/etc/sysconfig/ifconfig.${1}
 
 . /lib/lsb/init-functions
 
-log_info_msg "Bringing up the ${1} interface: "
+log_info_msg "Bringing up the ${1} interface... "
 
 if [ ! -r "${file}" ]; then
    log_warning_msg "\n${file} is missing or cannot be accessed." 
@@ -76,35 +76,39 @@ if [ "${IN_BOOT}" = "1" -a "${ONBOOT}" != "yes" ]; then
    exit 0
 fi
 
-if [ -n "${SERVICE}" -a -x "/lib/services/${SERVICE}" ]; then
-   if [ -z "${CHECK_LINK}"         -o \
-           "${CHECK_LINK}" = "y"   -o \
-           "${CHECK_LINK}" = "yes" -o \
-           "${CHECK_LINK}" = "1" ]; then
+for S in ${SERVICES}; do
+  if [ ! -n "${S}" -o ! -x "/lib/services/${S}" ]; then
+    MSG="\nUnable to process ${file}.  Either " 
+    MSG="${MSG}the SERVICE variable was not set "
+    MSG="${MSG}or the specified service cannot be executed."
+    log_failure_msg "$MSG"
+    exit 1
+  fi
+done
 
-      #  Bring up the interface
-      if ip link show ${IFACE} > /dev/null 2>&1; then
-         link_status=`ip link show ${IFACE}`
+if [ -z "${CHECK_LINK}"         -o \
+        "${CHECK_LINK}" = "y"   -o \
+        "${CHECK_LINK}" = "yes" -o \
+        "${CHECK_LINK}" = "1" ]; then
 
-         if [ -n "${link_status}" ]; then
-            if ! echo "${link_status}" | grep -q UP; then
-               ip link set ${IFACE} up
-            fi
+   #  Bring up the interface
+   if ip link show ${IFACE} > /dev/null 2>&1; then
+      link_status=`ip link show ${IFACE}`
+
+      if [ -n "${link_status}" ]; then
+         if ! echo "${link_status}" | grep -q UP; then
+            ip link set ${IFACE} up
          fi
-
-      else
-         log_warning_msg "\nInterface ${IFACE} doesn't exist."
       fi
+
+   else
+      log_warning_msg "\nInterface ${IFACE} doesn't exist."
+      exit 0
    fi
-
-   IFCONFIG=${file} /lib/services/${SERVICE} ${IFACE} up
-
-else
-   MSG="\nUnable to process ${file}.  Either " 
-   MSG="${MSG}the SERVICE variable was not set "
-   MSG="${MSG}or the specified service cannot be executed."
-   log_failure_msg "$MSG"
-   exit 1
 fi
+
+for S in ${SERVICE}; do 
+  IFCONFIG=${file} /lib/services/${S} ${IFACE} up
+done
 
 # End /sbin/ifup
