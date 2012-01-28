@@ -69,6 +69,22 @@
 
   </sect2>
 
+  <sect2 role="kernel" id='bridgeutils-kernel'>
+    <title>Configuration du noyau</title>
+
+    <para>Activez les options suivantes dans la configuration du noyau et
+    recompilez le noyau si nécessaire&nbsp;:</para>
+
+<screen><literal>Networking support: Y
+  Networking options: 
+    802.1d Ethernet Bridging: M or Y</literal></screen>
+
+    <indexterm zone="bridgeutils bridgeutils-kernel">
+      <primary sortas="d-bridgeutils">Bridge Utilities</primary>
+    </indexterm>
+
+  </sect2>
+
   <sect2 role="installation">
     <title>Installation de bridge-utils</title>
 
@@ -89,9 +105,71 @@ make</userinput></screen>
 <screen role="root"><userinput>make install</userinput></screen>
 
   </sect2>
+ 
+  <sect2 role="configuration">
+    <title>Configurer bridge-utils</title>
+
+    <sect3 id='bridgeutils-init'>
+      <title>Informations de configuration</title>
+
+      <para>Pour automatiser la création et la configuration d'un pont, 
+      installez script de service <filename>/lib/services/etc/bridge</filename>
+      inclu dans le paquet <xref linkend="bootscripts"/>.</para>
+
+      <indexterm zone="bridgeutils bridgeutils-init">
+        <primary sortas="f-bridgeutils">bridge-utils</primary>
+      </indexterm>
+
+<screen role="root"><userinput>make install-bridge</userinput></screen>
+
+      <note><para>Le script <filename>bridge</filename> dépend des
+      comamndes <command>/sbin/ifup</command> et
+      <command>/sbin/ifdown</command> et le script de service
+      <emphasis>ipv4-static</emphasis> des scripts de démarrage <emphasis>LFS</emphasis>
+      en date du 27 janvier 2012 ou plus tard.</para></note>
+
+      <para>Le fichier de configuration suivant va créer un périphérique de bridge
+      au moment du démarrage et y rattacher l'eth0. Si vous désirez plus d'un
+      périphérique, utilisez une liste séparée par un espace d'INTERFACES.  Cette
+      configuration est utile lorsqu'on envisage de faire fonctionner une machine virtuelle 
+      telle que kvm/qemu.</para>
+
+      <para>D'autres combinaisons de SERVICE sont possibles, par exemple, 
+      SERVICES="bridge dhcp".  Dans ce cas, les paramètres d'adresse ne sont
+      pas nécessaires mais ils n'interfèrent pas s'ils sont présents. Vous
+      pouvez utiliser le service bridge seul, mais vous aurez besoin  d'une
+      configuration consécutive supplémentaire.</para>
+
+      <caution><para>Ne lancez pas de configuration parallèle pour un périphérique
+      dans la liste INTERFACES. Par exemple, dans l'exemple ci-dessous, 
+      ne configurez pas <filename>/etc/sysconfig/ifconfig.eth0</filename>
+      pour se lancer au moment du démarrage. La commande <command>ifdown br0</command>
+      suivie de la commande <command>ifup eth0</command> fonctionnera, mais
+      n'essayez pas de faire marcher les deux en même temp.</para></caution>
+      
+<screen role="root"><userinput>cat &gt; /etc/sysconfig/ifconfig.br0 &lt;&lt; "EOF"
+<literal>ONBOOT=yes
+IFACE=br0
+SERVICE="bridge ipv4-static"  # Séparation par un espace
+IP=192.168.1.32
+GATEWAY=192.168.1.1
+PREFIX=24
+BROADCAST=192.168.1.255
+CHECK_LINK=no                 # Ne vérifie pas avant qu'ibridge soit créé
+STP=no                        # Spanning l'arborescence du protocole, par défaut non
+INTERFACES="eth0"             # Ajout à IFACE, périphériques séparés par des espaces
+IP_FORWARD=true</literal>
+EOF</userinput></screen>
+
+      <para>Vous devriez changer toutes les adresses pour correspondre à votre
+      contexte.</para>
+
+    </sect3>
+
+  </sect2>
 
   <sect2 role="content">
-    <title>Contenus</title>
+    <title>Contenu</title>
 
     <segmentedlist>
       <segtitle>Programme installé Program</segtitle>
