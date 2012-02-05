@@ -34,10 +34,9 @@
   <para>En utilisant la méthode udev, seuls les périphériques détectés
   par le noyau obtiennent des n&oelig;uds périphériques créés pour eux.
   Comme ces n&oelig;uds périphériques seront créés à chaque lancement du
-  système, ils seront stockés dans un 
-
-  <systemitem class="filesystem">tmpfs</systemitem> (un système de
-  fichiers qui réside entièrement en mémoire). Les n&oelig;uds
+  système, ils seront stockés dans un système de fichiers
+  <systemitem class="filesystem">devtmpfs</systemitem> (un système de
+  fichiers virtuel qui réside entièrement dans la  mémoire du système). Les n&oelig;uds
   périphériques ne requièrent pas beaucoup d'espace disque, donc la
   mémoire utilisée est négligeable.</para>
 
@@ -109,8 +108,9 @@
       enregistrées par les pilotes internes avec
       <systemitem class="filesystem">sysfs</systemitem> sont disponibles
       pour les processus en espace utilisateur ainsi qu'à
-      <command>udev</command> pour la création des n&oelig;uds
-      périphériques.</para>
+      <command>udev</command> pour continuer (et faire même des modifications 
+      aux n&oelig;uds
+      périphériques).</para>
 
     </sect3>
 
@@ -161,24 +161,35 @@
     <sect3>
       <title>Création de n&oelig;uds de périphérique</title>
 
-      <para>Pour obtenir le bon nombre majeur ou mineur d'un périphérique,
-      Udev s'appuie sur les informations fournies par 
-      <systemitem class="filesystem">sysfs</systemitem> dans
-      <filename class="directory">/sys</filename>. Par exemple,
-      <filename>/sys/class/tty/vcs/dev</filename> contient la chaîne
-      <quote>7:0</quote>. Cette chaîne est utilisée par <command>udevd</command>
-      pour créer un n&oelig;ud de périphérique avec un nombre majeur
-      <emphasis>7</emphasis> et et un nombre mineur <emphasis>0</emphasis>. Les noms
-      et les droits des n&oelig;uds sous le répertoire 
-      <filename class="directory">/dev</filename> sont déterminés par des
-      règles spécifiés dans des fichiers à l'intérieur du répertoire
-		<filename class="directory">/etc/udev/rules.d/</filename>. Celles-ci
-      sont numérotées d'une façon similaire au paquet LFS-Bootscripts. Si
-      <command>udevd</command> ne peut trouver une règle pour le périphérique
-     qu'il est en train de créer, il attribuera par défaut des droits 
-     <emphasis>660</emphasis> et la propriété à <emphasis>root:root</emphasis>.
-     La documentation sur la syntaxe des fichiers de configuration des
-     règles Udev est disponible dans <filename>/usr/share/doc/udev-&udev-version;/writing_udev_rules/index.html</filename>.</para>
+      <para>À partir d'Udev-&udev-version;, <command>udevd</command> ne crée
+      plus de fichiers de périphériques dans <filename class="directory">/dev</filename>.
+      Cela se gère plutôt dans le noyau, avec le système de fichiers <systemitem
+      class="filesystem">devtmpfs</systemitem>.  Tout pilote qui souhaite
+      enregistrer un n&oelig;ud périphérique ira sur <systemitem
+      class="filesystem">devtmpfs</systemitem> (via le c&oelig;ur du pilote) 
+      pour le faire. Quand une session
+      When a <systemitem class="filesystem">devtmpfs</systemitem> est montée sur
+      <filename class="directory">/dev</filename>, le n&oelig;ud de périphérique
+      sera cré au départ avec un nom, des droits et un propriétaire fixes.</para>
+
+      <para>Peu de temps après, le noyau enverra un uevent à <command>
+      udevd</command>. À partir des règles indiquées dans les fichiers contenus
+      dans les répertoires
+      <filename class="directory">/etc/udev/rules.d</filename>, <filename
+      class="directory">/lib/udev/rules.d</filename>, et <filename
+      class="directory">/run/udev/rules.d</filename>, <command>
+      udevd</command> créera les liens symboliques supplémentaires vers le
+      n&oelig;ud périphérique, ou bien il modifiera ses droits, son propriétaire 
+      ou son groupe, ou l'entrée dans la fase de données interne de 
+      <command>udevd</command> concernant cet objet.</para>
+
+      <para>Les règles dans ces trois répertoires sont numérotées de la même
+      façon que dans le paquet LFS-Bootscripts et les trois répertoires sont
+      mis à jour ensemble. Si <command>udevd</command> ne peut pas trouver de
+      règles pour le périphérique qu'il cée, il en donnera la propriété et les
+      droits à n'importe quel
+      <systemitem class="filesystem">devtmpfs</systemitem> utilisé
+      au départ.</para>
 
     </sect3>
 
@@ -289,11 +300,16 @@
       pour les applications OSS), configurez la commande
       <command>modprobe</command> pour charger le wrapper après qu'Udev ait
       chargé le module emballé. Pour cela, ajoutez une ligne
-      <quote>install</quote> dans tous les fichiers
+      <quote>softdep</quote> dans tous les fichiers
       <filename>/etc/modprobe.d/<replaceable>&lt;filename&gt;</replaceable>.conf</filename>. Par exemple&nbsp;:</para>
 
-<screen role="nodump"><literal>install snd-pcm /sbin/modprobe -i snd-pcm ; \
-    /sbin/modprobe snd-pcm-oss ; true</literal></screen>
+<screen role="nodump"><literal>softdep snd-pcm post: snd-pcm-oss</literal></screen>
+
+      <para>Remarquez que la commande <quote>softdep</quote> autorise aussi les
+      dépendances <literal>pre:</literal>, ou un mélange de
+      <literal>pre:</literal> et de <literal>post:</literal>.  Voir la page de 
+      manuel de <filename>modprobe.d(5)</filename> pour plus d'informations
+      sur la syntaxe et les possibilités d'<quote>softdep</quote>.</para>
 
       <para>Si le module en question n'est pas un emballage et s'avère
       utile en tant que tel, configurez le script de démarrage
