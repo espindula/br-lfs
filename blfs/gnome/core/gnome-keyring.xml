@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY gnome-keyring-download-http "&gnome-download-http;/gnome-keyring/&gnome-version;/gnome-keyring-&gnome-keyring-version;.tar.bz2">
-  <!ENTITY gnome-keyring-download-ftp  "&gnome-download-ftp;/gnome-keyring/&gnome-version;/gnome-keyring-&gnome-keyring-version;.tar.bz2">
-  <!ENTITY gnome-keyring-md5sum        "54cb1835c02a40f27fda73e58da17cc6">
-  <!ENTITY gnome-keyring-size          "1.5 Mio">
-  <!ENTITY gnome-keyring-buildsize     "52 Mio">
-  <!ENTITY gnome-keyring-time          "0.6 SBU">
+  <!ENTITY gnome-keyring-download-http "&gnome-download-http;/gnome-keyring/&gnome-version;/gnome-keyring-&gnome-keyring-version;.tar.xz">
+  <!ENTITY gnome-keyring-download-ftp  "&gnome-download-ftp;/gnome-keyring/&gnome-version;/gnome-keyring-&gnome-keyring-version;.tar.xz">
+  <!ENTITY gnome-keyring-md5sum        "0269f897bf6bc71df8b8cecd5f8e2f6c">
+  <!ENTITY gnome-keyring-size          "1.6 Mio">
+  <!ENTITY gnome-keyring-buildsize     "165 Mio">
+  <!ENTITY gnome-keyring-time          "1.3 SBU">
 ]>
 
 <sect1 id="gnome-keyring" xreflabel="gnome-keyring-&gnome-keyring-version;">
@@ -32,7 +32,7 @@
     <para>Le paquet <application>gnome-keyring</application> contient un démon
     qui conserve les mots de passe et d'autres secrets des utilisateurs.</para>
 
-    &lfs65_built;
+    &lfs70_built;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -56,14 +56,23 @@
       </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <itemizedlist spacing='compact'>
+      <listitem>
+        <para>Correctif requis&nbsp;: <ulink
+        url="&patch-root;/gnome-keyring-&gnome-keyring-version;-work_without_daemon-1.patch"/></para>
+      </listitem>
+    </itemizedlist>
+
     <bridgehead renderas="sect3">Dépendances de gnome-keyring</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required"><xref linkend="dbus"/>,
     <xref linkend="gtk2"/>,
     <xref linkend="intltool"/>,
-    <xref linkend="libgcrypt"/>, et
-    <xref linkend="libtasn1"/></para>
+    <xref linkend="libgcrypt"/>,
+    <xref linkend="libtasn1"/> et
+    <xref linkend="p11-kit"/></para>
  
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional"><xref linkend="gtk-doc"/> et
@@ -84,10 +93,10 @@
     <para>Installez <application>gnome-keyring</application> en lançant les
     commandes suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=$(pkg-config --variable=prefix ORBit-2.0) \
-            --libexecdir=$(pkg-config \
-            --variable=prefix ORBit-2.0)/lib/gnome-keyring \
-                --sysconfdir=&gnome-etc-dir; \
+<screen><userinput>patch -Np1 -i ../gnome-keyring-&gnome-keyring-version;-work_without_daemon-1.patch &amp;&amp;
+./configure --prefix=$GNOME_PREFIX \
+            --libexecdir=$GNOME_PREFIX/lib/gnome-keyring \
+            --sysconfdir=$GNOME_SYSCONFDIR \
             --with-pam-dir=/lib/security \
             --with-dbus-services=/usr/share/dbus-1/services \
             --with-root-certs=/etc/ssl/certs &amp;&amp;
@@ -104,24 +113,36 @@ make</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
+     <para><command>patch -Np1 -i ...</command>&nbsp;: Le correctif permet aux
+     suites de tests d'autres paquets qui appellent <application>gnome-keyring</application>, 
+     tels que <application>NetworkManager,</application>, de se lancer même si
+     le démon de ce paquet n'est pas lancé, par exemple quand vous construisez un
+    bureau <application>GNOME</application>.</para>
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gnome-prefix.xml"/>
 
-    <para><parameter>--libexecdir=$(pkg-config --variable=prefix
-    ORBit-2.0)/lib/gnome-keyring</parameter>&nbsp;: Ce paramètre fait que les
-    fichiers libexec s'installent à l'endroit préféré
-    <filename class="directory">$GNOME_PREFIX/lib/gnome-keyring</filename>
-    au lieu de
+    <para><parameter>--libexecdir=$GNOME_PREFIX/lib/gnome-keyring</parameter>&nbsp;:
+    Il résulte de ce paramètre que les fichiers libexec s'installent à l'endroit
+    préféré <filename
+    class="directory">$GNOME_PREFIX/lib/gnome-keyring</filename> au lieu de
     <filename class="directory">$GNOME_PREFIX/libexec</filename>.</para>
 
-    <para><parameter>--with-pam-dir=/lib/security</parameter>>:nbsp;: Ce paramètre précise ou le module pam sera installé.</para>
+    <para><parameter>--sysconfdir=$GNOME_SYSCONFDIR</parameter>&nbsp;: Ce
+    paramètre garantit que les fichiers de démarrage automatique xdg s'installent
+    à un endroit convenable.
+    </para>
+
+    <para><parameter>--with-pam-dir=/lib/security</parameter>>:nbsp;: Ce 
+    paramètre précise ou le module pam sera installé&nbsp;: vous pouvez vous passer
+    de ceci si vous n'avez pas installé <application>Linux-PAM</application>.</para>
 
     <para><parameter>--with-dbus-services=/usr/share/dbus-1/services</parameter>>:nbsp;:
-    Ce paramètre précise ou le répertoire des services <application>D-BUS</application> est situé.</para>
+    Ce paramètre précise ou le répertoire des services 
+    <application>D-BUS</application> est situé&nbsp;: vous pouvez vous passer
+    de ceci si votre GNOME_PREFIX est <filename class="directory">/usr</filename>.</para>
 
     <para><parameter>--with-root-certs=/etc/ssl/certs</parameter>>:nbsp;: Ce paramètre précise ou les certificats de confiance root sont situés.</para>
-
-    <para><option>--disable-scrollkeeper</option>>:nbsp;: utiliez ce paramètre si vous souhaitez désactiver les mises à jour de la base de données scrollkeeper.</para>
 
   </sect2>
 
@@ -138,7 +159,7 @@ make</userinput></screen>
         <seg>gck-ssh-store-standalone.so, gck-user-store-standalone.so,
         gnome-keyring-pkcs11.so, gck-roots-store-standalone.so,
         gck-secret-store-standalone.so, libgcr.so, libgp11.so, et
-        pam_gnome_keyring.so</seg>
+        pam_gnome_keyring.so (si Linux-PAM a été installé)</seg>
         <seg><envar>$GNOME_PREFIX</envar>/{include/{gcr,gp11},
         lib/gnome-keyring/{devel,standalone},share/{gcr/ui,
         gnome-keyring/{introspect,ui},gtk-doc/html/{gcr,gp11}}}</seg>
