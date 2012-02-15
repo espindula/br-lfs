@@ -4,11 +4,11 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY gnome-session-download-http "&gnome-download-http;/gnome-session/&gnome-version;/gnome-session-&gnome-session-version;.tar.bz2">
-  <!ENTITY gnome-session-download-ftp  "&gnome-download-ftp;/gnome-session/&gnome-version;/gnome-session-&gnome-session-version;.tar.bz2">
-  <!ENTITY gnome-session-md5sum        "d93a2da931ac0b9c0d98f6b68a17a730">
-  <!ENTITY gnome-session-size          "798 Kio">
-  <!ENTITY gnome-session-buildsize     "16 Mio">
+  <!ENTITY gnome-session-download-http "&gnome-download-http;/gnome-session/&gnome-version;/gnome-session-&gnome-session-version;.tar.xz">
+  <!ENTITY gnome-session-download-ftp  "&gnome-download-ftp;/gnome-session/&gnome-version;/gnome-session-&gnome-session-version;.tar.xz">
+  <!ENTITY gnome-session-md5sum        "05012cdf82e48feab17b5bc1804e37cf">
+  <!ENTITY gnome-session-size          "685 KB">
+  <!ENTITY gnome-session-buildsize     "19 MB">
   <!ENTITY gnome-session-time          "0.3 SBU">
 ]>
 
@@ -16,8 +16,8 @@
   <?dbhtml filename="gnome-session.html"?>
 
   <sect1info>
-    <othername>$LastChangedBy: wblaszcz $</othername>
-    <date>$Date: 2010-08-22 15:35:17 +0200 (dim. 22 août 2010) $</date>
+    <othername>$LastChangedBy&nbsp;: ken $</othername>
+    <date>$Date&nbsp;: 2012-02-14 21:08:22 +0100 (mar. 14 févr. 2012) $</date>
   </sect1info>
 
   <title>GNOME Session-&gnome-session-version;</title>
@@ -32,7 +32,7 @@
     <para>Le paquet <application>GNOME Session</application> contient le
     gestionnaire de session de <application>GNOME</application>.</para>
 
-    &lfs65_checked;
+    &lfs70_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -60,7 +60,8 @@
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required"><xref linkend="GConf"/>,
-    <xref linkend="gtk2"/>,
+    <xref linkend="gtk3"/>,
+    <xref linkend="json-glib"/>,
     <xref linkend="startup-notification"/>, et
     <xref linkend="upower"/></para>
 
@@ -81,12 +82,8 @@
     <para>Installez <application>GNOME Session</application> en
     lançant les commandes suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=$(pkg-config --variable=prefix ORBit-2.0) \
-            --sysconfdir=&gnome-etc-dir; \
-            --libexecdir=$(pkg-config \
-                --variable=prefix ORBit-2.0)/lib \
-            --mandir=$(pkg-config \
-                --variable=prefix ORBit-2.0)/share/man &amp;&amp;
+<screen><userinput>./configure --prefix=$GNOME_PREFIX \
+            --libexecdir=$GNOME_PREFIX/lib &amp;&amp;
 make</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -106,20 +103,54 @@ make</userinput></screen>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/gnome-sysconfdir.xml"/>
 
-    <para><parameter>--libexecdir=$(pkg-config --variable=prefix
-    ORBit-2.0)/lib</parameter>>:nbsp;: Ce paramètre est utilisé pour que l'outil de support interne
+    <para><parameter>--libexecdir=$GNOME_PREFIX/lib</parameter>&nbsp;:
+    Ce paramètre est utilisé pour que l'outil de support interne
     <application>gnome-session</application> soit installé dans le répertoire préféré de <filename
     class='directory'>$GNOME_PREFIX/lib</filename> dans <filename
     class='directory'>$GNOME_PREFIX/libexec</filename>.</para>
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-    href="../../xincludes/gnome-mandir.xml"/>
+    <para><option>--enable-docbook-docs</option>>&nbsp;:nbsp;: Ce paramètre est utilisé pour construire la documentation.</para>
 
-    <para><parameter>--with-at-spi-registryd-directory=...</parameter>&nbsp;: 
-    Ce paramètre est utilisé pour identifier l'emplacement du démon du registre
-    AT-SPI, vu que le réglage par défaut est <envar>$GNOME_PREFIX</envar>/libexec.</para>
+  </sect2>
 
-    <para><option>--enable-docbook-docs</option>>:nbsp;: Ce paramètre est utilisé pour construire la documentation.</para>
+  <sect2 role="configuration" id="gnome-session-config">
+    <title>Configuration de gnome-session</title>
+
+    <sect3>
+      <title>Information de configuration</title>
+
+      <para>Si vous n'utilisez pas <application>gdm</application> pour démarrer votre bureau
+      <application>GNOME</application>, vous devrez appeler
+      <command>gnome-session</command> <emphasis>au lieu</emphasis> d'appeler
+      directement un gestionnaire de fenêtres. Tous les paquets dans la section 'Shell' de
+      ce chapitre (plus tous ceux de 'Shell de secours' si votre pilote de carte vidéo n'a pas 
+      l'accélération 3D) doivent être installé en premier, et quelques 
+      'Utilitaires' - particulièrement <application>GNOME Terminal</application>
+      (<application>xterm</application> n'installe pas un fichier '.desktop' et
+      donc n'apparaissent pas dans les menus). Vous pouvez utiliser
+      <literal>Ctrl-Alt-Backspace</literal> pour finir la session du bureau.</para>
+
+      <para>Quand <command>gnome-session</command> est lancé, il appelle les démons nécéssaires
+      et soit <application>Metacity</application> ou
+      <application>gnome-shell</application> - le dernier qui sera appelé sera
+      <application>Mutter</application>.</para>
+
+      <para>Pour démarrer automatiquement le gestionnaire de fenêtres <application>gnome-session</application>
+      quand vous tapez la commande <command>startx</command>,
+      sauvegarder votre fichier <filename>~/.xinitrc</filename> actuel avant de le modifier.
+      Notez que vous devez pouvoir appeler <application>GNOME Terminal</application>
+      depuis le menu, mais il n'y a aucune raison de pouvoir appeler xterm ici. Créer un nouveau fichier
+      <filename>.xinitrc</filename> en utilisant cette commande&nbsp;:</para>
+
+      <indexterm zone="metacity gnome-session-config">
+        <primary sortas="e-AA.xinitrc">~/.xinitrc</primary>
+      </indexterm>
+
+<screen><userinput>cat &gt;&gt; ~/.xinitrc &lt;&lt; "EOF"
+<literal>exec dbus-launch --exit-with-session gnome-session</literal>
+EOF</userinput></screen>
+
+    </sect3>
 
   </sect2>
 
