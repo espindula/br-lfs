@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: manuel $
-$Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
+$Date: 2007-07-07 12:25:55 +0200 (sam. 07 juil. 2007) $
 -->
 
 <!DOCTYPE xsl:stylesheet [
