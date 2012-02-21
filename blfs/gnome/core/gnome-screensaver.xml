@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY gnome-screensaver-download-http "&gnome-download-http;/gnome-screensaver/&gnome-version;/gnome-screensaver-&gnome-screensaver-version;.tar.bz2">
-  <!ENTITY gnome-screensaver-download-ftp  "&gnome-download-ftp;/gnome-screensaver/&gnome-version;/gnome-screensaver-&gnome-screensaver-version;.tar.bz2">
-  <!ENTITY gnome-screensaver-md5sum        "a18086bf2191795d87b7ea80b7b66daa">
-  <!ENTITY gnome-screensaver-size          "4.6 Mio">
-  <!ENTITY gnome-screensaver-buildsize     "26 Mio">
-  <!ENTITY gnome-screensaver-time          "0.3 SBU">
+  <!ENTITY gnome-screensaver-download-http "&gnome-download-http;/gnome-screensaver/&gnome-version;/gnome-screensaver-&gnome-screensaver-version;.tar.xz">
+  <!ENTITY gnome-screensaver-download-ftp  "&gnome-download-ftp;/gnome-screensaver/&gnome-version;/gnome-screensaver-&gnome-screensaver-version;.tar.xz">
+  <!ENTITY gnome-screensaver-md5sum        "53fdcff388fadbc788571724874d5ab6">
+  <!ENTITY gnome-screensaver-size          "553 KB">
+  <!ENTITY gnome-screensaver-buildsize     "?? MB">
+  <!ENTITY gnome-screensaver-time          "?? SBU">
 ]>
 
 <sect1 id="gnome-screensaver" xreflabel="gnome-screensaver-&gnome-screensaver-version;">
@@ -36,8 +36,7 @@
     traductions dans plusieurs langues et entre lesquelles il est pratique pour 
     l'utilisateur de basculer.</para>
     
-    &lfs65_checked;
-
+    <!-- &lfs65_checked; not for this version! -->
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -64,8 +63,9 @@
     <bridgehead renderas="sect3">Dépendances de gnome-screensaver</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
-    <para role="required"><xref linkend="gnome-desktop"/> et
-    <xref linkend="gnome-menus"/></para>
+    <para role="required"><xref linkend="gnome-desktop"/>,
+    <xref linkend="gnome-menus"/>, et
+    <xref linkend="linux-pam"/></para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional"><xref linkend="libgnomekbd"/>,
@@ -105,10 +105,9 @@
     les commandes suivantes&nbsp;:</para>
 
 <screen><userinput>sed -i 's|etc/pam\.d"|etc"|' data/Makefile.in &amp;&amp;
-./configure --prefix=$(pkg-config --variable=prefix ORBit-2.0) \
-            --sysconfdir=&gnome-etc-dir; \
-            --libexecdir=$(pkg-config \
-                --variable=prefix ORBit-2.0)/lib/gnome-screensaver \
+./configure --prefix=$GNOME_PREFIX \
+            --sysconfdir=$GNOME_SYSCONFDIR \
+            --libexecdir=$GNOME_PREFIX/lib/gnome-screensaver \
             --with-pam-prefix=/etc &amp;&amp;
 make</userinput></screen>
 
@@ -146,8 +145,7 @@ cd ..</userinput></screen>
     qu'utilisateur <systemitem class='username'>root</systemitem>, effectuez les commandes
     suivantes&nbsp;:</para>
 
-<screen role='root'><userinput>GNOMEDOCDIR="$(pkg-config \
-     --variable=prefix ORBit-2.0)/share/doc/gnome-screensaver-&gnome-screensaver-version;" &amp;&amp;
+<screen role='root'><userinput>GNOMEDOCDIR="$GNOME_PREFIX/share/doc/gnome-screensaver-&gnome-screensaver-version;" &amp;&amp;
 
 install -v -m644 -D doc/gnome-screensaver.html \
                     ${GNOMEDOCDIR}/gnome-screensaver.html &amp;&amp;
@@ -158,11 +156,9 @@ unset GNOMEDOCDIR</userinput></screen>
     <application>gnome-screensaver</application>, installez-les en lançant
     les commandes suivantes en tant qu'utilisateur <systemitem class='username'>root</systemitem>&nbsp;:</para>
 
-<screen role='root'><userinput>install -v -m755 -d $(pkg-config --variable=prefix \
-        ORBit-2.0)/share/applications/screensavers/xscreensaver &amp;&amp;
+<screen role='root'><userinput>install -v -m755 -d $GNOME_PREFIX/share/applications/screensavers/xscreensaver &amp;&amp;
 install -v -m644 xscreensavers/*.desktop \
-        $(pkg-config --variable=prefix \
-            ORBit-2.0)/share/gnome-screensaver/themes/xscreensaver</userinput></screen>
+        $GNOME_PREFIX/share/applications/screensavers/xscreensaver</userinput></screen>
 
   </sect2>
 
@@ -189,9 +185,7 @@ install -v -m644 xscreensavers/*.desktop \
     <para><parameter>--with-pam-prefix=/etc</parameter>&nbsp;: Ce paramètre est
     utilisé pour que le fichier de configuration de <application>Linux-PAM</application> 
     pour l'application <application>gnome-screensaver</application> soit
-    installé au bon endroit. Vous pouvez enlever ce paramètre si vous n'avez pas
-    installé <application>Linux-PAM</application> , bien que cela ne changera
-    rien à la construction si vous ne le faites pas.</para>
+      installé au bon endroit.</para>
 
     <para><option>--with-xscreensaverdir=$XSAVERDIR</option>&nbsp;: Ce paramètre
     utilisera les configs hack d'xscreensaver qui se trouvent dans
@@ -236,8 +230,10 @@ install -v -m644 xscreensavers/*.desktop \
 
       <sect4>
         <title>Configuration Linux-PAM</title>
-
-        <para>Si vous avez installé <application>Linux-PAM</application>, le
+  
+        <!-- FIXME:ken PAM is *required*.  I assume this config does no harm
+        <para>If you have <application>Linux-PAM</application> installed, the-->
+        <para>Le
         fichier de configuration de <filename>gnome-screensaver</filename> qu'on
         vient d'installer ne fonctionne pas dans un système BLFS. Remplacez le fichier existant
         par un autre qui peut être utilisé dans un système BLFS en lançant la commande suivante
@@ -276,7 +272,6 @@ chmod -v 644 /etc/pam.d/gnome-screensaver</userinput></screen>
         <seg><envar>$GNOME_PREFIX</envar>/{lib/gnome-screensaver/gnome-screensaver,
         share/{applications/screensavers,backgrounds/cosmos,
         gnome-screensaver}}</seg>
-
       </seglistitem>
     </segmentedlist>
 
