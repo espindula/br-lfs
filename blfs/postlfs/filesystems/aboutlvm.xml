@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="aboutlvm">
+  <?dbhtml filename="aboutlvm.html"?>
+
+  <sect1info>
+    <othername>$LastChangedBy>&nbsp;: bdubbs $</othername>
+    <date>$Date>&nbsp;: 2012-02-17 06:39:57 +0100 (ven 17 fév 2012) $</date>
+  </sect1info>
+
+  <title>Au sujet de la gestion des volumes logiques (LVM)</title>
+
+  <para>LVM gère des disques durs. Il permet de combiner plusieurs disques et 
+  plusieurs partitions dans de gros <emphasis>volume groups</emphasis> (groupe de
+  volume), il aide à faire des sauvegardes via un <emphasis>snapshot</emphasis>
+  (instantané), et il permet le redimensionnement dynamique des volumes. Il
+  peut aussi fournir des fonctions de miroir similaires aux échelles de
+  a RAID 1.</para>
+
+  <para>Un sraitement complet de LVM irait av-delà des objectifs de cette introduction,
+  mais les concepts de base sont présentés ci-dessous.</para>
+  
+  <para>Pour lancer une des commandes présentées ici, le paquet <xref linkend='lvm2'/>
+  doit être installé.  Toutes les commandes doivent être exécutées en tant 
+  qu'utilisateur <systemitem
+  class="username">root</systemitem>&nbsp;.</para>
+
+  <para>La gestion des disques avec lvm se fait en utilisant les
+  concepts suivants&nbsp;: </para>
+
+  <variablelist>
+    <varlistentry>
+      <term>volumes physiques</term>
+      <listitem><para>Ce sont des disques ou des partitions physiques tels que 
+      /dev/sda3 ou /dev/sdb.</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>groupes de volume</term>
+      <listitem><para>C'est le nom de groupes de volumes physiques que peut
+      manipuler l'administrateur. Le nombre de volumes physiques pour constituer
+      un groupe de volumes relève de votre choix. Les volumes physiques peuvent
+      être ajoutés de façon dynamique ou supprimés à partir d'un groupe de
+      volumes. 
+      </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>volumes logiques</term>
+      <listitem><para>Les groupes de volume peuvent être subdivisés en volumes
+      logiques. Chaque volume logique peut ýtre ensuite formaté individuellement
+      comme s'il s'agissait d'une partition Linux normale. Les volumes logiques
+      peuvent être redimensionnés de manière dynamique par
+      l' administrateur en fonction des besoins.</para></listitem>
+
+    </varlistentry>
+  </variablelist> 
+
+  <para>Pour donner un exemple concret, supposons que nous avons deux disques de
+  2 Tio. Supposons aussi qu'une très grande quantité d'espace est nécessaire pour
+  une très grosse base de données,  montée sur <filename class='directory'>/srv/mysql</filename>.
+  Voici à quoi ressemblerait le réglage de départ des partitions&nbsp;:</para>
+
+  <screen><literal>Partition  Utilisation  Taille      Type de Partition
+/dev/sda1  /boot  100Mio     83 (Linux)
+/dev/sda2  /       10Gio     83 (Linux)
+/dev/sda3  swap     2Gio     82 (Swap)
+/dev/sda4  LVM    remainder 8e (LVM)
+/dev/sdb1  swap     2Gio     82 (Swap)
+/dev/sdb2  LVM    remainder 8e (LVM)</literal></screen> 
+
+  <para>Initialisez d'abord les volumes physiques&nbsp;:</para>
+
+  <screen><userinput>pvcreate /dev/sda4 /dev/sdb2</userinput></screen>
+
+  <para>Ensuite, créez un groupe de volumes appelé lfs-lvm&nbsp;:</para>
+
+  <screen><userinput>vgcreate lfs-lvm /dev/sda4  /dev/sdb2</userinput></screen>
+
+  <para>On peut vérifier vétat du groupe de volume en lançant la commande
+  <command>vgscan</command>. Maintenant, créez les volumes logiques. Vu qu'il y
+  a environ 3900 Gio disponibles, laissez environ 900 Gio libres pour agrandir.
+  Remarquez que le volume logique appelé <emphasis>mysql</emphasis> est plus
+  gros qu'un disque physique.  </para>
+
+  <screen><userinput>lvcreate --name mysql --size 2500G lfs-lvm
+lvcreate --name home  --size  500G lfs-lvm</userinput></screen>
+
+  <para>Enfin on peut formater et montre les volumes logiques. Dans cet
+  exemple, le système de fichiers jfs (<xref linkend='jfsutils'/>) est
+  utilisé pour les besoins de la démonstration.</para>
+
+  <screen><userinput>mkfs -t ext4 /dev/lfs-lvm/home
+mkfs -t jfs  /dev/lfs-lvm/mysql
+mount /dev/lfs-lvm/home /home
+mkdir -p /srv/mysql
+mount /dev/lfs-lvm/mysql /srv/mysql</userinput></screen>
+
+  <para>Les scripts de démarrage LFS rendent immédiatement disponibles ces
+  systèmes de fichiers pour le système, dans le scriqs checkfs. Éditez le
+  fichier <filename>/etc/fstab</filename> comme il faut pour les monter 
+  automatiquement.</para>
+
+  <para>Un volume logique LVM peut héberger un système de fichiers racine mais 
+  il exige d'utiliser une initramfs (initial RAM file system, système de fichiers
+  de démarrage en RAM) et ce n'est pas traité ici.</para>
+  
+  <para>Pour plus d'informations sur LVM, voir the <ulink
+  url="http://guidespratiques.traduc.org/lecture/LVM-HOWTO.html">le guide
+  pratique LVM</ulink>) et les pages de man de lvm.</para>
+
+</sect1>

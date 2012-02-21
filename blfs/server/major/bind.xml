@@ -8,7 +8,9 @@
   <!ENTITY bind-md5sum "afa41f8203d50bedad65071f9b6f96d7">
   <!ENTITY bind-size "8.1 Mio">
   <!ENTITY bind-buildsize "260 Mio">
-  <!ENTITY bind-time "1.7 SBU (additional 11 minutes, processor independent, to run the complete test suite)">
+
+  <!ENTITY bind-time "1.7 SBU (plus 11 minutes, quel que soit le processeur,
+  pour lancer la suite de tests complète)">
 ]>
 
 <sect1 id="bind" xreflabel="BIND-&bind-version;">
@@ -60,7 +62,8 @@
     <itemizedlist spacing='compact'>
       <listitem>
         <para>Correctif facultatif (si net-tools n'est pas installé)&nbsp;:
-        <ulink url="&patch-root;/bind-&bind-version;-use_iproute2-1.patch"/></para>
+        <ulink 
+        url="&patch-root;/bind-&bind-version;-use_iproute2-1.patch"/></para>
       </listitem>
     </itemizedlist>
 
@@ -92,6 +95,13 @@
     correctif iproute2 avec la commande suivante&nbsp;:</para>
 
 <screen><userinput>patch -Np1 -i ../bind-&bind-version;-use_iproute2-1.patch</userinput></screen>
+
+     <para>Si vous voulez <command>configure</command> (configurer)
+    <application>BIND</application> avec l'option, corrigez un bogue dans un des
+    Makefiles&nbsp;:</para>
+    <!-- this is a bug in bind-9.8.1 that wasn't in bind-9.8.0 -->
+
+<screen><userinput>sed -i 's# driver.o# .libs/driver.o#' bin/tests/system/dlzexternal/Makefile.in</userinput></screen>
 
     <para>Installez <application>BIND</application> en lançant les commandes
     suivantes&nbsp;:</para>
@@ -196,11 +206,13 @@ install -v -m644 \
       </indexterm>
 
       <indexterm zone="bind bind-config">
-        <primary sortas="e-etc-namedb-root.hints">/etc/namedb/root.hints</primary>
+        <primary
+        sortas="e-etc-namedb-root.hints">/etc/namedb/root.hints</primary>
       </indexterm>
 
       <indexterm zone="bind bind-config">
-        <primary sortas="e-etc-namedb-pz-127.0.0.0">/etc/namedb/pz/127.0.0.0</primary>
+        <primary
+        sortas="e-etc-namedb-pz-127.0.0.0">/etc/namedb/pz/127.0.0.0</primary>
       </indexterm>
 
     </sect3>
@@ -226,46 +238,43 @@ install -d -m770 -o named -g named /srv/named</userinput></screen>
       dont a besoin <application>BIND</application>&nbsp;:</para>
 
 <screen role="root"><userinput>cd /srv/named &amp;&amp;
-mkdir -p dev etc/namedb/slave var/run &amp;&amp;
+mkdir -p dev etc/namedb/{slave,pz} usr/lib/engines var/run/named &amp;&amp;
 mknod /srv/named/dev/null c 1 3 &amp;&amp;
 mknod /srv/named/dev/random c 1 8 &amp;&amp;
 chmod 666 /srv/named/dev/{null,random} &amp;&amp;
-mkdir /srv/named/etc/namedb/pz &amp;&amp;
-cp /etc/localtime /srv/named/etc</userinput></screen>
+cp /etc/localtime etc &amp;&amp;
+touch /srv/named/managed-keys.bind &amp;&amp;
+cp /usr/lib/engines/libgost.so usr/lib/engines &amp;&amp;
+[ $(arch) = x86_64 ] &amp;&amp; ln -sv lib usr/lib64</userinput></screen>
 
-      <para>Puis, générez une clé à utiliser dans les fichiers
-      <filename>named.conf</filename> et <filename>rdnc.conf</filename> en
-      utilisant la commande <command>rndc-confgen</command>&nbsp;:</para>
+      <para>Le fichier <filename>rndc.conf</filename> contient des informations
+      pour contrôler les opérations de <command>named</command> avec l'outil
+      <command>rndc</command>. Générez une clé à utiliser dans <filename>named.conf</filename> 
+      et <filename>rdnc.conf</filename> avec la commande 
+      <command>rndc-confgen</command>&nbsp;:</para>
 
-<screen role="root"><userinput>rndc-confgen -r /dev/urandom -b 512 | \
-    grep -m 1 "secret" | cut -d '"' -f 2</userinput></screen>
+<screen role="root"><userinput>rndc-confgen -r /dev/urandom -b 512 > /etc/rndc.conf &amp;&amp;
+sed '/conf/d;/^#/!d;s:^# ::' /etc/rndc.conf > /srv/named/etc/named.conf</userinput></screen>
 
-      <para>Créez le fichier <filename>named.conf</filename> à partir duquel 
+       <para>Complétez le fichier <filename>named.conf</filename> à partir duquel
       <command>named</command> lira l'emplacement des fichiers de zone, le serveur
       de DNS racine, et les clés DNS sécurisées&nbsp;:</para>
 
-<screen role="root"><?dbfo keep-together="auto"?><userinput>cat &gt; /srv/named/etc/named.conf &lt;&lt; "EOF"
-<literal> options {
-     directory "/etc/namedb";
+<screen role="root"><?dbfo keep-together="auto"?><userinput>cat &gt;&gt; /srv/named/etc/named.conf &lt;&lt; "EOF"
+<literal>options {
+    directory "/etc/namedb";
     pid-file "/var/run/named.pid";
     statistics-file "/var/run/named.stats";
 
- };
- controls {
-     inet 127.0.0.1 allow { localhost; } keys { rndc_key; };
- };
- key "rndc_key" {
-     algorithm hmac-md5;
-     secret "<replaceable>&lt;Insert secret from rndc-confgen's output here&gt;</replaceable>";
- };
- zone "." {
-     type hint;
-     file "root.hints";
- };
- zone "0.0.127.in-addr.arpa" {
-     type master;
-     file "pz/127.0.0";
- };
+};
+zone "." {
+    type hint;
+    file "root.hints";
+};
+zone "0.0.127.in-addr.arpa" {
+    type master;
+    file "pz/127.0.0";
+};
 
 // Bind 9 journalise maintenant via syslog (sauf le débogage).
 // Ce sont les règles de journalisation par défaut.
@@ -305,25 +314,6 @@ logging {
 };</literal>
 
 EOF</userinput></screen>
-
-      <para>Créez le fichier <filename>rndc.conf</filename> avec les commandes
-      suivantes&nbsp;:</para>
-
-<screen role="root"><userinput>cat &gt; /etc/rndc.conf &lt;&lt; "EOF"
-<literal>key rndc_key {
-algorithm "hmac-md5";
-    secret
-    "<replaceable>&lt;Insert secret from rndc-confgen's output here&gt;</replaceable>";
-    };
-options {
-    default-server localhost;
-    default-key    rndc_key;
-};</literal>
-EOF</userinput></screen>
-
-      <para>Le fichier <filename>rndc.conf</filename> contient des informations
-      de contrôle des opérations <command>named</command> avec l'outil
-      <command>rndc</command>.</para>
 
       <para>Créez un fichier de zone ayant le contenu suivant&nbsp;:</para>
 
@@ -401,7 +391,7 @@ EOF</userinput></screen>
       <para>Réglez les droits de la cage <command>chroot</command> avec la
       commande suivante&nbsp;:</para>
 
-<screen role="root"><userinput>chown -R named.named /srv/named</userinput></screen>
+<screen role="root"><userinput>chown -R named:named /srv/named</userinput></screen>
 
     </sect3>
 
