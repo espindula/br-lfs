@@ -58,27 +58,27 @@ file=/etc/sysconfig/ifconfig.${1}
 log_info_msg "Bringing up the ${1} interface... "
 
 if [ ! -r "${file}" ]; then
-   log_warning_msg "\n${file} is missing or cannot be accessed." 
+   log_failure_msg2 "${file} is missing or cannot be accessed." 
    exit 1
 fi
 
 . $file
 
 if [ "$IFACE" = "" ]; then
-   log_failure_msg "\n${file} does not define an interface [IFACE]."
+   log_failure_msg2 "${file} does not define an interface [IFACE]."
    exit 1
 fi
 
 # Do not process this service if started by boot, and ONBOOT
 # is not set to yes
 if [ "${IN_BOOT}" = "1" -a "${ONBOOT}" != "yes" ]; then
-   log_info_msg2 "skipped\n"
+   log_info_msg2 "skipped"
    exit 0
 fi
 
 for S in ${SERVICE}; do
   if [ ! -x "/lib/services/${S}" ]; then
-    MSG="\nUnable to process ${file}.  Either " 
+    MSG="\n     Unable to process ${file}.  Either " 
     MSG="${MSG}the SERVICE '${S} was not present "
     MSG="${MSG}or cannot be executed."
     log_failure_msg "$MSG"
@@ -102,10 +102,19 @@ if [ -z "${CHECK_LINK}"         -o \
       fi
 
    else
-      log_warning_msg "\nInterface ${IFACE} doesn't exist."
-      exit 0
+      log_failure_msg2 "Interface ${IFACE} doesn't exist."
+      exit 1
    fi
 fi
+
+# Set MTU if requested. Check if MTU has a "good" value.
+if test -n "${MTU}"; then
+   if [[ ${MTU} =~ ^[0-9]+$ ]] && [[ $MTU -ge 68 ]] ; then
+      ip link set dev ${IFACE} mtu $MTU
+   else
+      log_info_msg2 "Invalid MTU $MTU"
+   fi
+fi 
 
 for S in ${SERVICE}; do 
   IFCONFIG=${file} /lib/services/${S} ${IFACE} up
