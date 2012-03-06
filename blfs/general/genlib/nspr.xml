@@ -6,9 +6,9 @@
 
   <!ENTITY nspr-download-http "http://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v&nspr-version;/src/nspr-&nspr-version;.tar.gz">
   <!ENTITY nspr-download-ftp  "ftp://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v&nspr-version;/src/nspr-&nspr-version;.tar.gz">
-  <!ENTITY nspr-md5sum        "60770d45dc08c0f181b22cdfce5be3e8">
+  <!ENTITY nspr-md5sum        "aa0c960b23a9d66a3c30c3e6ba80a99a">
   <!ENTITY nspr-size          "1.2 Mio">
-  <!ENTITY nspr-buildsize     "21.5 Mio">
+  <!ENTITY nspr-buildsize     "15 Mio">
   <!ENTITY nspr-time          "moins de 0.1 SBU">
 ]>
 
@@ -57,15 +57,6 @@
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
-    <itemizedlist spacing='compact'>
-      <listitem>
-        <para>Correctif requis&nbsp;: <ulink
-          url="http://www.linuxfromscratch.org/patches/downloads/nspr/nspr-&nspr-version;-pkgconfig-2.patch"/>
-      </para>
-      </listitem>
-    </itemizedlist>
-
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/nspr"/></para>
 
@@ -77,9 +68,9 @@
     <para>Installez <application>NSPR</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../nspr-&nspr-version;-pkgconfig-2.patch &amp;&amp;
-cd mozilla/nsprpub &amp;&amp;
+<screen><userinput>cd mozilla/nsprpub &amp;&amp;
 sed -i 's#^\(RELEASE_BINS =\).*#\1#' pr/src/misc/Makefile.in &amp;&amp;
+sed -i 's#$(LIBRARY) ##' config/rules.mk &amp;&amp;
 ./configure --prefix=/usr --with-mozilla --with-pthreads \
   $([ $(arch) = x86_64 ] &amp;&amp; echo --enable-64bit) &amp;&amp;
 make</userinput></screen>
@@ -89,7 +80,18 @@ make</userinput></screen>
     <para>Maintenant, en tant qu'utilisateur the <systemitem class="username">root</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>make install &amp;&amp;
-cp -v -LR dist/include/nspr /usr/include</userinput></screen>
+cat &gt; /usr/lib/pkgconfig/nspr.pc &lt;&lt; "HERE_DOC"
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/nspr
+
+Name: NSPR
+Description: The Netscape Portable Runtime
+Version: &nspr-version;.0
+Libs: -L${libdir} -lplds4 -lplc4 -lnspr4 -lpthread 
+Cflags: -I${includedir}
+HERE_DOC</userinput></screen>
 
   </sect2>
 
@@ -112,9 +114,10 @@ cp -v -LR dist/include/nspr /usr/include</userinput></screen>
     <para><command>sed -i 's#^\(RELEASE_BINS ...</command>&nbsp;: Ceci
     désactive l'installation de deux scripts inutiles.</para>
 
-    <para>Si vous ne voulez pas compiler et installer les versions statiques des
-    bibliothèques, vous pouvez les désactiver avec un sed&nbsp;:
-    <command>sed -i '/^TARGETS/s# $(LIBRARY)##' config/rules.mk</command></para>
+    <para>
+      <command>sed -i 's#$(LIBRARY) ##' config/rules.mk</command>&nbsp;: Ceci
+      désactive l'installation des bibliothèques statiques.
+    </para>
 
   </sect2>
 
@@ -128,7 +131,7 @@ cp -v -LR dist/include/nspr /usr/include</userinput></screen>
 
       <seglistitem>
         <seg>nspr-config</seg>
-        <seg>libnspr4.{a,so}, libplc4.{a,so}, et libplds4.{a.so}</seg>
+        <seg>libnspr4.so, libplc4.so et libplds4.so</seg>
         <seg>/usr/include/nspr</seg>
       </seglistitem>
     </segmentedlist>
@@ -150,7 +153,7 @@ cp -v -LR dist/include/nspr /usr/include</userinput></screen>
       </varlistentry>
  
       <varlistentry id="libnspr4">
-        <term><filename class='libraryfile'>libnspr4.{so,a}</filename></term>
+        <term><filename class='libraryfile'>libnspr4.so</filename></term>
         <listitem>
           <para>contient les fonctions offrant l'indépendance de plateforme pour
           des fonctionalités non graphiques du système d'exploitation telles que
@@ -159,28 +162,28 @@ cp -v -LR dist/include/nspr /usr/include</userinput></screen>
           la gestion de base de la mémoire (malloc et free) et l'édition de
           liens de bibliothèque partagée.</para>
           <indexterm zone="nspr libnspr4">
-            <primary sortas="c-libnspr4">libnspr4.{so,a}</primary>
+            <primary sortas="c-libnspr4">libnspr4.so</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
       <varlistentry id="libplc4">
-        <term><filename class='libraryfile'>libplc4.{so,a}</filename></term>
+        <term><filename class='libraryfile'>libplc4.so</filename></term>
         <listitem>
           <para>contient les fonctions qui implémentent de nombreuses fonctionnalités
           offertes par libnspr4</para>
           <indexterm zone="nspr libplc4">
-            <primary sortas="c-libplc4">libplc4.{so,a}</primary>
+            <primary sortas="c-libplc4">libplc4.so</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
       <varlistentry id="libplds4">
-        <term><filename class='libraryfile'>libplds4.{so,a}</filename></term>
+        <term><filename class='libraryfile'>libplds4.so</filename></term>
         <listitem>
           <para>contient les fonctions qui fournissent des structures de données.</para>
           <indexterm zone="nspr libplds4">
-            <primary sortas="c-libplds4">libplds4.{so,a}</primary>
+            <primary sortas="c-libplds4">libplds4.so</primary>
           </indexterm>
         </listitem>
       </varlistentry>

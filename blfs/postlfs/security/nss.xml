@@ -4,12 +4,14 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY nss-download-http "http://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_13_1_RTM/src/nss-&nss-version;.tar.gz">
-  <!ENTITY nss-download-ftp  "ftp://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_13_1_RTM/src/nss-&nss-version;.tar.gz">
-  <!ENTITY nss-md5sum        "c500f96d33ba1390c8a35c667e05e542">
-  <!ENTITY nss-size          "5.7 Mio">
-  <!ENTITY nss-buildsize     "44 Mio (plus du double pour exécuter la suite de tests)">
-  <!ENTITY nss-time          "0.7 SBU (ajouter au moins 3.5 SBU pour éxécuter la suite de tests)">
+  <!ENTITY nss-download-http 
+  "http://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_13_3_RTM/src/nss-&nss-version;.tar.gz">
+  <!ENTITY nss-download-ftp  
+  "ftp://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_13_3_RTM/src/nss-&nss-version;.tar.gz">
+  <!ENTITY nss-md5sum        "006cb82fa900e9e664b4b14a9b7810ca">
+  <!ENTITY nss-size          "5.8 Mio">
+  <!ENTITY nss-buildsize     "70 Mio (plus du double pour exécuter la suite de tests)">
+  <!ENTITY nss-time          "1.0 SBU (ajouter au moins 3.5 SBU pour éxécuter la suite de tests)">
 ]>
 
 <sect1 id="nss" xreflabel="NSS-&nss-version;">
@@ -91,18 +93,15 @@
     <para>Installez <application>NSS</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>bash
-[ $(arch) = x86_64 ] &amp;&amp; export USE_64=1
-export BUILD_OPT=1 &amp;&amp;
-cat /usr/include/sqlite3.h &amp;&gt; /dev/null &amp;&amp;
-export NSS_USE_SYSTEM_SQLITE=1
-export NSPR_INCLUDE_DIR=/usr/include/nspr &amp;&amp;
-export USE_SYSTEM_ZLIB=1 &amp;&amp;
-export ZLIB_LIBS=-lz &amp;&amp;
-patch -Np1 -i ../nss-&nss-version;-standalone-1.patch &amp;&amp;
-make -C mozilla/security/nss nss_build_all</userinput></screen>
+<screen><userinput>patch -Np1 -i ../nss-&nss-version;-standalone-1.patch &amp;&amp;
+cd mozilla/security/nss &amp;&amp;
+make nss_build_all $([ $(arch) = x86_64 ] &amp;&amp; echo USE_64=1) BUILD_OPT=1 \
+  NSPR_INCLUDE_DIR=/usr/include/nspr USE_SYSTEM_ZLIB=1 ZLIB_LIBS=-lz \
+  $(cat /usr/include/sqlite3.h &amp;&gt; /dev/null &amp;&amp; echo NSS_USE_SYSTEM_SQLITE=1)</userinput></screen>
 
-    <para>Si vous souhaitez tester les résultats, vous devez initialiser le nom de domaine de
++    <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
+
+<!--    <para>Si vous souhaitez tester les résultats, vous devez initialiser le nom de domaine de
     votre systeme dans la variable d'environnement <envar>DOMSUF</envar>. La plupart des tests
     échoueront si vous ne mettez pas le nom de domaine correct. La sortie volumineuse
     indiquera combien des milliers de tests seront réussi, et si quelques uns echoue.
@@ -129,36 +128,25 @@ sed -i 's/gmake/make/' common/init.sh &amp;&amp;
 grep Passed $TEST_RESULTSDIR/$(hostname).1/results.html | wc -l &amp;&amp;
 
 exit</userinput></screen>
+-->
 
    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>export NSS_LINUXDIR=$(basename `ls -d $PWD/mozilla/dist/Linux*`) &amp;&amp;
-cd mozilla/dist &amp;&amp;
-install -v -m755 $NSS_LINUXDIR/lib/*.so /usr/lib &amp;&amp;
-install -v -m644 $NSS_LINUXDIR/lib/{*.chk,libcrmf.a} /usr/lib &amp;&amp;
+<screen role="root"><userinput>cd ../../dist &amp;&amp;
+install -v -m755 Linux*/lib/*.so /usr/lib &amp;&amp;
+install -v -m644 Linux*/lib/{*.chk,libcrmf.a} /usr/lib &amp;&amp;
 install -v -m755 -d /usr/include/nss &amp;&amp;
-install -v -m755 $NSS_LINUXDIR/bin/{certutil,nss-config,pk12util} /usr/bin &amp;&amp;
-install -v -m644 $NSS_LINUXDIR/lib/pkgconfig/nss.pc /usr/lib/pkgconfig &amp;&amp;
 cp -v -RL {public,private}/nss/* /usr/include/nss &amp;&amp;
-chmod 644 /usr/include/nss/*</userinput></screen>
-
-    <para>Maintenant, en tant qu'utilisateur non privilégié, quittez le shell 
-    <command>bash</command> ouvert au début de l'installation pour restaurer 
-    l'environnement dans son état d'origine.</para>
-
-<screen><userinput>exit</userinput></screen>
+chmod 644 /usr/include/nss/* &amp;&amp;
+install -v -m755 Linux*/bin/{certutil,nss-config,pk12util} /usr/bin &amp;&amp;
+install -v -m644 Linux*/lib/pkgconfig/nss.pc /usr/lib/pkgconfig</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><command>bash</command>&nbsp;: Autant de sells que de variables
-    d'environnement sont ouverts lors du processus d'installation. Quitter les 
-    shells a pour but de restaurer l'environnement et de revenir au répertoire
-    de départ quand l'installation est finie.</para>
-
-    <para><command>[ $(arch) = x86_64 ] &amp;&amp; export USE_64=1</command>&nbsp;:
+    <para><command>[ $(arch) = x86_64 ] &amp;&amp; echo USE_64=1</command>&nbsp;:
     Cette commande est <emphasis>exigée sur x86_64</emphasis>, sinon la
     construction va essayer de créer un objet 32 bits et échouer sur un système
     non multilib. Le test [ $(arch) = x86_64 ] garantit que cela n'aura aucun
@@ -168,38 +156,21 @@ chmod 644 /usr/include/nss/*</userinput></screen>
     <application>sqlite</application> est installé et si oui, il règle la
     variable d'environnement NSS_USE_SYSTEM_SQLITE=1 pour que 
     <filename class="libraryfile">libsoftokn3.so</filename> se lie à
-    the system version of sqlite.</para>
+    la version de sqlite du système.</para>
     
-    <para><command>export BUILD_OPT=1</command>&nbsp;: Cette variable est réglée pour que la construction
+    <para><command>BUILD_OPT=1</command>&nbsp;: Cette variable est réglée pour que la construction
     s'effectue sans les symboles de débogage intégré dans les binaires et que les
-    optimisations du compilateur par défaut soient utilisés.</para>
+    optimisations du compilateur par défaut soient utilisées.</para>
     
-    <para><command>export NSPR_INCLUDE_DIR=/usr/include/nspr</command>>&nbsp;:nbsp;: Cette comande
+    <para><command>NSPR_INCLUDE_DIR=/usr/include/nspr</command>>&nbsp;:nbsp;: Cette comande
     initialise l'emplacement des entêtes de nspr.</para>
     
-    <para><command>export USE_SYSTEM_ZLIB=1</command>&nbsp;: Ce commande
+    <para><command>USE_SYSTEM_ZLIB=1</command>&nbsp;: Ce commande
     garantit que la bibliothèque du système installé soit utilisée au lieu de
     la version incluse dans l'arborescence.</para>
 
-    <para><command>export ZLIB_LIBS=-lz</command>>&nbsp;:nbsp;: Cette commande fournit le drapeau nécessaire pour
-    lier au systeme zlib.</para>
-
-    <para><command>export NSS_LINUXDIR=...</command>&nbsp;: Cette variable est
-    réglée pour pouvoir déterminer le nom exact des répertoires spécifiques à 
-    l'architecture où sont stoclés les binaires dans l'arborescence des sources.</para>
-
-    <para><command>make -C mozilla/security/nss nss_build_all</command>&nbsp;: Cette 
-    commande construit les bibliothèques NSPR et <application>NSS</application> et crée un 
-    répertoire <filename class='directory'>dist</filename> qui abrite tous les
-    programmes, les bibliothèques et les en-têtes d'interface. Aucun programme créé par
-    par ce processus n'est installé sur le système en utilisant les instructions
-    par défaut (exepté pour <application>nss-config</application>). Si un de ces programmes 
-    doit être installé, vous pouvez les trouver dans le répertoire
-    <filename class='directory'>mozilla/dist/bin</filename> de l'arborescence des
-    sources.</para>
-
-    <para><command>sed -i 's/gmake/make/' common/init.sh</command>&nbsp;: Cette
-    commande modifie la commande utilisée pour compiler des programmes de test.</para>
+    <para><command>ZLIB_LIBS=-lz</command>>&nbsp;:nbsp;: Cette commande fournit le drapeau nécessaire pour
+    lier au système zlib.</para>
 
   </sect2>
 
@@ -212,10 +183,11 @@ chmod 644 /usr/include/nss/*</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>nss-config</seg>
-        <seg>libcrmf.a, libfreebl3.so, libnss3.so, libnssckbi.so,
-        libnssdbm3.so, libnssutil3.so, libsmime3.so, libsoftokn3.so
-        et libssl3.so</seg>
+        <seg>certutil, nss-config et pk12util</seg>
+        <seg>
+          libcrmf.a, libfreebl3.so, libnss3.so, libnssckbi.so, libnssdbm3.so,
+          libnssutil3.so, libsmime3.so, libsoftokn3.so et libssl3.so
+        </seg>
         <seg>/usr/include/nss</seg>
       </seglistitem>
     </segmentedlist>
@@ -225,6 +197,25 @@ chmod 644 /usr/include/nss/*</userinput></screen>
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
 
+      <varlistentry id="certutil">
+        <term><command>certutil</command></term>
+        <listitem>
+          <para>
+            est l'outil de base de données de certificats de Mozilla. C'est un
+            outil en ligne de commande qui peut modifier les fichiers de base
+            de données cert8.db et key3.db de Netscape Communicator. Il peut
+            aussi lister, générer, modifier ou effacer les certificats d'un
+            fichier cert8.db et créer ou modifier le mot de passe, générer de
+            nouveaux trousseaux de clés publiques et privées, afficher le
+            contenu de la base de données des clés ou effacer des trousseaux
+            de clés du fichier key3.db.
+          </para>
+          <indexterm zone="nss certutil">
+            <primary sortas="b-certutil">certutil</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="nss-config">
         <term><command>nss-config</command></term>
         <listitem>
@@ -232,6 +223,20 @@ chmod 644 /usr/include/nss/*</userinput></screen>
           NSS et des bibliothèques NSS installées.</para>
           <indexterm zone="nss nss-config">
             <primary sortas="b-nss-config">nss-config</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="pk12util">
+        <term><command>pk12util</command></term>
+        <listitem>
+          <para>
+            est un outil pour importer des certificats et des clés depuis des
+            fichiers pkcs #12 en NSS ou pour les exporter. Il peut aussi lister
+            les certificats et les clés dans de tels fichiers. 
+          </para>
+          <indexterm zone="nss pk12util">
+            <primary sortas="b-pk12util">pk12util</primary>
           </indexterm>
         </listitem>
       </varlistentry>
