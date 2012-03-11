@@ -6,8 +6,8 @@
 
   <!ENTITY postfix-download-http "http://postfix.energybeam.com/source/official/postfix-&postfix-version;.tar.gz">
   <!ENTITY postfix-download-ftp "ftp://ftp.porcupine.org/mirrors/postfix-release/official/postfix-&postfix-version;.tar.gz">
-  <!ENTITY postfix-md5sum "a9fdd0f204e7ca0b7d32fd0b9f8f8c72">
-  <!ENTITY postfix-size "3.5 Mio">
+  <!ENTITY postfix-md5sum "5c81b304a42c691671454dfe80b506ca">
+  <!ENTITY postfix-size "3.6 Mio">
   <!ENTITY postfix-buildsize "132 Mio">
   <!ENTITY postfix-time "0.4 SBU">
 ]>
@@ -37,7 +37,7 @@
     votre domaine ou un agent de relai de courriers électroniques avec votre 
     fournisseur d'accès à Internet (FAI).</para>
 
-    &lfs70_checked;
+    &lfs71_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -72,14 +72,19 @@
       <xref linkend="openssl"/>,
       <xref linkend="openldap"/>,
       <xref linkend="cyrus-sasl"/>, 
+      <xref linkend="sqlite"/>,
       <xref linkend="mysql"/>,
       <xref linkend="postgresql"/>, and
       <ulink url="http://cr.yp.to/cdb.html">cdb</ulink> or
       <ulink url="http://www.corpit.ru/mjt/tinycdb.html">TinyCDB</ulink>
     </para>
 
-    <para>Remarquez que mysql, postgresql et cdb ne servent que s'il y en a un
-    besoin connu.</para>
+    <para>
+      Remarquez que <application>Sqlite</application>,
+      <application>Mysql</application>, <application>Postgresql</application>
+      et <application>cdb</application> ne servent que s'il y en a un besoin
+      connu.
+    </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/postfix"/></para>
@@ -88,21 +93,53 @@
 
   <sect2 role="installation">
     <title>Installation de Postfix</title>
+         
+      <sect3>
+      <title>Ajout des utilisateurs et des groupes</title>
+      <para>
+        Avant de compiler le programme, vous devez créer des utilisateurs et des 
+        groupes qui doivent être opérationnels pendant l'installation. Ajoutez
+        les utilisateurs et les groupes avec les commandes suivantes lancées
+        depuis l'utilisateur 
+        <systemitem class="username">root</systemitem>&nbsp;:
+      </para>
 
+<screen role="root"><userinput>groupadd -g 32 postfix &amp;&amp;
+groupadd -g 33 postdrop &amp;&amp;
+useradd -c "Postfix Daemon User" -d /dev/null -g postfix \
+    -s /bin/false -u 32 postfix &amp;&amp;
+chown -v postfix:postfix /var/mail</userinput></screen>
+    </sect3>
+             
     <sect3>
       <title>Configuration de la construction</title>
 
-      <para>L'arborescence des sources de <application>Postfix</application> ne
-      contient pas de script <filename>configure</filename> mais le fichier
-      makefile du répertoire racine contient une cible <option>makefiles</option> 
-      qui régénère tous les autres makefiles de l'arborescence de la construction.
-      Si vous souhaitez utiliser des logiciels supplémentaires tels qu'un
-      fondement en base de données ou des utilisateurs virtuels ou 
-      l'authentication TLS/SSL, vous devrez régénérer les makefiles en utilisant
-      tout ou partie des paramètres <envar>CCARGS</envar> et
-      <envar>AUXLIBS</envar> listées ci-dessous.</para>
+      <para>Les fichiers README sont formatés pour être lus avec un pageur
+      comme 
+        <application>Less</application> ou <application>More</application>. Si
+        vous voulez les lire dans un éditeur de texte, rendez-les lisibles avec
+        un sed&nbsp;:
+      </para>
 
-<!--      <para>Voici un exemple combinant les arguments TLS et
+<screen><userinput>sed -i 's/.\x08//g' README_FILES/*</userinput></screen>
+
+      <para>
+        L'arborescence des sources de <application>Postfix</application> ne contient pas
+        de script <filename>configure</filename>, mais le makefile du répertoire
+        tout en haut de la hiérarchie contient une cible <option>makefiles</option>
+        qui régénère tous les autres makefiles d'une arborescence de construction.
+        Si vous souhaitez utiliser des logiciels supplémentaires tels qu'un
+        fondement de base de données pour des utilisateurs virtuels ou une
+        authentification TLS/SSL, vous devrez régénérer les makefiles
+        en utilisant un ou plusieurs paramètres <envar>CCARGS</envar> et
+        <envar>AUXLIBS</envar> adéquats listés ci-dessous.
+      </para>
+
+      <para>
+        Pour plus de détails lisez les fichiers readme.
+      </para>
+
+      <para>Voici un exemple combinant les arguments TLS et
       <application>Cyrus-SASL</application>&nbsp;:</para>
 
 <screen><userinput>make makefiles \
@@ -115,7 +152,7 @@ CCARGS='-DUSE_TLS -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
     AUXLIBS='-L/usr/lib -lssl -lcrypto -lsasl2'</userinput></screen>
 -->
 
-      <sect4>
+<!--      <sect4>
         <title>Expressions régulières compatibles Perl</title>
 
         <para>Pour utiliser <application>PCRE</application> avec
@@ -123,7 +160,7 @@ CCARGS='-DUSE_TLS -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
 
 <screen><literal>CCARGS='-DHAS_PCRE'</literal></screen>
 
-      </sect4>
+      </sect4>-->
 
       <sect4>
         <title>Cyrus-SASL</title>
@@ -133,18 +170,6 @@ CCARGS='-DUSE_TLS -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
 
 <screen><literal>CCARGS='-DUSE_SASL_AUTH -DUSE_CYRUS_SASL -I/usr/include/sasl'
 AUXLIBS='-lsasl2'</literal></screen>
-
-      </sect4>
-
-<!--
-      <sect4>
-        <title>Berkeley DB</title>
-
-        <para>Pour utiliser <application>Berkeley DB</application> avec
-        <application>Postfix</application>, utilisez les arguments suivants&nbsp;:</para>
-
-<screen><literal>CCARGS='-DHAS_DB -I/usr/include'
-AUXLIBS='-L/usr/lib -ldb'</literal></screen>
 
       </sect4>
 -->
@@ -157,6 +182,18 @@ AUXLIBS='-L/usr/lib -ldb'</literal></screen>
 
 <screen><literal>CCARGS='-DHAS_LDAP'
 AUXLIBS='-lldap -llber'</literal></screen>
+
+      </sect4>
+      <sect4>
+        <title>Sqlite</title>
+
+        <para>
+          Pour utiliser <application>Sqlite</application> avec
+          <application>Postfix</application>, utilisez les arguments suivants&nbsp;:
+        </para>
+
+<screen><literal>CCARGS='-DHAS_SQLITE'
+AUXLIBS='-lsqlite3 -lpthread'</literal></screen>
 
       </sect4>
 
@@ -210,19 +247,10 @@ AUXLIBS='-lssl -lcrypto'</literal></screen>
     <sect3>
       <title>Installer Postfix</title>
 
-      <para>Avant de construire le programme, vous devez créer les utilisateurs
-      et les groupes qu'on s'attend à trouver pendant l'installation. Ajoutez
-      les utilisateurs et les groupes en utilisant les commandes en tant
-      qu'utilisateur <systemitem class='username'>root</systemitem>&nbsp;:</para>
-
-<screen role="root"><userinput>groupadd -g 32 postfix &amp;&amp;
-groupadd -g 33 postdrop &amp;&amp;
-useradd -c "Postfix Daemon User" -d /dev/null -g postfix \
-    -s /bin/false -u 32 postfix &amp;&amp;
-chown -v postfix:postfix /var/mail</userinput></screen>
-
-      <para>Installez <application>Postfix</application> en lançant les
-      commandes suivantes&nbsp;:</para>
+      <para>
+        Si vous avez installép <application>OpenSSL</application>, installez
+        <application>Postfix</application> en lançant les commandes suivantes&nbsp;:
+      </para>
 
 <!--
 <screen><userinput>make makefiles \
@@ -234,18 +262,9 @@ CCARGS='-DDEF_DAEMON_DIR=\"/usr/lib/postfix\" \
     <replaceable>&lt;AUXLIBS='additional args'&gt;</replaceable> &amp;&amp;
 make</userinput></screen>-->
 
-<screen><userinput>PF_CCARGS="-DDEF_DAEMON_DIR=\\\"/usr/lib/postfix\\\""
-PF_CCARGS="$PF_CCARGS -DDEF_MANPAGE_DIR=\\\"/usr/share/man\\\""
-PF_CCARGS="$PF_CCARGS -DDEF_HTML_DIR=\\\"/usr/share/doc/postfix-&postfix-version;/html\\\""
-PF_CCARGS="$PF_CCARGS -DDEF_README_DIR=\\\"/usr/share/doc/postfix-&postfix-version;/README\\\""
-PF_CCARGS="$PF_CCARGS -DHAS_PCRE"
-PF_CCARGS="$PF_CCARGS -DUSE_TLS -I/usr/include/openssl"
-
-PF_AUXLIBS="-lpcre -lssl -lcrypto"
-
-make makefiles CCARGS="$PF_CCARGS" AUXLIBS="$PF_AUXLIBS" &amp;&amp;
-make &amp;&amp;
-unset PF_CCARGS PF_AUXLIBS</userinput></screen>
+<screen><userinput>make CCARGS="-DUSE_TLS -I/usr/include/openssl/ -DNO_NIS" \
+  AUXLIBS="-lssl -lcrypto" makefiles &amp;&amp;
+make</userinput></screen>
 
     <!-- There is a testsuite, but it fails a lot. It seems to need
          the host to be specifically setup for the tests.
@@ -254,7 +273,10 @@ unset PF_CCARGS PF_AUXLIBS</userinput></screen>
 
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role='root'><userinput>sh postfix-install -non-interactive</userinput></screen>
+<screen role="root"><userinput>sh postfix-install -non-interactive \
+  manpage_directory=/usr/share/man \
+  html_directory=/usr/share/doc/postfix-&postfix-version;/html \
+  readme_directory=/usr/share/doc/postfix-&postfix-version;/readme</userinput></screen>
 
     </sect3>
 
@@ -267,13 +289,22 @@ unset PF_CCARGS PF_AUXLIBS</userinput></screen>
     les makefiles de l'arborescence des sources pour utiliser les options 
     contenues dans les variables <envar>CCARGS</envar> et <envar>AUXLIBS</envar>.</para>
 
-    <para>\\\"&nbsp;: Cette structure est utilisé pour qu'un \" littéral aille
+    <para>
+      <parameter>-DNO_NIS</parameter>&nbsp;: Cette option désactive la construction
+      de support Network Information Service/Yellow Pages (pages jaunes/service
+      d'information réseau). L'implémentation RPC de glibc (dont dépend
+      (NIS/YP) est obsolète.
+    </para>
+
+<!--    <para>\\\"&nbsp;: Cette structure est utilisé pour qu'un \" littéral aille
     dans une définition de variable.</para>
+-->
 
     <para><command>sh postfix-install -non-interactive</command>&nbsp;: Ceci
     empêche le script d'installation de poser des questions, acceptant les
-    répertoires de destination par défaut dans les quelques cas indiqués dans
-    la commande 'make makefiles'.</para>
+    répertoires de destination par défaut dans quelques cas. Si les options
+    <option>html_directory</option> et <option>readme_directory</option> ne sont
+    pas définis, la documentation ne sera pas installée.</para>
 
   </sect2>
 
@@ -300,43 +331,38 @@ unset PF_CCARGS PF_AUXLIBS</userinput></screen>
     <sect3>
       <title>Informations de configuration</title>
 
+      <para>
+        Créez (ou envoyez vers un fichier existant) <filename>/etc/aliases</filename>
+        avec la commande suivante. Modifiez
+        <replaceable>&lt;LOGIN&gt;</replaceable> par votre identifiant non root
+        pour que les messages envoyés à 
+        <systemitem class="username">root</systemitem> vous soient transférés.
+        En tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:
+      </para>
+
 <screen role="root"><userinput>cat &gt;&gt; /etc/aliases &lt;&lt; "EOF"
 <literal># Début de /etc/aliases
 
 MAILER-DAEMON:    postmaster
 postmaster:       root
 
-root:             LOGIN
+root:             <replaceable>&lt;LOGIN&gt;</replaceable>
 # Fin de /etc/aliases</literal>
 EOF</userinput></screen>
 
-      <note>
         <para>Pour protéger un fichier <filename>/etc/aliases</filename> existant,
         la commande ci-dessus y envoie ces aliases. Vous devriez vérifier ce
         fichier et recopier les aliases supprimés s'il y en a.</para>
-      </note>
 
-      <para>Le fichier <filename>/etc/aliases</filename> qu'on vient de créer
-      ou de modifier, <filename>main.cf</filename> et
-      <filename>master.cf</filename> doivent être personnalisés selon votre
-      syst§me. Le fichier <filename>aliases</filename> a besoin de votre 
-      identité de connexion non root pour que le courrier envoyé à
-      <systemitem class="username">root</systemitem> puisse vous être transféré
-      au niveau utilisateur. Le fichier <filename>main.cf</filename> a besoin
-      de votre nom d'hôte pleinement qualifié. Toutes ces modifications peuvent
-      se faire avec des commandes <command>sed</command> entrées sur la
-      console avec les substitutions adéquates de votre nom d'hôte, de votre
-      identifiant à la place de <replaceable>&lt;utilisateur&gt;</replaceable> et 
-      votre nom d'hôte pleinement qualifié à la place de
-      <replaceable>&lt;localhost.localdomain&gt;</replaceable>. Vous
+      <note>
+        <para>Le fichier <filename>/etc/aliases</filename> qu'on vient de créer
+        ou de modifier, <filename>main.cf</filename> et
+        <filename>master.cf</filename> doivent être personnalisés selon votre
+        système. Le fichier <filename>aliases</filename> a besoin
+      de votre nom d'hôte pleinement qualifié. Vous
       trouverez que le fichier <filename>main.cf</filename> est auto-documenté
       donc chargez-le dans votre éditeur pour effectuez les modifications dont 
-      vous avez besoin dans votre situation.</para>
-
-<screen role="root"><userinput>sed -i "s/LOGIN/<replaceable>&lt;utilisateur&gt;</replaceable>/" /etc/aliases &amp;&amp;
-sed -i "s/#myhostname = host.domain.tld/myhostname = \
-  <replaceable>&lt;localhost.localdomain&gt;</replaceable>/" /etc/postfix/main.cf &amp;&amp;
-/usr/bin/newaliases</userinput></screen>
+      vous avez besoin dans votre situation.</para></note>
 
       <para>Si vous avez une configuration existante,, vous pouvez lancer l'outil
       <command>postfix</command> pour ajouter les définitions nécessaires à vos
@@ -378,131 +404,34 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
 
     <segmentedlist>
       <segtitle>Programmes installés</segtitle>
-      <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>anvil, bounce, cleanup, discard, error, flush, lmtp, local, mailq,
-        master, newaliases, nqmgr, oqmgr, pickup, pipe, postalias, postcat,
-        postconf, postdrop, postfix, postkick, postlock, postlog, postmap,
-        postqueue, postsuper, proxymap, qmgr, qmqpd, scache, sendmail, showq,
-		smtp, smtpd, spawn, tlsmgr, trivial-rewrite, verify, et virtual</seg>
-        <seg>Aucune</seg>
-        <seg>/etc/postfix, /usr/lib/postfix et
-        /usr/share/doc/postfix-&postfix-version;</seg>
-      </seglistitem>
+        <seg>
+          mailq, newaliases, postaliases, postcat, postconf, postdrop, postfix,
+          postkick, postlock, postlog, postmap, postmulti, postqueue, postsuper
+          et sendmail.
+        </seg>
+        <seg>
+          /etc/postfix, /usr/libexec/postfix, /var/lib/postfix,
+          /var/spool/postfix et /usr/share/doc/postfix-&postfix-version;
+        </seg>
+    </seglistitem>
     </segmentedlist>
-
+    
     <variablelist>
       <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
 
-      <varlistentry id="anvil">
-        <term><command>anvil</command></term>
-        <listitem>
-          <para>Donne la limitation de connexion et de requête de débit.</para>
-          <indexterm zone="postfix anvil">
-            <primary sortas="b-anvil">anvil</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="bounce">
-        <term><command>bounce</command></term>
-        <listitem>
-          <para>Un démon qui maintient des fichiers journaux par messages 
-          sans informations sur le statut de l'envoi.</para>
-          <indexterm zone="postfix bounce">
-            <primary sortas="b-bounce">bounce</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="cleanup">
-        <term><command>cleanup</command></term>
-        <listitem>
-          <para>Un démon qui traite des messages inbound, les insère dans la file
-          d'attente du courrier entrant et informe le gestionnaire de la file 
-          de son arrivée.</para>
-          <indexterm zone="postfix cleanup">
-            <primary sortas="b-cleanup">cleanup</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="discard">
-        <term><command>discard</command></term>
-        <listitem>
-          <para>Traite des requêtes d'envoi issues du gestionnaire de file d'attente 
-          qui ne peuvent être remises à leur destinataire.</para>
-          <indexterm zone="postfix discard">
-            <primary sortas="b-discard">discard</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="error">
-        <term><command>error</command></term>
-        <listitem>
-          <para>Traite des requêtes de non envoi issues du gestionnaire de file
-          d'attente.</para>
-          <indexterm zone="postfix error">
-            <primary sortas="b-error">error</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="flush">
-        <term><command>flush</command></term>
-        <listitem>
-          <para>Un démon qui maintient un enregistrement du courrier remis
-          par destination.</para>
-          <indexterm zone="postfix flush">
-            <primary sortas="b-flush">flush</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="lmtp">
-        <term><command>lmtp</command></term>
-        <listitem>
-          <para>Traite des requêtes d'envoi issues du gestionnaire de file 
-          d'attente.</para>
-          <indexterm zone="postfix lmtp">
-            <primary sortas="b-lmtp">lmtp</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="local">
-        <term><command>local</command></term>
-        <listitem>
-          <para>Traite des requêtes d'envoi issues du gestionnaire de file 
-          d'attente pour envoyer du courrier à des destinataires locaux.</para>
-          <indexterm zone="postfix local">
-            <primary sortas="b-local">local</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="mailq">
         <term><command>mailq</command></term>
         <listitem>
-          <para>Un lien symbolique vers <filename>sendmail</filename>.</para>
+          <para>
+            Un lien symbolique vers <filename>sendmail</filename>.
+          </para>
           <indexterm zone="postfix mailq">
             <primary sortas="b-mailq">mailq</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="master">
-        <term><command>master</command></term>
-        <listitem>
-          <para>Le processus résidant qui lance des démons
-          <application>Postfix</application> à la demande.</para>
-          <indexterm zone="postfix master">
-            <primary sortas="b-master">master</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -510,66 +439,24 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="newaliases">
         <term><command>newaliases</command></term>
         <listitem>
-          <para>Un lien symbolique vers <filename>sendmail</filename>.</para>
+          <para>
+            Un lien symbolique vers <filename>sendmail</filename>.
+          </para>
           <indexterm zone="postfix newaliases">
             <primary sortas="b-newaliases">newaliases</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="nqmgr">
-        <term><command>nqmgr</command></term>
+      <varlistentry id="postaliases">
+        <term><command>postaliases</command></term>
         <listitem>
-          <para>Un démon qui attend l'arrivée du courrier entrant et s'organise pour
-          sa remise.</para>
-          <indexterm zone="postfix nqmgr">
-            <primary sortas="b-nqmgr">nqmgr</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="oqmgr">
-        <term><command>oqmgr</command></term>
-        <listitem>
-          <para>L'ancien style de gestionnaire de file d'attente. Ceci sera 
-          bientôt supprimé.</para>
-          <indexterm zone="postfix oqmgr">
-            <primary sortas="b-oqmgr">oqmgr</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="pickup">
-        <term><command>pickup</command></term>
-        <listitem>
-          <para>Un démon attendant les notifications que le nouveau courrier a 
-          été mis dans le répertoire maildrop et le passe dans le démon
-          <application>cleanup</application> daemon.</para>
-          <indexterm zone="postfix pickup">
-            <primary sortas="b-pickup">pickup</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="pipe">
-        <term><command>pipe</command></term>
-        <listitem>
-          <para>Traite des requêtes d'envoi issues du gestionnaire de file 
-          d'attente pour remettre des messages aux commandes externes.</para>
-          <indexterm zone="postfix pipe">
-            <primary sortas="b-pipe">pipe</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="postalias">
-        <term><command>postalias</command></term>
-        <listitem>
-          <para>Crée ou cherche une ou plusieurs bases de données d'alias
-          <application>Postfix</application>, ou en met à jour une
-          existante.</para>
-          <indexterm zone="postfix postalias">
-            <primary sortas="b-postalias">postalias</primary>
+          <para>
+            est un outil <application>Postfix</application> de maintenance
+            de bases de données d'alias
+          </para>
+          <indexterm zone="postfix postaliases">
+            <primary sortas="b-postaliases">postaliases</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -577,8 +464,11 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postcat">
         <term><command>postcat</command></term>
         <listitem>
-          <para>Affiche le contenu des fichiers
-          <application>named</application> au format lisible par un humain.</para>
+          <para>
+            Affiche le contenu de fichiers de la queue
+            <application>Postfix</application> sous une forme lisible par un
+            humain.
+          </para>
           <indexterm zone="postfix postcat">
             <primary sortas="b-postcat">postcat</primary>
           </indexterm>
@@ -588,8 +478,10 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postconf">
         <term><command>postconf</command></term>
         <listitem>
-          <para>Affiche ou modifie la valeur des paramètres de configuration
-          <application>Postfix</application>.</para>
+          <para>
+            Affiche ou modifie la valeur des paramètres de configuration de
+            <application>Postfix</application>.
+          </para>
           <indexterm zone="postfix postconf">
             <primary sortas="b-postconf">postconf</primary>
           </indexterm>
@@ -599,8 +491,10 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postdrop">
         <term><command>postdrop</command></term>
         <listitem>
-          <para>Crée un fichier dans le répertoire maildrop et copie son entrée
-          standard dans un fichier.</para>
+          <para>
+            Crée un fichier et un répertoire maildrop et copie son entrée
+            standard dans le fichier.
+          </para>
           <indexterm zone="postfix postdrop">
             <primary sortas="b-postdrop">postdrop</primary>
           </indexterm>
@@ -610,8 +504,9 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postfix-bin">
         <term><command>postfix</command></term>
         <listitem>
-          <para>Contrôle l'action du système de messagerie
-          <application>Postfix</application>.</para>
+          <para>
+            est le programme de contrôle de<application>Postfix</application>.
+          </para>
           <indexterm zone="postfix postfix-bin">
             <primary sortas="b-postfix">postfix</primary>
           </indexterm>
@@ -621,8 +516,10 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postkick">
         <term><command>postkick</command></term>
         <listitem>
-          <para>Envoie des requêtes au service spécifié par un canal de transport
-          local.</para>
+          <para>
+            Envoie des requêtes au service spécifié via le canal local de
+            transport.
+          </para>
           <indexterm zone="postfix postkick">
             <primary sortas="b-postkick">postkick</primary>
           </indexterm>
@@ -632,8 +529,10 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postlock">
         <term><command>postlock</command></term>
         <listitem>
-          <para>Verrouille un dossier de courrier pour un usage exclusif et 
-          exécute des commandes qu'on lui passe.</para>
+          <para>
+            Verrouille un dossier de messages pour un usage exclusif et il
+            exécute des commandes qui lui sont passées.
+          </para>
           <indexterm zone="postfix postlock">
             <primary sortas="b-postlock">postlock</primary>
           </indexterm>
@@ -643,8 +542,10 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postlog">
         <term><command>postlog</command></term>
         <listitem>
-          <para>Une interface de journalisation compatible <application>Postfix</application>
-          pour, par exemple, une utilisation dans des scripts shell.</para>
+          <para>
+            Une interface de journalisation compatible avec <application>Postfix</application>
+            qui peut être utilisée, par exemple, dans des scripts shell.
+          </para>
           <indexterm zone="postfix postlog">
             <primary sortas="b-postlog">postlog</primary>
           </indexterm>
@@ -654,10 +555,26 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postmap">
         <term><command>postmap</command></term>
         <listitem>
-          <para>Crée ou interroge une ou plusieurs tables de recherche Postfix 
-          ou en met à jour une existante.</para>
+          <para>
+            Crée ou interroge une ou plusieurs tables de recherche Postfix 
+            ou met à jour une existante.
+          </para>
           <indexterm zone="postfix postmap">
             <primary sortas="b-postmap">postmap</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="postmulti">
+        <term><command>postmulti</command></term>
+        <listitem>
+          <para>
+            est le gestionnaire multi-instances <application>Postfix</application>.
+            Il permet à un administrateur système de gérer plusieurs sessions
+            <application>Postfix</application> sur un seul hôte.
+          </para>
+          <indexterm zone="postfix postmulti">
+            <primary sortas="b-postmulti">postmulti</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -665,8 +582,10 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postqueue">
         <term><command>postqueue</command></term>
         <listitem>
-          <para>L'interface utilisateur <application>Postfix</application> 
-          avec la gestion de file d'attente.</para>
+          <para>
+        L'interface utilisateur <application>Postfix</application> pour gérer
+          la queue.
+        </para>
           <indexterm zone="postfix postqueue">
             <primary sortas="b-postqueue">postqueue</primary>
           </indexterm>
@@ -676,55 +595,12 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="postsuper">
         <term><command>postsuper</command></term>
         <listitem>
-          <para>L'interface utilisateur <application>Postfix</application> avec
-          la gestion de file d'attente super-utilisateur.</para>
+          <para>
+        L'interface utilisateur <application>Postfix</application> pour gérer la
+          queue du super-utilisateur.
+        </para>
           <indexterm zone="postfix postsuper">
             <primary sortas="b-postsuper">postsuper</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="proxymap">
-        <term><command>proxymap</command></term>
-        <listitem>
-          <para>Offre un service de recherche en lecture seule de base de données
-          pour d'autres processus <application>Postfix</application>.</para>
-          <indexterm zone="postfix proxymap">
-            <primary sortas="b-proxymap">proxymap</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="qmgr">
-        <term><command>qmgr</command></term>
-        <listitem>
-          <para>Un démon qui attend l'arrivée du courrier entrant et s'organise
-          pour le remettre.</para>
-          <indexterm zone="postfix qmgr">
-            <primary sortas="b-qmgr">qmgr</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="qmqpd">
-        <term><command>qmqpd</command></term>
-        <listitem>
-          <para>Un démon qui reçoit un message par connexion, et le redirige
-          via le démon <application>cleanup</application> et le met dans
-          la file d'attente de l'entrant.</para>
-          <indexterm zone="postfix qmqpd">
-            <primary sortas="b-qmqpd">qmqpd</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="scache">
-        <term><command>scache</command></term>
-        <listitem>
-          <para>Maintient un cache de connexion utilisé pour partager une
-          connexion plusieurs fois.</para>
-          <indexterm zone="postfix scache">
-            <primary sortas="b-scache">scache</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -732,104 +608,15 @@ sed -i "s/#myhostname = host.domain.tld/myhostname = \
       <varlistentry id="sendmail-postfix">
         <term><command>sendmail</command></term>
         <listitem>
-          <para><application>Postfix</application> pour l'interface de
-          compatibilité <application>Sendmail</application>.</para>
+          <para>
+            est l'interface de compatibilité <application>Postfix</application> 
+            avec <application>Sendmail</application>.
+          </para>
           <indexterm zone="postfix sendmail-postfix">
             <primary sortas="b-sendmail">sendmail</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-
-      <varlistentry id="showq">
-        <term><command>showq</command></term>
-        <listitem>
-          <para>Un démon qui signale le statut de la file d'attente du courrier
-          de Postfix.</para>
-          <indexterm zone="postfix showq">
-            <primary sortas="b-showq">showq</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="smtp">
-        <term><command>smtp</command></term>
-        <listitem>
-          <para>Examine une liste d'adresses d'envoi de courrier vers l'hôte de
-          destination, trie la liste par préférence, et se connecte à chaque
-          adresse listée jusqu'à ce qu'il trouve un serveur qui répond.</para>
-          <indexterm zone="postfix smtp">
-            <primary sortas="b-smtp">smtp</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="smtpd">
-        <term><command>smtpd</command></term>
-        <listitem>
-          <para>Accepte des demandes de connexion réseaux et effectue aucune ou
-          plusieurs transactions SMTP par connexion.</para>
-          <indexterm zone="postfix smtpd">
-            <primary sortas="b-smtpd">smtpd</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="spawn">
-        <term><command>spawn</command></term>
-        <listitem>
-          <para>Écoute un port comme spécifié dans le fichier
-          <filename>master.cf</filename> de <application>Postfix</application> 
-          et génère une commande externe à chaque fois qu'une connexion est
-          établie.</para>
-          <indexterm zone="postfix spawn">
-            <primary sortas="b-spawn">spawn</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="tlsmgr">
-        <term><command>tlsmgr</command></term>
-        <listitem>
-          <para>Maintient le cache de la session TLS et agit comme un gestionnaire
-          PRNG.</para>
-          <indexterm zone="postfix tlsmgr">
-            <primary sortas="b-tlsmgr">tlsmgr</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="trivial-rewrite">
-        <term><command>trivial-rewrite</command></term>
-        <listitem>
-          <para>Un démon qui réécrit des adresses au format standard.</para>
-          <indexterm zone="postfix trivial-rewrite">
-            <primary sortas="b-trivial-rewrite">trivial-rewrite</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="verify">
-        <term><command>verify</command></term>
-        <listitem>
-          <para>Maintient un enregistrement des adresses de destinataires connues
-          pour être livrables ou non.</para>
-          <indexterm zone="postfix verify">
-            <primary sortas="b-verify">verify</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="virtual">
-        <term><command>virtual</command></term>
-        <listitem>
-          <para>Envoie du courrier aux répertoires de courrier d'un utilisateur
-          virtuel.</para>
-          <indexterm zone="postfix virtual">
-            <primary sortas="b-virtual">virtual</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
     </variablelist>
 
   </sect2>

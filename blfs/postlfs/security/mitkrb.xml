@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY mitkrb-download-http "http://web.mit.edu/kerberos/www/dist/krb5/1.6/krb5-&mitkrb-version;-signed.tar">
+  <!ENTITY mitkrb-download-http "http://web.mit.edu/kerberos/www/dist/krb5/1.10/krb5-&mitkrb-version;-signed.tar">
   <!ENTITY mitkrb-download-ftp " ">
-  <!ENTITY mitkrb-md5sum "a365e39ff7d39639556c2797a0e1c3f4">
-  <!ENTITY mitkrb-size "12.0 Mio">
-  <!ENTITY mitkrb-buildsize "124 Mio">
-  <!ENTITY mitkrb-time "1.4 SBU">
+  <!ENTITY mitkrb-md5sum "0b2c8366468f74c6bb8e11a5417645c1">
+  <!ENTITY mitkrb-size "10 Mio">
+  <!ENTITY mitkrb-buildsize "100 Mio">
+  <!ENTITY mitkrb-time "1.0 SBU">
 ]>
 
 <sect1 id="mitkrb" xreflabel="MIT Kerberos V5-&mitkrb-version;">
@@ -36,14 +36,16 @@
     qui supportent Kerberos, ce qui permet des connexions isolées et une
     communication chiffrée sur des réseaux internes ou sur Internet.</para>
 
+    &lfs70_checked;
+
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>Téléchargement (HTTP)&nbsp;: <ulink url="&mitkrb-download-http;"/></para>
       </listitem>
-      <listitem>
+<!--      <listitem>
         <para>Téléchargement (FTP)&nbsp;: <ulink url="&mitkrb-download-ftp;"/></para>
-      </listitem>
+      </listitem>-->
       <listitem>
         <para>Somme de contrôle MD5 du téléchargement&nbsp;: &mitkrb-md5sum;</para>
       </listitem>
@@ -61,8 +63,7 @@
     <bridgehead renderas="sect3">Dépendances de MIT Kerberos V5</bridgehead>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
-    <para role="optional"><xref linkend="linux-pam"/>
-    (pour les connexions basées sur <command>xdm</command>),
+    <para role="optional"><xref linkend="keyutils"/>,
     <xref linkend="openldap"/> et
     <xref linkend="dejagnu"/> (required to run the test suite)</para>
 
@@ -99,12 +100,10 @@
 <screen><userinput>cd src &amp;&amp;
 ./configure CPPFLAGS="-I/usr/include/et -I/usr/include/ss" \
             --prefix=/usr \
-            --sysconfdir=/etc/krb5 \
             --localstatedir=/var/lib \
             --with-system-et \
             --with-system-ss \
-            --enable-dns-for-realm \
-            --mandir=/usr/share/man &amp;&amp;
+            --enable-dns-for-realm &amp;&amp;
 make</userinput></screen>
 
     <para>La suite de tests de régression est conçu pour s'exécuter après
@@ -122,47 +121,17 @@ mv -v /usr/lib/libkrb5support.so.0* /lib &amp;&amp;
 
 ln -v -sf ../../lib/libkrb5.so.3.3 /usr/lib/libkrb5.so &amp;&amp;
 ln -v -sf ../../lib/libk5crypto.so.3.1 /usr/lib/libk5crypto.so &amp;&amp;
-ln -v -sf ../../lib/libkrb5support.so.0.1 /usr/lib/libkrb5support.so&amp;&amp;
+ln -v -sf ../../lib/libkrb5support.so.0.1 /usr/lib/libkrb5support.so &amp;&amp;
 
-install -m644 -v ../doc/*.info* /usr/share/info &amp;&amp;
-for INFOFILE in 425 5-admin 5-install 5-user; do
+install -m644 -v ../doc/*.info /usr/share/info &amp;&amp;
+for INFOFILE in 5-admin 5-install 5-user; do
     install-info --info-dir=/usr/share/info \
                  /usr/share/info/krb$INFOFILE.info
-    rm ../doc/krb$INFOFILE.info*
+    rm ../doc/krb$INFOFILE.info
 done &amp;&amp;
 
 install -m755 -v -d /usr/share/doc/krb5-&mitkrb-version; &amp;&amp;
 cp -Rv ../doc/* /usr/share/doc/krb5-&mitkrb-version;</userinput></screen>
-
-    <warning>
-      <para><command>login.krb5</command> ne supporte pas les mots de passe
-      <application>Shadow</application>. Il en résulte que lorsque le serveur
-      Kerberos n'est pas disponible, on ne pourra pas se rabattre sur
-      <filename>/etc/passwd</filename> car les mots de passe ont été déplacés
-      dans <filename>/etc/shadow</filename> pendant le processus de construction
-      de LFS. Si vous entrez les commandes suivantes sans remettre les mots de 
-      passe dans <filename>/etc/passwd</filename>, cela pourrait empêcher toute
-      connexion.</para>
-    </warning>
-
-    <para>Après avoir lu (et compris) l'avertissement ci-d!ssus, vous pouvez 
-    entrer les commandes suivantes en tant qu'utilisateur
-    <systemitem class="username">root</systemitem> pour remplacer le programme
-    <command>login</command> existant par la version Kerberizée (après avoir 
-    sauvegardé celui d'origine)) et pour déplacer les bibliothèques de support 
-    à un endroit disponible alors que le système de fichiers
-    <filename class='directory'>/usr</filename> n'est pas monté&nbsp;:</para>
-
-<screen role="root"><userinput>mv -v /bin/login /bin/login.shadow &amp;&amp;
-install -m755 -v /usr/sbin/login.krb5 /bin/login &amp;&amp;
-
-mv -v /usr/lib/libdes425.so.3* /lib &amp;&amp;
-mv -v /usr/lib/libkrb4.so.2* /lib &amp;&amp;
-
-ln -v -sf ../../lib/libdes425.so.3.0 /usr/lib/libdes425.so &amp;&amp;
-ln -v -sf ../../lib/libkrb4.so.2.0 /usr/lib/libkrb4.so &amp;&amp;
-
-ldconfig</userinput></screen>
 
     <!--
     <para>If <application>CrackLib</application> is installed, or if any
@@ -207,17 +176,9 @@ ldconfig</userinput></screen>
     <filename class='directory'>/var/lib</filename> et pas dans
     <filename class='directory'>/usr/var</filename>.</para>
 
-    <!-- <para><parameter>- -enable-static</parameter>>&nbsp;:nbsp;: This switch builds static
-    libraries in addition to the shared libraries.</para> -->
-
-    <para><command>mv -v /usr/bin/ksu /bin</command>&nbsp;: Déplace le programme
-    <command>ksu</command> dans le répertoire
-    <filename class="directory">/bin</filename> pour qu'il soit disponible alors
-    que le système de fichiers <filename class="directory">/usr</filename>
-    n'est pas monté.</para>
-
-    <para><command>mv -v ... /lib &amp;&amp; ln -v -sf ...</command>&nbsp;:
-    Ces bibliothèques sont déplacées dans <filename class="directory">/lib</filename>
+    <para><parameter>mv -v /usr/bin/ksu /bin</parameter>&nbsp;: Déplace le
+    programme <command>ksu</command> dans le répertoire
+    +    <filename class="directory">/bin</filename> pour qu'il soit disponible alors
     que le système de fichiers <filename class="directory">/usr</filename>
     n'est pas monté.</para>
 
@@ -229,11 +190,11 @@ ldconfig</userinput></screen>
     <sect3 id="krb5-config">
       <title>Fichiers de configuration</title>
 
-      <para><filename>/etc/krb5/krb5.conf</filename> et
+      <para><filename>/etc/krb5.conf</filename> et
       <filename>/var/lib/krb5kdc/kdc.conf</filename></para>
 
       <indexterm zone="mitkrb krb5-config">
-        <primary sortas="e-etc-krb5-krb5.conf">/etc/krb5/krb5.conf</primary>
+        <primary sortas="e-etc-krb5.conf">/etc/krb5.conf</primary>
       </indexterm>
 
       <indexterm zone="mitkrb krb5-config">
@@ -264,9 +225,8 @@ ldconfig</userinput></screen>
         commandes suivantes, que vous lancerez en tant qu'utilisateur
         <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>install -v -m755 -d /etc/krb5 &amp;&amp;
-cat &gt; /etc/krb5/krb5.conf &lt;&lt; "EOF"
-<literal># Début de /etc/krb5/krb5.conf
+<screen role="root"><userinput>cat &gt; /etc/krb5.conf &lt;&lt; "EOF"
+<literal># Début de /etc/krb5.conf
 
 [libdefaults]
     default_realm = <replaceable>&lt;LFS.ORG&gt;</replaceable>
@@ -287,7 +247,7 @@ cat &gt; /etc/krb5/krb5.conf &lt;&lt; "EOF"
     admin_server = SYSLOG[INFO[:AUTH]]
     default = SYSLOG[[:SYS]]
 
-# Fin de /etc/krb5/krb5.conf</literal>
+# Fin de /etc/krb5.conf</literal>
 EOF</userinput></screen>
 
         <para>Vous devrez mettre votre nom de domaine et d'hôte à la place de
@@ -333,27 +293,19 @@ EOF</userinput></screen>
 <screen role='root'><userinput><prompt>kadmin:</prompt> ktadd host/<replaceable>&lt;belgarath.lfs.org&gt;</replaceable></userinput></screen>
 
         <para>Cela devrait créer un fichier dans
-        <filename class="directory">/etc/krb5</filename> nommé
+        <filename class="directory">/etc</filename> nommé
         <filename>krb5.keytab</filename> (Kerberos 5). Ce fichier devrait
         avoir les persissions 600 ( lecture-écriture seulement par
         <systemitem class="username">root</systemitem>). ôter de l'accès public
         les fichiers de tables de clés est crucial pour toute la sécurité
         de l'installation de Kerberos.</para>
 
-        <para>Vous voudrez éventuellement ajouter des utilisateurs démons de 
-        serveur à la base de données et les extraire vers le fichier de table 
-        de clé. Vous faites cela de la même manière que vous avez créé les 
-        utilisateurs clés hôtes. Voici un exemple ci-dessous&nbsp;:</para>
-
-<screen role='root'><userinput><prompt>kadmin:</prompt> addprinc -randkey ftp/<replaceable>&lt;belgarath.lfs.org&gt;</replaceable>
-<prompt>kadmin:</prompt> ktadd ftp/<replaceable>&lt;belgarath.lfs.org&gt;</replaceable></userinput></screen>
-
         <para>Quittez le programme <command>kadmin</command> (utilisez
         <command>quit</command> ou <command>exit</command>) et retournez à
         l'invite du shell. Démarrez à la main le démon KDC, simplement pour
         tester l'installation&nbsp;:</para>
 
-<screen role='root'><userinput>/usr/sbin/krb5kdc &amp;</userinput></screen>
+<screen role='root'><userinput>/usr/sbin/krb5kdc</userinput></screen>
 
         <para>Essayez d'obtenir un ticket avec la commande suivante&nbsp;:</para>
 
@@ -371,7 +323,7 @@ EOF</userinput></screen>
         fonctionnement du fichier de table de clé, exécutez la commande suivante&nbsp;:</para>
 
 <screen><userinput>ktutil
-<prompt>ktutil:</prompt> rkt /etc/krb5/krb5.keytab
+<prompt>ktutil:</prompt> rkt /etc/krb5.keytab
 <prompt>ktutil:</prompt> l</userinput></screen>
 
         <para>Cela devrait renvoyer une liste d'utilisateurs clés hôtes, 
@@ -392,45 +344,10 @@ EOF</userinput></screen>
       </sect4>
 
       <sect4>
-        <title>Utiliser les clients Kerberizés</title>
-
-
-        <para>Pour utiliser les clients kerberizés (<command>telnet</command>,
-        <command>ftp</command>, <command>rsh</command>, <command>rcp</command>,
-        <command>rlogin</command>), vous devez d'abord
-        obtenir un TGT. Utilisez le programme <command>kinit</command> pour 
-        obtenir le ticket. Après avoir acquis le ticket, vous pouvez utiliser 
-        les programmes kerberizés pour vous connecter à un serveur kerberizé du
-        réseau. On ne vous demandera pas de vous authentifier jusqu'à 
-        l'expiration de votre ticket (par défaut, un jour), sauf si vous indiquez
-        un utilisateur différent en tant qu'argument de la ligne du commande du
-        programme.</para>
-
-        <para>Les programmes kerberizés se connecteront à des démons non
-        kerberizés en vous prévenant que l'authentication n'est pas chiffrée.</para>
-
-      </sect4>
-
-      <sect4>
-        <title>Utiliser un serveur Kerberizé</title>
-
-        <para>L'utilisation de serveurs kerberizés (<command>telnetd</command>,
-        <command>kpropd</command>, <command>klogind</command> et
-        <command>kshd</command>) exige deux étapes de configuration
-        supplémentaires. Tout d'abord, il faut mettre à jour le fichier 
-        <filename>/etc/services</filename> pour inclure
-        eklogin et krb5_prop. En deuxième lieu, il faut modifier
-        <filename>inetd.conf</filename> <!--ou <filename>xinetd.conf</filename>--> pour
-        chaque serveur qui sera activé<!-- en remplaçant en général le serveur de
-        <xref linkend="inetutils"/>-->.</para>
-
-      </sect4>
-
-      <sect4>
         <title>Informations supplémentaires</title>
 
         <para>Pour des informations supplémentaires, consultez <ulink
-        url="http://web.mit.edu/kerberos/www/krb5-1.6/#documentation">
+        url="http://web.mit.edu/kerberos/www/krb5-1.10/#documentation">
         Documentation for krb-&mitkrb-version;</ulink> (la documentation)
         sur laquelle se basent les instructions ci-dessus.</para>
 
@@ -450,18 +367,17 @@ EOF</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>ftp, ftpd, gss-client, gss-server, k5srvutil, kadmin,
-        kadmin.local, kadmind, kdb5_ldap_util, kdb5_util, kdestroy, kinit, klist,
-        klogind, kpasswd, kprop, kpropd, krb5-config, krb5-send-pr, krb524d,
-        krb524init, krb5kdc, kshd, ksu, ktutil, kvno, login.krb5, rcp, rlogin,
-        rsh, sclient, sim_client, sim_server, sserver, telnet, telnetd,
-        uuclient, uuserver et v4rcp</seg>
-        <seg>libdes425.so, libgssapi_krb5.so,
-        libgssrpc.so, libk5crypto.so, libkadm5clnt.so, libkadm5srv.so,
-        libkdb5.so, libkdb_ldap.so, libkrb4.so, libkrb5.so et
-        libkrb5support.so</seg>
-        <seg>/etc/krb5, /usr/include/{gssapi,gssrpc,kerberosIV,krb5},
-        /usr/lib/krb5, /usr/share/{doc/krb5-&mitkrb-version;,examples,gnats}
+        <seg>gss-client, gss-server, k5srvutil, kadmin, kadmin.local, 
+        kadmind, kdb5_ldap_util, kdb5_util, kdestroy, kinit, klist, 
+        kpasswd, kprop, kpropd, krb5-config, krb5kdc, krb5-send-pr, 
+        ksu, kswitch, ktutil, kvno, sclient, sim_client, sim_server, 
+        sserver, uuclient et uuserver</seg>
+        <seg>libgssapi_krb5.so, libgssrpc.so, libk5crypto.so, 
+        libkadm5clnt.so, libkadm5srv.so, libkdb5.so, libkdb_ldap.so, 
+        libkrb5.so, libkrb5support.so, libverto-k5ev.so et 
+        libverto.so</seg>
+        <seg>/usr/include/{gssapi,gssrpc,kadm5,krb5}, /usr/lib/krb5, 
+        /usr/share/{doc/krb5-&mitkrb-version;,examples/krb5,gnats}
         et /var/lib/krb5kdc</seg>
       </seglistitem>
     </segmentedlist>
@@ -470,26 +386,6 @@ EOF</userinput></screen>
       <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
-
-      <varlistentry id="ftp-mitkrb">
-        <term><command>ftp</command></term>
-        <listitem>
-          <para>est un client FTP kerberizé.</para>
-          <indexterm zone="mitkrb ftp-mitkrb">
-            <primary sortas="b-ftp">ftp</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="ftpd-mitkrb">
-        <term><command>ftpd</command></term>
-        <listitem>
-          <para>est un démon FTP kerberizé.</para>
-          <indexterm zone="mitkrb ftpd-mitkrb">
-            <primary sortas="b-ftpd">ftpd</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
 
       <varlistentry id="k5srvutil">
         <term><command>k5srvutil</command></term>
@@ -566,17 +462,6 @@ EOF</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="klogind">
-        <term><command>klogind</command></term>
-        <listitem>
-          <para>est le serveur qui répond à des requêtes
-          <command>rlogin</command>.</para>
-          <indexterm zone="mitkrb klogind">
-            <primary sortas="b-klogind">klogind</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="kpasswd-mitkrb">
         <term><command>kpasswd</command></term>
         <listitem>
@@ -631,16 +516,6 @@ EOF</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="kshd">
-        <term><command>kshd</command></term>
-        <listitem>
-          <para>est le serveur qui répond à des requêtes <command>rsh</command>.</para>
-          <indexterm zone="mitkrb kshd">
-            <primary sortas="b-kshd">kshd</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="ksu">
         <term><command>ksu</command></term>
         <listitem>
@@ -651,6 +526,17 @@ EOF</userinput></screen>
           autorisés à devenir super utilisateurs.</para>
           <indexterm zone="mitkrb ksu">
             <primary sortas="b-ksu">ksu</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="kswitch">
+        <term><command>kswitch</command></term>
+        <listitem>
+          <para>met en cache les tickets sécifiés, le premier cache pour
+          l'ensemble, si un groupe de caches est disponible.</para>
+          <indexterm zone="mitkrb kswitch">
+            <primary sortas="b-kswitch">kswitch</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -676,62 +562,24 @@ EOF</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="login.krb5">
-        <term><command>login.krb5</command></term>
+      <varlistentry id="sclient">
+        <term><command>sclient</command></term>
         <listitem>
-        <para>est un programme de connexion kerberizé.</para>
-        <indexterm zone="mitkrb login">
-        <primary sortas="b-login.krb5">login.krb5</primary>
-        </indexterm>
+          <para>utilisé pour contacter un serveur modèle et s'y authentifier
+          en utilisant des tickets de Kerberos version 5, puis affiche la
+          réponse du serveur.</para>
+          <indexterm zone="mitkrb sclient">
+            <primary sortas="b-sclient">sclient</primary>
+           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="rcp-mitkrb">
-        <term><command>rcp</command></term>
+      <varlistentry id="sserver">
+        <term><command>sserver</command></term>
         <listitem>
-          <para>est un client rcp kerberizé.</para>
-          <indexterm zone="mitkrb rcp-mitkrb">
-            <primary sortas="b-rcp">rcp</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="rlogin">
-        <term><command>rlogin</command></term>
-        <listitem>
-          <para>est un client rlogin kerberizé.</para>
-          <indexterm zone="mitkrb rlogin">
-            <primary sortas="b-rlogin">rlogin</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="rsh-mitkrb">
-        <term><command>rsh</command></term>
-        <listitem>
-          <para>est un client rsh kerberizé.</para>
-          <indexterm zone="mitkrb rsh-mitkrb">
-            <primary sortas="b-rsh">rsh</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="telnet-mitkrb">
-        <term><command>telnet</command></term>
-        <listitem>
-          <para>est un client telnet kerberizé.</para>
-          <indexterm zone="mitkrb telnet-mitkrb">
-            <primary sortas="b-telnet">telnet</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="telnetd-mitkrb">
-        <term><command>telnetd</command></term>
-        <listitem>
-          <para>est un serveur telnet kerberizé.</para>
-          <indexterm zone="mitkrb telnetd-mitkrb">
-            <primary sortas="b-telnetd">telnetd</primary>
+          <para>modèle de serveur Kerberos version 5.</para>
+          <indexterm zone="mitkrb sserver">
+            <primary sortas="b-sserver">sserver</primary>
           </indexterm>
         </listitem>
       </varlistentry>
