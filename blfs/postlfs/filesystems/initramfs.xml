@@ -94,27 +94,30 @@ printf "Creating $INITRAMFS_FILE... "
 binfiles="sh cat cp dd killall ls lsmod mkdir mknod mount "
 binfiles="$binfiles umount sed sleep ln rm uname"
 
-sbinfiles="udevadm udevd modprobe blkid switch_root mdadm"
+#Fichiers et emplacements facultatifs
+for f in mdadm udevd; do
+  if [ -x /sbin/$f ] ; then sbinfiles="$sbinfiles $f"; fi
+done
 
 unsorted=$(mktemp /tmp/unsorted.XXXXXXXXXX)
 
 DATADIR=/usr/share/mkinitramfs
 INITIN=init.in
 
-# Create a temporrary working directory
+# Création d'un répertoire de travail temporaire
 WDIR=$(mktemp -d /tmp/initrd-work.XXXXXXXXXX)
 
-# Create base directory structure
+# Création d'une structure de répertoires de base
 mkdir -p $WDIR/{bin,dev,lib/firmware,run,sbin,sys,proc}
 mkdir -p $WDIR/etc/{modprobe.d,udev/rules.d}
 touch $WDIR/etc/modprobe.d/modprobe.conf
 ln -s lib $WDIR/lib64
 
-# Create necessary device nodes
+# Création des noeuds de périphériques nécessaires
 mknod -m 640 $WDIR/dev/console c 5 1
 mknod -m 664 $WDIR/dev/null    c 1 3
 
-# Install the udev configuration files
+# Installation des fichiers de configuration d'udev 
 cp /etc/udev/udev.conf $WDIR/etc/udev/udev.conf
 
 for file in $(find /etc/udev/rules.d/ -type f) ; do
@@ -125,7 +128,7 @@ if [ -f /etc/mdadm.conf ] ; then
   cp /etc/mdadm.conf $WDIR/etc
 fi
 
-# Install the init file
+# Installer les fichiers de démarrage
 install -m0755 $DATADIR/$INITIN $WDIR/init
 
 if [  -n "$KERNEL_VERSION" ] ; then
@@ -137,13 +140,13 @@ if [  -n "$KERNEL_VERSION" ] ; then
   fi
 fi
 
-# Install basic binaries
+# Installer les binaires de base
 for f in $binfiles ; do
   ldd /bin/$f | sed "s/\t//" | cut -d " " -f1 &gt;&gt; $unsorted
   copy $f bin
 done
 
-# Add lvm if present
+# Ajout de lvm si présent
 if [ -x /sbin/lvm ] ; then sbinfiles="$sbinfiles lvm"; fi
 
 for f in $sbinfiles ; do
@@ -151,16 +154,21 @@ for f in $sbinfiles ; do
   copy $f sbin
 done
 
-# Add module symlinks if appropriate
+# Ajout de bibliothèques udevd si elles ne sont pas dans /sbin
+if [ -x /lib/udev/udevd ] ; then
+  ldd /lib/udev/udevd | sed "s/\t//" | cut -d " " -f1 >> $unsorted
+fi
+
+# Ajout des liens symboliques des module si c'est adapté
 if [ -n "$KERNEL_VERSION" ] &amp;&amp; [ -x /bin/kmod ] ; then
   ln -s kmod $WDIR/bin/lsmod
   ln -s kmod $WDIR/bin/insmod
 fi
 
-# Add lvm symlinks if appropriate
+# Ajout des liens symboliques vers lvm si adéquat
 if  [ -x /sbin/lvm ] ; then
-  ln -s lvm $WDIR/sbin/lvchange
-  ln -s lvm $WDIR/sbin/lvchange
+  ln -s lvm $WDIR/sbin/lvrename
+  ln -s lvm $WDIR/sbin/lvextend
   ln -s lvm $WDIR/sbin/lvchange
   ln -s lvm $WDIR/sbin/lvcreate
   ln -s lvm $WDIR/sbin/lvdisplay
@@ -178,10 +186,10 @@ if  [ -x /sbin/lvm ] ; then
   ln -s lvm $WDIR/sbin/vgck
 fi
 
-# Install libraries
-sort $unsorted | uniq | while read lib ; do
-  if [ "$lib" == "linux-vdso.so.1" ] ||
-     [ "$lib" == "linux-gate.so.1" ]; then
+# Installation des bibliothèques
+sort $unsorted | uniq | while read library ; do
+  if [ "$library" == "linux-vdso.so.1" ] ||
+     [ "$library" == "linux-gate.so.1" ]; then
     continue
   fi
 
@@ -190,7 +198,7 @@ done
 
 cp -a /lib/udev $WDIR/lib
 
-# Install the kernel modules if requested
+# Installation des modules du noyau si demandé
 if [ -n "$KERNEL_VERSION" ]; then
   find                                                                        \
      /lib/modules/$KERNEL_VERSION/kernel/{crypto,fs,lib}                      \
@@ -199,12 +207,15 @@ if [ -n "$KERNEL_VERSION" ]; then
      /lib/modules/$KERNEL_VERSION/kernel/drivers/usb/{host,storage}           \
      -type f 2&gt; /dev/null | cpio --make-directories -p --quiet $WDIR
 
+  cp /lib/modules/$KERNEL_VERSION/modules.{builtin,order}                     \
+            $WDIR/lib/modules/$KERNEL_VERSION
+
   depmod -b $WDIR $KERNEL_VERSION
 fi
 
 ( cd $WDIR ; find . | cpio -o -H newc --quiet | gzip -9 ) &gt; $INITRAMFS_FILE
 
-# Remove the temporary directory et file
+# Suppression du répertoire et du fichier temporaires
 rm -rf $WDIR $unsorted
 printf "done.\n"
 
@@ -296,7 +307,15 @@ for param in $cmdline ; do
   esac
 done
 
-udevd --daemon --resolve-names=never
+# L'emplacement d'udevd dépend de la version
+if [ -x /sbin/udevd ]; then
+  UDEV_PATH=/sbin
+else
+  UDEV_PATH=/lib/udev
+fi
+
+${UDEV_PATH}/udevd --daemon --resolve-names=never
+
 udevadm trigger
 udevadm settle
 
@@ -306,7 +325,7 @@ if [ -n "$rootdelay"    ] ; then sleep "$rootdelay"              ; fi
 
 do_mount_root
 
-killall -w /sbin/udevd
+killall -w ${UDEV_PATH}/udevd
 
 exec switch_root /.root "$init" "$@"
 
