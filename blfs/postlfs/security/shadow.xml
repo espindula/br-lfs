@@ -76,8 +76,10 @@
     <bridgehead renderas="sect3">Dépendances de Shadow</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
-    <para role="required"><xref linkend="linux-pam"/> ou
-    <xref linkend="cracklib"/></para>
+    <para role="required">
+      <xref linkend="linux-pam"/> ou
+      <xref linkend="cracklib"/>
+    </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/shadow"/></para>
@@ -111,7 +113,7 @@
 <screen><userinput>sed -i 's/groups$(EXEEXT) //' src/Makefile.in &amp;&amp;
 find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \; &amp;&amp;
 sed -i -e 's/ ko//' -e 's/ zh_CN zh_TW//' man/Makefile.in &amp;&amp;
-
+sed -i '/&lt;stdio.h&gt;/a#include &lt;stdarg.h&gt;' libmisc/copydir.c &amp;&amp;
 sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD SHA512@' \
        -e 's@/var/spool/mail@/var/mail@' etc/login.defs &amp;&amp;
 
@@ -120,8 +122,7 @@ sed -i -e 's@PATH=/sbin:/bin:/usr/sbin:/usr/bin@&amp;:/usr/local/sbin:/usr/local
 
 patch -Np1 -i ../shadow-&shadow-version;-nscd-1.patch &amp;&amp;
 
-./configure --prefix=/usr --sysconfdir=/etc \
-            --without-acl --without-attr &amp;&amp;
+./configure --prefix=/usr --sysconfdir=/etc &amp;&amp;
 make</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -169,11 +170,11 @@ mv -v /usr/bin/passwd /bin</userinput></screen>
     et <filename class="directory">/usr/local/sbin</filename> pour l'utilisateur 
     <systemitem class="username">root</systemitem> seulement.</para>
 
-    <para><command>--without-acl</command>&nbsp;: Désactive le lien avec <xref linkend="acl"/>
-    depuis que <application>Shadow</application> ne peut pas se compiler s'il est présent.</para>
-
-   <para><command>--without-attr</command>&nbsp;: Désactive le lien avec <xref linkend="attr"/>
-    depuis que <application>Shadow</application> ne peut pas se compiler s'il est présent.</para>
+    <para>
+      <command>sed -i '/&lt;stdio.h&gt;/a#include &lt;stdarg.h&gt;'
+      libmisc/copydir.c</command>&nbsp;: Ce sed corrige un bogue qui ferait échouer
+      la construction si <xref linkend="acl"/> est installé.
+    </para>
 
     <para><command>mv -v /usr/bin/passwd /bin</command>&nbsp;: Le programme
     <command>passwd</command> peut être nécessaire aux moments où le système de
@@ -277,6 +278,8 @@ mv -v /usr/bin/passwd /bin</userinput></screen>
 
 <screen role="root"><userinput>install -v -m644 /etc/login.defs /etc/login.defs.orig &amp;&amp;
 for FUNCTION in FAIL_DELAY LASTLOG_ENAB \
+                FAILLOG_ENAB QUOTAS_ENAB \
+                FTMP_FILE PASS_MIN_LEN \
                 MAIL_CHECK_ENAB \
                 OBSCURE_CHECKS_ENAB \
                 PORTTIME_CHECKS_ENAB \
@@ -290,7 +293,7 @@ for FUNCTION in FAIL_DELAY LASTLOG_ENAB \
                 PASS_ALWAYS_WARN \
                 CHFN_AUTH ENVIRON_FILE
 do
-    sed -i "s/^$FUNCTION/# &amp;/" /etc/login.defs
+    sed -i "s/^${FUNCTION}/# &amp;/" /etc/login.defs
 done</userinput></screen>
 
       </sect4>
@@ -321,11 +324,11 @@ done</userinput></screen>
         <title>'system-account'</title>
 
 <screen role="root"><userinput>cat &gt; /etc/pam.d/system-account &lt;&lt; "EOF"
-<literal># Begin /etc/pam.d/system-account
+<literal># Début de /etc/pam.d/system-account
  
 account     required       pam_unix.so
 
-# End /etc/pam.d/system-account</literal>
+# Fin de /etc/pam.d/system-account</literal>
 EOF</userinput></screen>
 
       </sect4>
@@ -334,7 +337,7 @@ EOF</userinput></screen>
         <title>'system-auth'</title>
 
 <screen role="root"><userinput>cat &gt; /etc/pam.d/system-auth &lt;&lt; "EOF"
-<literal># Begin /etc/pam.d/system-auth
+<literal># Début de /etc/pam.d/system-auth
 
 auth        required       pam_unix.so
 
@@ -347,7 +350,7 @@ EOF</userinput></screen>
         <title>'system-passwd' (avec CrackLib)</title>
 
 <screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
-<literal># Begin /etc/pam.d/system-password
+<literal># Début de /etc/pam.d/system-password
   
 # vérifie la force des nouveaux mots de passe (man pam_cracklib)
 password  required    pam_cracklib.so   type=Linux retry=3 difok=5 \
@@ -375,13 +378,13 @@ EOF</userinput></screen>
         <title>'system-passwd' (without cracklib)</title>
 
 <screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
-<literal># Begin /etc/pam.d/system-password
+<literal># Début de /etc/pam.d/system-password
 
 # utilisation de sha512 hash pour le cryptage, et essaie d'utiliser un des jetons d'authentification
 # défini précédement (chosen password) initialisé par un des modules anterieurs
 password  required    pam_unix.so       sha512 shadow try_first_pass
 
-# End /etc/pam.d/system-password</literal>
+# Fin de /etc/pam.d/system-password</literal>
 EOF</userinput></screen>
 
       </sect4>
@@ -390,11 +393,11 @@ EOF</userinput></screen>
         <title>'system-session'</title>
 
 <screen role="root"><userinput>cat &gt; /etc/pam.d/system-session &lt;&lt; "EOF"
-<literal># Begin /etc/pam.d/system-session
+<literal># Début de /etc/pam.d/system-session
 
 session   required    pam_unix.so
 
-# End /etc/pam.d/system-session</literal>
+# Fin de /etc/pam.d/system-session</literal>
 EOF</userinput></screen>
 
       </sect4>
@@ -403,7 +406,7 @@ EOF</userinput></screen>
         <title>'login'</title>
 
 <screen role="root"><userinput>cat &gt; /etc/pam.d/login &lt;&lt; "EOF"
-<literal># Begin /etc/pam.d/login
+<literal># Début de /etc/pam.d/login
 
 # Initialise le delai après un echec avant un nouveau prompt à 3 seconds
 auth      optional    pam_faildelay.so  delay=3000000
@@ -447,7 +450,7 @@ session   required    pam_limits.so
 session   include     system-session
 password  include     system-password
 
-# End /etc/pam.d/login</literal>
+# Fin de /etc/pam.d/login</literal>
 EOF</userinput></screen>
 
       </sect4>
@@ -482,7 +485,7 @@ account   include     system-account
 session   required    pam_env.so
 
 # Inclure la session par défaut
-+session   include     system-session
+session   include     system-session
 
 # Fin de /etc/pam.d/su</literal>
 EOF</userinput></screen>
@@ -519,8 +522,8 @@ EOF</userinput></screen>
 <screen role="root"><userinput>for PROGRAM in chfn chgpasswd chpasswd chsh groupadd groupdel \
                groupmems groupmod newusers useradd userdel usermod
 do
-    install -v -m644 /etc/pam.d/chage /etc/pam.d/$PROGRAM
-    sed -i "s/chage/$PROGRAM/" /etc/pam.d/$PROGRAM
+    install -v -m644 /etc/pam.d/chage /etc/pam.d/${PROGRAM}
+    sed -i "s/chage/$PROGRAM/" /etc/pam.d/${PROGRAM}
 done</userinput></screen>
 
         <warning>
@@ -589,9 +592,7 @@ EOF</userinput></screen>
           <primary sortas="e-etc-security-access.conf">/etc/security/access.conf</primary>
         </indexterm>
 
-<screen role="root"><userinput>if [ -f /etc/login.access ]; then
-    mv -v /etc/login.access /etc/login.access.NOUSE
-fi</userinput></screen>
+<screen role="root"><userinput>[ -f /etc/login.access ] &amp;&amp; mv -v /etc/login.access{,.NOUSE}</userinput></screen>
 
       </sect4>
 
@@ -610,9 +611,7 @@ fi</userinput></screen>
           <primary sortas="e-etc-security-limits.conf">/etc/security/limits.conf</primary>
         </indexterm>
 
-<screen role="root"><userinput>if [ -f /etc/limits ]; then
-    mv -v /etc/limits /etc/limits.NOUSE
-fi</userinput></screen>
+<screen role="root"><userinput>[ -f /etc/limits ] &amp;&amp; mv -v /etc/limits{,.NOUSE}</userinput></screen>
 
       </sect4>
 
