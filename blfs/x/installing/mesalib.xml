@@ -6,10 +6,10 @@
 
   <!ENTITY mesalib-download-http " ">
   <!ENTITY mesalib-download-ftp  "ftp://ftp.freedesktop.org/pub/mesa/&mesalib-version;/MesaLib-&mesalib-version;.tar.bz2">
-  <!ENTITY mesalib-md5sum        "0837c52698fe3252369c3fdb5195afcc">
-  <!ENTITY mesalib-size          "6.0 Mio">
-  <!ENTITY mesalib-buildsize     "356 Mio">
-  <!ENTITY mesalib-time          "4.0 SBU">
+  <!ENTITY mesalib-md5sum        "24eeebf66971809d8f40775a379b36c9">
+  <!ENTITY mesalib-size          "5.5 MB">
+  <!ENTITY mesalib-buildsize     "460 MB">
+  <!ENTITY mesalib-time          "3.0 SBU">
 ]>
 
 <sect1 id="mesalib" xreflabel="MesaLib-&mesalib-version;">
@@ -30,7 +30,7 @@
     <title>Introduction à MesaLib</title>
 
     <para><application>Mesa</application> est une bibliothèque graphique 
-    compatible OpenGL 3-D.</para>
+    compatible OpenGL 3D.</para>
 
     &lfs70_checked;
 
@@ -62,11 +62,6 @@
     <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
-        <para>Correctif requis&nbsp;: <ulink
-        url="&patch-root;/MesaLib-&mesalib-version;-llvm_3.0-1.patch"/>
-        </para>
-      </listitem>
-      <listitem>
         <para>Correctif recommandé&nbsp;: <ulink
         url="&patch-root;/MesaLib-&mesalib-version;-add_xdemos-2.patch"/>
         (Utilisé si l'installation de Xorg est testés avec les instrutions BLFS)</para>
@@ -85,10 +80,6 @@
       <xref linkend="xorg7-lib"/>
     </para>
 
-    <bridgehead renderas="sect4">Facultatives</bridgehead>
-    <para role="optional"><xref linkend="lesstif"/> (requis pour contruire les motifs
-    de widgets)</para>
-
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/mesalib"/></para>
 
@@ -106,9 +97,9 @@
     suivantes&nbsp;:</para>
 
 <screen><userinput>sed 's@FLAGS=\"-g@FLAGS=\"@' -i configure &amp;&amp;
-patch -Np1 -i ../MesaLib-&mesalib-version;-llvm_3.0-1.patch   &amp;&amp;
 patch -Np1 -i ../MesaLib-&mesalib-version;-add_xdemos-2.patch &amp;&amp;
-./configure $XORG_CONFIG --enable-xcb &amp;&amp;
+./configure --prefix=$XORG_PREFIX --enable-shared-dricore --enable-xa \
+            --with-gallium-drivers="nouveau,r300,r600,svga,swrast" &amp;&amp;
 make</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -128,7 +119,10 @@ install -v -m644    docs/* \
 
 <screen role="root"><userinput>ln -s -v ${XORG_PREFIX}/include/GL  /usr/include &amp;&amp;
 ln -s -v ${XORG_PREFIX}/include/EGL /usr/include &amp;&amp;
-ln -s -v ${XORG_PREFIX}/include/KHR /usr/include</userinput></screen>
+ln -s -v ${XORG_PREFIX}/include/KHR /usr/include &amp;&amp;
+for HEADER in xa_{composite,context,tracker}.h
+do
+  ln -s -v ${$XORG_PREFIX}/include/$HEADER /usr/include
 
   </sect2>
 
@@ -140,15 +134,14 @@ ln -s -v ${XORG_PREFIX}/include/KHR /usr/include</userinput></screen>
     paramètre -g de <envar>CFLAGS</envar> et de <envar>CXXFLAGS</envar> avec
     cette commande.</para>
 
-    <para><option>--enable-xcb</option>&nbsp;&nbsp;: utilisez le fond XCB 
-    au lieu du fond XLib par défaut pour GLX.</para>
+    <para><command>--enable-shared-dricore</command>: lie les modules DRI avec
+    les routines partagées coeur de DRI.</para>
 
-    <para><option>--enable-motif</option>&nbsp;: construit les widgets Motif dans
-    la bibliothèque des widgets GL (exige <application>lesstif</application>).</para>
+    <para><command>--enable-xa</command>: active la constructions de l'API d'accélaration X XA
+    (Requise pour le pilote VMware 3D).</para>
 
-    <para><option>--with-gallium-driver=...</option>&nbsp;: construit les pilotes
-    gallium supplémentaires. Par défaut, incluent r300, r600, et swrast. Vous
-    devez indiquer les pilotes i9xx et nouveau.</para>
+    <para><command>--with-gallium-driver=...</command>&nbsp;: construit les pilotes
+    gallium supplémentaires. Par défaut, incluent r300, r600, et swrast.Etendu pour construire le pilote nouveau.</para>
 
   </sect2>
 
@@ -162,9 +155,9 @@ ln -s -v ${XORG_PREFIX}/include/KHR /usr/include</userinput></screen>
 
       <seglistitem>
         <seg>glxgears et glxinfo</seg>
-        <seg>libEGL.so, libGL.so, libGLU.so, libGLw.so, et *_dri.so</seg>
-        <seg><envar>$XORG_PREFIX</envar>/include/{EGL,KHR},
-        <envar>$XORG_PREFIX</envar>/lib/{dri,egl}, et
+        <seg>libEGL.so, libGL.so, libGLU.so, libxatracker.so, et *_dri.so</seg>
+        <seg><envar>$XORG_PREFIX</envar>/include/{EGL,GL,KHR},
+        <envar>$XORG_PREFIX</envar>/lib/dri, et
         <envar>$XORG_PREFIX</envar>/share/doc/MesaLib-&mesalib-version;</seg>
       </seglistitem>
     </segmentedlist>
@@ -226,13 +219,12 @@ ln -s -v ${XORG_PREFIX}/include/KHR /usr/include</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libGLw">
-        <term><filename class='libraryfile'>libGLw.so</filename></term>
+      <varlistentry id="libxatracker">
+        <term><filename class='libraryfile'>libxatracker.so</filename></term>
         <listitem>
-          <para>est la bibliothèque de widget de dessin de zones OpenGL 
-          Xt/Motif.</para>
-          <indexterm zone="mesalib libGLw">
-            <primary sortas="c-libGLw">libGLw.so</primary>
+          <para>est la bibliothèque de l'API d'accélération XA X.</para>
+          <indexterm zone="mesalib libxatracker">
+            <primary sortas="c-libxatracker">libxatracker.so</primary>
           </indexterm>
         </listitem>
       </varlistentry>
