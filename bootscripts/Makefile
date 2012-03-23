@@ -90,8 +90,8 @@ rc0: files
 	ln -sf ../init.d/network     ${EXTDIR}/rc.d/rc0.d/K80network
 	ln -sf ../init.d/sysklogd    ${EXTDIR}/rc.d/rc0.d/K90sysklogd
 	ln -sf ../init.d/sendsignals ${EXTDIR}/rc.d/rc0.d/S60sendsignals
+	ln -sf ../init.d/swap        ${EXTDIR}/rc.d/rc0.d/S65swap
 	ln -sf ../init.d/mountfs     ${EXTDIR}/rc.d/rc0.d/S70mountfs
-	ln -sf ../init.d/swap        ${EXTDIR}/rc.d/rc0.d/S80swap
 	ln -sf ../init.d/localnet    ${EXTDIR}/rc.d/rc0.d/S90localnet
 	ln -sf ../init.d/halt        ${EXTDIR}/rc.d/rc0.d/S99halt
 
@@ -119,8 +119,8 @@ rc6: files
 	ln -sf ../init.d/network     ${EXTDIR}/rc.d/rc6.d/K80network
 	ln -sf ../init.d/sysklogd    ${EXTDIR}/rc.d/rc6.d/K90sysklogd
 	ln -sf ../init.d/sendsignals ${EXTDIR}/rc.d/rc6.d/S60sendsignals
+	ln -sf ../init.d/swap        ${EXTDIR}/rc.d/rc6.d/S65swap
 	ln -sf ../init.d/mountfs     ${EXTDIR}/rc.d/rc6.d/S70mountfs
-	ln -sf ../init.d/swap        ${EXTDIR}/rc.d/rc6.d/S80swap
 	ln -sf ../init.d/localnet    ${EXTDIR}/rc.d/rc6.d/S90localnet
 	ln -sf ../init.d/reboot      ${EXTDIR}/rc.d/rc6.d/S99reboot
 
