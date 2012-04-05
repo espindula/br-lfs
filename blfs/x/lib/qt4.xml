@@ -6,7 +6,7 @@
 
   <!ENTITY qt4-download-http "http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-&qt4-version;.tar.gz">
   <!ENTITY qt4-download-ftp  "ftp://ftp.trolltech.com/qt/source/qt-everywhere-opensource-src-&qt4-version;.tar.gz">
-  <!ENTITY qt4-md5sum        "e8a5fdbeba2927c948d9f477a6abe904">
+  <!ENTITY qt4-md5sum        "7960ba8e18ca31f0c6e4895a312f92ff">
   <!ENTITY qt4-size          "228 Mio">
   <!ENTITY qt4-buildsize     "1.8 Gio (complet), 619 (essentiel)">
   <!ENTITY qt4-time          "69 SBU (complet), 54 SBU (essentiel)">
@@ -29,10 +29,14 @@
   <sect2 role="package">
     <title>Introduction à Qt4</title>
 
-    <para>Le paquet <application>Qt4</application> contient plusieurs bibliothèques
-    <application>C++</application> avec des composants GUI et non GUI. Un des
-    utilisateurs principaux de <application>Qt4</application> est
-    <application>KDE4</application>.</para>
+    <para><application>Qt</application> est un environnement de travail d'applications
+    multi-plateforme qui est largemet utilisé pour développer des applications
+    avec une interface utilisateur graphique (GUI) (dans quelques cas Qt est classé
+    comme une trousse de widgets), et aussi utilisé pour developper des programmes
+    non-GUI comme les outils en ligen de commande et les consoles pour les serveurs.
+    Un des utilisateurs majeurs de <application>Qt4</application> est <application>KDE</application>.</para>
+
+    &lfs71_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -55,6 +59,21 @@
         <para>Estimation du temps de construction&nbsp;: &qt4-time;</para>
       </listitem>
     </itemizedlist>
+
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+       <para>Correctif GCC 4.7 : <ulink
+	url="&patch-root;/qt-everywhere-opensource-src-&qt4-version;-gcc_fix-1.patch"/>
+       </para>
+     </listitem>
+      <listitem>
+        <para>Correctif GLib 2.32 : <ulink
+	url="&patch-root;/qt-everywhere-opensource-src-&qt4-version;-glib_fix-1.patch"/>
+        </para>
+       </listitem>
+    </itemizedlist>
+
 
     <bridgehead renderas="sect3">Dépendances de Qt</bridgehead>
 
@@ -116,6 +135,7 @@
     <filename class='directory'>/usr</filename>. C'est la méthode utilisée par la
     plupart des distributions du marché.</para>
 
+<!--
     <note>
       <para>Il n'y a pas de conflit entre les applications et les en-têtes de
       <application>Qt3</application> et de <application>Qt4</application>, donc
@@ -139,7 +159,7 @@
       <filename>/opt/qt&lt;version&gt;/bin</filename> avant l'autre répertoire
       bin de Qt.  </para>
     </note>
-
+    -->
     <caution>
       <para>Si vous allez réinstaller <application>Qt4</application> et si le
       répertoire <filename class='directory'>/usr</filename> est utilisé comme
@@ -171,16 +191,20 @@
     class='directory'>/opt/qt-&qt4-version;/</filename> puis crée un lien
     symbolique vers <filename>/opt/qt/</filename>.</para>
 
-    <para>Installez <application>Qt4</application> en lançant les commandes
+    <para>Configurez <application>Qt4</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>./configure -prefix /opt/qt-&qt4-version;  \
-            -nomake examples         \
-            -nomake demos            \
-            -system-sqlite           \
-            -no-nis                  \
-            &amp;&amp;
-make</userinput></screen>
+<screen><userinput>patch -Np1 -i ../qt-everywhere-opensource-src-&qt4-version;-gcc_fix-1.patch &amp;&amp;
+patch -Np1 -i ../qt-everywhere-opensource-src-&qt4-version;-glib_fix-1.patch &amp;&amp;
+./configure -prefix /opt/qt-&qt4-version;  \
+            -release               \
+            -nomake examples       \
+            -nomake demos          \
+            -system-sqlite         \
+            -no-nis                \
+	    -opensource            \
+	    -confirm-license</userinput></screen>
+
 
     <note><title>Phonon</title>
     <para>Si <application>KDE4</application> est prévu d'être installé, ajoutez
@@ -188,6 +212,16 @@ make</userinput></screen>
     Au moment de l'installation de <application>KDE4</application>, une version
 	séparées de la bibliothèque <application>Phonon</application> sera installée 
 	qui correspondra mieux au besoin du bureau <application>KDE4</application>.</para></note>
+
+    <para>Si vous avez compilé avec <application>GCC</application> 4.7 vous devez supprimer quelques
+    messages d'alerte qui peuvent faire que la construction échouera. Ceci peut être réalisé
+    par la modification de quelques Makefiles:</para>
+
+    <screen><userinput>find src/3rdparty/webkit/Source/{WebCore,WebKit} -name 'Makefile*' -exec sed -i 's@-Werror @@' {} \;</userinput></screen>
+
+    <para>Maintenant, construisez le paquet:</para>
+
+    <screen><userinput>make</userinput></screen>
   
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
 
@@ -205,6 +239,10 @@ make</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
+    <para><command>patch -Np1 -i qt-everywhere-...</command>:
+    Les deux correctifs corrigent la compilation avec <application>GCC</application>
+    4.7 et <application>GLib</application> 2.32.</para>
+    
     <para><parameter>-nomake examples, -nomake demos</parameter>&nbsp;: Ces
     paramètres désactivent la construction de programmes qui n'ont d'intérêt 
     que pour un développeur <application>Qt4</application>.</para>
@@ -245,7 +283,7 @@ make</userinput></screen>
       fichiers de cache d'exécution:</para>
 	  
 <screen role="root"><userinput>cat &gt;&gt; /etc/ld.so.conf &lt;&lt; "EOF" &amp;&amp;
-<literal># Début du supplément qt de  /etc/ld.so.conf
+<literal># Début du supplément qt
 
 /opt/qt/lib
 

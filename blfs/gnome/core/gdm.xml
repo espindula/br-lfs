@@ -33,7 +33,7 @@
     gestionnaire d'affichage de <application>GNOME</application>. C'est
     utile pour permettre des connexions graphiques configurables.</para>
 
-    &lfs70_built;
+    &lfs70_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -122,8 +122,6 @@ make</userinput></screen>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
 <screen role='root'><userinput>make install &amp;&amp;
-ln -fsv $GNOME_PREFIX/lib/gnome-settings-daemon-2.0/gnome-settings-daemon \
-        $GNOME_PREFIX/lib/gdm &amp;&amp;-->
 ln -fsv $GNOME_PREFIX/lib/gnome-settings-daemon/gnome-settings-daemon \
         $GNOME_PREFIX/lib/gdm &amp;&amp;
 ln -fsv /usr/lib/ConsoleKit/ck-get-x11-display-device \
@@ -131,6 +129,24 @@ ln -fsv /usr/lib/ConsoleKit/ck-get-x11-display-device \
 ln -fsv /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
         $GNOME_PREFIX/lib/gdm
 </userinput></screen>
+
+   <para>Si votre <envar>GNOME_SYSCONFDIR</envar> n'est <emphasis>PAS</emphasis>
+   simplement <filename class="directory">/etc</filename> alors vous aurez besoin de créer
+   quelques liens symboliques supplémentaires pour que le menu et quelques fichiers
+   <literal>.desktop</literal> (en particulier <filename>gnome-settings-daemon.desktop</filename>) puissent
+   être trouvés, car <envar>XDG_CONFIG_DIRS</envar> n'est pas respecté quand
+   <command>gdm</command> invoque <command>gnome-session</command>. Lancez les commandes suivantes,
+   en tant qu'utilisateur <systemitem class="username">root</systemitem> :</para>
+
+<screen role='root'><userinput>ln -sfv $GNOME_SYSCONFDIR/xdg/menus /etc/xdg &amp;&amp;
+pushd $GNOME_SYSCONFDIR/xdg/autostart &amp;&amp;
+FILES=`ls` &amp;&amp;
+popd &amp;&amp;
+for F in $FILES; do
+    ln -sfv $GNOME_SYSCONFDIR/xdg/autostart/$F /etc/xdg/autostart
+done
+</userinput></screen>
+
 
   </sect2>
 
@@ -158,9 +174,14 @@ ln -fsv /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
     <filename class="directory">/etc/pam.d</filename> au lieu de
     <filename class="directory">$GNOME_SYSCONFDIR</filename>.</para>
 
-    <para><parameter>--enable-static=no</parameter>&nbsp;: Ce paramèqee empêche
+    <para><parameter>--enable-static=no</parameter>&nbsp;: Ce paramètre empêche
     les bibliothèques statiques de s'installer.</para>
 
+    <para><parameter>ln -fsv $GNOME_PREFIX/lib/gnome-settings-daemon/...</parameter>:
+    ces trois liens symboliques autorisent les fonctions d'arrêt/rédémarrage dans
+    <application>gdm</application> à fonctionner.</para>
+
+    
   </sect2>
 
   <sect2 role="configuration">
@@ -191,8 +212,7 @@ ln -fsv /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
 
       <para>Les fichiers de configuration <application>PAM</application> de
       <application>GDM</application> contiennent des modules non présents dans
-      installation de BLFS. Si vous avez installé
-      <application>PAM</application>, lancez les commandes suivantes
+      installation de BLFS. Lancez les commandes suivantes
       en tant qu'utilisateur <systemitem class="username">root</systemitem> 
       pour remplacer ces fichiers par des fichiers contenant les modules
       correctement spécifiés&nbsp;:</para>
@@ -209,6 +229,8 @@ session     required    pam_loginuid.so
 session     optional    pam_console.so</literal>
 
 EOF
+chmod -v 644 /etc/pam.d/gdm
+
 cat &gt; /etc/pam.d/gdm-autologin &lt;&lt; "EOF"
 <literal>auth        required    pam_env.so
 account     required    pam_nologin.so
@@ -220,6 +242,8 @@ session     required    pam_loginuid.so
 session     optional    pam_console.so</literal>
 
 EOF
+chmod -v 644 /etc/pam.d/gdm-autologin
+
 cat &gt; /etc/pam.d/gdm-welcome &lt;&lt; "EOF"
 <literal>auth        required    pam_env.so
 auth        required    pam_permit.so
@@ -230,7 +254,10 @@ session     required    pam_loginuid.so
 session     optional    pam_keyinit.so force revoke
 session     required    pam_unix.so</literal>
 
-EOF</userinput></screen>
+EOF
+chmod -v 644 /etc/pam.d/gdm-welcome
+</userinput></screen>
+
 
       <indexterm zone="gdm gdm-config">
         <primary sortas="e-etc-pam.d-gdm">/etc/pam.d/gdm</primary>
@@ -240,12 +267,11 @@ EOF</userinput></screen>
         sortas="e-etc-pam.d-gdm-autologin">/etc/pam.d/gdm-autologin</primary>
       </indexterm>
 
-      <para id="gdm-config-dbus">Si vous avez installé <application>D-BUS</application>
-      et si vous voulez démarrer le démon de la session
-      <application>D-BUS</application> quand vous démarrez un environnement de
-      bureau GNOME en utilisant <command>gdm</command>, vous devrez créer 
-      un nouveau fichier Xsession. Créez le fichier en utilisant la commande
-      suivante en tant qu'utilisateur root.</para>
+      <para id="gdm-config-dbus">Le fichier <filename>gnome.desktop</filename>
+      livré ne démarre par le démon de la session <application>D-BUS</application>, et
+      il en résulte que tous les fichiers nécessaires par le gestionnaire de fenêtre
+      <application>GNOME</application> ne sont pas trouvés. Vous pouvez créer un nouveau fichier
+      Xsession en utilisant la commande suivante en tant qu'utilisateur root.</para>
 
 <screen role="root"><userinput>cat &gt; $GNOME_PREFIX/share/xsessions/gnome-dbus.desktop &lt;&lt; "EOF"
 <literal>[Desktop Entry]
@@ -263,6 +289,13 @@ chmod -v 644 $GNOME_PREFIX/share/xsessions/gnome-dbus.desktop</userinput></scree
       <para>Choisissez cette session en utilisant la boîte de dialogue de sélection de
       session sur l'écran de connexion du gestionnaire d'affichage. Vous avez
       aussi la possibilité d'en faire votre session par défaut.</para>
+
+      <para>Après avoir comparé les résultats en utilisant ces deux fichiers différents,
+	et particulièrement si la traduction du fichier livré est utile pour vous, vous pouvez
+	éditer les commandes <literal>Exec</literal> et <literal>TryExec</literal>
+      dans le fichier <filename>gnome.desktop</filename> fourni. Alternativement,
+      vous pouvez l'effacer si vous le trouvez inutile.</para>
+
 
       <note>
         <para>Il se peut que vous utilisiez le fichier 
@@ -282,9 +315,8 @@ chmod -v 644 $GNOME_PREFIX/share/xsessions/gnome-dbus.desktop</userinput></scree
 
       <para>On peut tester <command>gdm</command> en l'exécutant en tant 
       qu'utilisateur
-      <systemitem class="username">root</systemitem>. Utilisez la commande
-      <command>gdm-stop</command> si vous souhaitez arrêter le gestionnaire 
-      d'affichage.</para>
+      <systemitem class="username">root</systemitem>. si vous souhaitez l'arrêter
+      vous devez allez dans un tty différent et ensuite le tuer.</para>
 
     </sect3>
 

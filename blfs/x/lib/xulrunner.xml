@@ -62,7 +62,18 @@
         <para>Estimation du temps de construction&nbsp;: &xulrunner-time;</para>
       </listitem>
     </itemizedlist>
-    
+
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          correctif requis si vous utilisez <application>GCC-4.7</application>:
+          <ulink url="&patch-root;/xulrunner-&xulrunner-version;_gcc-4.7-1.patch"/>
+        </para>
+      </listitem>
+   </itemizedlist>
+
+   
     <bridgehead renderas="sect3">Dépendances de Xulrunner</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
@@ -174,8 +185,12 @@ EOF</userinput></screen>
     <para>Installez <application>Xulrunner</application> en tapant les
     commandes suivantes&nbsp;:</para>
 
-<screen><userinput>sed -i 's#VPX_CODEC_USE_INPUT_PARTITION#VPX_CODEC_USE_INPUT_FRAGMENTS#' configure &amp;&amp;
-sed -i '/Version/aRequires: nspr &gt;= &nspr-version;' xulrunner/installer/libxul-embedding.pc.in &amp;&amp;
+<screen><userinput>patch -p1 &lt; ../xulrunner-&xulrunner-version;_gcc-4.7-1.patch &amp;&amp;
+sed -i 's#VPX_CODEC_USE_INPUT_PARTITION#VPX_CODEC_USE_INPUT_FRAGMENTS#' configure &amp;&amp;
+if pkg-config --atleast-version &nspr-version; nspr
+then sed -i '/Version/aRequires: nspr &gt;= &nspr-version;' xulrunner/installer/libxul-embedding.pc.in
+else sed -i '/Version/aRequires: mozilla-nspr &gt;= &nspr-version;' xulrunner/installer/libxul-embedding.pc.in
+fi &amp;&amp;
 make -f client.mk build</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -185,20 +200,10 @@ make -f client.mk build</userinput></screen>
 <screen role="root"><userinput>make -C xulrunner-build-dir install &amp;&amp;
 mkdir -p /usr/lib/mozilla &amp;&amp;
 ln -sv ../mozilla/plugins /usr/lib/xulrunner-&xulrunner-version; &amp;&amp;
-chown -Rv root:root /usr/{include,lib,share/idl}/xulrunner-*</userinput></screen>
-
-    <para>Si vous avez choisi d'utiliser les NSPR et NSS inclus (par exemple,
-    si vous <emphasis>n'avez pas</emphasis> installé <xref linkend="nspr"/> et
-    <xref linkend="nss"/>), en tant qu'utilisateur
-    <systemitem class="username">root</systemitem>, terminez l'instalaltion avec
-    les commandes suivantes&nbsp;:</para>
-
-<screen role="root"><userinput>for DL in libnss3.so libnssutil3.so libsmime3.so \
-  libssl3.so libsoftokn3.so  libplds4.so libplc4.so libnspr4.so
-do ln -sv xulrunner-&xulrunner-version;/${DL} /usr/lib
-done &amp;&amp;
-unset DL</userinput></screen>
-
+chown -Rv root:root /usr/{include,lib,share/idl}/xulrunner-* &amp;&amp;
+for library in /usr/lib/xulrunner-devel-&xulrunner-version;/sdk/lib/*.a
+do ln -sfv ${library#/usr/lib/} /usr${library#*sdk}
+done</userinput></screen>
   </sect2>
 
   <sect2 role="commands">
@@ -210,11 +215,21 @@ unset DL</userinput></screen>
     installé libvpx-v0.9.7 ou supérieur ou si vous n'avez pas installé
       <application>Libvpx</application>.</para>
 
-    <para><command>sed ... Requires: nspr</command>&nbsp;: Si vous essayez de
-    construire des autres applications sans
-    cela, l'en-tête prtypes de nspr ne sera pas trouvée.</para>
+    <para>
+      <command>if pkg-config --atleast-version &nspr-version; nspr;
+      then sed -i '/Version/aRequires: nspr &gt;= &nspr-version;'
+      xulrunner/installer/libxul-embedding.pc.in;
+      else sed -i '/Version/aRequires: mozilla-nspr &gt;= &nspr-version;'
+      xulrunner/installer/libxul-embedding.pc.in;
+      fi</command>: ceci utilise <command>pkg-config</command> pour voir si 
+      <xref linkend="nspr"/> est installé et alors ajoute une ligne pour requérir
+      <application>nspr</application> ou <application>mozilla-nspr</application>
+      à <filename>libxul-embedding.pc</filename>. Si vous essayez de construire quelques autres
+      applications sans ceci, l'entête prtypes de NSPR ne sera pas trouvée.
+    </para>
 
-    <para><command>make -f client.mk ...</command>&nbsp;: Les produits Mozilla
+    <para>
+  <command>make -f client.mk ...</command>&nbsp;: Les produits Mozilla
     sont empaquetées pour permettre l'utilisation d'un fichier de configuration
     qu'on peut utiliser pour passer les paramètres de configuration à la
     commande <command>configure</command>. <command>make</command> utilise
@@ -227,17 +242,15 @@ unset DL</userinput></screen>
     du lien symbolique <application>Xulrunner</application> conserve les greffons
     supplémentaires gans le répertoire habituel.</para>
 
-    <para><command>for DL in ...</command>&nbsp;: Les bibliothèques NSPR et NSS
-      inclus avec ce paquet sont installés dans <filename>/usr/lib/xulrunner-&xulrunner-version;</filename>,
-    ce qui signifie qu'elles ne seront pas trouvées au moment de l'exécution. En
-    utilisant des liens symboliques issus de
-    <filename class="directory">/usr/lib</filename> les bibliothèques seront trouvées
-    et les liens pourront être modifiés facilement pour pointer vers une version plus
-    récente quand nous mettrons à jour.</para>
-
-   <note>
-     <para>Quand vous mettez à jour Xulrunner, rappelez vous de mettre à jour les liens symboliques.</para>
-   </note>
+    <para>
+    <command>for library in
+      /usr/lib/xulrunner-devel-&xulrunner-version;/sdk/lib/*.so; do ln -sfv
+      ${library#/usr/lib/} /usr${library#*sdk}; done</command>: Les bibliothèques 
+      livrés avec ce paquet sont installées dans 
+      <filename class="directory">/usr/lib/xulrunner-devel-&xulrunner-version;</filename>
+      ce qui veut dire qu'elles ne sont pas trouvées à l'exécution. Ces commandes font des liens
+      symboliques relatifs vers les bibliothèques partagées de <filename class="directory">/usr/lib</filename>.
+    </para>
 
   </sect2>
 
