@@ -8,7 +8,7 @@
 #               Kevin P. Fleming - kpfleming@linuxfromscratch.org
 # Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
 #
-# Version     : LFS 7.0
+# Version     : LFS 7.2
 #
 # Notes       : The IFCONFIG variable is passed to the SERVICE script
 #               in the /lib/services directory, to indicate what file the
@@ -16,7 +16,24 @@
 #
 ########################################################################
 
-RELEASE="7.0"
+up()
+{
+  if ip link show $1 > /dev/null 2>&1; then
+     link_status=`ip link show $1`
+
+     if [ -n "${link_status}" ]; then
+        if ! echo "${link_status}" | grep -q UP; then
+           ip link set $1 up
+        fi
+     fi
+
+  else
+     log_failure_msg "\nInterface ${IFACE} doesn't exist."
+     exit 1
+  fi
+}
+
+RELEASE="7.2"
 
 USAGE="Usage: $0 [ -hV ] [--help] [--version] interface"
 VERSTR="LFS ifup, version ${RELEASE}"
@@ -78,7 +95,7 @@ fi
 
 for S in ${SERVICE}; do
   if [ ! -x "/lib/services/${S}" ]; then
-    MSG="\n     Unable to process ${file}.  Either " 
+    MSG="\nUnable to process ${file}.  Either " 
     MSG="${MSG}the SERVICE '${S} was not present "
     MSG="${MSG}or cannot be executed."
     log_failure_msg "$MSG"
@@ -86,38 +103,34 @@ for S in ${SERVICE}; do
   fi
 done
 
-if [ -z "${CHECK_LINK}"         -o \
-        "${CHECK_LINK}" = "y"   -o \
-        "${CHECK_LINK}" = "yes" -o \
-        "${CHECK_LINK}" = "1" ]; then
+# Create/configure the interface
+for S in ${SERVICE}; do 
+  IFCONFIG=${file} /lib/services/${S} ${IFACE} up
+done
 
-   #  Bring up the interface
-   if ip link show ${IFACE} > /dev/null 2>&1; then
-      link_status=`ip link show ${IFACE}`
-
-      if [ -n "${link_status}" ]; then
-         if ! echo "${link_status}" | grep -q UP; then
-            ip link set ${IFACE} up
-         fi
-      fi
-
-   else
-      log_failure_msg2 "Interface ${IFACE} doesn't exist."
-      exit 1
-   fi
-fi
+# Bring up the interface and any components
+for I in $IFACE $INTERFACE_COMPONENTS; do up $I; done
 
 # Set MTU if requested. Check if MTU has a "good" value.
 if test -n "${MTU}"; then
    if [[ ${MTU} =~ ^[0-9]+$ ]] && [[ $MTU -ge 68 ]] ; then
-      ip link set dev ${IFACE} mtu $MTU
+      for I in $IFACE $INTERFACE_COMPONENTS; do 
+         ip link set dev $I mtu $MTU; 
+      done
    else
       log_info_msg2 "Invalid MTU $MTU"
    fi
 fi 
 
-for S in ${SERVICE}; do 
-  IFCONFIG=${file} /lib/services/${S} ${IFACE} up
-done
+# Set the route default gateway if requested
+if [ -n "${GATEWAY}" ]; then
+   if ip route | grep -q default; then
+      log_warning_msg "\nGateway already setup; skipping."
+   else
+      log_info_msg "Setting up default gateway..."
+      ip route add default via ${GATEWAY} dev ${IFACE}
+      evaluate_retval
+   fi
+fi
 
 # End /sbin/ifup

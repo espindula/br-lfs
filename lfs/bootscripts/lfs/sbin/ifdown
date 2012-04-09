@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/bash 
 ########################################################################
 # Begin /sbin/ifdown
 #
@@ -67,33 +67,28 @@ if [ "$IFACE" = "" ]; then
    exit 1
 fi
 
-# Reverse the order
-SERVICES=
-for S in ${SERVICE}; do SERVICES="${SERVICES} ${S}"; done
+# We only need to first service to bring down the interface
+S=`echo ${SERVICE} | cut -f1 -d" "`
 
-# This will run the service scripts
 if ip link show ${IFACE} > /dev/null 2>&1; then
-   for S in ${SERVICES}; do
-
-     if [ -n "${S}" -a -x "/lib/services/${S}" ]; then
-       IFCONFIG=${file} /lib/services/${S} ${IFACE} down
-     else
-       MSG="Unable to process ${file}.  Either "
-       MSG="${MSG}the SERVICE variable was not set "
-       MSG="${MSG}or the specified service cannot be executed."
-       log_failure_msg "$MSG"
-       exit 1
-    fi
-  done
+   if [ -n "${S}" -a -x "/lib/services/${S}" ]; then
+     IFCONFIG=${file} /lib/services/${S} ${IFACE} down
+   else
+     MSG="Unable to process ${file}.  Either "
+     MSG="${MSG}the SERVICE variable was not set "
+     MSG="${MSG}or the specified service cannot be executed."
+     log_failure_msg "$MSG"
+     exit 1
+  fi
 else
    log_warning_msg "Interface ${1} doesn't exist."
 fi
 
+# Leave the interface up if there are additional interfaces in the device
 link_status=`ip link show ${IFACE} 2>/dev/null`
 
 if [ -n "${link_status}" ]; then
    if [ "$(echo "${link_status}" | grep UP)" != "" ]; then
-      # Set the interface down only if all IP addresses have been removed.
       if [ "$(ip addr show ${IFACE} | grep 'inet ')" == ""  ]; then
          log_info_msg "Bringing down the ${IFACE} interface..."
          ip link set ${IFACE} down
