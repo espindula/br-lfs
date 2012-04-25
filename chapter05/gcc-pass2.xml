@@ -43,15 +43,20 @@
   <sect2 role="installation">
     <title>Installation of GCC</title>
 
-    <para>Versions of GCC later than 4.3 will treat this build as if
-    it were a relocated compiler and disallow searching for startfiles in
-    the location specified by <parameter>--prefix</parameter>. Since this
-    will not be a relocated compiler, and the startfiles in
-    <filename class="directory">/tools</filename> are crucial to building
-    a working compiler linked to the libs in <filename class="directory">/tools</filename>,
-    apply the following patch which partially reverts GCC to its old behavior:</para>
+    <para>Our first build of GCC has installed a couple of internal system
+    headers.  Normally one of them, <filename>limits.h</filename> will in turn
+    include the corresponding system <filename>limits.h</filename> header, in
+    this case, <filename>/tools/include/limits.h</filename>. However, at the
+    time of the first build of gcc <filename>/tools/include/limits.h</filename>
+    did not exist, so the internal header that GCC installed is a partial,
+    self-contained file and does not include the extended features of the
+    system header. This was adequate for building the temporary libc, but this
+    build of GCC now requires the full internal header.  Create a full version
+    of the internal header using a command that is identical to what the GCC
+    build system does in normal circumstances:</para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../&gcc-startfiles-patch;</userinput></screen>
+<screen><userinput remap="pre">cat gcc/limitx.h gcc/glimits.h gcc/limity.h &gt; \
+  `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include-fixed/limits.h</userinput></screen>
 
     <para>Under normal circumstances the GCC <command>fixincludes</command> script
     is run in order to fix potentially broken header files. As GCC-&gcc-version;
@@ -76,14 +81,9 @@ sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userin
 sed 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
   &gt; gcc/Makefile.in</userinput></screen>
 
-    <para>The following command will change the location of GCC's default
-    dynamic linker to use the one installed in
-    <filename class="directory">/tools</filename>. It also removes <filename
-    class="directory">/usr/include</filename> from GCC's include search path.
-    Doing this now rather than adjusting the specs file after installation
-    ensures that the new dynamic linker is used during the actual build of
-    GCC. That is, all of the binaries created during the build will link
-    against the new Glibc. Issue:</para>
+    <para>Once again, change the location of GCC's default dynamic linker to
+    use the one installed in <filename
+    class="directory">/tools</filename>.</para>
 
 <screen><userinput remap="pre">for file in \
  $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
@@ -94,39 +94,10 @@ do
   echo '
 #undef STANDARD_STARTFILE_PREFIX_1
 #undef STANDARD_STARTFILE_PREFIX_2
-#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib"
+#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
 #define STANDARD_STARTFILE_PREFIX_2 ""' &gt;&gt; $file
   touch $file.orig
 done</userinput></screen>
-
-    <para>In case the above seems hard to follow, let's break it down a bit.
-    First we find all the files under the
-    <filename class="directory">gcc/config</filename> directory that are named
-    either <filename>linux.h</filename>, <filename>linux64.h</filename> or
-    <filename>sysv4.h</filename>.
-    For each file found, we copy it to a file of the same name but with an added
-    suffix of <quote>.orig</quote>. Then the first sed expression prepends
-    <quote>/tools</quote> to every instance of <quote>/lib/ld</quote>,
-    <quote>/lib64/ld</quote> or <quote>/lib32/ld</quote>, while the second one
-    replaces hard-coded instances of <quote>/usr</quote>. Then we add our define
-    statements which alter the include search path and the default startfile prefix
-    to the end of the file.
-    Finally, we use <command>touch</command> to update the timestamp on the copied files.
-    When used in conjunction with <command>cp -u</command>, this prevents unexpected
-    changes to the original files in case the commands are inadvertently run twice.
-    </para>
-
-    <para>On x86_64, unsetting the multilib spec for GCC ensures that it
-    won't attempt to link against libraries on the host:</para>
-
-<screen><userinput remap="pre">case $(uname -m) in
-  x86_64)
-    for file in $(find gcc/config -name t-linux64) ; do \
-      cp -v $file{,.orig}
-      sed '/MULTILIB_OSDIRNAMES/d' $file.orig &gt; $file
-    done
-  ;;
-esac</userinput></screen>
 
     <para>As in the first build of GCC it requires the GMP, MPFR and MPC
     packages. Unpack the tarballs and move them into the required directory
@@ -149,12 +120,13 @@ cd ../gcc-build</userinput></screen>
 
     <para>Now prepare GCC for compilation:</para>
 
-<screen><userinput remap="configure">CC="$LFS_TGT-gcc -B/tools/lib/" \
+<screen><userinput remap="configure">CC="$LFS_TGT-gcc" \
 AR=$LFS_TGT-ar                  \
 RANLIB=$LFS_TGT-ranlib          \
 ../gcc-&gcc-version;/configure          \
     --prefix=/tools             \
     --with-local-prefix=/tools  \
+    --with-native-system-header-dir=/tools/include \
     --enable-clocale=gnu        \
     --enable-shared             \
     --enable-threads=posix      \
@@ -164,8 +136,6 @@ RANLIB=$LFS_TGT-ranlib          \
     --disable-multilib          \
     --disable-bootstrap         \
     --disable-libgomp           \
-    --without-ppl               \
-    --without-cloog             \
     --with-mpfr-include=$(pwd)/../gcc-&gcc-version;/mpfr/src \
     --with-mpfr-lib=$(pwd)/mpfr/src/.libs</userinput></screen>
 

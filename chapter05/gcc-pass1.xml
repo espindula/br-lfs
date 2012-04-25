@@ -62,6 +62,43 @@ mv -v gmp-&gmp-version; gmp
 tar -zxf ../mpc-&mpc-version;.tar.gz
 mv -v mpc-&mpc-version; mpc</userinput></screen>
 
+    <para>The following command will change the location of GCC's default
+    dynamic linker to use the one installed in <filename
+    class="directory">/tools</filename>. It also removes <filename
+    class="directory">/usr/include</filename> from GCC's include search path.
+    Issue:</para>
+
+<screen><userinput remap="pre">for file in \
+ $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
+do
+  cp -uv $file{,.orig}
+  sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
+      -e 's@/usr@/tools@g' $file.orig &gt; $file
+  echo '
+#undef STANDARD_STARTFILE_PREFIX_1
+#undef STANDARD_STARTFILE_PREFIX_2
+#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
+#define STANDARD_STARTFILE_PREFIX_2 ""' &gt;&gt; $file
+  touch $file.orig
+done</userinput></screen>
+
+    <para>In case the above seems hard to follow, let's break it down a bit.
+    First we find all the files under the <filename
+    class="directory">gcc/config</filename> directory that are named either
+    <filename>linux.h</filename>, <filename>linux64.h</filename> or
+    <filename>sysv4.h</filename>.  For each file found, we copy it to a file of
+    the same name but with an added suffix of <quote>.orig</quote>. Then the
+    first sed expression prepends <quote>/tools</quote> to every instance of
+    <quote>/lib/ld</quote>, <quote>/lib64/ld</quote> or
+    <quote>/lib32/ld</quote>, while the second one replaces hard-coded
+    instances of <quote>/usr</quote>. Next, we add our define statements which
+    alter the default startfile prefix to the end of the file. Note that the
+    trailing <quote>/</quote> in <quote>/tools/lib/</quote> is required.
+    Finally, we use <command>touch</command> to update the timestamp on the
+    copied files.  When used in conjunction with <command>cp -u</command>, this
+    prevents unexpected changes to the original files in case the commands are
+    inadvertently run twice.  </para>
+
     <para>The GCC documentation recommends building GCC outside of the
     source directory in a dedicated build directory:</para>
 
@@ -73,6 +110,11 @@ cd ../gcc-build</userinput></screen>
 <screen><userinput remap="configure">../gcc-&gcc-version;/configure         \
     --target=$LFS_TGT          \
     --prefix=/tools            \
+    --with-sysroot=$LFS        \
+    --with-newlib              \
+    --without-headers          \
+    --with-local-prefix=/tools \
+    --with-native-system-header-dir=/tools/include \
     --disable-nls              \
     --disable-shared           \
     --disable-multilib         \
@@ -83,13 +125,52 @@ cd ../gcc-build</userinput></screen>
     --disable-libgomp          \
     --disable-libquadmath      \
     --enable-languages=c       \
-    --without-ppl              \
-    --without-cloog            \
     --with-mpfr-include=$(pwd)/../gcc-&gcc-version;/mpfr/src \
     --with-mpfr-lib=$(pwd)/mpfr/src/.libs</userinput></screen>
 
     <variablelist>
       <title>The meaning of the configure options:</title>
+
+      <varlistentry>
+        <term><parameter>--with-newlib</parameter></term>
+        <listitem>
+          <para>Since a working C library is not yet available, this ensures
+          that the inhibit_libc constant is defined when building libgcc. This prevents
+          the compiling of any code that requires libc support.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-headers</parameter></term>
+        <listitem>
+          <para>When creating a complete cross-compiler, GCC requires
+          standard headers compatible with the target system. For our
+          purposes these headers will not be needed. This switch prevents
+          GCC from looking for them.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-local-prefix=/tools</parameter></term>
+        <listitem>
+          <para>The local prefix is the location in the system that GCC will search
+          for locally installed include files. The default is <filename>/usr/local</filename>.
+          Setting this to <filename>/tools</filename> helps keep the host location of
+          <filename>/usr/local</filename> out of this GCC's search path.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-native-system-header-dir=/tools/include</parameter></term>
+        <listitem>
+          <para>By default GCC searches <filename>/usr/include</filename> for system
+          headers. In conjunction with the sysroot switch, this would translate normally
+          to <filename>$LFS/usr/include</filename>. However the headers that will be installed
+          in the next two sections will go to <filename>$LFS/tools/include</filename>. This
+          switch ensures that gcc will find them correctly. In the second pass of GCC, this
+          same switch will ensure that no headers from the host system are found.</para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><parameter>--disable-shared</parameter></term>
@@ -124,15 +205,6 @@ cd ../gcc-build</userinput></screen>
         <listitem>
           <para>This option ensures that only the C compiler is built.
           This is the only language needed now.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--without-ppl, --without-cloog</parameter></term>
-        <listitem>
-          <para>These switches prevent GCC from building against the PPL and
-          CLooG libraries which may be present on the host system, but will not
-          be available in the chroot environment.</para>
         </listitem>
       </varlistentry>
 
