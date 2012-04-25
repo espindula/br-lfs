@@ -6,9 +6,9 @@
 
   <!ENTITY webkitgtk-download-http "http://webkitgtk.org/releases/webkit-&webkitgtk-version;.tar.xz">
   <!ENTITY webkitgtk-download-ftp  " ">
-  <!ENTITY webkitgtk-md5sum        "52b2feb0fae01e68432b547bd85e8d74">
+  <!ENTITY webkitgtk-md5sum        "f2f01b1fdc7262a2eede81ebed0970b2">
   <!ENTITY webkitgtk-size          "7.6 Mio">
-  <!ENTITY webkitgtk-buildsize     "500 Mio (38 Mio installed)">
+  <!ENTITY webkitgtk-buildsize     "566 Mio (38 Mio installed)">
   <!ENTITY webkitgtk-time          "28 SBU">
 ]>
 
@@ -113,7 +113,7 @@
       si vous avez un processeur à plusieurs c&oelig;urs, il peut être utile de
       d'accélérer la construction en lançant make avec plusieurs tâches.</para>
 
-    <para>Si vous voulez lancer make avec seulement une tâche, installez
+    <para>Si vous voulez lancer make avec seulement une c&oelig;ur, installez
     <application>WebKitGTK+</application> en exécutant les commandes
     suivantes&nbsp;:</para>
 
@@ -122,15 +122,22 @@ make</userinput></screen>
 
      <para>
       Si vous avez un processeur à plusieurs c&oelig;urs et si vous voulez lancer
-      make avec plusieurs tâches, 
+      make avec plusieurs tâches en parallèle, 
       installez <application>WebKit</application> en lançant les commandes
       suivantes&nbsp;:
     </para>
 
 <screen><userinput>./configure --prefix=/usr --enable-introspection &amp;&amp;
+error_count=0
 until make -j$(getconf _NPROCESSORS_ONLN)
-do echo "Let's try that again..."
-done</userinput></screen>
+do
+  if (( $((error_count++)) &gt; 4 ))
+  then
+    echo Too Many Errors
+    break
+  fi
+done
+unset error_count</userinput></screen>
 
     <para>
       Ce paquet n'est pas fourni avec une suite de tests opérationnelle.
@@ -157,21 +164,25 @@ done</userinput></screen>
       support pour 
       <application>Gobject-Introspection</application> et elle est nécessaire
       pour un bureau
-      <application>GNOME</application>.
+      <application>GNOME</application>. Si vous n'avez pas installé
+      <application>Gobject-Introspection</application> et si vous ne voulez pas
+      installer <application>GNOME</application>, supprimez cette option.
     </para>
 
     <para>
-      <command>until make -j$(getconf _NPROCESSORS_ONLN)</command>). Malheureusement,
+      <command>error_count=0; until make ...</command>&nbsp;: Malheureusement,
       il y a des concurrences (race conditions) dans les makefiles qui feront
       échouer la construction si vous lancez make avec plusieurs tâches. Ce
-      petit bidouillage simple contourne cela, <command>until</command> fera
-      poursuivre <command>make</command> jusqu'à ce qu'il réussisse.
-      Vous devez regarder la sortie de
-      <command>make</command>. Si une erreur apparaît qui
-      <emphasis>n'est pas</emphasis> due a des concurrences (race condition) alors il répétera
-      <command>make</command> jusqu'à ce que vous tuiez le processus.
-      <command>$(getconf _NPROCESSORS_ONLN)</command> affiche le nombre de
-      c&oelig;urs que semble posséder votre ordinateur.
+      petit bidouillage simple contourne ce problème en utilisant 
+      <command>until</command> pour maintenir la commande <command>make</command>
+      en fonction jusqu'à ce qu'elle réussisse. La variable <envar>error_count</envar>
+      est incrémentée à chaque fois qu'une erreur se produit et elle est vérifiée
+      pour être sûr que pas plus de 5 erreurs ne surviennent. Ceci est fait pour
+      que, si une erreur sorvient et qui <emphasis>n'est pas due</emphasis> à
+      un conflit (race condition), <command>make</command> ne se répétera pas
+      indéfiniment. <command>$(getconf _NPROCESSORS_ONLN)</command> affiche
+      le nombre de c&oelig;urs que semble avoir votre ordinateur. Si vous préférez,
+      vous pouvez utiliser un entier positif tel que 4.
     </para>
 
     <para><option>--with-gtk=2.0</option>&nbsp;: Ce paramètre oblige
