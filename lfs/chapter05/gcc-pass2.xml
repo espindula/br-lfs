@@ -43,17 +43,21 @@
   <sect2 role="installation">
     <title>Installation de GCC</title>
 
-    <para>Les versions de GCC supérieures à 4.3 vont gérer cette construction
-    comme si C était un compilateur placé à un nouvel endroit et interdire
-    la recherche de fichiers de démarrage (startfiles) dans l'emplacement
-    spécifié par <parameter>--prefix</parameter>. Comme ce ne sera pas un
-    compilateur placé à un nouvel endroit, et vu que les fichiers de 
-    démarrage dans <filename class="directory">/tools</filename> sont cruciaux
-    pour la construction d'un compilateur fonctionnel liés aux libs dans
-    <filename class="directory">/tools</filename>, appliquez le correctif suivant
-    qui ramène partiellement GCC vers son  ancien comportement&nbsp;:</para>
+    <para>Notre première construction de GCC a installé deux en-têtes internes
+    au système. En principe, l'une d'entre elles, <filename>limits.h</filename> 
+    incluera l'en-tête <filename>limits.h</filename> du système correspondante
+    dans ce cas, <filename>/tools/include/limits.h</filename>. Cependant, au
+    moment de la première construction de gcc, <filename>/tools/include/limits.h</filename>
+    n'existait pas, donc l'en-tête interne qu'a installée GCC est un fichier
+    partiel, à moitié-rempli et il n'inclut pas fonctions étendues de l'en-tête
+    du système. Ceci s'adaptait à la construcsion de la libc temporaire mais la
+    construction de GCC exige maintenant l'en-tête interne complète. 
+    Créez une version complète de l'en-tête interne en utilisant une commande 
+    identique à ce que fait le système de construction de GCC en temps 
+    normal&nbsp;:</para>
     
-<screen><userinput remap="pre">patch -Np1 -i ../&gcc-startfiles-patch;</userinput></screen>
+<screen><userinput remap="pre">cat gcc/limitx.h gcc/glimits.h gcc/limity.h &gt; \
+  `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include-fixed/limits.h</userinput></screen>
 
     <para>Dans des circonstances normales, le script
     <command>fixincludes</command> de GCC est exécuté
@@ -79,58 +83,23 @@ sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig &gt; gcc/Makefile.in</userin
 sed 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in.tmp \
   &gt; gcc/Makefile.in</userinput></screen>
 
-    <para>La commande suivante modifiera l'emplacement par défaut de l'éditeur de lien
-    dynamique de GCC pour utiliser celui installé dans
-    <filename class="directory">/tools</filename>. Il supprime aussi
-    <filename class="directory">/usr/include</filename> du chemin de 
-    recherche des en-têtes de GCC.</para>
+    <para>Une fois encore, modifiez l'emplacement de l'éditeur de liens dynamique
+    par défaut de GCC pour utiliser celui installé dans <filename
+    class="directory">/tools</filename>.</para>
 
-    <para>Faire cela maintenant plutôt qu'ajuster le fichier specs après
-    l'installation nous assure que l'éditeur de liens dynamiques sera utilisé
-    lors de la construction de GCC. C'est-à-dire que tous les exécutables créés lors de la construction seront liés à la nouvelle Glibc.
-    Lancez&nbsp;:</para>
-    
 <screen><userinput remap="pre">for file in \
  $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
 do
-   cp -uv $file{,.orig}
+#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib"   cp -uv $file{,.orig}
    sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
    -e 's@/usr@/tools@g' $file.orig &gt; $file
    echo '
 #undef STANDARD_STARTFILE_PREFIX_1
 #undef STANDARD_STARTFILE_PREFIX_2
-#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib"
+#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
 #define STANDARD_STARTFILE_PREFIX_2 ""' &gt;&gt; $file
    touch $file.orig
 done</userinput></screen>
-
-    <para>Si ce qui précède vous semble dur à suivre, décomposons-le un peu.
-    D'abord, nous trouvons tous les fichiers sous le répertoire <filename class="directory">gcc/config</filename> qui
-    sont nommés <filename>linux.h</filename> ou <filename>linux64.h</filename>.
-    Pour chaque fichier trouvé, nous le copions
-    vers un fichier du même nom mais avec en plus le suffixe <quote>.orig</quote>.
-    Puis la première expression sed préfixe chaque
-    occurrence de <quote>/lib/ld</quote>, <quote>/lib64/ld</quote> ou
-    <quote>/lib32/ld</quote> par  <quote>/tools</quote>, tandis que la deuxième remplace les occurrences de <quote>/usr</quote> codées en dur. Nous ajoutons alors nos déclarations define qui
-    modifient le chemin de recherche et le préfixe du fichier de démarrage
-    par défaut à la fin du fichier. Enfin, nous utilisons
-    <command>touch</command> pour mettre à jour l'horodatage des fichiers copiés.
-    Utilisé conjointement avec <command>cp -u</command>, cela empêche les
-    modifications inattendues des fichiers d'origine au cas où les commandes
-    seraient exécutées deux fois par inadvertence.</para>
-    
-    <para>En x86_64, le déparamétrage du spec multilib (multibibliothèque) pour GCC
-    assure qu'il ne s'efforcera pas de se lier aux bibliothèque sur le
-    système hôte&nbsp;:</para>
-    
-<screen><userinput remap="pre">case $(uname -m) in
-  x86_64)
-    for file in $(find gcc/config -name t-linux64) ; do \
-      cp -v $file{,.orig}
-      sed '/MULTILIB_OSDIRNAMES/d' $file.orig &gt; $file
-    done
-  ;;
-esac</userinput></screen>
 
     <para>Comme dans la première construction de GCC, il a besoin de GMP,
     de MPFR et MPC. Déballez les archives tar et déplacez-les dans les répertoires
@@ -155,12 +124,13 @@ cd ../gcc-build</userinput></screen>
 
     <para>Maintenant, préparez la compilation de GCC&nbsp;:</para>
 
-<screen><userinput remap="configure">CC="$LFS_TGT-gcc -B/tools/lib/" \
+<screen><userinput remap="configure">CC="$LFS_TGT-gcc" \
 AR=$LFS_TGT-ar                  \
 RANLIB=$LFS_TGT-ranlib          \
 ../gcc-&gcc-version;/configure          \
     --prefix=/tools             \
     --with-local-prefix=/tools  \
+    --with-native-system-header-dir=/tools/include \
     --enable-clocale=gnu        \
     --enable-shared             \
     --enable-threads=posix      \
@@ -170,8 +140,6 @@ RANLIB=$LFS_TGT-ranlib          \
     --disable-multilib          \
     --disable-bootstrap         \
     --disable-libgomp           \
-    --without-ppl               \
-    --without-cloog             \
     --with-mpfr-include=$(pwd)/../gcc-&gcc-version;/mpfr/src \
     --with-mpfr-lib=$(pwd)/mpfr/src/.libs</userinput></screen>
 

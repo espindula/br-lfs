@@ -62,6 +62,43 @@ mv -v gmp-&gmp-version; gmp
 tar -zxf ../mpc-&mpc-version;.tar.gz
 mv -v mpc-&mpc-version; mpc</userinput></screen>
 
+    <para>La commande suivante modifiera l'emplacement de l'éditeur de liens
+    dynamique par défaut de GCC pour utiliser celui installé dans <filename
+    class="directory">/tools</filename>. Elle supprime aussi <filename
+    class="directory">/usr/include</filename> du chemin de recherche include de
+    GCC. Lancez&nbsp;:</para>
+
+<screen><userinput remap="pre">for file in \
+ $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
+do
+  cp -uv $file{,.orig}
+  sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
+      -e 's@/usr@/tools@g' $file.orig &gt; $file
+  echo '
+#undef STANDARD_STARTFILE_PREFIX_1
+#undef STANDARD_STARTFILE_PREFIX_2
+#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
+#define STANDARD_STARTFILE_PREFIX_2 ""' &gt;&gt; $file
+  touch $file.orig
+done</userinput></screen>
+
+    <para>Au cas où ce qui précède vous semble compliqué à suivre, décortiquons-le un
+    peu. On cherche tout d'abord tous les fichiers sous le répertoire <filename
+    class="directory">gcc/config</filename> nommés soit 
+    <filename>linux.h</filename>, <filename>linux64.h</filename> ou
+    <filename>sysv4.h</filename>.  Pour chaque fichier trouvé, on le copie dans
+    un fichier du même nom, mais avec en plus le suffixe <quote>.orig</quote>. 
+    Puis la première expression sed envoie <quote>/tools</quote> dans toutes les 
+    occurrences <quote>/lib/ld</quote>, <quote>/lib64/ld</quote> ou
+    <quote>/lib32/ld</quote>, tandis que la deuxième remplace les lignes
+    <quote>/usr</quote> codées en dur. Ensuite, nous ajoutons nos instructions
+    define qui modifient le préfixe des startfiles par défaut à la fin du fichier.
+    Notez que le suffixe <quote>/</quote> dans <quote>/tools/lib/</quote> est
+    requis. Enfin, nous utilisons <command>touch</command> pour mettre à jour
+    l'horodatage des fichiers copiés. Utilisé avec <command>cp -u</command>, 
+    ceci empêche des modifications non prévues des fichiers originaux au cas où
+    les commandes sont lancées deux fois par erreur.  </para>
+
     <para>La documentation de GCC recommande de ne pas construire GCC dans le
     répertoire des sources mais dans un répertoire de construction dédié&nbsp;:</para>
 
@@ -73,6 +110,11 @@ cd ../gcc-build</userinput></screen>
 <screen><userinput remap="configure">../gcc-&gcc-version;/configure         \
     --target=$LFS_TGT          \
     --prefix=/tools            \
+    --with-sysroot=$LFS        \
+    --with-newlib              \
+    --without-headers          \
+    --with-local-prefix=/tools \
+    --with-native-system-header-dir=/tools/include \
     --disable-nls              \
     --disable-shared           \
     --disable-multilib         \
@@ -83,13 +125,56 @@ cd ../gcc-build</userinput></screen>
     --disable-libgomp          \
     --disable-libquadmath      \
     --enable-languages=c       \
-    --without-ppl              \
-    --without-cloog            \
     --with-mpfr-include=$(pwd)/../gcc-&gcc-version;/mpfr/src \
     --with-mpfr-lib=$(pwd)/mpfr/src/.libs</userinput></screen>
 
     <variablelist>
       <title>Voici la signification des options de configure&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--with-newlib</parameter></term>
+        <listitem>
+          <para>Vu qu'aucune bibliothèque C fonctionnelle n'est encore disponible,
+          ceci garantit que la constante inhibit_libc soit définie lors de la 
+          construction de libgcc. Cela empêchela compilation d'un code exigeant
+          le support libc.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-headers</parameter></term>
+        <listitem>
+          <para>Lors de la compilation d'un compilateur croisé complet, GCC 
+          exige des en-têtes standards compatibles avec le système cible. Pour
+          nos objectifs, ces en-têtes ne seront pas nécessaires. Ce paramètre
+          emmêche GCC de les chercher.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-local-prefix=/tools</parameter></term>
+        <listitem>
+          <para>Le préfixe local est l'emplacement du système où GCC cherchera
+          les fichiers include installés en local. Par défaut, c'est 
+          <filename>/usr/local</filename>. Définir ceci sur
+          <filename>/tools</filename> aide à garder l'emplacement de l'hôte 
+          <filename>/usr/local</filename> en-dehors du chemin de recherche de
+          GCC.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-native-system-header-dir=/tools/include</parameter></term>
+        <listitem>
+          <para>Par défaut, GCC cherche les en-têtes du système dans
+          <filename>/usr/include</filename>. Associé au paramètre sysroot, ceci
+          ne serait pas traduit en <filename>$LFS/usr/include</filename>. Cependant,
+          les en-têtes qui seront installées aux deux prochaines sections iront
+          dans <filename>$LFS/tools/include</filename>. Ce paramètre garantit que
+          gcc les trouvera correctement. Dans la deuxième passe de GCC, ce même
+          paramètre garantira qu'aucune en-tête du système hôte ne soit trouvée.</para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><parameter>--disable-shared</parameter></term>
@@ -127,14 +212,6 @@ cd ../gcc-build</userinput></screen>
         </listitem>
       </varlistentry>
  
-      <varlistentry>
-        <term><parameter>--without-ppl, --without-cloog</parameter></term>
-        <listitem>
-          <para>Ces paramètres empêche GCC de se construire contre les bibliothèques
-          PPL et CLooG qui peuvent être présentes sur le système hôte, mais
-          qui ne seront pas disponibles dans l'environnement chroot.</para>
-        </listitem>
-      </varlistentry>
     </variablelist>
 
     <para>Compilez GCC en lançant&nbsp;:</para>

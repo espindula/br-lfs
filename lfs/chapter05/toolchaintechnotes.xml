@@ -79,8 +79,7 @@
       sur du matériel gérant le 64 bits.</para>
     </listitem>
     <listitem>
-      <para>Une manipulation attentionnée du fichier <filename>specs</filename>
-      de <command>gcc</command> indique au compilateur
+      <para>Une manipulation attentionnée des sources de GCC dira au compilateur
       l'éditeur de liens dynamique cible à utiliser.</para>
     </listitem>
   </itemizedlist>
@@ -142,7 +141,11 @@ checking what linker to use... /tools/i686-lfs-linux-gnu/bin/ld</computeroutput>
   l'assemblage ceci comprenant les chemins de recherche inclus par
   <command>gcc</command> et leur ordre.</para>
 
-  <para>Le prochain paquetage installé est Glibc. Les choses les plus 
+  <para>Ce qui est ensuite installé est les en-têtes de l'API de Linux nettoyées.
+  Elles permettent à la bibliothèque standard (Glibc) d'interagir avec les 
+  fonctionnalités que le noyau Linux fournira.</para>
+
+  <para>Le paquet suivant installé est Glibc. Les choses les plus 
   importantes à prendre en considération pour construire Glibc sont
   le compilateur, les outils binaires et les en-têtes du noyau.
   Le compilateur ne pose généralement pas de problème car Glibc utilise
@@ -163,46 +166,20 @@ checking what linker to use... /tools/i686-lfs-linux-gnu/bin/ld</computeroutput>
   est auto-suffisant en terme de machinerie de construction et ne repose
   généralement pas sur la chaîne d'outils par défaut.</para>
 
-  <para>Après l'installation de Glibc, modifiez le
-  fichier specs de <command>gcc</command>  pour pointer vers le nouvel éditeur de
-  liens dynamique dans 
-  <filename class="directory">/tools/lib</filename>. Cette
-  dernière étape est vitale en assurant que la recherche et l'édition des liens
-  ne s'opère qu'à l'intérieur du préfixe <filename class="directory">/tools</filename>.
-  Un chemin en dur vers un éditeur de liens est intégré dans chaque exécutable
-  ainsi que dans chaque exécutable partagé (ELF). Ceci peut être inspecté en
-  exécutant&nbsp;:
-
-   <userinput>readelf -l &lt;nom du binaire&gt; | grep interpreter</userinput>.
-   Modifier le fichier specs de gcc nous assure que chaque programme
-  compilé à partir de maintenant et jusqu'à la fin de ce chapitre
-  utilisera le nouvel éditeur de liens dynamiques dans 
-  <filename class="directory">/tools/lib</filename>.</para>
-
-  <para>Pour la seconde passe de GCC, ses sources doivent être modifiées pour
-  dire à GCC d'utiliser le nouvel éditeur de liens dynamique. Échouer sur ce 
-  point aboutira à des
-  programmes GCC ayant le nom de l'éditeur de liens  provenant du
-  répertoire 
-
-  <filename class="directory">/lib</filename> Le besoin d'utiliser le
-  nouvel éditeur de liens dynamique est aussi la raison pour laquelle le
-  correctif Specs est appliqué lors de la seconde passe de GCC. Échouer
-  sur ce point aboutira à des programmes GCC ayant le nom de l'éditeur
-  de liens  provenant du répertoire 
-
-  <filename  class="directory">/lib</filename> du système hôte intégré
-  en eux, ce qui empêchera le but de s'éloigner de l'hôte.</para>
-
   <para>Lors de la seconde passe de Binutils, nous sommes capable  
 d'utiliser l'option <parameter>--with-lib-path</parameter> de  
 configure pour contrôler le chemin de recherche des bibliothèques de
-<command>ld</command>. À partir de là, la chaîne d'outils principal est
-contenu en lui-même. Le reste des paquetages de <xref  
-linkend="chapter-temporary-tools"/> se construit à partir de la nouvelle
-Glibc dans
+<command>ld</command>.</para>
 
-<filename class="directory">/tools</filename>.</para>
+  <para>Pour la deuxième passe de GCC, ses sources doivent aussi être modifiées
+  pour dit à GCC d'utiliser le nouvel éditeur de liens dynamique. Un échec pour
+  faire cela aura pour conséquence que les GCC eux-mêmes auront le nom que
+  l'éditeur de liens dynamique du répertoire <filename class="directory">/lib</filename> 
+  du système hôte embarrué à l'intérieur, ce qui irait à l'encontre de l'objectif
+  dede se démarquer de l'hôte. Dans cette optique, l'ensemble d'outils c&oelig;ur
+  est auto-contenue et auto-hébergée. Le reste des paquets du
+  <xref linkend="chapter-temporary-tools"/> se construit contre la nouvelle
+  Glibc de <filename class="directory">/tools</filename>.</para>
 
   <para>Avant d'entrer dans l'environnement chroot dans <xref
   linkend="chapter-building-system"/>, le premier paquetage majeur à
@@ -211,59 +188,5 @@ Glibc dans
   class="directory">/usr</filename>, nous allons réaliser une rapide modification
   des valeurs par défaut de l'ensemble des outils puis continuer la
   construction du reste du système LFS cible.</para>
-
-  <!-- FIXME: Removed as part of the fix for bug 1061 - we no longer build pass1
-      packages statically, therefore this explanation isn't required
-
-  <sect2> <title>Notes sur l'édition de liens statiques</title>
-
-  <para>En dehors de leur tâches spécifiques, la plupart des programmes
-  doivent réaliser un grand nombre d'opérations habituelles, voire
-  triviales. Elles incluent l'allocation de mémoire, la recherche dans
-  des répertoire, la lecture et l'écriture de fichiers, la gestion des
-  chaînes de caractères, la reconnaissance de modèles, l'arithmétique et
-  d'autres tâches. Au lieu d'obliger chaque programme à réinventer la
-  roue, le système GNU fournit toutes ces fonctions de base dans des
-  bibliothèques toutes prêtes. La bibliothèque majeure sur un système
-  Linux est Glibc.</para>
-
-  <para>Il existe deux façons de lier les fonctions d'une bibliothèque
-  dans un programme qui les utilise&mdash;statiquement ou dynamiquement.
-  Quand un programme est lié statiquement, le code des fonctions
-  utilisées est inclus dans l'exécutable, donnant un gros programme.
-  Quand un programme est lié dynamiquement, il inclut une référence à
-  l'éditeur de liens, le nom de la bibliothèque et le nom de la
-  fonction, aboutissant à un exécutable bien plus petit. Une troisième
-  option est d'utiliser l'interface de programmation de l'éditeur de
-  liens (voir la page man <filename>dlopen(3)</filename> pour plus
-  d'informations).</para>
-
-  <para>L'édition de liens dynamiques est le comportement par défaut sur
-  Linux et a trois avantages majeurs sur l'édition de liens statiques.
-  Tout d'abord, seule une copie du code exécutable de la bibliothèque
-  est nécessaire sur le disque dur, à la place de plusieurs copies du
-  même code inclus dans plusieurs programmes, sauvegardant ainsi de
-  l'espace disque. Deuxièmement, quand plusieurs programmes utilisent la
-  même fonction de bibliothèque en même temps, seule une copie du code
-  de la fonction est requis en mémoire, sauvegardant ainsi de la mémoire
-  vive. Troisièmement, quand une fonction d'une bibliothèque est
-  corrigée ou améliorée, seule la bibliothèque doit être recompilée au
-  lieu de recompiler tous les programmes utilisant ladite
-  fonction.</para>
-
-  <para>Si l'édition de liens dynamiques a plusieurs avantages, alors  
-pourquoi   utilisons-nous l'édition statique pour les deux premiers
-paquetages   dans ce  chapitre&nbsp;? Il y a trois raisons &mdash;
-historique, éducative et technique. La raison historique est que les
-versions antérieures de LFS liaient statiquement tous les programmes de
-ce chapitre. Sur le plan éducatif, connaître les différences entre
-statique et dynamique est utile. Le bénéfice technique est un élément
-gagné pour l'indépendance sur le système hôte, signifiant que les
-programmes peuvent être utilisés indépendamment du système hôte.
-Néanmoins, il est bon de noter qu'une construction réussie de LFS peut
-toujours se faire quand les deux premiers paquetages de LFS sont
-construits dynamiquement.</para>
-
-  </sect2>-->
 
 </sect1>
