@@ -3,13 +3,13 @@
    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
-  <!ENTITY autofs-patch-dir     "http://ftp.kernel.org/pub/linux/daemons/autofs/v5">
-  <!ENTITY autofs-download-http "http://ftp.kernel.org/pub/linux/daemons/autofs/v5/autofs-&autofs-version;.tar.bz2">
-  <!ENTITY autofs-download-ftp  "ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/autofs-&autofs-version;.tar.bz2">
-  <!ENTITY autofs-md5sum        "27839fe6fa8105b2b7d31bc922fd7cf6">
-  <!ENTITY autofs-size          "221 Kio">
-  <!ENTITY autofs-buildsize     "9 Mio">
-  <!ENTITY autofs-time          "moins de 0.1 SBU">
+  <!ENTITY autofs-patch-dir     "http://ftp.kernel.org/pub/linux/daemons/autofs/v5/patches-5.0.7">
+  <!ENTITY autofs-download-http "http://ftp.kernel.org/pub/linux/daemons/autofs/v5/autofs-&autofs-version;.tar.xz">
+  <!ENTITY autofs-download-ftp  "ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/autofs-&autofs-version;.tar.xz">
+  <!ENTITY autofs-md5sum        "cb05edaa43116c1837776e503bd86a66">
+  <!ENTITY autofs-size          "240 Kio">
+  <!ENTITY autofs-buildsize     "8.5 Mio">
+  <!ENTITY autofs-time          "0.1 SBU">
 ]>
 
 <sect1 id="autofs" xreflabel="Autofs-&autofs-version;">
@@ -39,10 +39,8 @@
     <para>Il peut aussi être utile pour permettre aux utilisateurs de monter des
     disquettes, des cdroms et d'autres périphériques de stockage amovibles sans
     devoir faire appel à l'administrateur système pour monter les périphériques.</para>
-<!--    bien que cette possibilité est en général offerte aujourd'hui par HAL (voir
-   <ulink url="http://www.freedesktop.org/wiki/Software/hal">Hal</ulink>). Il se peut que cela ne soit pas idéal pour toutes les
-    installations, donc gardez à l'esprit les risques avant d'implémenter cette
-    fonctionnalité.</para>-->
+
+    &lfs71_built;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -69,7 +67,7 @@
     <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
 
     <para>Correctifs recommandés&nbsp;: Il y a des correctifs fréquents appliqués
-    à <application>Autofs</application>. Une des méthodes que vous pouvez utiliser
+    à <application>autofs</application>. Une des méthodes que vous pouvez utiliser
     pour récupérer les correctifs actuels exige d'installer préalablement le
     paquet <xref linkend="wget"/>. Après vous être assuré que la commande
     <command>wget</command> est installée dans un répertoire identifié dans la
@@ -81,14 +79,13 @@ sed 's;autofs;&autofs-patch-dir;/autofs;' \
     patch_order-&autofs-version; &gt; wget-list &amp;&amp;
 wget -i wget-list</userinput></screen>
 
-    <note><para>A ce jour, la liste de correctifs contient un patch
-     étiquetés comme étant issus de la série de patchs 5.0.4.</para></note>
-
     <bridgehead renderas="sect3">Dépendances d'Autofs</bridgehead>
 
-    <bridgehead renderas="sect4">Facultatives</bridgehead>
-    <para role="optional"><xref linkend="openldap"/> et
-    <xref linkend="cyrus-sasl"/></para>
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required">
+      <xref linkend="openldap"/>,
+      <xref linkend="cyrus-sasl"/> et
+      <xref linkend="mitkrb"/></para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/autofs"/></para>
@@ -132,8 +129,7 @@ make</userinput></screen>
 
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>make install &amp;&amp;
-ln -sf  ../init.d/autofs /etc/rc.d/rcsysinit.d/S52autofs</userinput></screen>
+<screen role="root"><userinput>make install</userinput></screen>
 
   </sect2>
 
@@ -253,13 +249,15 @@ EOF</userinput></screen>
 
     </sect3>
 
-<!--
     <sect3  id="autofs-init">
-      <title>Boot Script</title>
+      <title>Script de démarrage</title>
+ 
+      <para> <application>autofs</application> installe son propre script de
+      démarrage, mais il n'a pas la capacité d'enregistrement, ni la cohérence
+      visuelle avec d'autres scripts BLFS.</para>
 
-
-      <para>Installez le script de montage <filename>/etc/rc.d/init.d/autofs</filename>
-      et le fichier de configuration <filename>/etc/sysconfig/autofs.conf</filename> inclus dans le paquet <xref linkend="bootscripts"/>.</para>
+      <para>Installez le script de montage <filename>/etc/init.d/autofs</filename>
+      inclu dans le paquet <xref linkend="bootscripts"/>.</para>
 
       <indexterm zone="autofs autofs-init">
         <primary sortas="f-autofs-init">autofs</primary>
@@ -267,14 +265,14 @@ EOF</userinput></screen>
 
 <screen role="root"><userinput>make install-autofs</userinput></screen>
 
-      <para>The time-out variable is set in
-      <filename>/etc/sysconfig/autofs.conf</filename>. The installed file sets
-      a default of 60 seconds of inactivity before unmounting the device.  A
-      much shorter time may be necessary to protect buffer writing to a floppy
-      if users tend to remove the media prior to the timeout setting.</para>
+      <para>La variable time-out est définie dans
+      <filename>/etc/sysconfig/autofs.conf</filename>. Le fichier installé définit
+      par défaut 60 secondes d'inactivité avant de démonter le périphérique. Il
+      se peut qu'un temps bien plus bref soit nécessaire pour protéger l'écriture 
+      en tampon avec un périphérique amovible si les utilisateurs ont tendance à
+      enlever le média dans un délai plus court que celui paramétré.</para>
 
     </sect3>
--->
 
   </sect2>
 
@@ -288,12 +286,12 @@ EOF</userinput></screen>
 
       <seglistitem>
         <seg>automount</seg>
-        <seg>lookup_file.so, lookup_hosts.so, lookup_multi.so,
-        lookup_nisplus.so, lookup_program.so, lookup_userhome.so,
-        lookup_yp.so, mount_afs.so, mount_autofs.so, mount_bind.so,
-        mount_changer.so, mount_ext2.so, mount_generic.so,
-        mount_nfs.so, parse_sun.so</seg>
-        <seg>/lib/autofs et /var/run/autofs</seg>
+        <seg>lookup_dir.so, lookup_file.so, lookup_hosts.so, lookup_ldap.so,
+             lookup_multi.so, lookup_nisplus.so, lookup_program.so, lookup_sss.so,
+             lookup_userhome.so, lookup_yp.so, mount_afs.so, mount_autofs.so, 
+             mount_bind.so, mount_changer.so, mount_ext2.so, mount_generic.so,
+             mount_nfs.so, parse_sun.so</seg>
+        <seg>/lib/autofs</seg>
       </seglistitem>
     </segmentedlist>
 
