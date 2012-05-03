@@ -11,7 +11,7 @@
   <!ENTITY firefox-md5sum        "80c3e5927274de7f181fb5f931ac5fd4">
   <!ENTITY firefox-size          "75 Mio">
   <!ENTITY firefox-buildsize     "2.8 Gio (31 Mio installés)">
-  <!ENTITY firefox-time          "24 SBU (ou 0.3 si vous construisez contre un Xulrunner installé)">
+  <!ENTITY firefox-time          "24 SBU">
 ]>
 
 <sect1 id="firefox" xreflabel="Firefox-&firefox-version;">
@@ -89,9 +89,6 @@
       <application>Gnome</application>),
       <xref linkend="libnotify"/>,
       <xref linkend="nspr"/>, <xref linkend="nss"/>,
-      <xref linkend="xulrunner"/> (lier à un xulrunner installé rapetissit
-      Firefox de 32 Mio, ce qui est peu par rapport à la taille de
-      xulrunner),
       <xref linkend="wireless_tools"/>,
       <ulink url="http://www.valgrind.org/">Valgrind</ulink> (seulement pour
       tester le code jemalloc) et
@@ -134,10 +131,6 @@ ac_add_options --disable-necko-wifi
 # Si vous avez installé libnotify effacez cette option&nbsp;:
 ac_add_options --disable-libnotify
 
-# Si vous avez installé xulrunner, décommentez ces deux lignes&nbsp;:
-# ac_add_options --with-system-libxul
-# ac_add_options --with-libxul-sdk=/usr/lib/xulrunner-devel-&xulrunner-version;
-
 # Décommentez ceci si vous les avez installé&nbsp;:
 # ac_add_options --enable-startup-notification
 # ac_add_options --enable-system-hunspell
@@ -148,20 +141,17 @@ ac_add_options --disable-libnotify
 # ac_add_options --with-system-nss
 
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/firefox-build-dir
-ac_add_options --enable-official-branding
-ac_add_options --prefix=/usr
-
-# Le reste de ces options n'ont pas d'effet si vous construisez contre un
-# xulrunner déjà installé :
 ac_add_options --disable-crashreporter
 ac_add_options --disable-debug
 ac_add_options --disable-installer
 ac_add_options --disable-static
 ac_add_options --disable-tests
 ac_add_options --disable-updater
+ac_add_options --enable-official-branding
 ac_add_options --enable-shared
 ac_add_options --enable-system-cairo
 ac_add_options --enable-system-ffi
+ac_add_options --prefix=/usr
 ac_add_options --with-pthreads
 ac_add_options --with-system-jpeg
 ac_add_options --with-system-png
@@ -175,20 +165,13 @@ EOF</userinput></screen>
   ipc/chromium/src/base/{file_util_linux,message_pump_libevent}.cc &amp;&amp;
 sed -i '/sys\/time\.h/a#include &lt;unistd.h&gt;' ipc/chromium/src/base/time_posix.cc &amp;&amp;
 sed -i 's# ""##' browser/base/Makefile.in &amp;&amp;
-make -f client.mk</userinput></screen>
+make -f client.mk &amp;&amp;
+make -C firefox-build-dir/browser/installer</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
 
 
-    <para>Si vous <emphasis>n'avez pas</emphasis> lié
-    <application>Firefox</application> à un <application>Xulrunner</application>
-     installé&nbsp;:</para>
-
-<screen><userinput>make -C firefox-build-dir/browser/installer</userinput></screen>
-
-    <para>Maintenant, si vous <emphasis>n'avez pas</emphasis> lié
-    <application>Firefox</application> à un <application>Xulrunner</application>
-    installé, en tant qu'utilisateur <systemitem class="username">root</systemitem> ,
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> ,
     installez le paquet&nbsp;:</para>
 
 <screen role="root"><userinput>mkdir /usr/lib/firefox-&firefox-version; &amp;&amp;
@@ -199,20 +182,15 @@ mkdir -p /usr/lib/mozilla/plugins &amp;&amp;
 ln -sv ../mozilla/plugins /usr/lib/firefox-&firefox-version; &amp;&amp;
 chown -R -v root:root /usr/lib/firefox-&firefox-version;</userinput></screen>
 
-    <para>Si vous <emphasis>avez</emphasis> lié à
-    un <application>Xulrunner</application> déjà installé, en tant qu'utilisateur
-    <systemitem class="username">root</systemitem>&nbsp;:</para>
+    <para>
+      Les instructions ci dessus installent juste la partie dont vous avez besoin
+      pour exécuter
+      <application>Firefox</application>. Cependant, si vous voulez installer l'environnement
+      de développement complet de <application>Firefox</application> (Notez,
+      cela installe plus de 500 Mio de fichiers supplémentaire et ce n'est pas recommandé) en
+      tant qu'utilisateur <systemitem class="username">root</systemitem> :</para>
 
-<screen role="root"><userinput>make -C firefox-build-dir install &amp;&amp;
-rm /usr/bin/firefox &amp;&amp;
-cat &gt; /usr/bin/firefox &lt;&lt; "EOF" &amp;&amp;
-#!/bin/bash
-/usr/lib/xulrunner-&xulrunner-version;/xulrunner /usr/lib/firefox-&firefox-version;/application.ini "${@}"
-EOF
-chmod 755 /usr/bin/firefox &amp;&amp;
-mkdir -p /usr/lib/mozilla/plugins &amp;&amp;
-ln -sv ../mozilla/plugins /usr/lib/firefox-&firefox-version; &amp;&amp;
-chown -R -v root:root /usr/lib/firefox-&firefox-version;</userinput></screen>
+<screen role="root"><userinput>make -C firefox-build-dir install</userinput></screen>
  
   </sect2>
 
@@ -246,14 +224,7 @@ chown -R -v root:root /usr/lib/firefox-&firefox-version;</userinput></screen>
     déballe <application>Firefox</application> dans /usr/lib. L'option
     <option>--strip-components=1</option> supprime le répertoire
     &apos;firefox&apos; des noms de fichier, ce qui nous permet de le déballer
-    dans un répertoire versionné. Déballer l'archive (au lieu d'exécuter make install)
-    l'empêche d'installer <filename class="directory">/usr/lib/firefox-devel-&firefox-version;</filename>
-    qui contient environ 430 Mio de fichiers. Si vous avez besoin d'un de ces
-    fichiers, ils se trouvent dans <xref linkend="xulrunner"/></para>
-
-    <para><command>make -C firefox-build-dir install</command>&nbsp;: Ceci
-    lance
-    <command>make install</command> dans firefox-build-dir.</para>
+    dans un répertoire versionné.</para>
 
     <para><command>ln -sfv ... /usr/bin/firefox</command>&nbsp;: ceci met un
     lien symbolique vers l'exécutable <command>firefox</command> dans votre
@@ -270,7 +241,12 @@ chown -R -v root:root /usr/lib/firefox-&firefox-version;</userinput></screen>
       nous créons le lien symbolique pour garder tous les greffons installés
       dans un seul dossier.</para>
 
-  </sect2>
+    <para>
+      <command>make -C firefox-build-dir install</command>: Cela lance
+      <command>make install</command> dans
+      <filename class="directory">firefox-build-dir</filename>.
+    </para>
+    </sect2>
 
   <sect2 role="configuration">
     <title>Configuration de Firefox</title>
@@ -334,7 +310,7 @@ ln -sv -f /usr/lib/firefox-&firefox-version;/icons/mozicon128.png /usr/share/pix
       <varlistentry id="firefox-prog">
         <term><command>firefox</command></term>
         <listitem>
-          <para>est un navigateur internet gtk2 qui utilise le moteur
+          <para>est un navigateur internet <application>Gtk 2</application> qui utilise le moteur
           d'affichage gecko.</para>
           <indexterm zone="firefox firefox-prog">
             <primary sortas="b-firefox">firefox</primary>
