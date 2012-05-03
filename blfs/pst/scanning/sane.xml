@@ -5,14 +5,13 @@
   %general-entities;
 
   <!ENTITY sane-be-download-http "http://alioth.debian.org/download.php/2318/sane-backends-&sane-version;.tar.gz">
-  <!ENTITY sane-be-download-ftp  "ftp://ftp2.sane-project.org/pub/sane/old-versions/sane-backends-&sane-version;/sane-backends-&sane-version;.tar.gz">
+  <!ENTITY sane-be-download-ftp  "ftp://ftp2.sane-project.org/pub/sane/sane-backends-&sane-version;/sane-backends-&sane-version;.tar.gz">
   <!ENTITY sane-be-download-ftp  "&gentoo-ftp-repo;/sane-backends-&sane-version;.tar.gz">
-  <!ENTITY sane-be-md5sum        "8c0936272dcfd4e98c51512699f1c06f">
-  <!ENTITY sane-be-size          "4.1 Mio">
-  <!ENTITY sane-be-buildsize     "71 Mio">
-  <!ENTITY sane-be-time          "1.5 SBU">
+  <!ENTITY sane-be-md5sum        "fadf56a60f4776bfb24491f66b617cf5">
+  <!ENTITY sane-be-size          "4.9 MB">
+  <!ENTITY sane-be-buildsize     "105 MB">
+  <!ENTITY sane-be-time          "1.2 SBU">
 
-  <!ENTITY sane-fe-version       "1.0.14">
   <!ENTITY sane-fe-download-http "http://alioth.debian.org/download.php/1140/sane-frontends-&sane-fe-version;.tar.gz">
   <!ENTITY sane-fe-download-ftp  "ftp://ftp2.sane-project.org/pub/sane/sane-frontends-&sane-fe-version;/sane-frontends-&sane-fe-version;.tar.gz">
   <!ENTITY sane-fe-md5sum        "c63bf7b0bb5f530cf3c08715db721cd3">
@@ -51,6 +50,8 @@
     interfaces. Les fondations sont des pilotes des scanners et des appareils
     photo. Les interfaces sont des interfaces utilisateur pour accéder aux
     fondations.</para>
+
+    &lfs71_checked;
 
     <bridgehead renderas="sect3">Information sur le paquet des fondations</bridgehead>
     <itemizedlist spacing='compact'>
@@ -96,21 +97,32 @@
       </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Correctif requis:
+          <ulink url="&patch-root;/sane-backends-&sane-version;-v4l-1.patch"/>
+        </para>
+      </listitem>
+    </itemizedlist>
+
     <bridgehead renderas="sect3">Dépendances de SANE</bridgehead>
 
     <bridgehead renderas="sect4">Facultatives (Back Ends)</bridgehead>
-    <para role="optional"><xref linkend="libjpeg"/>,
-    <xref linkend="libtiff"/>,
-    <xref linkend="libusb-compat"/>,
-    <ulink url="http://cyberelk.net/tim/libieee1284/">libieee1284</ulink>,
-    <ulink url="http://www.gphoto.org/">libgphoto2</ulink> et
-    <!-- <xref linkend="tetex"/> ou --> <xref linkend="texlive"/></para>
-
+    <para role="optional">
+      <xref linkend="libjpeg"/>,
+      <xref linkend="libtiff"/>,
+      <xref linkend="libusb-compat"/>,
+      <ulink url="http://cyberelk.net/tim/libieee1284/">libieee1284</ulink>,
+      <ulink url="http://www.gphoto.org/">libgphoto2</ulink>, et
+      <xref linkend="texlive"/>
+    </para>
     <bridgehead renderas="sect4">Facultatives (Front Ends)</bridgehead>
-    <para role="optional"><xref linkend="x-window-system"/>,
-    <xref linkend="gtk2"/> et
-    <xref linkend="gimp"/></para>
-
+    <para role="optional">
+      <xref linkend="x-window-system"/>,
+      <xref linkend="gtk2"/>, et
+      <xref linkend="gimp"/>
+    </para>
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/sane"/></para>
 
@@ -147,11 +159,20 @@
 
 <screen><userinput>groupadd -g 70 scanner</userinput></screen>
 
+      <note><para>L'utilisateur de construction <application>SANE</application>-backends
+      doit être membre du groupe scanner avant de commencer. La façon la plus simple pour s'assurer que
+      le système sait que vous avez ajouté un nouveau groupe est de se déloguer et se reloguer de nouveau.
+      Vous pouvez vérifier avec le résultat de la commande
+      <userinput>groups</userinput> command.</para></note>
+
       <para>Installez les fondations de <application>SANE</application> en
       lançant les commandes suivantes&nbsp;:</para>
 
-<screen><userinput>sed -i 's/SYSFS/ATTRS/g' tools/sane-desc.c &amp;&amp;
-./configure --prefix=/usr --sysconfdir=/etc &amp;&amp;
+<screen><userinput>patch -Npi -i ../sane-backends-&sane-version;-v4l-1.patch &amp;&amp;
+./configure --prefix=/usr        \
+            --sysconfdir=/etc    \
+            --with-group=scanner \
+            --localstatedir=/var &amp;&amp;
 make</userinput></screen>
 
       <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -177,7 +198,8 @@ install -m 644 -v tools/udev/libsane.rules /etc/udev/rules.d/65-scanner.rules</u
       <para>Pour installer <application>SANE</application>-frontends,
       utilisez les commandes suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=/usr &amp;&amp;
+<screen><userinput>sed -i -e "/SANE_CAP_ALWAYS_SETTABLE/d" src/gtkglue.c &amp;&amp;
+./configure --prefix=/usr &amp;&amp;
 make</userinput></screen>
 
       <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -201,9 +223,6 @@ install -v -m644 doc/sane.png xscanimage-icon-48x48-2.png \
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
-
-    <para><command>sed -i 's/SYSFS/ATTRS/g' tools/sane-desc.c</command>&nbsp;: 
-    Cette commande corrige un paramètre obsolète d'<application>udev</application>.</para>
 
     <para><parameter>--sysconfdir=/etc</parameter>&nbsp;: Ce paramètre installe
     les fichiers de configuration dans <filename class="directory">/etc/sane.d</filename>
