@@ -6,10 +6,10 @@
 
   <!ENTITY openssh-download-http "http://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-&openssh-version;.tar.gz">
   <!ENTITY openssh-download-ftp  "ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-&openssh-version;.tar.gz">
-  <!ENTITY openssh-md5sum        "afe17eee7e98d3b8550cc349834a85d0">
+  <!ENTITY openssh-md5sum        "3c9347aa67862881c5da3f3b1c08da7b">
   <!ENTITY openssh-size          "1.1 Mio">
-  <!ENTITY openssh-buildsize     "44 Mio">
-  <!ENTITY openssh-time          "3.5 SBU (ajouter 1.5 SBU pour lancer la suite de tests)">
+  <!ENTITY openssh-buildsize     "31 Mio">
+  <!ENTITY openssh-time          "0.6">
 ]>
 
 <sect1 id="openssh" xreflabel="OpenSSH-&openssh-version;">
@@ -118,7 +118,6 @@ useradd -c 'sshd PrivSep' -d /var/lib/sshd -g sshd \
 ./configure --prefix=/usr \
             --sysconfdir=/etc/ssh \
             --datadir=/usr/share/sshd \
-            --libexecdir=/usr/lib/openssh \
             --with-md5-passwords \
             --with-privsep-path=/var/lib/sshd &amp;&amp;
 make</userinput></screen>
@@ -170,11 +169,6 @@ install -v -m644 INSTALL LICENCE OVERVIEW README* \
     avec la configuration par défaut de la suite de mots de passe Shadow dans
     LFS.</para>
 
-    <para><parameter>--libexecdir=/usr/lib/openssh</parameter>&nbsp;: Ce
-    paramètre modifie le chemin d'installation de certains programmes en
-    <filename class="directory">/usr/lib/openssh</filename> plutôt que
-    <filename class="directory">/usr/libexec</filename>.</para>
-
     <para><parameter>--with-pam</parameter>&nbsp;: Ce paramètre active le
     support de <application>Linux-PAM</application> dans la construction.</para>
 
@@ -194,10 +188,6 @@ install -v -m644 INSTALL LICENCE OVERVIEW README* \
 
   <sect2 role="configuration">
     <title>Configuration d'OpenSSH</title>
-
-    <para>Si vous n'allez utiliser que les clients <command>ssh</command> ou
-    <command>scp</command>, aucune configuration ni scripts de démarrage n'est
-    nécessaire.</para>
 
     <sect3 id="openssh-config">
       <title>Fichiers de configuration</title>
@@ -230,6 +220,30 @@ install -v -m644 INSTALL LICENCE OVERVIEW README* \
       <command>ssh</command>&nbsp;:</para>
 
 <screen role="root"><userinput>echo "PermitRootLogin no" &gt;&gt; /etc/ssh/sshd_config</userinput></screen>
+
+      <para>
+        Si vous voulez vous loguer sans taper votre mot de passe, commencez par créer
+        ~/.ssh/id_rsa et ~/.ssh/id_rsa.pub avec
+        <command>ssh-keygen</command> et ensuite copiez ~/.ssh/id_rsa.pub dans
+       ~/.ssh/authorized_keys sur l'ordinateur distant ou vous voulez vous loguer.
+        Vous devrez changer REMOTE_HOSTNAME par le nom d'hôte de l'ordinateur distant
+        et vous devrez entrer votre mot de passe pour que la commande ssh réussisse:
+      </para>
+
+<screen><userinput>ssh-keygen &amp;&amp;
+public_key="$(cat ~/.ssh/id_rsa.pub)" &amp;&amp;
+ssh REMOTE_HOSTNAME "echo ${public_key} &gt;&gt; ~/.ssh/authorized_keys" &amp;&amp;
+unset public_key</userinput></screen>
+
+     <para>
+        Une fois que vous avez configuré un accès sans mot de passe, c'est actuellement plus sécurisant
+        que de vous connecter avec un mot de passe (tant que la clé privé est plus longue que la plupart
+        des mots de passes). Si vous voulez maintenant désactiver la connection avec mot de passe, en tant
+        qu'utilisateur <systemitem class="username">root</systemitem> :
+     </para>
+
+<screen role="root"><userinput>echo "PasswordAuthentication no" >> /etc/ssh/sshd_config &amp;&amp;
+echo "ChallengeResponseAuthentication no" >> /etc/ssh/sshd_config</userinput></screen>
 
       <para>Si vous avez ajouté le support de <application>LinuxPAM</application>,
       vous devrez ajouter un fichier de configuration pour
@@ -269,15 +283,19 @@ echo "USEPAM yes" &gt;&gt; /etc/ssh/sshd_config</userinput></screen>
 
     <segmentedlist>
       <segtitle>Programmes installés</segtitle>
-      <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>scp, sftp, sftp-server, slogin, ssh, sshd, ssh-add, ssh-agent,
-        ssh-keygen, ssh-keyscan, et ssh-keysign</seg>
-        <seg>Aucune</seg>
-        <seg>/etc/ssh, /var/lib/sshd, /usr/lib/openssh, et
-        /usr/share/doc/openssh-&openssh-version;</seg>
+        <seg>
+          scp, sftp, sftp-server, slogin, ssh, sshd, ssh-add, ssh-agent,
+          ssh-keygen, ssh-keyscan and ssh-keysign.
+        </seg>
+        <seg>
+          /etc/ssh,
+          /var/lib/sshd,
+          /usr/lib/openssh and
+          /usr/share/doc/openssh-&openssh-version;.
+        </seg>
       </seglistitem>
     </segmentedlist>
 

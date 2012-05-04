@@ -148,25 +148,54 @@ ln -sv application-{msword,rtf}.png</userinput></screen>
       <application>rox-filer</application> lancera en premier <command>AppRun</command>
       avant d'ouvrir le dossier.</para>
 
-      <!-- <para>As an example of how this may be used, if you have
-      <application>ssh<application> access to another computer (perhaps another
-      computer on you local network) with <application>ssh</application>
-      configured for passwordless logins et you have
-      <ulink url="http://fuse.sourceforge.net/sshfs.html">sshfs</ulink>
-      installed you can use <command>AppRun<command> to mount the remote
-      computer in a local folder using <command>sshfs</command>. If the
-      folder has the same name as the hostname of the remote computer:</para>
+      <para>Par exemple cela peut servir a, si vous avez un accès
+      <application>ssh</application> vers un autre ordinateur (peut être un autre ordinateur
+         de votre réseau local) avec <application>ssh</application>
+      configuré pour un accès sans mot de passe et que vous avez installé
+      <ulink url="http://fuse.sourceforge.net/sshfs.html">sshfs</ulink>,
+      utiliser AppRun pour monter l'ordinateur distant dans un
+         dossier local en utilisant <command>sshfs</command>. Pour cet exemple, le script AppRun fonctionne
+         si le dossier à le même nom que le nom d'hôte de l'ordinateur distant:</para>
 
 <screen><userinput>cat &gt; /path/to/hostname/AppRun &lt;&lt; "HERE_DOC"
 #!/bin/bash
 
-MOUNT_PATH="$(dirname ${0})"
-HOST="$(basename ${MOUNT_PATH})"
-echo ${HOST}:/ ${MOUNT_PATH}
+MOUNT_PATH="${0%/*}"
+HOST=${MOUNT_PATH##*/}
+export MOUNT_PATH HOST
 sshfs -o nonempty ${HOST}:/ ${MOUNT_PATH}
 rox -x ${MOUNT_PATH}
 HERE_DOC
-chmod 755 /path/to/hostname/AppRun</userinput></screen> -->
+chmod 755 /path/to/hostname/AppRun</userinput></screen>
+
+       <para>
+        Cela fonctionne correctement pour le montage, mais pour le démontage vous avez besoin de
+        lancer la commande <command>fusermount -u ${MOUNTPOINT}</command>. Vous pouvez l'initialiser
+        comme votre commande de démontage par défaut dans vos préférences de rox, mais vous ne pourrez
+        plus démonter des points de montage normaux (qui utilise
+       umount). Vous avez besoin d'un script qui démontera les points de montage Fuse
+        avec <command>fusermount -u ${MOUNTPOINT}</command> et le reste avec 
+        <command>umount</command>. En tant qu'utilisateur 
+        <systemitem class="username">root</systemitem> :
+      </para>
+
+<screen role="root"><userinput>cat &gt; /usr/bin/myumount &lt;&lt; "HERE_DOC" &amp;&amp;
+#!/bin/bash
+sync
+if mount | grep "${@}" | grep -q fuse
+then fusermount -u "${@}"
+else umount "${@}"
+fi
+HERE_DOC
+chmod 755 /usr/bin/myumount</userinput></screen>
+
+      <para>
+        Maintenant, pour faire que Rox utilise ce script simple, ouvrez une fenêtre Rox, clic droit sur elle et
+        choisissez Options dans le menu. Dans la liste de choix prenez
+        "Action windows" et ensuite dans le coté droit, ou il est dit
+        "Unmount command" changez <command>umount</command> par
+        <command>myumount</command>.
+      </para>
 
       <para>Si vous utilisez un environnement de bureau comme
       <application>Gnome</application> ou <application>KDE</application> vous devez créer
