@@ -37,6 +37,8 @@
     et il permet la construction d'un code impliquant le minimum d'overhead 
     sur une large variété d'architectures. </para>
 
+    &lfs71_checked;
+
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
@@ -70,10 +72,14 @@
     <para>Installez <application>libatomic_ops</application> en lançant les
     commandes suivantes&nbsp;:</para>
 
-<screen><userinput>sed -i \
-    's|datadir)/@PACKAGE@|datadir)/doc/@PACKAGE@/@PACKAGE_VERSION@|' \
-    doc/Makefile.in &amp;&amp;
-./configure --prefix=/usr &amp;&amp;
+<screen><userinput>sed -i 's#AC_PROG_RANLIB#AC_LIBTOOL_DLOPEN\nAC_PROG_LIBTOOL#' configure.ac &amp;&amp;
+sed -i 's#b_L#b_LTL#;s#\.a#.la#g;s#_a_#_la_#' src/Makefile.am &amp;&amp;
+sed -i '/a.h gcc\/ia/d' src/atomic_ops/sysdeps/Makefile.am &amp;&amp;
+sed -i 's# COPYING##;s#pkgdata#doc#' doc/Makefile.am &amp;&amp;
+sed -i 's#\.a#.so#g;s#\.\./src/#../src/.libs/#g' tests/Makefile.am &amp;&amp;
+autoreconf -i &amp;&amp;
+./configure --prefix=/usr --disable-static \
+  --docdir=/usr/share/doc/libatomic_ops-&libatomic_ops-version; &amp;&amp;
 make</userinput></screen>
 
     <para>Pour tester les résultats, lancez <command>make check</command>.</para>
@@ -87,22 +93,37 @@ make</userinput></screen>
   <sect2 role="commands">
     <title>Explications de la commande</title>
 
-    <para><command>sed -i ... doc/Makefile.in</command>&nbsp;: Cette commande
-    oblige la documentation à s'installer dans un répertoire versionné.</para>
+    <para>
+      <command>sed -i 's#AC_PROG_RANLIB ...</command>: Ces commandes sed modifie les fichiers
+      autotool pour que les bibliothèques partagée soient construites, les tests réussissent et les 
+      docs soient installées à la bonne place.
+   </para>
 
-  </sect2>
+    <para>
+      <command>autoreconf -i</command>: Cela régénère le script de configuration
+      et le fichier Makefile.in et installe quelques fichiers oubliés.
+    </para>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+      href="../../xincludes/static-libraries.xml"/>
+
+    <para>
+      <option>--docdir=/usr/share/doc/libatomic_ops-&libatomic_ops-version;</option>:
+      Cette option installe la documentation dans un répertoire versionné.
+    </para>
+
+</sect2>
 
   <sect2 role="content">
     <title>Contenu</title>
 
     <segmentedlist>
-      <segtitle>Programmes installés</segtitle>
       <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoire installé</segtitle>
 
       <seglistitem>
-        <seg>Aucun</seg>
-        <seg>libatomic_ops.a and libatomic_ops_gpl.a</seg>
+        <seg>
+          libatomic_ops.so et libatomic_ops_gpl.so
+        </seg>
         <seg>/usr/include/libatomic_ops</seg>
       </seglistitem>
     </segmentedlist>
@@ -113,11 +134,11 @@ make</userinput></screen>
       <?dbhtml list-presentation="table"?>
 
       <varlistentry id="libatomic_ops-lib">
-        <term><filename class='libraryfile'>libatomic_ops{,_gpl}.a</filename></term>
+        <term><filename class='libraryfile'>libatomic_ops{,_gpl}.so</filename></term>
         <listitem>
           <para>contient les fonctions pour les opérations sur la mémoire atomique.</para>
           <indexterm zone="libatomic_ops libatomic_ops-lib">
-            <primary sortas="c-libatomic_ops">libatomic_ops.a</primary>
+            <primary sortas="c-libatomic_ops">libatomic_ops.so</primary>
           </indexterm>
         </listitem>
       </varlistentry>
