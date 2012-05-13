@@ -9,7 +9,7 @@
   <!ENTITY llvm-md5sum "a8e5f5f1c1adebae7b4a654c376a6005">
   <!ENTITY llvm-size "9.9 Mio">
   <!ENTITY llvm-buildsize "265 Mio">
-  <!ENTITY llvm-time "13.2 SBU">
+  <!ENTITY llvm-time "13.2 SBU (et environ 7 SBU pour clang)">
 ]>
 
 <sect1 id="llvm" xreflabel="llvm-&llvm-version;">
@@ -30,12 +30,17 @@
     <title>Introduction à LLVM</title>
 
     <para>Le paquet <application>llvm</application> contient une collection de
-    compilateur modulaire et réutilisable et des technologies de chaînes d'outils. Le coeur
-    des bibliothèques LLVM fournit un optimiseur moderne de source- et cible- indépendant,ainsi
+    compilateur modulaire et réutilisable et des technologies de chaînes d'outils. Le c&oelig;ur
+    des bibliothèques <foreignphrase>Low Level Virtual Machine</foreignphrase> 
+    (LLVM) fournit un optimiseur moderne de source- et cible- indépendant,ainsi
     que le support de génération de code pour beaucoup des processeurs populaires 
     (ainsi que quelques autres moins courants!) Ces bibliothèques sont construites autour 
     d'une représentation du code bien connu comme précise la représentation LLVM intermédiaire 
     ("LLVM IR").</para>
+
+    <para>Le paquet facultative <application>clang</application> fournit une
+    nouvelle interface avec C, C++, C objet et C++ objet pour le compilateur
+    LLVM.</para>
 
     &lfs71_checked;
 
@@ -61,13 +66,26 @@
       </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <itemizedlist spacing='compact'>
+      <listitem>
+        <para>Paquet facultatif&nbsp;: 
+          <ulink url="http://llvm.org/releases/&llvm-version;/clang-&llvm-version;.tar.gz"/>
+        </para>
+      </listitem>
+    </itemizedlist>
+
     <bridgehead renderas="sect3">Dépendances de LLVM</bridgehead>
+
+    <bridgehead renderas="sect4">Recommandées</bridgehead>
+    <para role="recommended">
+       <xref linkend="libffi"/>
+    </para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-       <xref linkend="doxygen"/>,
-       <xref linkend="graphviz"/>, et
-       <xref linkend="libffi"/>
+       <xref linkend="doxygen"/> et
+       <xref linkend="graphviz"/>, 
     </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
@@ -78,49 +96,64 @@
   <sect2 role="installation">
     <title>Installation de LLVM</title>
 
+ 
+    <para>Si vous avez téléchargé le paquet facultatif <application>clang</application>,
+    installez-le dans l'arborescence des sources&nbsp;:</para>
+
+<screen><userinput>tar -xf ../clang-3.0.tar.gz -C tools &amp;&amp;
+mv tools/clang-3.0.src tools/clang</userinput></screen>
+
     <para>Installez <application>llvm</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>touch tools/edis/EnhancedDisassembly.exports               &amp;&amp;
-./configure --prefix=/opt/llvm                             &amp;&amp;
-find -name Makefile -exec                                  \
-        sed -i -r -e '/^LIBRARYNAME/a SHARED_LIBRARY = 1'  \
-                  -e 's#BUILD_ARCHIVE&nbsp;:*= 1#NO_&amp;#'         \
-                  -e '/^USEDLIBS/s# ([A-Za-z]*).a# -l\1#g' \
-                  -e 's#^USEDLIBS#LDFLAGS#' {} \;          &amp;&amp;
-sed -i 's#BUILD_ARCHIVE = 1#NO_&amp;#' Makefile.rules          &amp;&amp;
-sed -i 's#x)/docs#x)/share/doc#' Makefile.config           &amp;&amp;
+<screen><userinput>touch tools/edis/EnhancedDisassembly.exports &amp;&amp;
+
+CFLAGS="$CFLAGS -fno-tree-pre"               &amp;&amp;
+CXXFLAGS="$CXXFLAGS -fno-tree-pre"           &amp;&amp;
+
+sed -i -e 's:\$(PROJ_prefix)/etc/llvm:/etc/llvm:'                      \
+       -e 's:\$(PROJ_prefix)/lib:$(PROJ_prefix)/lib/llvm:'             \
+       -e 's:\$(PROJ_prefix)/docs/llvm:$(PROJ_prefix)/share/doc/llvm:' \
+       Makefile.config.in  &amp;&amp;
+
+sed -i 's:$(RPATH) -Wl,$(\(ToolDir\|LibDir\|ExmplDir\))::g' Makefile.rules &amp;&amp;
+
+export CPPFLAGS="$CPPFLAGS $(pkg-config --cflags libffi)"                  &amp;&amp;
+
+CC=gcc                                 \
+CXX=g++                                \
+./configure --prefix=/usr              \
+            --libdir=/usr/lib/llvm     \
+            --sysconfdir=/etc          \
+            --enable-shared            \
+            --enable-libffi            \
+            --enable-targets=all       \
+            --disable-expensive-checks \
+            --disable-debug-runtime    \
+            --disable-assertions       \
+            --enable-optimized        &amp;&amp;
 make</userinput></screen>
 
     <para>Pour tester l'installation, tapez: <command>make check</command>.</para>
 
     <para>Maintenant, en tant qu'utilisateur  <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>make install                            &amp;&amp;
-echo "/opt/llvm/lib" >> /etc/ld.so.conf &amp;&amp;
-ldconfig                                &amp;&amp;
-echo "pathappend /usr/share/man MANPATH"      &gt;&gt; /etc/profile.d/extrapaths.sh &amp;&amp;
-echo "pathappend /opt/llvm/share/man MANPATH" &gt;&gt; /etc/profile.d/extrapaths.sh &amp;&amp;
-echo "pathappend /opt/llvm/bin"               &gt;&gt; /etc/profile.d/extrapaths.sh &amp;&amp;
-ln -svf /opt/llvm/share/doc /usr/share/doc/llvm-&llvm-version;</userinput></screen>
+<screen role="root"><userinput>make install</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><parameter>--prefix=/opt/llvm</parameter>&nbsp;: Ce paquet a un grand nombre de bibliothèques
-    et exécutables. Cette option les conserve séparé.</para>
+    <para><userinput>CFLAGS=... CXXFLAGS=...</userinput>&nbsp;:  Construit sans
+    -ftree-pre pour contourner l'erreur de segmentation de clang sur des systèmes 
+    x86_64.</para>
 
-    <para><userinput>find -name Makefile -exec sed ...</userinput>&nbsp;: Cette
-    assure que les bibliothèques dynamiques sont construites.</para>
+    <para><userinput>sed ... Makefile.config.in</userinput>&nbsp;: Ceci corrige
+    les répertoires d'installation.</para>
 
-    <para><userinput>sed ... Makefile.rules</userinput>&nbsp;: Cette commande
-    désactive la construction des bibliothèques statiques.</para>
-
-    <para><userinput>echo "pathappend ..." &gt;&gt;
-    /etc/profile.d/extrapaths.sh</userinput>&nbsp;: Mettre en place les chemins utilisateur afin de bien trouver
-    les exécutables du programme et les pages de manuel </para>
+    <para><userinput>sed ... Makefile.rules</userinput>&nbsp;: Ceci
+    corrige un lpath non sécurisé pointant vers le répertoire de construction.</para>
 
   </sect2>
 
@@ -133,9 +166,10 @@ ln -svf /opt/llvm/share/doc /usr/share/doc/llvm-&llvm-version;</userinput></scre
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>de nombreux programmes sont installés dans /opt/llvm/bin</seg>
-        <seg>de nombreuses bibliothèques sont installées dans /opt/llvm/lib</seg>
-        <seg>/opt/llvm</seg>
+        <seg>clang, clang++ et numerous llvm-* build tools</seg>
+        <seg>de nombreuses bibliothèques de personnalisation pour supporter
+        des programmes llvm et clang</seg>
+        <seg>/usr/lib/{clang,llvm}, /usr/share/doc/llvm</seg>
       </seglistitem>
     </segmentedlist>
 <!--
