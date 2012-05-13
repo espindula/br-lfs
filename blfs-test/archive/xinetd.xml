@@ -1,0 +1,757 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+
+  <!ENTITY xinetd-download-http "http://www.xinetd.org/xinetd-&xinetd-version;.tar.gz">
+  <!ENTITY xinetd-download-ftp  "&gentoo-ftp-repo;/xinetd-&xinetd-version;.tar.gz">
+  <!ENTITY xinetd-md5sum        "567382d7972613090215c6c54f9b82d9">
+  <!ENTITY xinetd-size          "301 Kio">
+  <!ENTITY xinetd-buildsize     "4.4 Mio">
+  <!ENTITY xinetd-time          "moins de 0.1 SBU">
+]>
+
+<sect1 id="xinetd" xreflabel="xinetd-&xinetd-version;">
+  <?dbhtml filename="xinetd.html"?>
+
+  <sect1info>
+    <othername>$LastChangedBy&nbsp;: bdubbs $</othername>
+    <date>$Date&nbsp;: 2012-05-12 23:54:09 +0200 (Sat, 12 May 2012) $</date>
+  </sect1info>
+
+  <title>xinetd-&xinetd-version;</title>
+
+  <indexterm zone="xinetd">
+    <primary sortas="a-Xinetd">Xinetd</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title>Introduction à xinetd</title>
+
+    <para><application>xinetd</application> est le démon des services
+    <foreignphrase>eXtended InterNET</foreignphrase>, un remplaçant sécurisé de
+    <command>inetd</command>.</para>
+
+    <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Téléchargement (HTTP)&nbsp;: <ulink url="&xinetd-download-http;"/></para>
+      </listitem>
+      <listitem>
+        <para>Téléchargement (FTP)&nbsp;: <ulink url="&xinetd-download-ftp;"/></para>
+      </listitem>
+      <listitem>
+        <para>Somme de contrôle MD5 du téléchargement&nbsp;: &xinetd-md5sum;</para>
+      </listitem>
+      <listitem>
+        <para>Taille du téléchargement&nbsp;: &xinetd-size;</para>
+      </listitem>
+      <listitem>
+        <para>Estimation de l'espace disque requis&nbsp;: &xinetd-buildsize;</para>
+      </listitem>
+      <listitem>
+        <para>Estimation du temps de construction&nbsp;: &xinetd-time;</para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3">Dépendances de xinetd</bridgehead>
+
+    <bridgehead renderas="sect4">Facultatives</bridgehead>
+    <para role="optional"><xref linkend="tcpwrappers"/> et
+    <xref linkend="avahi"/></para>
+
+    <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
+    <ulink url="&blfs-wiki;/xinetd"/></para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de xinetd</title>
+
+    <para>Installez <application>xinetd</application> en lançant les commandes
+    suivantes&nbsp;:</para>
+
+<screen><userinput>./configure --prefix=/usr --with-loadavg &amp;&amp;
+make</userinput></screen>
+
+    <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
+
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>make install</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="configuration">
+    <title>Configuration de xinetd</title>
+
+    <sect3 id="xinetd-config">
+      <title>Fichiers de configuration</title>
+
+      <para><filename>/etc/xinetd.conf</filename> et
+      <filename class='directory'>/etc/xinetd.d/*</filename></para>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.conf">/etc/xinetd.conf</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d">/etc/xinetd.d/*</primary>
+      </indexterm>
+
+    </sect3>
+
+    <sect3>
+      <title>Informations de configuration</title>
+
+      <para>Assurez-vous que le chemin vers tous les démons est 
+      <filename class="directory">/usr/sbin</filename>, plutôt que celui 
+      path of <filename class="directory">/usr/etc</filename> par défaut et 
+      installez les fichiers de configuration de
+      <application>xinetd</application>  en lançant les 
+      commandes suivantes en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>cat &gt; /etc/xinetd.conf &lt;&lt; "EOF"
+<literal># Début de /etc/xinetd
+# Fichier de configuration pour xinetd
+#
+
+defaults
+{
+      instances       = 60
+      log_type        = SYSLOG daemon
+      log_on_success  = HOST PID USERID
+      log_on_failure  = HOST USERID
+      cps             = 25 30
+}
+
+# Tou! les fichiers de service sont stockés dans le répertoire /etc/xinetd.d
+#
+includedir /etc/xinetd.d
+# Fin de /etc/xinetd</literal>
+EOF</userinput></screen>
+
+      <para>Tous les fichiers suivants contiennent la ligne "disable = yes".
+      Pour activer n'importe lequel de ces services, il faudra modifier ce 
+      paramètre en "disable = no".</para>
+
+      <note>
+        <para>Les fichiers suivants sont listés pour démontrer des 
+        applications classiques de <application>xinetd</application>. Dans
+        bien des cas, ces applications sont inutiles. Dans certains cas, les 
+        applications sont considérées comme des risques de sécurité. Par exemple,
+        <command>telnet</command>,  <command>rlogin</command>, <command>rexec</command> et
+        <command>rsh</command> transmettent des noms d'utilisateur et des mots 
+        de passe en clair sur le réseau et on peut facilement les remplacer par
+        une alternative plus sécurisée&nbsp;: <command>ssh</command>.</para>
+      </note>
+
+<screen role="root"><?dbfo keep-together="auto"?><userinput>install -v -d -m755 /etc/xinetd.d &amp;&amp;
+cat &gt; /etc/xinetd.d/login &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/login
+
+service login
+{
+   disable        = yes
+   socket_type    = stream
+   protocol       = tcp
+   wait           = no
+   user           = root
+   server         = /usr/sbin/in.rlogind
+   log_type       = SYSLOG local4 info
+}
+
+# Fin de /etc/xinetd.d/login</literal>
+EOF
+cat &gt; /etc/xinetd.d/shell &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/shell
+
+service shell
+{
+   disable        = yes
+   socket_type    = stream
+   wait           = no
+   user           = root
+   instances      = UNLIMITED
+   flags          = IDONLY
+   log_on_success += USERID
+   server         = /usr/sbin/in.rshd
+}
+
+# Fin de /etc/xinetd.d/shell</literal>
+EOF
+cat &gt; /etc/xinetd.d/exec &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/exec
+
+service exec
+{
+   disable        = yes
+   socket_type    = stream
+   wait           = no
+   user           = root
+   server         = /usr/sbin/in.rexecd
+}
+
+# Fin de /etc/xinetd.d/exec</literal>
+EOF
+cat &gt; /etc/xinetd.d/comsat &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/comsat
+
+service comsat
+{
+   disable        = yes
+   socket_type    = dgram
+   wait           = yes
+   user           = nobody
+   group          = tty
+   server         = /usr/sbin/in.comsat
+}
+
+# Fin de /etc/xinetd.d/comsat</literal>
+EOF
+cat &gt; /etc/xinetd.d/talk &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/talk
+
+service talk
+{
+   disable        = yes
+   socket_type    = dgram
+   wait           = yes
+   user           = root
+   server         = /usr/sbin/in.talkd
+}
+
+# Fin de /etc/xinetd.d/talk</literal>
+EOF
+cat &gt; /etc/xinetd.d/ntalk &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/ntalk
+
+service ntalk
+{
+   disable        = yes
+   socket_type    = dgram
+   wait           = yes
+   user           = root
+   server         = /usr/sbin/in.ntalkd
+}
+
+# Fin de /etc/xinetd.d/ntalk</literal>
+EOF
+cat &gt; /etc/xinetd.d/telnet &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/telnet
+
+service telnet
+{
+   disable        = yes
+   socket_type    = stream
+   wait           = no
+   user           = root
+   server         = /usr/sbin/in.telnetd
+   bind           = 127.0.0.1
+   log_on_failure += USERID
+}
+
+service telnet
+{
+   disable        = yes
+   socket_type    = stream
+   wait           = no
+   user           = root
+#  server         = /usr/sbin/in.telnetd
+   bind           = 192.231.139.175
+   redirect       = 128.138.202.20 23
+   log_on_failure += USERID
+}
+
+# Fin de /etc/xinetd.d/telnet</literal>
+EOF
+cat &gt; /etc/xinetd.d/ftp &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/ftp
+
+service ftp
+{
+   disable        = yes
+   socket_type    = stream
+   wait           = no
+   user           = root
+   server         = /usr/sbin/in.ftpd
+   server_args    = -l
+   instances      = 4
+   log_on_success += DURATION USERID
+   log_on_failure += USERID
+   access_times   = 2:00-8:59 12:00-23:59
+   nice           = 10
+}
+
+# Fin de /etc/xinetd.d/ftp</literal>
+EOF
+cat &gt; /etc/xinetd.d/tftp &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/tftp
+
+service tftp
+{
+   disable        = yes
+   socket_type    = dgram
+   wait           = yes
+   user           = root
+   server         = /usr/sbin/in.tftpd
+   server_args    = -s /tftpboot
+}
+
+# Fin de /etc/xinetd.d/tftp</literal>
+EOF
+cat &gt; /etc/xinetd.d/finger &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/finger
+
+service finger
+{
+   disable        = yes
+   socket_type    = stream
+   wait           = no
+   user           = nobody
+   server         = /usr/sbin/in.fingerd
+}
+
+# Fin de /etc/xinetd.d/finger</literal>
+EOF
+cat &gt; /etc/xinetd.d/systat &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/systat
+
+service systat
+{
+   disable           = yes
+   socket_type       = stream
+   wait              = no
+   user              = nobody
+   server            = /usr/bin/ps
+   server_args       = -auwwx
+   only_from         = 128.138.209.0
+   log_on_success    = HOST
+}
+
+# Fin de /etc/xinetd.d/systat</literal>
+EOF
+cat &gt; /etc/xinetd.d/netstat &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/netstat
+
+service netstat
+{
+   disable           = yes
+   socket_type       = stream
+   wait              = no
+   user              = nobody
+   server            = /usr/ucb/netstat
+   server_args       = -f inet
+   only_from         = 128.138.209.0
+   log_on_success    = HOST
+}
+
+# Fin de /etc/xinetd.d/netstat</literal>
+EOF
+cat &gt; /etc/xinetd.d/echo &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/echo
+
+service echo
+{
+   disable     = yes
+   type        = INTERNAL
+   id          = echo-stream
+   socket_type = stream
+   protocol    = tcp
+   user        = root
+   wait        = no
+}
+
+service echo
+{
+   disable     = yes
+   type        = INTERNAL
+   id          = echo-dgram
+   socket_type = dgram
+   protocol    = udp
+   user        = root
+   wait        = yes
+}
+
+# Fin de /etc/xinetd.d/echo</literal>
+EOF
+cat &gt; /etc/xinetd.d/chargen &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/chargen
+
+service chargen
+{
+   disable        = yes
+   type           = INTERNAL
+   id             = chargen-stream
+   socket_type    = stream
+   protocol       = tcp
+   user           = root
+   wait           = no
+}
+
+service chargen
+{
+   disable        = yes
+   type           = INTERNAL
+   id             = chargen-dgram
+   socket_type    = dgram
+   protocol       = udp
+   user           = root
+   wait           = yes
+}
+
+# Fin de /etc/xinetd.d/chargen</literal>
+EOF
+cat &gt; /etc/xinetd.d/daytime &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/daytime
+
+service daytime
+{
+   disable        = yes
+   type           = INTERNAL
+   id             = daytime-stream
+   socket_type    = stream
+   protocol       = tcp
+   user           = root
+   wait           = no
+}
+
+service daytime
+{
+   disable        = yes
+   type           = INTERNAL
+   id             = daytime-dgram
+   socket_type    = dgram
+   protocol       = udp
+   user           = root
+   wait           = yes
+}
+
+# Fin de /etc/xinetd.d/daytime</literal>
+EOF
+cat &gt; /etc/xinetd.d/time &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/time
+
+service time
+{
+   disable        = yes
+   type           = INTERNAL
+   id             = time-stream
+   socket_type    = stream
+   protocol       = tcp
+   user           = root
+   wait           = no
+}
+
+
+service time
+{
+   disable        = yes
+   type           = INTERNAL
+   id             = time-dgram
+   socket_type    = dgram
+   protocol       = udp
+   user           = root
+   wait           = yes
+}
+
+# Fin de /etc/xinetd.d/time</literal>
+EOF
+cat &gt; /etc/xinetd.d/rstatd &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/rstatd
+
+service rstatd
+{
+   disable     = yes
+   type        = RPC
+   flags       = INTERCEPT
+   rpc_version = 2-4
+   socket_type = dgram
+   protocol    = udp
+   server      = /usr/sbin/rpc.rstatd
+   wait        = yes
+   user        = root
+}
+
+# Fin de /etc/xinetd.d/rstatd</literal>
+EOF
+cat &gt; /etc/xinetd.d/rquotad &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/rquotad
+
+service rquotad
+{
+   disable     = yes
+   type        = RPC
+   rpc_version = 1
+   socket_type = dgram
+   protocol    = udp
+   wait        = yes
+   user        = root
+   server      = /usr/sbin/rpc.rstatd
+}
+
+# Fin de /etc/xinetd.d/rquotad</literal>
+EOF
+cat &gt; /etc/xinetd.d/rusersd &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/rusersd
+
+service rusersd
+{
+   disable     = yes
+   type        = RPC
+   rpc_version = 1-2
+   socket_type = dgram
+   protocol    = udp
+   wait        = yes
+   user        = root
+   server      = /usr/sbin/rpc.rusersd
+}
+
+# Fin de /etc/xinetd.d/rusersd</literal>
+EOF
+cat &gt; /etc/xinetd.d/sprayd &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/sprayd
+
+service sprayd
+{
+   disable      = yes
+   type         = RPC
+   rpc_version  = 1
+   socket_type  = dgram
+   protocol     = udp
+   wait         = yes
+   user         = root
+   server       = /usr/sbin/rpc.sprayd
+}
+
+# Fin de /etc/xinetd.d/sprayd</literal>
+EOF
+cat &gt; /etc/xinetd.d/walld &lt;&lt; "EOF" &amp;&amp;
+<literal># Début de /etc/xinetd.d/walld
+
+service walld
+{
+   disable      = yes
+   type         = RPC
+   rpc_version  = 1
+   socket_type  = dgram
+   protocol     = udp
+   wait         = yes
+   user         = nobody
+   group        = tty
+   server       = /usr/sbin/rpc.rwalld
+}
+
+# Fin de /etc/xinetd.d/walld</literal>
+EOF
+cat &gt; /etc/xinetd.d/irc &lt;&lt; "EOF"
+<literal># Début de /etc/xinetd.d/irc
+
+service irc
+{
+   disable      = yes
+   socket_type  = stream
+   wait         = no
+   user         = root
+   flags        = SENSOR
+   type         = INTERNAL
+   bind         = 192.168.1.30
+   deny_time    = 60
+}
+
+# Fin de /etc/xinetd.d/irc</literal>
+EOF</userinput></screen>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-login">/etc/xinetd.d/login</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-shell">/etc/xinetd.d/shell</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-exec">/etc/xinetd.d/exec</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-comsat">/etc/xinetd.d/comsat</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-talk">/etc/xinetd.d/talk</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-ntalk">/etc/xinetd.d/ntalk</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-telnet">/etc/xinetd.d/telnet</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-ftp">/etc/xinetd.d/ftp</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-tftp">/etc/xinetd.d/tftp</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-systat">/etc/xinetd.d/systat</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-finger">/etc/xinetd.d/finger</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-netstat">/etc/xinetd.d/netstat</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-echo">/etc/xinetd.d/echo</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-chargen">/etc/xinetd.d/chargen</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-daytime">/etc/xinetd.d/daytime</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-time">/etc/xinetd.d/time</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-rstatd">/etc/xinetd.d/rstatd</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-rquotad">/etc/xinetd.d/rquotad</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-ruserd">/etc/xinetd.d/ruserd</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-sprayd">/etc/xinetd.d/sprayd</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-walld">/etc/xinetd.d/walld</primary>
+      </indexterm>
+
+      <indexterm zone="xinetd xinetd-config">
+        <primary sortas="e-etc-xinetd.d-irc">/etc/xinetd.d/irc</primary>
+      </indexterm>
+
+      <para>Le format de <filename>/etc/xinetd.conf</filename> est 
+      documenté dans la page de man <filename>xinetd.conf.5</filename>. Vous
+      pouvez trouver des informations supplémentaires sur <ulink
+      url="http://www.xinetd.org"/>.</para>
+
+    </sect3>
+
+    <sect3  id="xinetd-init">
+      <title>Script de démarrage</title>
+
+      <para>En tant qu'utilisateur <systemitem class="username">root</systemitem>,
+      installez le script de démarrage <filename>/etc/rc.d/init.d/xinetd</filename> 
+      inclu dans le paquet <xref linkend="bootscripts"/>.</para>
+
+      <indexterm zone="xinetd xinetd-init">
+        <primary sortas="f-xinetd">xinetd</primary>
+      </indexterm>
+
+<screen role="root"><userinput>make install-xinetd</userinput></screen>
+
+      <para>En tant qu'utilisateur <systemitem class="username">root</systemitem>,
+      utilisez le nouveau script de démarrage pour lancer <command>xinetd</command>&nbsp;:</para>
+
+<screen role="root"><userinput>/etc/rc.d/init.d/xinetd start</userinput></screen>
+
+      <para>Une lecture de <filename>/var/log/daemon.log</filename> devrait
+      s'avérer très agréable. Il se peut que ce fichier contienne des entrées
+      ressemblant à ce qui suit&nbsp;:</para>
+
+<screen><literal>Aug 22 21:40:21 dps10 xinetd[2696]: Server /usr/sbin/in.rlogind is not
+executable [line=29]
+Aug 22 21:40:21 dps10 xinetd[2696]: Error parsing attribute server -
+DISABLING SERVICE [line=29]
+Aug 22 21:40:21 dps10 xinetd[2696]: Server /usr/sbin/in.rshd is not
+executable [line=42]</literal></screen>
+
+      <para>Ces erreurs sont dues au fait que la plupart des serveurs
+      que <command>xinetd</command> essaie de contrôler ne sont pas encore
+      installés.</para>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title>Contenu</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Répertoires installés</segtitle>
+
+      <seglistitem>
+        <seg>itox, xconv.pl, et xinetd</seg>
+        <seg>Aucune</seg>
+        <seg>/etc/xinetd.d/</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="itox">
+        <term><command>itox</command></term>
+        <listitem>
+          <para>est un outil utilisé pour convertir des fichiers
+          <filename>inetd.conf</filename> au format
+          <filename>xinetd.conf</filename>.</para>
+          <indexterm zone="xinetd itox">
+            <primary sortas="b-itox">itox</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="xconv.pl">
+        <term><command>xconv.pl</command></term>
+        <listitem>
+          <para>est un script <application>Perl</application> utilisé pour
+          convertir des fichiers <filename>inetd.conf</filename> au format
+          <filename>xinetd.conf</filename>, ressemblant à
+          <command>itox</command>.</para>
+          <indexterm zone="xinetd xconv.pl">
+            <primary sortas="b-xconv.pl">xconv.pl</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="xinetd-prog">
+        <term><command>xinetd</command></term>
+        <listitem>
+          <para>est le démon des services Internet.</para>
+          <indexterm zone="xinetd xinetd-prog">
+            <primary sortas="b-xinetd">xinetd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>
