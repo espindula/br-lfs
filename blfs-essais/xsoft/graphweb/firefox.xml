@@ -91,8 +91,9 @@
       <xref linkend="nspr"/>, <xref linkend="nss"/>,
       <xref linkend="wireless_tools"/>,
       <ulink url="http://www.valgrind.org/">Valgrind</ulink> (seulement pour
-      tester le code jemalloc) et
-      <xref linkend="wget"/>
+      tester le code jemalloc),
+      <xref linkend="wget"/> et
+      <xref linkend="xulrunner"/>
     </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
@@ -131,6 +132,10 @@ ac_add_options --disable-necko-wifi
 # Si vous avez installé libnotify effacez cette option&nbsp;:
 ac_add_options --disable-libnotify
 
+# Si vous avez installé xulrunner décommentez ces 2 lignes:
+# ac_add_options --with-system-libxul
+# ac_add_options --with-libxul-sdk=/usr/lib/xulrunner-devel-&xulrunner-version;
+
 # Décommentez ceci si vous les avez installé&nbsp;:
 # ac_add_options --enable-startup-notification
 # ac_add_options --enable-system-hunspell
@@ -141,17 +146,20 @@ ac_add_options --disable-libnotify
 # ac_add_options --with-system-nss
 
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/firefox-build-dir
+ac_add_options --enable-official-branding
+ac_add_options --prefix=/usr
+
+# Les options restantes n'ont aucun effet si vous construisez
+# contre une version existante de xulrunner:
 ac_add_options --disable-crashreporter
 ac_add_options --disable-debug
 ac_add_options --disable-installer
 ac_add_options --disable-static
 ac_add_options --disable-tests
 ac_add_options --disable-updater
-ac_add_options --enable-official-branding
 ac_add_options --enable-shared
 ac_add_options --enable-system-cairo
 ac_add_options --enable-system-ffi
-ac_add_options --prefix=/usr
 ac_add_options --with-pthreads
 ac_add_options --with-system-jpeg
 ac_add_options --with-system-png
@@ -165,14 +173,23 @@ EOF</userinput></screen>
   ipc/chromium/src/base/{file_util_linux,message_pump_libevent}.cc &amp;&amp;
 sed -i '/sys\/time\.h/a#include &lt;unistd.h&gt;' ipc/chromium/src/base/time_posix.cc &amp;&amp;
 sed -i 's# ""##' browser/base/Makefile.in &amp;&amp;
-make -f client.mk &amp;&amp;
-make -C firefox-build-dir/browser/installer</userinput></screen>
+make -f client.mk</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
 
 
-    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> ,
-    installez l<application>Firefox</application>&nbsp;:</para>
+    <para>
+      Si vous n'avez <emphasis>PAS</emphasis> lié
+      <application>Firefox</application> contre un
+      <application>Xulrunner</application> installé:</para>
+
+<screen><userinput>make -C firefox-build-dir/browser/installer</userinput></screen>
+
+    <para>
+      Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>, si vous n'avez
+      <emphasis>PAS</emphasis> lié <application>Firefox</application>
+      contre un <application>Xulrunner</application> installé, installez le paquet:
+    </para>
 
 <screen role="root"><userinput>mkdir /usr/lib/firefox-&firefox-version; &amp;&amp;
 tar -xvf firefox-build-dir/dist/firefox-&firefox-version;.en-US.linux-$(uname -m).tar.bz2 \
@@ -182,7 +199,23 @@ mkdir -p /usr/lib/mozilla/plugins &amp;&amp;
 ln -sv ../mozilla/plugins /usr/lib/firefox-&firefox-version; &amp;&amp;
 chown -R -v root:root /usr/lib/firefox-&firefox-version;</userinput></screen>
 
-    <bridgehead renderas="sect3" id="npapi-firefox" xreflabel="Firefox">
+    <para>
+      Si vous <emphasis>AVEZ</emphasis> lié contre un 
+      <application>Xulrunner</application> déjà installé, en tant qu'utilisateur
+      <systemitem class="username">root</systemitem> :
+    </para>
+
+<screen role="root"><userinput>make -C firefox-build-dir install &amp;&amp;
+rm /usr/bin/firefox &amp;&amp;
+cat &gt; /usr/bin/firefox &lt;&lt; "HERE_DOC" &amp;&amp;
+#!/bin/bash
+/usr/lib/xulrunner-&xulrunner-version;/xulrunner /usr/lib/firefox-&firefox-version;/application.ini "${@}"
+HERE_DOC
+chmod 755 /usr/bin/firefox &amp;&amp;
+mkdir -p /usr/lib/mozilla/plugins &amp;&amp;
+ln -sv ../mozilla/plugins /usr/lib/firefox-&firefox-version;</userinput></screen>
+
+     <bridgehead renderas="sect3" id="npapi-firefox" xreflabel="Firefox">
       Entête de NPAPI
     </bridgehead>
 
@@ -196,17 +229,6 @@ chown -R -v root:root /usr/lib/firefox-&firefox-version;</userinput></screen>
 
 <screen role="root"><userinput>mkdir /usr/include/npapi
 cp dom/plugins/base/*.h /usr/include/npapi</userinput></screen>
-
-    <bridgehead renderas="sect3" id="devel-firefox" xreflabel="Firefox">
-      Toutes les bibliothèques et les entêtes de développement
-    </bridgehead>
-     <para>
-      Si vous souhaitez installer l'environnement complet de développement de
-      <application>Firefox</application> (Remarque, ceçi installe plus de 500 Mio de fichiers supplémentaires),
-      en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:
-    </para>
-
-<screen role="root"><userinput>make -C firefox-build-dir install</userinput></screen>
  
   </sect2>
 
@@ -242,6 +264,12 @@ cp dom/plugins/base/*.h /usr/include/npapi</userinput></screen>
     &apos;firefox&apos; des noms de fichier, ce qui nous permet de le déballer
     dans un répertoire versionné.</para>
 
+    <para>
+      <command>make -C firefox-build-dir install</command>&nbsp;: Cela lance
+      <command>make install</command> dans
+      <filename class="directory">firefox-build-dir</filename>.
+    </para>
+
     <para><command>ln -sfv ... /usr/bin/firefox</command>&nbsp;: ceci met un
     lien symbolique vers l'exécutable <command>firefox</command> dans votre
     ${PATH}.</para>
@@ -257,11 +285,6 @@ cp dom/plugins/base/*.h /usr/include/npapi</userinput></screen>
       nous créons le lien symbolique pour garder tous les greffons installés
       dans un seul dossier.</para>
 
-    <para>
-      <command>make -C firefox-build-dir install</command>&nbsp;: Cela lance
-      <command>make install</command> dans
-      <filename class="directory">firefox-build-dir</filename>.
-    </para>
     </sect2>
 
   <sect2 role="configuration">
@@ -284,7 +307,8 @@ cp dom/plugins/base/*.h /usr/include/npapi</userinput></screen>
     false. En tant qu'utilisateur
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>cat &gt; /usr/share/applications/firefox.desktop &lt;&lt; "EOF"
+<screen role="root"><userinput>mkdir -p /usr/share/applications &amp;&amp;
+cat &gt; /usr/share/applications/firefox.desktop &lt;&lt; "EOF" &amp;&amp;
 [Desktop Entry]
 Encoding=UTF-8
 Type=Application
