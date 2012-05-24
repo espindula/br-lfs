@@ -44,7 +44,12 @@
         <ulink url="&wpa_supplicant-download-http;"/></para>
       </listitem>
       <listitem>
-        <para>Somme de contrôle MD5 du téléchargement&nbsp;: &wpa_supplicant-md5sum;</para>
+        <para>
+          Téléchargement (FTP): <ulink url="&wpa_supplicant-download-ftp;"/>
+        </para>
+      </listitem>
+      <listitem>
+         <para>Somme de contrôle MD5 du téléchargement&nbsp;: &wpa_supplicant-md5sum;</para>
       </listitem>
       <listitem>
         <para>Taille du téléchargement&nbsp;: &wpa_supplicant-size;</para>
@@ -57,31 +62,24 @@
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
-    <itemizedlist spacing="compact">
-      <listitem>
-        <para>Correctif requis&nbsp;: <ulink
-        url="&patch-root;/wpa_supplicant-&wpa_supplicant-version;-libnl-3-fixes-1.patch"/></para>
-      </listitem>
-    </itemizedlist>
-
     <bridgehead renderas="sect3">Dépendances de wpa_supplicant</bridgehead>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
-    <para role="recommended"><xref linkend="libnl"/> (requis pour utiliser l'interface nl80211 du noyau.
-    L'utilisation de <application>wpa_supplicant</application>
-    sans <application>libnl</application> n'a pas été testée).</para>
+    <para role="recommended">
+       <xref linkend="libnl"/> et
+      <xref linkend="openssl"/>.
+      </para>
 
     <bridgehead renderas="sect4">Facultative</bridgehead>
-    <para role="optional"><xref linkend="openssl"/>,
-    <!-- using CONFIG_TLS=gnutls fails as
-    src/crypto/tls_gnutls.c uses functions like gnutls_session_get_client_random
-    et gnutls_session_get_server_random which have been removed from current
-    <xref linkend="gnutls"/> -->
-    <ulink url="http://libtom.org/">libtommath</ulink>,
-    <xref linkend="libpcap"/>,
-    <ulink url="http://libdnet.sourceforge.net/">libdnet</ulink>
-    et <xref linkend="dbus"/>.</para>
+    <para role="optional">
+      <xref linkend="dbus"/> et
+      <xref linkend="libxml2"/>
+      <!-- D-Bus and libxml2 are required for D-Bus Interface which
+      NetworkManager uses.
+      WPA Supplicant uses internal Linux specific implemenation
+      for L2_PACKET, libpcap or libdnet are only there for portability
+      with other OS'es. See README if you don't believe me. -->
+    </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/wpa_supplicant"/></para>
@@ -93,7 +91,7 @@
     <para>Activez les options suivantes dans la configuration du noyau et recompilez si nécessaire&nbsp;:</para>
 
 <screen><literal>[*] Networking support  --->
-  [*]   Wireless  --->
+    [*]   Wireless  --->
     [*]   cfg80211 - wireless configuration API
     [*]     cfg80211 wireless extensions compatibility
     [*]   Generic IEEE 802.11 Networking Stack (mac80211)
@@ -104,7 +102,8 @@ Device Drivers  --->
 </literal></screen>
 
     <para>Selectionnez les options que supportent votre matériel&nbsp;:
-    <command>lspci</command> de <xref linkend="pciutils"/> est votre ami ;)</para>
+    <command>lspci</command> de <xref linkend="pciutils"/> peut être utilisé
+    pour voir votre configuration matérielle.</para>
 
     <indexterm zone="wpa_supplicant wpa_supplicant-kernel">
       <primary sortas="d-wpa_supplicant">wpa_supplicant</primary>
@@ -114,76 +113,87 @@ Device Drivers  --->
   <sect2 role="installation">
     <title>Installation de wpa_supplicant</title>
 
-    <para>Installez <application>wpa_supplicant</application> en lancant les commandes suivantes&nbsp;:</para>
+    <para>
+      En premier vous devez créer un fichier de configuration initial pour la construction.
+      Vous pouvez lire <filename>wpa_supplicant/README</filename>
+      et <filename>wpa_supplicant/defconfig</filename> pour les explications des options
+      suivantes aussi bien que pour les autres options qui peuvent être utilisées.
+      Créer un fichier de configuration qui peut fonctionner avec les initialisations
+      standards pour le WiFi en lançant les commandes suivantes:
+    </para>
 
-<screen><userinput>patch -p1 &lt; ../wpa_supplicant-0.7.3-libnl-3-fixes-1.patch &amp;&amp;
-cd wpa_supplicant &amp;&amp;
-cat &gt; .config &lt;&lt; "HERE_DOC" &amp;&amp;
+<screen><userinput>cat &gt; wpa_supplicant/.config &lt;&lt; "EOF"
+CONFIG_BACKEND=file
+CONFIG_CTRL_IFACE=y
+CONFIG_DRIVER_NL80211=y
 CONFIG_DRIVER_WEXT=y
-CONFIG_EAP_GPSK=y
-CONFIG_EAP_GPSK_SHA256=y
+CONFIG_DRIVER_WIRED=y
 CONFIG_EAP_GTC=y
-CONFIG_EAP_IKEV2=y
 CONFIG_EAP_LEAP=y
 CONFIG_EAP_MD5=y
 CONFIG_EAP_MSCHAPV2=y
 CONFIG_EAP_OTP=y
-CONFIG_EAP_PAX=y
 CONFIG_EAP_PEAP=y
-CONFIG_EAP_PSK=y
 CONFIG_EAP_TLS=y
 CONFIG_EAP_TTLS=y
+CONFIG_IEEE8021X_EAPOL=y
+CONFIG_IPV6=y
+CONFIG_LIBNL32=y
 CONFIG_PEERKEY=y
 CONFIG_PKCS12=y
-CONFIG_CTRL_IFACE=y
 CONFIG_READLINE=y
-CONFIG_IPV6=y
-CONFIG_LIBNL20=y
-CONFIG_DRIVER_NL80211=y
-CFLAGS += -I/usr/include/libnl3
+CONFIG_SMARTCARD=y
+CONFIG_WPS=y
+EOF</userinput></screen>
 
-# Si vous n'avez pas installé openssl, décommentez la ligne suivante&nbsp;:
-# CONFIG_TLS=internal
+    <para>
+      Si vous souhaitez utiliser <application>WPA Supplicant</application> avec
+      <xref linkend="NetworkManager"/>, soyez certain d'avoir installé
+      <xref linkend="dbus"/> et <xref linkend="libxml2"/>, ensuite ajoutez
+      les options suivantes dans le fichier de configuration de <application>WPA Supplicant</application>
+      en lançant les commandes suivantes :
+    </para>
 
-# si vous souhaitez utiliser le TLS interne et n'avez pas installé libtommath,
-# décommentez la ligne suivante&nbsp;:
-# CONFIG_INTERNAL_LIBTOMMATH=y
+<screen><userinput>cat &gt;&gt; wpa_supplicant/.config &lt;&lt; "EOF"
+CONFIG_CTRL_IFACE_DBUS=y
+CONFIG_CTRL_IFACE_DBUS_NEW=y
+CONFIG_CTRL_IFACE_DBUS_INTRO=y
+EOF</userinput></screen>
 
-# Décommentez la ligne suivante si vous avez un chipset ralink&nbsp;:
-# CONFIG_DRIVER_RALINK=y
 
-# Décommentez la ligne suivante si vous avez un chipset Agere Hermes&nbsp;:
-# CONFIG_DRIVER_HERMES=y
+    <para>
+      Installez <application>WPA Supplicant</application> en lançant les commandes suivantes:
+    </para>
 
-# Décommentez la ligne suivante si vous avez un chipset Atmel&nbsp;:
-# CONFIG_DRIVER_ATMEL=y
-
-# Décommentez la ligne suivante si vous avez installé dbus&nbsp;:
-# CONFIG_CTRL_IFACE_DBUS_NEW=y
-
-# Décommentez la ligne suivante si vous avez installé libpcap et libdnet&nbsp;:
-# CONFIG_L2_PACKET=pcap
-HERE_DOC
-make</userinput></screen>
+<screen><userinput>cd wpa_supplicant &amp;&amp;
+make BINDIR=/sbin LIBDIR=/lib</userinput></screen>
 
     <para>Ce paquet n'est pas livré avec une suite de tests.</para>
 
     <para>Maintenant en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>cp wpa_{cli,passphrase,supplicant} /sbin &amp;&amp;
-cp doc/docbook/wpa_supplicant.conf.5 /usr/share/man/man5 &amp;&amp;
-cp doc/docbook/wpa_{cli,passphrase,supplicant}.8 /usr/share/man/man8</userinput></screen>
-  </sect2>
+<screen role="root"><userinput>install -v -m755 wpa_{cli,passphrase,supplicant} /sbin &amp;&amp;
+install -v -m644 doc/docbook/wpa_supplicant.conf.5 /usr/share/man/man5 &amp;&amp;
+install -v -m644 doc/docbook/wpa_{cli,passphrase,supplicant}.8 /usr/share/man/man8</userinput></screen>
 
-  <sect2 role="commands">
-    <title>Explications des commandes</title>
+    <para>
+      Si vous avez construit <application>WPA Supplicant</application> avec le support
+      <application>D-Bus</application>, vous devez installez les fichiers de configuration de
+      <application>D-Bus</application>. Installez les en lançant les commandes suivantes en tant
+      qu'utilisateur <systemitem class="username">root</systemitem> :
+    </para>
 
-    <para><command>cat > .config ...</command>&nbsp;: Cela va créer une configuration par défaut
-    qui doit fonctionner dans la plupart des cas. Elle utilise le pilote du noyau WEXT
-    que la plupart des cartes sans-fil semble utiliser. Pour une explication de ces options
-    (et pour voir les autres options que vous pouvez choisir) lire le fichier
-    <filename>wpa_supplicant/defconfig</filename> dans le source.</para>
-  </sect2>
+<screen role="root"><userinput>install -v -m644 dbus/fi.{epitest.hostap.WPASupplicant,w1.wpa_supplicant1}.service \
+                 /usr/share/dbus-1/system-services &amp;&amp;
+install -v -m644 dbus/dbus-wpa_supplicant.conf /etc/dbus-1/system.d/wpa_supplicant.conf
+</userinput></screen>
+
+    <note>
+      <para>
+        Vous devrez redémarrer le démon du système <application>D-Bus</application> avant que vous puissiez
+        utiliser l'interface <application>D-Bus</application> de <application>WPA Supplicant</application>.
+     </para>
+    </note>
 
   <sect2 role="configuration">
     <title>Configuration de wpa_supplicant</title>
@@ -208,7 +218,7 @@ cp doc/docbook/wpa_{cli,passphrase,supplicant}.8 /usr/share/man/man8</userinput>
 
 <screen role="root"><userinput>wpa_passphrase <replaceable>SSID</replaceable> <replaceable>SECRET_PASSWORD</replaceable> &gt; /etc/wpa_supplicant.conf</userinput></screen>
 
-      <para>/etc/wpa_supplicant.conf peut retenir les détails de plusieurs points d'accès.
+      <para><filename>/etc/wpa_supplicant.conf</filename> peut retenir les détails de plusieurs points d'accès.
       Quand vous lancez wpa_supplicant il scannera les SSIDs qu'il peut voir 
       et choisira le mot de passe approprié pour se connecter.</para>
 
@@ -292,7 +302,7 @@ ip route add default via 192.168.1.1 dev wlan0</userinput></screen>
         <term><command>wpa_passphrase</command></term>
         <listitem>
           <para>prend un SSID et un mot de passe et génère une configuration simple
-          que <command>wpa_supplicant</command> peut comprendre</para>
+          que <command>wpa_supplicant</command> peut comprendre.</para>
           <indexterm zone="wpa_supplicant wpa_passphrase">
             <primary sortas="b-wpa_passphrase">wpa_passphrase</primary>
           </indexterm>
@@ -303,7 +313,7 @@ ip route add default via 192.168.1.1 dev wlan0</userinput></screen>
         <term><command>wpa_cli</command></term>
         <listitem>
           <para>est une interface en ligen de commandes pour contrôler le lancement du démon
-	  wpa_supplicant</para>
+	  <command>wpa_supplicant</command>.</para>
           <indexterm zone="wpa_supplicant wpa_cli">
             <primary sortas="b-wpa_cli">wpa_cli</primary>
           </indexterm>
