@@ -17,7 +17,7 @@
 BLFS_EN="../blfs-en/BOOK/"
 
 #initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
-CHEMIN_LOG="./traduc/script/robot\ html/log"
+CHEMIN_LOG="./traduc/script/robot-html/log"
 
 
 #general.ent est exclu de la vérification
