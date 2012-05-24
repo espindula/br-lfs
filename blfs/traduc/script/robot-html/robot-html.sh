@@ -253,7 +253,7 @@ do
    fi
    # effacement de LOG de ce qui n'est pas un chiffre, des caractères [] et /,
    # effacement des nb à 1 chiffre, 2 chiffres, 3 chiffres, 4 chiffres et plus de 6 chiffres
-   LOG=$(echo $LOG | cut -d'|' -f4 2>>$CHEMIN_LOG/robot.err| tr "'A-Za-z.,;:+()-" ' ' 2>>$CHEMIN_LOG/robot.err | sed -e 's/\[//g' -e 's/\]//g'  -e 's@/@@g' -e 's/ [0-9] //g' -e 's/ [0-9][0-9] //g' -e 's/ [0-9][0-9][0-9] //g' -e 's/ [0-9][0-9][0-9][0-9] //g' -e 's/ [0-9][0-9][0-9][0-9][0-9][0-9]* //g' 2>>$CHEMIN_LOG/robot.err)
+   LOG=$(echo $LOG | cut -d'|' -f4 2>>$CHEMIN_LOG/robot.err| tr "'A-Za-z.,;:+()-?\\" ' ' 2>>$CHEMIN_LOG/robot.err | sed -e 's/\[//g' -e 's/\]//g'  -e 's@/@@g' -e 's/ [0-9] //g' -e 's/ [0-9][0-9] //g' -e 's/ [0-9][0-9][0-9] //g' -e 's/ [0-9][0-9][0-9][0-9] //g' -e 's/ [0-9][0-9][0-9][0-9][0-9][0-9]* //g' 2>>$CHEMIN_LOG/robot.err)
    if [[ $? -gt 0 ]]
    then
       log_err $?
