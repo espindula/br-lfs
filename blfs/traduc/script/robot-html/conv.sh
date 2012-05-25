@@ -22,6 +22,7 @@ cd $CHEMIN_BLFSFR
 for i in $(cat $CHEMIN_BLFSFR/listxml)
 do
             # pour les fichiers différents de general.ent qui reste en utf8
+           i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
            ok=$( echo $i | sed -e "s/^.*general.ent$/non/")
            if [[ "$ok" != "non" ]]
            then

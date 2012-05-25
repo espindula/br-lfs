@@ -68,6 +68,7 @@ cd ../../
 #recherche des fichiers xml dans listxml
 for i in $(cat $CHEMIN_BLFSFR/listxml)
 do
+  i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
   if [[ $1 != "-q" ]]
   then
     echo $i # affichage du fichier en cours

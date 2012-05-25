@@ -46,8 +46,10 @@ do
   then
     echo $i
   fi
-  j=$BLFS_EN${i:2}
+  j=$CHEMIN_BLFSFR/$BLFS_EN${i:2}
 
+  i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
+  
   if [[ -f $i ]]
   then
 
