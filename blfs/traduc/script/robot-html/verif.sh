@@ -68,12 +68,12 @@ cd ../../
 #recherche des fichiers xml dans listxml
 for i in $(cat $CHEMIN_BLFSFR/listxml)
 do
-  i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
   if [[ $1 != "-q" ]]
   then
     echo $i # affichage du fichier en cours
   fi
-  j="../blfs-en/BOOK/"${i:2} # initialisation du chemin vers le fichier anglais à partir du fichier français
+  j=$CHEMIN_BLFSFR"../blfs-en/BOOK/"${i:2} # initialisation du chemin vers le fichier anglais à partir du fichier français
+  i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
   nbfr=$(cat $i 2>>$CHEMIN_LOG/robot.err | grep -o "<" | wc -l) #détermination du nombre de balises dans le fichier français
   if [[ $? -gt 0 ]]
   then
