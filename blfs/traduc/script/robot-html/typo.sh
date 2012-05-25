@@ -10,11 +10,15 @@
 #
 # Fichier sous licence CC-BY-SA
 # 11/03/12
+# initialisation du chemin pour blfs-fr
+CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
 
+# on se déplace à la racine de la copie de travail de BLFS-fr
+cd $CHEMIN_BLFSFR
 
 #recherche des fichiers xml dans listxml
 
-for i in $(cat listxml)
+for i in $(cat $CHEMIN_BLFSFR/listxml)
 do
   if [[ $1 != "-q" ]]
   then

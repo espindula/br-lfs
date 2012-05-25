@@ -16,12 +16,17 @@
 
 BLFS_EN="../blfs-en/BOOK/"
 
-#initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
-CHEMIN_LOG="./traduc/script/robot-html/log"
+# initialisation du chemin pour blfs-fr
+CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
 
+#initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
+CHEMIN_LOG="$CHEMIN_BLFSFR/traduc/script/robot-html/log"
+
+# on se déplace à la racine de la copie de travail de BLFS-fr
+cd $CHEMIN_BLFSFR
 
 #general.ent est exclu de la vérification
-LIST=$(cat listxml | grep -v general.ent)
+LIST=$(cat $CHEMIN_BLFSFR/listxml | grep -v $CHEMIN_BLFSFR/general.ent)
 
 
 if echo $* | grep -q "q"

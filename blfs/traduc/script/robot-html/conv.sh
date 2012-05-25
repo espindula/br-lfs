@@ -10,14 +10,20 @@
 
 # on liste l'ensemble des fichiers de listxml
 
+# initialisation du chemin pour blfs-fr
+CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
+
 #initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
-CHEMIN_LOG="./traduc/script/robot-html/log"
+CHEMIN_LOG="$CHEMIN_BLFSFR/traduc/script/robot-html/log"
 
+# on se déplace à la racine de la copie de travail de BLFS-fr
+cd $CHEMIN_BLFSFR
 
-for i in $(cat listxml)
+for i in $(cat $CHEMIN_BLFSFR/listxml)
 do
             # pour les fichiers différents de general.ent qui reste en utf8
-           if [[ "$i" != "./general.ent" ]]
+           ok=$( echo $i | sed -e "s/^.*general.ent$/non/")
+           if [[ "$ok" != "non" ]]
            then
               # détermination du format de fichier
               a=$(file -i $i 2>&1 >>$CHEMIN_LOG/robot.err)
@@ -37,7 +43,7 @@ do
 			then
 			  echo "conversion de $i ($a vers iso-8859-15)"
 			fi
-                        iconv -f $a -t iso-8859-15 $i > $i.temp 2>>$CHEMIN_LOG/robot.err
+                        iconv -f $a -t ISO-8859-15 $i > $i.temp 2>>$CHEMIN_LOG/robot.err
                         if [[ $? -gt 0 ]]
                         then
                            exit 1

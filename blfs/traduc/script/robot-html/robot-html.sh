@@ -80,9 +80,9 @@ function log_err
         else
             echo "... Echec" >> $CHEMIN_LOG/robot.log
             echo "... Echec" >> $CHEMIN_LOG/jobrobot.log
-            cat $CHEMIN_LOG/robot.log >mail.err
-            cat $CHEMIN_LOG/robot.err >>mail.err
-            cat mail.err | mail -s "Echec du robot" -t $ADMIN_ROBOT -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="utf8"' -a "MIME-Version: 1.0"
+            cat $CHEMIN_LOG/robot.log >$CHEMIN_BLFSFR/mail.err
+            cat $CHEMIN_LOG/robot.err >>$CHEMIN_BLFSFR/mail.err
+            cat $CHEMIN_BLFSFR/mail.err | mail -s "Echec du robot" -t $ADMIN_ROBOT -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="utf8"' -a "MIME-Version: 1.0"
             exit 1
         fi
 }
@@ -122,7 +122,7 @@ echo -n "$(date) Exécution du robot" >> $CHEMIN_LOG/jobrobot.log
 # l'information est enregistrée dans le fichier ./vtraduc
 log_info "initialisation dernière VF traîtée "
 V_ANC=0
-V_ANC=$(cat vtraduc)
+V_ANC=$(cat $CHEMIN_BLFSFR/vtraduc)
 log_att $?
 
 #---------------------------------------------------------------------
@@ -184,10 +184,10 @@ rm list
 
 log_info "Recherche de la liste des fichiers modifiés sur le dépôt depuis la dernière visite du robot"
 
-svn diff -r BASE:HEAD | grep Index | sed -e 's/Index: /.\//g' > listxml 2>>$CHEMIN_LOG/robot.err
+svn diff -r BASE:HEAD | grep Index | sed -e 's/Index: /.\//g' > $CHEMIN_BLFSFR/listxml 2>>$CHEMIN_LOG/robot.err
 log_err $?
 log_info "Ajout de la liste des fichiers de verif.lst"
-sed -e 's/^\(.*\) :.*/\1/g' verif.lst >>listxml 2>>$CHEMIN_LOG/robot.err
+sed -e 's/^\(.*\) :.*/\1/g' verif.lst >>$CHEMIN_BLFSFR/listxml 2>>$CHEMIN_LOG/robot.err
 log_att $?
 
 # synchronisation de la copie de travail avec le dépôt
@@ -281,8 +281,8 @@ log_err $?
 
 # on a trouvé un numéro VO traduite, on continue.
 log_info "la dernière version traduite publiée est $V_EN \n"
-echo "Bonjour," > mail.txt 2>>$CHEMIN_LOG/robot.err
-echo >>mail.txt
+echo "Bonjour," > $CHEMIN_BLFSFR/mail.txt 2>>$CHEMIN_LOG/robot.err
+echo >>$CHEMIN_BLFSFR/mail.txt
 
 # synchro de la copie de travail angaise a la dernière version traduite
 log_info "Examen de la copie de travail de blfs-en"
@@ -307,18 +307,18 @@ log_err $?
 
 if [[ $VERSION == $V_ANC ]]
 then
-   log_info "Le robot a trouvé que la dernière version traduite est déja en ligne"
+   log_info "Le robot a trouvé que la dernière version traduite est déjà en ligne"
    log_err 0
    log_info "rédaction du rapport"
-   echo "Aucun changement sur le SVN depuis ma dernière visite. Alors j'ai rien a faire." >> mail.txt
-   echo >>mail.txt
-   echo "bonne journée !">>mail.txt
-   echo >>mail.txt
-   echo "Denis_ROBOT">>mail.txt
-   echo >>mail.txt
-   echo "Il faudrait analyser les fichiers suivants car le nombre de balises entre le français et l'anglais n'est pas concordant (un nombre négatif indique des balises manquantes dans la version française alors qu'un nombre positif indique des balises en trop) :" >>mail.txt
-   cat verif.lst >>mail.txt
-   mv mail.txt $CHEMIN_LOG/robot.rapport
+   echo "Aucun changement sur le SVN depuis ma dernière visite. Alors j'ai rien a faire." >> $CHEMIN_BLFSFR/mail.txt
+   echo >>$CHEMIN_BLFSFR/mail.txt
+   echo "bonne journée !">>$CHEMIN_BLFSFR/mail.txt
+   echo >>$CHEMIN_BLFSFR/mail.txt
+   echo "Denis_ROBOT">>$CHEMIN_BLFSFR/mail.txt
+   echo >>$CHEMIN_BLFSFR/mail.txt
+   echo "Il faudrait analyser les fichiers suivants car le nombre de balises entre le français et l'anglais n'est pas concordant (un nombre négatif indique des balises manquantes dans la version française alors qu'un nombre positif indique des balises en trop) :" >>$CHEMIN_BLFSFR/mail.txt
+   cat verif.lst >>$CHEMIN_BLFSFR/mail.txt
+   mv $CHEMIN_BLFSFR/mail.txt $CHEMIN_LOG/robot.rapport
    log_err $?
 # si la version indiquée sur le wiki n'est pas la dernière version publiée
 elif [[ $V_WIKI != $V_EN ]]
@@ -326,18 +326,18 @@ elif [[ $V_WIKI != $V_EN ]]
       log_info "Le robot pense qu'une version est en cours de traduction"
       log_err 0
       log_info "rédaction du rapport"
-      echo "Je pense qu'une traduction est en cours, donc je ne fais rien (sinon je vais faire des bêtises :o) )." >>mail.txt
-      echo >>mail.txt
-      echo "Version la plus récente en cours de traduction : $V_WIKI">>mail.txt
-      echo "Version anglaise sur le SVN : $V_EN">>mail.txt
-      echo >>mail.txt
-      echo "Bonne journée et bonne traduction !">>mail.txt
-      echo >>mail.txt
-      echo "Denis_ROBOT">>mail.txt
-      echo >>mail.txt
-      echo "Il faudrait analyser les fichiers suivants car le nombre de balises entre le français et l'anglais n'est pas concordant (un nombre négatif indique des balises manquantes dans la version française alors qu'un nombre positif indique des balises en trop) :" >>mail.txt
-      cat verif.lst >>mail.txt
-      mv mail.txt $CHEMIN_LOG/robot.rapport
+      echo "Je pense qu'une traduction est en cours, donc je ne fais rien (sinon je vais faire des bêtises :o) )." >>$CHEMIN_BLFSFR/mail.txt
+      echo >>$CHEMIN_BLFSFR/mail.txt
+      echo "Version la plus récente en cours de traduction : $V_WIKI">>$CHEMIN_BLFSFR/mail.txt
+      echo "Version anglaise sur le SVN : $V_EN">>$CHEMIN_BLFSFR/mail.txt
+      echo >>$CHEMIN_BLFSFR/mail.txt
+      echo "Bonne journée et bonne traduction !">>$CHEMIN_BLFSFR/mail.txt
+      echo >>$CHEMIN_BLFSFR/mail.txt
+      echo "Denis_ROBOT">>$CHEMIN_BLFSFR/mail.txt
+      echo >>$CHEMIN_BLFSFR/mail.txt
+      echo "Il faudrait analyser les fichiers suivants car le nombre de balises entre le français et l'anglais n'est pas concordant (un nombre négatif indique des balises manquantes dans la version française alors qu'un nombre positif indique des balises en trop) :" >>$CHEMIN_BLFSFR/mail.txt
+      cat $CHEMIN_BLFSFR/verif.lst >>$CHEMIN_BLFSFR/mail.txt
+      mv $CHEMIN_BLFSFR/mail.txt $CHEMIN_LOG/robot.rapport
       log_err $?      
    else
 # sinon il y a eu une nouvelle version de publiée   
@@ -367,8 +367,8 @@ elif [[ $V_WIKI != $V_EN ]]
 
       nb_ligne=$(cat validation.txt | wc -l)
 
-      echo "La dernière version anglaise traduite est la :" $V_EN >>mail.txt
-      echo >>mail.txt
+      echo "La dernière version anglaise traduite est la :" $V_EN >>$CHEMIN_BLFSFR/mail.txt
+      echo >>$CHEMIN_BLFSFR/mail.txt
 
       # si pas de problèmes à la validation le fichier validation.txt n'aura qu'une seule ligne
       if [[ $nb_ligne == "1" ]]
@@ -389,14 +389,14 @@ elif [[ $V_WIKI != $V_EN ]]
          log_info "modification des droits de l'archive"
          chmod -R a+w blfs-svn.tar.bz2 2>>$CHEMIN_LOG/robot.err
          log_att $?
-         echo "Le xml est ok et le html est également correctement construit." >>mail.txt
+         echo "Le xml est ok et le html est également correctement construit." >>$CHEMIN_BLFSFR/mail.txt
          log_info "récupération de la liste des modifications faites par le robot"
          svn diff > diff.txt 2>>$CHEMIN_LOG/robot.err
          log_att $?
          if [[ -s "diff.txt" ]]
          then
             echo >>mail.twt
-            echo "J'ai modifié des fichiers (voir mon commit)" >>mail.txt
+            echo "J'ai modifié des fichiers (voir mon commit)" >>$CHEMIN_BLFSFR/mail.txt
          fi
          log_info "publication sur le dépôt des modifications faites par le robot"
          svn commit -m "correction par le robot" 2>>$CHEMIN_LOG/robot.err
@@ -406,9 +406,9 @@ elif [[ $V_WIKI != $V_EN ]]
          log_err $?
          if [[ -s "verif.lst" ]]
          then
-            echo >>mail.txt
-            echo "Il faudrait analyser les fichiers suivants car le nombre de balises entre le français et l'anglais n'est pas concordant (un nombre négatif indique des balises manquantes dans la version française alors qu'un nombre positif indique des balises en trop) :" >>mail.txt
-            cat verif.lst >>mail.txt 
+            echo >>$CHEMIN_BLFSFR/mail.txt
+            echo "Il faudrait analyser les fichiers suivants car le nombre de balises entre le français et l'anglais n'est pas concordant (un nombre négatif indique des balises manquantes dans la version française alors qu'un nombre positif indique des balises en trop) :" >>$CHEMIN_BLFSFR/mail.txt
+            cat verif.lst >>$CHEMIN_BLFSFR/mail.txt 
          fi
          log_info "publication de la version HTML sur le site traduc.org"
          rsync $1 -lrugop --delete blfs-svn traduc.org:/home/traduc.org/www/lfs.traduc.org/view/ 2>&1 2>>$CHEMIN_LOG/robot.err
@@ -426,17 +426,17 @@ elif [[ $V_WIKI != $V_EN ]]
          then
             rm -r tmp
          fi
-         echo >>mail.txt
-         echo "bonne journée" >>mail.txt
-         echo "Denis_ROBOT" >>mail.txt
+         echo >>$CHEMIN_BLFSFR/mail.txt
+         echo "bonne journée" >>$CHEMIN_BLFSFR/mail.txt
+         echo "Denis_ROBOT" >>$CHEMIN_BLFSFR/mail.txt
          if [[ -s "verif.lst" ]]
          then
-            echo >>mail.txt
-            echo "Détail des balises :">>mail.txt
-            cat verif.detail >>mail.txt
+            echo >>$CHEMIN_BLFSFR/mail.txt
+            echo "Détail des balises :">>$CHEMIN_BLFSFR/mail.txt
+            cat verif.detail >>$CHEMIN_BLFSFR/mail.txt
          fi
-         echo >>mail.txt
-         mv mail.txt $CHEMIN_LOG/robot.rapport
+         echo >>$CHEMIN_BLFSFR/mail.txt
+         mv $CHEMIN_BLFSFR/mail.txt $CHEMIN_LOG/robot.rapport
          # enregistrement de la version traduite
          log_info "enregistrement de la version traduite"
          echo $V_FR > vtraduc
@@ -444,26 +444,26 @@ elif [[ $V_WIKI != $V_EN ]]
       else
          # si le XML ne valide pas
          pbxml="1"
-         echo "Le xml n'est pas ok. Le html n'est pas construit." >>mail.txt
-         echo >>mail.txt
-         cat validation.txt >>mail.txt
-         echo >>mail.txt
-         echo "bonne journée et bon déboguage XML !! ;o)">>mail.txt
-         echo "Denis_ROBOT">>mail.txt
+         echo "Le xml n'est pas ok. Le html n'est pas construit." >>$CHEMIN_BLFSFR/mail.txt
+         echo >>$CHEMIN_BLFSFR/mail.txt
+         cat validation.txt >>$CHEMIN_BLFSFR/mail.txt
+         echo >>$CHEMIN_BLFSFR/mail.txt
+         echo "bonne journée et bon déboguage XML !! ;o)">>$CHEMIN_BLFSFR/mail.txt
+         echo "Denis_ROBOT">>$CHEMIN_BLFSFR/mail.txt
       fi
 fi
 
 if [[ "$pbxml" == "1" ]]
 then
    log_info "conversion du fichier mail en iso 8959-15"
-   iconv -f utf-8 -t iso-8859-15 mail.txt > mail.txt.temp 2>>$CHEMIN_LOG/robot.err
+   iconv -f utf-8 -t iso-8859-15 $CHEMIN_BLFSFR/mail.txt > $CHEMIN_BLFSFR/mail.txt.temp 2>>$CHEMIN_LOG/robot.err
    log_att $?
-   mv mail.txt.temp mail.txt
+   mv $CHEMIN_BLFSFR/mail.txt.temp $CHEMIN_BLFSFR/mail.txt
    log_info "envoi du mail à la ML pour indiquer un pb avec le XML"
-   cat mail.txt | mail -s "PB XML" -t lfs-traducfr@linuxfromscratch.org -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="iso-8859-1"' -a "MIME-Version: 1.0" 2>>$CHEMIN_LOG/robot.err
+   cat $CHEMIN_BLFSFR/mail.txt | mail -s "PB XML" -t lfs-traducfr@linuxfromscratch.org -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="iso-8859-1"' -a "MIME-Version: 1.0" 2>>$CHEMIN_LOG/robot.err
    log_att $?
    log_info "envoi du mail à l'admin du robot"
-   cat mail.txt | mail -s "PB XML" -t $ADMIN_ROBOT -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="iso-8859-1"' -a "MIME-Version: 1.0" 2>> $CHEMIN_LOG/robot.err
+   cat $CHEMIN_BLFSFR/mail.txt | mail -s "PB XML" -t $ADMIN_ROBOT -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="iso-8859-1"' -a "MIME-Version: 1.0" 2>> $CHEMIN_LOG/robot.err
    log_att $?
 fi
 
@@ -473,11 +473,11 @@ if [[ "${dat:0:3}" == "Mon" ]]
 then
    if [[ -s "verif.lst" ]]
          then
-            echo >mail.txt
-            echo "Détail des balises :">>mail.txt
-            cat verif.detail >>mail.txt
+            echo >$CHEMIN_BLFSFR/mail.txt
+            echo "Détail des balises :">>$CHEMIN_BLFSFR/mail.txt
+            cat verif.detail >>$CHEMIN_BLFSFR/mail.txt
             log_info "envoi mail indiquant la concordance"
-            cat mail.txt | mail -s "Validation du html" -t lfs-traducfr@linuxfromscratch.org -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="iso-8859-1"' -a "MIME-Version: 1.0" 2>>$CHEMIN_LOG/robot.err
+            cat $CHEMIN_BLFSFR/mail.txt | mail -s "Validation du html" -t lfs-traducfr@linuxfromscratch.org -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="iso-8859-1"' -a "MIME-Version: 1.0" 2>>$CHEMIN_LOG/robot.err
             log_err $?
          fi
 fi

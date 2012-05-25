@@ -12,8 +12,15 @@
 # Fichier sous licence CC-BY-SA
 # 11/03/12
 
+# initialisation du chemin pour blfs-fr
+CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
+
 #initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
-CHEMIN_LOG="./traduc/script/robot-html/log"
+CHEMIN_LOG="$CHEMIN_BLFSFR/traduc/script/robot-html/log"
+
+
+# on se déplace à la racine de la copie de travail de BLFS-fr
+cd $CHEMIN_BLFSFR
 
 # déclaration des variables
 
@@ -47,7 +54,7 @@ function balises
 	bdiff=$bfr-$ben
 	if [[ $bdiff != 0 ]]
 	then
-		echo "balise" $1 ":" $bdiff >> verif.detail
+		echo "balise" $1 ":" $bdiff >> $CHEMIN_BLFSFR/verif.detail
 	fi
         bautre=$bautre-$bdiff 
 } 
@@ -55,18 +62,18 @@ function balises
 cd ../../
 
 #initialisation du fichier résultat 'list'
-> verif.lst
-> verif.detail
+> $CHEMIN_BLFSFR/verif.lst
+> $CHEMIN_BLFSFR/verif.detail
 
 #recherche des fichiers xml dans listxml
-for i in $(cat listxml)
+for i in $(cat $CHEMIN_BLFSFR/listxml)
 do
   if [[ $1 != "-q" ]]
   then
     echo $i # affichage du fichier en cours
   fi
   j="../blfs-en/BOOK/"${i:2} # initialisation du chemin vers le fichier anglais à partir du fichier français
-  nbfr=$(cat $i 2>>$CHEMIN_LOG/robot.err| grep -o "<" | wc -l) #détermination du nombre de balises dans le fichier français
+  nbfr=$(cat $i 2>>$CHEMIN_LOG/robot.err | grep -o "<" | wc -l) #détermination du nombre de balises dans le fichier français
   if [[ $? -gt 0 ]]
   then
      exit 1
@@ -90,7 +97,7 @@ do
     if [[ "$nbenc" != "$nbfrc" ]] # si différence avec le corrigé
     then
 	echo $i ": différence du nombre de balises (fr-en)= "$diff  >> verif.lst #écriture dans le fichier résultat 'list'
-	echo $i >> verif.detail
+	echo $i >> $CHEMIN_BLFSFR/verif.detail
         bautre=$diff	
 	for b in $liste_balise
 	do 
@@ -102,7 +109,7 @@ do
 	done	
 	if [[ $bautre != 0 ]]
 	then
-           echo "autres balises :" $bautre >> verif.detail
+           echo "autres balises :" $bautre >> $CHEMIN_BLFSFR/verif.detail
 	fi
      fi
   fi
