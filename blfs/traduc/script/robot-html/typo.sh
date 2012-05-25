@@ -31,7 +31,8 @@ do
      sed -e 's/>:/>\&nbsp;:/g' -i $i
   fi
   sed -e 's/\(<!ENTITY.* [KMG]\)B/\1io/g' -i $i
-  sed -e 's/^[+-]//g' -i $i
+  sed -e 's/^+//g' -i $i
+  
 done
 exit 0
  
