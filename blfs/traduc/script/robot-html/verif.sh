@@ -72,8 +72,16 @@ do
   then
     echo $i # affichage du fichier en cours
   fi
-  j=$CHEMIN_BLFSFR/"../blfs-en/BOOK/"${i:2} # initialisation du chemin vers le fichier anglais à partir du fichier français
-  i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
+  j=$CHEMIN_BLFSFR/"../blfs-en/BOOK/"${i:21} # initialisation du chemin vers le fichier anglais à partir du fichier français
+  i=$( echo $i | sed -e "s@^\.*@@g")
+
+  sed -e "s/<!--/\n<!--\n/g" -e "s/-->/\n-->\n/g" $i > $i.temp
+  i=$i.temp
+  sed -e "/<!--/,/-->/d" -i $i
+  sed -e "s/<!--/\n<!--\n/g" -e "s/-->/\n-->\n/g" $j > $j.temp
+  j=$j.temp
+  sed -e "/<!--/,/-->/d" -i $j
+
   nbfr=$(cat $i 2>>$CHEMIN_LOG/robot.err | grep -o "<" | wc -l) #détermination du nombre de balises dans le fichier français
   if [[ $? -gt 0 ]]
   then
@@ -97,8 +105,8 @@ do
     diff=$nbfrc-$nbenc # calcul de la différence
     if [[ "$nbenc" != "$nbfrc" ]] # si différence avec le corrigé
     then
-	echo $i ": différence du nombre de balises (fr-en)= "$diff  >> verif.lst #écriture dans le fichier résultat 'list'
-	echo $i >> $CHEMIN_BLFSFR/verif.detail
+	echo $( echo $i | sed -e "s/.temp//g") ": différence du nombre de balises (fr-en)= "$diff  >> $CHEMIN_BLFSFR/verif.lst #écriture dans le fichier résultat 'list'
+	echo $( echo $i | sed -e "s/.temp//g") >> $CHEMIN_BLFSFR/verif.detail
         bautre=$diff	
 	for b in $liste_balise
 	do 
@@ -114,5 +122,7 @@ do
 	fi
      fi
   fi
+  rm $i
+  rm $j
 done
 exit 0
