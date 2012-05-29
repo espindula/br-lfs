@@ -27,12 +27,12 @@ do
            if [[ "$ok" != "non" ]]
            then
               # détermination du format de fichier
-              a=$(file -i $i 2>&1 >>$CHEMIN_LOG/robot.err)
+              a=$(file -i $i )
               if [[ $? -gt 0 ]]
               then
                  exit 1
               fi
-              a=$(echo $a | awk -F "=" '{ print $2 }' 2>&1 >>$CHEMIN_LOG/robot.err)
+              a=$(echo $a | awk -F "=" '{ print $2 }' )
 	      if [[ $? -gt 0 ]]
               then
                  exit 1

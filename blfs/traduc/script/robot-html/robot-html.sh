@@ -280,7 +280,8 @@ fi
 log_err $?
 
 # on a trouvé un numéro VO traduite, on continue.
-log_info "la dernière version traduite publiée est $V_EN \n"
+log_info "la dernière version traduite publiée est $V_EN"
+log_err 0
 echo "Bonjour," > $CHEMIN_BLFSFR/mail.txt 2>>$CHEMIN_LOG/robot.err
 echo >>$CHEMIN_BLFSFR/mail.txt
 
