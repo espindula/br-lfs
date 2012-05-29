@@ -26,7 +26,7 @@ CHEMIN_LOG="$CHEMIN_BLFSFR/traduc/script/robot-html/log"
 cd $CHEMIN_BLFSFR
 
 #general.ent est exclu de la vérification
-LIST=$(cat $CHEMIN_BLFSFR/listxml | grep -v $CHEMIN_BLFSFR/general.ent)
+LIST=$(cat $CHEMIN_BLFSFR/listxml | grep -v general.ent)
 
 
 if echo $* | grep -q "q"

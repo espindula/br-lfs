@@ -62,8 +62,8 @@ function balises
 cd ../../
 
 #initialisation du fichier résultat 'list'
---> $CHEMIN_BLFSFR/verif.lst
---> $CHEMIN_BLFSFR/verif.detail
+> $CHEMIN_BLFSFR/verif.lst
+> $CHEMIN_BLFSFR/verif.detail
 
 #recherche des fichiers xml dans listxml
 for i in $(cat $CHEMIN_BLFSFR/listxml)
