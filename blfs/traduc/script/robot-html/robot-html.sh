@@ -184,7 +184,7 @@ rm list
 
 log_info "Recherche de la liste des fichiers modifiés sur le dépôt depuis la dernière visite du robot"
 
-svn diff -r BASE:HEAD | grep Index | sed -e 's/Index: /.\//g' > $CHEMIN_BLFSFR/listxml 2>>$CHEMIN_LOG/robot.err
+svn diff -r BASE:HEAD | grep -v "traduc/commits" | grep Index | sed -e '/^[+-]Index/d' | sed -e 's/Index: /.\//g' > $CHEMIN_BLFSFR/listxml 2>>$CHEMIN_LOG/robot.err
 log_err $?
 log_info "Ajout de la liste des fichiers de verif.lst"
 sed -e 's/^\(.*\) :.*/\1/g' verif.lst >>$CHEMIN_BLFSFR/listxml 2>>$CHEMIN_LOG/robot.err
