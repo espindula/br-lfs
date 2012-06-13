@@ -1,0 +1,192 @@
+Révision 10326
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   general/genlib/libatomic_ops.xml
+   general/prog/gc.xml
+
+Log :
+gc-7.2
+
+Le robot a traité 22 % du commit anglais
+Index: general/genlib/libatomic_ops.xml
+===================================================================
+--- general/genlib/libatomic_ops.xml	(revision 10325)
++++ general/genlib/libatomic_ops.xml	(revision 10326)
+@@ -79,6 +79,7 @@
+ <screen><userinput>sed -i 's#AC_PROG_RANLIB#AC_LIBTOOL_DLOPEN\nAC_PROG_LIBTOOL#' configure.ac &amp;&amp;
+ sed -i 's#b_L#b_LTL#;s#\.a#.la#g;s#_a_#_la_#' src/Makefile.am &amp;&amp;
+ sed -i 's#\.a#.so#g;s#\.\./src/#../src/.libs/#g' tests/Makefile.am &amp;&amp;
++sed -i 's#pkgdata#doc#' doc/Makefile.am &amp;&amp;
+ autoreconf -i &amp;&amp;
+ ./configure --prefix=/usr --disable-static \
+   --docdir=/usr/share/doc/libatomic_ops-&libatomic_ops-version; &amp;&amp;
+@@ -98,7 +99,8 @@
+ 
+     <para>
+       <command>sed -i 's#AC_PROG_RANLIB ...</command>: These seds massage the
+-      autotool files so that a shared library is built and the tests pass.
++      autotool files so that a shared library is built, the tests pass and the
++      docs are installed where we want.
+     </para>
+ 
+     <para>
+
+Index: general/prog/gc.xml
+===================================================================
+--- general/prog/gc.xml	(revision 10325)
++++ general/prog/gc.xml	(revision 10326)
+@@ -4,10 +4,11 @@
+   <!ENTITY % general-entities SYSTEM "../../general.ent">
+   %general-entities;
+ 
++    "http://www.hpl.hp.com/personal/Hans_Boehm/gc/gc_source/gc-&gc-version;.tar.gz">
+   <!ENTITY gc-download-ftp  "&gentoo-ftp-repo;/gc-&gc-version;.tar.gz">
+   <!ENTITY gc-buildsize     "13 MB">
+   <!ENTITY gc-time          "0.2 SBU">
+@@ -29,20 +30,21 @@
+      leak detector for C or C++ programs, though that is not its primary goal.
+    </para>
+ 
+-    &lfs70_checked;
++    &lfs71_checked;
+ 
+     <bridgehead renderas="sect3">Package Information</bridgehead>
+     <itemizedlist spacing="compact">
+@@ -66,58 +68,77 @@
+       </listitem>
+     </itemizedlist>
+ 
+-    <para condition="html" role="usernotes">User Notes:
+-    <ulink url="&blfs-wiki;/gc"/></para>
++    <bridgehead renderas="sect4">Optional</bridgehead>
++    <para role="optional">
++      <xref linkend="libatomic_ops"/> (Gc contains a copy of
++      Libatomic_ops-&gc-version; which it will compile and statically link if
++      configure doesn't find Libatomic_ops installed on your system).
++    </para>
+ 
++    <para condition="html" role="usernotes">
++      User Notes: <ulink url="&blfs-wiki;/gc"/>
++    </para>
+   </sect2>
+ 
+   <sect2 role="installation">
+@@     @@
+      Install <application>GC</application> by running the following commands:
+    </para>
+ 
+-<screen><userinput>./configure --prefix=/usr            \
+-            --datadir=/usr/share/doc \
+-            --enable-cplusplus &amp;&amp;
++<screen><userinput>sed -i 's#pkgdata#doc#' doc/doc.am &amp;&amp; autoreconf  &amp;&amp;
++./configure --prefix=/usr --enable-cplusplus      \
++  --disable-static --docdir=/usr/share/doc/gc-&gc-version; &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>To test the results, issue: <command>make check</command>.</para>
+@@     @@
+ 
+ <screen role="root"><userinput>make install &amp;&amp;
+ install -v -m644 doc/gc.man /usr/share/man/man3/gc_malloc.3 &amp;&amp;
+-ln -v -s gc_malloc.3 /usr/share/man/man3/gc.3 </userinput></screen>
++ln -sfv gc_malloc.3 /usr/share/man/man3/gc.3 </userinput></screen>
+   </sect2>
+ 
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+-    <para><parameter>--datadir=/usr/share/doc</parameter>: This parameter
+-    changes the installation path of the documentation to
+-    <filename class='directory'>/usr/share/doc/gc</filename> instead of
+-    <filename class='directory'>/usr/share/gc</filename>.</para>
++    <para>
++      <command>sed -i 's#pkgdata#doc#' doc/doc.am</command>,
++      <command>autoreconf</command> and
++      <option>--docdir=/usr/share/doc/gc-&gc-version;</option>: These commands
++      allow us to install the documentation in a versioned directory.
++    </para>
+ 
+-    <para><parameter>--enable-cplusplus</parameter>: This parameter forces
+-    the building and installation of the C++ library along with the standard
+-    C library.</para>
++    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
++      href="../../xincludes/static-libraries.xml"/>
+ 
++    <para>
++      <parameter>--enable-cplusplus</parameter>: This parameter enables the
++      building and installing the C++ library along with the standard C library.
++    </para>
+   </sect2>
+ 
+   <sect2 role="content">
+     <title>Contents</title>
+ 
+     <segmentedlist>
+-      <segtitle>Installed Programs</segtitle>
+       <segtitle>Installed Libraries</segtitle>
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-        <seg>None</seg>
+-        <seg>libcord.{a,so}, libgc.{so,a}, and libgccpp.{so,a}</seg>
+-        <seg>/usr/include/gc and /usr/share/doc/gc</seg>
++        <seg>
++          libcord.so,
++          libgc.so and
++          libgccpp.so
++        </seg>
++        <seg>
++          /usr/include/gc and
++          /usr/share/doc/gc
++        </seg>
+       </seglistitem>
+     </segmentedlist>
+ 
+@@ -127,29 +148,29 @@
+       <?dbhtml list-presentation="table"?>
+ 
+       <varlistentry id="libgc">
+-        <term><filename class='libraryfile'>libgc.{so,a}</filename></term>
++        <term><filename class='libraryfile'>libgc.so</filename></term>
+         <listitem>
+          <para>
+            contains a C interface to the conservative garbage collector,
+            primarily designed to replace the C malloc function.
+          </para>
+           <indexterm zone="gc libgc">
+-            <primary sortas="c-libgc">libgc.{so,a}</primary>
++            <primary sortas="c-libgc">libgc.so</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
+ 
+       <varlistentry id="libgccpp">
+-        <term><filename class='libraryfile'>libgccpp.{so,a}</filename></term>
++        <term><filename class='libraryfile'>libgccpp.so</filename></term>
+         <listitem>
+          <para>
+            contains a C++ interface to the conservative garbage collector.
+          </para>
+           <indexterm zone="gc libgccpp">
+-            <primary sortas="c-libgccpp">libgccpp.{so,a}</primary>
++            <primary sortas="c-libgccpp">libgccpp.so</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(revision 10325)
++++ introduction/welcome/changelog.xml	(revision 10326)
+@@ -47,6 +47,9 @@
+         <listitem>
+           <para>[abenton] - Updated Libatomic_Ops to 7.2.</para>
+         </listitem>
++        <listitem>
++          <para>[abenton] - Updated Gc to 7.2.</para>
++        </listitem>
+       </itemizedlist>
+     </listitem>
+ 
+
