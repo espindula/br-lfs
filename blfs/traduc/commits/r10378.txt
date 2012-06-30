@@ -1,0 +1,308 @@
+Révision 10378
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   multimedia/libdriv/libquicktime.xml
+   general.ent
+   general/sysutils/dbus.xml
+
+Log :
+D-Bus 1.6.2 and libquicktime 1.2.4
+
+Le robot a traité 69 % du commit anglais
+Index: general/sysutils/dbus.xml
+===================================================================
+--- general/sysutils/dbus.xml	(revision 10377)
++++ general/sysutils/dbus.xml	(revision 10378)
+@@ -82,66 +98,65 @@
+    </para>
+   </sect2>
+ 
+-  <sect2 role="kernel" id='dbus-kernel'>
+-    <title>Kernel Configuration</title>
+-    <para>Ensure the following option is enabled in the kernel configuration
+-    and recompile the kernel if necessary:</para>
+-<screen><literal>General Setup
+-  System V IPC</literal></screen>
+-    <indexterm zone="dbus dbus-kernel">
+-      <primary sortas="d-dbus">dbus</primary>
+-    </indexterm>
+-  </sect2>
+   <sect2 role="installation">
+     <title>Installation of D-Bus</title>
+ 
+@@     @@
+ 
+ <screen><userinput>./configure --prefix=/usr \
+             --sysconfdir=/etc \
++            --localstatedir=/var \
+             --libexecdir=/usr/lib/dbus-1.0 \
+-            --localstatedir=/var \
++            --with-console-auth-dir=/run/console/ \
++            --without-systemdsystemunitdir \
++            --disable-systemd \
+ 	    --disable-static &amp;&amp;
+ make</userinput></screen>
+ 
+@@ -149,42 +164,58 @@
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+-    <para><parameter>--libexecdir=/usr/lib/dbus-1.0</parameter>: This will
+-    install binaries meant to be only used internally by
+-    <application>D-Bus</application>, and the directory
+-    <filename class="directory">dbus-1</filename> into
+-    <filename class="directory">/usr/lib/dbus-1.0</filename> instead of
+-    into <filename class="directory">/usr/libexec</filename>.</para>
++    <para>
++      <parameter>--libexecdir=/usr/lib/dbus-1.0</parameter>: This will
++      ensure that <application>D-Bus</application> internal support
++      program is installed in the prefered directory
++      <filename class="directory">/usr/lib/dbus-1.0</filename> instead of
++      <filename class="directory">/usr/libexec</filename>.
++    </para>
+ 
+-    <para><parameter>--localstatedir=/var</parameter>: This parameter causes
+-    the daemon PID file, system bus socket and machine uuid file to be
+-    created in the <filename class="directory">/var</filename> directory
+-    instead of the <filename class="directory">/usr/var</filename>
+-    directory.</para>
++    <para>
++      <parameter>--with-console-auth-dir=/run/console/</parameter>: This
++      parameter specifies location of the
++      <application>ConsoleKit</application>  auth dir.
++    </para>
+ 
+-    <para><parameter>--enable-tests</parameter>: Build extra parts of the code
+-    to support testing. Configure will end with a NOTE warning about this.</para>
++    <para>
++      <option>--without-systemdsystemunitdir</option>: This switch prevents
++      installation of systemd unit files.
++    </para>
+ 
+-    <para><parameter>--enable-asserts</parameter>: Enable debugging code to run
+-    assertions for statements normally assumed to be true. This prevents a
+-    warning that '<parameter>--enable-tests</parameter>' on its own is only useful
+-    for profiling and might not give true results for all tests, but adds its own
+-    NOTE that this should not be used in a production build.
++    <para>
++      <option>--disable-systemd</option>: This switch disables systemd
++      support in <application>D-Bus</application>
+     </para>
+ 
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+      href="../../xincludes/static-libraries.xml"/>
+ 
++    <para>
++      <option>--enable-tests</option>: Build extra parts of the code to support
++      testing. Configure will end with a NOTE warning about this.
++    </para>
++    <para>
++      <option>--enable-asserts</option>: Enable debugging code to run assertions for
++      statements normally assumed to be true. This prevents a warning that 
++      '<parameter>--enable-tests</parameter>' on its own is only useful for profiling
++      and might not give true results for all tests, but adds its own NOTE that this
++      should not be used in a production build.
++    </para>
+   </sect2>
+ 
+   <sect2 role="configuration">
+@@ -192,10 +223,13 @@
+ 
+     <sect3 id="dbus-config">
+       <title>Config Files</title>
+-      <para><filename>/etc/dbus-1/session.conf</filename>,
+-      <filename>/etc/dbus-1/system.conf</filename> and
+-      <filename>/etc/dbus-1/system.d/*</filename></para>
+ 
++      <para>
++        <filename>/etc/dbus-1/session.conf</filename>,
++        <filename>/etc/dbus-1/system.conf</filename> and
++        <filename>/etc/dbus-1/system.d/*</filename>
++      </para>
+       <indexterm zone="dbus dbus-config">
+         <primary sortas="e-etc-dbus-1-session.conf">/etc/dbus-1/session.conf</primary>
+       </indexterm>
+@@ -257,64 +297,67 @@
+          </para>
+         </listitem>
+         <listitem>
+-          <para>If you use <command>gdm</command> or some other display manager
+-          that utilizes custom files to initiate sessions, use the example in
+-          <xref linkend="gdm-config-dbus"/> of the
+-          <application>GDM</application> instructions to create a file
+-          containing <command>dbus-launch</command>.</para>
+-        </listitem>-->
+-        <listitem>
+-          <para>The examples shown previously use
+-          <command>dbus-launch</command> to specify a program to be run. This
+-          has the benefit (when also using the
+-          <parameter>--exit-with-session</parameter> parameter) of stopping the
+-          session daemon when the specified program is stopped. You can also
+-          start the session daemon in your system or personal startup scripts
+-          by adding the following lines:</para>
++          <para>
++            The examples shown previously use
++            <command>dbus-launch</command> to specify a program to be run. This
++            has the benefit (when also using the
++            <parameter>--exit-with-session</parameter> parameter) of stopping the
++            session daemon when the specified program is stopped. You can also
++            start the session daemon in your system or personal startup scripts
++            by adding the following lines:
++          </para>
+ 
+ <screen><userinput><literal># Start the D-Bus session daemon
+ eval `dbus-launch`
+@@ -329,15 +372,25 @@
+ 
+     <segmentedlist>
+       <segtitle>Installed Programs</segtitle>
+-      <segtitle>Installed Libraries</segtitle>
++      <segtitle>Installed Library</segtitle>
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-        <seg>dbus-cleanup-sockets, dbus-daemon, dbus-launch, dbus-monitor, 
+-	dbus-send and dbus-uuidgen</seg>
+-        <seg>libdbus-1.so</seg>
+-        <seg>/etc/dbus-1, /usr/include/dbus-1.0, /usr/lib/dbus-1.0, 
+-	/usr/share/dbus-1, /usr/share/doc/dbus-1.6.0 and /var/run/dbus</seg>
++        <seg>
++          dbus-cleanup-sockets, dbus-daemon, dbus-launch, dbus-monitor, 
++	  dbus-send and dbus-uuidgen
++        </seg>
++        <seg>
++           libdbus-1.so
++        </seg>
++        <seg>
++          /etc/dbus-1,
++          /usr/include/dbus-1.0,
++          /usr/lib/dbus-1.0, 
++	  /usr/share/dbus-1,
++          /usr/share/doc/dbus-&dbus-version; and
++          /var/lib/dbus
++        </seg>
+       </seglistitem>
+     </segmentedlist>
+ 
+@@ -404,7 +466,9 @@
+       <varlistentry id="dbus-uuidgen">
+         <term><command>dbus-uuidgen</command></term>
+         <listitem>
+-          <para>is used to generate or read a universally unique ID.</para>
++          <para>
++            is used to generate a universally unique ID.
++          </para>
+           <indexterm zone="dbus dbus-uuidgen">
+             <primary sortas="b-dbus-uuidgen">dbus-uuidgen</primary>
+           </indexterm>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(revision 10377)
++++ introduction/welcome/changelog.xml	(revision 10378)
+@@ -42,6 +42,18 @@
+ 
+ -->
+     <listitem>
++      <para>June 30th, 2012</para>
++      <itemizedlist>
++        <listitem>
++          <para>[krejzi] - D-Bus 1.6.2.</para>
++        </listitem>
++        <listitem>
++          <para>[krejzi] - libquicktime 1.2.4.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>June 28th, 2012</para>
+       <itemizedlist>
+         <listitem>
+
+Index: multimedia/libdriv/libquicktime.xml
+===================================================================
+--- multimedia/libdriv/libquicktime.xml	(revision 10377)
++++ multimedia/libdriv/libquicktime.xml	(revision 10378)
+@@ -29,74 +29,97 @@
+     <bridgehead renderas="sect3">libquicktime Dependencies</bridgehead>
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+-    <para role="optional"><xref linkend="alsa"/>,
+-    <xref linkend="faac"/>,
+-    <xref linkend="faad2"/>,
+-    <xref linkend="ffmpeg"/>,
+-    <xref linkend="gtk2"/>,
+-    <xref linkend="lame"/>,
+-    <xref linkend="libdv"/>,
+-    <xref linkend="libjpeg"/>,
+-    <xref linkend="libpng"/>,
+-    <xref linkend="libvorbis"/>,
+-    <ulink url="http://www.diracvideo.org">Schroedinger</ulink>,
+-    <ulink url="http://developers.videolan.org/x264.html">x264</ulink> and
+-    <xref linkend="x-window-system"/></para>
++    <para role="optional">
++      <xref linkend="alsa-lib"/>,
++      <xref linkend="faac"/>,
++      <xref linkend="faad2"/>,
++      <xref linkend="ffmpeg"/>,
++      <xref linkend="gtk2"/>,
++      <xref linkend="lame"/>,
++      <xref linkend="libdv"/>,
++      <xref linkend="libjpeg"/>,
++      <xref linkend="libpng"/>,
++      <xref linkend="libvorbis"/>,
++      <ulink url="http://www.diracvideo.org">Schroedinger</ulink>,
++      <ulink url="http://developers.videolan.org/x264.html">x264</ulink> and
++      <xref linkend="xorg7-lib"/>
++    </para>
+ 
+     <para condition="html" role="usernotes">User Notes:
+      <ulink url="&blfs-wiki;/libquicktime"/>
+@@     @@
+ 
+ <screen><userinput>./configure --prefix=/usr \
+             --docdir=/usr/share/doc/libquicktime-&libquicktime-version; \
++            --enable-gpl \
+             --without-doxygen &amp;&amp;
+ make</userinput></screen>
+ 
+@@ -108,14 +131,20 @@
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+-    <para><parameter>--with-libdv</parameter>: Build with libdv support.
+-    Not enabled by default.</para>
++    <para>
++      <option>--with-libdv</option>: Build with libdv support.
++      Not enabled by default.
++    </para>
+ 
+-    <para><parameter>--without-doxygen</parameter>: This is necessary if you do
+-    not have Doxygen, omit this if installed.</para>
++    <para>
++      <option>--enable-gpl</option>: Changes the licence to GPL. This
++      enables some extra plugins, such as FAAC, FAAD2, and x264.
++    </para>
+ 
+-    <para><parameter>--enable-gpl</parameter>: Changes the licence to GPL. This
+-    enables some extra plugins, such as FAAC, FAAD2, and x264.</para>
++    <para>
++      <option>--without-doxygen</option>: This is necessary if you do
++      not have <application>Doxygen</application>, omit this if installed.
++    </para>
+ 
+   </sect2>
+ 
+@@ -157,7 +194,9 @@
+       <varlistentry id="lqtplay">
+         <term><command>lqtplay</command></term>
+         <listitem>
+-          <para>is a simple Quicktime movie player for X11.</para>
++          <para>
++            is a simple QuickTime movie player for X Window System.
++          </para>
+           <indexterm zone="libquicktime lqtplay">
+             <primary sortas="b-lqtplay">lqtplay</primary>
+           </indexterm>
+
