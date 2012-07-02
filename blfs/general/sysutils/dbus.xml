@@ -34,8 +34,8 @@
     tels que <quote>nouveau périphérique ajouté</quote> ou <quote>queue de l'imprimante
     modifiée</quote>) et un démon aligné sur la session de l'utilisateur (pour
     les besoins IPC généraux des applications de l'utilisateur). Le bus de
-    message est aussi construit au sommet d'un environnement de passagede message
-    entre éléments général, qui peut être utilisé par  deux
+    message est aussi construit au sommet d'un environnement de passage de message
+    entre éléments général, qui peut être utilisé par deux
     applications pour communiquer directement (sans passer par le démon de
     bus de message).</para>
 
@@ -91,21 +91,6 @@
 
   </sect2>
 
-  <sect2 role="kernel" id='dbus-kernel'>
-    <title>Configuration du noyau</title>
-
-    <para>Assurez-vous que l'option suivante est activée dans la configuration
-    du noyau et recompilez le noyau si nécessaire&nbsp;:</para>
-
-<screen><literal>General Setup
-  System V IPC</literal></screen>
-
-    <indexterm zone="dbus dbus-kernel">
-      <primary sortas="d-dbus">dbus</primary>
-    </indexterm>
-
-  </sect2>
-
   <sect2 role="installation">
     <title>Installation de D-BUS</title>
 
@@ -121,8 +106,15 @@ useradd -c "D-BUS Message Daemon User" -d /var/run/dbus         -u 18 -g message
     <command>./configure --help</command> et ajouter des paramètres désirés
     à la commande <command>configure</command> affichée ci-dessous)&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=/usr             --sysconfdir=/etc             --libexecdir=/usr/lib/dbus-1.0             --localstatedir=/var             --disable-static &amp;&amp;
-make</userinput></screen>
+ <screen><userinput>./configure --prefix=/usr \
+            --sysconfdir=/etc \
+            --localstatedir=/var \
+            --libexecdir=/usr/lib/dbus-1.0 \
+            --with-console-auth-dir=/run/console/ \
+            --without-systemdsystemunitdir \
+            --disable-systemd \
+ 	    --disable-static &amp;&amp;
+ make</userinput></screen>
 
     <para>Voir ci-dessous pour les instructions de test.</para>
  
@@ -154,24 +146,39 @@ make distclean</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><parameter>--libexecdir=/usr/lib/dbus-1.0</parameter>&nbsp;: Ceci 
-    installera des binaires conçus pour n'être utilisés qu'en interne par 
-    <application>D-BUS</application> et le répertoire 
-    <filename class="directory">dbus-1</filename> dans
-    <filename class="directory">/usr/lib/dbus-1.0</filename> au lieu de
-    <filename class="directory">/usr/libexec</filename>.</para>
+    <para>
+      <parameter>--libexecdir=/usr/lib/dbus-1.0</parameter>: Ceci
+      assurera que le programme de support interne <application>D-Bus</application>
+      est installé dans le répertoire 
+      <filename class="directory">/usr/lib/dbus-1.0</filename> au lieu de
+      <filename class="directory">/usr/libexec</filename>.
+    </para>
 
-    <para><parameter>--localstatedir=/var</parameter>&nbsp;: Il résulte
-    de ce paramètre que le fichier PID du démon, le socket du bus système et le
-    fichier uuid de la machine, seront créés dans le répertoire
-    <filename class="directory">/var</filename> plutôt que dans
-    le répertoire <filename class="directory">/usr/var</filename>.</para>
+    <para>
+      <parameter>--with-console-auth-dir=/run/console/</parameter>: Ce
+      paramètre specifit l'emplacement du répertoire 
+      d'authentification de <application>ConsoleKit</application>.
+    </para>
 
-    <para><parameter>--enable-tests</parameter>&nbsp;: Construit des parties
-    supplémentaires du code pour supporter le test. Configure se finira avec
-    un avertissement NOTE concernant cela.</para>
+   <para>
+      <option>--without-systemdsystemunitdir</option>: Ce switch empêche
+      l'installation des fichiers de service de systemd.
+    </para>
 
-    <para><parameter>--enable-asserts</parameter>&nbsp;: Active le code de
+    <para>
+      <option>--disable-systemd</option>: Cette option désactive le
+      support de systemd dans <application>D-Bus</application>
+    </para>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../../xincludes/static-libraries.xml"/>    
+
+    <para>
+      <option>--enable-tests</option>: Construit des parties supplémentaires
+      du code pour les tests. Configure se terminera avec un avertissement NOTE à ce propos.
+    </para>
+    <para>
+      <option>--enable-asserts</option>:  Active le code de
     débogage pour exécuter des déclarations d'éléments supposées normalement
     vraies. Cela empêche un avertissement selon lequel 
     '<parameter>--enable-tests</parameter>' n'est utile en lui-même que 
@@ -180,9 +187,6 @@ make distclean</userinput></screen>
     pas être utilisé dans une construction de production.
     </para>
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-    href="../../xincludes/static-libraries.xml"/>    
-
   </sect2>
 
   <sect2 role="configuration">
@@ -190,10 +194,11 @@ make distclean</userinput></screen>
 
     <sect3 id="dbus-config">
       <title>Fichiers de configuration</title>
-      <para><filename>/etc/dbus-1/session.conf</filename>,
-      <filename>/etc/dbus-1/system.conf</filename> et
-      <filename>/etc/dbus-1/system.d/*</filename></para>
-
+      <para>
+        <filename>/etc/dbus-1/session.conf</filename>,
+        <filename>/etc/dbus-1/system.conf</filename> et
+        <filename>/etc/dbus-1/system.d/*</filename>
+      </para>
       <indexterm zone="dbus dbus-config">
         <primary sortas="e-etc-dbus-1-session.conf">/etc/dbus-1/session.conf</primary>
       </indexterm>
@@ -277,25 +282,20 @@ EOF</userinput></screen>
           dans votre fichier
           <filename>~/.xsession</filename> qui démarre votre environnement
           graphique. La syntaxe ressemblerait à celle de l'exemple dans le
-          fichier <filename>~/.xinitrc</filename>.</para>
+          fichier <filename>~/.xinitrc</filename>.
+          </para>
         </listitem>
-<!-- Enabled by default.
-      <listitem>
-          <para>Si vous utilisez <command>gdm</command> ou un autre gestionnaire
-          d'affichage qui utilise des fichiers personnalisés pour ouvrir des
-          sessions, utilisez l'exemple dans
-          <xref linkend="gdm-config-dbus"/> des instructions de
-          <application>GDM</application> pour créer un fichier contenant
-          <command>dbus-launch</command>.</para>
-       </listitem>-->
         <listitem>
-          <para>Les exemples décrits précédemment utilisent 
-          <command>dbus-launch</command> pour dire à un programme de se lancer.
-          Ceci a l'avantage (lorsqu'on utilise aussi le paramètre
-          <parameter>--exit-with-session</parameter>) d'arrêter le démon de
-          session quand le programme spécifié est arrêté. Vous pouvez aussi
-          démarrer le démon de session dans votre système ou par vos scripts
-          de démarrage personnels en ajoutant les lignes suivantes&nbsp;:</para>
+          <para>
+            L'exemple montré précédement utilise 
+            <command>dbus-launch</command> pour spécifier un programme à executer. 
+            Ceci à le bénéfice (Quand on utilise également le paramètre
+            <parameter>--exit-with-session</parameter>) de stopper le
+            démon de la session quand le programme spécifié est stoppé. Vous pouvez également
+            commencer le démon de la session dans vos scripts de démarrage du système où personels
+            en ajoutant les lignes suivantes :
+          </para>
+
 
 <screen><userinput><literal># Start the D-BUS session daemon
 eval `dbus-launch`
@@ -330,15 +330,25 @@ kill $DBUS_SESSION_BUS_PID</literal></userinput></screen>
 
     <segmentedlist>
       <segtitle>Programmes installés</segtitle>
-      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Bibliothèque installée</segtitle>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>dbus-cleanup-sockets, dbus-daemon, dbus-launch, dbus-monitor,
-        dbus-send and dbus-uuidgen</seg>
-        <seg>libdbus-1.so</seg>
-        <seg>/etc/dbus-1, /usr/include/dbus-1.0, /usr/lib/dbus-1.0,
-       /usr/share/dbus-1, /usr/share/doc/dbus-1.6.0 and /var/run/dbus</seg>
+        <seg>
+          dbus-cleanup-sockets, dbus-daemon, dbus-launch, dbus-monitor, 
+	  dbus-send et dbus-uuidgen
+        </seg>
+        <seg>
+           libdbus-1.so
+        </seg>
+        <seg>
+          /etc/dbus-1,
+          /usr/include/dbus-1.0,
+          /usr/lib/dbus-1.0, 
+	  /usr/share/dbus-1,
+          /usr/share/doc/dbus-&dbus-version; et
+          /var/lib/dbus
+        </seg> 
       </seglistitem>
     </segmentedlist>
 
@@ -404,7 +414,9 @@ kill $DBUS_SESSION_BUS_PID</literal></userinput></screen>
       <varlistentry id="dbus-uuidgen">
         <term><command>dbus-uuidgen</command></term>
         <listitem>
-          <para>est utilisé pour générer ou lire un ID gunique universel.</para>
+          <para>
+			  est utilisé pour générer ou lire un ID unique universel.
+		  </para>
           <indexterm zone="dbus dbus-uuidgen">
             <primary sortas="b-dbus-uuidgen">dbus-uuidgen</primary>
           </indexterm>
