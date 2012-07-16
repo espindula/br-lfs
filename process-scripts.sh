@@ -23,11 +23,11 @@ do
 done
 
 # Udev rules
-#for s in udev-config/*.rules
-#do
-#  script=$(basename $s)
-#
-#  sed  -e 's/\&/\&amp\;/g' -e 's/</\&lt\;/g'   -e 's/>/\&gt\;/g' \
-#       -e "s/'/\&apos\;/g" -e 's/"/\&quot\;/g' -e 's/\t/    /g'  \
-#       $s > appendices/${script}.script 
-#done
+for s in udev-config/*.rules
+do
+  script=$(basename $s)
+
+  sed  -e 's/\&/\&amp\;/g' -e 's/</\&lt\;/g'   -e 's/>/\&gt\;/g' \
+       -e "s/'/\&apos\;/g" -e 's/"/\&quot\;/g' -e 's/\t/    /g'  \
+       $s > appendices/${script}.script 
+done
