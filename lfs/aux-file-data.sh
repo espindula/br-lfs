@@ -31,10 +31,10 @@ sed -i -e s/BOOTSCRIPTS-SIZE/$bootsize/              \
 ############
 
 # udev configuration tarball data
-udevconfig=$(ls udev-config*.bz2)
-udevsize=$(ls -lk $udevconfig | cut -f5 -d" ")
-udevmd5=$(md5sum $udevconfig | cut -f1 -d" ")
+#udevconfig=$(ls udev-config*.bz2)
+#udevsize=$(ls -lk $udevconfig | cut -f5 -d" ")
+#udevmd5=$(md5sum $udevconfig | cut -f1 -d" ")
 
-sed -i -e s/UDEV-SIZE/$udevsize/ \
-       -e s/UDEV-MD5SUM/$udevmd5/ $FILE
+#sed -i -e s/UDEV-SIZE/$udevsize/ \
+#       -e s/UDEV-MD5SUM/$udevmd5/ $FILE
 
