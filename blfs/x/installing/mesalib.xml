@@ -90,9 +90,8 @@ Download MD5 sum: &mesalib-md5sum;
       <xref linkend="xorg7-lib"/>
     </para>
 
-    <bridgehead renderas="sect4">Facultative</bridgehead>
-    <para role="optional">
-      <xref linkend="talloc"/> et
+    <bridgehead renderas="sect4">Recommandées</bridgehead>
+    <para role="recommended">
       <xref linkend="llvm"/>
     </para>
 
@@ -121,8 +120,15 @@ Download MD5 sum: &mesalib-md5sum;
 <screen><userinput>sed 's@FLAGS="-g@FLAGS="@' -i configure                &amp;&amp;
 patch -Np1 -i ../MesaLib-&mesalib-version;-add_xdemos-2.patch        &amp;&amp;
 patch -Np1 -i ../MesaLib-&mesalib-version;-llvm-3.1-fixes-1.patch    &amp;&amp;
-./configure --prefix=$XORG_PREFIX               --enable-shared-dricore             --enable-xa
-            --with-gallium-drivers="nouveau,svga,swrast" &amp;&amp;
+./configure --prefix=$XORG_PREFIX   \
+            --enable-texture-float  \
+            --enable-gles1          \
+            --enable-gles2          \
+            --enable-xa             \
+            --enable-shared-glapi   \
+            --enable-shared-dricore \
+            --enable-glx-tls        \
+            --with-gallium-drivers="nouveau,r300,r600,svga,swrast" &amp;&amp;
 make</userinput></screen>
 
     <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
@@ -131,8 +137,7 @@ make</userinput></screen>
 
 <screen role="root"><userinput>make install &amp;&amp;
 mkdir -pv ${XORG_PREFIX}/share/doc/MesaLib-&mesalib-version; &amp;&amp;
-cp -rv docs/* ${XORG_PREFIX}/share/doc/MesaLib-&mesalib-version;
-</userinput></screen>
+cp -rfv docs/* ${XORG_PREFIX}/share/doc/MesaLib-&mesalib-version;</userinput></screen>
 
     <para>Enfin, si vous installez dans un autre préfixe que 
     <filename class="directory">/usr</filename>, vous devriez créer des liens
@@ -140,12 +145,9 @@ cp -rv docs/* ${XORG_PREFIX}/share/doc/MesaLib-&mesalib-version;
     Exécutez la commande suivante en tant qu'utilisateur
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>ln -s -v ${XORG_PREFIX}/include/GL  /usr/include &amp;&amp;
-ln -s -v ${XORG_PREFIX}/include/EGL /usr/include &amp;&amp;
-ln -s -v ${XORG_PREFIX}/include/KHR /usr/include &amp;&amp;
-for HEADER in xa_{composite,context,tracker}.h
+<screen role="root"><userinput>for GLHEADER in EGL GL GLES GLES2 KHR xa_composite.h xa_context.h xa_tracker.h
 do
-  ln -s -v ${XORG_PREFIX}/include/$HEADER /usr/include
+  ln -sfv ${XORG_PREFIX}/include/${GLHEADER} /usr/include/${GLHEADER}
 done</userinput></screen>
 
   </sect2>
@@ -153,21 +155,47 @@ done</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><command>sed 's@FLAGS="-g@FLAGS="@' -i configure</command>&nbsp;: 
-    par défaut, Mesa se construit avec les symboles de débogage. Supprimez le 
-    paramètre -g de <envar>CFLAGS</envar> et de <envar>CXXFLAGS</envar> avec
-    cette commande.</para>
+    <para>
+      <option>--enable-texture-float</option>&nbsp;: Ce paramètre active les
+      textures et les tampons d'affichage de points flottants. Merci de consulter
+      <filename>docs/patents.txt</filename> pour voir s un problème légal existe
+      en cas d'utilisation de cette fonctionnalité.
+    </para>
 
-    <para><command>--enable-shared-dricore</command>&nbsp;: lie les modules DRI avec
-    les routines partagées coeur de DRI.</para>
+    <para>
+      <option>--enable-gles1</option>&nbsp;: Ce paramètre active le support
+      de l'API d'OpenGL ES 1.x.
+    </para>
 
-    <para><command>--enable-xa</command>&nbsp;: active la constructions de l'API d'accélaration X XA
-    (Requise pour le pilote VMware 3D).</para>
-
-    <para><command>--with-gallium-drivers="..."</command>&nbsp;: contrôle la construction des pilotes
-    de gallium. Ls drivers disponibles sont&nbsp;: i915, nouveau, r300, r600,
-    swrast et svga. Notez que r300 et r600 requiert que <xref linkend="llvm"/>
-    soit installé.</para>
+    <para>
+      <option>--enable-gles2</option>&nbsp;: Ce paramètre active le support de
+      l'API d'OpenGL ES 2.x.
+    </para>
+ 
+    <para>
+      <option>--enable-xa</option>&nbsp;: Ce paramètre active la construction de
+      l'API d'accélération XA X (Requise pour le pilote 3D de VMware).
+    </para>
+    <para>
+      <option>--enable-shared-glapi</option>&nbsp;: Ce paramètre active la construction
+      de la bibliothèque glapi partagée.
+    </para>
+    <para>
+      <option>--enable-shared-dricore</option>&nbsp;: Ce paramètre active l'édition
+      de liens des modules DRI vers les routines de base de l'API partagée.
+    </para>
+    <para>
+      <option>--enable-glx-tls</option>&nbsp;: Ce paramètre active le support
+      TLS dans GLX.
+    </para>
+    <para>
+      <parameter>--with-gallium-drivers="..."</parameter>&nbsp;: Ce paramètre
+      contrôle les pilotes Gallium qui seront construits. Les pilotes disponibles
+      sont&nbsp;!
+      i915, nouveau, r300, r600, swrast et svga. Remarquez qu'il vous faut
+      supprimer de la liste r300 et r600 si vous n'avez pas installé
+      <xref linkend="llvm"/>.
+    </para>
 
   </sect2>
 
@@ -180,11 +208,18 @@ done</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>glxgears et glxinfo</seg>
-        <seg>libEGL.so, libGL.so, libGLU.so, libxatracker.so, et *_dri.so</seg>
-        <seg><envar>$XORG_PREFIX</envar>/include/{EGL,GL,KHR},
-        <envar>$XORG_PREFIX</envar>/lib/dri, et
-        <envar>$XORG_PREFIX</envar>/share/doc/MesaLib-&mesalib-version;</seg>
+        <seg>
+          glxgears et glxinfo
+        </seg>
+        <seg>
+          libEGL.so, libglapi.so, libGLESv1_CM.so, libGLESv2.so,
+          libGL.so, libGLU.so et libxatracker.so
+        </seg>
+        <seg>
+          <envar>$XORG_PREFIX</envar>/include/{EGL,GL,GLES,GLES2,KHR},
+          <envar>$XORG_PREFIX</envar>/lib/dri, and
+          <envar>$XORG_PREFIX</envar>/share/doc/MesaLib-&mesalib-version;
+        </seg>
       </seglistitem>
     </segmentedlist>
 
@@ -248,7 +283,7 @@ done</userinput></screen>
       <varlistentry id="libxatracker">
         <term><filename class='libraryfile'>libxatracker.so</filename></term>
         <listitem>
-          <para>est la bibliothèque de l'API d'accélération XA X.</para>
+          <para>est la bibliothèque de l'API de l'accélération XA X.</para>
           <indexterm zone="mesalib libxatracker">
             <primary sortas="c-libxatracker">libxatracker.so</primary>
           </indexterm>
