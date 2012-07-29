@@ -99,9 +99,6 @@
         <para>Téléchargement (FTP)&nbsp;: <ulink url="&x7proto-download-ftp;"/></para>
       </listitem>
       <listitem>
-        <para>Somme de contrôle MD5 du téléchargement&nbsp;: <ulink url="&x7proto-md5sum;"/></para>
-      </listitem>
-      <listitem>
         <para>Taille du téléchargement&nbsp;: &x7proto-size;</para>
       </listitem>
       <listitem>
@@ -112,17 +109,14 @@
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
-    <itemizedlist spacing="compact">
-      <listitem>
-        <para>Liste des téléchargements requis&nbsp;: <ulink url="&x7proto-wget;"/></para>
-      </listitem>
-    </itemizedlist>
-
     <bridgehead renderas="sect3">Dépendances des entêtes du protocole Xorg</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required"> <xref linkend="util-macros"/></para>
+
+    <bridgehead renderas="sect4">Recommandées</bridgehead>
+    <para role="required"> <xref linkend="sudo"/> et
+    <xref linkend="wget"/></para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional"> <xref linkend="fop"/> et <xref linkend="xmlto"/>
@@ -141,30 +135,83 @@
   <sect2>
     <title>Téléchargement des en-têtes du protocole Xorg</title>
 
+    <para>Tout d'abord, créez une liste des fichieq à télécharger. Ce fichier
+    sera utilisé également pour vérifier l'intégrité des téléchargements après 
+    leur accomplissement&nbsp;:</para>
+
+<screen><userinput>cat &gt; proto-&xorg-version;.md5 &lt;&lt; "EOF"
+#&applewmproto-md5sum;  applewmproto-&applewmproto-version;.tar.bz2
+&bigreqsproto-md5sum;  bigreqsproto-&bigreqsproto-version;.tar.bz2
+&compositeproto-md5sum;  compositeproto-&compositeproto-version;.tar.bz2
+&damageproto-md5sum;  damageproto-&damageproto-version;.tar.bz2
+&dmxproto-md5sum;  dmxproto-&dmxproto-version;.tar.bz2
+&dri2proto-md5sum;  dri2proto-&dri2proto-version;.tar.bz2
+&fixesproto-md5sum;  fixesproto-&fixesproto-version;.tar.bz2
+&fontsproto-md5sum;  fontsproto-&fontsproto-version;.tar.bz2
+&glproto-md5sum;  glproto-&glproto-version;.tar.bz2
+&inputproto-md5sum;  inputproto-&inputproto-version;.tar.bz2
+&kbproto-md5sum;  kbproto-&kbproto-version;.tar.bz2
+&randrproto-md5sum;  randrproto-&randrproto-version;.tar.bz2
+&recordproto-md5sum;  recordproto-&recordproto-version;.tar.bz2
+&renderproto-md5sum;  renderproto-&renderproto-version;.tar.bz2
+&resourceproto-md5sum;  resourceproto-&resourceproto-version;.tar.bz2
+&scrnsaverproto-md5sum;  scrnsaverproto-&scrnsaverproto-version;.tar.bz2
+&videoproto-md5sum;  videoproto-&videoproto-version;.tar.bz2
+#&windowswmproto-md5sum;  windowswmproto-&windowswmproto-version;.tar.bz2
+&xcmiscproto-md5sum;  xcmiscproto-&xcmiscproto-version;.tar.bz2
+&xextproto-md5sum;  xextproto-&xextproto-version;.tar.bz2
+&xf86bigfontproto-md5sum;  xf86bigfontproto-&xf86bigfontproto-version;.tar.bz2
+&xf86dgaproto-md5sum;  xf86dgaproto-&xf86dgaproto-version;.tar.bz2
+&xf86driproto-md5sum;  xf86driproto-&xf86driproto-version;.tar.bz2
+&xf86vidmodeproto-md5sum;  xf86vidmodeproto-&xf86vidmodeproto-version;.tar.bz2
+&xineramaproto-md5sum;  xineramaproto-&xineramaproto-version;.tar.bz2
+&xproto-md5sum;  xproto-&xproto-version;.tar.bz2
+EOF</userinput></screen>
+
     <para>Pour télécharger les fichiers nécessaires en utilisant <application>wget</application>,
     utilisez les commandes suivantes&nbsp;:</para>
 
 <screen><userinput>mkdir proto &amp;&amp;
 cd proto &amp;&amp;
-grep -v '^#' ../proto-&xorg7-release;.wget | wget -i- -c     -B http://xorg.freedesktop.org/releases/individual/proto/ &amp;&amp;
-md5sum -c ../proto-&xorg7-release;.md5</userinput></screen>
+grep -v '^#' ../proto-&xorg-version;.md5 | awk '{print $2}' | wget -i- -c \
+     -B http://xorg.freedesktop.org/releases/individual/proto/ &amp;&amp;
+md5sum -c ../proto-&xorg-version;.md5</userinput></screen>
 
   </sect2>
 
   <sect2 role="installation">
     <title>Installation des en-têtes du protocole Xorg</title>
 
-    <para>Installez les en-têtes du protocole <application>Xorg</application> 
-    en lançant les commandes suivantes pour chaque paquet à installer.</para>
+    <para>Tout d'abord, démarrez un sous-shell d'où on sortira en cas d'erreur&nbsp;:</para>
+    
+<screen><userinput>bash -e</userinput></screen>
 
-<screen><userinput>./configure $XORG_CONFIG</userinput></screen>
+    <para>Installez toutes les applications en lançant les commandes suivantes&nbsp;:</para>
+    
+<screen><userinput>for package in $(grep -v '^#' ../proto-&xorg-version;.md5 | awk '{print $2}')
+do
+  packagedir=${package%.tar.bz2}
+  tar -xf $package
+  cd $packagedir
+  ./configure $XORG_CONFIG
+  sudo make install
+  cd ..
+  rm -r $packagedir
+done</userinput></screen>
 
-    <para>Ces paquets ne fournissent pas de suites de tests.</para>
+    <para>Enfin, quittez le shell démarré tout à l'heure&nbsp;:</para>
 
-    <para>Maintenant en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen><userinput>exit</userinput></screen>
 
-<screen role="root"><userinput>make install</userinput></screen>
+  </sect2>
 
+  <sect2 role="commands">
+    <title>Explication des commandes</title>
+    <para><command>bash -e</command>&nbsp;: Cette commande démarre un sous-shell
+    qui quittera si une commande retourne une autre valeur que 0, ce qui ferait
+    sortir immédiatement de la boucle loop si une erreur se produit. Ceci
+    élimine aussi le besoin d'utiliser <command>&amp;&amp;</command> partout
+    dans le livre.</para>
   </sect2>
 
   <sect2 role="content">

@@ -108,9 +108,6 @@
         <para>Téléchargement (FTP)&nbsp;: <ulink url="&x7libs-download-ftp;"/></para>
       </listitem>
       <listitem>
-        <para>Somme de contrôle MD5 du téléchargement&nbsp;: <ulink url="&x7libs-md5sum;"/></para>
-      </listitem>
-      <listitem>
         <para>Taille du téléchargement&nbsp;: &x7libs-size;</para>
       </listitem>
       <listitem>
@@ -121,15 +118,7 @@
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
-    <itemizedlist spacing="compact">
-      <listitem>
-        <para>Liste de téléchargements requis&nbsp;: <ulink url="&x7libs-wget;"/></para>
-      </listitem>
-
-    </itemizedlist>
-
-    <bridgehead renderas="sect3">Dépendances de Xorg Libraries</bridgehead>
+    <bridgehead renderas="sect3">Dépendances des bibliothèques Xorg</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required"><xref linkend="fontconfig"/>,
@@ -153,18 +142,92 @@
   <sect2>
     <title>Téléchargement des bibliothèques Xorg</title>
 
+    <para>Tout d'abord, créez une liste des fichieq à télécharger. Ce fichier
+    sera utilisé également pour vérifier l'intégrité des téléchargements après 
+    leur accomplissement&nbsp;:</para>
+
+<screen><userinput>cat &gt; lib-&xorg-version;.md5 &lt;&lt; "EOF"
+#&libAppleWM-md5sum;  libAppleWM-&libAppleWM-version;.tar.bz2
+&libdmx-md5sum;  libdmx-&libdmx-version;.tar.bz2
+&libfontenc-md5sum;  libfontenc-&libfontenc-version;.tar.bz2
+&libFS-md5sum;  libFS-&libFS-version;.tar.bz2
+&libICE-md5sum;  libICE-&libICE-version;.tar.bz2
+&libpciaccess-md5sum;  libpciaccess-&libpciaccess-version;.tar.bz2
+&libSM-md5sum;  libSM-&libSM-version;.tar.bz2
+#&libWindowsWM-md5sum;  libWindowsWM-&libWindowsWM-version;.tar.bz2
+&libX11-md5sum;  libX11-&libX11-version;.tar.bz2
+&libXaw-md5sum;  libXaw-&libXaw-version;.tar.bz2
+&libXcomposite-md5sum;  libXcomposite-&libXcomposite-version;.tar.bz2
+&libXcursor-md5sum;  libXcursor-&libXcursor-version;.tar.bz2
+&libXdamage-md5sum;  libXdamage-&libXdamage-version;.tar.bz2
+&libXext-md5sum;  libXext-&libXext-version;.tar.bz2
+&libXfixes-md5sum;  libXfixes-&libXfixes-version;.tar.bz2
+&libXfont-md5sum;  libXfont-&libXfont-version;.tar.bz2
+&libXft-md5sum;  libXft-&libXft-version;.tar.bz2
+&libXi-md5sum;  libXi-&libXi-version;.tar.bz2
+&libXinerama-md5sum;  libXinerama-&libXinerama-version;.tar.bz2
+&libxkbfile-md5sum;  libxkbfile-&libxkbfile-version;.tar.bz2
+&libXmu-md5sum;  libXmu-&libXmu-version;.tar.bz2
+&libXpm-md5sum;  libXpm-&libXpm-version;.tar.bz2
+&libXrandr-md5sum;  libXrandr-&libXrandr-version;.tar.bz2
+&libXrender-md5sum;  libXrender-&libXrender-version;.tar.bz2
+&libXres-md5sum;  libXres-&libXres-version;.tar.bz2
+&libXScrnSaver-md5sum;  libXScrnSaver-&libXScrnSaver-version;.tar.bz2
+&libXt-md5sum;  libXt-&libXt-version;.tar.bz2
+&libXtst-md5sum;  libXtst-&libXtst-version;.tar.bz2
+&libXv-md5sum;  libXv-&libXv-version;.tar.bz2
+&libXvMC-md5sum;  libXvMC-&libXvMC-version;.tar.bz2
+&libXxf86dga-md5sum;  libXxf86dga-&libXxf86dga-version;.tar.bz2
+&libXxf86vm-md5sum;  libXxf86vm-&libXxf86vm-version;.tar.bz2
+&xtrans-md5sum;  xtrans-&xtrans-version;.tar.bz2
+EOF</userinput></screen>
+
     <para>Pour télécharger les fichiers nécessaires en utilisant <application>wget</application>,
     utilisez les commandes suivantes&nbsp;:</para>
 
 <screen><userinput>mkdir lib &amp;&amp;
 cd lib &amp;&amp;
-grep -v '^#' ../lib-&xorg7-release;.wget | wget -i- -c     -B http://xorg.freedesktop.org/releases/individual/lib/ &amp;&amp;
-md5sum -c ../lib-&xorg7-release;.md5</userinput></screen>
+grep -v '^#' ../lib-&xorg-version;.md5 | awk '{print $2}' | wget -i- -c \
+     -B http://xorg.freedesktop.org/releases/individual/lib/ &amp;&amp;
+md5sum -c ../lib-&xorg-version;.md5</userinput></screen>
 
   </sect2>
 
   <sect2 role="installation">
     <title>Installation des bibliothèques Xorg</title>
+
+    <para>Tout d'abord, démarrez un sous-shell d'où on sortira en cas d'erreur&nbsp;:</para>
+    
+<screen><userinput>bash -e</userinput></screen>
+
+    <para>Installez toutes les applications en lançant les commandes suivantes&nbsp;:</para>
+    
+<screen><userinput>for package in $(grep -v '^#' ../lib-&xorg-version;.md5 | awk '{print $2}')
+do
+  packagedir=${package%.tar.bz2}
+  tar -xf $package
+  cd $packagedir
+  case $packagedir in
+    libXfont-[0-9]* )
+      ./configure $XORG_CONFIG --disable-devel-docs
+    ;;
+    libXt-[0-9]* )
+      ./configure $XORG_CONFIG \
+        --with-appdefaultdir=/etc/X11/app-defaults
+    ;;
+    * )
+      ./configure $XORG_CONFIG
+    ;;
+  esac
+  make
+  sudo make install
+  cd ..
+  rm -r $packagedir
+  sudo /sbin/ldconfig
+done</userinput></screen>
+
+    <para>Enfin, quittez le shell démarré tout à l'heure&nbsp;:</para>
+
 
     <para>Installez les bibliothèques en lançant les commandes suivantes pour
     chaque paquet&nbsp;:</para>
