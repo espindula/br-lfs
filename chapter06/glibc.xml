@@ -72,7 +72,11 @@
 <screen><userinput remap="pre">sed -i '/vi_VN.TCVN/d' localedata/SUPPORTED</userinput></screen>
 -->
 
-    <para>When running <command>make install</command>, a script called
+    <para>Fix a bug that causes the build to fail:</para>
+
+<screen><userinput remap="pre">sed -i 's#&lt;rpc/types.h&gt;#"rpc/types.h"#' sunrpc/rpc_clntout.c</userinput></screen>
+
+<!--    <para>When running <command>make install</command>, a script called
     <filename>test-installation.pl</filename> performs a small sanity test on
     our newly installed Glibc. However, because our toolchain still points to
     the <filename class="directory">/tools</filename> directory, the sanity
@@ -82,15 +86,14 @@
 <screen><userinput remap="pre">DL=$(readelf -l /bin/sh | sed -n 's@.*interpret.*/tools\(.*\)]$@\1@p')
 sed -i &quot;s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=$DL -o|&quot; \
         scripts/test-installation.pl
-unset DL</userinput></screen>
+unset DL</userinput></screen>-->
 
-    <para>In addition, there is a bug in the
-    <filename>test-installation.pl</filename> script in that it tries to link
-    a test program to a library that isn't installed by
-    <command>make install</command>.  Issue the following <command>sed</command>
-    command to fix it:</para>
+    <para>When running <command>make install</command>, a script called
+    <filename>test-installation.pl</filename> performs a small sanity test on
+    our newly installed Glibc. However, it contains a bug that causes it to
+    fail, so prevent it from running by issuing the following command:</para>
 
-    <screen><userinput remap="pre">sed -i -e 's/"db1"/&amp; \&amp;\&amp; $name ne "nss_test1"/' scripts/test-installation.pl</userinput></screen>
+<screen><userinput remap="pre">sed -i '/test-installation.pl/d' Makefile</userinput></screen>
 
     <para>The <command>ldd</command> shell script contains Bash-specific
     syntax. Change its default program interpreter to <command>/bin/bash</command>
@@ -99,12 +102,6 @@ unset DL</userinput></screen>
     chapter of the BLFS book:</para>
 
 <screen><userinput remap="pre">sed -i 's|@BASH@|/bin/bash|' elf/ldd.bash.in</userinput></screen>
-
-  <para>Fix a bug that causes several BLFS packages to segfault:</para>
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-fixes-patch;</userinput></screen>
-
-  <para>Fix a bug that prevents Glibc from building with GCC-&gcc-version;:</para>
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-gcc_fix-patch;</userinput></screen>
 
     <para>The Glibc documentation recommends building Glibc outside of the source
     directory in a dedicated build directory:</para>
@@ -314,6 +311,16 @@ rpc: files
 
 # End /etc/nsswitch.conf</literal>
 EOF</userinput></screen>
+
+    <para>Install timezone data:</para>
+<screen><userinput>tar -xf ../tzdata&tzdata-version;.tar.gz
+
+for tz in etcetera southamerica northamerica europe africa antarctica \
+  asia australasia backward pacificnew solar87 solar88 solar89 systemv; do
+
+    zic -L leapseconds -d /usr/share/zoneinfo -y "sh yearistype.sh" ${tz}
+
+done</userinput></screen>
 
     <para>One way to determine the local time zone, run the following
     script:</para>
