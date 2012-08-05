@@ -64,7 +64,11 @@
 <screen><userinput remap="pre">sed -i '/vi_VN.TCVN/d' localedata/SUPPORTED</userinput></screen>
 -->
 
-    <para>Lors de l'exécution de <command>make install</command>, un script appelé
+    <para>Corrigez un bogue qui fait échouer la construction&nbsp;:</para>
+
+<screen><userinput remap="pre">sed -i 's#&lt;rpc/types.h&gt;#"rpc/types.h"#' sunrpc/rpc_clntout.c</userinput></screen>
+
+<!--    <para>Lors de l'exécution de <command>make install</command>, un script appelé
     <filename>test-installation.pl</filename> opère un test de propreté sur notre
     Glibc récemment installée. Cependant, notre chaîne d'outils pointant
     encore vers le répertoire
@@ -75,16 +79,14 @@
 <screen><userinput remap="pre">DL=$(readelf -l /bin/sh | sed -n 's@.*interpret.*/tools\(.*\)]$@\1@p')
 sed -i &quot;s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=$DL -o|&quot; \
         scripts/test-installation.pl
-unset DL</userinput></screen>
+unset DL</userinput></screen>-->
 
+    <para>Lors de l'exécution de <command>make install</command>, un script appelé
+    <filename>test-installation.pl</filename> opère un petit test de propreté sur notre
+    Glibc récemment installé. Cependant, il contient un bogue qui le fait
+    échouer, donc empêchez-le de se lancer en exécutant la commande suivante&nbsp;:</para>
 
-    <para>En outre, il y a un bogue dans le script
-    <filename>test-installation.pl</filename> qui essaie de lier un programme
-    de test à une bibliothèque qui n'est pas installée par
-    <command>make install</command>.  Lancez la commande
-    <command>sed</command> suivante pour le corriger&nbsp;:</para>
-
-<screen><userinput remap="pre">sed -i -e 's/"db1"/&amp; \&amp;\&amp; $name ne "nss_test1"/' scripts/test-installation.pl</userinput></screen>
+<screen><userinput remap="pre">sed -i '/test-installation.pl/d' Makefile</userinput></screen>
 
     <para>Le script shell <command>ldd</command> contient la syntaxe spécifique à
     Bash. Changez son programme interpréteur par défaut en
@@ -94,15 +96,6 @@ unset DL</userinput></screen>
     du livre BLFS&nbsp;:</para>
 
 <screen><userinput remap="pre">sed -i 's|@BASH@|/bin/bash|' elf/ldd.bash.in</userinput></screen>
-  <para>Corrigez un bogue qui provoque une erreur de segmentation dans plusieurs
-  paquets BLFS&nbsp;:</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-fixes-patch;</userinput></screen>
- 
-  <para>Corrigez un bogue qui empêche Glibc de se construire avec
-  GCC-&gcc-version;&nbsp;:</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-gcc_fix-patch;</userinput></screen>
 
     <para>La documentation de Glibc recommande de construire Glibc en dehors du
     répertoire des sources dans un répertoire de construction dédié&nbsp;:</para>
@@ -313,6 +306,17 @@ rpc: files
 
 # End /etc/nsswitch.conf</literal>
 EOF</userinput></screen>
+
+    <para>Installez timezone data (les données de fuseau horaire)&nbsp;:</para>
+
+<screen><userinput>tar -xf ../tzdata&tzdata-version;.tar.gz
+
+for tz in etcetera southamerica northamerica europe africa antarctica \
+  asia australasia backward pacificnew solar87 solar88 solar89 systemv; do
+
+    zic -L leapseconds -d /usr/share/zoneinfo -y "sh yearistype.sh" ${tz}
+
+done</userinput></screen>
 
     <para>Pour déterminer dans quel fuseau horaire vous vous situez, lancez le
     script suivant&nbsp;:</para>
