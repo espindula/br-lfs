@@ -59,35 +59,40 @@
       </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          Correctif requis&nbsp;:
+          <ulink url="&patch-root;/cups-&cups-version;-upstream-fixes-1.patch"/>
+        </para>
+      </listitem>
+    </itemizedlist>
+
     <bridgehead renderas="sect3">Dépendances de Cups</bridgehead>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
-      <xref linkend="libjpeg"/>,
-      <xref linkend="libpng"/> et
-      <xref linkend="libtiff"/>
+      <xref linkend="colord"/>,
+      <xref linkend="dbus"/> et
+      <xref linkend="libusb"/>
     </para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      <xref linkend="dbus"/>,
-      <xref linkend="libusb"/>,
       <xref linkend="acl"/>,
-      <xref linkend="linux-pam"/>,
-      <xref linkend="openldap"/>,
-      <xref linkend="gnutls"/> or <xref linkend="openssl"/> (recherché dans cet
-      ordre), <xref linkend="mitkrb"/>,
-      <xref linkend="php"/>,
-      <xref linkend="gs"/>,
-      <xref linkend="python2"/>,
-      <xref linkend="openjdk"/>
-      <ulink url="http://portland.freedesktop.org/wiki/">Xdg-utils</ulink>,
-      <ulink url="http://www.openslp.org/">OpenSLP</ulink>,
+      <xref linkend="avahi"/>,
+      <xref linkend="gnutls"/> or <xref linkend="openssl"/>,
       <ulink
       url="http://packages.debian.org/source/sid/libpaper">libpaper</ulink>,
-	  <ulink url="http://www.easysw.com/htmldoc/">HTMLDOC</ulink>, et
-      <ulink url="http://valgrind.org/">Valgrind</ulink> (utilisé éventuellement
-      si vous lancez les suites de tests)
+      <xref linkend="linux-pam"/>,
+      <xref linkend="mitkrb"/>,
+      <xref linkend="openjdk"/>,
+      <xref linkend="php"/>,
+      <xref linkend="python2"/>,
+      <!-- <ulink url="http://valgrind.org/">Valgrind</ulink>
+      (optionaly used during the test suites) -->et
+      <xref linkend="xdg-utils"/>
     </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
@@ -98,26 +103,21 @@
   <sect2 role="kernel" id="cups-kernel">
     <title>Configuration du noyau</title>
 
-    <para>Si vous avez une imprimante sur port parallèle, activez les options 
-    suivantes dans la configuration de votre noyau et recompilez le noyau&nbsp;:</para>
+    <note>
+      <para>
+        Il existe un conflit entre la fondation <application>libusb</application>
+        de <application>Cups</application> et le pilote usblp du noyau. Si vous
+        voulez utiliser <application>Cups</application> avec
+        <application>libusb</application> <emphasis>n'activez pas</emphasis> le
+        support des imprimantes USB de votre noyau.
+      </para>
+    </note>
 
-<screen><literal>Device Drivers  ---&gt;
-  [*] Parallel port support  ---&gt;
-    [*]   PC-style hardware
-...
-  Character devices  ---&gt;
-    [*] Parallel printer support</literal></screen>
-
-    <note><para>Si vous avez une imprimante en port USB, il y a un conflit entre
-    le fond <application>libusb</application> de 
-    <application>Cups</application> et le pilote du noyau. Si vous voulez
-    utiliser <application>Cups</application> avec le support
-    <application>libusb</application>, <emphasis>n'activez pas</emphasis> USB 
-    Printer support dans votre noyau et supprimez <option>--disable-libusb</option> 
-    quand vous configurerez <application>Cups</application>.</para></note>
-
-    <para>Si vous voulez utiliser le pilote usblp du noyau, activez les options
-    suivantes dans la configuration de votre noyau et recompilez le noyau&nbsp;:</para>
+    <para>
+      Si vous voulez utiliser le pilote usblp du noyau, activez les
+      options suivantes dans la configuration de votre noyau et recompilez le
+      noyau&nbsp;:
+    </para>
 
 <screen>Device Drivers  ---&gt;
   [*] USB support  ---&gt;
@@ -128,6 +128,17 @@ Enable support for either UHCI or OHCI, not both:
 ...
     [*]   USB Printer support</screen>
 
+    <para>
+      Si vous avez une imprimante en port parallèle, activez les options suivantes
+      dans la configuration de votre noyau et recompilez le noyau&nbsp;:
+    </para>
+<screen><literal>Device Drivers  ---&gt;
+  [*] Parallel port support  ---&gt;
+    [*]   PC-style hardware
+...
+  Character devices  ---&gt;
+    [*] Parallel printer support</literal></screen>
+
     <indexterm zone="cups cups-kernel">
       <primary sortas="d-cups">cups</primary>
     </indexterm>
@@ -137,71 +148,127 @@ Enable support for either UHCI or OHCI, not both:
   <sect2 role="installation">
     <title>Installation de Cups</title>
 
-    <para>Créez un utilisateur <systemitem class="username">lp</systemitem> car
-    <application>Cups</application> va créer des fichiers appartenant à cet
-     utilisateur (l'utilisateur <systemitem class="username">lp</systemitem>
-     est celui utilisé par défaut par <application>Cups</application>, mais il
-     peut être modifié pour un utilisateur différent en passant un paramètre au
-     script <command>configure</command>.) Utilisez la commande suivante
-     en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+    <para>
+      Il va falloir ajouter un utilisateur <systemitem class="username">lp</systemitem>
+      car <application>Cups</application> va créer des fichiers qui appartiennent
+      à cet utilisateur. (L'utilisateur <systemitem class="username">lp</systemitem>
+      est celui que <application>Cups</application> utilise par défakt, mais
+      on peut mettre un autre utilisateur en passant un paramètre au script
+      <command>configure</command>. Utilisez la commande suivante en tant qu'utilisateur
+      <systemitem class="username">root</systemitem>&nbsp;:
+    </para>
+ 
+<screen role="root"><userinput>useradd -c "Print Service User" -d /var/spool/cups -g lp -s /bin/false -u 9 lp</userinput></screen>
 
-<screen role="root"><userinput>useradd -c "Print Service User" -d /dev/null -g lp -s /bin/false -u 9 lp</userinput></screen>
+      <para>Vous aurez également besoin d'un groupe dédié qui contiendra les
+      utilisateurs autorisés à effectuer des tâches administratives de
+      <application>Cups</application>. Ajoutez le groupe en lançant la commande
+      suivante en tant qu'utilisateur 
+      <systemitem class="username">root</systemitem>&nbsp;:
+    </para>
 
-    <para>Installez <application>Cups</application> en lançant les commandes
-    suivantes&nbsp;:</para>
+<screen role="root"><userinput>groupadd -g 19 lpadmin</userinput></screen>
+    <para>
+      Si vous voulez ajouter un utilisateur au groupe d'administration de
+      <application>Cups</application>, lancez la commande suivante en tant qu'utilisateur
+      <systemitem class="username">root</systemitem>&nbsp;:
+    </para>
+<screen role="root"><userinput>usermod -a -G lpadmin <replaceable>&lt;username&gt;</replaceable></userinput></screen>
+    <para>
+      Si vous n'avez pas installé <xref linkend="xdg-utils"/>, utilisez le
+      <command>sed</command> suivant pour modifier le navigateur utilisé par défaut
+      pour accéder à l'interface Web de <application>Cups</application>&nbsp;:
+    </para>
+<screen><userinput>sed -i 's#@CUPS_HTMLVIEW@#firefox#' desktop/cups.desktop.in</userinput></screen>
+    <para>
+      Remplacez <command>firefox</command> par le navigateur Web de votre
+      choix.
+    </para>
+    <para>
+      Installez <application>Cups</application> en lançant les commandes
+      suivantes&nbsp;:
+    </para>
+    <!-- docdir is also document root for cups administration interface, so
+    let's just put it in /usr/share/cups/doc and create symlink in 
+    /usr/share/doc -->
 
-<screen><userinput>sed -i 's#@CUPS_HTMLVIEW@#firefox#' desktop/cups.desktop.in &amp;&amp;
-./configure --localstatedir=/var                   --disable-libusb                       --with-rcdir=/tmp/cupsinit             --with-docdir=/usr/share/doc/cups-&cups-version; &amp;&amp;
+<screen><userinput>sed -e "s|MAN1EXT=1.gz|MAN1EXT=1|g" \
+    -e "s|MAN5EXT=5.gz|MAN5EXT=5|g" \
+    -e "s|MAN7EXT=7.gz|MAN7EXT=7|g" \
+    -e "s|MAN8EXT=8.gz|MAN8EXT=8|g" \
+    -i configure &amp;&amp;
+patch -Np1 -i ../cups-&cups-version;-upstream-fixes-1.patch &amp;&amp;
+./configure --with-rcdir=/tmp/cupsinit \
+            --with-docdir=/usr/share/cups/doc \
+            --with-system-groups=lpadmin &amp;&amp;
 make</userinput></screen>
 
+    <para>Ce paquet n'a pas de suite de tests opérationnelle.</para>
+    
     <para>Pour tester les résultats, lancez&nbsp;: <command>make check</command>.
-    Cela lancera une suite de tests basiques sans test de chargement. Si vous
-    souhaitez lancer les tests en spécifiant des paramètres non par défaut,
-    lancez&nbsp;: <command>make test</command>.
-    Remarquez que le test <quote>torture load testing</quote> (test de charge de
-    torture) utilise plus de ressources que ce qui est affiché sur l'invite.</para>
+    Ceci lance une suite de tests basique sans test de charge. Si vous souhaitez
+    lancer les tests en spécifiant d'autres paramètres que ceux par défaut, 
+    lancezqnbsp;: <command>make test</command>. Remarquez que le test
+    <quote>torture load testing</quote> utilise plus de ressources que celles 
+    indiquées dans l'invite.</para>
 
-    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+    <para>
+      Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:
+    </para>
+ <screen role="root"><userinput>make install &amp;&amp;
+rm -rf /tmp/cupsinit &amp;&amp;
+ln -sv ../cups/doc /usr/share/doc/cups-&cups-version;</userinput></screen>
 
-<screen role="root"><userinput>make install &amp;&amp;
-rm -rf /tmp/cupsinit</userinput></screen>
-
-    <para>Les fichiers de <application>man</application> sont installés dans
-    un format compressé (<filename class='extension'>.gz</filename>). Si vous
-    le désirez, utilisez les commandes suivantes pour les décompresser
-    en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
-
-<screen role="root"><userinput>pushd /usr/share/man/                                  &amp;&amp;
-find -name cups*gz -type l -print -delete             &amp;&amp;
-find -name *gz -exec gunzip -v {} ;                  &amp;&amp;
-popd
-
-ln -v -s cupsaccept.8 /usr/share/man/man8/reject.8     &amp;&amp;
-ln -v -s cupsaccept.8 /usr/share/man/man8/cupsreject.8 &amp;&amp;
-ln -v -s cupsaccept.8 /usr/share/man/man8/accept.8     &amp;&amp;
-ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
+<!-- Not all raw usb printer device nodes have root:lp owner. -->
+    <para>
+      Si vous avez construit <application>Cups</application> avec le support
+      <application>libusb</application>, corrigez les droits de la fondation
+      pour qu'elle soit exécutée en tant qu'utilisateur
+      <systemitem class="username">root</systemitem>. Lancez la commande
+      suivante en tant qu'utilisateur 
+      <systemitem class="username">root</systemitem>&nbsp;:
+    </para>
+ 
+<screen role="root"><userinput>chmod -v 744 /usr/lib/cups/backend/usb</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><command>sed -i 's#@CUPS_HTMLVIEW@#firefox#' ...</command>&nbsp;: Ceci
-    modifie le navigateur utilisé par fichier de bureau 
-    <application>Cups</application> pour son interface web.</para>
+    <para>
+      <parameter>--with-rcdir=/tmp/cupsinit</parameter>&nbsp;: Ce paramètre dit
+      au processus de construction d'installer le script de démarrage inclu dans
+      <filename class="directory">/tmp</filename> et non dans
+      <filename class="directory">/etc/rc.d</filename>.
+    </para>
+ 
+<!-- There isn't any class="group" so I had to use class="username" here -->
+    <para>
+      <parameter>--with-system-groups=lpadmin</parameter>&nbsp;: Ce paramètre
+      garantit que seul <systemitem class="username">lpadmin</systemitem> sera
+      utilisé comme groupe d'administration de <application>Cups</application>.
+    </para>
+ 
+    <para>
+      <option>--disable-libusb</option>&nbsp;: Utilisez ce paramètre si vous avez
+      installé <xref linkend="libusb"/>, mais si vous souhaitez le pilote usblp du noyau.
+    </para>
 
-    <para><option>--localstatedir=/var</option>&nbsp;: Ceci modifie l'emplacement
-    des répertoires cache, log, run et spool de /usr/var en /var.</para>
-
-    <para><option>--disable-libusb</option>&nbsp;: Ceci désactive le fond
-    <application>libusb</application> de
-    <application>Cups</application>. Si vous souhaitez que <application>Cups</application> 
-    utilise <application>libusb</application>, enlevez cette option et
-    assurez-vous de compiler votre noyau avec&nbsp;: # CONFIG_USB_PRINTER is not set</para>
-
-    <para><option>--with-rcdir=/tmp/cupsinit</option>&nbsp;: Cette option lui fait
-    installer ses scripts de démarrage dans <filename class="directory">/tmp</filename>
-    au lieu de <filename class="directory">/etc/rc.d</filename>.</para>
+    <para>
+      <option>--enable-libpaper</option>&nbsp;: Utilisez ce paramètre si vous 
+      avez installé <application>libpaper</application> et si vous souhaitez
+      l'utiliser avec 
+      <application>Cups</application>.
+    </para>
+ 
+    <para>
+      <option>--disable-gnutls --enable-openssl</option>&nbsp;: Ce paramètre
+      dit au processus de construction d'utiliser <xref linkend="openssl"/> au
+      lieu de <xref linkend="gnutls"/>. La version actuelle de
+      <application>GnuTLS</application> pourrait donner de nombreux avertissements
+      pendant la construction de <application>Cups</application>.
+    </para>
 
   </sect2>
 
@@ -226,6 +293,30 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
     utilisent Ghostscript pour convertir du PostScript en forme directement
     imprimable, mais les développeurs de <application>Cups</application> 
     considèrent cela comme du bricolage.</para>
+
+    <sect3>
+      <title>Configuration avec Linux PAM</title>
+      <para>
+        Le fichier de configuration pour <application>PAM</application> par
+        défaut de <application>Cups</application> devrait fonctionner, par défaut.
+        Cependant, il n'utilise pas les fichiers de configuration <application>PAM</application>
+        spécifiques à BLFS.
+      </para>
+      <para>
+        Si vous avez construit <application>Cups</application> avec le support
+        <application>PAM</application>, créez un fichier de configuration
+        <application>PAM</application> spécifique à BLFS en lançant la commande
+        suivante en tant qu'utilisateur 
+        <systemitem class="username">root</systemitem>&nbsp;:
+      </para>
+<screen role="root"><userinput>cat &gt;&gt; /etc/pam.d/cups &lt;&lt; "EOF"
+# Début de /etc/pam.d/cups
+auth    include system-auth
+account include system-account
+session include system-session
+# Fin de /etc/pam.d/cups
+EOF</userinput></screen>
+    </sect3>
 
     <sect3 id="cups-init">
       <title>Script de démarrage</title>
@@ -253,19 +344,31 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-         <seg>accept, cancel, cups-config, cupsaccept, cupsaddsmb, cupsctl,
-        cupsd, cupsdisable, cupsenable, cupsfilter, cupsreject, cupstestdsc,
-        cupstestppd, lp, lpadmin, lpc, lpinfo, lpmove, lpoptions, lppasswd,
-        lpq, lpr, lprm, lpstat, ppdc, ppdhtml, ppdi, ppdmerge, ppdpo,
-        reject</seg>
-        <seg>libcups.so, libcupscgi.so, libcupsdriver.so,
-        libcupsimage.so, libcupsmime.so, libcupsppdc.so, and
-        various filters et backend drivers</seg>
-        <seg>/etc/cups, /usr/include/cups, /usr/lib/cups, /usr/share/cups,
-        /usr/share/doc/cups-&cups-version;, /var/cache/cups, /var/log/cups,
-        /var/run/cups and /var/spool/cups.</seg>
-      </seglistitem>
-    </segmentedlist>
+        <seg>
+          accept, cancel, cupsaccept, cupsaddsmb, cups-config,
+          cupsctl, cupsd, cupsdisable, cupsenable, cupsfilter,
+          cupsreject, cupstestdsc, cupstestppd, ipptool, lp,
+          lpadmin, lpc, lpinfo, lpmove, lpoptions, lppasswd,
+          lpq, lpr, lprm, lpstat, ppdc, ppdhtml, ppdi, ppdmerge,
+          ppdpo et reject
+        </seg>
+        <seg>
+          libcupscgi.so, libcupsimage.so, libcupsmime.so,
+          libcupsppdc.so et libcups.so
+        </seg>
+        <seg>
+          /etc/cups,
+          /usr/include/cups,
+          /usr/lib/cups,
+          /usr/share/cups,
+          /usr/share/doc/cups-&cups-version;,
+          /var/cache/cups,
+          /var/log/cups,
+          /var/run/cups et
+          /var/spool/cups
+        </seg>
+       </seglistitem>
+     </segmentedlist>
 
     <variablelist>
       <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
@@ -294,6 +397,19 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
         </listitem>
       </varlistentry>
 
+      <varlistentry id="cupsaddsmb">
+        <term><command>cupsaddsmb</command></term>
+        <listitem>
+          <para>
+            exporte les imprimantes vers le logiciel <application>Samba</application>
+            pour une utilisation avec des clients Windows.
+          </para>
+          <indexterm zone="cups cupsaddsmb">
+            <primary sortas="b-cupsaddsmb">cupsaddsmb</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="cups-config">
         <term><command>cups-config</command></term>
         <listitem>
@@ -304,13 +420,12 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="cupsaddsmb">
-        <term><command>cupsaddsmb</command></term>
+      <varlistentry id="cupsctl">
+        <term><command>cupsctl</command></term>
         <listitem>
-          <para>exporte des imprimantes vers les logiciels <application>Samba</application>
-          pour une utilisation avec des clients Windows.</para>
-          <indexterm zone="cups cupsaddsmb">
-            <primary sortas="b-cupsaddsmb">cupsaddsmb</primary>
+          <para>Met à jour ou interroge le fichier cupsd.conf pour un serveur.</para>
+          <indexterm zone="cups cupsctl">
+            <primary sortas="b-cupsctl">cupsctl</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -326,6 +441,28 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
         </listitem>
       </varlistentry>
 
+      <varlistentry id="cupsfilter">
+        <term><command>cupsfilter</command></term>
+        <listitem>
+          <para>est une interface avec le sous-système de filtre de
+          <application>Cups</application> qui vous permet de convertir un
+          fichier dans un format spécifique.</para>
+          <indexterm zone="cups cupsfilter">
+            <primary sortas="b-cupsfilter">cupsfilter</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="cupstestdsc">
+        <term><command>cupstestdsc</command></term>
+        <listitem>
+          <para>teste la conformité des fichiers PostScript.</para>
+          <indexterm zone="cups cupstestdsc">
+            <primary sortas="b-cupstestdsc">cupstestdsc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="cupstestppd">
         <term><command>cupstestppd</command></term>
         <listitem>
@@ -336,22 +473,15 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="disable">
-        <term><command>disable</command></term>
+      <varlistentry id="ipptool">
+        <term><command>ipptool</command></term>
         <listitem>
-          <para>arrête les imprimantes ou les classes désignées.</para>
-          <indexterm zone="cups disable">
-            <primary sortas="b-disable">disable</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="enable">
-        <term><command>enable</command></term>
-        <listitem>
-          <para>démarre les imprimantes ou les classes désignées.</para>
-          <indexterm zone="cups enable">
-            <primary sortas="b-enable">enable</primary>
+          <para>
+            envoie des requêtes IPP à l'adresse spécifiée et teste et/ou affiche
+            les résultats.
+          </para>
+          <indexterm zone="cups ipptool">
+            <primary sortas="b-ipptool">ipptool</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -475,6 +605,68 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
         </listitem>
       </varlistentry>
 
+      <varlistentry id="ppdc">
+        <term><command>ppdc</command></term>
+        <listitem>
+          <para>
+            compile des fichiers sources PPDC en un ou plusieurs fichiers PPD.
+          </para>
+          <indexterm zone="cups ppdc">
+            <primary sortas="b-ppdc">ppdc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="ppdhtml">
+        <term><command>ppdhtml</command></term>
+        <listitem>
+          <para>
+            lit le fichier d'informations d'un pilote et donne une page de 
+            résumé en HTML qui liste tous les pilotes d'un fichier et les options
+            supportées.
+          </para>
+          <indexterm zone="cups ppdhtml">
+            <primary sortas="b-ppdhtml">ppdhtml</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="ppdi">
+        <term><command>ppdi</command></term>
+        <listitem>
+          <para>
+            importe un ou plusieurs fichiers PPD dans un fichier source pour le
+            compilateur PPD.
+          </para>
+          <indexterm zone="cups ppdi">
+            <primary sortas="b-ppdi">ppdi</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="ppdmerge">
+        <term><command>ppdmerge</command></term>
+        <listitem>
+          <para>
+            synchronise deux ou plusieurs fichiers PPD dans un seul fichier PPD 
+            multi-langages.
+          </para>
+          <indexterm zone="cups ppdmerge">
+            <primary sortas="b-ppdmerge">ppdmerge</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="ppdpo">
+        <term><command>ppdpo</command></term>
+        <listitem>
+          <para>
+            extrait des chaînes UI de fichiers source PPDC et met à jour soit
+            un fichier de traduction source d'un catalogue GNU gettext ou de
+            chaînes au format Mac OS X.
+          </para>
+          <indexterm zone="cups ppdpo">
+            <primary sortas="b-ppdpo">ppdpo</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="reject">
         <term><command>reject</command></term>
         <listitem>
@@ -482,6 +674,18 @@ ln -v -s cupsenable.8 /usr/share/man/man8/cupsdisable.8</userinput></screen>
           des destinations spécifiées.</para>
           <indexterm zone="cups reject">
             <primary sortas="b-reject">reject</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libcups">
+        <term><filename class="libraryfile">libcups.so</filename></term>
+        <listitem>
+          <para>
+            contient les fonctions de l'API de the <application>Cups</application>.
+          </para>
+          <indexterm zone="cups libcups">
+            <primary sortas="c-libcups">libcups.so</primary>
           </indexterm>
         </listitem>
       </varlistentry>
