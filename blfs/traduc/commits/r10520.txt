@@ -1,0 +1,318 @@
+Révision 10520
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   general.ent
+   server/databases/mysql.xml
+
+Log :
+MySQL 5.5.27 with improved instructions.
+
+Le robot a traité 19 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(revision 10519)
++++ introduction/welcome/changelog.xml	(revision 10520)
+@@ -44,6 +44,16 @@
+ 
+ -->
+     <listitem>
++      <para>August 15th, 2012</para>
++      <itemizedlist>
++        <listitem>
++          <para>[rthomsen] - MySQL 5.5.27. Fixes
++          <ulink url="&blfs-ticket-root;3492">#3492</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>August 14th, 2012</para>
+       <itemizedlist>
+         <listitem>
+
+Index: server/databases/mysql.xml
+===================================================================
+--- server/databases/mysql.xml	(revision 10519)
++++ server/databases/mysql.xml	(revision 10520)
+@@ -33,12 +33,6 @@
+     database server. It is a client/server implementation that consists of a
+     server daemon and many different client programs and libraries.</para>
+ 
+-    <para>There may be a more recent release available from the
+-    <application>MySQL</application> home page. You can check
+-    <ulink url="http://dev.mysql.com/"/> and probably use the
+-    existing BLFS instructions. Note that versions other than the one shown
+-    in the download URLs have not been tested in a BLFS environment.</para>
+     &lfs71_checked;
+ 
+     <bridgehead renderas="sect3">Package Information</bridgehead>
+@@ -66,18 +60,19 @@
+     <bridgehead renderas="sect3">Additional Downloads</bridgehead>
+     <itemizedlist spacing="compact">
+       <listitem>
+-        <para>Optional patch: <ulink
+-	url="&patch-root;/mysql-&mysql-version;-embedded-library-shared-1.patch"/></para>
++        <para>Optional patch (required if building for Amarok): <ulink
++        url="&patch-root;/mysql-&mysql-version;-embedded_library_shared-1.patch"/></para>
+       </listitem>
+       <listitem>
++        <para>Optional patch (required if building only the client): <ulink
++        url="&patch-root;/mysql-&mysql-version;-client_only_fix-1.patch"/></para>
++      </listitem>
++      <listitem>
+         <para>Optional Documentation (see tip below):
+           <ulink url="http://dev.mysql.com/doc/"/>
+         </para>
+        </listitem>
+     </itemizedlist>
+-    <note><para>The patch is required only if you plan to install <application>
+-    Amarok</application>.</para></note>
+     
+     <bridgehead renderas="sect3">MySQL Dependencies</bridgehead>
+ 
+@@ -96,67 +91,75 @@
+   <sect2 role="installation">
+     <title>Installation of MySQL</title>
+ 
++    <sect3>
++    <title>Building</title>
++   
+     <para>For security reasons, running the server as an unprivileged user
+-    and group is strongly encouraged:</para>
++    and group is strongly encouraged. Issue the following (as
++    <systemitem class="username">root</systemitem>) to create the user and
++    group:</para>
+ 
+ <screen role="root"><userinput>groupadd -g 40 mysql &amp;&amp;
+ useradd -c "MySQL Server" -d /dev/null -g mysql -s /bin/false -u 40 mysql</userinput></screen>
+ 
+-    <note><para>There are a great many options available to
+-    <userinput>cmake</userinput>.  Check the output of the `<userinput>cmake .
+-    -LH</userinput>` for additional customization options.  See the <ulink
+-    url="http://dev.mysql.com/doc/refman/5.5/en/source-configuration-options.html">MySQL
+-    Documentation</ulink> for a full listing of all options.</para></note>
++    <para>If the MySQL server is not needed, it is possible to build only the
++    client libraries of MySQL. To do this you need to apply the optional patch,
++    use the cmake option <parameter>-DWITHOUT_SERVER=ON</parameter> and the
++    client-only installation instructions below.</para>
+ 
+- <note><para>If you plan to install <application>Amarok</application>, you need to 
+- apply the optional patch, add the cmake option 
+- <userinput>-DWITH_EMBEDDED_SERVER=ON</userinput> and add 
+- <userinput>Embedded</userinput> to the <userinput>SEGMENTS</userinput> variable 
+- below.</para></note>
++    <para>MySQL contains an embedded server library which can be enabled with
++    the cmake option <parameter>-DWITH_EMBEDDED_SERVER=ON</parameter>. By default
++    this server is built as a statically linked library,
++    <filename>libmysqld.a</filename>, but by applying the optional patch, a
++    shared version of this library can be built. The shared library is needed
++    by certain applications, such as <application>Amarok</application>.</para>
+     
+-    <para>Apply the optional patch:</para>
++    <para>There are numerous options available to
++    <userinput>cmake</userinput>. Check the output of the `<userinput>cmake .
++    -LH</userinput>` for additional customization options. See the <ulink
++    url="http://dev.mysql.com/doc/refman/5.5/en/source-configuration-options.html">MySQL
++    Documentation</ulink> for a full listing of all options.</para>
+     
+- <screen><userinput>patch -Np1 -i ../mysql-&mysql-version;-embedded-library-shared-1.patch</userinput></screen>    
++    <para>If you want the shared version of the embedded server library, apply
++    the patch:</para>
+     
+-    <para>Build and install <application>MySQL</application> by
++<screen><userinput>patch -Np1 -i ../mysql-&mysql-version;-embedded_library_shared-1.patch</userinput></screen>
++     <para>If building the client-only, apply the patch:</para>
++<screen><userinput>patch -Np1 -i ../mysql-&mysql-version;-client_only_fix-1.patch</userinput></screen>
++    
++    <para>Configure and build <application>MySQL</application> by
+     running the following commands:</para>
+     
+-<screen><userinput> mkdir build &amp;&amp;                                 \
+-cd    build &amp;&amp;                                 \
+-cmake ..                                          \
+-      -DSYSCONFDIR=/etc                           \
+-      -DMYSQL_DATADIR=/srv/mysql                  \
+-      -DINSTALL_MYSQLDATADIR=/srv/mysql           \
+-      -DCMAKE_INSTALL_PREFIX=/usr                 \
+-      -DINSTALL_BINDIR=bin                        \
+-      -DINSTALL_SBINDIR=sbin                      \
+-      -DINSTALL_DOCDIR=share/doc/mysql            \
+-      -DINSTALL_DOCREADMEDIR=share/doc/mysql      \
+-      -DINSTALL_INCLUDEDIR=include/mysql          \
+-      -DINSTALL_INFODIR=share/info                \
+-      -DINSTALL_LIBDIR=lib                        \
+-      -DINSTALL_MANDIR=share/man                  \
+-      -DINSTALL_MYSQLSHAREDIR=share/mysql         \
+-      -DINSTALL_MYSQLTESTDIR=share/mysql-test     \
+-      -DINSTALL_PLUGINDIR=lib/plugin              \
+-      -DINSTALL_SCRIPTDIR=bin                     \
+-      -DINSTALL_SHAREDIR=share/mysql              \
+-      -DINSTALL_SQLBENCHDIR=share/mysql-bench     \
+-      -DINSTALL_SUPPORTFILESDIR=share/mysql/support-files \
+-      -DWITH_ZLIB=system                          \
+-      -DWITH_SSL=system                           \
+-      -DWITH_READLINE=system                      \
+-      -DMYSQL_UNIX_ADDR=/var/run/mysql/mysql.sock \
+-      -DWITH_ARCHIVE_STORAGE_ENGINE=1             \
+-      -DWITH_FEDERATED_STORAGE_ENGINE=1           \
+-      -DWITH_BLACKHOLE_STORAGE_ENGINE=1           \
+-      -DMYSQL_MAINTAINER_MODE=OFF                 \
+-      -DWITH_DEBUG=OFF                            &amp;&amp;
++<screen><userinput>mkdir build &amp;&amp;                                      \
++cd build &amp;&amp;                                         \
++cmake -DCMAKE_INSTALL_PREFIX=/usr                   \
++      -DINSTALL_DOCDIR=share/doc/mysql              \
++      -DINSTALL_DOCREADMEDIR=share/doc/mysql        \
++      -DINSTALL_INCLUDEDIR=include/mysql            \
++      -DINSTALL_INFODIR=share/info                  \
++      -DINSTALL_MANDIR=share/man                    \
++      -DINSTALL_MYSQLDATADIR=/srv/mysql             \
++      -DINSTALL_MYSQLSHAREDIR=share/mysql           \
++      -DINSTALL_MYSQLTESTDIR=share/mysql/test       \
++      -DINSTALL_PLUGINDIR=lib/mysql                 \
++      -DINSTALL_SBINDIR=sbin                        \
++      -DINSTALL_SCRIPTDIR=bin                       \
++      -DINSTALL_SQLBENCHDIR=share/mysql/bench       \
++      -DINSTALL_SUPPORTFILESDIR=share/mysql/support \
++      -DMYSQL_DATADIR=/srv/mysql                    \
++      -DMYSQL_UNIX_ADDR=/var/run/mysql/mysql.sock   \
++      -DSYSCONFDIR=/etc                             \
++      -DWITH_PARTITION_STORAGE_ENGINE=OFF           \
++      -DWITH_PERFSCHEMA_STORAGE_ENGINE=OFF          \
++      -DWITH_READLINE=system                        \
++      -DWITH_SSL=system                             \
++      .. &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>To test the results, issue: <command>make test-force 2>&amp;1 | tee
+@@ -170,10 +173,15 @@
+     fail.  Also, two tests will fail if ipv6 is not available in the kernel
+     either as a module or built in.</para>
+ 
+-    <note><para>The ssl tests may fail due to expired certifictes.</para></note>
++    <note><para>The SSL tests may fail due to expired certificates.</para></note>
++    </sect3>
++    
++    <sect3>
++      <title>Installation (server and client)</title>
++    
++      <para>To install the server and client, issue the following command (as
++      the <systemitem class="username">root</systemitem> user):</para>
+ 
+-    <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
+ <screen role="root"><userinput>SEGMENTS="Client Server IniFiles ManPages SharedLibraries"
+ SEGMENTS="$SEGMENTS Development Documentation Info Readme"
+ 
+@@ -183,35 +191,60 @@
+ 
+ unset SEGMENTS</userinput></screen>
+ 
+-    <tip>
+-      <para>The only documentation shipped in the source tarball are
++      <note><para>If you built the embedded server library add
++      <userinput>Embedded</userinput> to the <userinput>SEGMENTS</userinput>
++      variable above.</para></note>
++      <tip><para>The only documentation shipped in the source tarball are
+       <filename>mysql.info</filename> and man pages. You can download various
+       formats of the <application>MySQL</application> Reference Manual
+      from <ulink url="http://dev.mysql.com/doc/"/>.</para></tip>
+ 
+-    <note><para>If you only want to build and install the 
+-      <command>mysql</command> client, use:</para>
++    </sect3>
+ 
+-      <screen><userinput>cmake . &amp;&amp;
+-make mysqlclient libmysql</userinput></screen>
++    <sect3>
++      <title>Installation (client only)</title>
++      <para>If you would like to install the client software only, issue the
++      following (as <systemitem class="username">root</systemitem>):</para>
+ 
+-      <para>Continue as root:</para>
++<screen role="root"><userinput>SEGMENTS="Client ManPages SharedLibraries"
++SEGMENTS="$SEGMENTS Development Documentation Info Readme"
+ 
+-      <screen role="root"><userinput>make install</userinput></screen>
+-    </note>
++for segment in $SEGMENTS; do
++   cmake -DCMAKE_INSTALL_COMPONENT=$segment -P cmake_install.cmake
++done
+ 
++unset SEGMENTS</userinput></screen>
++    </sect3>
+   </sect2>
+ 
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
++    <para><parameter>-DWITH_&lt;engine&gt;_STORAGE_ENGINE=ON</parameter>: The default
++    instructions only build the innobase (InnoDB) storage engine. If other
++    storage engines are desired use this switch to enable them. Valid choices
++    are ARCHIVE, BLACKHOLE, EXAMPLE, FEDERATED, INNOBASE, NDBCLUSTER,
++    PARTITION and PERFSCHEMA.</para>
++    <para><parameter>-DWITHOUT_SERVER=ON</parameter>: Use this switch if you don't
++    want the server and would like to build the client only.</para>
++    <para><parameter>-DWITH_EMBEDDED_SERVER=ON</parameter>: Use this switch to build
++    the embedded server library.</para>
++    
++    <para><parameter>-DWITH_SSL=system</parameter>: Use this switch to build
++    against a system version of SSL.</para>
+     <para><command>cmake -DCMAKE_INSTALL_COMPONENT=$segment ...</command>: This
+-    command installs the appropriate portion of the package.  Different
+-    segemnts may be added or deleted as desired.  Valid segments are listed
+-    with `<command>make list_install_components</command>`.  Note that the
+-    'DataFiles' install segment does not honor the -DMYSQL_DATADIR or
+-    -DINSTALL_MYSQLDATADIR statements.</para>
++    command installs the appropriate portion of the package. Different
++    segments may be added or deleted as desired.  Valid segments are listed
++    with `<command>make list_install_components</command>`.
++    Note that the 'DataFiles' install segment does not honor the
++    -DMYSQL_DATADIR or -DINSTALL_MYSQLDATADIR statements and installs datafiles
++    in <filename class="directory">/usr/data</filename>.</para>
+ 
+   </sect2>
+ 
+@@ -304,22 +337,19 @@
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-        <seg>comp_err, innochecksum, msql2mysql, my_print_defaults,
+-        myisam_ftdump, myisamchk, myisamlog, myisampack, mysql,
+-        mysql_client_test, mysql_config, mysql_convert_table_format,
+-        mysql_create_system_tables, mysql_explain_log, mysql_find_rows,
+-        mysql_fix_extensions, mysql_fix_privilege_tables, mysql_install_db,
+-        mysql_secure_installation, mysql_setpermission, mysql_tableinfo,
+-        mysql_tzinfo_to_sql, mysql_waitpid, mysql_zap, mysqlaccess, mysqladmin,
++        <seg>innochecksum, msql2mysql, my_print_defaults, myisam_ftdump,
++        myisamchk, myisamlog, myisampack, mysql, mysql_client_test,
++        mysql_config, mysql_convert_table_format, mysql_find_rows,
++        mysql_fix_extensions, mysql_install_db, mysql_plugin,
++        mysql_secure_installation, mysql_setpermission, mysql_tzinfo_to_sql,
++        mysql_upgrade, mysql_waitpid, mysql_zap, mysqlaccess, mysqladmin,
+         mysqlbinlog, mysqlbug, mysqlcheck, mysqld, mysqld_multi, mysqld_safe,
+-        mysqldump, mysqldumpslow, mysqlhotcopy, mysqlimport, mysqlmanager,
+-        mysqlshow, mysqltest, mysqltestmanager, mysqltestmanager-pwgen,
+-        mysqltestmanagerc, perror, replace, resolve_stack_dump, and
++        mysqldump, mysqldumpslow, mysqlhotcopy, mysqlimport, mysqlshow,
++        mysqlslap, mysqltest, perror, replace, resolve_stack_dump and
+         resolveip</seg>
+-        <seg>libdbug.a, libheap.a, libmyisam.a, libmyisammrg.a,
+-        libmysqlclient.{so,a}, libmysqlclient_r.{so,a}, libmystrings.a,
+-        libmysys.a, and libvio.a</seg>
+-        <seg>/srv/mysql, /usr/include/mysql, /usr/lib/plugin, /usr/share/mysql and
++        <seg>libmysqlclient.{so,a}, libmysqlclient_r.{so,a}, libmysqlservices.a
++        and several in /usr/lib/mysql</seg>
++        <seg>/srv/mysql, /usr/include/mysql, /usr/lib/mysql, /usr/share/mysql and
+         /var/run/mysql</seg>
+       </seglistitem>
+     </segmentedlist>
+@@ -329,7 +359,7 @@
+     <para>Descriptions of all the programs and libraries would be several
+     pages long. Instead, consult the <filename>mysql.info</filename>
+     documentation or the on-line reference manual at <ulink
+-    url="http://dev.mysql.com/doc/refman/5.1/en/index.html"/>.</para>
++    url="http://dev.mysql.com/doc/refman/5.5/en/index.html"/>.</para>
+ 
+     <para>The <application>Perl</application> DBI modules must be installed
+     for some of the <application>MySQL</application> support programs to
+
