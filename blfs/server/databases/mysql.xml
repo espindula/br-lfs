@@ -32,13 +32,6 @@
     largement utilisé. C'est une implémentation client/serveur consistant dans 
     un démon serveur et de nombreux programmes et bibliothèques différents.</para>
 
-    <para>Il se peut qu'il existe une version plus récente disponible sur
-    la page d'accueil de <application>MySQL</application>. Vous pouvez regarder
-    <ulink url="http://dev.mysql.com/"/> et probablement utiliser les instructions
-    BLFS existantes. Remarquez que des versions différentes de celle indiquée
-    aux adresses de téléchargement n'ont pas été testées dans un environnement
-    BLFS.</para>
-
 &lfs71_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
@@ -66,8 +59,13 @@
     <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
-        <para>Correctif facultatif&nbsp;: <ulink
-	url="&patch-root;/mysql-&mysql-version;-embedded-library-shared-1.patch"/></para>
+        <para>Correctif facultatif (requis si vous construisez pour Amarok)&nbsp;: <ulink
+        url="&patch-root;/mysql-&mysql-version;-embedded_library_shared-1.patch"/></para>
+      </listitem>
+      <listitem>
+        <para>Correctif facultatif (requis si vous construisez seulement le
+        client)&nbsp;: <ulink
+        url="&patch-root;/mysql-&mysql-version;-fix_client_only-1.patch"/></para>
       </listitem>
       <listitem>
         <para>Documentation optionelle (voir l'astuce ci-dessous):
@@ -76,9 +74,6 @@
 		</listitem>
     </itemizedlist>
 
-    <note><para>Le correctif est requis seulement si vous planifiez d'installer <application>
-    Amarok</application>.</para></note>
- 
     <bridgehead renderas="sect3">Dépendances de MySQL</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
@@ -100,32 +95,72 @@
   <sect2 role="installation">
     <title>Installation de MySQL</title>
 
+    <sect3>
+    <title>Construction</title>
+
     <para>Pour des raisons de sécurité, vous êtes fortement encouragé à exécuter
-    le serveur en tant qu'utilisateur et groupe non privilégiés&nbsp;:</para>
+    le serveur en tant qu'utilisateur et groupe non privilégiés. Lancez ce
+    qui suit (en tant qu'utilisateur <systemitem class="username">root</systemitem>)
+    pour créer l'utilisateur et le groupe&nbsp;:</para>
 
 <screen role="root"><userinput>groupadd -g 40 mysql &amp;&amp;
 useradd -c "MySQL Server" -d /dev/null -g mysql -s /bin/false -u 40 mysql</userinput></screen>
-    <note><para>Il y a énormément d'options disponibles pour
-    <userinput>ckake</userinput>.  Regardez la sortie de 
-    `<userinput>cmake . -LH</userinput>` pour des options ce personnalisation
-    supplémentaires. Voir la <ulink
-    url="http://dev.mysql.com/doc/refman/5.5/en/source-configuration-options.html">MySQL
-    Documentation</ulink> pour une liste complète des options.</para></note>
 
- <note><para>Si vous prévoyez d'installer <application>Amarok</application>, vous devez appliquer le correctif
- facultatif, ajoutez l'option cmake
- <userinput>-DWITH_EMBEDDED_SERVER=ON</userinput> et ajoutez
- <userinput>Embedded</userinput> dans la variable <userinput>SEGMENTS</userinput> ci-dessous.</para></note>
+    <para>Si le serveur MySQL n'est pas nécessaire, il est possible de ne
+    construire que les bibliothèques clients de MySQL. Pour cela, vous devez
+    appliquer le correctif facultatif, utilisez l'option <parameter>-DWITHOUT_SERVER=ON</parameter> 
+    de cmake et les instructions d'installation du client-seulement ci-dessous.</para>
 
-    <para>Appliquez le correctif facultatif:</para>
+    <para>MySQL contient une bibliothèque serveur embarquée qui peut être activée
+    par l'option <parameter>-DWITH_EMBEDDED_SERVER=ON</parameter> de cmake.
+    Par défaut, ce serveur est construit comme bibliothèque liée de façon
+    statique, <filename>libmysqld.a</filename>, mais en appliquant le
+    correctif facultatif, on peut construire une version partagée de cette
+    bibliothèque. La bibliothèque partagée est nécessaire pour certaines
+    applications, telles que <application>Amarok</application>.</para>
+     
+    <para>Beaucoup d'options sont disponibles avec
+    <userinput>cmake</userinput>. Vérifiez la sortie de `<userinput>cmake .
+    -LH</userinput>` pour des options supplémentaires de personnalisation. Voir
+    la <ulink
+    url="http://dev.mysql.com/doc/refman/5.5/en/source-configuration-options.html">
+    Documentation MySQL </ulink> pour une liste complète des options.</para>
+     
+    <para>Si vous voulez la version partagée de la bibliothèque serveur
+    embarquée, appliquez le correctif&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../mysql-&mysql-version;-embedded-library-shared-1.patch</userinput></screen>
+<screen><userinput>patch -Np1 -i ../mysql-&mysql-version;-embedded_library_shared-1.patch</userinput></screen>
 
-
-    <para>Construisez et installez <application>MySQL</application> en
+     <para>Si vous ne construisez que le client, appliquez le correctif&nbsp;:</para>
+<screen><userinput>patch -Np1 -i ../mysql-&mysql-version;-client_only_fix-1.patch</userinput></screen>
+    
+    <para>Configurez et construisez <application>MySQL</application> en
     lançant les commandes suivantes&nbsp;:</para>
-
-<screen><userinput> mkdir build &amp;&amp;                                 cd    build &amp;&amp;                                 cmake ..                                                -DSYSCONFDIR=/etc                                 -DMYSQL_DATADIR=/srv/mysql                        -DINSTALL_MYSQLDATADIR=/srv/mysql                 -DCMAKE_INSTALL_PREFIX=/usr                       -DINSTALL_BINDIR=bin                              -DINSTALL_SBINDIR=sbin                            -DINSTALL_DOCDIR=share/doc/mysql                  -DINSTALL_DOCREADMEDIR=share/doc/mysql            -DINSTALL_INCLUDEDIR=include/mysql                -DINSTALL_INFODIR=share/info                      -DINSTALL_LIBDIR=lib                              -DINSTALL_MANDIR=share/man                        -DINSTALL_MYSQLSHAREDIR=share/mysql               -DINSTALL_MYSQLTESTDIR=share/mysql-test           -DINSTALL_PLUGINDIR=lib/plugin                    -DINSTALL_SCRIPTDIR=bin                           -DINSTALL_SHAREDIR=share/mysql                    -DINSTALL_SQLBENCHDIR=share/mysql-bench           -DINSTALL_SUPPORTFILESDIR=share/mysql/support-files       -DWITH_ZLIB=system                                -DWITH_SSL=system                                 -DWITH_READLINE=system                            -DMYSQL_UNIX_ADDR=/var/run/mysql/mysql.sock       -DWITH_ARCHIVE_STORAGE_ENGINE=1                   -DWITH_FEDERATED_STORAGE_ENGINE=1                 -DWITH_BLACKHOLE_STORAGE_ENGINE=1                 -DMYSQL_MAINTAINER_MODE=OFF                       -DWITH_DEBUG=OFF                            &amp;&amp;
+     
+<screen><userinput>mkdir build &amp;&amp;                                      \
+cd build &amp;&amp;                                         \
+cmake -DCMAKE_INSTALL_PREFIX=/usr                   \
+      -DINSTALL_DOCDIR=share/doc/mysql              \
+      -DINSTALL_DOCREADMEDIR=share/doc/mysql        \
+      -DINSTALL_INCLUDEDIR=include/mysql            \
+      -DINSTALL_INFODIR=share/info                  \
+      -DINSTALL_MANDIR=share/man                    \
+      -DINSTALL_MYSQLDATADIR=/srv/mysql             \
+      -DINSTALL_MYSQLSHAREDIR=share/mysql           \
+      -DINSTALL_MYSQLTESTDIR=share/mysql/test       \
+      -DINSTALL_PLUGINDIR=lib/mysql                 \
+      -DINSTALL_SBINDIR=sbin                        \
+      -DINSTALL_SCRIPTDIR=bin                       \
+      -DINSTALL_SQLBENCHDIR=share/mysql/bench       \
+      -DINSTALL_SUPPORTFILESDIR=share/mysql/support \
+      -DMYSQL_DATADIR=/srv/mysql                    \
+      -DMYSQL_UNIX_ADDR=/var/run/mysql/mysql.sock   \
+      -DSYSCONFDIR=/etc                             \
+      -DWITH_PARTITION_STORAGE_ENGINE=OFF           \
+      -DWITH_PERFSCHEMA_STORAGE_ENGINE=OFF          \
+      -DWITH_READLINE=system                        \
+      -DWITH_SSL=system                             \
+      .. &amp;&amp;
 make</userinput></screen>
 
     <para>Pour tester les résultats, lancez&nbsp;: <command>make test-force 2>&amp;1 | tee
@@ -136,10 +171,16 @@ make</userinput></screen>
     <filename>/etc/hosts.allow</filename> pour le démon <command>mysqld</command>. 
 	Sans cela, beaucoup de tests échoueront.</para>
 
-    <note><para>Il se peut que les tests ssl échouent à cause de certificts
+    <note><para>Il se peut que les tests SSL échouent à cause de certificts
     expirés.</para></note>
 
-    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+    </sect3>
+
+     <sect3>
+     <title>Installation (serveur et client)</title>
+    
+      <para>Pour installer le serveur et le client, lancez la commande suivante
+      (en tant qu'utilisateur <systemitem class="username">root</systemitem>)&nbsp;:</para>
 
 <screen role="root"><userinput>SEGMENTS="Client Server IniFiles ManPages SharedLibraries"
 SEGMENTS="$SEGMENTS Development Documentation Info Readme"
@@ -150,6 +191,10 @@ done
 
 unset SEGMENTS</userinput></screen>
 
+      <note><para>Si vous avez construit la bibliothèque serveur embarquée,
+      ajoutez <userinput>Embedded</userinput> à la variable
+      <userinput>SEGMENTS</userinput> ci-dessus.</para></note>
+
     <tip>
       <para>La seule documentation incluse dans l'archive tar des sources est
       dans des fichiers <filename>mysql.info</filename> et dans les man pages.
@@ -157,30 +202,51 @@ unset SEGMENTS</userinput></screen>
 	  <application>MySQL</application> sur <ulink url="http://dev.mysql.com/doc/"/>.
 	  </para>
     </tip>
+   </sect3>
 
-    <note><para>Si vous ne voulez construire ou installer que le client
-      <command>mysql</command>, utilisezqnbsp;:</para>
+    <sect3>
+      <title>Installation (client seulement)</title>
 
-      <screen><userinput>cmake . &amp;&amp;
-make mysqlclient libmysql</userinput></screen>
+      <para>Si vous voulez n'installer que le logiciel client, lancez ce qui suit
+      (en tant qu'utilisateur <systemitem class="username">root</systemitem>)&nbsp;:</para>
 
-      <para>Poursuivez, en tant que root&nbsp;:</para>
-
-      <screen role="root"><userinput>make install</userinput></screen>
-    </note>
-
-  </sect2>
+<screen role="root"><userinput>SEGMENTS="Client ManPages SharedLibraries"
+SEGMENTS="$SEGMENTS Development Documentation Info Readme"
+for segment in $SEGMENTS; do
+   cmake -DCMAKE_INSTALL_COMPONENT=$segment -P cmake_install.cmake
+done
+ 
+unset SEGMENTS</userinput></screen>
+    </sect3>
+   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
+    <para><parameter>-DWITH_&lt;engine&gt;_STORAGE_ENGINE=ON</parameter>&nbsp;:
+    Les instructions par défaut ne construisent que le moteur de stockage
+    innobase (InnoDB). Si vous désirez d'autres moteurs de stockage, utilisez
+    ce paramètre pour les activer. Les choix valides sont ARCHIVE, BLACKHOLE, 
+    EXAMPLE, FEDERATED, INNOBASE, NDBCLUSTER,
+    PARTITION et PERFSCHEMA.</para>
+
+    <para><parameter>-DWITHOUT_SERVER=ON</parameter>&nbsp;: Utilisez ce
+    paramètre si vous ne voulez pas le serveur et si vous ne voulez construire
+    que le client.</para>
+
+    <para><parameter>-DWITH_EMBEDDED_SERVER=ON</parameter>&nbsp;: Utilisez ce
+    paramètre pour construire la bibliothèque serveur embarquée.</para>
+    
+    <para><parameter>-DWITH_SSL=system</parameter>&nbsp;: Utilisez ce paramètre
+    pour construire contre une version de SSL du système.</para>
+
     <para><command>cmake -DCMAKE_INSTALL_COMPONENT=$segment ...</command>&nbsp;:
-    Cette commande installe le bon morceau du paquet. On peut ajouter ou supprimer
-    des segemnts différents en fonction de ce qu'on veut. Les segments valides
-    sont listés avec `<command>make list_install_components</command>`. 
-    Remarquez que le segment d'installation 'DataFiles' n'honore pas les
-    déclarations -DMYSQL_DATADIR ou
-    -DINSTALL_MYSQLDATADIR.</para>
+    Cette commane installe la partie adéquate du paquet. Vous pouvez ajouter
+    ou supprimer différents segments comme vous le voulez. Les segments
+    valides sont listés  `<command>make list_install_components</command>`.
+    Remarquez que le segmentation d'installation 'DataFiles' n'accepte pas les
+    déclarations -DMYSQL_DATADIR ou -DINSTALL_MYSQLDATADIR et il installe les
+    fichiers de données dans <filename class="directory">/usr/data</filename>.</para>
 
   </sect2>
 
@@ -275,24 +341,21 @@ mysqld_safe --user=mysql 2&gt;&amp;1 &gt;/dev/null &amp;</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>comp_err, innochecksum, msql2mysql, my_print_defaults,
-        myisam_ftdump, myisamchk, myisamlog, myisampack, mysql,
-        mysql_client_test, mysql_config, mysql_convert_table_format,
-        mysql_create_system_tables, mysql_explain_log, mysql_find_rows,
-        mysql_fix_extensions, mysql_fix_privilege_tables, mysql_install_db,
-        mysql_secure_installation, mysql_setpermission, mysql_tableinfo,
-        mysql_tzinfo_to_sql, mysql_waitpid, mysql_zap, mysqlaccess, mysqladmin,
+        <seg>innochecksum, msql2mysql, my_print_defaults, myisam_ftdump,
+        myisamchk, myisamlog, myisampack, mysql, mysql_client_test,
+        mysql_config, mysql_convert_table_format, mysql_find_rows,
+        mysql_fix_extensions, mysql_install_db, mysql_plugin,
+        mysql_secure_installation, mysql_setpermission, mysql_tzinfo_to_sql,
+        mysql_upgrade, mysql_waitpid, mysql_zap, mysqlaccess, mysqladmin,
         mysqlbinlog, mysqlbug, mysqlcheck, mysqld, mysqld_multi, mysqld_safe,
-        mysqldump, mysqldumpslow, mysqlhotcopy, mysqlimport, mysqlmanager,
-        mysqlshow, mysqltest, mysqltestmanager, mysqltestmanager-pwgen,
-        mysqltestmanagerc, perror, replace, resolve_stack_dump, et
+        mysqldump, mysqldumpslow, mysqlhotcopy, mysqlimport, mysqlshow,
+        mysqlslap, mysqltest, perror, replace, resolve_stack_dump et
         resolveip</seg>
-        <seg>libdbug.a, libheap.a, libmyisam.a, libmyisammrg.a,
-        libmysqlclient.{so,a}, libmysqlclient_r.{so,a}, libmystrings.a,
-        libmysys.a, et libvio.a</seg>
-        <seg>/srv/mysql, /usr/include/mysql, /usr/lib/plugin, /usr/share/mysql, et
-        /var/run/mysql</seg>
-      </seglistitem>
+        <seg>libmysqlclient.{so,a}, libmysqlclient_r.{so,a}, libmysqlservices.a
+        et plusieurs dans /usr/lib/mysql</seg>
+        <seg>/srv/mysql, /usr/include/mysql, /usr/lib/mysql, /usr/share/mysql and
+         /var/run/mysql</seg>
+       </seglistitem>      </seglistitem>
     </segmentedlist>
 
     <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
@@ -300,7 +363,7 @@ mysqld_safe --user=mysql 2&gt;&amp;1 &gt;/dev/null &amp;</userinput></screen>
     <para>Des descriptions de tous les programmes et de toutes les bibliothèques
      prendraient plusieurs pages. Consultez plutôt la documentation de
      <filename>mysql.info</filename> ou le manuel de référence en ligne sur <ulink
-    url="http://dev.mysql.com/doc/refman/5.1/en/index.html"/>.</para>
+    url="http://dev.mysql.com/doc/refman/5.5/en/index.html"/>.</para>
 
     <para>Les modules DBI de <application>Perl</application> doivent être
     installés pour avoir des programmes de support de <application>MySQL</application> 
