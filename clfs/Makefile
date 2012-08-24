@@ -1,5 +1,5 @@
 TOP		:= $(shell pwd)
-RENDERDIR	:= /home/jp/clfsfr/render
+RENDERDIR	:= ./clfsfr/render
 
 VALIDATEDIR	:= $(RENDERDIR)/validate
 PROFILEDIR	:= $(RENDERDIR)/profile
