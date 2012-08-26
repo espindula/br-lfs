@@ -1,0 +1,506 @@
+Révision 10587
+
+fichiers supprimés :
+   archive/xinetd.xml
+
+fichiers déplacés (avec ou sans changements) :
+xinetd.xml
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   general.ent
+   server/other/other.xml
+
+Log :
+Restore xinetd and upgrade to version 2.3.15
+
+Le robot a traité 65 % du commit anglais
+Index: bootscripts/ChangeLog
+===================================================================
+--- bootscripts/ChangeLog	(revision 10586)
++++ bootscripts/ChangeLog	(revision 10587)
+@@ -1,3 +1,6 @@
++2012-08-25 Bruce Dubbs <bdubbs@linuxfromscratch.org>
++   * Restore xinetd script
+ 2012-08-14 Armin K. <krejzi@email.com>
+    * Renamed cyrus-sasl bootscript to saslauthd
+    * Renamed openldap bootscript to slapd
+
+Index: bootscripts/Makefile
+===================================================================
+--- bootscripts/Makefile	(revision 10586)
++++ bootscripts/Makefile	(revision 10587)
+@@ -469,6 +469,16 @@
+ 	ln -sf ../init.d/vsftpd ${EXTDIR}/rc.d/rc5.d/S32vsftpd
+ 	ln -sf ../init.d/vsftpd ${EXTDIR}/rc.d/rc6.d/K28vsftpd
+ 
++install-xinetd: create-dirs
++	install -m ${MODE} blfs/init.d/xinetd     ${EXTDIR}/rc.d/init.d/
++	ln -sf ../init.d/xinetd ${EXTDIR}/rc.d/rc0.d/K49xinetd
++	ln -sf ../init.d/xinetd ${EXTDIR}/rc.d/rc1.d/K49xinetd
++	ln -sf ../init.d/xinetd ${EXTDIR}/rc.d/rc2.d/K49xinetd
++	ln -sf ../init.d/xinetd ${EXTDIR}/rc.d/rc3.d/S23xinetd
++	ln -sf ../init.d/xinetd ${EXTDIR}/rc.d/rc4.d/S23xinetd
++	ln -sf ../init.d/xinetd ${EXTDIR}/rc.d/rc5.d/S23xinetd
++	ln -sf ../init.d/xinetd ${EXTDIR}/rc.d/rc6.d/K49xinetd
+ uninstall-atd: 
+ 	rm -f ${EXTDIR}/rc.d/init.d/atd
+ 	rm -f ${EXTDIR}/rc.d/rc0.d/K29atd
+
+Index: bootscripts/blfs/init.d/xinetd
+===================================================================
+--- bootscripts/blfs/init.d/xinetd	(revision 0)
++++ bootscripts/blfs/init.d/xinetd	(revision 10587)
+@@ -0,0 +1,67 @@
++#!/bin/sh
++########################################################################
++# Begin xinetd
++#
++# Description : Start xinetd super server daemon
++#
++# Author      : Bruce Dubbs - bdubbs@linuxfromscratch.org
++#
++# Version     : LFS 7.2
++#
++########################################################################
++### BEGIN INIT INFO
++# Provides:            xinetd
++# Required-Start:      $network
++# Should-Start:
++# Required-Stop:       $network
++# Should-Stop:
++# Default-Start:       3 4 5
++# Default-Stop:        0 1 2 6
++# Short-Description:   Starts the xinetd daemon.
++# Description:         Starts the xinetd super server daemon to llisten to
++#                      specified incoming tcp and udp ports and execute
++#                      the configured service.
++# X-LFS-Provided-By:   BLFS / LFS 7.2
++### END INIT INFO
++. /lib/lsb/init-functions
++#$LastChangedBy: dj $
++#$Date: 2011-12-05 01:38:40 -0600 (Mon, 05 Dec 2011) $
++case "$1" in
++	start)
++		log_info_msg "Starting xinetd..."
++		start_daemon /usr/sbin/xinetd
++      evaluate_retval
++		;;
++	stop)
++		log_info_msg "Stopping xinetd..."
++		killproc /usr/sbin/xinetd
++      evaluate_retval
++		;;
++	reload)
++		log_info_msg "Reloading xinetd..."
++		killproc /usr/sbin/xinetd -HUP
++		;;
++	restart)
++		$0 stop
++		sleep 1
++		$0 start
++		;;
++	status)
++		statusproc /usr/sbin/xinetd
++		;;
++	*)
++		echo "Usage: $0 {start|stop|reload|restart|status}"
++		exit 1
++		;;
++esac
++# End /etc/init.d/xinetd
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(revision 10586)
++++ introduction/welcome/changelog.xml	(revision 10587)
+@@ -47,6 +47,9 @@
+       <para>August 25th, 2012</para>
+       <itemizedlist>
+         <listitem>
++          <para>[bdubbs] - Restore xinetd and upgrade to version 2.3.15.</para>
++        </listitem>
++        <listitem>
+           <para>[krejzi] - Moved AccountsService into
+           GNOME section.</para>
+         </listitem>
+
+Index: server/other/xinetd.xml
+===================================================================
+--- archive/xinetd.xml	2012-08-26 05:32:11.516901549 +0200
++++ archive/xinetd.xml	2012-08-26 05:32:11.572901550 +0200
+@@ -56,9 +56,11 @@
+ 
+     <bridgehead renderas="sect3">xinetd Dependencies</bridgehead>
+ 
++    <bridgehead renderas="sect4">Required</bridgehead>
++    <para role="required"><xref linkend="libtirpc"/></para>
+     <bridgehead renderas="sect4">Optional</bridgehead>
+-    <para role="optional"><xref linkend="tcpwrappers"/> and
+-    <xref linkend="avahi"/></para>
++    <para role="optional"><ulink url="ftp://ftp.porcupine.org/pub/security/">tcpwrappers (deprecated)</ulink></para>
+ 
+     <para condition="html" role="usernotes">User Notes:
+     <ulink url="&blfs-wiki;/xinetd"/></para>
+@@ -71,7 +73,9 @@
+     <para>Install <application>xinetd</application> by running the following
+     commands:</para>
+ 
+-<screen><userinput>./configure --prefix=/usr --with-loadavg &amp;&amp;
++<screen><userinput>sed -i -e "/^LIBS/s/-lpset/&amp; -ltirpc/" xinetd/Makefile.in       &amp;&amp;
++sed -i -e "/register unsigned count/s/register//" xinetd/itox.c &amp;&amp;
++./configure --prefix=/usr --with-loadavg                        &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>This package does not come with a test suite.</para>
+@@ -82,6 +86,17 @@
+ 
+   </sect2>
+ 
++  <sect2 role="commands">
++     <title>Command Explanations</title>
++     <para><command>sed ... xinetd/Makefile.in</command>: Ensure the program
++     links against the libtirpc library.</para>
++     <para><command>sed ... xinetd/itox.c</command>: Fix some compiler 
++     warnings.</para>
++  </sect2>
+   <sect2 role="configuration">
+     <title>Configuring xinetd</title>
+ 
+@@ -106,7 +121,7 @@
+ 
+       <para>Ensure the path to all daemons is
+       <filename class="directory">/usr/sbin</filename>, rather than the default
+-      path of <filename class="directory">/usr/etc</filename>, and install the
++      path of <filename class="directory">/usr/bin</filename>, and install the
+       <application>xinetd</application> configuration files by running the
+       following commands as the <systemitem class="username">root</systemitem>
+       user:</para>
+@@ -114,7 +129,6 @@
+ <screen role="root"><userinput>cat &gt; /etc/xinetd.conf &lt;&lt; "EOF"
+ <literal># Begin /etc/xinetd
+ # Configuration file for xinetd
+-#
+ 
+ defaults
+ {
+@@ -126,8 +140,9 @@
+ }
+ 
+ # All service files are stored in the /etc/xinetd.d directory
+-#
+ includedir /etc/xinetd.d
+ # End /etc/xinetd</literal>
+ EOF</userinput></screen>
+@@ -136,9 +151,9 @@
+       to "disable = no".</para>
+ 
+       <note>
+-        <para>The following files are listed to demonstrate classic
++        <para>The following files are listed to demonstrate several
+         <application>xinetd</application> applications. In many cases, these
+-        applications are not needed. In some cases, the applications are
++        applications are not needed. Some classic applications are
+         considered security risks. For example, <command>telnet</command>,
+         <command>rlogin</command>, <command>rexec</command>, and
+         <command>rsh</command> transmit unencrypted usernames and passwords
+@@ -147,173 +162,7 @@
+       </note>
+ 
+ <screen role="root"><?dbfo keep-together="auto"?><userinput>install -v -d -m755 /etc/xinetd.d &amp;&amp;
+-cat &gt; /etc/xinetd.d/login &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/login
+-service login
+-{
+-   disable        = yes
+-   socket_type    = stream
+-   protocol       = tcp
+-   wait           = no
+-   user           = root
+-   server         = /usr/sbin/in.rlogind
+-   log_type       = SYSLOG local4 info
+-}
+-# End /etc/xinetd.d/login</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/shell &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/shell
+-service shell
+-{
+-   disable        = yes
+-   socket_type    = stream
+-   wait           = no
+-   user           = root
+-   instances      = UNLIMITED
+-   flags          = IDONLY
+-   log_on_success += USERID
+-   server         = /usr/sbin/in.rshd
+-}
+-# End /etc/xinetd.d/shell</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/exec &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/exec
+-service exec
+-{
+-   disable        = yes
+-   socket_type    = stream
+-   wait           = no
+-   user           = root
+-   server         = /usr/sbin/in.rexecd
+-}
+-# End /etc/xinetd.d/exec</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/comsat &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/comsat
+-service comsat
+-{
+-   disable        = yes
+-   socket_type    = dgram
+-   wait           = yes
+-   user           = nobody
+-   group          = tty
+-   server         = /usr/sbin/in.comsat
+-}
+-# End /etc/xinetd.d/comsat</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/talk &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/talk
+-service talk
+-{
+-   disable        = yes
+-   socket_type    = dgram
+-   wait           = yes
+-   user           = root
+-   server         = /usr/sbin/in.talkd
+-}
+-# End /etc/xinetd.d/talk</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/ntalk &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/ntalk
+-service ntalk
+-{
+-   disable        = yes
+-   socket_type    = dgram
+-   wait           = yes
+-   user           = root
+-   server         = /usr/sbin/in.ntalkd
+-}
+-# End /etc/xinetd.d/ntalk</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/telnet &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/telnet
+ 
+-service telnet
+-{
+-   disable        = yes
+-   socket_type    = stream
+-   wait           = no
+-   user           = root
+-   server         = /usr/sbin/in.telnetd
+-   bind           = 127.0.0.1
+-   log_on_failure += USERID
+-}
+-service telnet
+-{
+-   disable        = yes
+-   socket_type    = stream
+-   wait           = no
+-   user           = root
+-#  server         = /usr/sbin/in.telnetd
+-   bind           = 192.231.139.175
+-   redirect       = 128.138.202.20 23
+-   log_on_failure += USERID
+-}
+-# End /etc/xinetd.d/telnet</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/ftp &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/ftp
+-service ftp
+-{
+-   disable        = yes
+-   socket_type    = stream
+-   wait           = no
+-   user           = root
+-   server         = /usr/sbin/in.ftpd
+-   server_args    = -l
+-   instances      = 4
+-   log_on_success += DURATION USERID
+-   log_on_failure += USERID
+-   access_times   = 2:00-8:59 12:00-23:59
+-   nice           = 10
+-}
+-# End /etc/xinetd.d/ftp</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/tftp &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/tftp
+-service tftp
+-{
+-   disable        = yes
+-   socket_type    = dgram
+-   wait           = yes
+-   user           = root
+-   server         = /usr/sbin/in.tftpd
+-   server_args    = -s /tftpboot
+-}
+-# End /etc/xinetd.d/tftp</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/finger &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/finger
+-service finger
+-{
+-   disable        = yes
+-   socket_type    = stream
+-   wait           = no
+-   user           = nobody
+-   server         = /usr/sbin/in.fingerd
+-}
+-# End /etc/xinetd.d/finger</literal>
+-EOF
+ cat &gt; /etc/xinetd.d/systat &lt;&lt; "EOF" &amp;&amp;
+ <literal># Begin /etc/xinetd.d/systat
+ 
+@@ -331,23 +180,7 @@
+ 
+ # End /etc/xinetd.d/systat</literal>
+ EOF
+-cat &gt; /etc/xinetd.d/netstat &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/netstat
+ 
+-service netstat
+-{
+-   disable           = yes
+-   socket_type       = stream
+-   wait              = no
+-   user              = nobody
+-   server            = /usr/ucb/netstat
+-   server_args       = -f inet
+-   only_from         = 128.138.209.0
+-   log_on_success    = HOST
+-}
+-# End /etc/xinetd.d/netstat</literal>
+-EOF
+ cat &gt; /etc/xinetd.d/echo &lt;&lt; "EOF" &amp;&amp;
+ <literal># Begin /etc/xinetd.d/echo
+ 
+@@ -456,110 +291,6 @@
+ }
+ 
+ # End /etc/xinetd.d/time</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/rstatd &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/rstatd
+-service rstatd
+-{
+-   disable     = yes
+-   type        = RPC
+-   flags       = INTERCEPT
+-   rpc_version = 2-4
+-   socket_type = dgram
+-   protocol    = udp
+-   server      = /usr/sbin/rpc.rstatd
+-   wait        = yes
+-   user        = root
+-}
+-# End /etc/xinetd.d/rstatd</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/rquotad &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/rquotad
+-service rquotad
+-{
+-   disable     = yes
+-   type        = RPC
+-   rpc_version = 1
+-   socket_type = dgram
+-   protocol    = udp
+-   wait        = yes
+-   user        = root
+-   server      = /usr/sbin/rpc.rstatd
+-}
+-# End /etc/xinetd.d/rquotad</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/rusersd &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/rusersd
+-service rusersd
+-{
+-   disable     = yes
+-   type        = RPC
+-   rpc_version = 1-2
+-   socket_type = dgram
+-   protocol    = udp
+-   wait        = yes
+-   user        = root
+-   server      = /usr/sbin/rpc.rusersd
+-}
+-# End /etc/xinetd.d/rusersd</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/sprayd &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/sprayd
+-service sprayd
+-{
+-   disable      = yes
+-   type         = RPC
+-   rpc_version  = 1
+-   socket_type  = dgram
+-   protocol     = udp
+-   wait         = yes
+-   user         = root
+-   server       = /usr/sbin/rpc.sprayd
+-}
+-# End /etc/xinetd.d/sprayd</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/walld &lt;&lt; "EOF" &amp;&amp;
+-<literal># Begin /etc/xinetd.d/walld
+-service walld
+-{
+-   disable      = yes
+-   type         = RPC
+-   rpc_version  = 1
+-   socket_type  = dgram
+-   protocol     = udp
+-   wait         = yes
+-   user         = nobody
+-   group        = tty
+-   server       = /usr/sbin/rpc.rwalld
+-}
+-# End /etc/xinetd.d/walld</literal>
+-EOF
+-cat &gt; /etc/xinetd.d/irc &lt;&lt; "EOF"
+-<literal># Begin /etc/xinetd.d/irc
+-service irc
+-{
+-   disable      = yes
+-   socket_type  = stream
+-   wait         = no
+-   user         = root
+-   flags        = SENSOR
+-   type         = INTERNAL
+-   bind         = 192.168.1.30
+-   deny_time    = 60
+-}
+-# End /etc/xinetd.d/irc</literal>
+ EOF</userinput></screen>
+ 
+       <indexterm zone="xinetd xinetd-config">
+@@ -674,10 +405,11 @@
+ 
+ <screen role="root"><userinput>/etc/rc.d/init.d/xinetd start</userinput></screen>
+ 
+-      <para>Checking the <filename>/var/log/daemon.log</filename> file
+-      should prove quite entertaining. This file may contain entries
+-      similar to the following:</para>
++      <para>Check the <filename>/var/log/daemon.log</filename> to ensure the
++      appropriate services are started. If no services are enabled, the program
++      will not start without the <option>-stayalive</option> option.</para>
+ 
++<!--
+ <screen><literal>Aug 22 21:40:21 dps10 xinetd[2696]: Server /usr/sbin/in.rlogind is not
+ executable [line=29]
+ Aug 22 21:40:21 dps10 xinetd[2696]: Error parsing attribute server -
+@@ -688,7 +420,7 @@
+       <para>These errors are because most of the servers
+       <command>xinetd</command> is trying to control are not
+       installed yet.</para>
++-->
+     </sect3>
+ 
+   </sect2>
+
