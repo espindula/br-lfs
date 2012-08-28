@@ -1,0 +1,229 @@
+Révision 10591
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   networking/netprogs/samba3.xml
+   general.ent
+
+Log :
+Update to samba-3.6.7
+
+Le robot a traité 27 % du commit anglais
+Index: bootscripts/ChangeLog
+===================================================================
+--- bootscripts/ChangeLog	(revision 10590)
++++ bootscripts/ChangeLog	(revision 10591)
+@@ -1,3 +1,6 @@
++2012-08-26 Bruce Dubbs <bdubbs@linuxfromscratch.org>
++   * Restore winbindd script
+ 2012-08-25 Bruce Dubbs <bdubbs@linuxfromscratch.org>
+    * Restore xinetd script
+ 
+
+Index: bootscripts/Makefile
+===================================================================
+--- bootscripts/Makefile	(revision 10590)
++++ bootscripts/Makefile	(revision 10591)
+@@ -365,16 +365,6 @@
+ 	ln -sf  ../init.d/rsyncd ${EXTDIR}/rc.d/rc5.d/S30rsyncd
+ 	ln -sf  ../init.d/rsyncd ${EXTDIR}/rc.d/rc6.d/K30rsyncd
+ 
+-install-samba: create-dirs
+-	install -m ${MODE} blfs/init.d/samba      ${EXTDIR}/rc.d/init.d/
+-	ln -sf  ../init.d/samba ${EXTDIR}/rc.d/rc0.d/K48samba
+-	ln -sf  ../init.d/samba ${EXTDIR}/rc.d/rc1.d/K48samba
+-	ln -sf  ../init.d/samba ${EXTDIR}/rc.d/rc2.d/K48samba
+-	ln -sf  ../init.d/samba ${EXTDIR}/rc.d/rc3.d/S45samba
+-	ln -sf  ../init.d/samba ${EXTDIR}/rc.d/rc4.d/S45samba
+-	ln -sf  ../init.d/samba ${EXTDIR}/rc.d/rc5.d/S45samba
+-	ln -sf  ../init.d/samba ${EXTDIR}/rc.d/rc6.d/K48samba
+ install-swat: create-dirs
+ 	install -m ${MODE} blfs/init.d/swat      ${EXTDIR}/rc.d/init.d/
+ 	ln -sf  ../init.d/swat ${EXTDIR}/rc.d/rc0.d/K47swat
+@@ -469,6 +459,16 @@
+ 	ln -sf ../init.d/vsftpd ${EXTDIR}/rc.d/rc5.d/S32vsftpd
+ 	ln -sf ../init.d/vsftpd ${EXTDIR}/rc.d/rc6.d/K28vsftpd
+ 
++install-winbindd: create-dirs
++	install -m ${MODE} blfs/init.d/winbindd      ${EXTDIR}/rc.d/init.d/
++	ln -sf  ../init.d/winbindd ${EXTDIR}/rc.d/rc0.d/K49winbindd
++	ln -sf  ../init.d/winbindd ${EXTDIR}/rc.d/rc1.d/K49winbindd
++	ln -sf  ../init.d/winbindd ${EXTDIR}/rc.d/rc2.d/K49winbindd
++	ln -sf  ../init.d/winbindd ${EXTDIR}/rc.d/rc3.d/S50winbindd
++	ln -sf  ../init.d/winbindd ${EXTDIR}/rc.d/rc4.d/S50winbindd
++	ln -sf  ../init.d/winbindd ${EXTDIR}/rc.d/rc5.d/S50winbindd
++	ln -sf  ../init.d/winbindd ${EXTDIR}/rc.d/rc6.d/K49winbindd
+ install-xinetd: create-dirs
+ 	install -m ${MODE} blfs/init.d/xinetd     ${EXTDIR}/rc.d/init.d/
+ 	ln -sf ../init.d/xinetd ${EXTDIR}/rc.d/rc0.d/K49xinetd
+@@ -843,6 +843,26 @@
+ 	rm -f ${EXTDIR}/rc.d/rc5.d/S32vsftpd
+ 	rm -f ${EXTDIR}/rc.d/rc6.d/K28vsftpd
+ 
++uninstall-winbindd:
++	rm -f ${EXTDIR}/rc.d/init.d/winbindd
++	rm -f ${EXTDIR}/rc.d/rc0.d/K49winbindd
++	rm -f ${EXTDIR}/rc.d/rc1.d/K49winbindd
++	rm -f ${EXTDIR}/rc.d/rc2.d/K49winbindd
++	rm -f ${EXTDIR}/rc.d/rc3.d/S50winbindd
++	rm -f ${EXTDIR}/rc.d/rc4.d/S50winbindd
++	rm -f ${EXTDIR}/rc.d/rc5.d/S50winbindd
++	rm -f ${EXTDIR}/rc.d/rc6.d/K49winbindd
++uninstall-xinetd:
++	rm -f ${EXTDIR}/rc.d/init.d/xinetd
++	rm -f ${EXTDIR}/rc.d/rc0.d/K49xinetd
++	rm -f ${EXTDIR}/rc.d/rc1.d/K49xinetd
++	rm -f ${EXTDIR}/rc.d/rc2.d/K49xinetd
++	rm -f ${EXTDIR}/rc.d/rc3.d/S23xinetd
++	rm -f ${EXTDIR}/rc.d/rc4.d/S23xinetd
++	rm -f ${EXTDIR}/rc.d/rc5.d/S23xinetd
++	rm -f ${EXTDIR}/rc.d/rc6.d/K49xinetd
+ .PHONY: all create-dirs create-service-dir \
+ 	install-service-dhclient \
+ 	install-service-dhcpcd \
+@@ -886,6 +906,8 @@
+ 	install-sysstat \
+ 	install-vsftpd \
+ 	install-virtuoso \
++	install-winbindd \
++	install-xinetd \
+ 	uninstall-atd \
+ 	uninstall-alsa \
+ 	uninstall-avahi \
+
+Index: bootscripts/blfs/init.d/winbindd
+===================================================================
+--- bootscripts/blfs/init.d/winbindd	(revision 0)
++++ bootscripts/blfs/init.d/winbindd	(revision 10591)
+@@ -0,0 +1,64 @@
++#!/bin/sh
++# Begin /etc/init.d/winbindd
++### BEGIN INIT INFO
++# Provides:            winbindd
++# Required-Start:      samba
++# Should-Start:        
++# Required-Stop:       samba
++# Should-Stop:         
++# Default-Start:       3 4 5
++# Default-Stop:        0 1 2 6
++# Short-Description:   Provides Name Server Switch (NSS) capabilities to Samba.
++# Description:         Starts the winbindd daemon to provide 
++#                      Name Server Swithch (NSS) capabilities to Samba.
++# X-LFS-Provided-By:   BLFS
++### END INIT INFO
++. /lib/lsb/init-functions
++#$LastChangedBy$
++#$Date$
++PIDFILE=/var/run/winbindd.pid
++case "$1" in
++   start)
++      log_info_msg "Starting winbindd..."
++      start_daemon /usr/sbin/winbindd
++      evaluate_retval
++      ;;
++   stop)
++      log_info_msg "Stopping winbindd..."
++      killproc -p ${PIDFILE} /usr/sbin/winbindd
++      evaluate_retval
++      log_info_msg "Stopping nmbd..."
++      killproc /usr/sbin/nmbd
++      evaluate_retval
++      ;;
++   reload)
++      log_info_msg "Reloading smbd..."
++      killproc /usr/sbin/winbindd -HUP
++      evaluate_retval
++      ;;
++   restart)
++      $0 stop
++      sleep 1
++      $0 start
++      ;;
++   status)
++      statusproc /usr/sbin/winbindd
++      ;;
++   *)
++      echo "Usage: $0 {start|stop|reload|restart|status}"
++      exit 1
++      ;;
++esac
++# End /etc/init.d/winbindd
+
+Index: general.ent
+===================================================================
+--- general.ent	(revision 10590)
++++ general.ent	(revision 10591)
+@@ -570,7 +570,7 @@
+ <!ENTITY ntp-version                  "4.2.6p5">
+ <!ENTITY rpcbind-version              "0.2.0">
+ <!ENTITY rsync-version                "3.0.9">
+-<!ENTITY samba3-version               "3.6.4">
++<!ENTITY samba3-version               "3.6.7">
+ <!ENTITY wget-version                 "1.14">
+ <!ENTITY wireless-tools-version       "29">
+ <!ENTITY wpa_supplicant-version       "1.0">
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(revision 10590)
++++ introduction/welcome/changelog.xml	(revision 10591)
+@@ -44,6 +44,16 @@
+ 
+ -->
+     <listitem>
++      <para>August 26th, 2012</para>
++      <itemizedlist>
++        <listitem>
++          <para>[bdubbs] - Update to Samba-3.6.7. Fixes
++          <ulink url="&blfs-ticket-root;3427">#3427</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>August 25th, 2012</para>
+       <itemizedlist>
+         <listitem>
+
+Index: networking/netprogs/samba3.xml
+===================================================================
+--- networking/netprogs/samba3.xml	(revision 10590)
++++ networking/netprogs/samba3.xml	(revision 10591)
+@@ -464,10 +464,10 @@
+ 
+ <screen role="root"><userinput>make install-samba</userinput></screen>
+ 
+-        <para>If you also need the <filename>winbind</filename>
+-        script:</para>
++        <para>If you also need the <filename>winbindd</filename>
++        script to resolve names from Windows clients, run:</para>
+ 
+-<screen role="root"><userinput>make install-winbind</userinput></screen>
++<screen role="root"><userinput>make install-winbindd</userinput></screen>
+ 
+        </sect4>
+ 
+@@ -483,7 +483,7 @@
+       <indexterm zone="samba3 samba3-swat-config">
+         <primary sortas="g-configuring-SWAT">Configuring SWAT</primary>
+       </indexterm>
++<!--
+       <sect4>
+         <title>Setting up SWAT using inetd</title>
+ 
+@@ -523,7 +523,7 @@
+         http://localhost:905.</para>
+         
+       </sect4>
++-->
+       <sect4>
+         <title>Setting up SWAT using xinetd</title>
+ 
+@@ -579,7 +579,7 @@
+         http://localhost:905.</para>
+ 
+       </sect4>
+--->
+       <sect4>
+         <title>Setting up SWAT using stunnel</title>
+ 
+
