@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
 <!--
-$LastChangedBy: manuel $
-$Date: 2008-07-14 18:28:31 $
+$LastChangedBy: bdubbs $
+$Date: 2012-08-29 22:45:23 +0200 (mer 29 aoû 2012) $
 -->
 
 <!DOCTYPE xsl:stylesheet [
@@ -47,7 +47,7 @@ $Date: 2008-07-14 18:28:31 $
   </xsl:attribute-set>
 
     <!-- Divisions:
-          Translate alphabetical divisons titles to by-type titles. -->
+          Translate alphabetical divisions titles to by-type titles. -->
     <!-- The original template is in {docbook-xsl}/fo/autoidx.xsl -->
   <xsl:template match="indexterm" mode="index-div-basic">
     <xsl:param name="scope" select="."/>

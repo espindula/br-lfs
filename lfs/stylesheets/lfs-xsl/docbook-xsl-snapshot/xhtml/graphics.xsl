@@ -4,7 +4,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:stext="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.TextFactory" xmlns:simg="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.ImageIntrinsics" xmlns:ximg="xalan://com.nwalsh.xalan.ImageIntrinsics" xmlns:xtext="xalan://com.nwalsh.xalan.Text" xmlns:lxslt="http://xml.apache.org/xslt" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink stext xtext lxslt simg ximg" extension-element-prefixes="stext xtext" version="1.0">
 
 <!-- ********************************************************************
-     $Id: graphics.xsl 8369 2007-09-09 08:55:14Z manuel $
+     $Id: graphics.xsl 9967 2012-08-29 20:45:23Z bdubbs $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -107,7 +107,7 @@
           and convert percentages to actual values based on that nominal size.
 
        Scale can be problematic. Scale applies to the contentwidth, so
-       a scale of 50 when a contentwidth is not specified is analagous to a
+       a scale of 50 when a contentwidth is not specified is analogous to a
        width of 50%. (If a contentwidth is specified, the scaling factor can
        be applied to that value and no problem exists.)
 

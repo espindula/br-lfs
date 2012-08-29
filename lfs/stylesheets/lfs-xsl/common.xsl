@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
 <!--
-$LastChangedBy: manuel $
-$Date: 2008-07-14 18:28:27 $
+$LastChangedBy: bdubbs $
+$Date: 2012-08-29 22:45:23 +0200 (mer 29 aoû 2012) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -27,7 +27,7 @@ $Date: 2008-07-14 18:28:27 $
            We create this param to can have gentext support in both
            the Index page title and links that point to the Index page.
            It also allow us to change the title, if wanted.
-           Note: To change the title involves creating the appropiate
+           Note: To change the title involves creating the appropriate
            entries in lfs-l10n.xml -->
   <xsl:param name="index-title">Index</xsl:param>
 
@@ -413,7 +413,7 @@ $Date: 2008-07-14 18:28:27 $
     <xsl:param name="position">1</xsl:param>
     <xsl:variable name="tokens" select="count($scope/varlistentry)"/>
     <xsl:variable name="token" select="$scope/varlistentry[$position]/term/token"/>
-    <xsl:variable name="size" select="substring-before($token,' Kio')"/>
+    <xsl:variable name="size" select="substring-before($token,' KB')"/>
     <xsl:variable name="rawsize">
       <xsl:choose>
         <xsl:when test="contains($size,',')">
@@ -436,17 +436,17 @@ $Date: 2008-07-14 18:28:27 $
         <xsl:choose>
           <xsl:when test="$total &lt; '1000'">
             <xsl:value-of select="$total"/>
-            <xsl:text>  Kio</xsl:text>
+            <xsl:text>  KB</xsl:text>
           </xsl:when>
           <xsl:when test="$total &gt; '1000' and $total &lt; '5000'">
             <xsl:value-of select="substring($total,1,1)"/>
             <xsl:text>,</xsl:text>
             <xsl:value-of select="substring($total,2)"/>
-            <xsl:text>  Kio</xsl:text>
+            <xsl:text>  KB</xsl:text>
           </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="round($total div 1024)"/>
-            <xsl:text>  Mio</xsl:text>
+            <xsl:text>  MB</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:otherwise>

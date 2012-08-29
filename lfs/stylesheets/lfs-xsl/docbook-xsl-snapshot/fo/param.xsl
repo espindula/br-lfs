@@ -4,7 +4,7 @@
 <!-- This file is generated from param.xweb -->
 
 <!-- ********************************************************************
-     $Id: param.xsl,v 1.2 2008-07-14 18:28:28 texou Exp $
+     $Id: param.xsl 9967 2012-08-29 20:45:23Z bdubbs $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
@@ -832,7 +832,7 @@ set       toc,title
   </xsl:choose>
 </xsl:param>
 <xsl:param name="toc.indent.width">24</xsl:param>
-<!-- inconsistant point specification? -->
+<!-- inconsistent point specification? -->
 <xsl:attribute-set name="toc.line.properties">
   <xsl:attribute name="text-align-last">justify</xsl:attribute>
   <xsl:attribute name="text-align">start</xsl:attribute>
