@@ -35,7 +35,7 @@ $Date$
   </xsl:attribute-set>
 
     <!-- Format variablelists lists as blocks? 1 = yes, 0 = no
-           Default variablelist format. We override it when necesary
+           Default variablelist format. We override it when necessary
            using the list-presentation processing instruction. -->
   <xsl:param name="variablelist.as.blocks" select="1"/>
 

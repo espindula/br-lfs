@@ -832,7 +832,7 @@ set       toc,title
   </xsl:choose>
 </xsl:param>
 <xsl:param name="toc.indent.width">24</xsl:param>
-<!-- inconsistant point specification? -->
+<!-- inconsistent point specification? -->
 <xsl:attribute-set name="toc.line.properties">
   <xsl:attribute name="text-align-last">justify</xsl:attribute>
   <xsl:attribute name="text-align">start</xsl:attribute>

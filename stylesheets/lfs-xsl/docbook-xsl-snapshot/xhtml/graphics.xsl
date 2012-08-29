@@ -107,7 +107,7 @@
           and convert percentages to actual values based on that nominal size.
 
        Scale can be problematic. Scale applies to the contentwidth, so
-       a scale of 50 when a contentwidth is not specified is analagous to a
+       a scale of 50 when a contentwidth is not specified is analogous to a
        width of 50%. (If a contentwidth is specified, the scaling factor can
        be applied to that value and no problem exists.)
 

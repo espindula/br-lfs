@@ -27,7 +27,7 @@ $Date$
            We create this param to can have gentext support in both
            the Index page title and links that point to the Index page.
            It also allow us to change the title, if wanted.
-           Note: To change the title involves creating the appropiate
+           Note: To change the title involves creating the appropriate
            entries in lfs-l10n.xml -->
   <xsl:param name="index-title">Index</xsl:param>
 

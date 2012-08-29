@@ -48,7 +48,7 @@ $Date$
   </xsl:template>
 
     <!--Divisions:
-          Translate alphabetical divisons titles to by-type titles.
+          Translate alphabetical divisions titles to by-type titles.
           Added gentext support to divisions titles.
           Using h2 for divisions titles.
           Changed output from dl format to ul format. -->

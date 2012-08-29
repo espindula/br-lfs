@@ -217,7 +217,7 @@ $Date$
 
     <!-- Body attributes:
            Add to the body XHTML output tag a class attribute with the book type
-           and a id atribute with the book type and version. -->
+           and a id attribute with the book type and version. -->
     <!-- The original template is in {docbook-xsl}/xhtml/docbook.xsl -->
   <xsl:template name="body.attributes">
     <xsl:attribute name="class">

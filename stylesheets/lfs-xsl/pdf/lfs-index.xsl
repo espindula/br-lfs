@@ -47,7 +47,7 @@ $Date$
   </xsl:attribute-set>
 
     <!-- Divisions:
-          Translate alphabetical divisons titles to by-type titles. -->
+          Translate alphabetical divisions titles to by-type titles. -->
     <!-- The original template is in {docbook-xsl}/fo/autoidx.xsl -->
   <xsl:template match="indexterm" mode="index-div-basic">
     <xsl:param name="scope" select="."/>
