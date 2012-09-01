@@ -1,0 +1,51 @@
+# Custom systemd Makefile include that builds/installs gir only for LFS
+
+# vim: tabstop=3
+
+G_IR_INCLUDES =                \
+   src/gudev/gudev.h           \
+   src/gudev/gudevtypes.h      \
+   src/gudev/gudevenums.h      \
+   src/gudev/gudevenumtypes.h  \
+   src/gudev/gudevclient.h     \
+   src/gudev/gudevdevice.h     \
+   src/gudev/gudevenumerator.h \
+   src/gudev/gudevclient.c     \
+   src/gudev/gudevdevice.c     \
+   src/gudev/gudevenumerator.c
+
+build/GUdev-1.0.gir: gudev
+	@echo G-IR-SCANNER $@
+	$(VB)LD_LIBRARY_PATH=./build g-ir-scanner \
+   $(G_IR_INCLUDES)               \
+   -D_GUDEV_COMPILATION           \
+   -D_GUDEV_WORK_AROUND_DEV_T_BUG \
+   -I src -I src/gudev            \
+   -L./build -lgudev-1.0 -ludev   \
+   --quiet                        \
+   --warn-all                     \
+   --no-libtool                   \
+   --include=GObject-2.0          \
+   --pkg-export=gudev-1.0         \
+   --c-include=gudev/gudev.h      \
+   --library=gudev-1.0            \
+   --namespace=GUdev              \
+   --nsversion=1.0                \
+   --output=$@
+
+build/GUdev-1.0.typelib: build/GUdev-1.0.gir
+	@echo G-IR-COMPILER $@
+	$(VB)LIBRARY_PATH=./build g-ir-compiler $< > $@
+
+gir-data: build/GUdev-1.0.gir build/GUdev-1.0.typelib 
+
+install-gir-data: gir-data
+	@mkdir -pv $(DESTDIR)/usr/lib/girepository-1.0 \
+             $(DESTDIR)/usr/share/gir-1.0
+
+	@cp -v build/GUdev-1.0.typelib $(DESTDIR)/usr/lib/girepository-1.0
+	@cp -v build/GUdev-1.0.gir     $(DESTDIR)/usr/share/gir-1.0
+
+clean-gir-data:
+	rm -f build/GUdev-1.0.typelib
+	rm -f build/GUdev-1.0.gir

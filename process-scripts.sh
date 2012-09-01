@@ -5,7 +5,7 @@ for s in bootscripts/lfs/init.d/*       \
          bootscripts/lfs/sysconfig/*    \
          bootscripts/lfs/lib/services/* \
          bootscripts/lfs/sbin/*         \
-         ../udev-lfs/*.rules
+         udev-lfs/*.rules
 do
   script=$(basename $s)
   
