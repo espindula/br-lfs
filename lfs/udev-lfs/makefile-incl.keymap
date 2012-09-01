@@ -1,0 +1,151 @@
+# Custom systemd Makefile include that builds/installs keymap tool only for LFS
+
+# vim: tabstop=3
+
+KEYMAPS =                                          \
+   keymaps/acer                                    \
+   keymaps/acer-aspire_5720                        \
+   keymaps/acer-aspire_8930                        \
+   keymaps/acer-aspire_5920g                       \
+   keymaps/acer-aspire_6920                        \
+   keymaps/acer-travelmate_c300                    \
+   keymaps/asus                                    \
+   keymaps/compaq-e_evo                            \
+   keymaps/dell                                    \
+   keymaps/dell-latitude-xt2                       \
+   keymaps/everex-xt5000                           \
+   keymaps/fujitsu-amilo_li_2732                   \
+   keymaps/fujitsu-amilo_pa_2548                   \
+   keymaps/fujitsu-amilo_pro_edition_v3505         \
+   keymaps/fujitsu-amilo_pro_v3205                 \
+   keymaps/fujitsu-amilo_si_1520                   \
+   keymaps/fujitsu-esprimo_mobile_v5               \
+   keymaps/fujitsu-esprimo_mobile_v6               \
+   keymaps/genius-slimstar-320                     \
+   keymaps/hewlett-packard                         \
+   keymaps/hewlett-packard-2510p_2530p             \
+   keymaps/hewlett-packard-compaq_elitebook        \
+   keymaps/hewlett-packard-pavilion                \
+   keymaps/hewlett-packard-presario-2100           \
+   keymaps/hewlett-packard-tablet                  \
+   keymaps/hewlett-packard-tx2                     \
+   keymaps/ibm-thinkpad-usb-keyboard-trackpoint    \
+   keymaps/inventec-symphony_6.0_7.0               \
+   keymaps/lenovo-3000                             \
+   keymaps/lenovo-ideapad                          \
+   keymaps/lenovo-thinkpad-usb-keyboard-trackpoint \
+   keymaps/lenovo-thinkpad_x6_tablet               \
+   keymaps/lenovo-thinkpad_x200_tablet             \
+   keymaps/lg-x110                                 \
+   keymaps/logitech-wave                           \
+   keymaps/logitech-wave-cordless                  \
+   keymaps/logitech-wave-pro-cordless              \
+   keymaps/maxdata-pro_7000                        \
+   keymaps/medion-fid2060                          \
+   keymaps/medionnb-a555                           \
+   keymaps/micro-star                              \
+   keymaps/module-asus-w3j                         \
+   keymaps/module-ibm                              \
+   keymaps/module-lenovo                           \
+   keymaps/module-sony                             \
+   keymaps/module-sony-old                         \
+   keymaps/module-sony-vgn                         \
+   keymaps/olpc-xo                                 \
+   keymaps/onkyo                                   \
+   keymaps/oqo-model2                              \
+   keymaps/samsung-other                           \
+   keymaps/samsung-90x3a                           \
+   keymaps/samsung-sq1us                           \
+   keymaps/samsung-sx20s                           \
+   keymaps/toshiba-satellite_a100                  \
+   keymaps/toshiba-satellite_a110                  \
+   keymaps/toshiba-satellite_m30x                  \
+   keymaps/zepto-znote
+
+KEYMAPS_FR =                           \
+   keymaps-force-release/dell-touchpad \
+   keymaps-force-release/dell-xps      \
+   keymaps-force-release/hp-other      \
+   keymaps-force-release/samsung-other \
+   keymaps-force-release/samsung-90x3a \
+   keymaps-force-release/common-volume-keys
+
+KEYMAP_DEPS = common src/udev/keymap/keys-from-name.h src/udev/keymap/keys-to-name.h
+
+src/udev/keymap/keys.txt:
+	@echo GEN $@
+	$(VB)awk '/^#define.*KEY_[^ ]+[ \t]+[0-9]/ \
+   {                                         \
+     if ($$2 != "KEY_MAX") { print $$2 }     \
+   }'                                        \
+   /usr/include/linux/input.h | sed 's/^KEY_COFFEE$$/KEY_SCREENLOCK/' > $@
+
+src/udev/keymap/keys-from-name.gperf: src/udev/keymap/keys.txt
+	@echo GEN $@
+	$(VB)awk 'BEGIN                       \
+   {                                    \
+     print "struct key                  \
+     {                                  \
+       const char* name;                \
+       unsigned short id;               \
+     };";                               \
+                                        \
+     print "%null-strings"; print "%%"; \
+   }                                    \
+   {                                    \
+     print $$1 ", " $$1                 \
+   }' $< > $@
+
+src/udev/keymap/keys-from-name.h: src/udev/keymap/keys-from-name.gperf
+	@echo GEN $@
+	$(VB)gperf -L ANSI-C -t --ignore-case -N lookup_key -H hash_key_name -p -C $< > $@
+
+src/udev/keymap/keys-to-name.h: src/udev/keymap/keys.txt 
+	@echo GEN $@
+	$(VB)awk 'BEGIN                                     \
+   {                                                   \
+     print "const char* const key_names[KEY_CNT] = { " \
+   }                                                   \
+   {                                                   \
+     print "[" $$1 "] = \"" $$1 "\","                  \
+   }                                                   \
+   END{print "};"                                      \
+   }' $< > $@
+
+build/keymap: src/udev/keymap/keymap.c build/$(COMMON_LIB) $(KEYMAP_DEPS)
+	@echo LINK $@
+	$(VB)gcc $< -o $@ -I src/udev/keymap $(WARN) $(OPTIONS2) $(INCLUDE) $(DEF) \
+      build/$(COMMON_LIB) $(LDFLAGS)
+	$(VB)strip --strip-unneeded $@
+
+keymap: build/keymap
+
+install-keymap: keymap
+	@mkdir -pv $(DESTDIR)/lib/udev/keymaps/force-release \
+              $(DESTDIR)/lib/udev/rules.d               \
+              $(DESTDIR)/usr/share/doc/udev
+
+	@cp -v build/keymap  $(DESTDIR)/lib/udev
+
+	@cp -v $(KEYMAPS)    $(DESTDIR)/lib/udev/keymaps
+	@cp -v $(KEYMAPS_FR) $(DESTDIR)/lib/udev/keymaps/force-release
+
+	@cp -v src/udev/keymap/*.rules       $(DESTDIR)/lib/udev/rules.d
+	@cp -v src/udev/keymap/findkeyboards $(DESTDIR)/lib/udev
+
+	@cp -v src/udev/keymap/*.txt $(DESTDIR)/usr/share/doc/udev
+
+	@sed -e 's|@udevlibexecdir@|/lib/udev|g'              \
+            src/udev/keymap/keyboard-force-release.sh.in \
+            > $(DESTDIR)/lib/udev/keyboard-force-release.sh
+
+	@chmod 0755 $(DESTDIR)/lib/udev/keyboard-force-release.sh
+
+clean-keymap:
+	rm -f src/udev/keymap/keys.txt
+	rm -f src/udev/keymap/keys-from-name.gperf
+	rm -f src/udev/keymap/keys-from-name.h
+	rm -f src/udev/keymap/keys-to-name.h
+	rm -f build/keymap
+
+.PHONY: clean-keymap

@@ -1,0 +1,108 @@
+# Custom systemd Makefile include that builds/installs gudev only for LFS
+
+# vim: tabstop=3
+
+LIBGUDEV_SRCS =      \
+   gudevclient.c     \
+   gudevdevice.c     \
+   gudevenumerator.c \
+   gudevenumtypes.c  \
+   gudevmarshal.c
+
+LIBGUDEV_INCLUDES =           \
+   src/gudev/gudev.h          \
+   src/gudev/gudevenums.h     \
+   src/gudev/gudevenumtypes.h \
+   src/gudev/gudevtypes.h     \
+   src/gudev/gudevclient.h    \
+   src/gudev/gudevdevice.h    \
+   src/gudev/gudevenumerator.h
+
+LIBGUDEV_OBJS := $(addprefix build/, $(LIBGUDEV_SRCS:.c=.o))
+
+LIBGUDEV_CFLAGS =             \
+   -I src/gudev               \
+   -D_POSIX_PTHREAD_SEMANTICS \
+   -D_REENTRANT               \
+   -D_GUDEV_COMPILATION       \
+   -DG_LOG_DOMAIN=\"GUdev\"   \
+   -fvisibility=default       \
+   -I /usr/include/glib-2.0   \
+   -I /usr/lib/glib-2.0/include
+
+LIBGUDEV_LDFLAGS =      \
+   -L build -L /usr/lib \
+   -ludev -lgobject-2.0 \
+   -lglib-2.0
+
+GUDEV_GENERATED =             \
+   src/gudev/gudevmarshal.h   \
+   src/gudev/gudevmarshal.c   \
+   src/gudev/gudevenumtypes.h \
+   src/gudev/gudevenumtypes.c
+
+LIBGUDEV            = libgudev-1.0
+LIBGUDEV_MAJOR      = .0
+LIBGUDEV_MINOR      = .1
+LIBGUDEV_PATCH      = .2
+LIBGUDEV_SONAME    := $(LIBGUDEV).so
+LIBGUDEV_LINK_NAME := $(LIBGUDEV_SONAME)$(LIBGUDEV_MAJOR)
+LIBGUDEV_REAL_NAME := $(LIBGUDEV_LINK_NAME)$(LIBGUDEV_MINOR)$(LIBGUDEV_PATCH)
+
+src/gudev/gudevmarshal.h: src/gudev/gudevmarshal.list
+	@echo GEN $@
+	$(VB)glib-genmarshal $< --prefix=g_udev_marshal --header > $@
+
+src/gudev/gudevmarshal.c: src/gudev/gudevmarshal.list
+	@echo GEN $@
+	@echo "#include \"gudevmarshal.h\"" > $@
+	$(VB)glib-genmarshal $< --prefix=g_udev_marshal --body >> $@
+
+src/gudev/gudevenumtypes.h: src/gudev/gudevenumtypes.h.template src/gudev/gudevenums.h
+	@echo GEN $@
+	$(VB)glib-mkenums --template $^ > $@
+
+src/gudev/gudevenumtypes.c: src/gudev/gudevenumtypes.c.template src/gudev/gudevenums.h 
+	@echo GEN $@
+	$(VB)glib-mkenums --template $^ > $@
+
+build/%o: src/gudev/%c $(GUDEV_GENERATED) common
+	@echo CC $<
+	$(VB)gcc -c $(LIBGUDEV_CFLAGS) $(WARN) $(OPTIONS) $(INCLUDE) $(DEF) -o $@ $<
+
+build/$(LIBGUDEV_REAL_NAME): $(LIBGUDEV_OBJS) build/udev-local.a build/$(LIBUDEV_REAL_NAME)
+	@echo LINK $@
+	$(VB)gcc -shared -Wl,--export-dynamic -Wl,-soname,$(LIBGUDEV_LINK_NAME) \
+   -o build/$(LIBGUDEV_REAL_NAME) $(LIBGUDEV_OBJS) $(LIBGUDEV_LDFLAGS)
+
+	ln -sfn $(LIBGUDEV_REAL_NAME) build/$(LIBGUDEV_LINK_NAME)
+	ln -sfn $(LIBGUDEV_REAL_NAME) build/$(LIBGUDEV_SONAME)
+
+build/gudev-1.0.pc: src/gudev/gudev-1.0.pc.in
+	@echo GEN $@
+	@$(SED_PROCESS)
+
+gudev: build/$(LIBGUDEV_REAL_NAME) build/gudev-1.0.pc
+
+clean-gudev:
+	rm -f src/gudev/gudevmarshal.h
+	rm -f src/gudev/gudevmarshal.c
+	rm -f src/gudev/gudevenumtypes.h
+	rm -f src/gudev/gudevenumtypes.c
+	rm -f $(LIBGUDEV_OBJS)
+	rm -f build/libgudev-1.0.so*
+
+install-gudev: gudev
+	@mkdir -pv $(DESTDIR)/usr/include/gudev-1.0/gudev \
+              $(DESTDIR)/usr/lib/pkgconfig           \
+              $(DESTDIR)/usr/share/gtk-doc/html/gudev
+
+	@cp -v $(LIBGUDEV_INCLUDES)        $(DESTDIR)/usr/include/gudev-1.0/gudev
+	@cp -v build/$(LIBGUDEV_REAL_NAME) $(DESTDIR)/usr/lib
+
+	@ln -svfn $(LIBGUDEV_REAL_NAME) $(DESTDIR)/usr/lib/$(LIBGUDEV_SONAME)
+	@ln -svfn $(LIBGUDEV_REAL_NAME) $(DESTDIR)/usr/lib/$(LIBGUDEV_LINK_NAME)
+
+	@cp -v build/gudev-1.0.pc       $(DESTDIR)/usr/lib/pkgconfig
+	@cp -v docs/gudev/html/*        $(DESTDIR)/usr/share/gtk-doc/html/gudev
+
