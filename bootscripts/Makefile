@@ -64,9 +64,6 @@ files: create-dirs
 	if [ ! -f ${EXTDIR}/sysconfig/udev_retry  ]; then \
           install -m ${CONFMODE} lfs/sysconfig/udev_retry  ${EXTDIR}/sysconfig/ ;\
         fi
-	if [ ! -f ${EXTDIR}/sysconfig/rc          ]; then \
-          install -m ${CONFMODE} lfs/sysconfig/rc          ${EXTDIR}/sysconfig/ ;\
-        fi
 	if [ ! -f ${EXTDIR}/sysconfig/rc.site     ]; then \
           install -m ${CONFMODE} lfs/sysconfig/rc.site     ${EXTDIR}/sysconfig/ ;\
         fi
