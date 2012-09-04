@@ -18,10 +18,10 @@ $Date$
   <xsl:import href="chunk-slave.xsl"/>
 
     <!-- Upstream chunk code named templates -->
-  <xsl:import href="docbook-xsl-1.77.1/xhtml/chunk-common.xsl"/>
+  <xsl:import href="docbook-xsl-snapshot/xhtml/chunk-common.xsl"/>
 
     <!-- Upstream chunk code match templates -->
-  <xsl:include href="docbook-xsl-1.77.1/xhtml/chunk-code.xsl"/>
+  <xsl:include href="docbook-xsl-snapshot/xhtml/chunk-code.xsl"/>
 
     <!-- Including our customized chunks templates -->
   <xsl:include href="xhtml/lfs-index.xsl"/>

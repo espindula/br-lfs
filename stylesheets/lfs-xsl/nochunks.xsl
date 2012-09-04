@@ -13,7 +13,7 @@ $Date$
         Replaces {docbook-xsl}/xhtml/profile-docbook.xsl -->
 
     <!-- Upstream XHTML templates -->
-  <xsl:import href="docbook-xsl-1.77.1/xhtml/docbook.xsl"/>
+  <xsl:import href="docbook-xsl-snapshot/xhtml/docbook.xsl"/>
 
     <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
   <xsl:output method="html" encoding="ISO-8859-1" indent="no" />

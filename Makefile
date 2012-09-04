@@ -29,6 +29,7 @@ lfs: validate profile-html
 	fi;
 	$(Q)cp images/*.png $(BASEDIR)/images
 	$(Q)cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html
+	$(Q)cd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html
 
 	@echo "Running Tidy and obfuscate.sh..."
 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
@@ -74,10 +75,6 @@ nochunks: validate profile-html
 	$(Q)sed -i -e "s@../wget-list@wget-list@"  \
 	  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)$(MAKE) wget-list
-
-epub: validate
-	@echo "Generating ePub..."
-	$(Q)xsltproc --nonet stylesheets/lfs-xsl/epub.xsl $(RENDERTMP)/lfs-full.xml
 
 tmpdir:
 	@echo "Creating and cleaning $(RENDERTMP)"
