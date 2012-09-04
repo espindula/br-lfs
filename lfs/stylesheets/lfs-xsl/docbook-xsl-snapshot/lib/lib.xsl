@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ASCII"?>
 <!-- ********************************************************************
-     $Id: lib.xsl,v 1.2 2008-07-14 18:28:28 texou Exp $
+     $Id: lib.xsl 8369 2007-09-09 08:55:14Z manuel $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.

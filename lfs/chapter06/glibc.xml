@@ -55,7 +55,16 @@
       l'Unicode, du coup libiconv n'est pas requis sur un système LFS.</para>
     </note>
 
+    <para>The Glibc build system is self-contained and will install
+    perfectly, even though the compiler specs file and linker are still
+    pointing at <filename class="directory">/tools</filename>. The specs
+    and linker cannot be adjusted before the Glibc install because the
+    Glibc autoconf tests would give false results and defeat the goal
+    of achieving a clean build.</para>
+
 <!--
+    This should have been fixed a long time ago.
+
     <para>Sous la locale vi_VN.TCVN, <command>bash</command> entre dans une boucle
     infinie au lancement. On ne sait pas s'il s'agit d'un bogue <command>bash</command>
     ou d'un problème de Glibc. Désactivez l'installation de cette locale afin
@@ -68,12 +77,10 @@
 
 <screen><userinput remap="pre">sed -i 's#&lt;rpc/types.h&gt;#"rpc/types.h"#' sunrpc/rpc_clntout.c</userinput></screen>
 
-
 <!--    <para>Lors de l'exécution de <command>make install</command>, un script appelé
     <filename>test-installation.pl</filename> opère un test de propreté sur notre
     Glibc récemment installée. Cependant, notre chaîne d'outils pointant
-    encore vers le répertoire
-    <filename class="directory">/tools</filename>, le test de propreté pourrait
+    encore vers le répertoire <filename class="directory">/tools</filename>, le test de propreté pourrait
     se fier au mauvais Glibc. Nous pouvons forcer le script à tester la Glibc que
     nous venons d'installer en lançant ceci&nbsp;:</para>
 
@@ -109,12 +116,11 @@ unset DL</userinput></screen>-->
 
 <screen><userinput remap="pre">mkdir -v ../glibc-build
 cd ../glibc-build</userinput></screen>
-
 <!--
     <para>Comme au chapitre 5, ajoutez à nouveau à CFLAGS les commutateurs du compilateur requis pour les machines x86. Ici, l'optimisation 
     de la bibliothèque est également réglée pour le compilateur gcc pour gérer la vitesse de compilation (-pipe) et la performance des 
     paquets (-O3).</para>
-    
+
 <screen><userinput remap="configure">case `uname -m` in
   i?86) echo "CFLAGS += -march=i486 -mtune=native -O3 -pipe" &gt; configparms ;;
 esac</userinput></screen>
@@ -171,28 +177,36 @@ grep Error glibc-check-log</userinput></screen>
 
     <itemizedlist>
       <!-- Check again after updating from gcc-4.1.x -->
-      <listitem>
-        <para>Le test <emphasis>nptl/tst-cancel1</emphasis> échouera si vous
-        utilisez les séries 4.1 de GCC.</para>
-      </listitem>
+      <!-- Haven;t seen this in quite a while <listitem>
+        <para>The <emphasis>nptl/tst-cancel1</emphasis> test will fail when
+        using the 4.1 series of GCC.</para>
+      </listitem> -->
+      <!-- Was true in glibc-2.3.6, rt/tst-cpuclock2 in glibc-2.11.1 -->
+
       <listitem>
         <para>Les tests <emphasis>nptl/tst-attr3</emphasis>, 
         <emphasis>tst/tst-cputimer1</emphasis>, et
-        <emphasis>rt/tst-cpuclock2</emphasis> sont connus pour échouer. On n'a pas encore
+        <emphasis>rt/tst-cpuclock2</emphasis>
+        sont connus pour échouer. On n'a pas encore
         totalement compris la raison, mais des indications laissent penser que
         des problèmes mineurs de temps peuvent être à l'origine de ces échecs.</para>
       </listitem>
+
       <listitem>
-        <para>Les tests <emphasis>math</emphasis> échouent quelque fois lors de
-        leur exécution sur des systèmes où le processeur n'est pas un Intel ou un AMD
-        authentique.</para>
+        <para>The math tests sometimes fail when running on
+        systems where the CPU is not a relatively new genuine Intel or
+        authentic AMD processor.</para>
       </listitem>
-      <!-- <listitem>
+      
+      <!--
+      <listitem>
         <para>Si vous avez monté la partition LFS avec l'option
         <parameter>noatime</parameter>, le test <emphasis>atime</emphasis>
         échouera. Comme mentionné dans <xref linkend="space-mounting"/>,
         n'utilisez pas l'option <parameter>noatime</parameter> lors de la construction de LFS.</para>
-      </listitem>-->
+      </listitem>
+      -->
+      
       <listitem>
         <para>Lors d'une exécution sur un matériel ancien et lent, quelques
         tests peuvent échouer à cause de délais de test dépassés. La modification
@@ -200,6 +214,7 @@ grep Error glibc-check-log</userinput></screen>
         aidant à éliminer ces erreurs (par exemple <command>TIMEOUTFACTOR=16
         make -k check</command>).</para>
       </listitem>
+      
       <listitem>
         <para>D'autres tests qui sont connus pour échouer sur certaines 
         architectures sont posix/bug-regex32, 
@@ -232,10 +247,9 @@ cp -v ../glibc-&glibc-version;/nis/rpcsvc/*.h /usr/include/rpcsvc</userinput></s
     n'est indispensable, mais si certaines sont absentes, les suites de test
     des futurs paquets peuvent sauter des situations de test importantes.</para>
 
-    <para>Vous pouvez installer les locales individuelles en utilisant le
-    programme <command>localedef</command> Par exemple, la première commande
-    <command>localedef</command> ci-dessous combine la définition
-    de la locale du codage indépendant 
+    <para>Vous pouvez installer les locales individuelles en utilisant le programme
+     <command>localedef</command> Par exemple, la première commande
+    <command>localedef</command> ci-dessous combine la définition de la locale du codage indépendant 
     <filename>/usr/share/i18n/locales/cs_CZ</filename> avec la définition
     de la page de codes 
     <filename>/usr/share/i18n/charmaps/UTF-8.gz</filename> et envoie le
@@ -303,8 +317,8 @@ localedef -i zh_CN -f GB18030 zh_CN.GB18030</userinput></screen>
     dans un environnement en réseau. De plus, le fuseau horaire a besoin d'être
     configuré.</para>
 
-    <para>Créez un nouveau fichier <filename>/etc/nsswitch.conf</filename> en
-    lançant ce qui suit&nbsp;:</para>
+    <para>Créez un nouveau fichier <filename>/etc/nsswitch.conf</filename> en lançant ce qui
+    suit&nbsp;:</para>
 
 <screen><userinput>cat &gt; /etc/nsswitch.conf &lt;&lt; "EOF"
 <literal># Begin /etc/nsswitch.conf
@@ -325,8 +339,8 @@ rpc: files
 EOF</userinput></screen>
 
     <para>Installez timezone data (les données de fuseau horaire)&nbsp;:</para>
-
 <screen><userinput>tar -xf ../tzdata&tzdata-version;.tar.gz
+
 ZONEINFO=/usr/share/zoneinfo
 mkdir -pv $ZONEINFO/{posix,right} 
 
@@ -341,6 +355,7 @@ done
 cp -v zone.tab iso3166.tab $ZONEINFO
 zic -d $ZONEINFO -p America/New_York
 unset ZONEINFO</userinput></screen>
+
     <variablelist>
       <title>Voici la signification de la commande zic&nbsp;:</title>
 
@@ -382,8 +397,7 @@ unset ZONEINFO</userinput></screen>
     </variablelist>
 
     <para>Une façon de déterminer dans quel fuseau horaire où vous situez consiste
-    à lancer le
-    script suivant&nbsp;:</para>
+    à lancer le script suivant&nbsp;:</para>
 
 <screen role="nodump"><userinput>tzselect</userinput></screen>
 
@@ -454,7 +468,6 @@ unset ZONEINFO</userinput></screen>
 /usr/local/lib
 /opt/lib
 </literal>
-
 EOF</userinput></screen>
 
     <para>Si vous le désirez, le chargeur dynamique peut également chercher un
@@ -611,17 +624,17 @@ mkdir /etc/ld.so.conf.d</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-      
+
       <varlistentry id="localedef">
         <term><command>localedef</command></term>
         <listitem>
-           <para>Compile les spécifications de locale</para>
+          <para>Compile les spécifications de locale</para>
           <indexterm zone="ch-system-glibc localedef">
             <primary sortas="b-localedef">localedef</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-      
+
       <varlistentry id="mtrace">
         <term><command>mtrace</command></term>
         <listitem>
@@ -658,8 +671,7 @@ mkdir /etc/ld.so.conf.d</userinput></screen>
         <term><command>pt_chown</command></term>
         <listitem>
           <para>Un programme d'aide pour que <command>grantpt</command> 
-          initialise les droits des propriétaires, groupes et autres d'un 
-          pseudo-terminal esclave</para>
+          initialise les droits des propriétaires, groupes et autres d'un  pseudo-terminal esclave</para>
           <indexterm zone="ch-system-glibc pt_chown">
             <primary sortas="b-pt_chown">pt_chown</primary>
           </indexterm>
@@ -852,8 +864,7 @@ mkdir /etc/ld.so.conf.d</userinput></screen>
         <term><filename class="libraryfile">libg</filename></term>
         <listitem>
           <para>Bibliothèque factice ne contenant aucune fonction.
-          C'était auparavant une bibliothèque d'exécution pour
-          <command>g++</command></para>
+          C'était auparavant une bibliothèque d'exécution pour <command>g++</command></para>
           <indexterm zone="ch-system-glibc libg">
             <primary sortas="c-libg">libg</primary>
           </indexterm>
@@ -866,8 +877,7 @@ mkdir /etc/ld.so.conf.d</userinput></screen>
           <para>Un lien vers ce module provoque volontairement des règles de
           gestion d'erreur pour les fonctions math telles que définies par les
           <foreignphrase>Institute of Electrical and Electronic
-          Engineers</foreignphrase> (IEEE). Le paramètre par défaut est la gestion de l'erreur
-          POSIX.1</para>
+          Engineers</foreignphrase> (IEEE). Le paramètre par défaut est la gestion de l'erreur POSIX.1</para>
           <indexterm zone="ch-system-glibc libieee">
             <primary sortas="c-libieee">libieee</primary>
           </indexterm>
@@ -1009,5 +1019,3 @@ mkdir /etc/ld.so.conf.d</userinput></screen>
   </sect2>
 
 </sect1>
-
-
