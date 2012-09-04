@@ -12,11 +12,11 @@ $Date$
        Replaces {docbook-xsl}/profiling/profile.xsl -->
 
   <!-- Include common profiling stylesheet -->
-  <xsl:import href="docbook-xsl-snapshot/profiling/profile-mode.xsl"/>
+  <xsl:import href="docbook-xsl-1.77.1/profiling/profile-mode.xsl"/>
 
     <!-- This file must be included, because profile-mode is using
          templates from it -->
-  <xsl:import href="docbook-xsl-snapshot/common/stripns.xsl"/>
+  <xsl:import href="docbook-xsl-1.77.1/common/stripns.xsl"/>
 
     <!-- In the two pass processing there is no need for base URI fixup -->
   <xsl:param name="profile.baseuri.fixup" select="false()"/>
