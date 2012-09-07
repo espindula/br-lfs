@@ -419,7 +419,7 @@ elif [[ $V_WIKI != $V_EN ]]
          log_err $?
          log_info "suppression du rep blfs-html"
          rm -r blfs-html 2>>$CHEMIN_LOG/robot.err
-         log_err $?
+#         log_err $?
          log_info "déplacement de la version HTML que l'on vient de construire dans blfs-html"
          mv blfs-svn blfs-html 2>>$CHEMIN_LOG/robot.err
          log_err $?
