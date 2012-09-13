@@ -32,11 +32,12 @@
 
     <para>
       <application>Thunderbird</application> est un client autonome de
-    mail/news basésur le code source de <application>Mozilla</application>.
+      mail/news basé sur le code source de <application>Mozilla</application>. Il utilise le
+      moteur de rendement Gecko afin d'afficher et d'écrire des courriels HTML.
     </para>
 
-&lfs72_checked;
-(for integration with the old version of <application>GNOME</application>),
+    &lfs72_checked;
+
 <ulink url="http://hunspell.sourceforge.net/">Hunspell</ulink>,
 
     <bridgehead renderas="sect3">Information sur le paquet</bridgehead>
@@ -71,6 +72,25 @@
       <xref linkend="unzip"/>
     </para>
 
+    <bridgehead renderas="sect4">Recommendées</bridgehead>
+    <para role="recommended">
+      <xref linkend="libevent"/>,
+      <xref linkend="libvpx"/>,
+      <xref linkend="nspr"/>,
+      <xref linkend="nss"/>,
+      <xref linkend="sqlite"/> et
+      <xref linkend="yasm"/>
+    </para>
+    <note>
+      <para>
+        Si vous n'installez pas les dépendances recommandées,
+        alors les copies inclues dans le paquet seront 
+        utilisées. Elles peuvent être testées pour fonctionner, mais
+        elles peuvent être obsolètes ou contenir des failles de 
+        sécurité.
+      </para>
+    </note>
+
     <bridgehead renderas="sect4">Supplémentaire</bridgehead>
     <para role="optional">
       <xref linkend="dbus-glib"/>,
@@ -78,16 +98,9 @@
       <xref linkend="gnome-vfs"/> et <xref linkend="libgnomeui"/>
       (pour l'intégration avec l'ancienne version de <application>Gnome</application>),
       <xref linkend="libnotify"/>,
-      <xref linkend="nss"/>,
-      <xref linkend="nspr"/>,
       <xref linkend="startup-notification"/>,
-      <xref linkend="sqlite"/>,
-      <xref linkend="yasm"/> (ou <xref linkend="libvpx"/>),
-      <ulink url="http://hunspell.sourceforge.net/">Hunspell</ulink>,
-      <xref linkend="libevent"/>,
-      <ulink url="http://www.valgrind.org/">Valgrind</ulink> (seulement pour tester 
-      le code jemalloc) et
-      <xref linkend="wget"/>
+      <xref linkend="wget"/> et
+      <xref linkend="wireless_tools"/>
     </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
@@ -108,47 +121,61 @@
 
 <screen><userinput>cat &gt; mozconfig &lt;&lt; "EOF"
 # Si vous avez une machine multicoeurs, vous pouvez accélérer la
-# construction en lançant plusieurs tâches en même temps, mais vous n'avez qu'un
-# coeur, effacez cette ligne&nbsp;:
-mk_add_options MOZ_MAKE_FLAGS="-j4"
+# construction en lançant plusieurs tâches en même temps en décommentant la ligne suivante et
+# et en paramétrant le nombre de coeurs du CPU&nbsp;:
+#mk_add_options MOZ_MAKE_FLAGS="-j4"
 
-# Si vous avez installé Yasm effacez cette option&nbsp;:
-ac_add_options --disable-webm
-
-# Si vous avez installé DBus-Glib effacez cette option&nbsp;:
+# Si vous avez installé DBus-Glib commentez cette option&nbsp;:
 ac_add_options --disable-dbus
 
-# Si vous avez installé wireless-tools effacez cette option&nbsp;:
+# Si vous avez installé wireless-tools commentez cette option&nbsp;:
 ac_add_options --disable-necko-wifi
 
-# Si vous avez installé libnotify effacez cette option&nbsp;:
+# Si vous avez installé libnotify commentez cette option&nbsp;:
 ac_add_options --disable-libnotify
 
-# Décommentez ceci si vous les avez installés&nbsp;:
-# ac_add_options --enable-startup-notification
-# ac_add_options --enable-system-hunspell
-# ac_add_options --enable-system-sqlite
-# ac_add_options --with-system-libevent
+# Décommentez ceci si vous avez installé des dépendances optionnelles&nbsp;:
+#ac_add_options --enable-startup-notification
+#ac_add_options --enable-system-hunspell
 
+# Si vous n'avez pas installé Yasm décommentez cette option&nbsp;:
+#ac_add_options --disable-webm
 
 # Si vous voulez compiler le calendrier Mozilla, décommentez cette ligne :
 # ac_add_options --enable-calendar
-mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/thunderbuild
+
+# Commentez les options suivantes si vous n'avez pas installé
+# les dépendances recommandées&nbsp;:
+ac_add_options --enable-system-sqlite
+ac_add_options --with-system-libevent
+ac_add_options --with-system-libvpx
+ac_add_options --with-system-nspr
+ac_add_options --with-system-nss
+
+# Il est recommandé de ne pas toucher ce qui suit
+ac_add_options --prefix=/usr
 ac_add_options --disable-crashreporter
-ac_add_options --disable-debug
-ac_add_options --disable-debug-symbols
 ac_add_options --disable-installer
-ac_add_options --disable-static
-ac_add_options --disable-tests
 ac_add_options --disable-updater
+ac_add_options --disable-debug
+ac_add_options --disable-tests
+ac_add_options --enable-optimize
+ac_add_options --enable-strip
+ac_add_options --enable-install-strip
+ac_add_options --enable-gio
 ac_add_options --enable-official-branding
-ac_add_options --enable-shared
+ac_add_options --enable-safe-browsing
+ac_add_options --enable-url-classifier
 ac_add_options --enable-system-cairo
 ac_add_options --enable-system-ffi
-ac_add_options --prefix=/usr
+ac_add_options --enable-system-pixman
 ac_add_options --with-pthreads
+ac_add_options --with-system-bz2
 ac_add_options --with-system-jpeg
 ac_add_options --with-system-png
+ac_add_options --with-system-zlib
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/thunderbuild
 EOF</userinput></screen>
 
     <para>Compiler <application>Thunderbird</application> en tapant les commandes suivantes:</para>
@@ -170,7 +197,7 @@ ln -sfv ../lib/thunderbird-&thunderbird-version;/thunderbird /usr/bin</userinput
       Les instructions ci dessus installent juste la partie dont vous avez besoin
       pour exécuter
       <application>Thunderbird</application>. Cependant, si vous voulez installer l'environnement
-      de développement complet de <application>Thunderbird</application> en
+      de développement complet de <application>Thunderbird</application>, lancez les commandes suivantes en
       tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
 <screen role="root"><userinput>make -C thunderbuild install</userinput></screen>
@@ -246,23 +273,25 @@ ln -sfv ../lib/thunderbird-&thunderbird-version;/thunderbird /usr/bin</userinput
     <application>Gnome</application>
     ou <application>KDE</application> vous pourriez souhaiter créer un fichier
     <filename>thunderbird.desktop</filename> pour que <application>Firefox</application> apparaisse dans les
-    menus du bureau. Si vous n'avez pas activé startup-notification (notification 
+    menus du bureau. Si vous n'avez pas activé <application>startup-notification</application> (notification 
     de démarrage) dans votre mozconfig, modifiez la ligne StartupNotify en
     false. En tant qu'utilisateur
-    <systemitem class="username">root</systemitem>&nbsp;:</para>
+    <systemitem class="username">root</systemitem> lancez les commandes suivantes&nbsp;:</para>
 
 <screen role="root"><userinput>mkdir -pv /usr/share/applications &amp;&amp;
 cat &gt; /usr/share/applications/thunderbird.desktop &lt;&lt; "EOF" &amp;&amp;
 [Desktop Entry]
 Encoding=UTF-8
-Type=Application
-Name=Thunderbird
-Comment=Fetch Your Email
-Icon=thunderbird
-Exec=thunderbird
-Categories=Network;GTK;Application;Email;News;
-StartupNotify=true
+Name=Thunderbird Mail
+Comment=Send and receive mail with Thunderbird
+GenericName=Mail Client
+Exec=thunderbird %u
 Terminal=false
+Type=Application
+Icon=thunderbird
+Categories=Application;Network;Email;
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;x-scheme-handler/mailto;
+StartupNotify=true
 EOF
 ln -sfv /usr/lib/thunderbird-&thunderbird-version;/chrome/icons/default/default256.png   /usr/share/pixmaps/thunderbird.png</userinput></screen>
 
@@ -275,15 +304,10 @@ ln -sfv /usr/lib/thunderbird-&thunderbird-version;/chrome/icons/default/default2
 
     <segmentedlist>
       <segtitle>Programmes installés</segtitle>
-      <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>thunderbird</seg>
-        <seg>De nombreuses bibliothèques, des composants de messagerie/nouvelles,
-        des plugins, des extensions et des modules d'aide installés dans
-        <filename class='directory'>/usr/lib/thunderbird-&thunderbird-version;</filename>
-        </seg>
+        <seg>Thunderbird</seg>
         <seg>/usr/lib/thunderbird-&thunderbird-version;</seg>
       </seglistitem>
     </segmentedlist>
