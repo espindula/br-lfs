@@ -17,35 +17,36 @@
   <para>Cette section s'applique seulement si une carte réseau doit être
   configurée.</para>
 
-  <para>Si une carte réseau ne sera pas utilisée, il n'y a aucun besoin
+  <para>Si aucune carte réseau ne sera pas utilisée, il n'est pas nécessaire
   de créer des fichiers de configuration relatifs aux cartes réseau. Si
   c'est le cas, supprimez les liens symboliques
   <filename class="symlink">network</filename> de tous les répertoires
   des niveaux d'exécution (<filename
-  class="directory">/etc/rc.d/rc*.d</filename>).</para>
+  class="directory">/etc/rc.d/rc*.d</filename>) après avoir installé les scripts de démarrage
+  de la <xref linkend="ch-scripts-bootscripts"/>.</para>
 
   <sect2 id='stable-net-names'>
     <title>Création de noms stables pour les interfaces réseaux</title>
 
     <para>S'il n'y a qu'une interface réseau à configurer sur le système,
     cette section est facultative, bien que cela ne fera pas de mal de l'appliquer.
-    Dans de nombreux cas (comme un portable avec une interface sans fil et
-    filaire), l'application de la configuration de cette section est nécessaire.</para>  
+    Dans de nombreux cas (comme un portable avec deux interfaces l'une sans, l'autre avec fil),
+    l'application de la configuration de cette section est nécessaire.</para>
 
-    <para>Avec Udev et les pilotes réseau modulaires, la numérotation 
-    n'est pas constante au fur et à mesure des redémarrages par défaut,
+    <para>Avec Udev et les pilotes réseau modulaires, la numérotation
+    des interfaces réseau n'est pas constante entre deux redémarrages,
     car les pilotes sont chargés en parallèle, et du coup, dans un ordre
     aléatoire. Par exemple, sur un ordinateur ayant deux cartes réseau
     fabriquées par Intel et Realtek, la carte réseau produite par Intel
     peut devenir <filename class="devicefile">eth0</filename> et celle
-    de Realtek devient <filename class="devicefile">eth1</filename>.
+    de Realtek <filename class="devicefile">eth1</filename>.
     Dans certains cas, après un redémarrage, les cartes sont
     renumérotées d'une autre façon. Pour éviter cela, Udev est fourni
     avec un script et des règles pour affecter des noms stables aux
     cartes réseau basés sur leur adresse MAC.</para>
 
     <para>Les règles ont été pré-générées dans les instructions de construction
-    d'<application>udev (systemd)</application> au dernier chapitre. Regardez
+    d'<application>udev (systemd)</application> au chapitre précédent. Regardez
     le fichier <filename>/etc/udev/rules.d/70-persistent-net.rules</filename>
     pour trouver les noms affectés à vos périphériques réseaux&nbsp;:</para>
 
@@ -53,61 +54,61 @@
 
     <note><para>Dans certains cas comme lorsque des adresses MAC ont été affectées
     à la main à une carte réseau, ou dans un environnement virtuel tel que Xen,
-    il se peut que le fichier de règles réseaux n'ait pas été généré car les
-    adresses ne sont pas affectées de manière cohérente. Dans de tels cas,
+    il se peut que le fichier de règles réseau n'ait pas été généré car les
+    adresses ne sont pas affectées de manière cohérente. Dans ce cas,
     passez simplement à la section suivante.</para></note>
 
     <para>Le fichier commence par un bloc de commentaire suivi de deux
     lignes pour chaque NIC. La première ligne de chaque NIC est une
-    description commentée montrant ses IDs matériels (comme ses IDs de
-    fabricant PCI et de périphérique, si c'est une carte PCI), puis avec
+    description commentée des IDs matériels (IDs de
+    fabricant PCI et de périphérique, si c'est une carte PCI), puis de
     ses pilotes entre parenthèses, si le pilote peut être trouvé. Ni
     l'ID du périphérique ni le pilote ne sont utilisés pour déterminer
-    quel nom donner à une interface. Ces informations ne sont
-    qu'en tant que référence. La deuxième ligne est la règle Udev
-    correspondant à ce NIC et qui lui affecte au final un nom..</para>
+    quel nom donner à une interface&nbsp;; Ces informations sont
+    là pour référence seulement. La seconde ligne est la règle Udev
+    qui correspond à ce NIC et qui lui affecte au final un nom.</para>
 
     <para>Toutes les règles Udev sont constituées de plusieurs mots,
-    séparés par une virgule ou optionnellement un espace. Ces clés de
+    séparés d'une virgule et optionnellement d'un espace. Ces clés de
     règle ainsi qu'une explication de chacune d'entre elles sont les
     suivantes&nbsp;:</para>
 
     <itemizedlist>
       <listitem>
-        <para><literal>SUBSYSTEM=="net"</literal> - Ceci dit à Udev d'ignorer
-        les périphériques qui ne sont pas des cartes réseau.</para>
+        <para><literal>SUBSYSTEM=="net"</literal> - Demande à Udev d'ignorer
+        les périphériques qui ne sont pas des cartes réseau&nbsp;;</para>
       </listitem>
       <listitem>
-        <para><literal>ACTION=="add"</literal> - Ceci dit à Udev d'ignorer cette
+        <para><literal>ACTION=="add"</literal> - Demande à Udev d'ignorer cette
         règle pour un uevent qui n'est pas un ajout (les uevents "retrait" et
         "changement" se produisent aussi mais ils n'ont pas besoin de renommer
-        les interfaces réseau).</para>
+        les interfaces réseau)&nbsp;;</para>
       </listitem>
       <listitem>
         <para><literal>DRIVERS=="?*"</literal> - Ceci existe afin qu'Udev ignore
-        les VLAN ou les sous-interfaces bridge (car les sous-interfaces 
-        n'ont pas de pilotes). Ces sous-interfaces sont sautées car le nom
-        qui pourrait leur être affecté entrerait en conflit avec leur périphériques parents.</para>
+        les VLAN ou les sous-interfaces bridge (car les sous-interfaces
+        n'ont pas de pilotes). Ces sous-interfaces sont ignorées car le nom
+        qui pourrait leur être affecté entrerait en conflit avec leur périphériques parents&nbsp;;</para>
       </listitem>
       <listitem>
-        <para><literal>ATTR{address}</literal> - La valeur de cette
-        clé est l'adresse MAC du NIC.</para>
+        <para><literal>ATTR{adresse}</literal> - La valeur de cette
+        clé est l'adresse MAC du NIC&nbsp;;</para>
       </listitem>
       <listitem>
-        <para><literal>ATTR{type}=="1"</literal> - Ceci assure que la règle ne
+        <para><literal>ATTR{type}=="1"</literal> - Assure que la règle ne
         correspond qu'à l'interface primaire dans le cas de certains pilotes
-      sans fil, qui créent plusieurs interfaces virtuelles. Les interfaces
-        secondaires sont sautées pour la même raison que le sont les VLAN et les
-        sous-interfaces bridge&nbsp;: il y aurait en ce cas un conflit de noms.</para>
+        sans fil, qui créent plusieurs interfaces virtuelles. Les interfaces
+        secondaires sont ignorées pour la même raison que le sont les VLAN et les
+        sous-interfaces bridge&nbsp;: il y aurait en ce cas un conflit de nom&nbsp;;</para>
       </listitem>
       <listitem>
         <para><literal>KERNEL=="eth*"</literal> - Cette clé a été ajoutée au
        générateur de règles d'Udev pour gérer les machines ayant plusieurs
-       interfaces réseau, toutes ayant la même adresse MAC (la PS3 en 
+       interfaces réseau, toutes ayant la même adresse MAC (la PS3 en
        fait partie). Si les interfaces indépendantes ont des noms de base
        différents, cette clé permettra à Udev de leur parler en aparté. Ce
        n'est normalement pas nécessaire pour la plupart des utilisateurs de
-       Linux From Scratch, mais ça ne fait pas de mal.</para>
+       Linux From Scratch, mais ça ne fait pas de mal&nbsp;;</para>
       </listitem>
       <listitem>
         <para><literal>NAME</literal> - La valeur de cette clé est le nom qu'Udev
@@ -117,26 +118,26 @@
 
     <para>La valeur de <literal>NAME</literal> est la partie importante.
     Assurez-vous de connaître quel nom a été affecté à chacune de vos
-    cartes réseau avant de continuer, et aisurez-vous d'utiliser cette
+    cartes réseau avant de continuer, et assurez-vous d'utiliser cette
     valeur <literal>NAME</literal> lorsque vous créerez les fichiers de
     configuration ci-dessous.</para>
 
   </sect2>
 
   <sect2>
-    <title>Créer des fichiers de configuration des interfaces réseau</title>
+    <title>Créer les fichiers de configuration des interfaces réseau</title>
 
-    <para>Les interfaces activées et désactivées par le script network
-    dépendent des fichiers compris dans <filename class="directory">/etc/sysconfig/</filename>.
+    <para>Les interfaces activées et désactivées par le script réseau
+    dépendent des fichiers du répertoire <filename class="directory">/etc/sysconfig/</filename>.
     Ce répertoire devrait contenir un fichier par interface à configurer, tel
     que <filename>ifconfig.xyz</filename>, où <quote>xyz</quote> signifie,
-    pour l'administrateur, quelque chose comme le nom du périphérique (par 
+    pour l'administrateur, quelque chose comme le nom du périphérique (par
     exemple eth0). Dans ce fichier, il y a les attributs de cette interface, tels
-    que son/ses adresse(s) IP, ses masques de sous-réseau, et ainsi de suite.
+    que son ou ses adresses IP, ses masques de sous-réseau, et ainsi de suite.
     Il faut que la fin du nom de fichier soit <emphasis>ifconfig</emphasis>.</para>
 
     <para>La commande suivante crée un fichier modèle pour le périphérique
-    <emphasis>eth0</emphasis>&nbsp;:</para>
+    <emphasis>eth0</emphasis> avec une adresse IP statique&nbsp;:</para>
 
 <screen><userinput>cd /etc/sysconfig/
 cat &gt; ifconfig.eth0 &lt;&lt; "EOF"
@@ -151,47 +152,43 @@ EOF</userinput></screen>
 
     <para>Les valeurs de ces variables doivent être modifiées dans
     chaque fichier pour correspondre à la bonne configuration.</para>
-    
+
     <para>Si la variable <envar>ONBOOT</envar> est configurée à <quote>yes</quote>,
-    le script network configurera la carte réseau
-    (<foreignphrase>Network Interface Card</foreignphrase>, NIC) pendant
+    le script réseau configurera le NIC pendant
     le démarrage du système. S'il est configuré avec toute autre valeur
-    que <quote>yes</quote>, l'interface réseau sera ignorée par le
-    script network et pas configurée automatiquement. On peut démarrer et
+    que <quote>yes</quote>, le NIC sera ignoré par le
+    script réseau et ne sera pas configurée automatiquement. On peut démarrer et
     arrêter l'interface à la main avec les commandes <command>ifup</command> et
     <command>ifdown</command>.</para>
 
     <para>La variable <envar>IFACE</envar> définit le nom de l'interface,
-    par exemple, eth0.  Elle est nécessaire dans tous les fichiers de 
-    configuration des périphériques réseaux. </para>
+    par exemple, eth0. Elle est nécessaire dans tous les fichiers de
+    configuration des périphériques réseaux.</para>
 
     <para>La variable <envar>SERVICE</envar> définit la méthode utilisée
-    pour obtenir une adresse IP. Les scripts de démarrage LFS ont un
-    format d'affectation IP modulaire. Créer les fichier supplémentaires
-    dans le répertoire
-    <filename class="directory">/lib/services/</filename>
+    pour obtenir l'adresse IP. Les scripts de démarrage LFS ont un
+    format d'affectation d'IP modulaire. Créer les fichiers supplémentaires
+    dans le répertoire <filename class="directory">/lib/services/</filename>
     autorise d'autres méthodes d'affectation d'IP. Ceci est habituellement
-    utilisé pour le DHCP (<foreignphrase>Dynamic Host Configuration
-    Protocol</foreignphrase>, NdT&nbsp;:protocole de configuration de
-    l'hôte dynamique), qui est adressé dans le livre BLFS.</para>
+    utilisé pour le DHCP, qui est adressé dans le livre BLFS.</para>
 
     <para>La variable <envar>GATEWAY</envar> devrait contenir l'adresse
     IP par défaut de la passerelle, si elle existe. Sinon, mettez
     entièrement en commentaire la variable.</para>
 
-    <para>La variable <envar>PREFIX</envar> contient le 
-    nombre de bits utilisé dans le sous-réseau. Chaque octet dans une
-    adresse IP est sur huit bits. Si le masque réseau du sous-réseau est
+    <para>La variable <envar>PREFIX</envar> contient le
+    nombre de bits utilisés dans le sous-réseau. Chaque octet dans une
+    adresse IP est exprimé sur huit bits. Si le masque du sous-réseau est
     255.255.255.0, alors il est en train d'utiliser les trois premiers
-    octets (24 bits) pour spécifier le numéro réseau. Si le
-    masque réseau est 255.255.255.240, il utiliserait les 128 premiers
+    octets (24 bits) pour spécifier le numéro du réseau. Si le
+    masque réseau est 255.255.255.240, il utiliserait les 28 premiers
     bits. Les préfixes plus longs que 24 bits sont habituellement
-    utilisés par les fournisseurs d'accès à Internet ADSL et câble. Dans
-    cet exemple (PREFIX=24), le masque réseau est 255.255.255.0. Ajustez
+    utilisés par les fournisseurs d'accès Internet ADSL et câble.
+    Dans cet exemple (PREFIX=24), le masque réseau est 255.255.255.0. Ajustez
     la variable <envar>PREFIX</envar> en concordance avec votre
     sous-réseau spécifique. Si vous ne le mettez pas, PREFIX vaut 24 par défaut.</para>
 
-    <para>Pour plus d'informations, voir la page de man de <command>ifup</command>.</para>
+    <para>Pour plus d'informations, voir la page de manuel de <command>ifup</command>.</para>
 
   </sect2>
 
@@ -203,37 +200,34 @@ EOF</userinput></screen>
     </indexterm>
 
     <para>Si le système a besoin d'être connecté à Internet, il aura
-    besoin de la résolution de noms proposée par le DNS (Domain Name
-    Service) pour résoudre les noms de domaines Internet, et vice-versa.
+    besoin d'un DNS pour résoudre les noms de domaines Internet en adresse IP, et vice-versa.
     Ceci se fait en plaçant les adresses IP du serveur DNS, disponibles
     auprès du FAI ou de l'administrateur système, dans
     <filename>/etc/resolv.conf</filename>. Créez le fichier en lançant
     ce qui suit&nbsp;:</para>
 
 <screen><userinput>cat &gt; /etc/resolv.conf &lt;&lt; "EOF"
-<literal># Begin /etc/resolv.conf
+<literal># Début de /etc/resolv.conf
 
 domain <replaceable>&lt;Votre nom de domaine&gt;</replaceable>
 nameserver <replaceable>&lt;Adresse IP du DNS primaire&gt;</replaceable>
-nameserver <replaceable>&lt;Adresse IP du DNS secodaire&gt;</replaceable>
+nameserver <replaceable>&lt;Adresse IP du DNS secondaire&gt;</replaceable>
 
-# End /etc/resolv.conf</literal>
+# Fin de /etc/resolv.conf</literal>
 EOF</userinput></screen>
 
     <para>Le paramètre <varname>domain</varname> peut être omis
-    ou remplacé par un paramètre <varname>search</varname>.  Voir la page de man
+    ou remplacé par un paramètre <varname>search</varname>. Voir la page de manuel
     de resolv.conf pour plus de détails.</para>
 
-    <para>Remplacez <replaceable>&lt;adresse IP du DNS&gt;</replaceable> avec l'adresse
+    <para>Remplacez <replaceable>&lt;Adresse IP du DNS&gt;</replaceable> par l'adresse
     IP du DNS le plus approprié pour la configuration. Il y aura souvent plus d'une
-    entrée (les conseils recommandent des serveurs DNS disposant de capacité de
-    prise en charge. Si vous avez seulement besoin ou si vous voulez uniquement le
-    serveur DNS, supprimez la seconde ligne <emphasis>serveur de noms</emphasis> à
-    partir du fichier. L'adresse IP pourrait aussi être un routeur sur le réseau
-    local.</para>
+    entrée (les serveurs secondaires sont utiles en cas d'indisponibilité du premier). Si vous avez seulement besoin
+    ou si vous voulez seulement
+    un serveur DNS, supprimez la seconde ligne <emphasis>nameserver</emphasis> du fichier.
+    L'adresse IP pourrait aussi être un routeur sur le réseau local.</para>
 
-    <note><para>Les adresses de DNS publiques IPV4 de Google sont 8.8.8.8 et
-    8.8.4.4.</para></note>
+    <note><para>Les adresses des DNS publiques IPV4 de Google sont 8.8.8.8 et 8.8.4.4.</para></note>
 
   </sect2>
 

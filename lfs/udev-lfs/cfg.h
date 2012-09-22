@@ -39,6 +39,11 @@
 
 /* Enable GNU extensions on systems that have them.  */
 # define _GNU_SOURCE 1
-/* Version number of package */
-#define VERSION "188"
 
+/* Version number of package */
+#define VERSION "190"
+
+#define HAVE_DECL_PIVOT_ROOT 0
+#define HAVE_DECL_GETTID 0
+#define HAVE_NAME_TO_HANDLE_AT 1
+#define HAVE___SECURE_GETENV 1

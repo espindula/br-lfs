@@ -19,18 +19,15 @@
     liens symboliques <filename class="symlink">/dev/cdrom</filename> et
     <filename class="symlink">/dev/dvd</filename> existent et pointent
     vers le lecteur CD-ROM ou DVD-ROM. De plus, il peut être pratique de
-    mettre des références à ces liens symboliques dans
-    <filename>/etc/fstab</filename>. Udev est fourni avec un script qui
-    générera des fichiers de règles pour créer ces liens symboliques pour
-    vous, selon les possibilités de chaque périphérique, mais vous devez
-    décider lequel des deux modes opératoires vous souhaitez que le script
-    utilise.</para>
+    mettre des références à ces liens symboliques dans <filename>/etc/fstab</filename>. Udev
+    est fourni avec un script qui générera des fichiers de règles pour créer ces liens symboliques
+    pour vous, selon les possibilités de chaque périphérique, mais vous devez
+    décider lequel des deux modes opératoires vous souhaitez que le script utilise.</para>
 
-    <para>Tout d'abord, le script peut opérer en mode
-    <quote>selon-le-chemin</quote> (utilisé par défaut pour les
-    périphériques USB et FireWire), où les règles qu'il crée dépendent
+    <para>Tout d'abord, le script peut opérer en mode <quote>chemin</quote> (utilisé par
+    défaut pour les périphériques USB et FireWire), où les règles qu'il crée dépendent
     du chemin physique vers le lecteur CD ou DVD. Ensuite, il peut
-    opérer en mode <quote>selon-l-id</quote> (par défaut pour les
+    opérer en mode <quote>id</quote> (par défaut pour les
     périphériques IDE et SCSI), où les règles qu'il crée dépendent des
     chaînes d'identification contenues dans le lecteur CD ou DVD
     lui-même. Le chemin est déterminé par le script
@@ -43,62 +40,59 @@
     approche à utiliser dépendra des types de changements de périphérique
     qui peuvent se produire. Si vous vous attendez à ce que le chemin
     physique vers le périphérique (c'est-à-dire, les ports et/ou les
-    slots par lesquels ils sont branchés) change, par exemple parce que
+    slots par lesquels ils sont branchés) changent, par exemple parce que
     vous envisagez de déplacer le lecteur sur un port IDE différent ou
     un connecteur USB différent, alors vous devriez utiliser le mode
-    <quote>par-l-id</quote>. D'un autre côté, si vous vous attendez à ce
+    <quote>id</quote>. D'un autre côté, si vous vous attendez à ce
     que l'identification du périphérique change, par exemple parce qu'il
     peut mourir et que vous le remplaceriez par un périphérique différent
     avec les mêmes possibilités et qui serait monté sur les mêmes
     connecteurs, vous devriez utiliser le mode
-    <quote>par-chemin</quote>.</para>
+    <quote>chemin</quote>.</para>
 
     <para>Si les deux types de changement sont possibles avec votre
     lecteur, choisissez un mode basé sur le type de changement que vous
-    pensez avoir plus fréquemment.</para>
+    pensez rencontrer le plus fréquemment.</para>
 
 <!-- If you use by-id mode, the symlinks will survive even the transition
      to libata for IDE drives, but that is not for the book. -->
 
     <important><para>Les périphériques externes (par exemple un lecteur
-    CD connecté en USB) ne devraient pas utiliser la méthode by-path,
+    CD connecté en USB) ne devraient pas utiliser la méthode des chemins,
     car chaque fois que le périphérique est monté sur un nouveau port,
     son chemin physique changera. Tous les périphériques connectés en
     externe auront ce problème si vous écrivez des règles Udev pour les
-    reconnaître par leur chemin physique&nbsp;, le problème ne concerne
+    reconnaître par leur chemin physique&nbsp;; le problème ne concerne
     pas que les lecteurs CD et DVD.</para></important>
 
     <para>Si vous souhaitez voir les valeurs que les scripts Udev
-    utiliseront, et pour le périphérique CD-ROM approprié, trouvez le
+    utiliseront, et celles appropriées au périphérique CD-ROM, trouvez le
     répertoire correspondant sous
-
-    <filename class="directory">/sys</filename> (cela peut être par
-    exemple <filename class="directory">/sys/block/hdd</filename>) et
+    <filename class="directory">/sys</filename> (cela peut être par exemple
+    <filename class="directory">/sys/block/hdd</filename>) et
     lancez une commande ressemblant à ce qui suit&nbsp;:</para>
 
 <screen role="nodump"><userinput>udevadm test /sys/block/hdd</userinput></screen>
 
     <para>Regardez les lignes contenant la sortie des divers programmes
-    *_id. Le mode <quote>par-l-id</quote> utilisera la valeur ID_SERIAL
-    si elle existe et qu'elle n'est pas vide, sinon il utilisera une combinaison
-    de ID_MODEL et de ID_REVISION. Le mode <quote>by-path</quote> utilisera la
-    valeur de ID_PATH.</para>
+    *_id. Le mode <quote>id</quote> utilisera la valeur ID_SERIAL
+    si elle existe et n'est pas vide, sinon il utilisera une combinaison
+    de ID_MODEL et de ID_REVISION. Le mode <quote>chemin</quote> utilisera la valeur de ID_PATH.</para>
 
     <para>Si le mode par défaut ne convient pas à votre situation, vous
     pouvez faire la modification suivante du fichier
     <filename>/lib/udev/rules.d/75-cd-aliases-generator.rules</filename>,
-    comme suit, (où <replaceable>mode</replaceable> est soit 
-
-    <quote>par-l-id</quote> soit <quote>par-chemin</quote>)&nbsp;:</para>
+    comme suit, (où <replaceable>mode</replaceable> est soit
+    <quote>by-id</quote> soit <quote>by-path</quote>)&nbsp;:</para>
 
 <screen role="nodump"><userinput>sed -i -e 's/"write_cd_rules"/"write_cd_rules <replaceable>mode</replaceable>"/' \
     /lib/udev/rules.d/75-cd-aliases-generator.rules</userinput></screen>
 
     <para>Remarquez qu'il n'est pas nécessaire de créer les fichiers de règle ou les
      liens symboliques à ce moment puisque vous avez monté en bind le répertoire
-    <filename class="directory">/dev</filename> du système hôte dans le système
-    LFS, et nous assumons que les liens symboliques existent sur l'hôte. Les
-    règles et les liens symboliques seront créés la première fois que vous 
+    <filename class="directory">/dev</filename> du système hôte dans le système LFS,
+    et nous supposons que les liens symboliques existent sur l'hôte. Les
+    règles et les liens symboliques seront créés la première fois que vous
     démarrerez votre système LFS.</para>
 
     <para>Cependant, si vous avez plusieurs lecteurs CD-ROM, les liens
@@ -120,31 +114,26 @@
 
     <title>Gestion des périphériques dupliqués</title>
 
-    <para>Comme expliqué dans <xref linkend="ch-scripts-udev"/>, l'ordre
-    dans lequel les périphériques ayant la même fonction apparaissent
-    dans <filename class="directory">/dev</filename> est essentiellement
-    aléatoire. Par exemple si vous avez une webcam en USB et un tunner
-    TV, parfois <filename>/dev/video0</filename> renvoie à la webcam, et
-    <filename>/dev/video1</filename> renvoie au tuner, et parfois après
-    un redémarrage l'ordre s'inverse. Pour toutes les classes
-    de matériel sauf les cartes son et les cartes réseau, ceci peut se
-    corriger en créant des règles udev pour des liens symboliques
-    constants personnalisés. Le cas des cartes réseau est couvert de
-    façon séparé dans <xref linkend="ch-scripts-network"/>, et vous
-    pouvez trouver la configuration des cartes son dans
+    <para>Comme expliqué à la <xref linkend="ch-scripts-udev"/>, l'ordre
+    dans lequel les périphériques ayant la même fonction apparaissent dans
+    <filename class="directory">/dev</filename> est essentiellement aléatoire.
+    Par exemple si vous avez une webcam USB et un tunner TV, parfois
+   <filename>/dev/video0</filename> renvoie à la webcam, et
+    <filename>/dev/video1</filename> renvoie au tuner, et parfois
+    après un redémarrage l'ordre s'inverse.
+    Pour toutes les classes de matériel sauf les cartes son et les cartes réseau, ceci peut se
+    corriger en créant des règles udev pour des liens symboliques constants personnalisés.
+    Le cas des cartes réseau est couvert de façon séparé dans
+    <xref linkend="ch-scripts-network"/>, et vous pouvez trouver la configuration des cartes son dans
     <ulink url="&blfs-root;view/svn/postlfs/devices.html">BLFS</ulink>.</para>
 
     <para>Pour chacun des périphériques susceptibles d'avoir ce problème
-    (même si le problème n'apparaît pas dans votre distribution Linux
-    actuelle), trouvez le répertoire correspondant sous
-
+    (même si le problème n'apparaît pas dans votre distribution Linux actuelle),
+    trouvez le répertoire correspondant sous
     <filename class="directory">/sys/class</filename> ou
-
-    <filename class="directory">/sys/block</filename>. Pour les
-    périphériques vidéo, cela peut être 
-
-    <filename
-    class="directory">/sys/class/video4linux/video<replaceable>X</replaceable></filename>.
+    <filename class="directory">/sys/block</filename>.
+    Pour les périphériques vidéo, cela peut être
+    <filename class="directory">/sys/class/video4linux/video<replaceable>X</replaceable></filename>.
     Calculez les attributs qui identifient de façon unique un
     périphérique (normalement basé sur l'ID du fabricant et du produit
     et/ou les numéros de série)&nbsp;:</para>
@@ -155,7 +144,7 @@
 
 <screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/83-duplicate_devs.rules &lt;&lt; "EOF"
 <literal>
-# Persistent symlinks for webcam and tuner
+# Liens symboliques permanent vers la webcam et le tuner
 KERNEL=="video*", ATTRS{idProduct}=="1910", ATTRS{idVendor}=="0d81", \
     SYMLINK+="webcam"
 KERNEL=="video*", ATTRS{device}=="0x036f", ATTRS{vendor}=="0x109e", \
@@ -163,11 +152,10 @@ KERNEL=="video*", ATTRS{device}=="0x036f", ATTRS{vendor}=="0x109e", \
 </literal>
 EOF</userinput></screen>
 
-    <para>Il en résulte que les périphériques
-    <filename>/dev/video0</filename> et <filename>/dev/video1</filename>
-    renvoient encore de manière aléatoire au tuner et à la webcam (et
-    donc ne devrait jamais être utilisé directement), mais il y a des
-    liens smboliques <filename>/dev/tvtuner</filename> et
+    <para>Il en résulte que les périphériques <filename>/dev/video0</filename> et
+    <filename>/dev/video1</filename> renvoient encore de manière aléatoire au tuner
+    et à la webcam (et donc ne devrait jamais être utilisé directement), mais il y a des
+    liens symboliques <filename>/dev/tvtuner</filename> et
     <filename>/dev/webcam</filename> qui pointent toujours vers le bon
     périphérique.</para>
 
