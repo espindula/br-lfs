@@ -350,7 +350,7 @@ elif [[ $V_WIKI != $V_EN ]]
       fi
       # mise à jour des champs date et contributeur
       log_info "vérification des champs date et contributeur"
-      ./traduc/script/robot-html/maj-date-contrib.sh -q 2>>$CHEMIN_LOG/robot.err
+      ./traduc/script/robot-html/maj-date-contrib.sh  2>>$CHEMIN_LOG/robot.err
       log_err $?
       # correction de typo
       log_info "correction sur le fichiers xml"
