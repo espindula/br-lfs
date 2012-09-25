@@ -1,12 +1,21 @@
 #!/bin/sh -e
 
+# Updated for LFS by B. Dubbs, 2012-09-23
+# Fix RULES_LOCK location
+
+
 RULES_FILE="/etc/udev/rules.d/82-persistent-cd.rules"
 
 ##############################################################################
 lock_rules_file() {
-  RULES_LOCK="/dev/.udev/.lock-${RULES_FILE##*/}"
+  RULES_LOCK="/run/udev/lock-${RULES_FILE##*/}"
 
-  retry=30
+  if [ ! -d /run/udev/ ]; then
+    echo "write_cd_aliases: /run/udev does not exist!" >&2
+    exit 2
+  fi
+
+  retry=10
   while ! mkdir $RULES_LOCK 2> /dev/null; do
     if [ $retry -eq 0 ]; then
        echo "Cannot lock $RULES_FILE!" >&2
