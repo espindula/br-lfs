@@ -41,7 +41,7 @@
 # define _GNU_SOURCE 1
 
 /* Version number of package */
-#define VERSION "190"
+#define VERSION "LFS-VERSION"
 
 #define HAVE_DECL_PIVOT_ROOT 0
 #define HAVE_DECL_GETTID 0
