@@ -55,17 +55,6 @@
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
-    <itemizedlist spacing="compact">
-      <listitem>
-        <para>Correctif requis&nbsp;: <ulink
-        url="&patch-root;/gdm-&gdm-version;-vt-allocation-hack-1.patch"/></para>
-      </listitem>
-      <listitem>
-        <para>Correctif requis: <ulink
-        url="&patch-root;/gdm-&gdm-version;-blfs-patch-1.patch"/></para>
-      </listitem>
-    </itemizedlist>
 
     <bridgehead renderas="sect3">Dépendances de GDM</bridgehead>
 
@@ -73,33 +62,31 @@
     <para role="required">
       <xref linkend="accountsservice"/>,
       <xref linkend="dconf"/>,
-      <xref linkend="gnome-doc-utils"/>,
-      <xref linkend="gtk3"/>,
       <xref linkend="libcanberra"/>,
-     <xref linkend="linux-pam"/> et
-      <xref linkend="nss"/>
+      <xref linkend="linux-pam"/>,
+      <xref linkend="nss"/> et
+      <xref linkend="yelp-xsl"/>
     </para>
-    <bridgehead renderas="sect4">Requis (pour l'exécution)</bridgehead>
-    <para role="required">
-      <xref linkend="gnome-session"/> et soit
-      <xref linkend="gnome-shell"/> ou
-      <xref linkend="gnome-panel"/> et
-      <xref linkend="metacity"/> (pour le gestionnaire de fenêtres Greeter).
-    </para>
+
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
-      <xref linkend="consolekit"/>
-      (Requis pour les fonctions d'arrêt/redémarrage),
       <xref linkend="gobject-introspection"/>,
-      <xref linkend="libxklavier"/>,
-      <xref linkend="rarian"/> et
+      <xref linkend="iso-codes"/> et
       <xref linkend="upower"/>
     </para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
       <xref linkend="check"/> (requis pour lancer la suite de tests)
+    </para>
+
+    <bridgehead renderas="sect4">Dépendances d'exécution</bridgehead>
+    <para role="required">
+      <xref linkend="consolekit"/>,
+      <xref linkend="gnome-session"/> et soit
+      <xref linkend="gnome-shell"/> ou
+      <xref linkend="metacity"/>
     </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
@@ -123,9 +110,18 @@ usermod -a -G video gdm</userinput></screen>
     <para>Installez <application>GDM</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>patch -Np1 -i ../gdm-&gdm-version;-vt-allocation-hack-1.patch &amp;&amp;
-patch -Np1 -i ../gdm-&gdm-version;-blfs-patch-1.patch &amp;&amp;
-./configure --prefix=/usr             --sysconfdir=/etc             --localstatedir=/var             --libexecdir=$(pkg-config             --variable=prefix ORBit-2.0)/lib/gdm             --libexecdir=/usr/lib/gdm             --with-at-spi-registryd-directory=/usr/lib/at-spi2-core             --disable-static &amp;&amp;
+<screen><userinput>./configure --prefix=/usr \
+            --sysconfdir=/etc     \
+            --localstatedir=/var  \
+            --libexecdir=$(pkg-config   \
+            --variable=prefix ORBit-2.0)/lib/gdm    \
+            --libexecdir=/usr/lib/gdm  \
+            --with-initial-vt=7 \
+            --with-at-spi-registryd-directory=/usr/lib/at-spi2-core   \
+            --with-authentication-agent-directory=/usr/lib/polkit-gnome \
+            --with-check-accelerated-directory=/usr/lib/gnome-session \
+            --with-consolekit-directory=/usr/lib/ConsoleKit \
+            --disable-static &amp;&amp;
 make</userinput></screen>
 
     <para>Si vous avez installé <xref linkend="check"/> et si vous souhaitez
@@ -147,19 +143,24 @@ chown -R -v gdm:gdm /var/lib/gdm /var/cache/gdm /var/log/gdm
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
        href="../../xincludes/gnome-sysconfdir.xml"/>-->
 
-    <para><parameter>--libexecdir=/usr/lib/gdm</parameter>&nbsp;: Ce
-    paramètre est utilisé pour que les programmes de support internes de
-    <application>GDM</application> s'installent à l'endroit préféré <filename
-    class='directory'>/usr/lib/gdm</filename> et non <filename
-    class='directory'>/usr/libexec</filename>.</para>
+    <para>
+      <parameter>--with-initial-vt=7</parameter>: Ce paramètre
+      fait que <application>GDM</application> démarre sur vt7
+      à la place du premier VT libre .</para>
 
+    <para>
+      <parameter>--with-*-directory=...</parameter>: Ces paramètres
+      spécifient l'endroit des programmes qui sont utilisés à l'exécution.
+    </para>
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../xincludes/static-libraries.xml"/>
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-    href="../../xincludes/without-scrollkeeper.xml"/>
-
+    <para>
+      <parameter>--with-default-pam-config=lfs</parameter>: Utilisez ce paramètre
+      si vous ne créez pas <filename>/etc/lfs-release</filename>
+      ou que l'autodétection de la distribution échoue et que vous voulez activer l'utilisation de <application>GDM</application>.
+    </para>
   </sect2>
 
   <sect2 role="configuration">
@@ -182,7 +183,7 @@ chown -R -v gdm:gdm /var/lib/gdm /var/cache/gdm /var/log/gdm
 
       <para>Le démon GDM est configuré en utilisant le fichier
       <filename>/etc/gdm/custom.conf</filename>.
-      Les valeurs par défaut sont stockées dans GConf dans le fichier
+      Les valeurs par défaut sont stockées dans GSettings dans le fichier
       <filename>gdm.schemas</filename>. Il est recommandé que les utilisateurs finaux
       modifient le fichier <filename>/etc/gdm/custom.conf</filename>
       car le fichier schemas peut être écrasé par les utilisateurs mettent à jour leur 
@@ -240,15 +241,20 @@ chown -R -v gdm:gdm /var/lib/gdm /var/cache/gdm /var/log/gdm
 
       <seglistitem>
         <seg>
-          gdm, gdmflexiserver et gdm-screenshot
+          gdm, et gdm-screenshot
         </seg>
         <seg>
-          libgdmgreeter.so et libgdmsimplegreeter.so
+          libgdm.so et libgdmsimplegreeter.so
        </seg>
         <seg>
           /etc/dconf/db/gdm.d, /etc/gdm, /usr/include/gdm,
-          /usr/lib/gdm, /usr/share/gdm, /usr/share/gnome/help/gdm,
-          /usr/share/omf/gdm et /var/{cache,lib,log,run}/gdm
+          /usr/lib/gdm, /usr/share/gdm,
+          /usr/share/help/*/gdm,
+          /var/cache/gdm,
+          /var/gdm,
+          /var/lib/gdm,
+          /var/log/gdm and
+          /var/run/gdm
         </seg>
      </seglistitem>
     </segmentedlist>
@@ -268,21 +274,10 @@ chown -R -v gdm:gdm /var/lib/gdm /var/cache/gdm /var/log/gdm
         </listitem>
       </varlistentry>
 
-      <varlistentry id="gdmflexiserver">
-        <term><command>gdmflexiserver</command></term>
-        <listitem>
-          <para>est le mécanisme de serveur flexi qui permet de lancer des <application>sessions GDM</application>
-           à la demande, dans une nouvelle console virtuelle.</para>
-          <indexterm zone="gdm gdmflexiserver">
-            <primary sortas="b-gdmflexiserver">gdmflexiserver</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="gdm-screenshot">
         <term><command>gdm-screenshot</command></term>
         <listitem>
-          <para>est un outil d'impression écran.</para>
+          <para>est un outil d'impression écran<application>GDM</application> .</para>
           <indexterm zone="gdm gdm-screenshot">
             <primary sortas="b-gdm-screenshot">gdm-screenshot</primary>
           </indexterm>
