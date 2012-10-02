@@ -76,87 +76,87 @@
     <sect3>
       <title>Sysfs</title>
 
-      <para>The <systemitem class="filesystem">sysfs</systemitem> filesystem was
-      mentioned briefly above. One may wonder how <systemitem
+      <para>The <systemitem class="filesystem">sysfs</systemitem> filesystem
+      was mentioned briefly above. One may wonder how <systemitem
       class="filesystem">sysfs</systemitem> knows about the devices present on
       a system and what device numbers should be used for them. Drivers that
-      have been compiled into the kernel directly register their objects with
-      <systemitem class="filesystem">sysfs</systemitem> as they are detected by
-      the kernel. For drivers compiled as modules, this registration will happen
-      when the module is loaded. Once the <systemitem
-      class="filesystem">sysfs</systemitem> filesystem is mounted (on <filename
-      class="directory">/sys</filename>), data which the built-in drivers
-      registered with <systemitem class="filesystem">sysfs</systemitem> are
-      available to userspace processes and to <command>udevd</command> for
-      processing (including modifications to device nodes).</para>
-
-    </sect3>
-
-    <sect3>
-      <title>Udev Bootscripts</title>
-
-      <para>The <command>/etc/rc.d/init.d/udev</command> initscript takes care
-      of creating device nodes when Linux is booted. The script unsets the
-      uevent handler from the default of <command>/sbin/hotplug</command>.
-      This is done because the kernel no longer needs to call out to an
-      external binary.  Instead <command>udevd</command> will listen on a
-      netlink socket for uevents that the kernel raises. Next, the bootscript
-      copies any static device nodes that exist in <filename
-      class="directory">/lib/udev/devices</filename> to <filename
-      class="directory">/dev</filename>. This is necessary because some
-      devices, directories, and symlinks are needed before the dynamic device
-      handling processes are available during the early stages of booting a
-      system, or are required by <command>udevd</command> itself.  Creating
-      static device nodes in <filename
-      class="directory">/lib/udev/devices</filename> also provides an easy
-      workaround for devices that are not supported by the dynamic device
-      handling infrastructure. The bootscript then starts the Udev daemon,
-      <command>udevd</command>, which will act on any uevents it receives.
-      Finally, the bootscript forces the kernel to replay uevents for any
-      devices that have already been registered and then waits for
-      <command>udevd</command> to handle them.</para>
-
-      <para>The <command>/etc/rc.d/init.d/udev_retry</command> initscript takes
-      care of re-triggering events for subsystems whose rules may rely on
-      filesystems that are not mounted until the <command>mountfs</command>
-      script is run (in particular, /usr and /var may cause this).  This script
-      runs after the <command>mountfs</command> script, so those rules (if
-      re-triggered) should succeed the second time around.  It is configured
-      from the <filename>/etc/sysconfig/udev_retry</filename> file; any words
-      in this file other than comments are considered subsystem names to
-      trigger at retry time.  (To find the subsystem of a device, use
-      <command>udevadm info --attribute-walk</command>.)</para>
+      have been compiled into the kernel directly register their objects with a
+      <systemitem class="filesystem">sysfs</systemitem> (devtmpfs internally)
+      as they are detected by the kernel. For drivers compiled as modules, this
+      registration will happen when the module is loaded. Once the <systemitem
+      class="filesystem">sysfs</systemitem> filesystem is mounted (on /sys),
+      data which the drivers register with <systemitem
+      class="filesystem">sysfs</systemitem> are available to userspace
+      processes and to udevd for processing (including modifications to device
+      nodes).</para> 
 
     </sect3>
 
     <sect3>
       <title>Device Node Creation</title>
 
-      <para>In recent version of udev, <command>udevd</command> no longer
-      creates device files in <filename class="directory">/dev</filename>.
-      Instead, this must be handled in the kernel, by the <systemitem
+      <para>Device files are created by the kernel by the <systemitem
       class="filesystem">devtmpfs</systemitem> filesystem.  Any driver that
       wishes to register a device node will go through <systemitem
       class="filesystem">devtmpfs</systemitem> (via the driver core) to do it.
       When a <systemitem class="filesystem">devtmpfs</systemitem> instance is
       mounted on <filename class="directory">/dev</filename>, the device node
-      will initially be created with a fixed name, permissions, and owner.</para>
+      will initially be created with a fixed name, permissions, and
+      owner.</para>
 
       <para>A short time later, the kernel will send a uevent to <command>
       udevd</command>.  Based on the rules specified in the files within the
       <filename class="directory">/etc/udev/rules.d</filename>, <filename
       class="directory">/lib/udev/rules.d</filename>, and <filename
       class="directory">/run/udev/rules.d</filename> directories, <command>
-      udevd</command> will create additional symlinks to the device node,
-      or change its permissions, owner, or group, or modify the internal
-      <command>udevd</command> database entry for that object.</para>
+      udevd</command> will create additional symlinks to the device node, or
+      change its permissions, owner, or group, or modify the internal
+      <command>udevd</command> database entry (name) for that object.</para>
 
       <para>The rules in these three directories are numbered in a similar
-      fashion to the LFS-Bootscripts package, and all three directories are
+      fashion to the LFS-Bootscripts package and all three directories are
       merged together. If <command>udevd</command> can't find a rule for the
       device it is creating, it will leave the permissions and ownership at
       whatever <systemitem class="filesystem">devtmpfs</systemitem> used
-      initially.</para>
+      initially.</para> </sect3>
+
+    <sect3>
+      <title>Udev Bootscripts</title>
+
+      <para>The first LFS bootscript,
+      <filename>/etc/init.d/mountvirtfs</filename> will copy any devices
+      located in <filename class="directory">/lib/udev/devices</filename> to
+      <filename class="directory">/dev</filename>. This is necessary because
+      some devices, directories, and symlinks are needed before the dynamic
+      device handling processes are available during the early stages of
+      booting a system, or are required by <command>udevd</command> itself.
+      Creating static device nodes in <filename
+      class="directory">/lib/udev/devices</filename> also provides an easy
+      workaround for devices that are not supported by the dynamic device
+      handling infrastructure.</para> 
+
+      <para>The <filename>/etc/rc.d/init.d/udev</filename> initscript starts
+      <command>udevd</command>, triggers any "coldplug" devices that have
+      already been created by the kernel and waits for any rules to complete.
+      The script also unsets the uevent handler from the default of
+      <filename>/sbin/hotplug </filename>.  This is done because the kernel no
+      longer needs to call out to an external binary.  Instead
+      <command>udevd</command> will listen on a netlink socket for uevents that
+      the kernel raises.</para> 
+
+      <para>The <command>/etc/rc.d/init.d/udev_retry</command> initscript takes
+      care of re-triggering events for subsystems whose rules may rely on
+      filesystems that are not mounted until the <command>mountfs</command>
+      script is run (in particular, <filename class="directory">/usr</filename>
+      and <filename class="directory">/var</filename> may cause this).  This
+      script runs after the <command>mountfs</command> script, so those rules
+      (if re-triggered) should succeed the second time around.  It is
+      configured from the <filename>/etc/sysconfig/udev_retry</filename> file;
+      any words in this file other than comments are considered subsystem names
+      to trigger at retry time.  To find the subsystem of a device, use
+      <command>udevadm info --attribute-walk &lt;device&gt;</command> where
+      &lt;device&gt; is a an absolure path in /dev or /sys such as /dev/sr0 or
+      /sys/class/rtc.</para>
 
     </sect3>
 
@@ -368,12 +368,13 @@
         <ulink url="http://www.kernel.org/pub/linux/kernel/people/mochel/doc/papers/ols-2005/mochel.pdf"/></para>
       </listitem>
 
+<!--  No longer available
       <listitem>
         <para>Pointers to further reading
         <ulink url="http://www.kernel.org/pub/linux/utils/kernel/hotplug/udev.html"/>
         </para>
       </listitem>
-
+-->
     </itemizedlist>
 
   </sect2>
