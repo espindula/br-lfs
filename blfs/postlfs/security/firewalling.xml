@@ -184,12 +184,12 @@
 <screen role="root"><?dbfo keep-together="auto"?><userinput>cat &gt; /etc/rc.d/rc.iptables &lt;&lt; "EOF"
 <literal>#!/bin/sh
 
-# Début de $rc_base/rc.iptables
+# Début de rc.iptables
 
 # Insère les modules de traquage de connexion (inutile si construit dans
 # le noyau  
-modprobe ip_tables modprobe iptable_filter modprobe ip_conntrack
-modprobe ip_conntrack_ftp modprobe ipt_state modprobe ipt_LOG
+modprobe nf_conntrack
+modprobe xt_LOG
 
 # Activation de la protection écho broadcast
 echo 1 &gt; /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
@@ -248,13 +248,13 @@ iptables -A OUTPUT -j ACCEPT
 
 # Permet des réponses sur des connexions déjà établies et permet de nouvelles
 # connexions liées à celles établies (comme le port en mode ftp)
-iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 # Enregistre tout le reste. 
 Log everything else. What's Windows' latest exploitable vulnerability?
 iptables -A INPUT -j LOG --log-prefix "FIREWALL:INPUT "
 
-# Fin de $rc_base/rc.iptables</literal>
+# Fin de rc.iptables</literal>
 EOF
 chmod 700 /etc/rc.d/rc.iptables</userinput></screen>
 
@@ -307,16 +307,11 @@ echo
 
 # Insérer les modules iptables (inutile si construit en dur dans le noyau).
 
-modprobe ip_tables
-modprobe iptable_filter
-modprobe ip_conntrack
-modprobe ip_conntrack_ftp
-modprobe ipt_state
-modprobe iptable_nat
-modprobe ip_nat_ftp
-modprobe ipt_MASQUERADE
-modprobe ipt_LOG
-modprobe ipt_REJECT
+modprobe nf_conntrack
+modprobe nf_conntrack_ftp
+modprobe xt_conntrack
+modprobe xt_LOG
+modprobe xt_state
 
 # Active la protection echo broadcast
 echo 1 &gt; /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
@@ -367,8 +362,8 @@ iptables -A INPUT  -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
 
 # Permettre les redirections si initié sur l'intranet
-iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
-iptables -A FORWARD  -i ! ppp+ -m state --state NEW      -j ACCEPT
+iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD  -i ! ppp+ -m conntrack --ctstate NEW      -j ACCEPT
 
 # Faire du masquerading (inutile si l'intranet n'utilise pas des adresses IP
 # privées
@@ -437,7 +432,7 @@ iptables -A OUTPUT -o ! ppp+  -j ACCEPT</literal></screen>
       <para>Si des démons tels que squid, doivent accéder eux-mêmes à Internet,
       vous pouvez en général ouvrir OUTPUT et restreindre INPUT.</para>
 
-<screen><literal>iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+<screen><literal>iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A OUTPUT -j ACCEPT</literal></screen>
 
       <para>Il n'est toutefois pas conseillé de laisser OUTPUT sans restrictions.
@@ -457,7 +452,7 @@ iptables -A OUTPUT -j ACCEPT</literal></screen>
           <para>Squid met en cache Internet&nbsp;:</para>
 
 <screen><literal>iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
-iptables -A INPUT  -p tcp --sport 80 -m state --state ESTABLISHED \
+iptables -A INPUT  -p tcp --sport 80 -m conntrack --ctstate ESTABLISHED \
   -j ACCEPT</literal></screen>
 
         </listitem>
@@ -497,9 +492,9 @@ iptables -A OUTPUT -p icmp -m icmp --icmp-type echo-reply   -j ACCEPT</literal><
           qui sont entrés après le timeout du netfilter ou certains types d'analyse
           de paquets), insérez ces règles au début de la chaîne&nbsp;:</para>
 
-<screen><literal>iptables -I INPUT 0 -p tcp -m state --state INVALID \
+<screen><literal>iptables -I INPUT 0 -p tcp -m conntrack --ctstate INVALID \
   -j LOG --log-prefix "FIREWALL:INVALID "
-iptables -I INPUT 1 -p tcp -m state --state INVALID -j DROP</literal></screen>
+iptables -I INPUT 1 -p tcp -m conntrack --ctstate INVALID -j DROP</literal></screen>
 
         </listitem>
         <listitem>
