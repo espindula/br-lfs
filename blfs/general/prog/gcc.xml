@@ -34,7 +34,7 @@
 
     <para>Le paquet <application>GCC</application> contient des compilateurs
     GNU. Ce paquet est utile pour compiler des programmes écrits en C, C++, Fortran,
-    Java, C objet, C++ objet et Ada. Vous devriez vous assurer d'avoir réellement
+    Java, C objet, et C++ objet. Vous devriez vous assurer d'avoir réellement
     besoin de d'un de ces compilateurs supplémentaires (celui C et C++ sont 
     installés avec LFS) avant de les installer. En outre, il y a des instructions
     dans le livre BLFS pour installer <xref linkend="openjdk"/> qu'on peut utiliser
@@ -44,8 +44,6 @@
     <application>GCC</application>.</para>
 
 &lfs72_checked;
-<!--
-<bridgehead renderas="sect3">GNAT GPL 2012 Package Information</bridgehead>
 
     <caution>
       <para>Si vous mettez à jour depuis une version de <application>GCC</application> 
@@ -90,27 +88,23 @@
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended"><xref linkend="dejagnu"/></para>
 
-    <note>
-      <para>Si vous envisagez de compiler Ada, vous devrez installer
-      <application>GNAT</application> temporairement pour satisfaire la dépendance
-      circulaire quand vous recompilez <application>GCC</application> pour inclure
-      Ada. Sur la page de téléchargement d'AdaCore, choisissez votre plateforme
-      et 2010, puis sélectionnez le fichier à télécharger. Vous voulez
-      probablement le fichier x86-linux ou x86_64-linux.</para>
-    </note>
-
+     <para>La construction de Ada depuis les sources n'est plus supportée par BLFS. Le paquet binaire
+        de développement est basé sur gcc-4.5.4 et n'est pas capable de construire Ada depuis le paquet
+        <application>GCC</application> actuel.</para>
+      </note>
+<!--
     <bridgehead renderas="sect3">Informations sur le paquet GNAT GPL 2010</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>Téléchargement (HTTP)&nbsp;: <ulink url="&gnat-download-http;"/></para>
       </listitem>
     </itemizedlist>
-
+-->
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/gcc"/></para>
 
   </sect2>
-
+<!--
   <sect2 role="installation">
     <title>Installation de GNAT</title>
 
@@ -140,7 +134,7 @@ rm -rf gnat-2010-i686-gnu-linux-libc2.3-bin</userinput></screen>
 export PATH=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin:$PATH_HOLD</userinput></screen>
 
   </sect2>
-
+  -->
   <sect2 role="installation">
     <title>Installation de GCC</title>
 
@@ -151,10 +145,10 @@ export PATH=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin:$PA
       <para>Il se peut que le processus d'installation écrase les compilateurs
       et les bibliothèques existants 
       <command>gcc</command> et
-      <command>c++</command> de <application>GCC</application>. Il est hautement recommandé d'installer
+      <command>c++</command> de <application>GCC</application>. Avoir
       les paquets <application>Tcl</application>,
-      <application>Expect</application> et <application>DejaGnu</application>
-      avant de commencer la construction afin que vous puissiez lancer la suite de
+      <application>Expect</application> et <application>DejaGnu</application> d'installer avant de
+      commencer la construction est hautement recommandé afin que vous puissiez lancer la suite de
       tests complète.</para>
 
       <para>Ne procédez pas à la commande <command>make install</command> avant
@@ -169,20 +163,26 @@ export PATH=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin:$PA
     bootstrap</command></quote> au lieu d'un
     <quote><command>make</command></quote> complet. Bien que nous supposions
     que la version actuelle de <application>GCC</application> est installée dans
-    LFS, cette installation incluant le compilateur Ada en tant que langage installé,
-    un bootstrap est requis. Le compilateur GNAT doit être utilisé 
-    pour stage1 du bootstrap afin de construire Ada. Si le processus n'a pas utilisé
-    de <quote>bootstrap</quote>, vous pourriez finir par avoir un 
-    <command>gcc</command> installé sur le système qui a été produit par un compilateur
-    étranger.</para>
+    LFS,un bootstrap est recommandé pour plus de robustesse.</para>
 
 <screen><userinput>sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in &amp;&amp;
 sed -i 's@./fixinc.sh@-c true@'        gcc/Makefile.in       &amp;&amp;
-sed -i 's/Standard/Types/'               gcc/ada/uintp.adb     &amp;&amp;
-
+case `uname -m` in
+      i?86) sed -i 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in ;;
+esac &amp;&amp;
 mkdir ../gcc-build &amp;&amp;
 cd    ../gcc-build &amp;&amp;
-../gcc-&gcc-version;/configure             --prefix=/usr                  --libexecdir=/usr/lib          --with-system-zlib             --enable-shared                --enable-threads=posix         --enable-__cxa_atexit          --disable-multilib             --enable-bootstrap             --enable-clocale=gnu           --enable-languages=c,c++,ada,fortran,java,objc,obj-c++ &amp;&amp;
+../gcc-&gcc-version;/configure \
+--prefix=/usr            \
+--libexecdir=/usr/lib    \
+--with-system-zlib       \
+--enable-shared          \
+--enable-threads=posix   \
+--enable-__cxa_atexit    \
+--disable-multilib       \
+--enable-bootstrap       \
+--enable-clocale=gnu     \
+--enable-languages=c,c++,fortran,java,objc,obj-c++ &amp;&amp;
 make bootstrap &amp;&amp;
 make -k check  &amp;&amp;
 ../gcc-&gcc-version;/contrib/test_summary</userinput></screen>
@@ -191,9 +191,13 @@ make -k check  &amp;&amp;
 
 <screen role="root"><userinput>make install &amp;&amp;
 ln -v -sf ../usr/bin/cpp /lib &amp;&amp;
-ln -v -sf gcc /usr/bin/cc &amp;&amp;
-chown -v -R root:root     /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/include     /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/ada{lib,include}</userinput></screen>
+ln -v -sf gcc /usr/bin/cc </userinput></screen>
 
+<!--
+chown -v -R root:root \
+/usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/include  \
+/usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/ada{lib,include}</userinput></screen>
+-->
     <para>L'en-tête de l'interface <filename class='libraryfile'>libffi</filename>
     est installée dans un endroit où les autres paquets ne pourront pas la trouver. Si vous avez inclu
     Java comme un des langages installés, créez un lien symbolique dans
@@ -201,7 +205,8 @@ chown -v -R root:root     /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/include  
 
 <screen role="root"><userinput>ln -v -sf `find /usr/lib/gcc -name ffitarget.h` /usr/include</userinput></screen>
 
-    <para>Vous devriez maintenant passer en utilisateur non privilégié et 
+<!--
+    <para>Vous devriez maintenant passer en utilisateur non privilégié et
     supprimer l'installation de <application>GNAT</application> et effectuer
     d'autres nettoyages&nbsp;:</para>
 
@@ -209,15 +214,14 @@ chown -v -R root:root     /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/include  
 
 <screen><userinput>export PATH=$PATH_HOLD &amp;&amp;
 unset PATH_HOLD</userinput></screen>
-
+-->
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para>Les deux commandes <command>sed</command> sont les mêmes
-    que celles utilisées pendant la construction de LFS. La troisième corrige
-    un problme avec la construction d'Ada.</para>
+    <para>Les trois commandes <command>sed</command> sont les mêmes
+    que celles utilisées pendant la construction de LFS.</para>
 
     <para><command>mkdir ../gcc-build; cd ../gcc-build</command>&nbsp;: La
     documentation de <application>GCC</application> recommande de construire
@@ -234,7 +238,7 @@ unset PATH_HOLD</userinput></screen>
     <para><parameter>--enable-bootstrap</parameter>&nbsp;: Ce paramètere est
     utilisé pour qu'une installation bootstrap s'effectue.</para>
 
-    <para><parameter>--enable-languages=c,c++,ada,fortran,java,objc,obj-c++</parameter>&nbsp;: Cette commande est
+    <para><parameter>--enable-languages=c,c++,fortran,java,objc,obj-c++</parameter>&nbsp;: Cette commande est
     une sécurité contre des échecs dus à des données de locales incomplètes.</para>
 
     <para>
@@ -257,7 +261,7 @@ unset PATH_HOLD</userinput></screen>
 
     <para><command>ln -v -sf gcc /usr/bin/cc</command>&nbsp;: Ce lien est créé
     car certains paquets se réfèrent au compilateur C en utilisant un nom alternatif.</para>
-
+<!--
     <para><command>chown -v -R root:root
     /usr/lib/gcc/i686-pc-linux-gnu/...</command>&nbsp;: Si le paquet
     est construit par un utilisateur différent de root, le propriétaire des
@@ -267,7 +271,7 @@ unset PATH_HOLD</userinput></screen>
     l'utilisateur et le groupe <systemitem class="username">root</systemitem>. 
     Ommettez cette commande en modifiant les répertoires Ada si vous n'avez pas
     inclu Ada comme un des langages installés.</para>
-
+    -->
   </sect2>
 
   <sect2 role="content">
@@ -280,15 +284,13 @@ unset PATH_HOLD</userinput></screen>
 
       <seglistitem>
         <seg>addr2name.awk, fastjar, gcj, gcj-dbtool,gcjh, gfortran, gij,
-        gjnih, gnat, gnatbind, gnatbl, gnatchop, gnatclean, gnatfind, gnatkr,
-        gnatlink, gnatls, gnatmake, gnatname, gnatprep, gnatxref, gprmake,
+        gjnih,  gprmake,
         grepjar, grmic, grmiregistry, gtreelang, jcf-dump, jv-convert, jv-scan
         et architecture specific names for gcj and gcjh</seg>
         <seg>libffi.{so,a}, libgcj.{so,a}, libgfortran.{so,a},
         libgfortranbegin.a, libgij.{so,a}, libobjc.{so,a} et de nombreuses autres
         bibliothèques d'exécution et des exécutables in /usr/lib/gcc</seg>
         <seg>/usr/include/c++/&gcc-version;/{gcj,gnu,java,javax,org},
-        /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/ada{include,lib},
         /usr/lib/gcj-&gcc-version;,
         /usr/lib/security
         et /usr/share/java</seg>
@@ -389,7 +391,7 @@ unset PATH_HOLD</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-
+<!--
       <varlistentry id="gnat">
         <term><command>gnat</command></term>
         <listitem>
@@ -526,7 +528,7 @@ unset PATH_HOLD</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-
+      -->
       <varlistentry id="gprmake">
         <term><command>gprmake</command></term>
         <listitem>
