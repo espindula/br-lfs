@@ -25,6 +25,10 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
+/* Define to 1 if you have the declaration of `name_to_handle_at', and to 0 if
+ *    you don't. */
+#define HAVE_DECL_NAME_TO_HANDLE_AT 1
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
