@@ -4,7 +4,7 @@
 # vim: tabstop=3
 
 SHELL=/bin/bash
-VERSION=190
+VERSION=195
 
 ifeq ($(V),)
  VB = @
@@ -69,6 +69,7 @@ COMMON_SRCS = log.c         \
               mkdir.c       \
               cgroup-util.c \
               strv.c        \
+              strbuf.c      \
               path-util.c   \
               conf-files.c  \
               hashmap.c     \
@@ -159,7 +160,7 @@ udev: common                     \
 
 common: udev-lfs-$(VERSION)/cfg.h
 	@mkdir -p build
-	cp udev-lfs-$(VERSION)/cfg.h .
+	sed  -e 's/LFS-VERSION/$(VERSION)/' udev-lfs-$(VERSION)/cfg.h > ./cfg.h
 
 build/%o: %c common
 	@echo CC $<
@@ -204,7 +205,7 @@ build/udevd: build/$(COMMON_LIB) build/udevd.o
       build/udev-local.a build/$(COMMON_LIB)
 	$(VB)strip --strip-unneeded $@
 
-build/udevadm: $(UDEV_ADMIN_OBJS)
+build/udevadm: $(UDEV_ADMIN_OBJS) build/$(COMMON_LIB)
 	@echo LINK $@
 	$(VB)gcc $(UDEV_ADMIN_OBJS) -o $@ $(LDFLAGS2) build/$(COMMON_LIB)
 	$(VB)strip --strip-unneeded $@
@@ -278,13 +279,14 @@ install: udev
    # Create null device and copy rules
 	@cp -v rules/*                        $(DESTDIR)/lib/udev/rules.d
 	@rm -v                                $(DESTDIR)/lib/udev/rules.d/99*
-	@cp -v udev-lfs-$(VERSION)/*lfs.rules $(DESTDIR)/etc/udev/rules.d
+	@cp -v udev-lfs-$(VERSION)/*.rules    $(DESTDIR)/etc/udev/rules.d
 
    # Copy documentation
 	@cp -v man/udev.7                     $(DESTDIR)/usr/share/man/man7
 	@cp -v man/udevadm.8                  $(DESTDIR)/usr/share/man/man8
-	@cp -v udev-lfs-$(VERSION)/udevd.8    $(DESTDIR)/usr/share/man/man8/udevd.8
-	@cp -v udev-lfs-$(VERSION)/doc/*      $(DESTDIR)/usr/share/doc/udev/lfs
+	@cp -v udev-lfs-$(VERSION)/udevd.8    $(DESTDIR)/usr/share/man/man8
+	@cp -v udev-lfs-$(VERSION)/README     $(DESTDIR)/usr/share/doc/udev/lfs
+	@cp -v udev-lfs-$(VERSION)/*.txt      $(DESTDIR)/usr/share/doc/udev/lfs
 
    # Copy misc
 	@cp -v udev-lfs-$(VERSION)/init-net-rules.sh  $(DESTDIR)/lib/udev

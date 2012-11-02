@@ -86,7 +86,7 @@
       connaît les périphériques présents sur un système et quels numéros
       de périphériques devraient être utilisés. Les pilotes qui ont été
       compilés directement dans le noyau enregistrent leurs objets avec
-      <systemitem class="filesystem">sysfs</systemitem> quand ils sont
+      <systemitem class="filesystem">sysfs</systemitem> (en interne, devtmpfs) quand ils sont
       détectés par le noyau. Pour les pilotes compilés en tant que
       modules, cet enregistrement surviendra quand le module sera
       chargé. Une fois que le système de fichier
@@ -101,60 +101,19 @@
 
     </sect3>
 
-    <sect3>
-      <title>Scripts de démarrage d'Udev</title>
-
-      <para>Le script de démarrage <command>/etc/rc.d/init.d/udev</command>
-      s'occupe de créer les n&oelig;uds de périphériques au lancement de Linux.
-      Le script supprime la gestion par défaut des uevents de
-      <command>/sbin/hotplug</command>, ainsi le noyau n'a plus besoin de faire appel à un binaire externe.
-      À la place, <command>udevd</command> écoutera sur un socket netlink les uevents que le noyau fait apparaître.
-      Puis, le script de démarrage copie les n&oelig;uds des périphériques statiques qui existent dans
-      <filename class="directory">/lib/udev/devices</filename> vers
-      <filename class="directory">/dev</filename>.
-      Ceci est nécessaire car certains périphériques, répertoires et liens symboliques sont requis
-      avant que les processus de gestion du périphérique dynamique
-      ne soient disponibles pendant les premières étapes du démarrage d'un système,
-      ou sont nécessaire à <command>udevd</command> lui-même.
-      La création des n&oelig;uds statiques dans
-      <filename class="directory">/lib/udev/devices</filename>
-      fournit aussi un contournement facile pour les périphériques
-      qui ne sont pas supportés par l'infrastructure de gestion dynamique des périphériques.
-      Ensuite le script de démarrage lance le démon Udev,
-      <command>udevd</command>, qui agira sur tous les uevents qu'il reçoit.
-      Enfin, le script de démarrage oblige le noyau à répéter des uevents pour chaque
-      périphérique qui a déjà été enregistré puis attend que
-      <command>udevd</command> les gère.</para>
-
-
-      <para>Le script de démarrage <command>/etc/rc.d/init.d/udev_retry</command>
-      s'occupe d'intercepter les événements pour les sous-systèmes dont les règles
-      se basent sur des systèmes de fichiers non montés jusqu'à ce que le script
-      <command>mountfs</command>
-      se lance (en particulier, il se peut que /usr et /var provoquent cela).
-      Ce script se lance après le script
-      <command>mountfs</command>, pour que ces règles réussissent le
-      contournement (si elles sont retardées). Le fichier
-      <filename>/etc/sysconfig/udev_retry</filename> configure cela&nbsp;;
-      tous les mots de ce fichier qui ne sont pas des commentaires sont
-      considérés comme des noms de sous-systèmes qu'il faut intercepter au moment
-      du nouvel essai. (Pour trouver le sous-système d'un périphérique, utilisez
-      <command>udevadm info --attribute-walk</command>.)</para>
-
-    </sect3>
 
     <sect3>
       <title>Création de n&oelig;uds de périphérique</title>
 
-      <para>Dans les versions récentes, <command>udevd</command> ne crée
-      plus de fichiers de périphériques dans <filename class="directory">/dev</filename>.
-      Cela se gère plutôt dans le noyau, avec le système de fichiers
-      <systemitem class="filesystem">devtmpfs</systemitem>. Tout pilote qui souhaite
-      enregistrer un n&oelig;ud de périphérique ira sur
-      <systemitem class="filesystem">devtmpfs</systemitem> (via le c&oelig;ur du pilote) pour le faire.
-      Quand une instance de <systemitem class="filesystem">devtmpfs</systemitem> est montée sur
-      <filename class="directory">/dev</filename>, le n&oelig;ud de périphérique
-      sera créé au départ avec un nom, des droits et un propriétaire fixes.</para>
+      <para>Les fichiers de périphérique sont créés par le noyau avec le
+      système de fichiers <systemitem class="filesystem">devtmpfs</systemitem>.
+      Tout pilote souhaitant enregistrer un n&oelig;ud de périphérique ira dans
+      <systemitem class="filesystem">devtmpfs</systemitem> (par le c&oelig;ur du
+      pilote) pour le faire. Quand une instance <systemitem class="filesystem">devtmpfs</systemitem>
+      est montée sur <filename class="directory">/dev</filename>, le n&oelig;ud
+      de périphérique sera créé dès le départ avec un nom, des droits et un
+      propriétaire figés.</para>
+      
 
       <para>Peu de temps après, le noyau enverra un uevent à <command>udevd</command>.
       À partir des règles indiquées dans les fichiers contenus dans les répertoires
@@ -173,6 +132,48 @@
       droits à n'importe quel <systemitem class="filesystem">devtmpfs</systemitem>
       utilisé au départ.</para>
 
+    </sect3> 
+
+    <sect3>
+      <title>Les scripts de démarrage d'Udev</title>
+
+      <para>Le premier script de démarrage de LFS,
+      <filename>/etc/init.d/mountvirtfs</filename>, va copier les périphériques de
+      <filename class="directory">/lib/udev/devices</filename> vers
+      <filename class="directory">/dev</filename>. C'est nécessaire car certains
+      périphériques, certains répertoires et certains liens symboliques sont
+      requis avant que les processus de gestion dynamique des périphériques ne soient
+      disponibles au tout début du démarrage d'un système ou car ils sont exigés
+      par <command>udevd</command> lui-même. La création de n&oelig;uds de
+      périphériques statiques dans <filename
+      class="directory">/lib/udev/devices</filename> offre aussi un contournement
+      facile pour les périphériques qui ne sont pas supportés par l'infrastructure
+      de gestion dynamique des périphériques.</para> 
+
+      <para>Le script de démarrage <filename>/etc/rc.d/init.d/udev</filename> 
+      démarre <command>udevd</command>, récupère tous les périphériques "montés à
+      froid"" ayant déjà été créés par le noyau et et il attend les règles pour
+      se terminer. Le script défait aussi le gestionnaire d'uevent de son
+      paramétrage par défaut <filename>/sbin/hotplug </filename>.  Cela se fait
+      car le noyau n'a plus besoin d'appeler de binaires externes. À la place,
+      <command>udevd</command> listera sur une socket netlink les uevents que
+      le noyau détecte.</para> 
+
+      <para>Le script de démarrage <command>/etc/rc.d/init.d/udev_retry</command>
+      prend soin de ratraper les événements pour les sous-systèmes dont les règles
+      peuvent s'appuyer sur des systèmes de fichiers non montés jusqu'à ce que
+      le script <command>mountfs</command> ne s'exécute (en particulier,
+      <filename class="directory">/usr</filename>
+      et <filename class="directory">/var</filename> peut causeer cela).  Ce
+      script se lance après que le script <command>mountfs</command>, afin
+      que les règles (si récupérées), réussissent la deuxième fois. Il est
+      configuré à partir du fichier <filename>/etc/sysconfig/udev_retry</filename>&nbsp;;
+      tous les mots de ce fichier différents de commentaires sont considérés comme
+      des noms de sous-systèmes pour récupérer lors de la nouvelle tentative.
+      Pour trouver le sous-système d'un périphérique, utilisez
+      <command>udevadm info --attribute-walk &lt;périphérique&gt;</command> où
+      &lt;périphérique&gt; est un chemin absolu dans /dev ou /sys tel que /dev/sr0 ou
+      /sys/class/rtc.</para>
     </sect3>
 
     <sect3>
@@ -399,11 +400,11 @@
         (NdT&nbsp;: Le système de fichiers <systemitem class="filesystem">sysfs</systemitem>)</para>
       </listitem>
 
-      <listitem>
+<!--      <listitem>
         <para>Pointers to further reading
         <ulink url="http://www.kernel.org/pub/linux/utils/kernel/hotplug/udev.html"/>
         (NdT&nbsp;: Pointeurs vers de plus amples lectures)</para>
-      </listitem>
+      </listitem>-->
 
     </itemizedlist>
 
