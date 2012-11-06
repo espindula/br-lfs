@@ -72,6 +72,7 @@ do
   then
     echo $i # affichage du fichier en cours
   fi
+  k=$i
   j=$CHEMIN_BLFSFR/"../blfs-en/BOOK/"${i:2} # initialisation du chemin vers le fichier anglais à partir du fichier français
   i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
   cp $j tempen
@@ -110,7 +111,7 @@ do
     if [[ "$nbenc" != "$nbfrc" ]] # si différence avec le corrigé
     then
 	echo $i ": différence du nombre de balises (fr-en)= "$diff  >> $CHEMIN_BLFSFR/verif.lst #écriture dans le fichier résultat 'list'
-	echo $i >> $CHEMIN_BLFSFR/verif.detail
+	echo $k >> $CHEMIN_BLFSFR/verif.detail
         bautre=$diff	
 	for b in $liste_balise
 	do 
