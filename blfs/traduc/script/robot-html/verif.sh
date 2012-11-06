@@ -68,10 +68,8 @@ cd ../../
 #recherche des fichiers xml dans listxml
 for i in $(cat $CHEMIN_BLFSFR/listxml)
 do
-  if [[ $1 != "-q" ]]
-  then
-    echo $i # affichage du fichier en cours
-  fi
+  echo $i # affichage du fichier en cours
+  echo ${i:2}
   k=$i
   j=$CHEMIN_BLFSFR/"../blfs-en/BOOK/"${i:2} # initialisation du chemin vers le fichier anglais à partir du fichier français
   i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
