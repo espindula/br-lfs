@@ -74,7 +74,19 @@ do
   fi
   j=$CHEMIN_BLFSFR/"../blfs-en/BOOK/"${i:2} # initialisation du chemin vers le fichier anglais à partir du fichier français
   i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
-  nbfr=$(cat $i 2>>$CHEMIN_LOG/robot.err | grep -o "<" | wc -l) #détermination du nombre de balises dans le fichier français
+  cp $j tempen
+  cp $i tempfr
+  j=tempen
+  i=tempfr
+  sed -e "s/<!--/<!--\n/g" -e "s/-->/-->\n/g" -i $i
+  sed -e "s/<!--/<!--\n/g" -e "s/-->/-->\n/g" -i $j
+  sed -e "/<!--/,/-->/ {
+           d
+            }" -i $i  
+  sed -e "/<!--/,/-->/ {
+           d
+            }" -i $j
+   nbfr=$(cat $i 2>>$CHEMIN_LOG/robot.err | grep -o "<" | wc -l) #détermination du nombre de balises dans le fichier français
   if [[ $? -gt 0 ]]
   then
      exit 1
