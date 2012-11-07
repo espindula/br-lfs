@@ -77,8 +77,8 @@ do
   cp $i tempfr
   j=tempen
   i=tempfr
-  sed -e "s/<!--/<!--\n/g" -e "s/-->/-->\n/g" -i $i
-  sed -e "s/<!--/<!--\n/g" -e "s/-->/-->\n/g" -i $j
+  sed -e "s/<!--/\n<!--\n/g" -e "s/-->/\n-->\n/g" -i $i
+  sed -e "s/<!--/\n<!--\n/g" -e "s/-->/\n-->\n/g" -i $j
   sed -e "/<!--/,/-->/ {
            d
             }" -i $i  
