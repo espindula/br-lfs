@@ -4,7 +4,7 @@
 # vim: tabstop=3
 
 SHELL=/bin/bash
-VERSION=195
+VERSION=196
 
 ifeq ($(V),)
  VB = @
@@ -33,8 +33,7 @@ LDFLAGS2 := $(LDFLAGS) -lblkid -lkmod
 DEF = -include cfg.h                    \
       -DSYSCONFDIR=\"/etc\"             \
       -DFIRMWARE_PATH="\"/lib/firmware/updates/\", \"/lib/firmware/\"" \
-      -DUSB_DATABASE=\"/usr/share/misc/usb.ids\"                       \
-      -DPCI_DATABASE=\"/usr/share/misc/pci.ids\"                       \
+      -DHWDB_BIN=\"/etc/udev/hwdb.bin\"                                \
       -DROOTPREFIX=                     \
       -DUDEVLIBEXECDIR=\"/lib/udev\"    \
       -D_LARGEFILE_SOURCE               \
@@ -45,6 +44,7 @@ INCLUDE = -I src/libudev -I src/shared -I src -I src/login -I src/systemd
 LIBUDEV_SRCS = libudev-device-private.c \
                libudev-device.c         \
                libudev-enumerate.c      \
+               libudev-hwdb.c           \
                libudev-list.c           \
                libudev-monitor.c        \
                libudev-queue-private.c  \
@@ -94,6 +94,7 @@ UDEVD_SRCS = udev-ctrl.c             \
              udev-builtin-hwdb.c     \
              udev-builtin-kmod.c     \
              udev-builtin-uaccess.c  \
+             udev-builtin-net_id.c   \
              udev-builtin-usb_id.c   \
              udev-builtin-input_id.c \
              udev-builtin-btrfs.c
@@ -104,6 +105,7 @@ UDEV_ADMIN_SRCS = udevadm.c               \
                   udevadm-test.c          \
                   udevadm-monitor.c       \
                   udevadm-settle.c        \
+                  udevadm-hwdb.c          \
                   udevadm-info.c          \
                   udevadm-test-builtin.c  \
                   udevadm-trigger.c       \
@@ -120,6 +122,7 @@ UDEV_ADMIN_SRCS = udevadm.c               \
                   udev-builtin-hwdb.c     \
                   udev-builtin-kmod.c     \
                   udev-builtin-uaccess.c  \
+                  udev-builtin-net_id.c   \
                   udev-builtin-usb_id.c   \
                   udev-builtin-input_id.c \
                   udev-builtin-btrfs.c
@@ -158,9 +161,12 @@ udev: common                     \
       build/udev.pc              \
       build/libudev.pc
 
-common: udev-lfs-$(VERSION)/cfg.h
-	@mkdir -p build
+cfg.h: udev-lfs-$(VERSION)/cfg.h
 	sed  -e 's/LFS-VERSION/$(VERSION)/' udev-lfs-$(VERSION)/cfg.h > ./cfg.h
+	@mkdir -p build
+
+common: cfg.h 
+	@touch common
 
 build/%o: %c common
 	@echo CC $<
@@ -281,6 +287,11 @@ install: udev
 	@rm -v                                $(DESTDIR)/lib/udev/rules.d/99*
 	@cp -v udev-lfs-$(VERSION)/*.rules    $(DESTDIR)/etc/udev/rules.d
 
+   # Set up hardware DB
+	@mkdir -pv $(DESTDIR)/lib/udev/hwdb.d
+	@cp hwdb/* $(DESTDIR)/lib/udev/hwdb.d
+	@build/udevadm hwdb --update
+
    # Copy documentation
 	@cp -v man/udev.7                     $(DESTDIR)/usr/share/man/man7
 	@cp -v man/udevadm.8                  $(DESTDIR)/usr/share/man/man8
@@ -301,14 +312,15 @@ install-all: install install-keymap install-gudev install-gir-data
 clean:
 	rm -rf build
 	rm -f  cfg.h
-	rm -f src/gudev/gudevmarshal.h
-	rm -f src/gudev/gudevmarshal.c
-	rm -f src/gudev/gudevenumtypes.h
-	rm -f src/gudev/gudevenumtypes.c
-	rm -f src/udev/keymap/keys.txt
-	rm -f src/udev/keymap/keys-from-name.gperf
-	rm -f src/udev/keymap/keys-from-name.h
-	rm -f src/udev/keymap/keys-to-name.h
+	rm -f  common
+	rm -f  src/gudev/gudevmarshal.h
+	rm -f  src/gudev/gudevmarshal.c
+	rm -f  src/gudev/gudevenumtypes.h
+	rm -f  src/gudev/gudevenumtypes.c
+	rm -f  src/udev/keymap/keys.txt
+	rm -f  src/udev/keymap/keys-from-name.gperf
+	rm -f  src/udev/keymap/keys-from-name.h
+	rm -f  src/udev/keymap/keys-to-name.h
 
-.PHONY: clean build 
+.PHONY: clean 
 
