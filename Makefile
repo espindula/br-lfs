@@ -58,7 +58,9 @@ pdf: validate
 	$(Q)if [ ! -e $(BASEDIR) ]; then \
 	  mkdir -p $(BASEDIR); \
 	fi;
-	$(Q)fop $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+	$(Q)fop -q  $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT) 2>fop.log
+	@echo "$(BASEDIR)/$(PDF_OUTPUT) created"
+	@echo "fop.log created"
 
 nochunks: validate profile-html
 	@echo "Generating non chunked XHTML file..."
