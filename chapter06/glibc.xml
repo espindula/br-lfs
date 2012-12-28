@@ -61,67 +61,12 @@
     Glibc autoconf tests would give false results and defeat the goal
     of achieving a clean build.</para>
 
-<!--
-    This should have been fixed a long time ago.
-
-    <para>In the vi_VN.TCVN locale, <command>bash</command> enters an infinite
-    loop at startup. It is unknown whether this is a <command>bash</command>
-    bug or a Glibc problem. Disable installation of this locale in order to
-    avoid the problem:</para>
-
-<screen><userinput remap="pre">sed -i '/vi_VN.TCVN/d' localedata/SUPPORTED</userinput></screen>
--->
-
-    <para>Fix a problem that causes the build to fail in the LFS environment:</para>
-
-<screen><userinput remap="pre">sed -i 's#&lt;rpc/types.h&gt;#"rpc/types.h"#' sunrpc/rpc_clntout.c</userinput></screen>
-
-<!--    <para>When running <command>make install</command>, a script called
-    <filename>test-installation.pl</filename> performs a small sanity test on
-    our newly installed Glibc. However, because our toolchain still points to
-    the <filename class="directory">/tools</filename> directory, the sanity
-    test would be carried out against the wrong Glibc. We can force the script
-    to check the Glibc we have just installed with the following:</para>
-
-<screen><userinput remap="pre">DL=$(readelf -l /bin/sh | sed -n 's@.*interpret.*/tools\(.*\)]$@\1@p')
-sed -i &quot;s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=$DL -o|&quot; \
-        scripts/test-installation.pl
-unset DL</userinput></screen>-->
-
-    <para>When running <command>make install</command>, a script called
-    <filename>test-installation.pl</filename> performs a small sanity test on
-    our newly installed Glibc. Use a patch to fix the bug that causes it to
-    fail:</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-installation-patch;</userinput></screen>
-
-    <para>The <command>ldd</command> shell script contains Bash-specific
-    syntax. Change its default program interpreter to <command>/bin/bash</command>
-    in case another <command>/bin/sh</command> is installed as described in the
-    <ulink url="&blfs-root;view/svn/postlfs/shells.html">Shells</ulink>
-    chapter of the BLFS book:</para>
-
-<screen><userinput remap="pre">sed -i 's|@BASH@|/bin/bash|' elf/ldd.bash.in</userinput></screen>
-
-    <para>Now fix a problem that causes some applications to crash when 
-    utilizing problem nameservers:</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-fix-resolv-patch;</userinput></screen>
-
     <para>The Glibc documentation recommends building Glibc outside of the source
     directory in a dedicated build directory:</para>
 
 <screen><userinput remap="pre">mkdir -v ../glibc-build
 cd ../glibc-build</userinput></screen>
-<!--
-    <para>As in Chapter 5, add the needed compiler flags to CFLAGS for x86 machines.
-    Here, the optimization of the library is also set for the gcc compiler to
-    enhance compilation speed (-pipe) and package performance (-O3).</para>
 
-<screen><userinput remap="configure">case `uname -m` in
-  i?86) echo "CFLAGS += -march=i486 -mtune=native -O3 -pipe" &gt; configparms ;;
-esac</userinput></screen>
--->
     <para>Prepare Glibc for compilation:</para>
 
 <screen><userinput remap="configure">../glibc-&glibc-version;/configure  \
@@ -157,8 +102,6 @@ esac</userinput></screen>
     <para>Generally a few tests do not pass, but you can generally ignore
     any of the test failures listed below. Now test the build results:</para>
 
-<!-- cp -v ../glibc-&glibc-version;/iconvdata/gconv-modules iconvdata -->
-
 <screen><userinput remap="test">make -k check 2&gt;&amp;1 | tee glibc-check-log
 grep Error glibc-check-log</userinput></screen>
 
@@ -169,12 +112,6 @@ grep Error glibc-check-log</userinput></screen>
     most common issues:</para>
 
     <itemizedlist>
-      <!-- Check again after updating from gcc-4.1.x -->
-      <!-- Haven;t seen this in quite a while <listitem>
-        <para>The <emphasis>nptl/tst-cancel1</emphasis> test will fail when
-        using the 4.1 series of GCC.</para>
-      </listitem> -->
-      <!-- Was true in glibc-2.3.6, rt/tst-cpuclock2 in glibc-2.11.1 -->
 
       <listitem>
         <para>The <emphasis>nptl/tst-clock2</emphasis>,
@@ -191,15 +128,6 @@ grep Error glibc-check-log</userinput></screen>
         systems where the CPU is not a relatively new genuine Intel or
         authentic AMD processor.</para>
       </listitem>
-      
-      <!--
-      <listitem>
-        <para>If you have mounted the LFS partition with the
-        <parameter>noatime</parameter> option, the <emphasis>atime</emphasis>
-        test will fail. As mentioned in <xref linkend="space-mounting"/>, do not
-        use the <parameter>noatime</parameter> option while building LFS.</para>
-      </listitem>
-      -->
       
       <listitem>
         <para>When running on older and slower hardware or on systems under
@@ -287,8 +215,6 @@ localedef -i zh_CN -f GB18030 zh_CN.GB18030</userinput></screen>
     install locales not listed in the
     <filename>glibc-&glibc-version;/localedata/SUPPORTED</filename> file
     in the unlikely case you need them.</para>
-    <!-- The Live CD patches the localedata/SUPPORTED file instead of
-    running localedef, the results are equivalent -->
 
   </sect2>
 
