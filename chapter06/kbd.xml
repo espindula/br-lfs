@@ -5,9 +5,6 @@
   %general-entities;
 ]>
 
-<!-- FIXME: upstream git has been persuaded by SuSe to build resizecons on x86_64,
-so the sed will need attention if that change is not removed before the next release -->
-
 <sect1 id="ch-system-kbd" role="wrap">
   <?dbhtml filename="kbd.html"?>
 
@@ -44,11 +41,6 @@ so the sed will need attention if that change is not removed before the next rel
   <sect2 role="installation">
     <title>Installation of Kbd</title>
 
-    <para>The behaviour of <command>loadkeys</command> when run without a
-    filename was broken in this release. The following patch fixes this:</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../&kbd-fixes-patch;</userinput></screen>
-
     <para>The behaviour of the Backspace and Delete keys is not consistent
     across the keymaps in the Kbd package. The following patch fixes this
     issue for i386 keymaps:</para>
@@ -58,29 +50,14 @@ so the sed will need attention if that change is not removed before the next rel
     <para>After patching, the Backspace key generates the character with code 127,
     and the Delete key generates a well-known escape sequence.</para>
 
-    <para>Fix a bug in the Spanish message translations which prevents kbd from
-    building with gettext-&gettext-version;:</para>
+    <para>Fix a bug that causes some keymaps not to be loaded correctly:</para>
 
-<screen><userinput remap="pre">sed -i '/guardado\ el/s/\(^.*en\ %\)\(.*\)/\14\$\2/' po/es.po</userinput></screen>
-
-    <para>Remove the redundant <command>resizecons</command> program (32-bit x86
-    only, needs the defunct svgalib, which predates linux-2.6 and is incompatible
-    with modern KMS, to provide the video mode files - for normal use
-    <command>setfont</command> sizes the console appropriately) and its manpage.</para>
-
-    <para>The shipped version of <filename>configure.ac</filename> is newer than
-    <filename>aclocal.m4</filename>, so autotools will be run by <command>make</command>
-    which will overwrite the change to <filename>configure</filename>. Alter the date
-    and time of <filename>configure.ac</filename> - this uses the system timezone, so we
-    pick a time that is sufficiently old in all timezones.</para>
-
-<screen><userinput remap="pre">sed -i 's/\(RESIZECONS_PROGS=\)yes/\1no/' configure &amp;&amp;
-sed -i 's/resizecons.8 //' man/man8/Makefile.in &amp;&amp;
-touch -d '2011-05-07 08:30' configure.ac</userinput></screen>
+<screen><userinput remap="pre">sed -i -e '326 s/if/while/' src/loadkeys.analyze.l</userinput></screen>
 
     <para>Prepare Kbd for compilation:</para>
 
-<screen><userinput remap="configure">./configure --prefix=/usr --datadir=/lib/kbd</userinput></screen>
+<screen><userinput remap="configure">./configure --prefix=/usr --datadir=/lib/kbd \
+  --disable-vlock</userinput></screen>
 
     <variablelist>
       <title>The meaning of the configure options:</title>
@@ -91,6 +68,15 @@ touch -d '2011-05-07 08:30' configure.ac</userinput></screen>
           <para>This option puts keyboard layout data in a directory that will
           always be on the root partition instead of the default <filename
           class="directory">/usr/share/kbd</filename>.</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-vlock</parameter></term>
+        <listitem>
+          <para>This option prevents the vlock utility from being built, as it
+          requires the PAM library, which isn't available in the chroot
+          environment.</para>
        </listitem>
       </varlistentry>
 
