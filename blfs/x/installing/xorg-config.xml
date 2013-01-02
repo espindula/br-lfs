@@ -37,7 +37,7 @@
 
     </sect2>
 
-    <sect2 role="configuration" id='checking-dri' xreflabel="Checking the DRI installation">
+    <sect2 role="configuration" id="checking-dri" xreflabel="Checking the DRI installation">
     <title>Vérifier l'installation de la Direct Rendering Infrastructure (DRI)</title>
 
     <para>DRI est un environnement permettant aux logiciels d'accéder au matériel
@@ -45,11 +45,11 @@
     <application>X</application> (en utilisant <application>MesaLib</application>) 
     si vous avez une carte graphique supportée.</para>
 
-    <para>Pour vérifier que la DRI est installée correctement, vérifiez que le
+    <para>Pour vérifier que le pilote DRI est installé correctement, vérifiez que le
     fichier journal <filename>/var/log/Xorg.0.log</filename> contient des messages
     comme&nbsp;:</para>
 
-<screen><literal>(II) R128(0): Direct rendering enabled</literal></screen>
+<screen><literal>(II) intel(0): direct rendering: DRI2 enabled</literal></screen>
 
     <note><para>Il se peut que la configuration DRI diffère si vous utilisez
     d'autres pilotes tels que ceux de 
@@ -73,12 +73,13 @@
 
 <screen role="root"><userinput>usermod -a -G video <replaceable>&lt;username&gt;</replaceable></userinput></screen>
 
-    <para>Si vous optez pour l'installation du paquet Mesa-Demos lors de
-    l'installation de
-    <xref linkend="mesalib"/>, depuis un <command>xterm</command>, lancez
-    <command>glxinfo</command> et cherchez d'emblée le passage&nbsp;:</para>
+    <para>Si vous avez installé les deux programmes de démonstration OpenGL quand vous avez
+    installé <xref linkend="mesalib"/>, depuis un terminal X, lancez
+    <command>glxinfo</command> et cherchez le passage&nbsp;:</para>
 
-<screen><computeroutput>direct rendering: Yes</computeroutput></screen>
+<screen><computeroutput>name of display: :0
+display: :0  screen: 0
+direct rendering: Yes</computeroutput></screen>
 
     <para>Si direct rendering est activé, vous pouvez ajouter de la verbosité en
     lançant <command>LIBGL_DEBUG=verbose glxinfo</command>.  Ceci affichera
@@ -86,12 +87,30 @@
     le système DRI.</para>
 
     <para>Si la DRI est activée, pour confirmer que l'accélération matérielle 
-    DRI2 fonctionne, vous pouvez (toujours dans un <command>xterm</command>) 
+    DRI2 fonctionne, vous pouvez (toujours dans un terminal X) 
     lancer la commande 
-    <command>glxinfo | grep "OpenGL renderer string"</command> - si cela
+    <command>glxinfo | egrep "(OpenGL vendor|OpenGL renderer|OpenGL version)"</command> - si cela
     renvoie quelque chose <emphasis>d'autre que</emphasis>
     <literal>Software Rasterizer</literal> c'est que l'accélération fonctionne
-    pour l'utilisateur qui a lancç la commande.</para>
+    pour l'utilisateur qui a lançé la commande.</para>
+
+    <para>
+      Si votre matériel n'a pas de pilote DRI2 de disponible, il utilisera un rendu logiciel pour
+      le Direct Rendering. Dans ce cas, il est recommandé d'utiliser le nouveau rendu logiciel accéléré
+      de LLVM appelé LLVMPipe. Avant de construire LLVMPipe soyez certain que 
+      <xref linkend="llvm"/> est présent au moment de la construotion de MesaLib. Merci de noter
+      que tous les décodages sont fait par le CPU à la place du GPU, donc prevoyez que les choses seront
+      plus lentes. Pour vérifier si vous avez utilisé LLVMpipe, lançez
+     <command>glxinfo | egrep "(OpenGL vendor|OpenGL renderer|OpenGL version)"</command>.
+      Un example de sortie est montré en dessous:
+    </para>
+
+<screen><computeroutput>OpenGL vendor string: VMware, Inc.
+OpenGL renderer string: Gallium 0.4 on llvmpipe (LLVM 3.2, 256 bits)
+OpenGL version string: 2.1 Mesa 9.1-devel (git-cb3b172)</computeroutput></screen>
+    <para>
+      Vous pouvez toujours forcer LLVMPipe en exportant la variable d'environnement <envar>LIBGL_ALWAYS_SOFTWARE=1</envar>.
+    </para>
 
     <para>De nouveau, si vous avez ajouté le paquet Mesa-Demos, vous pouvez
     aussi lancer le programme de test <command>glxgears</command>.
@@ -101,6 +120,33 @@
     cadres dessinés par secondes dépendent beaucoup de la taille de la fenêtre.</para>
 
     </sect2>
+    <sect2 role="configuration" id="hybrid-graphics" xreflabel="Hybrid Graphics">
+    <title>Hybrid Graphics</title>
+    <para>
+      Hybrid Graphics est expérimental dans Linux. Les développeurs de Xorg ont mis au point une 
+      technologie appelé PRIME qui peut être utilisé pour commuter entre le GPU intégré et le 
+      "muxless" à souhait. La commutation automatique n'est pas possible pour le moment.
+    </para>
+    <para>
+      Pour utiliser PRIME pour la commutation de GPU, soyez certain d'utiliser le noyau Linux
+      3.4 ou plus (recommandé). Vous devez avoir les pilotes DRI et DDX pour votre matériel
+      et avoir <application>Xorg Server</application> 1.13 avec un correctif facultatif d'appliqué.
+    </para>
+    <para>
+      <application>Xorg Server</application> ne pourra pas charger les deux pilotes GPU automatiquement.
+      Pour lancer une application GLX sur un GPU, vous devez exporter la variable d'environnement
+      <envar>DRI_PRIME=1</envar>. Par exemple,
+
+
+<screen><userinput>DRI_PRIME=1 glxinfo | egrep "(OpenGL vendor|OpenGL renderer|OpenGL version)"</userinput></screen>
+      affichera le fournisseur OpenGL, le rendu et la version du GPU.
+    </para>
+    <para>
+      Si la dernière commande affiche le même rendu OpenGL avec ou sans <envar>DRI_PRIME=1</envar>,
+      vous devez vérifier votre installation.
+    </para>
+    </sect2>
+<!--
 
     <sect2 role="configuration" id='X11R6-compat-symlink'
          xreflabel="Creating an X11R6 Compatibility Symlink">
@@ -134,8 +180,8 @@
 <screen role="root"><userinput>ln -vsf $XORG_PREFIX /usr/X11R6</userinput></screen>
 
     </sect2>
-
-    <sect2 role="configuration" id="xft-font-protocol"  xreflabel="Xft Font Protocol">
+-->
+    <sect2 role="configuration" id="xft-font-protocol" xreflabel="Xft Font Protocol">
       <title>Protocole Xft Font</title>
 
       <indexterm zone="xft-font-protocol" id="fonts">
