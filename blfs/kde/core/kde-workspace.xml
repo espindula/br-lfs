@@ -107,18 +107,35 @@
 
   <sect2 role="installation">
     <title>Installation de Kde-workspace</title>
+    <para>
+      Il est recommandé d'avoir un utilisateur et un group dédiés pour contrôler
+      le démon <command>kdm</command> après qu'il soit démarré.
+      Tapez les commandes suivantes en tant qu'utilisateur 
+      <systemitem class="username">root</systemitem> :
+    </para>
+<screen role="root"><userinput>groupadd -g 37 kdm &amp;&amp;
+useradd -c "KDM Daemon Owner" -d /var/lib/kdm -g kdm \
+        -u 37 -s /bin/false kdm &amp;&amp;
+install -o kdm -g kdm -dm755 /var/lib/kdm</userinput></screen>
 
     <para>Installez <application>Kde-workspace</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
 <screen><userinput>mkdir build &amp;&amp;
 cd build &amp;&amp;
-cmake -DCMAKE_INSTALL_PREFIX=&kde-dir;        -DSYSCONF_INSTALL_DIR=/etc/kde        -DPYTHON_SITE_PACKAGES_INSTALL_DIR=/usr/lib/python2.7/site-packages       .. &amp;&amp;
+cmake -DCMAKE_INSTALL_PREFIX=&kde-dir;   \
+      -DSYSCONF_INSTALL_DIR=/etc \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DPYTHON_SITE_PACKAGES_INSTALL_DIR=/usr/lib/python2.7/site-packages \
+      .. &amp;&amp;
 make</userinput></screen>
 
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>make install</userinput></screen>
+<screen role="root"><userinput>make install &amp;&amp;
+mkdir -p /usr/share/xsessions &amp;&amp;
+ln -sf &kde-dir;/share/apps/kdm/sessions/kde-plasma.desktop \
+       /usr/share/xsessions/kde-plasma.desktop</userinput></screen>
 
   </sect2>
 
@@ -130,6 +147,47 @@ make</userinput></screen>
 
   </sect2>
 
+  <sect2 role="configuration">
+    <title>Configurer l'espace de travail de KDE</title>
+    <sect3>
+      <title>Configuration de Linux PAM</title>
+      
+     <para>Si vous avez construit <application>KDE Workspace</application> avec
+      le support <application>Linux PAM</application>, créez les fichiers de configuration
+      nécessaire en lançant les commandes suivantes en tant qu'utilisateur 
+      <systemitem class="username">root</systemitem> :</para>
+      
+<screen role="root"><userinput>cat &gt;&gt; /etc/pam.d/kde &lt;&lt; "EOF" &amp;&amp;
+# Begin /etc/pam.d/kde
+auth     requisite      pam_nologin.so
+auth     required       pam_env.so
+auth     required       pam_succeed_if.so uid &gt;= 1000 quiet
+auth     include        system-auth
+account  include        system-account
+password include        system-password
+session  include        system-session
+# End /etc/pam.d/kde
+EOF
+cat &gt; /etc/pam.d/kde-np &lt;&lt; "EOF" &amp;&amp;
+# Begin /etc/pam.d/kde-np
+auth     requisite      pam_nologin.so
+auth     required       pam_env.so
+auth     required       pam_succeed_if.so uid &gt;= 1000 quiet
+auth     required       pam_permit.so
+account  include        system-account
+password include        system-password
+session  include        system-session
+# End /etc/pam.d/kde-np
+EOF
+cat &gt; /etc/pam.d/kscreensaver &lt;&lt; "EOF"
+# Begin /etc/pam.d/kscreensaver
+auth    include system-auth
+account include system-account
+# End /etc/pam.d/kscreensaver
+EOF</userinput></screen>
+    </sect3>
+  </sect2>
+ 
   <sect2 role="content">
     <title>Contenu</title>
 
@@ -154,24 +212,7 @@ make</userinput></screen>
         <seg>plusieurs dans &kde-dir;/include, &kde-dir;/lib et &kde-dir;/share</seg>
       </seglistitem>
     </segmentedlist>
-<!--
-    <variablelist>
-      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
-      <?dbfo list-presentation="list"?>
-      <?dbhtml list-presentation="table"?>
 
-      <varlistentry id="a-kde4baseworkspace">
-        <term><command>kde4baseworkspace</command></term>
-        <listitem>
-          <para>is a testing utility for kde4baseworkspace-generated build trees.</para>
-          <indexterm zone="a-kde4baseworkspace kde4baseworkspace">
-            <primary sortas="b-kde4baseworkspace">kdelibs</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-    </variablelist>
--->
   </sect2>
   
 </sect1>
