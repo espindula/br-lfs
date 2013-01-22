@@ -6,63 +6,83 @@
 ]>
 
 <sect1 id="ch-system-procps" role="wrap">
-  <?dbhtml filename="procps.html"?>
+  <?dbhtml filename="procps-ng.html"?>
 
   <sect1info condition="script">
-    <productname>procps</productname>
-    <productnumber>&procps-version;</productnumber>
-    <address>&procps-url;</address>
+    <productname>procps-ng</productname>
+    <productnumber>&procps-ng-version;</productnumber>
+    <address>&procps-ng-url;</address>
   </sect1info>
 
-  <title>Procps-&procps-version;</title>
+  <title>Procps-&procps-ng-version;</title>
 
   <indexterm zone="ch-system-procps">
-    <primary sortas="a-Procps">Procps</primary>
+    <primary sortas="a-Procps">Procps-ng</primary>
   </indexterm>
 
   <sect2 role="package">
     <title/>
 
-    <para>The Procps package contains programs for monitoring processes.</para>
+    <para>The Procps-ng package contains programs for monitoring processes.</para>
 
     <segmentedlist>
       <segtitle>&buildtime;</segtitle>
       <segtitle>&diskspace;</segtitle>
 
       <seglistitem>
-        <seg>&procps-ch6-sbu;</seg>
-        <seg>&procps-ch6-du;</seg>
+        <seg>&procps-ng-ch6-sbu;</seg>
+        <seg>&procps-ng-ch6-du;</seg>
       </seglistitem>
     </segmentedlist>
 
   </sect2>
 
   <sect2 role="installation">
-    <title>Installation of Procps</title>
+    <title>Installation of Procps-ng</title>
 
-    <para>Apply a patch to prevent an error message from being displayed when
-    determining the kernel clock tick rate:</para>
+    <para>Now prepare procps-ng for compilation:</para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../&procps-hz_fixes-patch;</userinput></screen>
+<screen><userinput remap="configure">./configure --prefix=                        \
+            --mandir=/usr/share/man          \
+            --docdir=/usr/share/doc/$PROGRAM \
+            --disable-skill                  \
+            --disable-kill</userinput></screen>
 
-    <para>Apply a patch to fix a unicode related issue in the
-    <command>watch</command> program:</para>
+    <variablelist>
+      <title>The meaning of the configure options:</title>
 
-<screen><userinput remap="pre">patch -Np1 -i ../&procps-watch-patch;</userinput></screen>
-
-    <para>Do not install the kill program because it was installed by util-linux.
-    Also fix a bug in the Makefile, which prevents procps from building with
-    make-&make-version;:</para>
-
-<screen><userinput remap="pre">sed -i -e 's@\*/module.mk@proc/module.mk ps/module.mk@' \
-       -e 's@^#SKIP@SKIP@' Makefile</userinput></screen>
-
+      <varlistentry>
+        <term><parameter>--disable-skill</parameter></term>
+        <listitem>
+          <para>This switch disables the obsolete and unportable
+          skill and snice commands.</para> 
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>--disable-kill</parameter></term>
+        <listitem>
+          <para>This switch disables building the kill command that
+          was installed in the util-linux package.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+ 
     <para>Compile the package:</para>
 
 <screen><userinput remap="make">make</userinput></screen>
 
-    <para>This package does not come with a test suite.</para>
+    <para>The test suite needs some custom modifications for LFS. 
+    The <command>which</command> is not available and the
+    <command>pmap</command> test does not match a newline character in 
+    two tests. To run the test suite, run the following commands:</para>
 
+<screen><userinput remap="test">pushd testsuite
+  sed -i 's|exec which sleep|exec echo /tools/bin/sleep|' config/unix.exp
+  sed -i 's|pmap_initname\\\$|pmap_initname|'             pmap.test/pmap.exp
+  make site.exp 
+  DEJAGNU=global-conf.exp runtest
+popd</userinput></screen>
+                            
     <para>Install the package:</para>
 
 <screen><userinput remap="install">make install</userinput></screen>
@@ -70,16 +90,16 @@
   </sect2>
 
   <sect2 id="contents-procps" role="content">
-    <title>Contents of Procps</title>
+    <title>Contents of Procps-ng</title>
 
     <segmentedlist>
       <segtitle>Installed programs</segtitle>
       <segtitle>Installed library</segtitle>
 
       <seglistitem>
-        <seg>free, pgrep, pkill, pmap, ps, pwdx, skill, slabtop, snice,
-        sysctl, tload, top, uptime, vmstat, w, and watch</seg>
-        <seg>libproc.so</seg>
+        <seg>free, pgrep, pkill, pmap, ps, pwdx, slabtop, 
+        sysctl, tload, top, uptime, vmstat, w, and, watch</seg>
+        <seg>libprocps.so</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -149,33 +169,12 @@
         </listitem>
       </varlistentry>
 
-      <varlistentry id="skill">
-        <term><command>skill</command></term>
-        <listitem>
-          <para>Sends signals to processes matching the given criteria</para>
-          <indexterm zone="ch-system-procps skill">
-            <primary sortas="b-skill">skill</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="slabtop">
         <term><command>slabtop</command></term>
         <listitem>
           <para>Displays detailed kernel slap cache information in real time</para>
           <indexterm zone="ch-system-procps slabtop">
             <primary sortas="b-slabtop">slabtop</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="snice">
-        <term><command>snice</command></term>
-        <listitem>
-          <para>Changes the scheduling priority of processes matching the given
-          criteria</para>
-          <indexterm zone="ch-system-procps snice">
-            <primary sortas="b-snice">snice</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -257,13 +256,13 @@
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libproc">
+      <varlistentry id="libprocps">
         <term><filename class="libraryfile">libproc</filename></term>
         <listitem>
           <para>Contains the functions used by most programs in this
           package</para>
-          <indexterm zone="ch-system-procps libproc">
-            <primary sortas="c-libproc">libproc</primary>
+          <indexterm zone="ch-system-procps libprocps">
+            <primary sortas="c-libprocps">libprocps</primary>
           </indexterm>
         </listitem>
       </varlistentry>
