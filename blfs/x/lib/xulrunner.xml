@@ -73,28 +73,33 @@
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
-      <xref linkend="yasm"/> ou <xref linkend="libvpx"/>
-      (pour permettre à <application>Xulrunner</application> de lire des
-      vidéos webm).
+      <xref linkend="libevent"/>,
+      <xref linkend="libvpx"/>,
+      <xref linkend="nspr"/>,
+      <xref linkend="nss"/>,
+      <xref linkend="sqlite"/> et
+      <xref linkend="yasm"/>
     </para>
 
+    <note>
+      <para>
+        Si vous n'installez pas les dépendances recommandées, alors les versions
+        internes de ces paquets seront utilisés.
+        Ils peuvent être testé pour fonctionner, mais ils peuvent être
+        dépassé ou contenir des trous de sécurité.
+      </para>
+    </note>
+    
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
       <xref linkend="dbus-glib"/>,
-      <xref linkend="startup-notification"/>,
-      <xref linkend="sqlite"/>,
-      <ulink url="http://sourceforge.net/projects/hunspell/">Hunspell</ulink>,
-      <xref linkend="libevent"/>,
       <xref linkend="doxygen"/>,
       <xref linkend="gnome-vfs"/> et <xref linkend="libgnomeui"/> (pour
       une intégration avec l'ancienne version de <application>Gnome</application>),
       <xref linkend="libnotify"/>,
-      <xref linkend="nspr"/>,
-      <xref linkend="nss"/>,
-      <xref linkend="wireless_tools"/>,
-      <ulink url="http://www.valgrind.org/">Valgrind</ulink> (seulement pour
-      tester le code jemalloc) et
-      <xref linkend="wget"/>
+      <xref linkend="startup-notification"/>,
+      <xref linkend="wget"/> et
+      <xref linkend="wireless_tools"/>
     </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
@@ -115,47 +120,63 @@
 
 <screen><userinput>cat &gt; mozconfig &lt;&lt; "EOF"
 # Si vous avez une machine multicoeurs, vous pouvez accélérer la
-# construction en lançant plusieurs tâches en même temps, mais vous n'avez qu'un
-# coeur, effacez cette ligne&nbsp;:
-mk_add_options MOZ_MAKE_FLAGS="-j4"
+# construction en lançant plusieurs tâches en même temps en décommentant, la ligne suivantes
+# et en initialisant la valeur du nombre de coeur:
+#mk_add_options MOZ_MAKE_FLAGS="-j4"
 
-# Si vous n'avez pas installé Yasm décommentez cette option&nbsp;:
-# ac_add_options --disable-webm
-
-# Si vous avez installé DBus-Glib effacez cette option&nbsp;:
+# Si vous avez installé DBus-Glib commentez cette ligne&nbsp;:
 ac_add_options --disable-dbus
 
-# Si vous avez installé wireless-tools effacez cette option&nbsp;:
+# Si vous avez installé wireless-tools commentez cette ligne&nbsp;:
 ac_add_options --disable-necko-wifi
 
-# Si vous avez installé libnotify effacez cette option&nbsp;:
+# Si vous avez installé libnotify commentez cette ligne&nbsp;:
 ac_add_options --disable-libnotify
 
 
-# Décommentez ceci si vous les avez installés&nbsp;:
-# ac_add_options --enable-startup-notification
-# ac_add_options --enable-system-hunspell
-# ac_add_options --enable-system-sqlite
-# ac_add_options --with-system-libevent
-# ac_add_options --with-system-libvpx
-# ac_add_options --with-system-nspr
-# ac_add_options --with-system-nss
+# Décommentez ces lignes si vous avez installé les dépendances facultatives
+#ac_add_options --enable-system-hunspell
+#ac_add_options --enable-startup-notification
 
-mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/xulrunner-build-dir
-ac_add_options --disable-crashreporter
-ac_add_options --disable-debug
-ac_add_options --disable-debug-symbols
-ac_add_options --disable-installer
-ac_add_options --disable-static
-ac_add_options --disable-tests
-ac_add_options --disable-updater
-ac_add_options --enable-application=xulrunner
-ac_add_options --enable-shared
-ac_add_options --enable-system-ffi
+# Si vous n'avez pas installé Yasmalors décommentez cette ligne:
+#ac_add_options --disable-webm
+
+
+# Commentez les options suivantes si vous n'avez pas installé les dépendances
+# receommandées:
+ac_add_options --enable-system-sqlite
+ac_add_options --with-system-libevent
+ac_add_options --with-system-libvpx
+ac_add_options --with-system-nspr
+ac_add_options --with-system-nss
+
+# Il est recommandé de ne rien modifier après cette ligne
 ac_add_options --prefix=/usr
+ac_add_options --enable-application=xulrunner
+
+ac_add_options --disable-crashreporter
+ac_add_options --disable-installer
+ac_add_options --disable-updater
+ac_add_options --disable-debug
+ac_add_options --disable-tests
+ac_add_options --disable-mochitest
+
+ac_add_options --enable-optimize
+ac_add_options --enable-strip
+ac_add_options --enable-install-strip
+
+ac_add_options --enable-system-ffi
+ac_add_options --enable-system-pixman
+
+ac_add_options --enable-shared-js
 ac_add_options --with-pthreads
+
+ac_add_options --with-system-bz2
 ac_add_options --with-system-jpeg
 ac_add_options --with-system-png
+ac_add_options --with-system-zlib
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/xulrunner-build-dir
 EOF</userinput></screen>
 
     <para>Installez <application>Xulrunner</application> en tapant les
@@ -175,11 +196,20 @@ rm -rf                    /usr/lib/xulrunner-&xulrunner-version;/plugins        
 ln -sv ../mozilla/plugins /usr/lib/xulrunner-&xulrunner-version;                  &amp;&amp;
 chown -Rv root:root       /usr/{include,lib,share/idl}/xulrunner-* &amp;&amp;
 
-for library in /usr/lib/xulrunner-&xulrunner-version;/*.so; do
-   ln -sfv $library /usr/lib
+mkdir -pv /usr/lib/mozilla/plugins &amp;&amp;
+rm -rf /usr/lib/xulrunner-&xulrunner-version;/plugins &amp;&amp;
+ln -sv ../mozilla/plugins /usr/lib/xulrunner-&xulrunner-version; &amp;&amp;
+chmod -v 755 /usr/lib/xulrunner-&xulrunner-version;/libxpcom.so \
+             /usr/lib/xulrunner-devel-&xulrunner-version;/sdk/bin/xpcshell &amp;&amp;
+for library in libmozalloc.so libmozjs.so libxpcom.so libxul.so; do
+    ln -sfv ../../../xulrunner-&xulrunner-version;/$library \
+            /usr/lib/xulrunner-devel-&xulrunner-version;/sdk/lib/$library
+    ln -sfv xulrunner-&xulrunner-version;/$library /usr/lib/$library
 done
-ln -sv -f ../xulrunner-devel-&xulrunner-version;/sdk/bin/run-mozilla.sh        /usr/lib/xulrunner-&xulrunner-version;
-ln -sv -f ../xulrunner-devel-&xulrunner-version;/sdk/bin/xpcshell        /usr/lib/xulrunner-&xulrunner-version;
+ln -sfv ../xulrunner-devel-&xulrunner-version;/sdk/bin/run-mozilla.sh \
+        /usr/lib/xulrunner-&xulrunner-version;
+ln -sfv ../xulrunner-devel-&xulrunner-version;/sdk/bin/xpcshell \
+        /usr/lib/xulrunner-&xulrunner-version;</userinput></screen>
 </userinput></screen>
   </sect2>
 
@@ -194,23 +224,24 @@ ln -sv -f ../xulrunner-devel-&xulrunner-version;/sdk/bin/xpcshell        /usr/li
     le fichier <filename>client.mk</filename> pour obtenir la configuration de
     départ et paramétrer les réglages.</para>
 
-    <para><command>ln -sv ../mozilla/plugins ...</command>&nbsp;: Certains
+    <para><command>ln -sfv ../mozilla/plugins ...</command>&nbsp;: Certains
     paquets installeront des greffons de navigateur dans
     <filename class="directory">/usr/lib/mozilla/plugins</filename>. La création
     du lien symbolique <application>Xulrunner</application> conserve les greffons
     supplémentaires gans le répertoire habituel.</para>
 
     <para>
-    <command>for library in
-      /usr/lib/xulrunner-&xulrunner-version;/*.so; do ln -sfv $library /usr/lib;
-      done</command>&nbsp;: Ces bibliothèques fournies avec ce paquet sont
+      <command>for library in libmozalloc.so libmozjs.so libxpcom.so libxul.so ...
+      </command>: Ces bibliothèques fournies avec ce paquet sont
       installées dans
-      <filename class="directory">/usr/lib/xulrunner-&xulrunner-version;</filename>,
+      <filename class="directory">/usr/lib/xulrunner-&xulrunner-version;</filename>
+      ce qui veut dire qu'elles ne sont pas trouvées à l'exécution. on;</filename>,
       ce qui veut dire qu'elles ne sont pas trouvées à l'exécution. Ces commandes font des liens
-      symboliques relatifs vers les bibliothèques partagées de <filename class="directory">/usr/lib</filename>.
-      Des versions débogguées de certaines, mais pas toutes, de ces bibliothèques 
-      peuvent également être trouvées dans
-      <filename class="directory">/usr/lib/xulrunner-devel-&xulrunner-version;/sdk/lib</filename>.
+      symboliques relatifs vers les bibliothèques partagées de 
+      <filename class="directory">/usr/lib</filename>. Cela remplacera aussi les bibliothèques en doubles qui sont installées
+      dans
+      <filename class="directory">/usr/lib/xulrunner-devel-&xulrunner-version;/sdk/lib</filename>
+      avec des liens symboliques pour économiser un peu d'espace.
     </para>
 
     <para>
@@ -230,14 +261,20 @@ ln -sv -f ../xulrunner-devel-&xulrunner-version;/sdk/bin/xpcshell        /usr/li
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>xulrunner</seg>
-        <seg>De nombreuses bibliothèques, des composants du navigateur, plugins, des extensions 
-        et des modules auxiliaires installés dans <filename
-       class='directory'>/usr/lib/xulrunner-&xulrunner-version;</filename></seg>
-        <seg>/etc/gre.d, /usr/include/xulrunner-&xulrunner-version;,
-        /usr/lib/xulrunner-&xulrunner-version;,
-        /usr/lib/xulrunner-devel-&xulrunner-version;, et
-        /usr/share/idl/xulrunner-&xulrunner-version;</seg>
+        <seg>
+          xulrunner
+        </seg>
+        <seg>
+          De nombreuses bibliothèques, des composants du navigateur, plugins, des extensions
+        et des modules d'aide installés dans <filename
+          class="directory">/usr/lib/xulrunner-&xulrunner-version;</filename>
+        </seg>
+        <seg>
+          /usr/include/xulrunner-&xulrunner-version;,
+          /usr/lib/xulrunner-&xulrunner-version;,
+          /usr/lib/xulrunner-devel-&xulrunner-version; and
+          /usr/share/idl/xulrunner-&xulrunner-version;
+        </seg>
       </seglistitem>
     </segmentedlist>
 
