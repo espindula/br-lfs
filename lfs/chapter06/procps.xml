@@ -6,24 +6,24 @@
 ]>
 
 <sect1 id="ch-system-procps" role="wrap">
-  <?dbhtml filename="procps.html"?>
+  <?dbhtml filename="procps-ng.html"?>
 
   <sect1info condition="script">
-    <productname>procps</productname>
-    <productnumber>&procps-version;</productnumber>
-    <address>&procps-url;</address>
+    <productname>procps-ng</productname>
+    <productnumber>&procps-ng-version;</productnumber>
+    <address>&procps-ng-url;</address>
   </sect1info>
 
-  <title>Procps-&procps-version;</title>
+  <title>Procps-&procps-ng-version;</title>
 
   <indexterm zone="ch-system-procps">
-    <primary sortas="a-Procps">Procps</primary>
+    <primary sortas="a-Procps">Procps-ng</primary>
   </indexterm>
 
   <sect2 role="package">
     <title/>
 
-    <para>Le paquet Procps contient des programmes pour surveiller les
+    <para>Le paquet Procps-ng contient des programmes pour surveiller les
     processus.</para>
 
     <segmentedlist>
@@ -31,56 +31,83 @@
       <segtitle>&diskspace;</segtitle>
 
       <seglistitem>
-        <seg>&procps-ch6-sbu;</seg>
-        <seg>&procps-ch6-du;</seg>
+        <seg>&procps-ng-ch6-sbu;</seg>
+        <seg>&procps-ng-ch6-du;</seg>
       </seglistitem>
     </segmentedlist>
 
   </sect2>
 
   <sect2 role="installation"> 
-    <title>Installation de Procps</title>
+    <title>Installation de Procps-ng</title>
 
-  <para>Appliquez un correctif pour empêcher un message d'erreur de s'afficher
-  pendant la détermination de la vitesse de la pendule du noyau&nbsp;:</para>
+    <para>Préparez maintenant la compilation de procps-ng&nbsp;:</para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../&procps-hz_fixes-patch;</userinput></screen>
+<screen><userinput remap="configure">./configure --prefix=/usr                           \
+            --exec-prefix=                          \
+            --libdir=/usr/lib                       \
+            --docdir=/usr/share/doc/procps-ng-&procps-ng-version; \
+            --disable-static                        \
+            --disable-skill                         \
+            --disable-kill</userinput></screen>    
 
-    <para>Appliquez un correctif pour corriger un problème lié a  l'unicode dans le programme
-    <command>watch</command>&nbsp;:</para>
+    <variablelist>
+      <title>Voici la signification des options de configure&nbsp;:</title>
 
-<screen><userinput remap="pre">patch -Np1 -i ../&procps-watch-patch;</userinput></screen>
-
-    <para>N'installez pas le programme kill car il a été installé par util-linux.
-    Corrigez aussi un bogue dans le Makefile qui empêche procps de se construire avec
-    make-&make-version;&nbsp;:</para>
-
-<screen><userinput remap="pre">sed -i -e 's@\*/module.mk at proc/module.mk ps/module.mk@' \
-       -e 's@^#SKIP at SKIP@' Makefile</userinput></screen>
+      <varlistentry>
+        <term><parameter>--disable-skill</parameter></term>
+        <listitem>
+          <para>Ce paramètre désactive les commandes obsolètes et non portables
+          skill et snice.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>--disable-kill</parameter></term>
+        <listitem>
+          <para>Cette option désactive la construction de la commande kill
+          installée dans le paquet util-linux.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
 
     <para>Compilez le paquet&nbsp;:</para>
 
 <screen><userinput remap="make">make</userinput></screen>
 
-    <para>Ce paquet n'est pas fourni avec une suite de test.</para>
+    <para>La suite de tests exige des modifications pour LFS. <command>which</command>
+    n'est pas disponible et le test <command>pmap</command> n'associe pas de
+    caractère newline pour deux tests. Pour lancer la suite de tests, lancez
+    les commandes suivantes&nbsp;:</para>
+    
+<screen><userinput remap="test">pushd testsuite
+  sed -i 's|exec which sleep|exec echo /tools/bin/sleep|' config/unix.exp
+  sed -i 's|pmap_initname\\\$|pmap_initname|'             pmap.test/pmap.exp
+  make site.exp
+  DEJAGNU=global-conf.exp runtest
+popd</userinput></screen>
 
     <para>Installez le paquet&nbsp;:</para>
 
 <screen><userinput remap="install">make install</userinput></screen>
 
+    <para>Enfin, déplacez la bibliothèque à un endroit où elle sera trouvable
+    si <filename class="directory">/usr</filename> n'est pas monté.</para>
+    
+<screen><userinput remap="install">mv -v /usr/lib/libprocps.so.* /lib
+ln -sfv ../../lib/libprocps.so.1.0.0 /usr/lib/libprocps.so</userinput></screen>
   </sect2>
 
   <sect2 id="contents-procps" role="content">
-    <title>Contenu de Procps</title>
+    <title>Contenu de Procps-ng</title>
 
     <segmentedlist>
       <segtitle>Programmes installés</segtitle>
       <segtitle>Bibliothèque installée</segtitle>
 
       <seglistitem>
-        <seg>free, pgrep, pkill, pmap, ps, pwdx, skill, slabtop, snice,
-        sysctl, tload, top, uptime, vmstat, w et watch</seg>
-        <seg>libproc.so</seg>
+        <seg>free, pgrep, pkill, pmap, ps, pwdx, slabtop,
+        sysctl, tload, top, uptime, vmstat, w, et watch</seg>
+        <seg>libprocps.so</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -150,32 +177,12 @@
         </listitem>
       </varlistentry>
 
-      <varlistentry id="skill">
-        <term><command>skill</command></term>
-        <listitem>
-          <para>Envoie des signaux aux processus correspondant à un critère donné</para>
-          <indexterm zone="ch-system-procps skill">
-            <primary sortas="b-skill">skill</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="slabtop">
         <term><command>slabtop</command></term>
         <listitem>
           <para>Affiche des informations détaillées sur le cache slap du noyau en temps réel</para>
           <indexterm zone="ch-system-procps slabtop">
             <primary sortas="b-slabtop">slabtop</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="snice">
-        <term><command>snice</command></term>
-        <listitem>
-          <para>Modifie les priorités des processus suivant le critère donné.</para>
-          <indexterm zone="ch-system-procps snice">
-            <primary sortas="b-snice">snice</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -255,13 +262,13 @@
         </listitem>
       </varlistentry>
 
-      <varlistentry id="libproc">
+      <varlistentry id="libprocps">
         <term><filename class="libraryfile">libproc</filename></term>
         <listitem>
           <para>Contient les fonctions utilisées par la plupart des programmes 
           de ce paquet</para>
-          <indexterm zone="ch-system-procps libproc">
-            <primary sortas="c-libproc">libproc</primary>
+          <indexterm zone="ch-system-procps libprocps">
+            <primary sortas="c-libprocps">libprocps</primary>
           </indexterm>
         </listitem>
       </varlistentry>

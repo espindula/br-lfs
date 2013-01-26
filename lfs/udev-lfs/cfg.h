@@ -1,3 +1,5 @@
+/* Custom udev (from systemd) configuration header file for LFS */
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
@@ -12,6 +14,10 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the `secure_getenv' function. */
+/* For glibc before 2.17, this should be HAVE___SECURE_GETENV */
+#define HAVE_SECURE_GETENV 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -56,4 +62,3 @@
 #define HAVE_DECL_PIVOT_ROOT 0
 #define HAVE_DECL_GETTID 0
 #define HAVE_NAME_TO_HANDLE_AT 1
-#define HAVE___SECURE_GETENV 1

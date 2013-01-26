@@ -4,8 +4,8 @@
 # vim: tabstop=3
 
 SHELL=/bin/bash
-SYSTEMD_VERSION=196
-VERSION=196-3
+SYSTEMD_VERSION=197
+VERSION=197-2
 
 ifeq ($(V),)
  VB = @
@@ -79,7 +79,8 @@ COMMON_SRCS = log.c         \
               util.c        \
               dev-setup.c   \
               sd-login.c    \
-              sd-daemon.c
+              sd-daemon.c   \
+              time-util.c
 
 COMMON_OBJS := $(addprefix build/, $(COMMON_SRCS:.c=.o))
 
@@ -146,6 +147,14 @@ SED_PROCESS = \
        -e 's|@includedir@|/usr/include|g'  \
         < $< > $@
 
+SECURE = $(shell if nm /lib/libc.so.6 | grep -q " secure_getenv"; \
+then echo yes; fi)
+
+ifeq "$(SECURE)" "yes"
+   SECURE_GETENV = SECURE_GETENV
+else
+   SECURE_GETENV = __SECURE_GETENV
+endif
 
 udev: common                     \
       build/$(COMMON_LIB)        \
@@ -163,7 +172,9 @@ udev: common                     \
       build/libudev.pc
 
 cfg.h: udev-lfs-$(VERSION)/cfg.h
-	sed  -e 's/LFS-VERSION/$(SYSTEMD_VERSION)/' udev-lfs-$(VERSION)/cfg.h > ./cfg.h
+	sed  -e 's/LFS-VERSION/$(SYSTEMD_VERSION)/' \
+        -e 's/SECURE_GETENV/$(SECURE_GETENV)/' \
+        udev-lfs-$(VERSION)/cfg.h > ./cfg.h
 	@mkdir -p build
 
 common: cfg.h 
