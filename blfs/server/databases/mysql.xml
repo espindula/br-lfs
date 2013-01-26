@@ -63,12 +63,7 @@
         url="&patch-root;/mysql-&mysql-version;-embedded_library_shared-1.patch"/></para>
       </listitem>
       <listitem>
-        <para>Correctif facultatif (requis si vous construisez seulement le
-        client)&nbsp;: <ulink
-        url="&patch-root;/mysql-&mysql-version;-fix_client_only-1.patch"/></para>
-      </listitem>
-      <listitem>
-        <para>Documentation optionelle (voir l'astuce ci-dessous):
+        <para>Documentation facultative (voir l'astuce ci-dessous):
           <ulink url="http://dev.mysql.com/doc/"/>
         </para>      
 		</listitem>
@@ -77,10 +72,10 @@
     <bridgehead renderas="sect3">Dépendances de MySQL</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
-    <para role="optional"><xref linkend="cmake"/></para>
+    <para role="required"><xref linkend="cmake"/></para>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
-    <para role="optional"><xref linkend="openssl"/></para>
+    <para role="recommended"><xref linkend="openssl"/></para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
@@ -95,29 +90,27 @@
   <sect2 role="installation">
     <title>Installation de MySQL</title>
 
-    <sect3>
-    <title>Construction</title>
-
     <para>Pour des raisons de sécurité, vous êtes fortement encouragé à exécuter
     le serveur en tant qu'utilisateur et groupe non privilégiés. Lancez ce
     qui suit (en tant qu'utilisateur <systemitem class="username">root</systemitem>)
     pour créer l'utilisateur et le groupe&nbsp;:</para>
 
 <screen role="root"><userinput>groupadd -g 40 mysql &amp;&amp;
-useradd -c "MySQL Server" -d /dev/null -g mysql -s /bin/false -u 40 mysql</userinput></screen>
+useradd -c "MySQL Server" -d /srv/mysql -g mysql -s /bin/false -u 40 mysql</userinput></screen>
 
     <para>Si le serveur MySQL n'est pas nécessaire, il est possible de ne
     construire que les bibliothèques clients de MySQL. Pour cela, vous devez
-    appliquer le correctif facultatif, utilisez l'option <parameter>-DWITHOUT_SERVER=ON</parameter> 
-    de cmake et les instructions d'installation du client-seulement ci-dessous.</para>
+    ajouter <parameter>-DWITHOUT_SERVER=ON</parameter> dans la commande <command>cmake</command>
+    ci-dessous.</para>
 
     <para>MySQL contient une bibliothèque serveur embarquée qui peut être activée
     par l'option <parameter>-DWITH_EMBEDDED_SERVER=ON</parameter> de cmake.
     Par défaut, ce serveur est construit comme bibliothèque liée de façon
     statique, <filename>libmysqld.a</filename>, mais en appliquant le
     correctif facultatif, on peut construire une version partagée de cette
-    bibliothèque. La bibliothèque partagée est nécessaire pour certaines
-    applications, telles que <application>Amarok</application>.</para>
+    bibliothèque. La bibliothèque est nécessaire pour certaines
+    applications, telles que <application>Amarok</application> et nous recommandons
+    l'utilisation des bibliothèques partagées.</para>
      
     <para>Beaucoup d'options sont disponibles avec
     <userinput>cmake</userinput>. Vérifiez la sortie de `<userinput>cmake .
@@ -127,80 +120,80 @@ useradd -c "MySQL Server" -d /dev/null -g mysql -s /bin/false -u 40 mysql</useri
     Documentation MySQL </ulink> pour une liste complète des options.</para>
      
     <para>Si vous voulez la version partagée de la bibliothèque serveur
-    embarquée, appliquez le correctif&nbsp;:</para>
+    embarquée, appliquez le correctif suivant&nbsp;:</para>
 
 <screen><userinput>patch -Np1 -i ../mysql-&mysql-version;-embedded_library_shared-1.patch</userinput></screen>
-
-     <para>Si vous ne construisez que le client, appliquez le correctif&nbsp;:</para>
-<screen><userinput>patch -Np1 -i ../mysql-&mysql-version;-fix_client_only-1.patch</userinput></screen>
-    
-    <para>Configurez et construisez <application>MySQL</application> en
+ 
+    <para>Installez <application>MySQL</application> en
     lançant les commandes suivantes&nbsp;:</para>
      
-<screen><userinput>mkdir build &amp;&amp;
+<screen><userinput>sed -i "/ADD_SUBDIRECTORY(sql\/share)/d" CMakeLists.txt &amp;&amp;
+sed -i "s/ADD_SUBDIRECTORY(libmysql)/&amp;\\nADD_SUBDIRECTORY(sql\/share)/" CMakeLists.txt &amp;&amp;
+sed -i "s@data/test@\${INSTALL_MYSQLSHAREDIR}@g" sql/CMakeLists.txt &amp;&amp;
+sed -i "s@data/mysql@\${INSTALL_MYSQLTESTDIR}@g" sql/CMakeLists.txt &amp;&amp;
+mkdir build &amp;&amp;
 cd build &amp;&amp;
-cmake -DCMAKE_INSTALL_PREFIX=/usr                         -DINSTALL_DOCDIR=share/doc/mysql                    -DINSTALL_DOCREADMEDIR=share/doc/mysql              -DINSTALL_INCLUDEDIR=include/mysql                  -DINSTALL_INFODIR=share/info                        -DINSTALL_MANDIR=share/man                          -DINSTALL_MYSQLDATADIR=/srv/mysql                   -DINSTALL_MYSQLSHAREDIR=share/mysql                 -DINSTALL_MYSQLTESTDIR=share/mysql/test             -DINSTALL_PLUGINDIR=lib/mysql                       -DINSTALL_SBINDIR=sbin                              -DINSTALL_SCRIPTDIR=bin                             -DINSTALL_SQLBENCHDIR=share/mysql/bench             -DINSTALL_SUPPORTFILESDIR=share/mysql/support       -DMYSQL_DATADIR=/srv/mysql                          -DMYSQL_UNIX_ADDR=/var/run/mysql/mysql.sock         -DSYSCONFDIR=/etc                                   -DWITH_PARTITION_STORAGE_ENGINE=OFF                 -DWITH_PERFSCHEMA_STORAGE_ENGINE=OFF                -DWITH_READLINE=system                              -DWITH_SSL=system                                   .. &amp;&amp;
+cmake -DCMAKE_BUILD_TYPE=Release                    \
+      -DCMAKE_INSTALL_PREFIX=/usr                   \
+-DINSTALL_DOCDIR=share/doc/mysql       \
+-DINSTALL_DOCREADMEDIR=share/doc/mysql  \
+-DINSTALL_INCLUDEDIR=include/mysql   \
+-DINSTALL_INFODIR=share/info        \
+-DINSTALL_MANDIR=share/man               \
+-DINSTALL_MYSQLDATADIR=/srv/mysql    \
+-DINSTALL_MYSQLSHAREDIR=share/mysql    \
+-DINSTALL_MYSQLTESTDIR=share/mysql/test  \
+-DINSTALL_PLUGINDIR=lib/mysql         \
+-DINSTALL_SBINDIR=sbin                \
+-DINSTALL_SCRIPTDIR=bin                \
+-DINSTALL_SQLBENCHDIR=share/mysql/bench \
+-DINSTALL_SUPPORTFILESDIR=share/mysql/support    \
+-DMYSQL_DATADIR=/srv/mysql               \
+-DMYSQL_UNIX_ADDR=/var/run/mysql/mysql.sock    \
+-DSYSCONFDIR=/etc/mysql                 \
+-DWITH_PARTITION_STORAGE_ENGINE=OFF         \
+-DWITH_PERFSCHEMA_STORAGE_ENGINE=OFF       \
+-DWITH_READLINE=system   \
+-DWITH_SSL=system      \
+.. &amp;&amp;
 make</userinput></screen>
 
     <para>Pour tester les résultats, lancez&nbsp;: <command>make test-force 2>&amp;1 | tee
 	test.log</command>.Cela force le test à lancer au départ le log de toutes les sorties de tests.
 	Il y a beaucoup de tests qui ne sont pas lancés a cause des options de configuraton et de 
-	considérations des programmeurs. Remarquez que si vous utilisez TCP Wreappers et avez un 
-	<filename>/etc/hosts.deny</filename> restreint, vous devrez ajouter une entrée adéquate au fichier
-    <filename>/etc/hosts.allow</filename> pour le démon <command>mysqld</command>. 
-	Sans cela, beaucoup de tests échoueront.</para>
+	considérations des programmeurs. Sans cela, beaucoup de tests échoueront.
+        Aussi, deux tests échoueront si ipv6 n'est pas activé dans le noyau
+        en tant que module ou en dur.</para>
 
     <note><para>Il se peut que les tests SSL échouent à cause de certificts
     expirés.</para></note>
 
-    </sect3>
+    <para>
+      Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> user:
+    </para>
 
-     <sect3>
-     <title>Installation (serveur et client)</title>
-    
-      <para>Pour installer le serveur et le client, lancez la commande suivante
-      (en tant qu'utilisateur <systemitem class="username">root</systemitem>)&nbsp;:</para>
-
-<screen role="root"><userinput>SEGMENTS="Client Server IniFiles ManPages SharedLibraries"
-SEGMENTS="$SEGMENTS Development Documentation Info Readme"
-
-for segment in $SEGMENTS; do
-   cmake -DCMAKE_INSTALL_COMPONENT=$segment -P cmake_install.cmake
-done
-
-unset SEGMENTS</userinput></screen>
-
-      <note><para>Si vous avez construit la bibliothèque serveur embarquée,
-      ajoutez <userinput>Embedded</userinput> à la variable
-      <userinput>SEGMENTS</userinput> ci-dessus.</para></note>
+<screen role="root"><userinput>make install</userinput></screen>
 
     <tip>
-      <para>La seule documentation incluse dans l'archive tar des sources est
-      dans des fichiers <filename>mysql.info</filename> et dans les man pages.
-	  Vous pouvez télécharger différents formats du manuel de référence de 
-	  <application>MySQL</application> sur <ulink url="http://dev.mysql.com/doc/"/>.
-	  </para>
+      <para>
+        Les seules documentations fournies dans l'archive des sources sont
+        <filename>mysql.info</filename> et les pages de manuels. Vous pouvez
+        télécharger différents formats du manuel de référence
+        <application>MySQL</application>
+        à l'adresse <ulink url="http://dev.mysql.com/doc/"/>.
+      </para>
     </tip>
-   </sect3>
 
-    <sect3>
-      <title>Installation (client seulement)</title>
-
-      <para>Si vous voulez n'installer que le logiciel client, lancez ce qui suit
-      (en tant qu'utilisateur <systemitem class="username">root</systemitem>)&nbsp;:</para>
-
-<screen role="root"><userinput>SEGMENTS="Client ManPages SharedLibraries"
-SEGMENTS="$SEGMENTS Development Documentation Info Readme"
-for segment in $SEGMENTS; do
-   cmake -DCMAKE_INSTALL_COMPONENT=$segment -P cmake_install.cmake
-done
- 
-unset SEGMENTS</userinput></screen>
-    </sect3>
    </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
+
+    <para>
+      <command>sed -i ...</command>: Le premier des deux seds corrige
+      la construction du client seulement, le dernier des deux seds
+      initialise les bons répertoires d'installation pour quelques composants.
+    </para>
 
     <para><parameter>-DWITH_&lt;engine&gt;_STORAGE_ENGINE=ON</parameter>&nbsp;:
     Les instructions par défaut ne construisent que le moteur de stockage
@@ -209,23 +202,17 @@ unset SEGMENTS</userinput></screen>
     EXAMPLE, FEDERATED, INNOBASE, NDBCLUSTER,
     PARTITION et PERFSCHEMA.</para>
 
-    <para><parameter>-DWITHOUT_SERVER=ON</parameter>&nbsp;: Utilisez ce
+   <para><parameter>-DWITHOUT_SERVER=ON</parameter>&nbsp;: Utilisez ce
     paramètre si vous ne voulez pas le serveur et si vous ne voulez construire
     que le client.</para>
 
     <para><parameter>-DWITH_EMBEDDED_SERVER=ON</parameter>&nbsp;: Utilisez ce
     paramètre pour construire la bibliothèque serveur embarquée.</para>
     
-    <para><parameter>-DWITH_SSL=system</parameter>&nbsp;: Utilisez ce paramètre
-    pour construire contre une version de SSL du système.</para>
-
-    <para><command>cmake -DCMAKE_INSTALL_COMPONENT=$segment ...</command>&nbsp;:
-    Cette commane installe la partie adéquate du paquet. Vous pouvez ajouter
-    ou supprimer différents segments comme vous le voulez. Les segments
-    valides sont listés  `<command>make list_install_components</command>`.
-    Remarquez que le segmentation d'installation 'DataFiles' n'accepte pas les
-    déclarations -DMYSQL_DATADIR ou -DINSTALL_MYSQLDATADIR et il installe les
-    fichiers de données dans <filename class="directory">/usr/data</filename>.</para>
+    <para><parameter>-DWITH_SSL=system</parameter>&nbsp;: Ce paramètre est utilisé
+    pour signaler d'utiliser la version du système de 
+      <application>OpenSSL</application>. Effacez le si vous n'avez pas installées
+      <application>OpenSSL</application>.</para>
 
   </sect2>
 
@@ -235,15 +222,17 @@ unset SEGMENTS</userinput></screen>
     <sect3 id="mysql-config">
       <title>Fichiers de configuration</title>
 
-      <para><filename>/etc/my.cnf</filename> et
-      <filename>~/.my.cnf</filename></para>
+      <para>
+        <filename>/etc/mysql/my.cnf</filename> et
+        <filename>~/.my.cnf</filename>
+      </para>
 
       <indexterm zone="mysql mysql-config">
         <primary sortas="e-AA.my.cnf">~/.my.cnf</primary>
       </indexterm>
 
       <indexterm zone="mysql mysql-config">
-        <primary sortas="e-etc-my.cnf">/etc/my.cnf</primary>
+        <primary sortas="e-etc-mysql-my.cnf">/etc/my.cnf</primary>
       </indexterm>
 
     </sect3>
@@ -255,11 +244,12 @@ unset SEGMENTS</userinput></screen>
       disponibles dans <filename class="directory">/usr/share/mysql</filename>.
       Quand vous créez le fichier, assurez vous que les journaux binaires sont
       désactivés à moins que vous fassiez une copie de la base de données.
-      Créez <filename>/etc/my.cnf</filename> en utilisant la commande suivante
+      Créez <filename>/etc/mysql/my.cnf</filename> en utilisant la commande suivante
       en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>install -v -m644 /usr/share/mysql/support/my-medium.cnf /etc/my.cnf
-sed -i 's/^log-bin/#log-bin/' /etc/my.cnf</userinput></screen>
+<screen role="root"><userinput>install -v -Dm644 /usr/share/mysql/support/my-medium.cnf /etc/mysql/my.cnf &amp;&amp;
+sed -i 's/^log-bin/#log-bin/' /etc/mysql/my.cnf &amp;&amp;
+sed -i 's/^binlog/#binlog/' /etc/mysql/my.cnf</userinput></screen>
 
       <para>Vous pouvez maintenant installer une base de données et modifier 
       l'appartenance en faveur de l'utilisateur et du groupe non privilégiés 
@@ -267,7 +257,7 @@ sed -i 's/^log-bin/#log-bin/' /etc/my.cnf</userinput></screen>
       class="username">root</systemitem> user)&nbsp;:</para>
 
 <screen role="root"><userinput>mysql_install_db --basedir=/usr --datadir=/srv/mysql --user=mysql &amp;&amp;
-chgrp -v mysql /srv/mysql{,/test,/mysql}</userinput></screen>
+chown -R mysql:mysql /srv/mysql</userinput></screen>
 
       <para>La configuration supplémentaire exige que le serveur
       <application>MySQL</application> soit en fonction. Démarrez le serveur en
@@ -320,21 +310,31 @@ mysqld_safe --user=mysql 2&gt;&amp;1 &gt;/dev/null &amp;</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>innochecksum, msql2mysql, my_print_defaults, myisam_ftdump,
-        myisamchk, myisamlog, myisampack, mysql, mysql_client_test,
-        mysql_config, mysql_convert_table_format, mysql_find_rows,
-        mysql_fix_extensions, mysql_install_db, mysql_plugin,
-        mysql_secure_installation, mysql_setpermission, mysql_tzinfo_to_sql,
-        mysql_upgrade, mysql_waitpid, mysql_zap, mysqlaccess, mysqladmin,
-        mysqlbinlog, mysqlbug, mysqlcheck, mysqld, mysqld_multi, mysqld_safe,
-        mysqldump, mysqldumpslow, mysqlhotcopy, mysqlimport, mysqlshow,
-        mysqlslap, mysqltest, perror, replace, resolve_stack_dump et
-        resolveip</seg>
-        <seg>libmysqlclient.{so,a}, libmysqlclient_r.{so,a}, libmysqlservices.a
-        et plusieurs dans /usr/lib/mysql</seg>
-        <seg>/srv/mysql, /usr/include/mysql, /usr/lib/mysql, /usr/share/mysql et
-         /var/run/mysql</seg>
-       </seglistitem> 
+        <seg>
+          innochecksum, msql2mysql, myisamchk, myisam_ftdump, myisamlog,
+          myisampack, my_print_defaults, mysql, mysqlaccess, mysqlaccess.conf,
+          mysqladmin, mysqlbinlog, mysqlbug, mysqlcheck, mysql_client_test,
+          mysql_client_test_embedded, mysql_config, mysql_convert_table_format,
+          mysqld, mysqld_multi, mysqld_safe, mysqldump, mysqldumpslow,
+          mysql_embedded, mysql_find_rows, mysql_fix_extensions, mysqlhotcopy,
+          mysqlimport, mysql_install_db, mysql_plugin, mysql_secure_installation,
+          mysql_setpermission, mysqlshow, mysqlslap, mysqltest,
+          mysqltest_embedded, mysql_tzinfo_to_sql, mysql_upgrade, mysql_waitpid,
+          mysql_zap, perror, replace, resolveip et resolve_stack_dump
+        </seg>
+        <seg>
+          libmysqlclient.{so,a}, libmysqlclient_r.{so,a}, libmysqld.{so,a},
+          libmysqlservices.a et quelques unes dans /usr/lib/mysql
+        </seg>
+        <seg>
+          /etc/mysql,
+          /srv/mysql,
+          /usr/include/mysql,
+          /usr/lib/mysql,
+          /usr/share/doc/mysql et
+          /usr/share/mysql
+        </seg>
+      </seglistitem>
     </segmentedlist>
 
     <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
