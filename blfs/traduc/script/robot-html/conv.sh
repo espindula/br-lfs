@@ -11,7 +11,7 @@
 # on liste l'ensemble des fichiers de listxml
 
 # initialisation du chemin pour blfs-fr
-CHEMIN_BLFSFR="/home/denis/travail/blfs-fr"
+CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
 
 #initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
 CHEMIN_LOG="$CHEMIN_BLFSFR/traduc/script/robot-html/log"
