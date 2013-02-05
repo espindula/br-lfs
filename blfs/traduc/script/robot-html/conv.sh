@@ -11,7 +11,7 @@
 # on liste l'ensemble des fichiers de listxml
 
 # initialisation du chemin pour blfs-fr
-CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
+CHEMIN_BLFSFR="/home/denis/travail/blfs-fr"
 
 #initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
 CHEMIN_LOG="$CHEMIN_BLFSFR/traduc/script/robot-html/log"
@@ -45,15 +45,7 @@ do
 			  echo "conversion de $i ($a vers iso-8859-15)"
 			fi
                         iconv -f $a -t ISO-8859-15 $i > $i.temp 2>>$CHEMIN_LOG/robot.err
-                        if [[ $? -gt 0 ]]
-                        then
-                           exit 1
-                        fi
 			mv $i.temp $i 2>&1 >>$CHEMIN_LOG/robot.err
-                        if [[ $? -gt 0 ]]
-                        then
-                           exit 1
-                        fi
 		fi
 	   fi
          
