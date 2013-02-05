@@ -265,7 +265,10 @@ do
    do
       if [[ "$i" -gt "$V_EN" ]]
       then
-         let V_EN=$i
+         if [[ "$i" -gt "10000" ]]
+	then
+           let V_EN=$i
+         fi
       fi
    done
 done
@@ -289,7 +292,6 @@ echo >>$CHEMIN_BLFSFR/mail.txt
 log_info "Examen de la copie de travail de blfs-en"
 cd ../blfs-en/ 2>>$CHEMIN_LOG/robot.err
 log_err $?
-
 log_info "Synchro de la copie de travail de blfs_en à la version $V_EN"
 svn -r "$V_EN" up 2>>$CHEMIN_LOG/robot.err
 log_err $?
