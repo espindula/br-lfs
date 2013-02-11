@@ -1,0 +1,236 @@
+Révision 11012
+
+fichiers modifiés :
+   networking/netprogs/wpa_supplicant.xml
+   general.ent
+   introduction/welcome/changelog.xml
+
+Log :
+Added wpa service configuration to wpa_supplicant p age and few modifications to wpa and dhclient services.
+
+Le robot a traité 43 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(revision 11011)
++++ introduction/welcome/changelog.xml	(revision 11012)
+@@ -45,6 +45,16 @@
+ -->
+ 
+     <listitem>
++      <para>February 11th, 2013</para>
++      <itemizedlist>
++        <listitem>
++          <para>[krejzi] - Added wpa service configuration to
++          wpa_supplicant instructions.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>February 10th, 2013</para>
+       <itemizedlist>
+         <listitem>
+
+Index: networking/netprogs/wpa_supplicant.xml
+===================================================================
+--- networking/netprogs/wpa_supplicant.xml	(revision 11011)
++++ networking/netprogs/wpa_supplicant.xml	(revision 11012)
+@@ -207,12 +207,9 @@
+       Now, as the <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>install -v -m755 wpa_{cli,passphrase,supplicant}               \
+-                 /sbin                                         &amp;&amp;
+-install -v -m644 doc/docbook/wpa_supplicant.conf.5             \
+-                 /usr/share/man/man5                           &amp;&amp;
+-install -v -m644 doc/docbook/wpa_{cli,passphrase,supplicant}.8 \
+-                 /usr/share/man/man8</userinput></screen>
++<screen role="root"><userinput>install -v -m755 wpa_{cli,passphrase,supplicant} /sbin/ &amp;&amp;
++install -v -m644 doc/docbook/wpa_supplicant.conf.5 /usr/share/man/man5/ &amp;&amp;
++install -v -m644 doc/docbook/wpa_{cli,passphrase,supplicant}.8 /usr/share/man/man8/</userinput></screen>
+ 
+     <para>
+       If you have built <application>WPA Supplicant</application> with
+@@ -223,7 +220,7 @@
+     </para>
+ 
+ <screen role="root"><userinput>install -v -m644 dbus/fi.{epitest.hostap.WPASupplicant,w1.wpa_supplicant1}.service \
+-                 /usr/share/dbus-1/system-services &amp;&amp;
++                 /usr/share/dbus-1/system-services/ &amp;&amp;
+ install -v -m644 dbus/dbus-wpa_supplicant.conf \
+                  /etc/dbus-1/system.d/wpa_supplicant.conf</userinput></screen>
+ 
+@@ -256,12 +253,16 @@
+ 
+     <sect3 id="wpa_supplicant-config">
+       <title>Config File</title>
+-      <para><filename>/etc/wpa_supplicant.conf</filename></para>
+ 
++      <para>
++        <filename>/etc/sysconfig/wpa_supplicant-*.conf</filename>
++      </para>
+       <indexterm zone="wpa_supplicant wpa_supplicant-config">
+         <primary
+-        sortas="e-etc-wpa_supplicant.conf">/etc/wpa_supplicant.conf</primary>
++        sortas="e-etc-sysconfig-wpa_supplicant-star.conf">/etc/sysconfig/wpa_supplicant-*.conf</primary>
+       </indexterm>
+     </sect3>
+ 
+@@ -269,26 +270,27 @@
+ 
+       <para>
+         To connect to an access point that uses a password, you need to put
+-        the pre-shared key in <filename>/etc/wpa_supplicant.conf</filename>. Use
+-        <command>wpa_passphrase</command> to generate this. SSID is the string
+-        that the access point/router transmits to identify itself. As the
++        the pre-shared key in <filename>
++        /etc/sysconfig/wpa_supplicant-<replaceable>wlan0</replaceable>.conf</filename>.
++        SSID is the string that the access point/router transmits to
++        identify itself. Run the following command as the
+         <systemitem class="username">root</systemitem> user:
+       </para>
+ 
+-<screen role="root"><userinput>wpa_passphrase <replaceable>SSID</replaceable> <replaceable>SECRET_PASSWORD</replaceable> &gt; /etc/wpa_supplicant.conf</userinput></screen>
++<screen role="root"><userinput>wpa_passphrase <replaceable>SSID</replaceable> <replaceable>SECRET_PASSWORD</replaceable> &gt; /etc/sysconfig/wpa_supplicant-<replaceable>wlan0</replaceable>.conf</userinput></screen>
+ 
+       <para>
+-        <filename>/etc/wpa_supplicant.conf</filename> can hold the details of
+-        several access points. When you run <command>wpa_supplicant</command>
+-        it will scan for the SSIDs it can see and choose the appropriate
+-        password to connect.
++        <filename>/etc/sysconfig/wpa_supplicant-<replaceable>wlan0</replaceable>.conf
++        </filename> can hold the details of several access points. When
++        <command>wpa_supplicant</command> is started, it will scan for the
++        SSIDs it can see and choose the appropriate password to connect.
+         </para>
+ 
+       <para>
+         If you want to connect to an access point that isn't password
+-        protected, put an entry like this in
+-        <filename>/etc/wpa_supplicant.conf</filename>. Replace
+-        "Some-SSID" with the SSID of the access point/router.
++        protected, put an entry like this in <filename>
++        /etc/sysconfig/wpa_supplicant-<replaceable>wlan0</replaceable>.conf</filename>.
++        Replace "Some-SSID" with the SSID of the access point/router.
+       </para>
+ 
+ <screen>network={
+@@ -303,45 +305,113 @@
+         source tree.
+       </para>
+ 
++    </sect3>
++    <sect3>
++      <title>Connecting to an Access Point</title>
++      <para id="wpa-service">
++        If you want to configure network interfaces at boot using
++        <command>wpa_supplicant</command>, you need to install the
++        <filename>/lib/services/wpa</filename> script
++        included in <xref linkend="bootscripts"/> package:
++      </para>
++<screen role="root"><userinput>make install-service-wpa</userinput></screen>
++      <indexterm zone="wpa_supplicant wpa-service">
++        <primary sortas="f-wpa">wpa</primary>
++      </indexterm>
+       <para>
+-        To use <command>wpa_cli</command> to control the running
+-        <command>>wpa_supplicant</command> daemon, add a control interface to
+-        <filename>/etc/wpa_supplicant.conf</filename> as the
++        If your router/access point uses DHCP to allocate IP addresses, you
++        can install <xref linkend="dhcp"/> client and use it to
++        automatically obtain network addresses. Create the
++        <filename>/etc/sysconfig/ifconfig-<replaceable>wlan0</replaceable>
++        </filename> by running the following command as the
+         <systemitem class="username">root</systemitem> user:
+       </para>
+ 
+-<screen role="root"><userinput>echo ctrl_interface=/run/wpa_supplicant &gt;&gt; /etc/wpa_supplicant.conf</userinput></screen>
+-    </sect3>
++<screen role="root"><userinput>cat &gt; /etc/sysconfig/ifconfig.<replaceable>wlan0</replaceable> &lt;&lt; "EOF"
++<literal>ONBOOT="yes"
++IFACE="<replaceable>wlan0</replaceable>"
++SERVICE="wpa"
+ 
+-    <sect3>
+-      <title>Connecting to an Access Point</title>
++# Additional arguments to wpa_supplicant
++WPA_ARGS=""
+ 
++WPA_SERVICE="dhclient"
++DHCP_START=""
++DHCP_STOP=""
++# Set PRINTIP="yes" to have the script print
++# the DHCP assigned IP address
++PRINTIP="no"
++# Set PRINTALL="yes" to print the DHCP assigned values for
++# IP, SM, DG, and 1st NS. This requires PRINTIP="yes".
++PRINTALL="no"</literal>
++EOF</userinput></screen>
+       <para>
+-        If your router/access point uses DHCP to allocate IP addresses you
+-        can install <xref linkend="dhcpcd"/> and use it to connect. As the
++        If you prefer <xref linkend="dhcpcd"/> instead of
++        <xref linkend="dhcp"/> client, then create the 
++        <filename>/etc/sysconfig/ifconfig-<replaceable>wlan0</replaceable>
++        </filename> by running the following command as the
+         <systemitem class="username">root</systemitem> user:
+       </para>
+ 
+-<screen role="root"><userinput>wpa_supplicant -B -c/etc/wpa_supplicant.conf -iwlan0 -Dnl80211,wext
+-sleep 2 # let it settle
+-dhcpcd</userinput></screen>
++<screen role="root"><userinput>cat &gt; /etc/sysconfig/ifconfig.<replaceable>wlan0</replaceable> &lt;&lt; "EOF"
++<literal>ONBOOT="yes"
++IFACE="<replaceable>wlan0</replaceable>"
++SERVICE="wpa"
+ 
++# Additional arguments to wpa_supplicant
++WPA_ARGS=""
++WPA_SERVICE="dhcpcd"
++DHCP_START="-b -q <replaceable>&lt;insert appropriate start options here&gt;</replaceable>"
++DHCP_STOP="-k <replaceable>&lt;insert additional stop options here&gt;</replaceable>"</literal>
++EOF</userinput></screen>
+       <para>
+-        Alternatively, you can use static addresses on your local network.
+-        This has the advantage that you can put the hostnames in
+-        <filename>/etc/hosts</filename>. Replace 192.168.1.6 with the static
+-        address you've chosen. Replace 192.168.1.1 with the local IP address of
+-        the access point/router. Run the following commands as the
++        Alternatively, if you use static addresses on your local network,
++        then create the
++        <filename>/etc/sysconfig/ifconfig-<replaceable>wlan0</replaceable>
++        </filename> by running the following command as the
+         <systemitem class="username">root</systemitem> user:
+       </para>
+ 
+-<screen role="root"><userinput>ip addr add 192.168.1.6 dev wlan0
+-ip link set wlan0 up
+-wpa_supplicant -B -c/etc/wpa_supplicant.conf -iwlan0 -Dnl80211,wext
+-ip route add 192.168.1.1 dev wlan0
+-ip route add default via 192.168.1.1 dev wlan0</userinput></screen>
++<screen role="root"><userinput>cat &gt; /etc/sysconfig/ifconfig.<replaceable>wlan0</replaceable> &lt;&lt; "EOF"
++<literal>ONBOOT="yes"
++IFACE="<replaceable>wlan0</replaceable>"
++SERVICE="wpa"
+ 
++# Additional arguments to wpa_supplicant
++WPA_ARGS=""
++WPA_SERVICE="ipv4-static"
++IP="192.168.1.1"
++GATEWAY="192.168.1.2"
++PREFIX="24"
++BROADCAST="192.168.1.255"</literal>
++EOF</userinput></screen>
++      <para>
++        You can connect to the wireless access point by
++        running the following command as the
++        <systemitem class="username">root</systemitem> user:
++      </para>
++<screen role="root"><userinput>ifup <replaceable>wlan0</replaceable></userinput></screen>
++      <para>
++        Replace <replaceable>wlan0</replaceable> with the correct
++        wireless interface.
++      </para>
+     </sect3>
+   </sect2>
+ 
+
