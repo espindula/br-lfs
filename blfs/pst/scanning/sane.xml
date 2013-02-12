@@ -52,6 +52,12 @@
 
    &lfs72_checked;
 
+    <!-- This note is not applicable. First, there is no issue downloading the
+         ftp://ftp2.sane-project.org/pub/sane/sane-backends-1.0.23.tar.gz
+         tarball with wget. Next, the combined tarball exists on the SANE FTP
+         site, but the MD5sum is wrong. We can simply point the download to
+         the SANE FTP site and create our own MD5sum (as we do on many packages).
+
     <note><para>Le site web de développement utilise un certificat
        de sécurité auto-signé. Si vous utilisez <command>wget</command>,
        l'option --no-check-certificate doit être ajouté.</para>
@@ -60,6 +66,7 @@
       soient réunies.  Une archive complète avec la somme de contrôle
       correcte est disponible à l'adresse <ulink
     url="http://anduin.linuxfromscratch.org/sources/other/sane-backends-1.0.23.tar.gz">http://anduin.linuxfromscratch.org/sources/other/sane-backends-1.0.23.tar.gz</ulink>.</para></note>
+-->
 
     <bridgehead renderas="sect3">Information sur le paquet des fondations</bridgehead>
     <itemizedlist spacing='compact'>
@@ -118,11 +125,15 @@
 
     <bridgehead renderas="sect4">Facultatives (Back Ends)</bridgehead>
     <para role="optional">
+      <xref linkend="avahi"/>,
+      <xref linkend="cups"/>,
       <xref linkend="libjpeg"/>,
       <xref linkend="libtiff"/>,
-      <xref linkend="libusb-compat"/>,
+      <xref linkend="libusb"/>,
+      <ulink url="http://www.net-snmp.org/">Net-SNMP</ulink>,
       <ulink url="http://cyberelk.net/tim/libieee1284/">libieee1284</ulink>,
-      <ulink url="http://www.gphoto.org/">libgphoto2</ulink>, et
+      <ulink url="http://www.gphoto.org/">libgphoto2</ulink>,
+      <ulink url="http://linuxtv.org/downloads/v4l-utils/">Video4Linux</ulink>, et
       <xref linkend="texlive"/>
     </para>
     <bridgehead renderas="sect4">Facultatives (Front Ends)</bridgehead>
@@ -161,6 +172,13 @@
     <sect3>
       <title>Installation des fondations de SANE</title>
 
+      <note>
+        <para>
+          vous pouvez ignorer sans problème tous les messages affichés à l'écran
+          quand vous déballez le paquet.
+        </para>
+      </note>
+
       <para>Le démon <application>SANE</application> devrait se lancer avec son 
       propre groupe. Créez ce groupe en exécutant les commandes suivantes en tant
       qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
@@ -168,23 +186,42 @@
 <screen><userinput>groupadd -g 70 scanner</userinput></screen>
 
       <note><para>L'utilisateur de construction <application>SANE</application>-backends
-      doit être membre du groupe scanner avant de commencer. La façon la plus simple pour s'assurer que
-      le système sait que vous avez ajouté un nouveau groupe est de se déloguer et se reloguer de nouveau.
-      Vous pouvez vérifier avec le résultat de la commande
-      <userinput>groups</userinput> command.</para></note>
+      doit être membre du groupe  <systemitem class="groupname">scanner</systemitem>
+      avant de commencer. Après que vous ayez ajouté l'utilisateur construisant le paquet
+      au groupe  <systemitem class="groupname">scanner</systemitem>, tapez la commande
+      suivante pour créer un nouveau shell :
+      </para>
+<screen><userinput>su $(whoami)</userinput></screen>
+
+        <para>
+          Vérifiez la sortie de la commande <userinput>groups</userinput> et assurez vous que
+          l'utilisateur est membre du groupe 
+          <systemitem class="groupname">scanner</systemitem>.
+        </para>
+      </note>
 
       <para>Installez les fondations de <application>SANE</application> en
       lançant les commandes suivantes&nbsp;:</para>
+            <!-- Not sure why this was there as it works if TeX is installed
+                 and it doesn't try to use it if TeX is not installed
+                 -disable-latex &amp;&amp; -->
 
-<screen><userinput>./configure --prefix=/usr           --sysconfdir=/etc          --with-group=scanner       --localstatedir=/var       --disable-latex &amp;&amp;
-make</userinput></screen>
+<screen><userinput>./configure --prefix=/usr                                    \
+            --sysconfdir=/etc                                \
+            --localstatedir=/var                             \
+            --with-docdir=/usr/share/doc/sane-backend-1.0.23 \
+            --with-group=scanner                             &amp;&amp;
+make                                                         &amp;&amp;
+exit</userinput></screen>
 
-      <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
+      <para>Pour tester les résultats, tapez :  <command>make check</command>.</para>
 
       <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>make install &amp;&amp;
-install -m 644 -v tools/udev/libsane.rules /etc/udev/rules.d/65-scanner.rules</userinput></screen>
+<screen role="root"><userinput>make install                                         &amp;&amp;
+install -m 644 -v tools/udev/libsane.rules           \
+                  /etc/udev/rules.d/65-scanner.rules &amp;&amp;
+chgrp -v scanner  /var/lock/sane</userinput></screen>
 
     </sect3>
 
@@ -196,7 +233,7 @@ install -m 644 -v tools/udev/libsane.rules /etc/udev/rules.d/65-scanner.rules</u
       <command>xcam</command> ainsi qu'une interface en ligne de commande
       <command>scanadf</command>. Vous n'avez pas besoin de ce paquet si vous
       souhaitez utiliser une des interfaces graphiques plus avancées comme
-      <xref linkend="xsane"/>. FPour une liste des paquets d'interface, 
+      <xref linkend="xsane"/>. Pour une liste des paquets d'interface, 
       voir <ulink url="http://www.sane-project.org/sane-frontends.html"/>.</para>
 
       <para>Pour installer <application>SANE</application>-frontends,
@@ -230,6 +267,13 @@ install -v -m644 doc/sane.png xscanimage-icon-48x48-2.png     /usr/share/sane</u
     <para><parameter>--sysconfdir=/etc</parameter>&nbsp;: Ce paramètre installe
     les fichiers de configuration dans <filename class="directory">/etc/sane.d</filename>
     et non dans <filename class="directory">/usr/etc/sane.d</filename>.</para>
+
+    <para><parameter>--with-group=scanner</parameter>: Ce paramètre fait que le répertoire
+    créé pour les fichiers de verrou doit appartenir au groupe
+    <systemitem class="groupname">scanner</systemitem> au lieu du groupe par défaut
+    <systemitem class="groupname">uucp</systemitem>.</para>
+    <para><command>exit</command>: Cette commande est utilisée pour sortir
+    du shell créé par la commande <command>su</command>.</para>
 
   </sect2>
 
