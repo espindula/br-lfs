@@ -186,12 +186,9 @@ popd</userinput></screen>
 
     <para>Maintenant en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>install -v -m755 wpa_{cli,passphrase,supplicant}               \
-                 /sbin                                         &amp;&amp;
-install -v -m644 doc/docbook/wpa_supplicant.conf.5             \
-                 /usr/share/man/man5                           &amp;&amp;
-install -v -m644 doc/docbook/wpa_{cli,passphrase,supplicant}.8 \
-                 /usr/share/man/man8</userinput></screen>
+<screen role="root"><userinput>install -v -m755 wpa_{cli,passphrase,supplicant} /sbin/ &amp;&amp;
+install -v -m644 doc/docbook/wpa_supplicant.conf.5 /usr/share/man/man5/ &amp;&amp;
+install -v -m644 doc/docbook/wpa_{cli,passphrase,supplicant}.8 /usr/share/man/man8/</userinput></screen>
 
     <para>
       Si vous avez construit <application>WPA Supplicant</application> avec le support
@@ -201,7 +198,7 @@ install -v -m644 doc/docbook/wpa_{cli,passphrase,supplicant}.8 \
     </para>
 
 <screen role="root"><userinput>install -v -m644 dbus/fi.{epitest.hostap.WPASupplicant,w1.wpa_supplicant1}.service \
-   /usr/share/dbus-1/system-services &amp;&amp;
+   /usr/share/dbus-1/system-services \ &amp;&amp;
 install -v -m644 dbus/dbus-wpa_supplicant.conf \
        /etc/dbus-1/system.d/wpa_supplicant.conf
 </userinput></screen>
@@ -231,11 +228,13 @@ install -v -m644 wpa_gui-qt4/icons/wpa_gui.svg /usr/share/pixmaps/</userinput></
 
     <sect3 id="wpa_supplicant-config">
       <title>Fichier de Configuration</title>
-      <para><filename>/etc/wpa_supplicant.conf</filename></para>
+      <para>
+        <filename>/etc/sysconfig/wpa_supplicant-*.conf</filename>
+      </para>
 
       <indexterm zone="wpa_supplicant wpa_supplicant-config">
         <primary
-        sortas="e-etc-wpa_supplicant.conf">/etc/wpa_supplicant.conf</primary>
+        sortas="e-etc-sysconfig-wpa_supplicant-star.conf">/etc/sysconfig/wpa_supplicant-*.conf</primary>
       </indexterm>
     </sect3>
 
@@ -243,19 +242,19 @@ install -v -m644 wpa_gui-qt4/icons/wpa_gui.svg /usr/share/pixmaps/</userinput></
       <title>Information de Configuration</title>
 
       <para>Pour se connecter à un point d'acces qui utilise un mot de passe vous devez mettre
-      la clé public dans <filename>/etc/wpa_supplicant.conf</filename>. Utilisez
-      <command>wpa_passphrase</command> pour la générer. SSID est la chaîne que le point d'accès ou le routeur
+      la clé public dans <filename>/etc/sysconfig/wpa_supplicant-<replaceable>wlan0</replaceable>.conf</filename>.
+      SSID est la chaîne que le point d'accès ou le routeur
       transmet pour s'identifier. En tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>wpa_passphrase <replaceable>SSID</replaceable> <replaceable>SECRET_PASSWORD</replaceable> &gt; /etc/wpa_supplicant.conf</userinput></screen>
+<screen role="root"><userinput>wpa_passphrase <replaceable>SSID</replaceable> <replaceable>SECRET_PASSWORD</replaceable> &gt; /etc/sysconfig/wpa_supplicant-<replaceable>wlan0</replaceable>.conf</userinput></screen>
 
-      <para><filename>/etc/wpa_supplicant.conf</filename> peut retenir les détails de plusieurs points d'accès.
+      <para><filename>/etc/sysconfig/wpa_supplicant-<replaceable>wlan0</replaceable>.conf</filename> peut retenir les détails de plusieurs points d'accès.
       Quand vous lancez <command>wpa_supplicant</command> il scannera les SSIDs qu'il peut voir
       et choisira le mot de passe approprié pour se connecter.</para>
 
       <para>Si vous souhaitez vous connecter à un point d'accès qui n'est pas protégé par un mot de passe,
 	indiquez une entrée comme cela dans in
-      <filename>/etc/wpa_supplicant.conf</filename>. Remplacez
+      <filename>etc/sysconfig/wpa_supplicant-<replaceable>wlan0</replaceable>.conf</filename>. Remplacez
       "Some-SSID" avec le SSID du point d'accès/routeur.</para>
 
 <screen>network={
@@ -267,37 +266,94 @@ install -v -m644 wpa_gui-qt4/icons/wpa_gui.svg /usr/share/pixmaps/</userinput></
       à chaque point d'accès. Elles sont décrites en détails dans le fichier
       <filename>wpa_supplicant/wpa_supplicant.conf</filename> dans les sources.</para>
 
-      <para>Pour utiliser <command>wpa_cli</command> pour contrôler le lancement du démon
-      <command>>wpa_supplicant</command>, ajoutez une interface de contrôle dans
-      <filename>/etc/wpa_supplicant.conf</filename>. En tant qu'utilisateur
-      <systemitem class="username">root</systemitem>&nbsp;:</para>
-
-<screen role="root"><userinput>echo ctrl_interface=/run/wpa_supplicant &gt;&gt; /etc/wpa_supplicant.conf</userinput></screen>
     </sect3>
-
     <sect3>
       <title>Connexion à un point d'accès</title>
+      <para id="wpa-service">
+        Si vous voulez configurer une interface réseau au démarrage en utilisant
+        <command>wpa_supplicant</command>, vous devez installer le script
+        <filename>/lib/services/wpa</filename> 
+        fourni dans le paquet <xref linkend="bootscripts"/>:
+      </para>
+<screen role="root"><userinput>make install-service-wpa</userinput></screen>
+      <indexterm zone="wpa_supplicant wpa-service">
+        <primary sortas="f-wpa">wpa</primary>
+      </indexterm>
 
-      <para>Si votre routeur/point d'accès utilise DHCP pour vous allouer une adresse IP vous pouvez
-      installer <xref linkend="dhcpcd"/> et l'utiliser pour la connexion. En tant qu'utilisateur
+     <para>
+        Si votre routeur/point d'accès utilise DHCP pour allouer les adresses IP, vous pouvez installer un client
+        <xref linkend="dhcp"/> et l'utiliser pour obtenir automatiquement une adresse réseau.
+        Créez 
+        <filename>/etc/sysconfig/ifconfig-<replaceable>wlan0</replaceable>
+        </filename> en lançant la commande suivante en tant qu'utilisateur
+        <systemitem class="username">root</systemitem>&nbsp;:</para>
+
+<screen role="root"><userinput>cat &gt; /etc/sysconfig/ifconfig.<replaceable>wlan0</replaceable> &lt;&lt; "EOF"
+<literal>ONBOOT="yes"
+IFACE="<replaceable>wlan0</replaceable>"
+SERVICE="wpa"
+
+# Additional arguments to wpa_supplicant
+WPA_ARGS=""
+WPA_SERVICE="dhclient"
+DHCP_START=""
+DHCP_STOP=""
+
+# Set PRINTIP="yes" to have the script print
+# the DHCP assigned IP address
+PRINTIP="no"
+
+# Set PRINTALL="yes" to print the DHCP assigned values for
+# IP, SM, DG, and 1st NS. This requires PRINTIP="yes".
+PRINTALL="no"</literal>
+EOF</userinput></screen>
+
+      <para>
+        Si vous préférez <xref linkend="dhcpcd"/> au lieu du client 
+        <xref linkend="dhcp"/>, alors créez 
+        <filename>/etc/sysconfig/ifconfig-<replaceable>wlan0</replaceable>
+        </filename> en lançant la commande suivante en tant qu'utilisateur
       <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>wpa_supplicant -B -c/etc/wpa_supplicant.conf -iwlan0 -Dnl80211,wext
-sleep 2 # let it settle
-dhcpcd</userinput></screen>
+<screen role="root"><userinput>cat &gt; /etc/sysconfig/ifconfig.<replaceable>wlan0</replaceable> &lt;&lt; "EOF"
+<literal>ONBOOT="yes"
+IFACE="<replaceable>wlan0</replaceable>"
+SERVICE="wpa"
 
-      <para>Sinon, vous pouvez utiliser une adresse statique de votre réseau local.
-      L'avantage, c'est que vous pouvez mettre le nom d'hôte dans le fichier
-      <filename>/etc/hosts</filename>. Remplacez 192.168.1.6 avec l'adresse statique que vous avez
-      choisie. Remplacez 192.168.1.1 avec l'adresse IP de votre point d'accès/routeur. En tant qu'utilisateur
-      <systemitem class="username">root</systemitem>&nbsp;:</para>
+# Additional arguments to wpa_supplicant
+WPA_ARGS=""
+WPA_SERVICE="dhcpcd"
+DHCP_START="-b -q <replaceable>&lt;insert appropriate start options here&gt;</replaceable>"
+DHCP_STOP="-k <replaceable>&lt;insert additional stop options here&gt;</replaceable>"</literal>
+EOF</userinput></screen>
 
-<screen role="root"><userinput>ip addr add 192.168.1.6 dev wlan0
-ip link set wlan0 up
-wpa_supplicant -B -c/etc/wpa_supplicant.conf -iwlan0 -Dnl80211,wext
-ip route add 192.168.1.1 dev wlan0
-ip route add default via 192.168.1.1 dev wlan0</userinput></screen>
+      <para>
+         Sinon, si vous utilisez une adresse statique de votre réseau local.
+      alors créez
+        <filename>/etc/sysconfig/ifconfig-<replaceable>wlan0</replaceable>
+        </filename> en lançant la commande suivante en tant qu'utilisateur 
+         <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen role="root"><userinput>cat &gt; /etc/sysconfig/ifconfig.<replaceable>wlan0</replaceable> &lt;&lt; "EOF"
+<literal>ONBOOT="yes"
+IFACE="<replaceable>wlan0</replaceable>"
+SERVICE="wpa"
 
+# Additional arguments to wpa_supplicant
+WPA_ARGS=""
+WPA_SERVICE="ipv4-static"
+IP="192.168.1.1"
+GATEWAY="192.168.1.2"
+PREFIX="24"
+BROADCAST="192.168.1.255"</literal>
+EOF</userinput></screen>
+      <para>
+        Vous pouvez vous connecter au point d'accès sans fil en lançant la commande suivante en tant qu'utilisateur
+        <systemitem class="username">root</systemitem>:
+      </para>
+<screen role="root"><userinput>ifup <replaceable>wlan0</replaceable></userinput></screen>
+      <para>
+        Remplacez <replaceable>wlan0</replaceable> par l'interface sans fil correspondante.
+      </para>
     </sect3>
   </sect2>
 

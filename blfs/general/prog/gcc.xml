@@ -34,13 +34,13 @@
 
     <para>Le paquet <application>GCC</application> contient des compilateurs
     GNU. Ce paquet est utile pour compiler des programmes écrits en C, C++, Fortran,
-    Java, C objet, et C++ objet. Vous devriez vous assurer d'avoir réellement
-    besoin de d'un de ces compilateurs supplémentaires (celui C et C++ sont 
+    Java, C objet, C++ objet, Ada et Go. Vous devriez vous assurer d'avoir réellement
+    besoin de l'un de ces compilateurs supplémentaires (celui C et C++ sont
     installés avec LFS) avant de les installer. En outre, il y a des instructions
     dans le livre BLFS pour installer <xref linkend="openjdk"/> qu'on peut utiliser
     à la place du Java fourni par le
     paquet <application>GCC</application>. Nombreux sont ceux qui considèrent que
-    JDK d'Oracle est un environnement Java plus robuste que celui fourni par
+    Iced Tea est un environnement Java plus robuste que celui fourni par
     <application>GCC</application>.</para>
 
    &lfs72_checked;
@@ -88,28 +88,37 @@
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended"><xref linkend="dejagnu"/></para>
 
-  <note>
-     <para>La construction de Ada depuis les sources n'est plus supportée par BLFS. Le paquet binaire
-        de développement est basé sur gcc-4.5.4 et n'est pas capable de construire Ada depuis le paquet
-        <application>GCC</application> actuel.</para>
+    <bridgehead renderas="sect4">Requises pour la construction de java</bridgehead>
+    <para role="required">
+      <xref linkend="zip"/>,
+      <xref linkend="unzip"/>, et
+      <xref linkend="which"/>
+    </para>
+
+    <note>
+      <para>Si vous planifiez de compiler Ada, vous devrez installer 
+      <application>GNAT</application> temporairement pour satisfaire une dépendance circulaire quand vous allez recompiler 
+      <application>GCC</application> pour inclure Ada. Sur la page de teléchagement de AdaCore, choisissez votre plateforme et
+      2011, ensuite sélectionné le fichier à téléchager. Vous voudrez probablement le fichier x86-linux
+      ou x86_64-linux.</para>
       </note>
-<!--
-    <bridgehead renderas="sect3">Informations sur le paquet GNAT GPL 2010</bridgehead>
+<!-- Using 2011, because 2012 does not compile GCC-4.7.2 -->
+    <bridgehead renderas="sect3">Information du paquet GNAT GPL 2011</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>Téléchargement (HTTP)&nbsp;: <ulink url="&gnat-download-http;"/></para>
       </listitem>
     </itemizedlist>
--->
+
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/gcc"/></para>
 
   </sect2>
-<!--
+
   <sect2 role="installation">
     <title>Installation de GNAT</title>
 
-    <para>Avant de déballer et d'aller dans le répertoire de construction de GCC,
+    <para>Avant de déballer et d'aller dans le répertoire des sources de GCC,
     déballez au préalable l'archive tar de <application>GNAT</application> et
     rendez-vous dans le répertoire nouvellement créé, puis installez 
     <application>GNAT</application> en lançant la commande suivante&nbsp;:</para>
@@ -124,7 +133,7 @@
     des sources&nbsp;:</para>
 
 <screen><userinput>cd .. &amp;&amp;
-rm -rf gnat-2010-i686-gnu-linux-libc2.3-bin</userinput></screen>
+rm -rf gnat-2011-*</userinput></screen>
 
     <para>Préparez la compilation de <application>GCC</application> en
     mettant la version de <application>GNAT</application> de <command>gcc</command> 
@@ -134,8 +143,19 @@ rm -rf gnat-2010-i686-gnu-linux-libc2.3-bin</userinput></screen>
 <screen><userinput>PATH_HOLD=$PATH &amp;&amp;
 export PATH=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin:$PATH_HOLD</userinput></screen>
 
-  </sect2>
-  -->
+    <para>Cela présente l'inconvénient que les exécutables de <application>GCC</application>
+    et <application>Binutils</application> sont pris du paquet
+    <application>GNAT</application> qui vient d'être installé, mais les versions des exécutables sont
+    dépassées comparées à celle installées dans LFS. Ce n'est pas important pour les compilateurs
+    <application>GCC</application>, depuis qu'ils les recompilent 
+    eux-mêmes pendant le processus de bootstrap. Dans un autre sens, les outils 
+    <command>ld</command> et <command>as</command> dépassés
+    sont utilisés tout du long. Pour utiliser les outils LFS, tapez:</para>
+<screen><userinput>find <replaceable>&lt;Votre répertoire de construction&gt;</replaceable>/gnat -name ld -exec mv -v \{\} \{\}.old \;
+find <replaceable>&lt;votre répertoire de constrcution&gt;</replaceable>/gnat -name as -exec mv -v \{\} \{\}.old \;</userinput></screen>
+
+</sect2>
+
   <sect2 role="installation">
     <title>Installation de GCC</title>
 
@@ -160,21 +180,32 @@ export PATH=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin:$PA
       <application>GCC</application> du chapitre 6 du livre LFS (<ulink url="&lfs-root;/chapter06/gcc.html"/>).</para>
     </important>
 
-    <para>Les instructions ci-dessous effectuent intentionnellement un <quote><command>make
-    bootstrap</command></quote> au lieu d'un
-    <quote><command>make</command></quote> complet. Bien que nous supposions
-    que la version actuelle de <application>GCC</application> est installée dans
-    LFS,un bootstrap est recommandé pour plus de robustesse.</para>
+    <para>Les instructions ci-dessous initialise le mécanisme de construction pour faire un 
+    <quote>bootstrap</quote> volontairement. Cela est nécessaire si vous installez le compilateur
+    <application>ADA</application>. Même si vous ne le faite pas, 
+    un bootstrap est recommandé pour plus de robustesse.</para>
 
-<screen><userinput>sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in &amp;&amp;
+<screen><userinput>sed -i 's/\(install.*:\) install-.*recursive/\1/' libffi/Makefile.in &amp;&amp;
+sed -i 's/\(install-data-am:\).*/\1/' libffi/include/Makefile.in &amp;&amp;
+sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in &amp;&amp;
 sed -i 's@./fixinc.sh@-c true@'        gcc/Makefile.in       &amp;&amp;
 case `uname -m` in
       i?86) sed -i 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in ;;
 esac &amp;&amp;
 mkdir ../gcc-build &amp;&amp;
 cd    ../gcc-build &amp;&amp;
-../gcc-&gcc-version;/configure --prefix=/usr            --libexecdir=/usr/lib    --with-system-zlib       --enable-shared          --enable-threads=posix   --enable-__cxa_atexit    --disable-multilib       --enable-bootstrap       --enable-clocale=gnu     --enable-languages=c,c++,fortran,java,objc,obj-c++ &amp;&amp;
-make bootstrap &amp;&amp;
+../gcc-&gcc-version;/configure --prefix=/usr    \
+--libdir=/usr/lib          \
+--libexecdir=/usr/lib \
+--with-system-zlib   \
+--enable-shared      \
+--enable-threads=posix \
+--enable-__cxa_atexit \
+--disable-multilib    \
+--enable-clocale=gnu  \
+--enable-lto   \
+--enable-languages=c,c++,fortran,ada,go,java,objc,obj-c++ &amp;&amp;
+make &amp;&amp;
 make -k check  &amp;&amp;
 ../gcc-&gcc-version;/contrib/test_summary</userinput></screen>
 
@@ -182,35 +213,42 @@ make -k check  &amp;&amp;
 
 <screen role="root"><userinput>make install &amp;&amp;
 ln -v -sf ../usr/bin/cpp /lib &amp;&amp;
-ln -v -sf gcc /usr/bin/cc </userinput></screen>
+ln -v -sf gcc /usr/bin/cc
 
-<!--
-chown -v -R root:root /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/include  /usr/lib/gcc/i686-pc-linux-gnu/&gcc-version;/ada{lib,include}</userinput></screen>
--->
+chown -v -R root:root \
+
+    /usr/lib/gcc/*linux-gnu/&gcc-version;/include{,-fixed} \
+    /usr/lib/gcc/*linux-gnu/&gcc-version;/ada{lib,include}</userinput></screen>
+<!-- Not needed since we do not install libffi
+
     <para>L'en-tête de l'interface <filename class='libraryfile'>libffi</filename>
     est installée dans un endroit où les autres paquets ne pourront pas la trouver. Si vous avez inclu
     Java comme un des langages installés, créez un lien symbolique dans
     <filename class='directory'>/usr/include</filename> pour y remédier&nbsp;:</para>
 
 <screen role="root"><userinput>ln -v -sf `find /usr/lib/gcc -name ffitarget.h` /usr/include</userinput></screen>
+-->
 
-<!--
     <para>Vous devriez maintenant passer en utilisateur non privilégié et
     supprimer l'installation de <application>GNAT</application> et effectuer
     d'autres nettoyages&nbsp;:</para>
 
 <screen><userinput>rm -rf <replaceable>&lt;Your build directory&gt;</replaceable>/gnat</userinput></screen>
 
-<screen><userinput>export PATH=$PATH_HOLD &amp;&amp;
+<screen><userinput>rm -rf <replaceable>&lt;Your build directory&gt;</replaceable>/gnat &amp;&amp;
+export PATH=$PATH_HOLD &amp;&amp;
 unset PATH_HOLD</userinput></screen>
--->
-  </sect2>
+
+</sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para>Les trois commandes <command>sed</command> sont les mêmes
-    que celles utilisées pendant la construction de LFS.</para>
+    <para>Les deux premières commandes <command>sed</command> empêche l'installation de la bibliothèque
+    <application>libffi</application> livrée avec <application>GCC</application>,
+    puisqu'elle est dépassée comparée à 
+    <xref linkend="libffi"/>. Les trois autres commandes <command>sed</command> sont les mêmes que celle
+    utilisées pendant la construction de LFS.</para>
 
     <para><command>mkdir ../gcc-build; cd ../gcc-build</command>&nbsp;: La
     documentation de <application>GCC</application> recommande de construire
@@ -224,14 +262,18 @@ unset PATH_HOLD</userinput></screen>
     <para><parameter>--disable-multilib</parameter>&nbsp;: Ce paramètre assure 
     que les fichiers sont créés pour l'architecture spécifique à votre ordinateur.</para>
 
-    <para><parameter>--enable-bootstrap</parameter>&nbsp;: Ce paramètere est
-    utilisé pour qu'une installation bootstrap s'effectue.</para>
+<!-- Double dashes are forbidden in comments, so use "- -". Change it to
+     double dash if you ever remove this comment!
+    <para><parameter>- -enable-bootstrap</parameter>: This parameter is used
+     so that a bootstrap installation is performed.</para>
+-->
 
-    <para><parameter>--enable-languages=c,c++,fortran,java,objc,obj-c++</parameter>&nbsp;: Cette commande est
-    une sécurité contre des échecs dus à des données de locales incomplètes.</para>
+    <para><parameter>--enable-lto</parameter>: Initialisez ce paramètre pour autoriser la construction
+    d'un compilateur qui puisse faire du <quote>link time
+    optimization (lto)</quote>.</para>
 
     <para>
-    <parameter>--enable-languages=c,c++,ada,fortran,java,objc,treelang</parameter>&nbsp;:
+    <parameter>--enable-languages=c,c++,fortran,java,objc,obj-c++,ada,go</parameter>>&nbsp;:
     Cette commande identifie les langages à construire. Il se peut que vous modifiez
     cette commande pour supprimer des langages non désirés.</para>
 
@@ -250,9 +292,9 @@ unset PATH_HOLD</userinput></screen>
 
     <para><command>ln -v -sf gcc /usr/bin/cc</command>&nbsp;: Ce lien est créé
     car certains paquets se réfèrent au compilateur C en utilisant un nom alternatif.</para>
-<!--
+
     <para><command>chown -v -R root:root
-    /usr/lib/gcc/i686-pc-linux-gnu/...</command>&nbsp;: Si le paquet
+    /usr/lib/gcc/*linux-gnu/...</command>&nbsp;: Si le paquet
     est construit par un utilisateur différent de root, le propriétaire des
     répertoires <filename class='directory'>include</filename> et
     <filename class='directory'>adalib</filename> installés (et leur
@@ -260,7 +302,7 @@ unset PATH_HOLD</userinput></screen>
     l'utilisateur et le groupe <systemitem class="username">root</systemitem>. 
     Ommettez cette commande en modifiant les répertoires Ada si vous n'avez pas
     inclu Ada comme un des langages installés.</para>
-    -->
+
   </sect2>
 
   <sect2 role="content">
@@ -272,17 +314,21 @@ unset PATH_HOLD</userinput></screen>
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>addr2name.awk, fastjar, gcj, gcj-dbtool,gcjh, gfortran, gij,
-        gjnih,  gprmake,
-        grepjar, grmic, grmiregistry, gtreelang, jcf-dump, jv-convert, jv-scan
-        et architecture specific names for gcj and gcjh</seg>
-        <seg>libffi.{so,a}, libgcj.{so,a}, libgfortran.{so,a},
-        libgfortranbegin.a, libgij.{so,a}, libobjc.{so,a} et de nombreuses autres
-        bibliothèques d'exécution et des exécutables in /usr/lib/gcc</seg>
-        <seg>/usr/include/c++/&gcc-version;/{gcj,gnu,java,javax,org},
-        /usr/lib/gcj-&gcc-version;,
-        /usr/lib/security
-        et /usr/share/java</seg>
+        <seg>aot-compile, gappletviewer, gc-analyze, gccgo, gcj, gcj-dbtool,
+        gcjh, gfortran, gij, gjar, gjarsigner, gjavah, gkeytool,
+        gnat, gnatbind, gnatchop, gnatclean, gnatfind, gnative2ascii, gnatkr,
+        gnatlink, gnatls, gnatmake, gnatname, gnatprep, gnatxref, gorbd,
+        grmic, grmid, grmiregistry, gserialver, gtnameserv, jcf-dump,
+        jv-convert, rebuild-gcj-db, and architecture specific names</seg>
+        <seg>libgcj_bc.so, libgcj.so, libgcj-tools.so, libgfortran.{so,a},
+        libgij.so, libgo.{so,a}, libgobegin.a, libobjc.{so,a} et de nombreux autres bibliothèques
+        d'exécution et des exécutables dans /usr/lib/gcc</seg>
+        <seg>/usr/include/c++/&gcc-version;/{gcj,gnu,java,javax,org,sun},
+        /usr/lib/gcc/&lt;arch-model&gt;-linux-gnu/&gcc-version;/ada{include,lib},
+        /usr/lib/gcj-&gcc-version;-13,
+        /usr/lib/go,
+         /usr/lib/security,
+         et /usr/share/java</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -296,91 +342,92 @@ unset PATH_HOLD</userinput></screen>
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
 
-      <varlistentry id="addr2name.awk">
-        <term><command>addr2name.awk</command></term>
-        <listitem>
-          <para>émule certaines fonctionnalités d'addr2line.</para>
-          <indexterm zone="gcc addr2name.awk">
-            <primary sortas="b-addr2name.awk">addr2name.awk</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
+      <varlistentry id="aot-compile">
+        <term><command>aot-compile</command></term>
+          <listitem>
+             <para>cherche un répertoir pour le bytecode java et utlise
+          <command>gcj</command> pour le compiler en code natif.</para>
+          <indexterm zone="gcc aot-compile">
+            <primary sortas="b-aot-compile">aot-compile</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
 
-      <varlistentry id="fastjar-gcc">
-        <term><command>fastjar</command></term>
-        <listitem>
-          <para>est un outil d'archive pour les archives <application>Java</application> archives.</para>
-          <indexterm zone="gcc fastjar-gcc">
-            <primary sortas="b-fastjar">fastjar</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
+      <varlistentry id="gappletviewer">
+        <term><command>gappletviewer</command></term>
+          <listitem>
+             <para>charge et lance une applet <application>Java</application>.</para>
+          <indexterm zone="gcc gappletviewer">
+            <primary sortas="b-gappletviewer">gappletviewer</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
 
-      <varlistentry id="gcj">
-        <term><command>gcj</command></term>
+      <varlistentry id="gc-analyze">
+        <term><command>gc-analyze</command></term>
         <listitem>
-          <para>est un compilateur ahead-of-time pour le langage
+          <para>analyse les "garbage collector" (GC) des vidages de mémoire du code 
           <application>Java</application>.</para>
-          <indexterm zone="gcc gcj">
-            <primary sortas="b-gcj">gcj</primary>
+          <indexterm zone="gcc gc-analyze">
+            <primary sortas="b-gc-analyze">gc-analyze</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="gcj-dbtool">
-        <term><command>gcj-dbtool</command></term>
+ 
+      <varlistentry id="gccgo">
+        <term><command>gccgo</command></term>
         <listitem>
-          <para>est un outil pour créer et manipuler des bases de données de 
-          plans de fichiers de classe.</para>
-          <indexterm zone="gcc gcj-dbtool">
-            <primary sortas="b-gcj-dbtool">gcj-dbtool</primary>
+          <para>est un compilateur basé sur GCC pour le langage
+          <application>Go</application>.</para>
+          <indexterm zone="gcc gccgo">
+            <primary sortas="b-gccgo">gccgo</primary>
           </indexterm>
         </listitem>
       </varlistentry>
+       
+      <varlistentry id="gjar">
+        <term><command>gjar</command></term>
+          <listitem>
+           <para>est une implémentation (partielle) de l'utilitaire <command>jar</command>
+          qui vient avec le JDK de Sun.</para>
+          <indexterm zone="gcc gjar">
+            <primary sortas="b-gjar">gjar</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
 
-      <varlistentry id="gcjh">
-        <term><command>gcjh</command></term>
+      <varlistentry id="gjarsigner">
+        <term><command>gjarsigner</command></term>
         <listitem>
-          <para>génère des fichiers d'en-tête à partir de fichiers de classe
+          <para>est un outil de vérification et signature des fichiers Java ARchive (JAR).</para>
+          <indexterm zone="gcc gjarsigner">
+            <primary sortas="b-gjarsigner">gjarsigner</primary>
+         </indexterm>
+        </listitem>
+      </varlistentry>
+      
+     <varlistentry id="gjavah">
+        <term><command>gjavah</command></term>
+        <listitem>
+          <para>génére les fichiers d'entêtes depuis les fichiers de class Java.</para>
+          <indexterm zone="gcc gjavah">
+            <primary sortas="b-gjavah">gjavah</primary>
+          </indexterm>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="gkeytool">
+        <term><command>gkeytool</command></term>
+       <listitem>
+          <para>gère les clés privés et les certificats publiques dans un environnement
           <application>Java</application>.</para>
-          <indexterm zone="gcc gcjh">
-            <primary sortas="b-gcjh">gcjh</primary>
+          <indexterm zone="gcc gkeytool">
+            <primary sortas="b-gkeytool">gkeytool</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="gfortran">
-        <term><command>gfortran</command></term>
-        <listitem>
-          <para>est le compilateur <application>Fortran</application> appelé par
-          <command>gcc</command>.</para>
-          <indexterm zone="gcc gfortran">
-            <primary sortas="b-gfortran">gfortran</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="gij">
-        <term><command>gij</command></term>
-        <listitem>
-          <para>est l'interpréteur GNU pour le code byte <application>Java</application>.</para>
-          <indexterm zone="gcc gij">
-            <primary sortas="b-gij">gij</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="gjnih">
-        <term><command>gjnij</command></term>
-        <listitem>
-          <para>est utilisé pour générer des fichiers d'en-tête JNI à partir de
-          fichiers de classe. Son exécution revient à lancer <command>gcjh -jni</command>.</para>
-          <indexterm zone="gcc gjnih">
-            <primary sortas="b-gjnih">gjnih</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-<!--
       <varlistentry id="gnat">
         <term><command>gnat</command></term>
         <listitem>
@@ -398,16 +445,6 @@ unset PATH_HOLD</userinput></screen>
           <para>est utilisé pour attacher des objets compilés.</para>
           <indexterm zone="gcc gnatbind">
             <primary sortas="b-gnatbind">gnatbind</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="gnatbl">
-        <term><command>gnatbl</command></term>
-        <listitem>
-          <para>est l'éditeur de liens <application>Ada</application>.</para>
-          <indexterm zone="gcc gnatbl">
-            <primary sortas="b-gnatbl">gnatbl</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -445,7 +482,17 @@ unset PATH_HOLD</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="gnatkr">
+      <varlistentry id="gnative2ascii">
+        <term><command>gnative2ascii</command></term>
+        <listitem>
+         <para>est un convertisseur d'encodage pour <application>Java</application>.</para>
+          <indexterm zone="gcc gnative2ascii">
+            <primary sortas="b-gnative2ascii">gnative2ascii</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+       <varlistentry id="gnatkr">
         <term><command>gnatkr</command></term>
         <listitem>
           <para>est utilisé pour déterminer le nom crunché d'un fichier donné, lorsqu'un crunch
@@ -517,27 +564,16 @@ unset PATH_HOLD</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-      -->
-      <varlistentry id="gprmake">
-        <term><command>gprmake</command></term>
-        <listitem>
-          <para>est un outil utilisé pour créer des <filename>Makefile</filename>s qui supportent la
-          compilation par plusieurs langages.</para>
-          <indexterm zone="gcc gprmake">
-            <primary sortas="b-gprmake">gprmake</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
 
-      <varlistentry id="grepjar">
-        <term><command>grepjar</command></term>
-        <listitem>
-          <para>recherche des fichiers <filename>jar</filename> pour un modèle.</para>
-          <indexterm zone="gcc grepjar">
-            <primary sortas="b-grepjar">grepjar</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
+      <varlistentry id="gorbd">
+        <term><command>gorbd</command></term>
+          <listitem>
+           <para>est un démon de demandes d'objets cassés.</para>
+          <indexterm zone="gcc gorbd">
+            <primary sortas="b-gorbd">gorbd</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
 
       <varlistentry id="grmic-gcc">
         <term><command>grmic</command></term>
@@ -549,7 +585,17 @@ unset PATH_HOLD</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="grmiregistry-gcc">
+      <varlistentry id="grmid-gcc">
+        <term><command>grmid</command></term>
+        <listitem>
+          <para>est un démon d'activation du sytème RMI.</para>
+          <indexterm zone="gcc grmid-gcc">
+            <primary sortas="b-grmid">grmid</primary>
+         </indexterm>
+        </listitem>
+      </varlistentry>
+
+        <varlistentry id="grmiregistry-gcc">
         <term><command>grmiregistry</command></term>
         <listitem>
           <para>démarre un registre objet distant sur l'hôte actuel.</para>
@@ -559,22 +605,22 @@ unset PATH_HOLD</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="gtreelang">
-        <term><command>gtreelang</command></term>
+      <varlistentry id="gserialver">
+        <term><command>gserialver</command></term>
+       <listitem>
+          <para> affiche le serialVersionUID de la classe spécifiée.</para>
+          <indexterm zone="gcc gserialver">
+            <primary sortas="b-gserialver">gserialver</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
+
+      <varlistentry id="gtnameserv">
+        <term><command>gtnameserv</command></term>
         <listitem>
-          <para>est une version très raccourcie de C, destinée à montrer les
-          fonctionnalités de la génération de code de fond <application>GCC</application>.
-          Seules ces fonctionnalités sont directement supportées par la 
-          génération de code de fond <application>GCC</application> et sont
-          implémentées. Les fonctionnalités sont implémentées de la manière la plus facile et
-          la plus claire à implémenter. Toutes voire la plupart
-          des fonctionnalités de génération de code de fond ne sont pas implémentées. L'objectif
-          est d'ajouter ces fonctionnalités progressivement jusqu'à ce que
-          les fonctionnalités de fond 
-          <application>GCC</application> soient implémentées
-          dans Treelang.</para>
-          <indexterm zone="gcc gtreelang">
-            <primary sortas="b-gtreelang">gtreelang</primary>
+          <para> démarre un service de noms.</para>
+          <indexterm zone="gcc gtnameserv">
+            <primary sortas="b-gtnameserv">gtnameserv</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -600,18 +646,19 @@ unset PATH_HOLD</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="jv-scan">
-        <term><command>jv-scan</command></term>
-        <listitem>
-          <para>affiche des informations sur les fichiers sources <application>Java</application>.</para>
-          <indexterm zone="gcc jv-scan">
-            <primary sortas="b-jv-scan">jv-scan</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
+      <varlistentry id="rebuild-gcj-db">
+        <term><command>rebuild-gcj-db</command></term>
+          <listitem>
+             <para>Fusionne la base de données de per-solib fait par 
+          <application>aot-compile</application> dans la base de données coté système.</para>
+          <indexterm zone="gcc rebuild-gcj-db">
+            <primary sortas="b-rebuild-gcj-db">rebuild-gcj-db</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
 
-    </variablelist>
+       </variablelist>
 
-  </sect2>
+       </sect2>
 
 </sect1>
