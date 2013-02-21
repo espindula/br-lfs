@@ -89,8 +89,14 @@
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-    <xref linkend="imagemagick"/>, et
-    <xref linkend="python2"/>
+    <xref linkend="imagemagick"/>,
+    <xref linkend="python2"/>, et
+    <xref linkend="mitkrb"/>
+    <!-- Currently broken
+    <xref linkend="php"/>
+    <xref linkend="ruby"/>
+    <ulink url="https://libwbxml.opensync.org/">libwbxml</ulink
+    -->
     </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
@@ -105,39 +111,58 @@
     en lançant les commandes
     suivantes&nbsp;:</para>
 
-<screen><userinput>./configure --prefix=/usr             --sysconfdir=/etc             --localstatedir=/var             --without-internal-zlib             --program-transform-name="s/isql/isql-v/" 	    --disable-all-vads 	    --disable-static &amp;&amp;
+
+<screen><userinput>sed -i "s|virt_iodbc_dir/include|&amp;/iodbc|" configure  &amp;&amp;
+./configure --prefix=/usr                             \
+            --sysconfdir=/etc                         \
+            --localstatedir=/var                      \
+            --with-iodbc=/usr                         \
+            --with-readline                           \
+            --without-internal-zlib                   \
+            --program-transform-name="s/isql/isql-v/" \
+	    --disable-all-vads 	\
+            --disable-static &amp;&amp;
 make</userinput></screen>
 
-    <para><application>Virtuoso</application> n'est pas fourni. Une routine
-    de test extensible fait partie du processus de
-    construction.</para>
+    <para>Pour tester les résultats, tapez <command>make -k check</command>.</para>
 
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen role="root"><userinput>make install</userinput></screen>
+<screen role="root"><userinput>make install &amp;&amp;
+install -v -m755 -d /usr/share/doc/virtuoso-&virtuoso-version; &amp;&amp;
+ln -s   -v          ../../virtuoso/doc \
+                    /usr/share/doc/virtuoso-&virtuoso-version;</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explications des commandes</title>
 
-    <para><option>--without-internal-zlib</option>&nbsp;: Cette
-    option est paramétrée pour utiliser 
-    <application>zlib</application> installé et
-    pas celui inclu.</para>
+    <para><command>sed -i ...</command>: Cette commande est utilisée pour modifier la variable
+    <envar>CPPFLAGS</envar> pour que  les entêtes de l'interface de <application>libiodbc</application>
+    soient trouvées par le script <command>configure</command> script.</para>
 
-    <para><option>--program-transform-name</option>&nbsp;: 
+    <para><parameter>--with-iodbc=/usr</parameter>: Ce paramètre est utilisé pour que la construction
+    utilise les entêtes d'interface système de <application>libiodbc</application> et pas les
+    entêtes dans les sources.</para>
+    <para><parameter>--with-readline</parameter>: Ce paramètre est utilisé pour que la bibliothèque
+    système <application>Readline</application> soit utilisée.</para>
+    <para><parameter>--without-internal-zlib</parameter>: Ce paramètre est initialisé
+    pour que la bibliothèque <application>zlib</application> installée soit utilisée et non
+    celle empaqueté avec les sources.</para>
+    <para><parameter>--program-transform-name</parameter>&nbsp;: 
     <application>Virtuoso</application> et <application>unixODBC</application>
-    installent un programme nommé <command>isql</command>. Utilisez
+    installent un programme nommé <command>isql</command>. Utilisez cette option
     pour renommer le programme de
     <application>virtuoso</application> pour
     <command>isql-v</command></para>
 
-    <para><option>--disable-all-vads</option>&nbsp;: Cette option désactive la construction de
+    <para><parameter>--disable-all-vads</parameter>&nbsp;: Ce paramètre désactive la construction de
     tous les paquets VAD (tutoriels, démos, etc.).</para>
 
-    <para><option>--disable-static</option>&nbsp;: Cette option désactive la construction des bibliothèques
-    statiques. Cependant, la bibliothèques principale de virtuoso, libvirtuoso-t, est encore construite
+    <para><parameter>--disable-static</parameter>&nbsp;: Ce paramètre désactive la construction des bibliothèques
+    statiques. Cependant, les bibliothèques <filename class="libraryfile">libvirtuoso-t</filename> et
+    <filename class="libraryfile">libvirtuoso-iodbc-t</filename> sontencore construites
     en bibliothèque statique.</para>
 
     <para><option>--enable-python</option>Ajoutez cette option si 
@@ -152,6 +177,19 @@ make</userinput></screen>
     <para><option>--with-port</option>&nbsp;: Ajoutez cela si vous voulez que
     <application>virtuoso</application> écoute un autre port que le
     1111.</para>
+
+    <para><option>--enable-aio</option>: Ajoutez cela si vous voulez utiliser
+    <application>Virtuoso</application> pour des opérations asynchrones pour les 
+    I/O de fichiers au lieu d'I/O synchrone.</para>
+    <para><option>--enable-perl</option>: N'utilisez pas cette option si vous construisez
+    Perl en suivant les instructions LFS. La construction échouera avec une note similaire à
+    <computeroutput>Your perl should be compiled w -Dusemultiplicity.
+    Check the output of perl -V:usemultiplicity</computeroutput>.</para>
+    <para>Notez que passer toutes les options <option>with-jdk4=${JAVA_HOME}</option>,
+    <option>--enable-php5=/usr</option>, <option>--enable-ruby</option>, et
+    <option>--enable-wbxml2=/usr</option> échouera pendant la phase 
+    <command>configure</command> de la construction. Cela n'arretera pas la construction,
+    mais le support souhaité ne sera pas inclus dans la construction.</para>
 
   </sect2>
 
