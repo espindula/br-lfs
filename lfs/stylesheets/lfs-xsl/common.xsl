@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: bdubbs $
-$Date: 2012-08-29 22:45:23 +0200 (mer 29 aoû 2012) $
+$Date: 2012-08-29 22:45:23 +0200 (mer. 29 aoÃ»t 2012) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -413,7 +413,7 @@ $Date: 2012-08-29 22:45:23 +0200 (mer 29 aoû 2012) $
     <xsl:param name="position">1</xsl:param>
     <xsl:variable name="tokens" select="count($scope/varlistentry)"/>
     <xsl:variable name="token" select="$scope/varlistentry[$position]/term/token"/>
-    <xsl:variable name="size" select="substring-before($token,' Ko')"/>
+    <xsl:variable name="size" select="substring-before($token,' KB')"/>
     <xsl:variable name="rawsize">
       <xsl:choose>
         <xsl:when test="contains($size,',')">
@@ -436,17 +436,17 @@ $Date: 2012-08-29 22:45:23 +0200 (mer 29 aoû 2012) $
         <xsl:choose>
           <xsl:when test="$total &lt; '1000'">
             <xsl:value-of select="$total"/>
-            <xsl:text>  Ko</xsl:text>
+            <xsl:text>  KB</xsl:text>
           </xsl:when>
           <xsl:when test="$total &gt; '1000' and $total &lt; '5000'">
             <xsl:value-of select="substring($total,1,1)"/>
             <xsl:text>,</xsl:text>
             <xsl:value-of select="substring($total,2)"/>
-            <xsl:text>  Ko</xsl:text>
+            <xsl:text>  KB</xsl:text>
           </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="round($total div 1024)"/>
-            <xsl:text>  Mo</xsl:text>
+            <xsl:text>  MB</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:otherwise>

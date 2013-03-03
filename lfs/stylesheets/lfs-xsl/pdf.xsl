@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: matthew $
-$Date: 2012-09-04 20:29:02 +0200 (mar 04 sep 2012) $
+$Date: 2012-09-04 20:29:02 +0200 (mar. 04 sept. 2012) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -39,7 +39,7 @@ $Date: 2012-09-04 20:29:02 +0200 (mar 04 sep 2012) $
   <xsl:param name="draft.mode" select="'no'"/>
 
    <!-- Paper size -->
-  <xsl:param name="paper.type" select="'A4'"/>
+  <xsl:param name="paper.type" select="'USletter'"/>
 
     <!-- Paper size required by the publisher
   <xsl:param name="paper.type" select="'Customized'"/>

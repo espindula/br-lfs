@@ -2,7 +2,7 @@
 
 <!--
 $LastChangedBy: bdubbs $
-$Date: 2012-08-29 22:45:23 +0200 (mer 29 aoû 2012) $
+$Date: 2012-08-29 22:45:23 +0200 (mer. 29 aoÃ»t 2012) $
 -->
 
 <!DOCTYPE xsl:stylesheet [
