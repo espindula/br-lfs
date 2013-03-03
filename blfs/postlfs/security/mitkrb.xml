@@ -64,9 +64,11 @@
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
     <xref linkend="dejagnu"/> (requis pour lancer la suite de tests),
-    <xref linkend="keyutils"/> et
-    <xref linkend="openldap"/> et
-      <xref linkend="python2"/> (utilisé pendant la suite de tests)</para>
+    <xref linkend="keyutils"/> 
+    <xref linkend="openldap"/> 
+      <xref linkend="python2"/> (utilisé pendant la suite de tests) et
+       <xref linkend="rpcbind"/> (utilisé pendant la suite de tests)
+       </para>
 
     <note>
       <para>Certaines fonctionnalités de synchronisation du temps sur votre
@@ -114,7 +116,18 @@ gpg: Can't check signature: public key not found</screen>
     </para>
 
 <screen><userinput>cd src &amp;&amp;
-./configure CPPFLAGS="-I/usr/include/et -I/usr/include/ss"   --prefix=/usr       --localstatedir=/var/lib    --with-system-et       --with-system-ss      --enable-dns-for-realm &amp;&amp;
+sed -e "s@python2.5/Python.h@&amp; python2.7/Python.h@g" \
+    -e "s@-lpython2.5]@&amp;,\n  AC_CHECK_LIB(python2.7,main,[PYTHON_LIB=-lpython2.7])@g" \
+    -i configure.in &amp;&amp;
+sed -e "s@interp->result@Tcl_GetStringResult(interp)@g" \
+    -i kadmin/testing/util/tcl_kadm5.c &amp;&amp;
+autoconf &amp;&amp;
+./configure CPPFLAGS="-I/usr/include/et -I/usr/include/ss" \
+--prefix=/usr       \
+--localstatedir=/var/lib  \
+--with-system-et   \
+--with-system-ss   \
+--enable-dns-for-realm &amp;&amp;
 make</userinput></screen>
 
     <para>La suite de tests de régression est conçu pour s'exécuter après
@@ -125,8 +138,8 @@ make</userinput></screen>
 <screen role="root"><userinput>make install &amp;&amp;
 
 for LIBRARY in gssapi_krb5 gssrpc k5crypto kadm5clnt_mit kadm5srv_mit 
-               kdb5 krb5 krb5support verto ; do
-    chmod -v 755 /usr/lib/lib$LIBRARY.so.*.*
+               kdb5 kdb_ldap krb5 krb5support verto ; do
+    [ -e  /usr/lib/lib$LIBRARY.so.*.* ] &amp;&amp; chmod -v 755 /usr/lib/lib$LIBRARY.so.*.*
 done &amp;&amp;
 mv -v /usr/lib/libkrb5.so.3*        /lib &amp;&amp;
 mv -v /usr/lib/libk5crypto.so.3*    /lib &amp;&amp;
@@ -154,7 +167,12 @@ unset LIBRARY</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><parameter>--enable-dns-for-realm</parameter>&nbsp;: Ce paramètre
+    <para>
+      <command>sed -e ...</command>: Le premier <command>sed</command> corrige
+      la détection de <application>Python</application> et le second corrige la correction avec 
+      <application>Tcl</application> 8.6.
+    </para>
+    <para><option>--enable-dns-for-realm</option>&nbsp;: Ce paramètre
     autorise la résolution des realms en utilisant le serveur DNS.</para>
 
     <para><parameter>--with-system-et</parameter>&nbsp;: Ce paramètre a pour
@@ -344,7 +362,7 @@ EOF</userinput></screen>
 
         <para>Pour des informations supplémentaires, consultez <ulink
         url="http://web.mit.edu/kerberos/www/krb5-1.10/#documentation">
-        Documentation for krb-&mitkrb-version;</ulink> (la documentation)
+        Documentation for krb5-&mitkrb-version;</ulink> (la documentation)
         sur laquelle se basent les instructions ci-dessus.</para>
 
       </sect4>
