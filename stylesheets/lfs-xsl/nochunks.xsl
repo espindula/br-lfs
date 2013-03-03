@@ -70,7 +70,7 @@ $Date$
     <!-- sect2.titlepage:
            Removed a lot of unneeded code.
            Skip empty titles.
-           No label in preface (actualy, skip the hardcoded dot). -->
+           No label in preface (actually, skip the hardcoded dot). -->
     <!-- The original template is in {docbook-xsl}/xhtml/titlepage.templates.xsl -->
   <xsl:template name="sect2.titlepage">
     <xsl:choose>
