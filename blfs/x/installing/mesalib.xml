@@ -21,8 +21,8 @@
   <?dbhtml filename="mesalib.html"?>
 
   <sect1info>
-    <othername>$LastChangedBy&nbsp;: krejzi $</othername>
-    <date>$Date&nbsp;: 2012-12-30 19:28:02 +0100 (Sun, 30 Dec 2012) $</date>
+    <othername>$LastChangedBy&nbsp;: randy $</othername>
+    <date>$Date&nbsp;: 2013-02-11 19:51:17 +0100 (Mon, 11 Feb 2013) $</date>
   </sect1info>
 
   <title>MesaLib-&mesalib-version;</title>
@@ -102,7 +102,7 @@
       <listitem>
         <para>
             Correctif recommandé&nbsp;:
-         <ulink url="&patch-root;/MesaLib-&mesalib-version;-add_xdemos-5.patch"/>
+         <ulink url="&patch-root;/MesaLib-&mesalib-version;-add_xdemos-1.patch"/>
           (Nécessaire pour tester l'installation de Xorg par les instructions de BLFS).
        </para>
       </listitem>
@@ -123,7 +123,16 @@
     <para role="recommended">
       <xref linkend="llvm"/>
    </para>
-   
+    <warning>
+      <para>
+        Les instructions qui suivent considèrent que <application>LLVM</application>
+        est installé. vous devrez modifier les instructions si vous choisissez de ne pas l'installer
+        Merci de noter que 
+       <application>LLVM</application> et <emphasis>requis</emphasis> pour les pilotes 3D
+        Radeon.
+      </para>
+    </warning>
+
     <note>
       <para>Le module <application>Python</application> <application>libxml2</application>
       doit avoir été construit pendant l'installation de <application>libxml2</application>
@@ -146,13 +155,28 @@
     <para>
       Si vous avez téléchargé le correctif recommandé, appliquez le en lançant les commandes suivantes:
     </para>
-<screen><userinput>patch -Np1 -i ../MesaLib-&mesalib-version;-add_xdemos-5.patch</userinput></screen>
+<screen><userinput>patch -Np1 -i ../MesaLib-&mesalib-version;-add_xdemos-1.patch</userinput></screen>
     <para>
      Installez <application>MesaLib</application> en lançant les commandes
     suivantes&nbsp;:</para>
 
 <screen><userinput>autoreconf -fi &amp;&amp;
-./configure CFLAGS="-O2" CXXFLAGS="-O2"                --prefix=/usr                    --sysconfdir=/etc       --enable-texture-float   --enable-gles1            --enable-gles2           --enable-openvg          --enable-osmesa          --enable-xa              --enable-gbm             --enable-gallium-egl     --enable-gallium-gbm     --enable-glx-tls         --with-egl-platforms="drm,x11"   --with-gallium-drivers="nouveau,r300,r600,svga,swrast" &amp;&amp;
+./configure CFLAGS="-O2" CXXFLAGS="-O2"     \
+           --prefix=/usr        \
+           --sysconfdir=/etc    \
+           --enable-texture-float  \
+           --enable-gles1  \
+           --enable-gles2   \
+           --enable-openvg \
+           --enable-osmesa \
+           --enable-xa    \
+           --enable-gbm   \
+           --enable-gallium-egl \
+           --enable-gallium-gbm \
+           --enable-glx-tls  \
+           --with-llvm-shared-libs        \
+           --with-egl-platforms="drm,x11"\
+           --with-gallium-drivers="nouveau,r300,r600,svga,swrast" &amp;&amp;
 make</userinput></screen>
 
     <para>
@@ -202,11 +226,10 @@ make</userinput></screen>
 
 
      <para>
-      <parameter>CFLAGS="-O2" CXXFLAGS="-O2"</parameter>: Par défaut,
+      <parameter>CFLAGS="-O2" CXXFLAGS="-O2"</parameter>&nbsp;: Par défaut,
       <application>Autoconf</application> initialise CFLAGS et CXXFLAGS à
       "-g -O2". Ce qui fait que les binaires et les bibliothèques sont construits
-      avec les symboles de déboguage ce qui fait qu'ils sont plus lourd. Il est recommandé
-      que vous écrasiez
+      avec les symboles de déboguage ce qui fait qu'ils sont plus lourd. Ecrasez
       les drapeaux par défauts pour omettre le paramètre -g pour avoir au final des
       bibliothèques plus légeres.
     </para>
@@ -262,6 +285,13 @@ make</userinput></screen>
     </para>
 
      <para>
+      <option>--with-llvm-shared-libs</option>: Ce paramètre est utilisé pour que les pilotes
+      Gallium soient liés à la bibliothèque
+      <application>LLVM</application> au lieu d'utiliser la statique.
+      A supprimer si vous n'installez pas <xref linkend="llvm"/>.
+    </para>
+
+    <para>
       <parameter>--with-egl-platforms="..."</parameter>&nbsp;: Ce paramètre contrôle pour quel plateforme
       EGL doit être construit. Les plateformes disponibles sont drm, x11 et wayland.
     </para>
@@ -292,7 +322,7 @@ make</userinput></screen>
           glxgears et glxinfo
         </seg>
         <seg>
-          libdricore9.0.0.so, libEGL.so, libgbm.so, libglapi.so,
+          libdricore9.1.0.so, libEGL.so, libgbm.so, libglapi.so,
           libGLESv1_CM.so, libGLESv2.so, libGL.so, libGLU.so,
           libOpenVG.so, libOSMesa.so et libxatracker.so
         </seg>
@@ -301,9 +331,13 @@ make</userinput></screen>
           /usr/include/GL,
           /usr/include/GLES,
           /usr/include/GLES2,
+          /usr/include/GLES3,
           /usr/include/KHR,
-          /usr/include/VG et
-          /usr/lib/dri
+          /usr/include/VG,
+          /usr/lib/dri,
+          /usr/lib/egl,
+          /usr/lib/gallium-pipe et
+          /usr/lib/gbm
         </seg>
       </seglistitem>
     </segmentedlist>
@@ -335,13 +369,13 @@ make</userinput></screen>
       </varlistentry>
 
       <varlistentry id="libdricore">
-        <term><filename class="libraryfile">libdricore9.0.0.so</filename></term>
+        <term><filename class="libraryfile">libdricore9.1.0.so</filename></term>
         <listitem>
           <para>
             contient les routines courantes DRI utilisées par les pilotes DRI de <application>Mesa</application>.
           </para>
           <indexterm zone="mesalib libdricore">
-            <primary sortas="c-libdricore">libdricore9.0.0.so</primary>
+            <primary sortas="c-libdricore">libdricore9.1.0.so</primary>
           </indexterm>
         </listitem>
       </varlistentry>
