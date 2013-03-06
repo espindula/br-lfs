@@ -361,7 +361,7 @@ elif [[ $V_WIKI != $V_EN ]]
       # conversion des fichiers en iso-8859-15
       log_info "Conversion des fichiers au format iso-8859-15"
       ./traduc/script/robot-html/conv.sh -q
-      log_err $?
+#      log_err $?
 
       # on regarde la validité du xml
       log_info "validation du xml"
