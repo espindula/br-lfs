@@ -22,8 +22,8 @@
   <?dbhtml filename="llvm.html" ?>
 
   <sect1info>
-    <othername>$LastChangedBy&nbsp;: randy $</othername>
-    <date>$Date&nbsp;: 2013-02-11 19:51:17 +0100 (Mon, 11 Feb 2013) $</date>
+    <othername>$LastChangedBy&nbsp;: bdubbs $</othername>
+    <date>$Date&nbsp;: 2013-03-06 04:05:17 +0100 (Wed, 06 Mar 2013) $</date>
   </sect1info>
 
   <title>LLVM-&llvm-version;</title>
@@ -82,11 +82,32 @@
        </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Correctifs recommandées</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          LLVM R600 Backend:
+          <ulink url="&tstellar-llvm;/R600-Mesa-9.1.patch"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Somme de contrôle MD5 de LLVM R600 Backend: a6f9ec35fa847c4298213ab28fb868ce
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Correction de LLVM R600 Backend:
+          <ulink url="&patch-root;/llvm-&llvm-version;-r600_fixes-1.patch"/>
+        </para>
+      </listitem>
+    </itemizedlist>
+
     <bridgehead renderas="sect3">Téléchargements facultatifs</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>
-          Téléchargement de Clang (HTTP): <ulink url="&clang-download-http;"/>
+          Clang : <ulink url="&clang-download-http;"/>
         </para>
       </listitem>
       <listitem>
@@ -96,12 +117,12 @@
       </listitem>
       <listitem>
         <para>
-          Taille du téléchargement de Clang: &clang-size;
+          Taille de Clang: &clang-size;
         </para>
       </listitem>
       <listitem>
         <para>
-          Téléchargement de Compiler RT (HTTP): <ulink url="&compiler-rt-download-http;"/>
+         Compiler RT: <ulink url="&compiler-rt-download-http;"/>
         </para>
       </listitem>
       <listitem>
@@ -111,7 +132,7 @@
       </listitem>
       <listitem>
         <para>
-          Taille du téléchargement de Compiler RT: &compiler-rt-size;
+          Taille de Compiler RT: &compiler-rt-size;
         </para>
       </listitem>
     </itemizedlist>
@@ -152,13 +173,33 @@ tar -xf ../compiler-rt-&llvm-version;.src.tar.gz -C projects &amp;&amp;
 mv tools/clang-&llvm-version;.src tools/clang &amp;&amp;
 mv projects/compiler-rt-&llvm-version;.src projects/compiler-rt &amp;&amp;
 
-sed -e "s@../lib/libprofile_rt.a@../lib/llvm/libprofile_rt.a@g"     -i tools/clang/lib/Driver/Tools.cpp</userinput></screen>
+sed -e "s@../lib/libprofile_rt.a@../lib/llvm/libprofile_rt.a@g" \
+    -i tools/clang/lib/Driver/Tools.cpp</userinput></screen>
+   <para>
+      Si vous avez téléchargé les correctifs recommandés, appliquez les en lançant les commandes
+      suivantes :
+    </para>
+<screen><userinput>patch -Np1 -i ../R600-Mesa-9.1.patch &amp;&amp;
+patch -Np1 -i ../llvm-&llvm-version;-r600_fixes-1.patch</userinput></screen>
     <para>
+
+
+
       Installez <application>LLVM</application> en lançant les commandes suivantes&nbsp;:
     </para>
 <screen><userinput>patch -Np1 -i ../llvm-&llvm-version;-blfs_paths-1.patch &amp;&amp;
 CC=gcc CXX=g++
-./configure --prefix=/usr                  --sysconfdir=/etc                      --libdir=/usr/lib/llvm                     --enable-libffi                        --enable-optimized                     --enable-shared                            --enable-targets=all                       --disable-assertions                   --disable-debug-runtime                    --disable-expensive-checks &amp;&amp;
+./configure --prefix=/usr   \
+      --sysconfdir=/etc    \
+      --libdir=/usr/lib/llvm   \
+      --enable-libffi          \
+      --enable-optimized      \
+      --enable-shared        \
+      --enable-targets=all   \
+      --disable-assertions  \
+      --disable-debug-runtime   \
+      --disable-expensive-checks\
+      --enable-experimental-targets=R600  &amp;&amp;
 make</userinput></screen>
 
     <para>
@@ -190,18 +231,43 @@ ldconfig</userinput></screen>
 <screen role="root"><userinput>install -m644 docs/_build/man/* /usr/share/man/man1</userinput></screen>
    </sect2>
 
-<!--
    <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><userinput>sed ... Makefile.config.in</userinput>&nbsp;: Ceci corrige
-    les répertoires d'installation.</para>
-
-    <para><userinput>sed ... Makefile.rules</userinput>&nbsp;: Ceci
-    corrige un lpath non sécurisé pointant vers le répertoire de construction.</para>
+    <para>
+      <parameter>--enable-libffi</parameter>: Ce paramètre initialise 
+      <application>LLVM</application> pour utiliser
+      <application>libffi</application>. Effacez le si vous n'avaz pas installé
+      <application>libffi</application>.
+    </para>
+    <para>
+      <parameter>--enable-optimized</parameter>: Ce paramètre active
+      les optimisations du compilateur pour augmenter la vitesse du code et diminuer sa taille.
+    </para>
+    <para>
+      <parameter>--enable-shared</parameter>: Ce paramètre active la construction des
+      bibliothèques partagées de <application>LLVM</application> qui contiennent
+      toutes les bibliothèques statiques liées dans une seule bibliothèque.
+    </para>
+    <para>
+      <parameter>--enable-targets=all</parameter>: Ce paramètre assure que toutes
+      les cibles de <application>LLVM</application> sont construites.
+    </para>
+    <para>
+      <parameter>--disable-*</parameter>: Ces paramètres désactivent les fonctionnalités
+      qui sont utilisées pour le déboguage et qui ne sont pas nécessaire
+      sur un système de production.
+    </para>
+    <para>
+      <parameter>--enable-experimental-targets=R600</parameter>:
+      Ce paramètre active la cible R600 qui est requise par 
+      <application>Mesa</application> pour construire le pilote 3D radeonsi.
+      Il peut être utilisé par le serveur r600 de <application>LLVM</application>
+      et par le suiveur d'état de OpenCL dans <application>Mesa</application>. Effacez le
+      si vous n'avez pas appliqué les correctifs recommandés.
+    </para>
 
   </sect2>
-  -->
   
   <sect2 role="contenu">
     <title>Contents</title>
