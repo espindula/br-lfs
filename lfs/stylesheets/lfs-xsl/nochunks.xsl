@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 
 <!--
-$LastChangedBy: matthew $
-$Date: 2012-09-04 20:29:02 +0200 (mar. 04 sept. 2012) $
+$LastChangedBy: bdubbs $
+$Date: 2013-03-04 00:27:56 +0100 (lun. 04 mars 2013) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -70,7 +70,7 @@ $Date: 2012-09-04 20:29:02 +0200 (mar. 04 sept. 2012) $
     <!-- sect2.titlepage:
            Removed a lot of unneeded code.
            Skip empty titles.
-           No label in preface (actualy, skip the hardcoded dot). -->
+           No label in preface (actually, skip the hardcoded dot). -->
     <!-- The original template is in {docbook-xsl}/xhtml/titlepage.templates.xsl -->
   <xsl:template name="sect2.titlepage">
     <xsl:choose>
