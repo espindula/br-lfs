@@ -5,7 +5,7 @@
 
 SHELL=/bin/bash
 SYSTEMD_VERSION=198
-VERSION=198-2
+VERSION=198-3
 
 ifeq ($(V),)
  VB = @
@@ -28,7 +28,7 @@ OPTIONS = -O2 -pipe -ffast-math -fno-common -fdiagnostics-show-option \
 
 OPTIONS2 := $(OPTIONS) -fvisibility=hidden
 
-LDFLAGS   = -pthread -lrt -Wl,--as-needed -Wl,--gc-sections
+LDFLAGS   = -pthread -lrt -Wl,--as-needed -Wl,--gc-sections -Wl,--no-undefined
 LDFLAGS2 := $(LDFLAGS) -lblkid -lkmod 
 
 DEF = -include cfg.h                    \
@@ -82,7 +82,9 @@ COMMON_SRCS = log.c         \
               sd-daemon.c   \
               time-util.c   \
               fileio.c      \
-              strxcpyx.c
+              strxcpyx.c    \
+              env-util.c    \
+              utf8.c
 
 COMMON_OBJS := $(addprefix build/, $(COMMON_SRCS:.c=.o))
 
@@ -149,7 +151,7 @@ SED_PROCESS = \
        -e 's|@includedir@|/usr/include|g'  \
         < $< > $@
 
-SECURE = $(shell if nm /lib/libc.so.6 | grep -q " secure_getenv"; \
+SECURE = $(shell if objdump -T /lib/libc.so.6 | grep -q " secure_getenv"; \
 then echo yes; fi)
 
 ifeq "$(SECURE)" "yes"
@@ -205,6 +207,7 @@ build/$(LIBUDEV_REAL_NAME): $(LIBUDEV_OBJS) build/$(COMMON_LIB)
       -Wl,--no-whole-archive -ldl -lrt -O2  \
       -Wl,--as-needed                       \
       -Wl,--gc-sections                     \
+      -Wl,--no-undefined                    \
       -Wl,-soname,$(LIBUDEV_LINK_NAME)      \
       -o build/$(LIBUDEV_REAL_NAME)
 
