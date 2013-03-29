@@ -41,13 +41,6 @@
   <sect2 role="installation">
     <title>Installation of GCC</title>
 
-    <para>Apply a <command>sed</command> substitution that will suppress the
-    installation of <filename class="libraryfile">libiberty.a</filename>. The
-    version of <filename class="libraryfile">libiberty.a</filename> provided by
-    Binutils will be used instead:</para>
-
-<screen><userinput remap="pre">sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
-
     <para>As in <xref linkend="ch-tools-gcc-pass2"/>, apply the following
     <command>sed</command> to force the build to use the
     <option>-fomit-frame-pointer</option> compiler flag in order to ensure
@@ -56,6 +49,12 @@
 <screen><userinput remap="pre">case `uname -m` in
   i?86) sed -i 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in ;;
 esac</userinput></screen>
+
+    <para>Workaround a bug so that GCC doesn't install
+    <filename class="libraryfile">libiberty.a</filename>, which is already
+    provided by Binutils:</para>
+
+<screen><userinput remap="pre">sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
 
     <para>Also fix an error in one of the check Makefiles:</para>
 
@@ -69,15 +68,16 @@ cd ../gcc-build</userinput></screen>
 
     <para>Prepare GCC for compilation:</para>
 
-<screen><userinput remap="configure">../gcc-&gcc-version;/configure --prefix=/usr            \
-                       --libexecdir=/usr/lib    \
-                       --enable-shared          \
-                       --enable-threads=posix   \
-                       --enable-__cxa_atexit    \
-                       --enable-clocale=gnu     \
-                       --enable-languages=c,c++ \
-                       --disable-multilib       \
-                       --disable-bootstrap      \
+<screen><userinput remap="configure">../gcc-&gcc-version;/configure --prefix=/usr               \
+                       --libexecdir=/usr/lib       \
+                       --enable-shared             \
+                       --enable-threads=posix      \
+                       --enable-__cxa_atexit       \
+                       --enable-clocale=gnu        \
+                       --enable-languages=c,c++    \
+                       --disable-multilib          \
+                       --disable-bootstrap         \
+                       --disable-install-libiberty \
                        --with-system-zlib</userinput></screen>
 
     <para>Note that for other languages, there are some prerequisites that
@@ -86,6 +86,14 @@ cd ../gcc-build</userinput></screen>
 
     <variablelist>
       <title>The meaning of the new configure option:</title>
+
+      <varlistentry>
+        <term><parameter>--disable-install-libiberty</parameter></term>
+        <listitem>
+          <para>This prevents GCC from installing its own copy of libiberty,
+          which is already provided by Binutils-&binutils-version;.</para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><parameter>--with-system-zlib</parameter></term>
