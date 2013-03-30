@@ -41,19 +41,6 @@
   <sect2 role="installation">
     <title>Installation de GCC</title>
 
-    <para>Appliquez une substitution <command>sed</command> qui
-    supprimera l'installation de <filename class="libraryfile">libiberty.a</filename>. À la place, la
-    version de <filename class="libraryfile">libiberty.a</filename> fournie par
-    Binutils sera utilisée&nbsp;:</para>
-
-<screen><userinput remap="pre">sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
-
-    <para>Là encore, ne construisez pas les fichiers .info. Ils ne sont pas 
-    nécessaires ici et ils sont cassés dans la version actuelle de 
-    <command>makeinfo</command>.</para>
-
-<screen><userinput remap="pre">sed -i 's/BUILD_INFO=info/BUILD_INFO=/' gcc/configure</userinput></screen>
-
     <para>Comme au <xref linkend="ch-tools-gcc-pass2"/>, appliquez la commande
     <command>sed</command> suivant pour obliger la construction à utiliser le drapeau de construction
     <option>-fomit-frame-pointer</option> afin de garantir des constructions de compilateur cohérentes&nbsp;:</para> 
@@ -61,6 +48,12 @@
 <screen><userinput remap="pre">case `uname -m` in
   i?86) sed -i 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in ;;
 esac</userinput></screen>
+
+    <para>Contournez un bogue pour que GCC n'installe pas
+    <filename class="libraryfile">libiberty.a</filename>, qui est fourni par
+    Binutils&nbsp;:</para>
+    
+<screen><userinput remap="pre">sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
 
     <para>Corrigez aussi une erreur dans un des Makefiles de vérification&nbsp;:</para>
 
@@ -74,15 +67,16 @@ cd ../gcc-build</userinput></screen>
 
     <para>Préparez la compilation de GCC&nbsp;:</para>
 
-<screen><userinput remap="configure">../gcc-&gcc-version;/configure --prefix=/usr            \
-                       --libexecdir=/usr/lib    \
-                       --enable-shared          \
-                       --enable-threads=posix   \
-                       --enable-__cxa_atexit    \
-                       --enable-clocale=gnu     \
-                       --enable-languages=c,c++ \
-                       --disable-multilib       \
-                       --disable-bootstrap      \
+<screen><userinput remap="configure">../gcc-&gcc-version;/configure --prefix=/usr               \
+                       --libexecdir=/usr/lib       \
+                       --enable-shared             \
+                       --enable-threads=posix      \
+                       --enable-__cxa_atexit       \
+                       --enable-clocale=gnu        \
+                       --enable-languages=c,c++    \
+                       --disable-multilib          \
+                       --disable-bootstrap         \
+                       --disable-install-libiberty \
                        --with-system-zlib</userinput></screen>
 
     <para>Remarquez que pour d'autres langages, il existe des prérequis non
@@ -93,6 +87,14 @@ cd ../gcc-build</userinput></screen>
       <title>Voici la signification de la nouvelle option de configure&nbsp;:</title>
 
       <varlistentry>
+        <term><parameter>--disable-install-libiberty</parameter></term>
+        <listitem>
+          <para>Ceci empêche GCC d'installer sa propre copie de libiberty,
+          qui est déjà fournie par Binutils-&binutils-version;.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><parameter>--with-system-zlib</parameter></term>
         <listitem>
           <para>Ce paramètre dit à GCC de se lier à la copie installée sur le système
@@ -100,20 +102,6 @@ cd ../gcc-build</userinput></screen>
         </listitem>
       </varlistentry>
     </variablelist>
-
-    <para>Remarquez que pour d'autres langages, il y a des prérequis qui ne
-    sont pas disponibles. Voir le livre BLFS pour des instructions sur la
-    façon de construire tous les langages supportés par GCC.</para>
-    
-    <note><para>Il existe un argument facultatif à <command>configure</command>,
-    <option>--enable-lto</option>, qu'on peut utiliser pour permettre à la
-    commande <command>gcc</command> de faire "de l'optimisation du temps de 
-    l'édition de liens" si elle est spécifiée. Aucun paquet de LFS ou de BLFS utilise cette
-    possibilité.</para>
-
-    <para>Pour utiliser cette fonctionnalité, elle doit également être activée
-    dans <application>binutils</application>.</para></note>
-
 
     <para>Compilez le paquet&nbsp;:</para>
 
