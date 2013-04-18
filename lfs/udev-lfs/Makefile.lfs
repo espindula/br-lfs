@@ -4,7 +4,7 @@
 # vim: tabstop=3
 
 SHELL=/bin/bash
-SYSTEMD_VERSION=200
+SYSTEMD_VERSION=201
 VERSION=$(SYSTEMD_VERSION)-1
 
 ifeq ($(V),)
@@ -24,12 +24,12 @@ WARN = -Wall -W -Wextra -Wno-inline -Wvla -Wundef -Wformat=2 \
 -Werror=overflow -Wp,-D_FORTIFY_SOURCE=2 -Wno-long-long 
 
 OPTIONS = -O2 -pipe -ffast-math -fno-common -fdiagnostics-show-option \
--fno-strict-aliasing -ffunction-sections -fdata-sections -fPIC
+-fno-strict-aliasing -ffunction-sections -fdata-sections -fPIC -std=gnu99
 
 OPTIONS2 := $(OPTIONS) -fvisibility=hidden
 
-LDFLAGS   = -pthread -lrt -Wl,--as-needed -Wl,--gc-sections -Wl,--no-undefined
-LDFLAGS2 := $(LDFLAGS) -lblkid -lkmod 
+LDFLAGS1  = -pthread -lrt -Wl,--as-needed -Wl,--gc-sections -Wl,--no-undefined 
+LDFLAGS2 := $(LDFLAGS1) -lblkid -lkmod 
 
 DEF = -include cfg.h                    \
       -DSYSCONFDIR=\"/etc\"             \
@@ -38,7 +38,8 @@ DEF = -include cfg.h                    \
       -DROOTPREFIX=                     \
       -DUDEVLIBEXECDIR=\"/lib/udev\"    \
       -D_LARGEFILE_SOURCE               \
-      -D_FILE_OFFSET_BITS=64
+      -D_FILE_OFFSET_BITS=64            \
+      -DHAVE_FIRMWARE
 
 INCLUDE = -I src/libudev -I src/shared -I src -I src/login -I src/systemd
 
@@ -57,7 +58,7 @@ LIBUDEV_OBJS := $(addprefix build/, $(LIBUDEV_SRCS:.c=.o))
 
 LIBUDEV           = libudev
 LIBUDEV_MAJOR     = .1
-LIBUDEV_MINOR     = .0
+LIBUDEV_MINOR     = .3
 LIBUDEV_PATCH     = .2
 LIBUDEV_SONAME    := $(LIBUDEV).so
 LIBUDEV_LINK_NAME := $(LIBUDEV_SONAME)$(LIBUDEV_MAJOR)
@@ -236,39 +237,39 @@ build/udevadm: $(UDEV_ADMIN_OBJS) build/$(COMMON_LIB)
 build/accelerometer: build/accelerometer.o build/$(COMMON_LIB)
 	@echo LINK $@
 	$(VB)gcc build/accelerometer.o -o $@ \
-      build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS) -lm
+      build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS1) -lm
 	$(VB)strip --strip-unneeded $@
 
 build/scsi_id: build/scsi_id.o build/scsi_serial.o build/$(COMMON_LIB)
 	@echo LINK $@
 	$(VB)gcc build/scsi_id.o build/scsi_serial.o -o $@ \
-      build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS)
+      build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS1)
 	$(VB)strip --strip-unneeded $@
 
 build/ata_id: build/ata_id.o build/$(COMMON_LIB)
 	@echo LINK $@
-	$(VB)gcc build/ata_id.o -o $@ build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS)
+	$(VB)gcc build/ata_id.o -o $@ build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS1)
 	$(VB)strip --strip-unneeded $@
 
 build/cdrom_id: build/cdrom_id.o build/$(COMMON_LIB)
 	@echo LINK $@
-	$(VB)gcc build/cdrom_id.o -o $@ build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS)
+	$(VB)gcc build/cdrom_id.o -o $@ build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS1)
 	$(VB)strip --strip-unneeded $@
 
 build/v4l_id: build/v4l_id.o build/$(COMMON_LIB)
 	@echo LINK $@
-	$(VB)gcc build/v4l_id.o -o $@ build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS)
+	$(VB)gcc build/v4l_id.o -o $@ build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS1)
 	$(VB)strip --strip-unneeded $@
 
 build/mtd_probe: build/mtd_probe.o build/probe_smartmedia.o build/$(COMMON_LIB)
 	@echo LINK $@
 	$(VB)gcc build/mtd_probe.o build/probe_smartmedia.o -o $@ \
-      build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS)
+      build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS1)
 	$(VB)strip --strip-unneeded $@
 
 build/collect: build/collect.o build/$(COMMON_LIB)
 	@echo LINK $@
-	$(VB)gcc build/collect.o -o $@ build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS)
+	$(VB)gcc build/collect.o -o $@ build/udev-local.a build/$(COMMON_LIB) $(LDFLAGS1)
 	$(VB)strip --strip-unneeded $@
 
 build/%pc: %pc.in common
@@ -279,8 +280,9 @@ install: udev
 	@mkdir -pv $(DESTDIR)/lib/udev/devices/pts   $(DESTDIR)/lib/udev/rules.d \
               $(DESTDIR){,/usr}/lib/firmware    $(DESTDIR)/sbin             \
               $(DESTDIR)/usr/lib/pkgconfig      $(DESTDIR)/etc/udev/rules.d \
-              $(DESTDIR)/usr/share/doc/udev/lfs $(DESTDIR)/usr/include      \
-              $(DESTDIR)/usr/share/man/man{7,8}
+              $(DESTDIR)/usr/share/man/man{7,8} $(DESTDIR)/usr/include      \
+              $(DESTDIR)/usr/share/doc/udev-$(SYSTEMD_VERSION)/lfs          \
+              $(DESTDIR)/usr/share/gtk-doc/html/udev
 
    # Copy executables
 	@cp -v build/udevadm                  $(DESTDIR)/sbin
@@ -313,8 +315,10 @@ install: udev
 	@cp -v udev-lfs-$(VERSION)/udev.7     $(DESTDIR)/usr/share/man/man7
 	@cp -v udev-lfs-$(VERSION)/udevadm.8  $(DESTDIR)/usr/share/man/man8
 	@cp -v udev-lfs-$(VERSION)/udevd.8    $(DESTDIR)/usr/share/man/man8
-	@cp -v udev-lfs-$(VERSION)/README     $(DESTDIR)/usr/share/doc/udev/lfs
-	@cp -v udev-lfs-$(VERSION)/*.txt      $(DESTDIR)/usr/share/doc/udev/lfs
+	@cp -v udev-lfs-$(VERSION)/README     $(DESTDIR)/usr/share/doc/udev-$(SYSTEMD_VERSION)/lfs
+	@cp -v udev-lfs-$(VERSION)/*.txt      $(DESTDIR)/usr/share/doc/udev-$(SYSTEMD_VERSION)/lfs
+	@cp -v docs/libudev/*.{txt,types}     $(DESTDIR)/usr/share/doc/udev-$(SYSTEMD_VERSION)
+	@cp -v docs/libudev/html/*            $(DESTDIR)/usr/share/gtk-doc/html/udev
 
    # Copy misc
 	@cp -v udev-lfs-$(VERSION)/init-net-rules.sh  $(DESTDIR)/lib/udev
