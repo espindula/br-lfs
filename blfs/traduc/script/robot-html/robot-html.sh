@@ -203,7 +203,7 @@ INFO=$(svn info 2>>$CHEMIN_LOG/robot.err)
 log_err $? 
 
 # initialisation de V_FRACT avec le numéro de la version courante de blfs-fr
-#V_FRACT=$(echo $INFO | sed -re 's/(.*Revision: )([0-9][0-9]*)(.*)/\2/')
+#V_FRACT=$(echo $INFO | sed -re 's/.*Révision : ([0-9][0-9]*).*/\1/')
 
 LOG="------------------------------------------------------------------------"
 
@@ -220,8 +220,7 @@ LOG="------------------------------------------------------------------------"
 V_EN=0
 
 #V_FR=$(echo $LOG | sed 's/.*r\([0-9][0-9]*\).*/\1/g')
-V_FR=$(echo $INFO | sed -re 's/(.*Revision: )([0-9][0-9]*)(.*)/\2/')
-
+V_FR=$(echo $INFO | sed -e 's/^.*vision.:.\([0-9][0-9][0-9][0-9]\).*$/\1/')
 VERSION=$V_FR+1
 
 # on cherche tant qu'on n'a pas trouvé un numéro de VO
@@ -472,7 +471,7 @@ fi
 
 # si on est lundi, on envoi un rapport de concordance sur la ML
 dat=$(date)
-if [[ "${dat:0:3}" == "Mon" ]]
+if [[ "${dat:0:3}" == "lun" ]]
 then
    if [[ -s "verif.lst" ]]
          then
