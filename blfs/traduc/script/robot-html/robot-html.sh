@@ -301,7 +301,7 @@ pbxml="0"
 
 # on vérifie la concordance
 log_info "traîtement des concordances"
-./traduc/script/robot-html/verif.sh -q 2>>$CHEMIN_LOG/robot.err
+#./traduc/script/robot-html/verif.sh -q 2>>$CHEMIN_LOG/robot.err
 log_err $?
 
 # si la dernière version traduite est également la dernière version traîtée par le robot
@@ -351,15 +351,15 @@ elif [[ $V_WIKI != $V_EN ]]
       fi
       # mise à jour des champs date et contributeur
       log_info "vérification des champs date et contributeur"
-      ./traduc/script/robot-html/maj-date-contrib.sh  2>>$CHEMIN_LOG/robot.err
+ #     ./traduc/script/robot-html/maj-date-contrib.sh  2>>$CHEMIN_LOG/robot.err
       log_err $?
       # correction de typo
       log_info "correction sur le fichiers xml"
-      ./traduc/script/robot-html/typo.sh -q 2>>$CHEMIN_LOG/robot.err
+  #    ./traduc/script/robot-html/typo.sh -q 2>>$CHEMIN_LOG/robot.err
       log_err $?
       # conversion des fichiers en iso-8859-15
       log_info "Conversion des fichiers au format iso-8859-15"
-      ./traduc/script/robot-html/conv.sh -q
+  #    ./traduc/script/robot-html/conv.sh -q
 #      log_err $?
 
       # on regarde la validité du xml
