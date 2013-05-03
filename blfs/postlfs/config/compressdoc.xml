@@ -30,165 +30,155 @@
 <literal>#!/bin/bash
 # VERSION: 20080421.1623
 #
-# Compresse (avec bzip2 ou gzip) toutes les pages de  man d'une hiérarchie et
-# met à jour les liens symboliques  - Par Marc Heerdink &lt;marc @ koelkast.net&gt;
+# Compress (with bzip2 or gzip) all man pages in a hierarchy and
+# update symlinks - By Marc Heerdink &lt;marc @ koelkast.net&gt;
 #
-# Modifié pour pouvoir éventuellement gzipper ou bzip2er des fichiers et pour
-# gérer correctement tous les liens symboliques par Mark Hymers &lt;markh @ &lfs-domainname;&gt;
+# Modified to be able to gzip or bzip2 files as an option and to deal
+# with all symlinks properly by Mark Hymers &lt;markh @ &lfs-domainname;&gt;
 #
-# Modifié le 30092003 par Yann E. Morin &lt;yann.morin.1998 @ anciens.enib.fr&gt;
-# pour accepter la compression/décompression, pour gérer correctement les liens
-# en dur, pour permettre de transformer les liens durs en liens mous, de spécifier
-# le niveau de compression, d'analyser le man.conf pour toutes les occurrences de
-# MANPATH, pour permettre une sauvegarde, pour permettre de prendre la version 
-# la plus récente d'une page.
+# Modified 20030930 by Yann E. Morin &lt;yann.morin.1998 @ anciens.enib.fr&gt;
+# to accept compression/decompression, to correctly handle hard-links,
+# to allow for changing hard-links into soft- ones, to specify the
+# compression level, to parse the man.conf for all occurrences of MANPATH,
+# to allow for a backup, to allow to keep the newest version of a page.
 #
-# Modifié le 30032004 par Tushar Teredesai pour remplacer par $0 par le nom du
+# Modified 20040330 by Tushar Teredesai to replace $0 by the name of the
 # script.
-#   (Remarque&nbsp;: On suppose que le script se trouve dans le PATH de
-# l'utilisateur)
+#   (Note: It is assumed that the script is in the user's PATH)
 #
-# Modifié le 12012005 par Randy McMurchy pour raccourcir la longueur des lignes
-# et corriger des fautes de grammaire.
+# Modified 20050112 by Randy McMurchy to shorten line lengths and
+# correct grammar errors.
 #
-# Modifié le 28012006 par Alexander E. Patrakov pour une compatibilité avec
-# Man-DB.
+# Modified 20060128 by Alexander E. Patrakov for compatibility with Man-DB.
 #
-# Modifié le 11032006 par Archaic pour utiliser l'outil manpath de Man-DB qui
-# remplace man --path de Man.
+# Modified 20060311 by Archaic to use Man-DB manpath utility which is a
+# replacement for man --path from Man.
 #
-# Modifié le 21042008 par Dan Nicholson pour exécuter correctement le bon
-# compressdoc lors d'un fonctionnement de façon récursive. Cela signifie que
-# le même compressdoc sera utilisé si on donne un chemin complet ou s'il a été 
-# résolu à partir de PATH.
+# Modified 20080421 by Dan Nicholson to properly execute the correct
+# compressdoc when working recursively. This means the same compressdoc
+# will be used whether a full path was given or it was resolved from PATH.
 #
-# Modifié le 21042008 par Dan Nicholson pour être plus robuste face aux
-# répertoires qui n'existent pas ou qui n'ont pas assez de droits.
+# Modified 20080421 by Dan Nicholson to be more robust with directories
+# that don't exist or don't have sufficient permissions.
 #
-# Modifié le 21042008 par Lars Bamberger pour choisir (en quelque sorte)
-# automatiquement une méthode de compression basée sur la taille de la page de 
-# man. Deux corrections de bogues ont été ajoutées par Dan Nicholson.
+# Modified 20080421 by Lars Bamberger to (sort of) automatically choose
+# a compression method based on the size of the manpage. A couple bug
+# fixes were added by Dan Nicholson.
 #
-# Modifié le 21042008 par Dan Nicholson pour supprimer des avertissements de 
-# manpath vu qu'ils apparaissent quand $MANPATH est paramétré. Suppression du
-# TODO l'utilisation de la variable $MANPATH puisque manpath(1) gère déjà
-# cela. 
+# Modified 20080421 by Dan Nicholson to suppress warnings from manpath
+# since these are emitted when $MANPATH is set. Removed the TODO for
+# using the $MANPATH variable since manpath(1) handles this already.
 #
-# TODO&nbsp;: (à faire)
-#     - choisir une méthode de compression par défaut basée sur l'outil
-#       disponible&nbsp;: gzip or bzip2;
-#     - offrir une option pour restaurer une sauvegarde précédente ;
-#     - ajout d'autres moteurs de compression (compress, zip, etc?). Nécessaire ?
-# Assez marrant, cette fonction affiche de l'aide.
+# TODO:
+#     - choose a default compress method to be based on the available
+#       tool : gzip or bzip2;
+#     - offer an option to restore a previous backup;
+#     - add other compression engines (compress, zip, etc?). Needed?
+# Funny enough, this function prints some help.
 function help ()
 {
   if [ -n "$1" ]; then
-    echo "Option inconnue&nbsp;: $1"
+    echo "Unknown option : $1"
   fi
-  ( echo "Utilisation&nbsp;: $MY_NAME &lt;comp_method&gt; [options] [reps]" &amp;&amp; \
+  ( echo "Usage: $MY_NAME &lt;comp_method&gt; [options] [dirs]" &amp;&amp; \
   cat &lt;&lt; EOT
-Où comp_method est un de ceux-ci&nbsp;:
+Where comp_method is one of :
   --gzip, --gz, -g
   --bzip2, --bz2, -b
-                Compresse en utilisant gzip ou bzip2.
+                Compress using gzip or bzip2.
   --automatic
-                Compresse en utilisant soit gzip ou bzip2, selon la taille du
-                fichier à compresser. Les fichiers plus grands que 5
-                Ko sont bzippées, les fichiers plus grands que 1 Ko asont
-                gzippés et les fichiers plus petits qu'1 Ko ne sont pas.
-                compressés.
+                Compress using either gzip or bzip2, depending on the
+                size of the file to be compressed. Files larger than 5
+                kB are bzipped, files larger than 1 kB are gzipped and
+                files smaller than 1 kB are not compressed.
   --decompress, -d
-                Décompresse les pages de man.
-  --backup      Spécifier qu'une sauvegarde .tar sera créé pour tous les
-  répertoires.
-                Si une sauvegarde existe déjà, elle est sauvegardée comme
-                un .tar.old avant de faire les nouvelles sauvegardes. Si une
-                sauvegarde .tar.old existe, elle est supprimée avant de 
-                créer une sauvegarde. En mode sauvegarde, aucune autre action 
-                n'est effectuée.
-Et où options sont&nbsp;:
+                Decompress the man pages.
+  --backup      Specify a .tar backup shall be done for all directories.
+                In case a backup already exists, it is saved as .tar.old
+                prior to making the new backup. If a .tar.old backup
+                exists, it is removed prior to saving the backup.
+                In backup mode, no other action is performed.
+And where options are :
   -1 to -9, --fast, --best
-                Le niveau de compression, comme accepté par gzip et bzip2.
-                Lorsqu'elle n'est pas sécifiée, utilise le niveau de compression
-                de la méthode donnée (-6 pour gzip, et -9 pour bzip2).
-                Pas utilisée quand en modes sauvegarde ou décompression.
-  --force, -F   Oblige la (re-)compression, même si celle précédente était
-                la même méthode. Utile quand on change le ratio d compression.
-                Par défaut, une page ne sera pas recompressée si
-                elle se termine par le même suffixe que celui ajouté par la
-                méthode (.bz2 pour bzip2, .gz pour gzip).
-  --soft, -S    Change les liens en dur en liens mous. Utilié avec _caution_ car
-                le premier fichier rencontré sera utilisé en tant que
-                référence. Non utilisé en mode sauvegarde.
-  --hard, -H    Transforme des liens mous en liens durs. Pas utilisé en
-                mode sauvegarde.
+                The compression level, as accepted by gzip and bzip2.
+                When not specified, uses the default compression level
+                for the given method (-6 for gzip, and -9 for bzip2).
+                Not used when in backup or decompress modes.
+  --force, -F   Force (re-)compression, even if the previous one was
+                the same method. Useful when changing the compression
+                ratio. By default, a page will not be re-compressed if
+                it ends with the same suffix as the method adds
+                (.bz2 for bzip2, .gz for gzip).
+  --soft, -S    Change hard-links into soft-links. Use with _caution_
+                as the first encountered file will be used as a
+                reference. Not used when in backup mode.
+  --hard, -H    Change soft-links into hard-links. Not used when in
+                backup mode.
   --conf=dir, --conf dir
-                Spécifie l'emplacement de man_db.conf. Par défaut, sur /etc.
-  --verbose, -v Mode verbeux, affiche le nom du répertoire traité. Doublez le
-                drapeau le rend encore plus verbeux, et affichera le nom du
-                fichier traité.
-  --fake, -f    Trompe le script. Affiche les paramètres actuels que compressdoc 
-                utilisera.
-  dirs          Une liste de chemins _absolus_ vers les pages de man séparés par
-                des espaces. Si et seulement si vous laissez vide, utilise
-                manpath pour parser ${MAN_CONF}/man_db.conf pour toutes les 
-                occurrences valides de MANDATORY_MANPATH.
-Remarque sur la compression&nbsp;:
-  Il y a eu une discussion sur blfs-support concernant les ratios de compression
-  des pages de man par gzip et bzip2, prenant en compte le système de fichiers 
-  hôte, l'architecture, etc... En particulier, on en a conclu que gzip était
-  beaucoup plus efficace pour les 'petits' fichiers, et bzip2 sur les 'gros'
-  fichiers, la notion de petit et de gros dépendant beaucoup du contenu des 
-  fichiers.
-  Voir le message d'origine de Mickael A. Peters, intitulé
-  "Bootable Utility CD" (outil CD amorçable), datant du 09042003.1816(+0200), et
-  les messages consécutifs&nbsp;:
+                Specify the location of man_db.conf. Defaults to /etc.
+  --verbose, -v Verbose mode, print the name of the directory being
+                processed. Double the flag to turn it even more verbose,
+                and to print the name of the file being processed.
+  --fake, -f    Fakes it. Print the actual parameters compressdoc will use.
+  dirs          A list of space-separated _absolute_ pathnames to the
+                man directories. When empty, and only then, use manpath
+                to parse ${MAN_CONF}/man_db.conf for all valid occurrences
+                of MANDATORY_MANPATH.
+Note about compression:
+  There has been a discussion on blfs-support about compression ratios of
+  both gzip and bzip2 on man pages, taking into account the hosting fs,
+  the architecture, etc... On the overall, the conclusion was that gzip
+  was much more efficient on 'small' files, and bzip2 on 'big' files,
+  small and big being very dependent on the content of the files.
+  See the original post from Mickael A. Peters, titled
+  "Bootable Utility CD", dated 20030409.1816(+0200), and subsequent posts:
   http://&lfs-domainname;/pipermail/blfs-support/2003-April/038817.html
-  Sur mon système (x86, ext3), les pages de man faisaient 35564Ko avant compression.
-  gzip -9 les a compressé jusqu'à 20372Ko (57.28%), bzip2 -9 les a passés à
-  19812Ko (55.71%). Soit un gain d'espace de 1.57%. YMMV.
-  On n'a pas tenu compte de de la vitesse de décompression. Mais cela a-t-il un
-  sens ? Vous gagnez en rapidité d'accès avec des pages de man cooppessées,
-  ou vous gagnez de la place et un peu de temps.
-  Bon, mon P4-2.5GHz ne me notifie même pas de ça...&nbsp;:-)
+  On my system (x86, ext3), man pages were 35564KB before compression.
+  gzip -9 compressed them down to 20372KB (57.28%), bzip2 -9 got down to
+  19812KB (55.71%). That is a 1.57% gain in space. YMMV.
+  What was not taken into consideration was the decompression speed. But
+  does it make sense to? You gain fast access with uncompressed man
+  pages, or you gain space at the expense of a slight overhead in time.
+  Well, my P4-2.5GHz does not even let me notice this... :-)
 EOT
 ) | less
 }
-# Cette fonction vérifie que la page de man est unique entre bzip2'd,
-# gzip'd et des versions décompressées.
-#  $1 le répertoire dans lequel le fichier réside
-#  $2 le nom du fichier de la page de man
-# Retourne 0 (true, vrai)) si le fichier 
-# est la dernière version et s'il doit être traitéet 1 (false, faux) si le
-# fichier n'est pas la dernière version (et a donc été effacé).
+# This function checks that the man page is unique amongst bzip2'd,
+# gzip'd and uncompressed versions.
+#  $1 the directory in which the file resides
+#  $2 the file name for the man page
+# Returns 0 (true) if the file is the latest and must be taken care of,
+# and 1 (false) if the file is not the latest (and has therefore been
+# deleted).
 function check_unique ()
 {
-  # NB. Quand il y a des liens en dur vers ce fichier, ils _ne_ sont _pas_
-  # effacés. En fait, s'il y a des liens en dur, ils sont tous de la même
-  # date/h1ore, étant ainsi prêt pour un effacement futur.
-  # Construire la liste de toutes les pages de man ayant le même nom
+  # NB. When there are hard-links to this file, these are
+  # _not_ deleted. In fact, if there are hard-links, they
+  # all have the same date/time, thus making them ready
+  # for deletion later on.
+  # Build the list of all man pages with the same name
   DIR=$1
   BASENAME=`basename "${2}" .bz2`
   BASENAME=`basename "${BASENAME}" .gz`
   GZ_FILE="$BASENAME".gz
   BZ_FILE="$BASENAME".bz2
-  # Cherche et garde la plus récente
+  # Look for, and keep, the most recent one
   LATEST=`(cd "$DIR"; ls -1rt "${BASENAME}" "${GZ_FILE}" "${BZ_FILE}" \
          2&gt;/dev/null | tail -n 1)`
   for i in "${BASENAME}" "${GZ_FILE}" "${BZ_FILE}"; do
     [ "$LATEST" != "$i" ] &amp;&amp; rm -f "$DIR"/"$i"
   done
-  # Si le fichier spécifié était la dernière version, retourner 0
+  # In case the specified file was the latest, return 0
   [ "$LATEST" = "$2" ] &amp;&amp; return 0
-  # Si le fichier spécifié n'était pas la dernière version, retourner 1
+  # If the file was not the latest, return 1
   return 1
 }
-# Nom du script
+# Name of the script
 MY_NAME=`basename $0`
-# D'accord, analyser la ligne de commande pour y trouver les arguments et
-# initialiser dans un état intelligent, c'est-à-dire&nbsp;: ne pas changer l'état des
-# liens, analyser /etc/man_db.conf, être le plus discret, chercher man_db.conf
-# dans /etc et ne pas forcer une (re)-compression.
+# OK, parse the command-line for arguments, and initialize to some
+# sensible state, that is: don't change links state, parse
+# /etc/man_db.conf, be most silent, search man_db.conf in /etc, and don't
+# force (re-)compression.
 COMP_METHOD=
 COMP_SUF=
 COMP_LVL=
@@ -271,7 +261,7 @@ while [ -n "$1" ]; do
       exit 1
       ;;
     *)
-      echo "\"$1\" n'est pas le nom d'un chemin absolu"
+      echo "\"$1\" is not an absolute path name"
       exit 1
       ;;
   esac
@@ -279,26 +269,26 @@ done
 # Redirections
 case $VERBOSE_LVL in
   0)
-     # O, être discret
+     # O, be silent
      DEST_FD0=/dev/null
      DEST_FD1=/dev/null
      VERBOSE_OPT=
      ;;
   1)
-     # 1, être un peu verbeux
+     # 1, be a bit verbose
      DEST_FD0=/dev/stdout
      DEST_FD1=/dev/null
      VERBOSE_OPT=-v
      ;;
   *)
-     # 2 et supérieur, être très verbeux
+     # 2 and above, be most verbose
      DEST_FD0=/dev/stdout
      DEST_FD1=/dev/stdout
      VERBOSE_OPT="-v -v"
      ;;
 esac
-# Remarque&nbsp;: sur ma machine, 'man --path' donne /usr/share/man deux fois, une
-# fois avec un '/', rampant, une fois sans.
+# Note: on my machine, 'man --path' gives /usr/share/man twice, once
+# with a trailing '/', once without.
 if [ -z "$MAN_DIR" ]; then
   MAN_DIR=`manpath -q -C "$MAN_CONF"/man_db.conf \
             | sed 's/:/\\n/g' \
@@ -306,21 +296,21 @@ if [ -z "$MAN_DIR" ]; then
             | sort -u \
             | while read bar; do echo -n "$bar "; done`
 fi
-# Si pas de MANDATORY_MANPATH dans ${MAN_CONF}/man_db.conf, s'arrêter
+# If no MANDATORY_MANPATH in ${MAN_CONF}/man_db.conf, abort as well
 if [ -z "$MAN_DIR" ]; then
-  echo "Aucun répertoire spécifié et aucun répertoire trouvé avec \`manpath'"
+  echo "No directory specified, and no directory found with \`manpath'"
   exit 1
 fi
-# Vérifier que les réperqoires spécifiés existent effectivement et sont lisibles
+# Check that the specified directories actually exist and are readable
 for DIR in $MAN_DIR; do
   if [ ! -d "$DIR" -o ! -r "$DIR" ]; then
-    echo "Le répertoire '$DIR' n'existe pas ou n'est pas lisible"
+    echo "Directory '$DIR' does not exist or is not readable"
     exit 1
   fi
 done
-# Tromperie ?
+# Fake?
 if [ "$FAKE" != "no" ]; then
-  echo "Paramètres actuels utilisés&nbsp;:"
+  echo "Actual parameters used:"
   echo -n "Compression.......: "
   case $COMP_METHOD in
     --bzip2|--bz2|-b) echo -n "bzip2";;
@@ -330,38 +320,38 @@ if [ "$FAKE" != "no" ]; then
     *) echo -n "unknown";;
   esac
   echo " ($COMP_METHOD)"
-  echo "Niveau de compression.&nbsp;: $COMP_LVL"
-  echo "Suffixe de compression&nbsp;: $COMP_SUF"
-  echo -n "Forcer la compression.: "
+  echo "Compression level.: $COMP_LVL"
+  echo "Compression suffix: $COMP_SUF"
+  echo -n "Force compression.: "
   [ "foo$FORCE_OPT" = "foo-F" ] &amp;&amp; echo "yes" || echo "no"
-  echo "man_db.conf est....: ${MAN_CONF}/man_db.conf"
-  echo -n "Liens en dur........: "
+  echo "man_db.conf is....: ${MAN_CONF}/man_db.conf"
+  echo -n "Hard-links........: "
   [ "foo$LN_OPT" = "foo-S" ] &amp;&amp;
-  echo "convertir en liens mous" || echo "leave as is"
-  echo -n "Liens mous........: "
+  echo "convert to soft-links" || echo "leave as is"
+  echo -n "Soft-links........: "
   [ "foo$LN_OPT" = "foo-H" ] &amp;&amp;
-  echo "convertir en liens durs" || echo "leave as is"
-  echo "Sauvegarde............: $BACKUP"
-  echo "Tromperie (oui !).....: $FAKE"
-  echo "Répertoires.......: $MAN_DIR"
-  echo "Niveau de verbosité...: $VERBOSE_LVL"
+  echo "convert to hard-links" || echo "leave as is"
+  echo "Backup............: $BACKUP"
+  echo "Faking (yes!).....: $FAKE"
+  echo "Directories.......: $MAN_DIR"
+  echo "Verbosity level...: $VERBOSE_LVL"
   exit 0
 fi
-# Si aucune méthode n'a été spécifiée, afficher l'aide
+# If no method was specified, print help
 if [ -z "${COMP_METHOD}" -a "${BACKUP}" = "no" ]; then
   help
   exit 1
 fi
-# En mode sauvegarde, faire seulement la sauvegarde
+# In backup mode, do the backup solely
 if [ "$BACKUP" = "yes" ]; then
   for DIR in $MAN_DIR; do
     cd "${DIR}/.."
     if [ ! -w "`pwd`" ]; then
-      echo "On ne peut pas écrire dans le répertoire '`pwd`'"
+      echo "Directory '`pwd`' is not writable"
       exit 1
     fi
     DIR_NAME=`basename "${DIR}"`
-    echo "Sauvegarde de $DIR..." &gt; $DEST_FD0
+    echo "Backing up $DIR..." &gt; $DEST_FD0
     [ -f "${DIR_NAME}.tar.old" ] &amp;&amp; rm -f "${DIR_NAME}.tar.old"
     [ -f "${DIR_NAME}.tar" ] &amp;&amp;
     mv "${DIR_NAME}.tar" "${DIR_NAME}.tar.old"
@@ -369,40 +359,40 @@ if [ "$BACKUP" = "yes" ]; then
   done
   exit 0
 fi
-# Je sais que MAN_DIR n'a que des noms de chemins absolus
-# J'ai besoin de tenir compte des man localisés, donc je procède récursivement
+# I know MAN_DIR has only absolute path names
+# I need to take into account the localized man, so I'm going recursive
 for DIR in $MAN_DIR; do
   MEM_DIR=`pwd`
   if [ ! -w "$DIR" ]; then
-    echo "On ne peut écrire dans le répertoire '$DIR'"
+    echo "Directory '$DIR' is not writable"
     exit 1
   fi
   cd "$DIR"
   for FILE in *; do
-    # Corrige le cas où le répertoire est vide
+    # Fixes the case were the directory is empty
     if [ "foo$FILE" = "foo*" ]; then continue; fi
-    # Corrige le cas où les liens en dur voient leur plan de compression changer
-    # (de non compressé en compressé, ou de bz2 en gz, ou de gz en bz2)
-    # Corrige aussi le cas où plusieurs versions de la page sont présentes,
-    # qu'elles soient ou non compressées
+    # Fixes the case when hard-links see their compression scheme change
+    # (from not compressed to compressed, or from bz2 to gz, or from gz
+    # to bz2)
+    # Also fixes the case when multiple version of the page are present,
+    # which are either compressed or not.
     if [ ! -L "$FILE" -a ! -e "$FILE" ]; then continue; fi
-    # Ne compresse pas ces fichiers
+    # Do not compress whatis files
     if [ "$FILE" = "whatis" ]; then continue; fi
     if [ -d "$FILE" ]; then
-      # Nous procédons de façon récursive dans ce répertoire
-      echo "-&gt; Entrant dans ${DIR}/${FILE}..." &gt; $DEST_FD0
-      # J'ai besoin de passer --conf, car je précise le répertoire sur lequel
-      # travailler. Mais je dois quitter en cas d'erreur. 
-      # Nous devons faire en sens inverse avec le répertoire d'origine pour que
-      # $0 soit résolu correctement.
+      # We are going recursive to that directory
+      echo "-&gt; Entering ${DIR}/${FILE}..." &gt; $DEST_FD0
+      # I need not pass --conf, as I specify the directory to work on
+      # But I need exit in case of error. We must change back to the
+      # original directory so $0 is resolved correctly.
       (cd "$MEM_DIR" &amp;&amp; eval "$0" ${COMP_METHOD} ${COMP_LVL} ${LN_OPT} \
         ${VERBOSE_OPT} ${FORCE_OPT} "${DIR}/${FILE}") || exit $?
-      echo "&lt;- Quittant ${DIR}/${FILE}." &gt; $DEST_FD1
+      echo "&lt;- Leaving ${DIR}/${FILE}." &gt; $DEST_FD1
     else # !dir
       if ! check_unique "$DIR" "$FILE"; then continue; fi
-      # Avec la compression automatique, afficher la taille du fichier 
-      # décompressé (référencement des liens symboliques), et choisir une
-      # méthode de compression adaptée.
+      # With automatic compression, get the uncompressed file size of
+      # the file (dereferencing symlinks), and choose an appropriate
+      # compression method.
       if [ "$COMP_METHOD" = "--automatic" ]; then
         declare -i SIZE
         case "$FILE" in
@@ -421,12 +411,12 @@ for DIR in $MAN_DIR; do
           COMP_SUF=
         fi
       fi
-      # Vérifier si le fichier est déjà compressé avec la méthode spécifiée
+      # Check if the file is already compressed with the specified method
       BASE_FILE=`basename "$FILE" .gz`
       BASE_FILE=`basename "$BASE_FILE" .bz2`
       if [ "${FILE}" = "${BASE_FILE}${COMP_SUF}" \
          -a "foo${FORCE_OPT}" = "foo" ]; then continue; fi
-      # Si on a un lien symbolique
+      # If we have a symlink
       if [ -h "$FILE" ]; then
         case "$FILE" in
           *.bz2)
@@ -453,23 +443,23 @@ for DIR in $MAN_DIR; do
           # Keep this soft-link a soft- one.
           rm -f "$FILE" &amp;&amp; ln -s "${LINK}$COMP_SUF" "${FILE}$COMP_SUF"
         fi
-        echo "Réédition du lien $FILE" &gt; $DEST_FD1
-      # sinon, si on a un fichier "plain"
+        echo "Relinked $FILE" &gt; $DEST_FD1
+      # else if we have a plain file
       elif [ -f "$FILE" ]; then
-        # Gérer les liens en dur&nbsp;: construire la liste des fichiers liés en
-        # dur vers un autre qu'on {dé,}compresse.
-        # NB. Ce n'est pas optimum car le fichier sera éventuellement compressé
-        # autant de fois qu'il est lié en dur. Mais pour l'instant,
-        # c'est une méthode sécurisée.
+        # Take care of hard-links: build the list of files hard-linked
+        # to the one we are {de,}compressing.
+        # NB. This is not optimum has the file will eventually be
+        # compressed as many times it has hard-links. But for now,
+        # that's the safe way.
         inode=`ls -li "$FILE" | awk '{print $1}'`
         HLINKS=`find . \! -name "$FILE" -inum $inode`
         if [ -n "$HLINKS" ]; then
-          # On a des liens en dur ! Les supprimer maintenant
+          # We have hard-links! Remove them now.
           for i in $HLINKS; do rm -f "$i"; done
         fi
-        # Maintenant, traiter le fichier qui n'a pas de lien en dur
-        # On décompresse d'abord pour re-compresser plus tard avec le ratio de
-        # compression sélectionné...
+        # Now take care of the file that has no hard-link
+        # We do decompress first to re-compress with the selected
+        # compression ratio later on...
         case "$FILE" in
           *.bz2)
             bunzip2 $FILE
@@ -480,41 +470,40 @@ for DIR in $MAN_DIR; do
             FILE=`basename "$FILE" .gz`
           ;;
         esac
-        # Compresse le fichier avec le ratio de compression donné si nécessaire
+        # Compress the file with the given compression ratio, if needed
         case $COMP_SUF in
           *bz2)
             bzip2 ${COMP_LVL} "$FILE" &amp;&amp; chmod 644 "${FILE}${COMP_SUF}"
-            echo "$FILE compressé" &gt; $DEST_FD1
+            echo "Compressed $FILE" &gt; $DEST_FD1
             ;;
           *gz)
             gzip ${COMP_LVL} "$FILE" &amp;&amp; chmod 644 "${FILE}${COMP_SUF}"
-            echo "$FILE compressé" &gt; $DEST_FD1
+            echo "Compressed $FILE" &gt; $DEST_FD1
             ;;
           *)
-            echo "$FILE décompressé" &gt; $DEST_FD1
+            echo "Uncompressed $FILE" &gt; $DEST_FD1
             ;;
         esac
-        # Si le fichier avait des liens en dur, les recréer (en dur ou mou)
+        # If the file had hard-links, recreate those (either hard or soft)
         if [ -n "$HLINKS" ]; then
           for i in $HLINKS; do
             NEWFILE=`echo "$i" | sed s/\.gz$// | sed s/\.bz2$//`
             if [ "$LN_OPT" = "-S" ]; then
-              # Rendre mou ce lien dur 
+              # Make this hard-link a soft- one
               ln -s "${FILE}$COMP_SUF" "${NEWFILE}$COMP_SUF"
             else
-              # Garder le lien dur en l'état
+              # Keep the hard-link a hard- one
               ln "${FILE}$COMP_SUF" "${NEWFILE}$COMP_SUF"
             fi
-            # Ne fonctionne vraiment que pour les liens durs. Dangereux pour 
-            # les liens mous
+            # Really work only for hard-links. Harmless for soft-links
             chmod 644 "${NEWFILE}$COMP_SUF"
           done
         fi
       else
-        # Il y a un problème quand on n'a ni lien symbolique ni fichier réel.
-        # On n'en arrivera bien sûr jamais là...&nbsp;:-(
-        echo -n "Whaooo... \"${DIR}/${FILE}\" n'est ni un lien symbolique "
-        echo "ni un vrai fichier. Merci de vérifier&nbsp;:"
+        # There is a problem when we get neither a symlink nor a plain
+        # file. Obviously, we shall never ever come here... :-(
+        echo -n "Whaooo... \"${DIR}/${FILE}\" is neither a symlink "
+        echo "nor a plain file. Please check:"
         ls -l "${DIR}/${FILE}"
         exit 1
       fi

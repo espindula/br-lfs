@@ -145,59 +145,58 @@
 <screen role="root">
 <?dbfo keep-together="auto"?><userinput>cat &gt; /etc/rc.d/rc.iptables &lt;&lt; "EOF"
 <literal>#!/bin/sh
-# Début de rc.iptables
-# Insère les modules de traquage de connexion (inutile si construit dans
-# le noyau  
+# Begin rc.iptables
+# Insert connection-tracking modules
+# (not needed if built into the kernel)
 modprobe nf_conntrack
 modprobe xt_LOG
-# Activation de la protection écho broadcast
+# Enable broadcast echo Protection
 echo 1 &gt; /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
-# Désactivation des paquets routés à la source
+# Disable Source Routed Packets
 echo 0 &gt; /proc/sys/net/ipv4/conf/all/accept_source_route
 echo 0 &gt; /proc/sys/net/ipv4/conf/default/accept_source_route
-# Activation de la protection des cookies SYN TCP 
+# Enable TCP SYN Cookie Protection
 echo 1 &gt; /proc/sys/net/ipv4/tcp_syncookies
-# Activation de la protection des cookies SYN TCP 
+# Disable ICMP Redirect Acceptance
 echo 0 &gt; /proc/sys/net/ipv4/conf/default/accept_redirects
-# N'envoie pas de messages redirigés
+# Do not send Redirect Messages
+echo 0 &gt; /proc/sys/net/ipv4/conf/all/send_redirects
 echo 0 &gt; /proc/sys/net/ipv4/conf/default/send_redirects
-echo 0 &gt; /proc/sys/net/ipv4/conf/default/send_redirects
-# Accepte les paquets Spoofed entrant sur une interface, où les réponses
-# feraient sortir une réponse sur une interface différente.
+# Drop Spoofed Packets coming in on an interface, where responses
+# would result in the reply going out a different interface.
+echo 1 &gt; /proc/sys/net/ipv4/conf/all/rp_filter
 echo 1 &gt; /proc/sys/net/ipv4/conf/default/rp_filter
-echo 1 &gt; /proc/sys/net/ipv4/conf/default/rp_filter
-# Enregistrement des paquets avec des adresses impossibles.
+# Log packets with impossible addresses.
 echo 1 &gt; /proc/sys/net/ipv4/conf/all/log_martians
 echo 1 &gt; /proc/sys/net/ipv4/conf/default/log_martians
-# être verbeux sur les adresses IP dynamiques (inutile en cas d'IP statique)
+# be verbose on dynamic ip-addresses  (not needed in case of static IP)
 echo 2 &gt; /proc/sys/net/ipv4/ip_dynaddr
-# Désactivation de la notification de congestion explicite car trop de routeurs
-# l'ignorent
+# disable Explicit Congestion Notification
+# too many routers are still ignorant
 echo 0 &gt; /proc/sys/net/ipv4/tcp_ecn
-# Paramétrage d'un état connu
+# Set a known state
 iptables -P INPUT   DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT  DROP
-# Ces lignes sont au cas où les règles sont déjà en place et où le script 
-# est déjà retourné à la volée. Nous voulons supprimer toutes les règles et les
-# chaînes d'utilisateur préexistantes avant d'implémenter de nouvelles
-# règles.
+# These lines are here in case rules are already in place and the
+# script is ever rerun on the fly. We want to remove all rules and
+# pre-existing user defined chains before we implement new rules.
 iptables -F
 iptables -X
 iptables -Z
 iptables -t nat -F
-# Ne permettre que les connexions locales
+# Allow local-only connections
 iptables -A INPUT  -i lo -j ACCEPT
-# Sortie libre sur n'importe quelle interface, n'importe quelle IP pour n'importe
-# quel service (revient à -P ACCEPT)
+# Free output on any interface to any ip for any service
+# (equal to -P ACCEPT)
 iptables -A OUTPUT -j ACCEPT
-# Permet des réponses sur des connexions déjà établies et permet de nouvelles
-# connexions liées à celles établies (comme le port en mode ftp)
+# Permit answers on already established connections
+# and permit new connections related to established ones
+# (e.g. port mode ftp)
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-# Enregistre tout le reste. 
-Log everything else. What's Windows' latest exploitable vulnerability?
+# Log everything else. What's Windows' latest exploitable vulnerability?
 iptables -A INPUT -j LOG --log-prefix "FIREWALL:INPUT "
-# Fin de rc.iptables</literal>
+# End $rc_base/rc.iptables</literal>
 EOF
 chmod 700 /etc/rc.d/rc.iptables</userinput>
 </screen>
@@ -228,71 +227,70 @@ chmod 700 /etc/rc.d/rc.iptables</userinput>
 <screen role="root">
 <?dbfo keep-together="auto"?><userinput>cat &gt; /etc/rc.d/rc.iptables &lt;&lt; "EOF"
 <literal>#!/bin/sh
-# Début de $rc_base/rc.iptables
+# Begin rc.iptables
 echo
-echo "Vous utilisez la configuration donnee en exemple pour installer un pare-feu"
-echo "au-delà de Linux From Scratch."
-echo "Cet exemple est loin d'être complet, il est uniquement destiné"
-echo "à être une réference."
-echo "Une sécuritée par pare-feu est un problème difficile, qui dépasse la portée"
-echo "des règles de configuration suivantes."
-echo "Vous pouvez trouver des informations supplémentaires"
-echo "à propos des pare-feu dans le chapitre of du livre BLFS."
+echo "You're using the example configuration for a setup of a firewall"
+echo "from Beyond Linux From Scratch."
+echo "This example is far from being complete, it is only meant"
+echo "to be a reference."
+echo "Firewall security is a complex issue, that exceeds the scope"
+echo "of the configuration rules below."
+echo "You can find additional information"
+echo "about firewalls in Chapter 4 of the BLFS book."
 echo "http://www.&lfs-domainname;/blfs"
 echo
-# Insérer les modules iptables (inutile si construit en dur dans le noyau).
+# Insert iptables modules (not needed if built into the kernel).
 modprobe nf_conntrack
 modprobe nf_conntrack_ftp
 modprobe xt_conntrack
 modprobe xt_LOG
 modprobe xt_state
-# Active la protection echo broadcast
+# Enable broadcast echo Protection
 echo 1 &gt; /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
-# Désactive les paquets routés depuis la source
+# Disable Source Routed Packets
 echo 0 &gt; /proc/sys/net/ipv4/conf/all/accept_source_route
-# Activation de la protection des cookies SYN TCP 
+# Enable TCP SYN Cookie Protection
 echo 1 &gt; /proc/sys/net/ipv4/tcp_syncookies
-# Désactive l'acceptation des redirections ICMP 
+# Disable ICMP Redirect Acceptance
 echo 0 &gt; /proc/sys/net/ipv4/conf/all/accept_redirects
-# N'envoie pas de messages redirigés
-echo 0 &gt; /proc/sys/net/ipv4/conf/all/send_redirects
-# Accepte les paquets Spoofed entrant sur une interface, où les réponses
-# feraient sortir une réponse sur une interface différente.
-echo 1 &gt; /proc/sys/net/ipv4/conf/all/rp_filter
-# Enregistrement des paquets aux adresses impossibles.
+# Don't send Redirect Messages
+echo 0 &gt; /proc/sys/net/ipv4/conf/default/send_redirects
+# Drop Spoofed Packets coming in on an interface where responses
+# would result in the reply going out a different interface.
+echo 1 &gt; /proc/sys/net/ipv4/conf/default/rp_filter
+# Log packets with impossible addresses.
 echo 1 &gt; /proc/sys/net/ipv4/conf/all/log_martians
-# Etre verbeux sur les adresses IP dynamiques (inutile en cas d'IP statique)
+# Be verbose on dynamic ip-addresses  (not needed in case of static IP)
 echo 2 &gt; /proc/sys/net/ipv4/ip_dynaddr
-# Désactivation de la notification de congestion explicite car trop de routeurs
-# l'ignorent
+# Disable Explicit Congestion Notification
+# Too many routers are still ignorant
 echo 0 &gt; /proc/sys/net/ipv4/tcp_ecn
-# Paramètre un état connu
+# Set a known state
 iptables -P INPUT   DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT  DROP
-# Ces lignes sont au cas où les règles sont déjà en place et où le script 
-# est déjà retourné à la volée. Nous voulons supprimer toutes les règles et les
-# chaînes d'utilisateur préexistantes avant d'implémenter de nouvelles
-# règles.
+# These lines are here in case rules are already in place and the
+# script is ever rerun on the fly. We want to remove all rules and
+# pre-existing user defined chains before we implement new rules.
 iptables -F
 iptables -X
 iptables -Z
 iptables -t nat -F
-# Permettre les connexions locales
+# Allow local connections
 iptables -A INPUT  -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
-# Permettre les redirections si initié sur l'intranet
+# Allow forwarding if the initiated on the intranet
 iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A FORWARD  -i ! ppp+ -m conntrack --ctstate NEW      -j ACCEPT
-# Faire du masquerading (inutile si l'intranet n'utilise pas des adresses IP
-# privées
+# Do masquerading
+# (not needed if intranet is not using private ip-addresses)
 iptables -t nat -A POSTROUTING -o ppp+ -j MASQUERADE
-# Enregistre tout pour du débogage (dernière des règles, mais avant les règles
-# de politique de sécurité)
+# Log everything for debugging
+# (last of all rules, but before policy rules)
 iptables -A INPUT   -j LOG --log-prefix "FIREWALL:INPUT "
 iptables -A FORWARD -j LOG --log-prefix "FIREWALL:FORWARD "
 iptables -A OUTPUT  -j LOG --log-prefix "FIREWALL:OUTPUT "
-# Activation de la redirection d'IP
+# Enable IP Forwarding
 echo 1 &gt; /proc/sys/net/ipv4/ip_forward</literal>
 EOF
 chmod 700 /etc/rc.d/rc.iptables</userinput>

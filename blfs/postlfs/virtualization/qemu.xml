@@ -119,8 +119,10 @@
     </para>
 <screen>
 <userinput>patch -Np1 -i ../qemu-&qemu-version;-fixes-1.patch
-./configure --prefix=/usr &amp;&amp;
-LIBS_QGA=-lrt LIBS=-lrt make</userinput>
+./configure --prefix=/usr                \
+            --sysconfdir=/etc            \
+            --target-list=x86_64-softmmu &amp;&amp;
+make</userinput>
 </screen>
     <para>Les tests ne sont pas automatiques. Pour lancer chacun des tests, allez dans le répertoire
     <filename class='directory'>tests/</filename>, et examinez
@@ -172,10 +174,10 @@ LIBS_QGA=-lrt LIBS=-lrt make</userinput>
     <filename>Fedora-16-x86_64-Live-LXDE.iso</filename> dans le répertoire courant.
     Exécutez les commandes suivantes&nbsp;:</para>
 <screen>
-<userinput>qemu -hda vdisk.img       \
-   -cdrom Fedora-16-x86_64-Live-LXDE.iso  \
-   -boot d  \
-   -m 384</userinput>
+<userinput>qemu -enable-kvm -hda vdisk.img            \
+     -cdrom Fedora-16-x86_64-Live-LXDE.iso \
+     -boot d                               \
+     -m 384</userinput>
 </screen>
     <para>Suivre la procedure d'installation normal pour la distribution choisie.
     L'option -boot spécifie l'ordre de démarrage des disques comme un chaîne de lettres de
@@ -185,7 +187,7 @@ LIBS_QGA=-lrt LIBS=-lrt make</userinput>
     Pour les ordinateurs avec 512Mo de RAM il est prudent d'utiliser -m 192, ou même -m 128 (la valeur par défaut).</para>
     <para>Pour exécuter le nouveau système d'exploitation, lancer&nbsp;:</para>
 <screen>
-<userinput>qemu vdisk.img -m 384</userinput>
+<userinput>qemu -enable-kvm vdisk.img -m 384</userinput>
 </screen>
     <para>Pour ajouter le réseau à la machine virtuelle ajoutez "-net nic -net user" à la commande précédente.
     qemu fournit une serveur DHCP pour les machines virtuelles et en fonction de votre système client,
@@ -219,12 +221,12 @@ EOF</userinput>
 #!/bin/bash
 switch=br0
 if [ -n "\$1" ]; then
-  # ajoute une nouvelle interface tap0 au pont
+  # Add new tap0 interface to bridge
   /sbin/ip link set \$1 up
   sleep 0.5s
-  /usr/sbin/brctl addif $switch \$1
+  /usr/sbin/brctl addif \$switch \$1
 else
-  echo "Erreur&nbsp;: pas d'interface spécifiée"
+  echo "Error: no interface specified"
   exit 1
 fi
 exit 0
@@ -236,10 +238,10 @@ chmod +x /etc/qemu-ifup</userinput>
 #!/bin/bash
 switch=br0
 if [ -n "\$1" ]; then
-  # Enlève une interface tap0 au pont
-  /usr/sbin/brctl delif $switch \$1
+  # Remove tap0 interface from bridge
+  /usr/sbin/brctl delif \$switch \$1
 else
-  echo "Errer&nbsp;: pas d'interface spécifiée"
+  echo "Error: no interface specified"
   exit 1
 fi
 exit 0
