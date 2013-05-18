@@ -188,6 +188,7 @@ svn diff -r BASE:HEAD | grep -v "traduc/commits" | grep Index | sed -e '/^[+-]In
 log_err $?
 log_info "Ajout de la liste des fichiers de verif.lst"
 sed -e 's/^\(.*\) :.*/\1/g' verif.lst >>$CHEMIN_BLFSFR/listxml 2>>$CHEMIN_LOG/robot.err
+sed -e "/archive/d" -i listxml
 log_att $?
 
 # synchronisation de la copie de travail avec le dépôt
