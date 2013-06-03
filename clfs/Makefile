@@ -190,13 +190,21 @@ ARCHS_DLLIST := $(ARCHS:%=%-dllist)
 download-list: $(ARCHS_DLLIST)
 $(ARCHS_DLLIST): override arch = $(@:%-dllist=%)
 $(ARCHS_DLLIST):
-	@echo "Creating download and md5sum list for $(arch)..."
+	@echo "Creating download list for $(arch)..."
 	$(Q)mkdir -p $(DLLISTDIR)
 	$(Q)xsltproc --xinclude --nonet \
 	  --output $(DLLISTDIR)/$(arch).list \
 	  $(TOP)/stylesheets/wget.xsl \
 	  $(TOP)/$(arch)-index.xml
-	 $(Q)xsltproc --xinclude --nonet \
+
+ARCHS_MD5LIST := $(ARCHS:%=%-md5list)
+.PHONY: md5-list $(ARCHS_MD5LIST)
+md5-list: $(ARCHS_MD5LIST)
+$(ARCHS_MD5LIST): override arch = $(@:%-md5list=%)
+$(ARCHS_MD5LIST):
+	@echo "Creating md5 hash list for $(arch)..."
+	$(Q)mkdir -p $(DLLISTDIR)
+	$(Q)xsltproc --xinclude --nonet \
 	  --output $(DLLISTDIR)/$(arch).md5sum \
 	  $(TOP)/stylesheets/md5sum.xsl \
 	  $(TOP)/$(arch)-index.xml
@@ -230,3 +238,5 @@ help:
 	@echo
 	@echo "Download-List Targets"
 	@echo "  $(FG_GREEN)download-list $(FG_BLUE)$(ARCHS_DLLIST)$(FG_DEFAULT)"
+	@echo "md5-List Targets"
+	@echo "  $(FG_GREEN)md5-list $(FG_BLUE)$(ARCHS_MD5LIST)$(FG_DEFAULT)"
