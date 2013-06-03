@@ -1,10 +1,10 @@
 TOP		:= $(shell pwd)
-RENDERDIR	:= ./clfsfr/render
+RENDERDIR	:= $(TOP)/../render
 
 VALIDATEDIR	:= $(RENDERDIR)/validate
 PROFILEDIR	:= $(RENDERDIR)/profile
 
-HTMLDIR		:= $(RENDERDIR)/clfs-svn
+HTMLDIR		:= $(RENDERDIR)/html
 NOCHUNKDIR	:= $(RENDERDIR)/nochunk
 
 FODIR		:= $(RENDERDIR)/fo
@@ -190,13 +190,17 @@ ARCHS_DLLIST := $(ARCHS:%=%-dllist)
 download-list: $(ARCHS_DLLIST)
 $(ARCHS_DLLIST): override arch = $(@:%-dllist=%)
 $(ARCHS_DLLIST):
-	@echo "Creating download list for $(arch)..."
+	@echo "Creating download and md5sum list for $(arch)..."
 	$(Q)mkdir -p $(DLLISTDIR)
 	$(Q)xsltproc --xinclude --nonet \
 	  --output $(DLLISTDIR)/$(arch).list \
 	  $(TOP)/stylesheets/wget.xsl \
 	  $(TOP)/$(arch)-index.xml
-
+	 $(Q)xsltproc --xinclude --nonet \
+	  --output $(DLLISTDIR)/$(arch).md5sum \
+	  $(TOP)/stylesheets/md5sum.xsl \
+	  $(TOP)/$(arch)-index.xml
+       
 FG_GREEN := $(shell echo -e '\e[0;32m')
 FG_BLUE := $(shell echo -e '\e[0;34m')
 FG_DEFAULT := $(shell echo -e '\e[0;0m')
