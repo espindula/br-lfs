@@ -1,0 +1,308 @@
+Révision 11334
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   general.ent
+   x/installing/mesalib.xml
+   general/prog/llvm.xml
+
+Log :
+LLVM 3.3
+
+Le robot a traité 23 % du commit anglais
+Index: general/prog/llvm.xml
+===================================================================
+--- general/prog/llvm.xml	(révision 11333)
++++ general/prog/llvm.xml	(révision 11334)
+@@ -90,84 +88,52 @@
+       </listitem>
+     </itemizedlist>
+ 
+-<bridgehead renderas="sect3">Additional Downloads</bridgehead>
+-<itemizedlist spacing="compact">
+-<listitem>
+-<para>
+-Required patch:
+-<ulink url="&patch-root;/llvm-&llvm-version;-blfs_paths-1.patch"/>
+-</para>
+-</listitem>
+-</itemizedlist>
+-<bridgehead renderas="sect3">Recommended Patches</bridgehead>
+-<itemizedlist spacing="compact">
+-<listitem>
+-<para>
+-LLVM R600 Backend:
+-<ulink url="&tstellar-llvm;/R600-Mesa-9.1.patch"/>
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+-LLVM R600 Backend MD5 sum: a6f9ec35fa847c4298213ab28fb868ce
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+-LLVM R600 Backend Fixes:
+-<ulink url="&patch-root;/llvm-&llvm-version;-r600_fixes-1.patch"/>
+-</para>
+-</listitem>
+-</itemizedlist>
+     <bridgehead renderas="sect3">Optional Downloads</bridgehead>
+-<itemizedlist spacing="compact">
+-<listitem>
+-<para>
+-Clang: <ulink url="&clang-download-http;"/>
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+-Clang MD5 sum: &clang-md5sum;
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+-Clang size: &clang-size;
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+-Compiler RT: <ulink url="&compiler-rt-download-http;"/>
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+-Compiler RT MD5 sum: &compiler-rt-md5sum;
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+-Compiler RT size: &compiler-rt-size;
+-</para>
+-</listitem>
+-</itemizedlist>
+ 
+-<warning>
+-<para>
+-If you are going to build radeonsi Gallium3D driver from
+-<xref linkend="mesalib"/>, you will need the recommended
+-patches.
+-</para>
+-</warning>
++      <bridgehead renderas="sect4">Clang</bridgehead>
++      <itemizedlist spacing="compact">
++        <listitem>
++          <para>
++            Download: <ulink url="&clang-download-http;"/>
++          </para>
++        </listitem>
++        <listitem>
++          <para>
++            Download MD5 sum: &clang-md5sum;
++          </para>
++        </listitem>
++        <listitem>
++          <para>
++            Download size: &clang-size;
++          </para>
++        </listitem>
++      </itemizedlist>
+ 
++      <bridgehead renderas="sect4">Compiler RT</bridgehead>
++      <itemizedlist spacing="compact">
++        <listitem>
++          <para>
++            Download: <ulink url="&compiler-rt-download-http;"/>
++          </para>
++        </listitem>
++        <listitem>
++          <para>
++            Download MD5 sum: &compiler-rt-md5sum;
++          </para>
++        </listitem>
++        <listitem>
++          <para>
++            Download size: &compiler-rt-size;
++          </para>
++        </listitem>
++      </itemizedlist>
+     <bridgehead renderas="sect3">LLVM Dependencies</bridgehead>
+ 
+     <bridgehead renderas="sect4">Recommended</bridgehead>
+@@ -194,33 +160,22 @@
+       the source tree by running the following commands:
+     </para>
+ 
+-<screen><userinput>tar -xf ../clang-&llvm-version;.src.tar.gz -C tools &amp;&amp;
++<screen><userinput>tar -xf ../cfe-&llvm-version;.src.tar.gz -C tools &amp;&amp;
+ tar -xf ../compiler-rt-&llvm-version;.src.tar.gz -C projects &amp;&amp;
+ 
+-mv tools/clang-&llvm-version;.src tools/clang &amp;&amp;
+-mv projects/compiler-rt-&llvm-version;.src projects/compiler-rt &amp;&amp;
++mv tools/cfe-&llvm-version;.src tools/clang &amp;&amp;
++mv projects/compiler-rt-&llvm-version;.src projects/compiler-rt</userinput></screen>
+ 
+-sed -e "s@../lib/libprofile_rt.a@../lib/llvm/libprofile_rt.a@g" \
+--i tools/clang/lib/Driver/Tools.cpp</userinput></screen>
+     <para>
+-If you have downloaded the recommended patches, apply them by
+-running the following commands:
+-</para>
+-<screen><userinput>patch -Np1 -i ../R600-Mesa-9.1.patch &amp;&amp;
+-patch -Np1 -i ../llvm-&llvm-version;-r600_fixes-1.patch</userinput></screen>
+-<para>
+       Install <application>LLVM</application> by running the following
+       commands:
+     </para>
+ 
+-<screen><userinput>patch -Np1 -i ../llvm-&llvm-version;-blfs_paths-1.patch &amp;&amp;
++<screen><userinput>sed -e 's:\$(PROJ_prefix)/docs/llvm:$(PROJ_prefix)/share/doc/llvm-&llvm-version;:' \
++    -i Makefile.config.in &amp;&amp;
+ CC=gcc CXX=g++                         \
+ ./configure --prefix=/usr              \
+             --sysconfdir=/etc          \
+---libdir=/usr/lib/llvm     \
+             --enable-libffi            \
+             --enable-optimized         \
+             --enable-shared            \
+@@ -247,17 +202,35 @@
+     </para>
+ 
+ <screen role="root"><userinput>make install &amp;&amp;
+-chmod -v 644 /usr/lib/llvm/*.a &amp;&amp;
+-echo /usr/lib/llvm &gt;&gt; /etc/ld.so.conf &amp;&amp;
+-ldconfig</userinput></screen>
++for file in /usr/lib/lib{clang,LLVM,LTO,profile_rt}*.a
++do
++  test -f $file &amp;&amp; chmod -v 644 $file
++done</userinput></screen>
+ 
+     <para>
++      If you had <xref linkend="python2"/> installed and you have
++      built <application>Clang</application>, install the
++      <application>Clang Analyzer</application> by running the
++      following command as the
++      <systemitem class="username">root</systemitem> user:
++    </para>
++<screen role="root"><userinput>install -v -dm755 /usr/lib/clang-analyzer &amp;&amp;
++for prog in scan-build scan-view
++do
++  cp -rfv tools/clang/tools/$prog /usr/lib/clang-analyzer/
++  ln -sfv ../lib/clang-analyzer/$prog/$prog /usr/bin/
++done &amp;&amp;
++ln -sfv /usr/bin/clang /usr/lib/clang-analyzer/scan-build/ &amp;&amp;
++mv -v /usr/lib/clang-analyzer/scan-build/scan-build.1 /usr/share/man/man1/</userinput></screen>
++    <para>
+       If you have built manual pages, install them by running the
+       following command as the
+       <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>install -m644 docs/_build/man/* /usr/share/man/man1</userinput></screen>
++<screen role="root"><userinput>install -v -m644 docs/_build/man/* /usr/share/man/man1/</userinput></screen>
+ 
+   </sect2>
+ 
+@@ -265,6 +238,11 @@
+     <title>Command Explanations</title>
+ 
+     <para>
++      <command>sed -e ...</command>: This sed fixes location of the
++      installed documentation.
++    </para>
++    <para>
+       <parameter>--enable-libffi</parameter>: This switch enables
+       <application>LLVM</application> to use
+       <application>libffi</application>. Remove if you did not
+@@ -317,15 +294,17 @@
+ 
+       <seglistitem>
+         <seg>
+-bugpoint, c-index-test, clang, clang++, clang-check, clang-tblgen, llc, lli,
+-llvm-ar, llvm-as, llvm-bcanalyzer, llvm-config, llvm-cov, llvm-diff, llvm-dis,
+-llvm-dwarfdump, llvm-extract, llvm-link, llvm-mc, llvm-mcmarkup, llvm-nm,
+-llvm-objdump, llvm-prof, llvm-ranlib, llvm-readobj, llvm-rtdyld, llvm-size,
+-llvm-stress, llvm-tblgen, macho-dump and opt
++          bugpoint, c-index-test, clang, clang++, clang-check, clang-format, clang-tblgen,
++          llc, lli, llvm-ar, llvm-as, llvm-bcanalyzer, llvm-config, llvm-cov, llvm-diff,
++          llvm-dis, llvm-dwarfdump, llvm-extract, llvm-link, llvm-mc, llvm-mcmarkup,
++          llvm-nm, llvm-objdump, llvm-prof, llvm-ranlib, llvm-readobj, llvm-rtdyld,
++          llvm-size, llvm-stress, llvm-symbolizer, llvm-tblgen, macho-dump, opt, 
++          scan-build and scan-view
+         </seg>
+         <seg>
+-libclang.so, libLLVM-&llvm-version;.so, libprofile_rt.so
+-and numerous libraries in /usr/lib/llvm
++          BugpointPasses.so, libclang.so, libLLVM-&llvm-version;.so, 
++          libLTO.so, libprofile_rt.so, LLVMHello.so and numerous
++          static libraries in /usr/lib
+         </seg>
+         <seg>
+           /usr/include/clang,
+@@ -333,8 +312,8 @@
+           /usr/include/llvm,
+           /usr/include/llvm-c,
+           /usr/lib/clang,
+-/usr/lib/llvm and
+-/usr/share/doc/llvm
++          /usr/lib/clang-analyzer and
++          /usr/share/doc/llvm-&llvm-version;
+         </seg>
+       </seglistitem>
+     </segmentedlist>
+@@ -581,6 +560,19 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="scan-build">
++        <term><command>scan-build</command></term>
++        <listitem>
++          <para>
++            is a <application>Perl</application> script that invokes the
++            <application>Clang</application> static analyzer.
++          </para>
++          <indexterm zone="llvm scan-build">
++            <primary sortas="b-scan-build">scan-build</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="libllvm">
+         <term><filename class="libraryfile">libLLVM-&llvm-version;.so</filename></term>
+         <listitem>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 11333)
++++ introduction/welcome/changelog.xml	(révision 11334)
+@@ -52,6 +52,9 @@
+         <listitem>
+           <para>[bdubbs] - Updated to gtk+-2.24.19.</para>
+         </listitem>
++        <listitem>
++          <para>[krejzi] - LLVM 3.3.</para>
++        </listitem>
+       </itemizedlist>
+     </listitem>
+ 
+
+Index: x/installing/mesalib.xml
+===================================================================
+--- x/installing/mesalib.xml	(révision 11333)
++++ x/installing/mesalib.xml	(révision 11334)
+@@ -113,12 +113,12 @@
+ 
+     <bridgehead renderas="sect3">Additional Patches</bridgehead>
+     <itemizedlist spacing="compact">
++      <listitem>
+         <para>
+           Required patch:
+           <ulink url="&patch-root;/MesaLib-&mesalib-version;-llvm_fixes-1.patch"/>
+@@ -193,8 +193,8 @@
+       commands:
+     </para>
+ 
++<screen><userinput>patch -Np1 -i ../MesaLib-&mesalib-version;-llvm_fixes-1.patch &amp;&amp;
++autoreconf -fi &amp;&amp;
+ ./configure CFLAGS="-O2" CXXFLAGS="-O2"    \
+             --prefix=/usr                  \
+             --sysconfdir=/etc              \
+
