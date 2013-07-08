@@ -80,7 +80,6 @@
           </para>
         </listitem>
       </itemizedlist>
-
       <bridgehead renderas="sect4">Compiler RT</bridgehead>
       <itemizedlist spacing="compact">
         <listitem>
@@ -99,7 +98,6 @@
           </para>
         </listitem>
       </itemizedlist>
-
     <bridgehead renderas="sect3">Dépendances de LLVM</bridgehead>
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
@@ -124,17 +122,28 @@
     <para>Si vous avez téléchargé les paquets facultatifs,
     installez-les dans l'arborescence des sources&nbsp;:</para>
 <screen>
-<userinput>tar -xf ../cle-&llvm-version;.src.tar.gz -C tools &amp;&amp;
+<userinput>tar -xf ../cfe-&llvm-version;.src.tar.gz -C tools &amp;&amp;
 tar -xf ../compiler-rt-&llvm-version;.src.tar.gz -C projects &amp;&amp;
-mv tools/cle-&llvm-version;.src tools/clang &amp;&amp;
+mv tools/cfe-&llvm-version;.src tools/clang &amp;&amp;
 mv projects/compiler-rt-&llvm-version;.src projects/compiler-rt</userinput>
 </screen>
     <para>
       Installez <application>LLVM</application> en lançant les commandes suivantes&nbsp;:
     </para>
 <screen>
-<userinput>patch -Np1 -i ../llvm-&llvm-version;-blfs_paths-1.patch &amp;&amp;
-CC=gcc CXX=g++                         ./configure --prefix=/usr                          --sysconfdir=/etc                      --libdir=/usr/lib/llvm                 --enable-libffi                        --enable-optimized                     --enable-shared                        --enable-targets=all                   --disable-assertions                   --disable-debug-runtime                --disable-expensive-checks             --enable-experimental-targets=R600 &amp;&amp;
+<userinput>sed -e 's:\$(PROJ_prefix)/docs/llvm:$(PROJ_prefix)/share/doc/llvm-&llvm-version;:' \
+    -i Makefile.config.in &amp;&amp;
+CC=gcc CXX=g++                         \
+./configure --prefix=/usr              \
+            --sysconfdir=/etc          \
+            --enable-libffi            \
+            --enable-optimized         \
+            --enable-shared            \
+            --enable-targets=all       \
+            --disable-assertions       \
+            --disable-debug-runtime    \
+            --disable-expensive-checks \
+            --enable-experimental-targets=R600 &amp;&amp;
 make</userinput>
 </screen>
     <para>
@@ -152,9 +161,10 @@ make</userinput>
     </para>
 <screen role="root">
 <userinput>make install &amp;&amp;
-chmod -v 644 /usr/lib/llvm/*.a &amp;&amp;
-echo /usr/lib/llvm &gt;&gt; /etc/ld.so.conf &amp;&amp;
-ldconfig</userinput>
+for file in /usr/lib/lib{clang,LLVM,LTO,profile_rt}*.a
+do
+  test -f $file &amp;&amp; chmod -v 644 $file
+done</userinput>
 </screen>
     <para>
       Si vous avez installé <xref linkend="python2"/> et vous avez construit
@@ -162,21 +172,23 @@ ldconfig</userinput>
       <application>Clang Analyzer</application> en lançant la commande suivante en tant qu'utilisateur
       <systemitem class="username">root</systemitem> :
     </para>
-<screen role="root"><userinput>install -v -dm755 /usr/lib/clang-analyzer &amp;&amp;
+<screen role="root">
+<userinput>install -v -dm755 /usr/lib/clang-analyzer &amp;&amp;
 for prog in scan-build scan-view
 do
   cp -rfv tools/clang/tools/$prog /usr/lib/clang-analyzer/
   ln -sfv ../lib/clang-analyzer/$prog/$prog /usr/bin/
 done &amp;&amp;
 ln -sfv /usr/bin/clang /usr/lib/clang-analyzer/scan-build/ &amp;&amp;
-mv -v /usr/lib/clang-analyzer/scan-build/scan-build.1 /usr/share/man/man1/</userinput></screen>
+mv -v /usr/lib/clang-analyzer/scan-build/scan-build.1 /usr/share/man/man1/</userinput>
+</screen>
     <para>
       si vous avez constuit les pages de manuel, installez les en lançant
       la commande suivant en tant qu'utilisateur
       <systemitem class="username">root</systemitem>&nbsp;:
     </para>
 <screen role="root">
-<userinput>install -m644 docs/_build/man/* /usr/share/man/man1</userinput>
+<userinput>install -v -m644 docs/_build/man/* /usr/share/man/man1/</userinput>
 </screen>
    </sect2>
    <sect2 role="commands">
