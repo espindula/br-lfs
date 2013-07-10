@@ -58,11 +58,6 @@ sed -i "s|libs -o|libs -L/usr/lib -Wl,-dynamic-linker=${LINKER} -o|" \
    scripts/test-installation.pl
 unset LINKER</userinput></screen>
 
-    <para os="p3">Le correctif suivant corrige un problème qui peut faire
-    planter ALSA&nbsp;:</para>
-      
-<screen os="p4"><userinput>patch -Np1 -i ../&eglibc-fixes-patch;</userinput></screen>
-
     <para os="b">Le système de construction d'EGLIBC est autosuffisant et s'installe
     parfaitement, même si notre fichier specs pour le compilateur et l'éditeur de
     liens pointent toujours vers <filename class="directory">/tools</filename>. Les
@@ -79,7 +74,8 @@ cd ../eglibc-build</userinput></screen>
     <para os="g">Préparez la compilation d'EGLIBC&nbsp;:</para>
 
 <screen os="h"><userinput>../eglibc-&eglibc-version;/configure --prefix=/usr \
-    --disable-profile --enable-kernel=2.6.32 --libexecdir=/usr/lib/eglibc</userinput></screen>
+    --disable-profile --enable-kernel=2.6.32 --libexecdir=/usr/lib/eglibc \
+    --enable-obsolete-rpc</userinput></screen>
 
     <variablelist os="i">
       <title>Voici la signification de la nouvelle option de configure&nbsp;:</title>
@@ -146,13 +142,6 @@ make -k check 2&gt;&amp;1 | tee eglibc-check-log; grep Error eglibc-check-log</u
     <para os="s">Installez le paquet&nbsp;:</para>
 
 <screen os="t"><userinput>make install</userinput></screen>
-
-    <para os="ra">Installez les en-têtes liées à NIS et RPC qui ne sont pas
-    installées par défaut.</para>
-
-<screen os="rb"><userinput>cp -v ../eglibc-&eglibc-version;/sunrpc/rpc/*.h /usr/include/rpc
-cp -v ../eglibc-&eglibc-version;/sunrpc/rpcsvc/*.h /usr/include/rpcsvc
-cp -v ../eglibc-&eglibc-version;/nis/rpcsvc/*.h /usr/include/rpcsvc</userinput></screen>
 
   </sect2>
 
@@ -240,6 +229,65 @@ rpc: files
 
 # Fin de /etc/nsswitch.conf</literal>
 EOF</userinput></screen>
+
+    <para>Installez les données de fuseau horaire&nbsp;:</para>
+    
+<screen><userinput>tar -xf ../tzdata&tzdata-version;.tar.gz
+
+ZONEINFO=/usr/share/zoneinfo
+mkdir -pv $ZONEINFO/{posix,right}
+
+for tz in etcetera southamerica northamerica europe africa antarctica  \
+          asia australasia backward pacificnew solar87 solar88 solar89 \
+          systemv; do
+    zic -L /dev/null   -d $ZONEINFO       -y "sh yearistype.sh" ${tz}
+    zic -L /dev/null   -d $ZONEINFO/posix -y "sh yearistype.sh" ${tz}
+    zic -L leapseconds -d $ZONEINFO/right -y "sh yearistype.sh" ${tz}
+done
+
+cp -v zone.tab iso3166.tab $ZONEINFO
+zic -d $ZONEINFO -p America/New_York
+unset ZONEINFO</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification de ces commandes&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>zic -L /dev/null ...</parameter></term>
+        <listitem>
+          <para>Ceci crée des fuseaux horaires posix sans décalage de secondes.
+          Par convention, on les met dans
+          <filename class="directory">zoneinfo</filename> et dans
+          <filename class="directory">zoneinfo/posix</filename>. Il faut mettre
+          les fuseaux horaires POSIX dans
+          <filename class="directory">zoneinfo</filename>, sans quoi plusieurs
+          suites de tests renverront des erreurs. Sur un système embarqué, où
+          l'espace est limité et où vous ne souhaitez jamais mettre à jour les
+          fuseaux horaires, vous pouvez économiser 1.9Mo en n'utilisant pas
+          le répertoire <filename class="directory">posix</filename>, mais il se
+          peut que les suites de tests de certaines applications donnent de moins
+          bons résultats</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>zic -L leapseconds ...</parameter></term>
+        <listitem>
+          <para>Ceci crée des fuseaux horaires incluant les sauts de secondes.
+          Sur un système embarqué, où l'espace est limité et où vous ne souhaitez
+          jamais mettre à jour les fuseaux horaires, vous pouvez économiser
+          1.9Mo en ne mettant pas de répertoire
+          <filename class="directory">right</filename>.</para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>zic ... -p ...</parameter></term>
+        <listitem>
+          <para>Cela crée le fichier <filename>posixrules</filename>. Nous
+          utilisons New York car POSIX exige des règles d'heures de sauvegarde
+          quotidiennes correspondant aux règles américaines.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
 
     <para>Pour déterminer dans quel fuseau horaire vous vous situez, exécutez le
     script suivant&nbsp;:</para>
