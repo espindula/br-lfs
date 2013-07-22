@@ -1,0 +1,152 @@
+Révision 11471
+
+fichiers modifiés :
+   general.ent
+   general/prog/openjdk.xml
+   general/prog/gcc.xml
+   introduction/welcome/changelog.xml
+
+Log :
+Update to gcc-4.8.1 to bring in sync with LFS.
+
+Le robot a traité 33 % du commit anglais
+Index: general/prog/gcc.xml
+===================================================================
+--- general/prog/gcc.xml	(révision 11470)
++++ general/prog/gcc.xml	(révision 11471)
+@@ -100,11 +100,12 @@
+       <application>GNAT</application> temporarily to satisfy the circular
+       dependency when you recompile <application>GCC</application>
+       to include Ada. At the AdaCore download page, choose your platform and
+-2011, then select the file to download. You probably want the x86-linux
++      2013, then select the file to download. You probably want the x86-linux
+       or x86_64-linux file.</para>
+     </note>
++<!-- Using 2011, because 2012 does not compile GCC-4.7.2 
++     GCC-4.8.1 and gnat 2013 work OK -->
++    <bridgehead renderas="sect3">GNAT GPL 2013 Package Information</bridgehead>
+     <itemizedlist spacing="compact">
+       <listitem>
+         <para>Download (HTTP): <ulink url="&gnat-download-http;"/></para>
+@@ -120,30 +121,30 @@
+     <title>Installation of GNAT</title>
+ 
+     <para>Before unpacking and changing into the GCC source directory, first
+-unpack the <application>GNAT</application> tarball and change into the
+-newly created directory and install <application>GNAT</application> by
+-running the following command:</para>
++    unpack the <application>GNAT</application> tarball.  You may have to drill
++    down several levels and unpack a second tarball.  For example,
++    AdaCore-Download-2013-07-22_0530.tar expands to
++    <filename>x86_64-linux/2013/gnatgpl/gnat-gpl-2013-x86_64-pc-linux-gnu-bin.tar.gz</filename>.
++    Expand this second tarball and change into the newly created directory.
++    Install <application>GNAT</application> by running the following
++    command:</para>
+ 
+-<screen><userinput>make ins-all prefix=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat</userinput></screen>
++<screen><userinput>make ins-all prefix=/opt/gnat</userinput></screen>
+ 
+-<para>The <application>GNAT</application> compiler can be
+-invoked by executing the <command>gcc</command> binary installed
+-in <filename
+-class='directory'><replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin</filename>.</para>
++    <para>The <application>GNAT</application> compiler can be invoked by
++    executing the <command>gcc</command> binary installed in <filename
++    class='directory'>/opt/gnat/bin</filename>.</para>
+ 
+     <para>You may now remove the <application>GNAT</application>
+-source directory:</para>
++    source directory if desired.</para>
+ 
+-<screen><userinput>cd .. &amp;&amp;
+-rm -rf gnat-2011-*</userinput></screen>
+     <para>Prepare to compile <application>GCC</application> by placing the
+     <application>GNAT</application> version of <command>gcc</command> at the
+     beginning of the <envar>PATH</envar> variable by using the following
+-commands:</para>
++    commands as the <systemitem class="username">root</systemitem> user:</para>
+ 
+ <screen><userinput>PATH_HOLD=$PATH &amp;&amp;
+-export PATH=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin:$PATH_HOLD</userinput></screen>
++export PATH=/opt/gnat/bin:$PATH_HOLD</userinput></screen>
+ 
+     <para>Doing so has the drawback that the <application>GCC</application>
+     and <application>Binutils</application> executables are taken
+@@ -154,8 +155,8 @@
+     hand, the outdated <command>ld</command> and <command>as</command> tools
+     are used all along. In order to use the LFS tools, issue:</para>
+ 
+-<screen><userinput>find <replaceable>&lt;Your build directory&gt;</replaceable>/gnat -name ld -exec mv -v \{\} \{\}.old \;
+-find <replaceable>&lt;Your build directory&gt;</replaceable>/gnat -name as -exec mv -v \{\} \{\}.old \;</userinput></screen>
++<screen><userinput>find /opt/gnat -name ld -exec mv -v {} {}.old \;
++find /opt/gnat -name as -exec mv -v {} {}.old \;</userinput></screen>
+ 
+   </sect2>
+ 
+@@ -215,8 +216,9 @@
+     --enable-lto               \
+     --enable-languages=c,c++,fortran,ada,go,java,objc,obj-c++ &amp;&amp;
+ 
+-make &amp;&amp;
+-make -k check  &amp;&amp;
++make            &amp;&amp;
++ulimit -s 32768 &amp;&amp;
++make -k check   &amp;&amp;
+ 
+ ../gcc-&gcc-version;/contrib/test_summary</userinput></screen>
+ 
+@@ -239,11 +241,10 @@
+ 
+ <screen role="root"><userinput>ln -v -sf `find /usr/lib/gcc -name ffitarget.h` /usr/include</userinput></screen>-->
+ 
+-<para>You should now become the unprivileged user and remove the
+-<application>GNAT</application> installation and perform other
+-cleanups:</para>
++    <para>You should now remove the <application>GNAT</application>
++    installation and perform other cleanups:</para>
+ 
+-<screen><userinput>rm -rf <replaceable>&lt;Your build directory&gt;</replaceable>/gnat &amp;&amp;
++<screen><userinput>rm -rf /opt/gnat &amp;&amp;
+ export PATH=$PATH_HOLD &amp;&amp;
+ unset PATH_HOLD</userinput></screen>
+ 
+@@ -286,6 +287,9 @@
+     This command identifies which languages to build. You may modify
+     this command to remove undesired languages.</para>
+ 
++    <para><command>ulimit -s 32768</command>: This command prevents several
++    tests from running out of stack space.</para>
+     <para><command>make -k check</command>: This command runs the test suite
+     without stopping if any errors are encountered.</para>
+ 
+
+Index: general/prog/openjdk.xml
+===================================================================
+--- general/prog/openjdk.xml	(révision 11470)
++++ general/prog/openjdk.xml	(révision 11471)
+@@ -46,7 +46,7 @@
+   <!ENTITY openjdk-time                  "47 SBU (an additional 156 SBU for testsuite)">
+ ]>
+ 
+-<sect1 id="openjdk" xreflabel="OpenJDK-&openjdk-version;">
++<sect1 id="openjdk" xreflabel="OpenJDK-&openjdk-version;/IcedTea-&icedtea-version;">
+   <?dbhtml filename="openjdk.html" ?>
+ 
+   <sect1info>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 11470)
++++ introduction/welcome/changelog.xml	(révision 11471)
+@@ -47,6 +47,10 @@
+       <para>July 22nd, 2013</para>
+       <itemizedlist>
+         <listitem>
++          <para>[bdubbs] - Update to gcc-4.8.1 to bring in sync with
++          LFS.</para>
++        </listitem>
++        <listitem>
+           <para>[igor] - MesaLib-9.1.5</para>
+         </listitem>
+       </itemizedlist>
+
