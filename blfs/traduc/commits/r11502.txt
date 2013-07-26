@@ -1,0 +1,160 @@
+Révision 11502
+
+fichiers modifiés :
+   server/mail/postfix.xml
+   server/mail/sendmail.xml
+   server/major/bind.xml
+   server/major/proftpd.xml
+   introduction/welcome/changelog.xml
+   general.ent
+
+Log :
+Update to bind-9.9.3-P1 Update to sendmail-8.14.7 Update to postfix-2.10.1 Update to proftpd-1.3.4d
+
+Le robot a traité 56 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 11501)
++++ introduction/welcome/changelog.xml	(révision 11502)
+@@ -47,6 +47,18 @@
+       <para>July 25th, 2013</para>
+       <itemizedlist>
+         <listitem>
++          <para>[bdubbs] - Update to sendmail.8.14.7.</para>
++        </listitem>
++        <listitem>
++          <para>[bdubbs] - Update to postfix-2.10.1.</para>
++        </listitem>
++        <listitem>
++          <para>[bdubbs] - Update to proftpd-1.3.4d.</para>
++        </listitem>
++        <listitem>
++          <para>[bdubbs] - Update to bind-9.9.3-P1.</para>
++        </listitem>
++        <listitem>
+           <para>[bdubbs] - Update to apache-2.4.6.</para>
+         </listitem>
+         <listitem>
+
+Index: server/mail/sendmail.xml
+===================================================================
+--- server/mail/sendmail.xml	(révision 11501)
++++ server/mail/sendmail.xml	(révision 11502)
+@@ -4,11 +4,13 @@
+   <!ENTITY % general-entities SYSTEM "../../general.ent">
+   %general-entities;
+ 
++  <!-- Downloads a web page
+   <!ENTITY sendmail-download-ftp  "ftp://ftp.sendmail.org/pub/sendmail/sendmail.&sendmail-version;.tar.gz">
+   <!ENTITY sendmail-size          "2.0 MB">
+   <!ENTITY sendmail-time          "0.3 SBU">
+@@ -32,7 +34,7 @@
+     <para>The <application>sendmail</application> package contains a Mail
+     Transport Agent (MTA).</para>
+ 
+-&lfs72_checked;
++    &lfs73_checked;
+ 
+     <bridgehead renderas="sect3">Package Information</bridgehead>
+     <itemizedlist spacing="compact">
+@@ -84,19 +86,18 @@
+chmod -v 1777 /var/mail                            &amp;&amp;
+ install -v -m700 -d /var/spool/mqueue</userinput></screen>
+ 
+-<para><emphasis>Note:</emphasis> See the source tree
+-<filename>sendmail/README</filename> file for information on linking
+-optional packages into the build. Use the example below, which adds
+-support for SASL, StartTLS
++    <note><para>See the source tree <filename>sendmail/README</filename> file
++    for information on linking optional packages into the build. Use the
++    example below, which adds support for SASL, StartTLS
+     (<application>OpenSSL</application>) and
+    <application>OpenLDAP</application>, as a starting point.  Of course,
+    modify it to suit your particular needs.</para></note>
+@@ -114,9 +115,13 @@
+ define(`confUBINGRP',`root')
+ define(`confUBINOWN',`root')</literal>
+ EOF
+-cd sendmail &amp;&amp;
+-sh Build &amp;&amp;
+-cd ../cf/cf &amp;&amp;
++sed -i -r "s/^# if (DB.*)$/# if (\1) || DB_VERSION_MAJOR >= 5/" \
++    include/sm/bdb.h            &amp;&amp;
++cd sendmail                     &amp;&amp;
++sh Build                        &amp;&amp;
++cd ../cf/cf                     &amp;&amp;
+ cp generic-linux.mc sendmail.mc &amp;&amp;
+ sh Build sendmail.cf</userinput></screen>
+ 
+@@ -127,33 +132,41 @@
+cp -v -R cf/* /etc/mail                               &amp;&amp;
+ 
+ install -v -m755 -d /usr/share/doc/sendmail-&sendmail-version;/{cf,sendmail} &amp;&amp;
+-install -v -m644 \
+-CACerts FAQ KNOWNBUGS LICENSE PGPKEYS README RELEASE_NOTES \
++install -v -m644 CACerts FAQ KNOWNBUGS LICENSE PGPKEYS README RELEASE_NOTES \
+         /usr/share/doc/sendmail-&sendmail-version; &amp;&amp;
+ install -v -m644 sendmail/{README,SECURITY,TRACEFLAGS,TUNING} \
+         /usr/share/doc/sendmail-&sendmail-version;/sendmail &amp;&amp;
+@@     @@
+ 
+ for manpage in sendmail editmap mailstats makemap praliases smrsh
+ do
+-install -v -m444 $manpage/$manpage.8 /usr/share/man/man8
++    install -v -m644 $manpage/$manpage.8 /usr/share/man/man8
+ done &amp;&amp;
+-install -v -m444 sendmail/aliases.5    /usr/share/man/man5 &amp;&amp;
+-install -v -m444 sendmail/mailq.1      /usr/share/man/man1 &amp;&amp;
+-install -v -m444 sendmail/newaliases.1 /usr/share/man/man1 &amp;&amp;
+-install -v -m444 vacation/vacation.1   /usr/share/man/man1</userinput></screen>
+ 
++install -v -m644 sendmail/aliases.5    /usr/share/man/man5 &amp;&amp;
++install -v -m644 sendmail/mailq.1      /usr/share/man/man1 &amp;&amp;
++install -v -m644 sendmail/newaliases.1 /usr/share/man/man1 &amp;&amp;
++install -v -m644 vacation/vacation.1   /usr/share/man/man1</userinput></screen>
+     <para>Install the <application>sendmail</application> Installation and
+     Operations Guide with the following commands:</para>
+ 
+-<screen><userinput>cd doc/op &amp;&amp;
++    <note><para>Remove <filename>op.pdf</filename> from the
++    <command>make</command> and <command>install</command> commands below if
++    you don't have <application>Ghostscript</application>
++    installed.</para></note>
++<screen><userinput>cd doc/op                                       &amp;&amp;
+ sed -i 's/groff/GROFF_NO_SGR=1 groff/' Makefile &amp;&amp;
+ make op.txt op.pdf</userinput></screen>
+ 
+@@ -163,10 +176,6 @@
+ install -v -m644 op.ps op.txt op.pdf /usr/share/doc/sendmail-&sendmail-version; &amp;&amp;
+ cd ../..</userinput></screen>
+ 
+-<para><emphasis>Note:</emphasis> remove <filename>op.pdf</filename> from
+-the <command>make</command> and <command>install</command> commands if
+-you don't have <application>Ghostscript</application> installed.</para>
+   </sect2>
+ 
+   <sect2 role="commands">
+@@ -175,6 +184,9 @@
+     <para><command>cat &gt; devtools/Site/site.config.m4 &lt;&lt; "EOF"</command>:
+     This creates a configuration file changing some of the default settings.</para>
+ 
++    <para><command>sed ... include/sm/bdb.h</command>: This allows sendmail to
++    build properly with <xref linkend='db'/> versions 5 and above.</para>
+     <para><command>sh Build; sh Build sendmail.cf; sh Build install-cf;
+     sh Build install</command>: <application>sendmail</application> uses an
+     <application>m4</application> based build script to create the various
+
+Index: server/major/proftpd.xml
+===================================================================
+--- server/major/proftpd.xml	(révision 11501)
++++ server/major/proftpd.xml	(révision 11502)
+@@ -244,7 +244,7 @@
+ 
+       <seglistitem>
+         <seg>ftpcount, ftpdctl, ftpasswd, ftpmail, ftpquota, ftpscrub,
+-ftptop, ftpshut, ftpcount, ftpwho, proftpd</seg>
++             ftptop, ftpshut, ftpcount, ftpwho, and proftpd</seg>
+         <seg>None</seg>
+         <seg>/var/run/proftpd</seg>
+       </seglistitem>
+
