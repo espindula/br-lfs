@@ -1,0 +1,373 @@
+Révision 11519
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   networking/netprogs/samba.xml
+   general.ent
+
+Log :
+Update to samba-4.0.7
+
+Le robot a traité 18 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 11518)
++++ introduction/welcome/changelog.xml	(révision 11519)
+@@ -47,6 +47,9 @@
+       <para>July 28th, 2013</para>
+       <itemizedlist>
+         <listitem>
++          <para>[bdubbs] - Update to samba-4.0.7.</para>
++        </listitem>
++        <listitem>
+           <para>[krejzi] - Updated GNOME Core packages to latest ones.</para>
+         </listitem>
+         <listitem>
+
+Index: networking/netprogs/samba.xml
+===================================================================
+--- networking/netprogs/samba.xml	(révision 11518)
++++ networking/netprogs/samba.xml	(révision 11519)
+@@ -31,13 +31,12 @@
+ 
+     <para>The <application>Samba</application> package provides file and print
+     services to SMB/CIFS clients and Windows networking to Linux clients.
+-<application>Samba</application> can also be configured as a Windows NT
+-4.0 Domain Controller replacement (with caveats working with NT PDC's and
+-BDC's), a file/print server acting as a member of a Windows NT 4.0 or
++    <application>Samba</application> can also be configured as a Windows Domain
++    Controller replacement, a file/print server acting as a member of a Windows
+     Active Directory domain and a NetBIOS (rfc1001/1002) nameserver (which
+-amongst other things provides LAN browsing support).</para>
++    among other things provides LAN browsing support).</para>
+ 
+-&lfs72_checked;
++    &lfs73_checked;
+ 
+     <bridgehead renderas="sect3">Package Information</bridgehead>
+     <itemizedlist spacing="compact">
+@@ -61,46 +60,34 @@
+    </para>
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+-<para role="optional"><xref linkend="popt"/>,
+-<xref linkend="linux-pam"/>,
+-<xref linkend="cups"/>,
+-<xref linkend="openldap"/>,
+-<xref linkend="gamin"/>,
+-<xref linkend="acl"/>,
+-<xref linkend="xfsprogs"/>,
+-<xref linkend="mitkrb"/>,
+-<xref linkend="python2"/> (used only in parts of the test suite),
+-<ulink url="http://tdb.samba.org/">tdb</ulink>,
+-<ulink url="http://ctdb.samba.org/">ctdb</ulink>,
+-<xref linkend="libcap2"/>,
+-<ulink url="http://www.nongnu.org/libunwind/">libunwind</ulink>,
+-<xref linkend="avahi"/>,
+-<ulink url="http://www.openafs.org/">OpenAFS</ulink>,
+-and <ulink url="http://valgrind.org/">Valgrind</ulink> (optionally
+-used by the test suite)</para>
++    <para role="optional">
++      <xref linkend="popt"/>,
++      <xref linkend="linux-pam"/>,
++      <xref linkend="cups"/>,
++      <xref linkend="openldap"/>,
++      <xref linkend="gamin"/>,
++      <xref linkend="acl"/>,
++      <xref linkend="xfsprogs"/>,
++      <xref linkend="mitkrb"/>,
++      <xref linkend="python2"/> (used only in parts of the test suite),
++      <xref linkend="libxslt"/> (used only for documentation),
++      <ulink url="http://tdb.samba.org/">tdb</ulink>,
++      <ulink url="http://ctdb.samba.org/">ctdb</ulink>,
++      <xref linkend="libcap2"/>,
++      <ulink url="http://www.nongnu.org/libunwind/">libunwind</ulink>,
++      <xref linkend="avahi"/>,
++      <ulink url="http://www.openafs.org/">OpenAFS</ulink>, and
++      <ulink url="http://valgrind.org/">Valgrind</ulink> (optionally
++        used by the test suite)</para>
+ 
+-<para>You will need to install one of the kerberos packages if you plan
+-on using your system to join a Windows NT domain.</para>
+-<!-- <bridgehead renderas="sect4">Optional for Samba4 Support</bridgehead>
+-<para role="optional"><xref linkend="gnutls"/> (recommended),
+-<xref linkend="python2"/>, and
+-<xref linkend="sqlite"/></para> -->
+     <para condition="html" role="usernotes">User Notes:
+     <ulink url="&blfs-wiki;/samba"/></para>
+ 
+@@ -111,7 +98,8 @@
+ 
+     <note>
+       <para>If you wish to run the test suite after the binaries are built,
+-you must add the <option>--enable-socket-wrapper</option> parameter to
++      you must add the <option>--enable-socket-wrapper</option> 
++      and <option>--enable-selftest</option> parameters to
+       the <command>configure</command> script below. You may want to run
+       <command>configure</command> with the <option>--help</option> parameter
+       first. There may be other parameters needed to take advantage of
+@@ -121,12 +109,8 @@
+     <para>Install <application>Samba</application> by running the following
+     commands:</para>
+ 
+-<screen><userinput>cd source3 &amp;&amp;
++<screen><userinput>sed -i -e "/dmapi_lib/s/$/ldflags='-ltirpc',/" source3/wscript_build &amp;&amp;
+ 
+-sed -i -e "s/python2.6 python2.5/python2.7 &amp;/" \
+--e "s/python2.6-config python2.5-config/python2.7-config &amp;/" \
+-configure &amp;&amp;
+ ./configure                            \
+     --prefix=/usr                      \
+     --sysconfdir=/etc                  \
+@@ -134,54 +118,65 @@
+     --with-piddir=/run/samba           \
+     --with-pammodulesdir=/lib/security \
+     --with-fhs                         \
+---enable-nss-wrapper               \
+---enable-socket-wrapper            &amp;&amp;
+-sed -i "s/-ldl/&amp; -ltirpc -lpthread/" Makefile &amp;&amp;
++    --enable-nss-wrapper               &amp;&amp;
+ make</userinput></screen>
+ 
+-<para>To test the results, issue: <command>make test</command>. If you have
+-<application>Linux-PAM</application> installed and built the PAM library
+-modules, you can perform a dlopen test by issuing:
+-<command>make test_pam_modules</command>.</para>
++    <para>To test the results, as the <systemitem
++    class="username">root</systemitem> user,issue: <command>make
++    quicktest</command> (about 8 SBU).  There are other targets (test,
++    subunit-test) available, but take a very long (over 100 SBU) time.</para>
+ 
+     <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
+ 
+ <screen role="root"><userinput>make install &amp;&amp;
+ 
+-install -v -m644 pkgconfig/*.pc /usr/lib/pkgconfig        &amp;&amp;
+-install -v -m755 ../nsswitch/libnss_win{s,bind}.so /lib   &amp;&amp;
+-ln -v -sf libnss_winbind.so /lib/libnss_winbind.so.2      &amp;&amp;
+-ln -v -sf libnss_wins.so    /lib/libnss_wins.so.2         &amp;&amp;
++mv -v /usr/lib/libnss_win{s,bind}.so*   /lib                       &amp;&amp;
++ln -v -sf ../../lib/libnss_winbind.so.2 /usr/lib/libnss_winbind.so &amp;&amp;
++ln -v -sf ../../lib/libnss_wins.so.2    /usr/lib/libnss_wins.so    &amp;&amp;
+ 
+install -v -m644 ../examples/smb.conf.default /etc/samba &amp;&amp;
+ 
+-if [ -d /etc/openldap/schema ]; then
+-install -v -m644    ../examples/LDAP/README              \
+-/etc/openldap/schema/README.LDAP     &amp;&amp;
+-install -v -m644    ../examples/LDAP/samba*              \
+-/etc/openldap/schema                 &amp;&amp;
+-install -v -m755    ../examples/LDAP/{convert*,get*,ol*} \
+-/etc/openldap/schema                 &amp;&amp;
+-fi &amp;&amp;
++mkdir -pv /etc/openldap/schema                        &amp;&amp;
+ 
++install -v -m644    examples/LDAP/README              \
++                    /etc/openldap/schema/README.LDAP  &amp;&amp;
++install -v -m644    examples/LDAP/samba*              \
++                    /etc/openldap/schema              &amp;&amp;
++install -v -m755    examples/LDAP/{convert*,get*,ol*} \
++                    /etc/openldap/schema              &amp;&amp;
+ install -v -m755 -d /usr/share/doc/samba-&samba-version; &amp;&amp;
+-install -v -m644    ../docs/*.pdf \
++install -v -m644    lib/ntdb/doc/design.pdf \
+                     /usr/share/doc/samba-&samba-version; &amp;&amp;
+ ln -v -s ../../samba/swat  /usr/share/doc/samba-&samba-version;</userinput></screen>
+ 
++  <para>To create the html documents needed for <command>swat</command> 
++  (<xref linkend='libxslt'/> required), do the following:</para>
++<screen><userinput>cd docs-xml &amp;&amp;
++autoreconf  &amp;&amp;
++./configure &amp;&amp;
++make htmlman</userinput></screen>
++    <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
++<screen role="root"><userinput>mkdir -pv                          /usr/share/samba/swat/help/manpages &amp;&amp;
++cp output/htmldocs/manpages/*.html /usr/share/samba/swat/help/manpages</userinput></screen>
+   </sect2>
+ 
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
++    <para><command>sed ... source3/wscript_build</command>:
++    This command enables the build to complete when using libtirpc instead of
++    the deprecated glibc rpc functions.</para>
+ 
+-<para><command>sed -i -e "s/python2.6 ...</command>: Make Samba checking
+-for newer Python versions too</para>
+     <para><parameter>--sysconfdir=/etc</parameter>: Sets the configuration
+     file directory to avoid the default of
+     <filename class="directory">/usr/etc</filename>.</para>
+@@ -196,29 +191,20 @@
+     <para><parameter>--enable-nss-wrapper</parameter>: Builds the nss-wrapper
+     library.</para>
+ 
+-<para><parameter>--enable-socket-wrapper</parameter>: This options is
+-required to run the test suite.</para>
++    <para><parameter>--enable-socket-wrapper</parameter> and
++    <parameter>--enable-selftest</parameter>: These options are required to run
++    the test suite.</para>
+ 
+-<para><command>sed -i "s/-ldl/&amp; -ltirpc -lpthread/" Makefile</command>:
+-This command enables the build to complete when using libtirpc instead of
+-the deprecated GLibC rpc functions.</para>
++    <para><command>mv -v /usr/lib/libnss_win{s,bind}.so* /lib</command>:
++    The nss libraries are installed in /usr/lib by default. Move them to
++    /lib.</para>
+ 
+-<para><command>cp pkgconfig/wbclient.pc /usr/lib/pkgconfig</command>:
+-Install a file omitted by the install procedure.</para>
++    <para><command>ln -v -sf ../../lib/libnss_winbind.so.2 /usr/lib/libnss_winbind.so</command>
++    and <command>ln -v -sf ../../lib/libnss_wins.so.2    /usr/lib/libnss_wins.so</command>:
++    These symlinks are required when applicates build against these libraries.</para>
+ 
+-<para><command>install -v -m755 nsswitch/libnss_win{s,bind}.so /lib</command>:
+-The nss libraries are not installed by default. If you intend to use
+-winbindd for Windows NT domain authentication, and/or WINS name resolution,
+-you need these libraries.</para>
+-<para><command>ln -v -sf libnss_winbind.so /lib/libnss_winbind.so.2</command>
+-and <command>ln -v -sf libnss_wins.so /lib/libnss_wins.so.2</command>:
+-These symlinks are required by <application>Glibc</application> to use the
+-NSS libraries.</para>
+-<para><command>if [ -d /etc/openldap/schema ]; then ...; fi</command>:
+-These commands are used to see if you have an OpenLDAP installation, and if
+-so, they copy sample Samba schemas to the OpenLDAP
++    <para><command>install -v -m644 examples/LDAP/* /etc/openldap/schema</command>:
++    These commands are used to copy sample Samba schemas to the OpenLDAP
+     <filename class='directory'>schema</filename> directory.</para>
+ 
+     <para><command>install -v -m644 ../examples/smb.conf.default
+@@ -398,15 +384,11 @@
+         <title>Advanced Requirements</title>
+ 
+         <para>More complex scenarios involving domain control or membership are
+-possible if the right flags are passed to the ./configure script when
+-the package is built. Such setups are advanced topics and cannot be
+-adequately covered in BLFS. Many complete books have been written on
+-these topics alone. It should be noted, however, that a
+-<application>Samba</application> BDC cannot be used as a fallback
+-for a Windows PDC, and conversely, a Windows BDC cannot be used as a
+-fallback for a <application>Samba</application> PDC. Also in some
+-domain membership scenarios, the <command>winbindd</command> daemon and
+-the corresponding bootscript are needed.</para>
++        possible.  Such setups are advanced topics and cannot be adequately
++        covered in BLFS. Many complete books have been written on these topics
++        alone.  Note that in some domain membership scenarios, the
++        <command>winbindd</command> daemon and the corresponding bootscript are
++        needed.</para>
+ 
+         <para>There is quite a bit of documentation available which covers many
+         of these advanced configurations. Point your web browser to the links
+@@ -416,21 +398,21 @@
+         <itemizedlist spacing='compact'>
+           <listitem>
+             <para>Using Samba, 2nd Edition; a popular book published by O'Reilly
+-<ulink url="file:///usr/share/samba/swat/using_samba/toc.html"/></para>
++            <ulink url="http://www.samba.org/samba/docs/using_samba/toc.html"/></para>
+           </listitem>
+           <listitem>
+             <para>The Official Samba HOWTO and Reference Guide <ulink
+-url="file:///usr/share/samba/swat/help/Samba-HOWTO-Collection/index.html"/>
++            url="http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/"/>
+             </para>
+           </listitem>
+           <listitem>
+             <para>Samba-3 by Example
+-<ulink url="file:///usr/share/samba/swat/help/Samba-Guide/index.html"/>
++            <ulink url="http://www.samba.org/samba/docs/man/Samba-Guide/"/>
+             </para>
+           </listitem>
+           <listitem>
+             <para>The Samba-3 man Pages
+-<ulink url="file:///usr/share/samba/swat/help/samba.7.html"/></para>
++            <ulink url="file:///usr/share/samba/swat/help/manpages/samba.7.html"/></para>
+           </listitem>
+         </itemizedlist>
+ 
+@@ -495,47 +477,7 @@
+         <primary sortas="g-configuring-SWAT">Configuring SWAT</primary>
+       </indexterm>
+ 
+-<indexterm zone="samba samba-swat-config">
+-<primary sortas="e-etc-inetd.conf">/etc/inetd.conf</primary>
+-</indexterm>
+-<indexterm zone="samba samba-swat-config">
+-<primary sortas="e-etc-services">/etc/services</primary>
+-</indexterm>
+-<warning>
+-<para>BLFS does not recommend using these procedures because of the
+-security risk involved. However, in a home network environment and
+-disclosure of the <systemitem class='username'>root</systemitem>
+-password is an acceptable risk, the following
+-instructions are provided for your convenience.</para>
+-</warning>
+-<para>First you must add an entry to <filename>/etc/services</filename>
+-and modify the <command>inetd</command> configuration. Add this entry
+-with the following command issued as the <systemitem
+-class="username">root</systemitem> user:</para>
+-<screen role="root"><userinput>echo "swat            905/tcp" &gt;&gt; /etc/services</userinput></screen>
+-<para>Now add this entry to the <filename>/etc/inetd.conf</filename>
+-file, again as the <systemitem class="username">root</systemitem>
+-user:</para>
+-<screen role="root"><userinput>echo "swat stream tcp nowait.5 root /usr/sbin/swat swat &gt;&gt; /etc/inetd.conf</userinput></screen>
+-<para>Issue a <command>killall -HUP inetd</command> to reread the
+-changed <filename>inetd.conf</filename> file.</para>
+-<para>SWAT can be launched by pointing your web browser to
+-http://localhost:905.</para>
+-</sect4>
+--->
+       <sect4>
+         <title>Setting up SWAT using xinetd</title>
+ 
+@@ -654,20 +596,26 @@
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-<seg>eventlogadm, findsmb, ldbadd, ldbdel, ldbedit,
+-ldbmodify, ldbrename, ldbsearch, net, nmbd,
+-nmblookup, ntlm_auth, pdbedit, profiles, rpcclient, sharesec, smbcacls,
+-smbclient, smbcontrol, smbcquotas, smbd, smbget, smbpasswd, smbspool,
+-smbstatus, smbtar, smbtree, swat, testparm, wbinfo,
+-winbindd, and (if not using system TDB) tdbbackup, tdbdump, and
+-tdbtool</seg>
++        <seg>cifsdd, dbwrap_tool, eventlogadm, gentest, ldbadd, ldbdel,
++        ldbedit, ldbmodify, ldbrename, ldbsearch, locktest, masktest, ndrdump,
++        net, nmbd, nmblookup, nmblookup4, ntlm_auth, oLschema2ldif, pdbedit,
++        pidl, profiles, regdiff, regpatch, regshell, regtree, rpcclient, samba,
++        samba_dnsupdate samba_kcc, samba_spnupdate, samba-tool,
++        samba_upgradedns, sharesec, smbcacls, smbclient, smbclient4,
++        smbcontrol, smbcquotas, smbd, smbget, smbpasswd, smbspool, smbstatus,
++        smbta-util, smbtar, smbtree, smbtorture, swat, testparm, tdbbackup,
++        tdbdump, tdbrestore, and tdbtool, winbindd, and wbinfo</seg>
+         <seg>libnss_winbind.so, libnss_wins.so, libnetapi.so, libsmbclient.so,
+-libsmbsharemodes.so, libtalloc.so, libwbclient.so, the pam_winbind.so
++        libsmbsharemodes.so, libwbclient.so, the pam_winbind.so
+         and pam_smbpass.so PAM libraries, and assorted character set,
+         filesystem and support modules.</seg>
+-<seg>/etc/samba, /usr/lib/samba, /usr/share/doc/samba-&samba-version;,
+-/usr/share/samba, /var/lib/samba, /var/log/samba (if configured), and
+-/var/nmbd</seg>
++        
++        <seg>/etc/samba, /usr/include/samba-4.0, /usr/lib/samba,
++        /usr/share/samba, /var/cache/samba, /var/lib/samba,
++        /var/log/samba, /var/lock/samba, and /var/run/samba</seg>
+       </seglistitem>
+     </segmentedlist>
+ 
+@@ -688,17 +636,6 @@
+         </listitem>
+       </varlistentry>
+ 
+-<varlistentry id="findsmb">
+-<term><command>findsmb</command></term>
+-<listitem>
+-<para>lists information about machines that respond to
+-SMB name queries on a subnet.</para>
+-<indexterm zone="samba findsmb">
+-<primary sortas="b-findsmb">findsmb</primary>
+-</indexterm>
+-</listitem>
+-</varlistentry>
+       <varlistentry id="ldbadd">
+         <term><command>ldbadd</command></term>
+         <listitem>
+
