@@ -406,14 +406,14 @@ $Date: 2012-08-29 22:45:23 +0200 (mer. 29 août 2012) $
     </xsl:choose>
   </xsl:template>
 
-    <!-- Self-made calculation template. -->
+   <!-- Self-made calculation template. -->
   <xsl:template name="calculation">
     <xsl:param name="scope"/>
     <xsl:param name="total">0</xsl:param>
     <xsl:param name="position">1</xsl:param>
     <xsl:variable name="tokens" select="count($scope/varlistentry)"/>
     <xsl:variable name="token" select="$scope/varlistentry[$position]/term/token"/>
-    <xsl:variable name="size" select="substring-before($token,' KB')"/>
+    <xsl:variable name="size" select="substring-before($token,' Ko')"/>
     <xsl:variable name="rawsize">
       <xsl:choose>
         <xsl:when test="contains($size,',')">
@@ -436,17 +436,17 @@ $Date: 2012-08-29 22:45:23 +0200 (mer. 29 août 2012) $
         <xsl:choose>
           <xsl:when test="$total &lt; '1000'">
             <xsl:value-of select="$total"/>
-            <xsl:text>  KB</xsl:text>
+            <xsl:text>  Ko</xsl:text>
           </xsl:when>
           <xsl:when test="$total &gt; '1000' and $total &lt; '5000'">
             <xsl:value-of select="substring($total,1,1)"/>
             <xsl:text>,</xsl:text>
             <xsl:value-of select="substring($total,2)"/>
-            <xsl:text>  KB</xsl:text>
+            <xsl:text>  Ko</xsl:text>
           </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="round($total div 1024)"/>
-            <xsl:text>  MB</xsl:text>
+            <xsl:text>  Mo</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:otherwise>
