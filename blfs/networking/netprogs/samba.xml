@@ -58,7 +58,6 @@
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required"><xref linkend="libtirpc"/></para>
     <bridgehead renderas="sect4">Facultatives</bridgehead>
-
     <para role="optional">
       <xref linkend="popt"/>,
       <xref linkend="linux-pam"/>,
@@ -96,20 +95,15 @@
     <para>Installez <application>Samba</application> en lançant les commandes
     suivantes&nbsp;:</para>
 <screen>
-<userinput>cd source3 &amp;&amp;
-sed -i -e "s/python2.6 python2.5/python2.7 &amp;/" \
-       -e "s/python2.6-config python2.5-config/python2.7-config &amp;/" \
-          configure &amp;&amp;
+<userinput>sed -i -e "/dmapi_lib/s/$/ldflags='-ltirpc',/" source3/wscript_build &amp;&amp;
 ./configure                            \
     --prefix=/usr                      \
     --sysconfdir=/etc                  \
     --localstatedir=/var               \
     --with-piddir=/run/samba           \
     --with-pammodulesdir=/lib/security \
-    --with-fhs                         \
-    --enable-nss-wrapper               \
-    --enable-socket-wrapper            &amp;&amp;
-sed -i "s/-ldl/&amp; -ltirpc -lpthread/" Makefile &amp;&amp;
+    --enable-fhs                       \
+    --enable-nss-wrapper               &amp;&amp;
 make</userinput>
 </screen>
     <para>Pour tester les résultats,en tant qu'utilisateur    <systemitem class="username">root</systemitem>
@@ -119,43 +113,44 @@ make</userinput>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
 <userinput>make install &amp;&amp;
-install -v -m644 pkgconfig/*.pc /usr/lib/pkgconfig        &amp;&amp;
-install -v -m755 ../nsswitch/libnss_win{s,bind}.so /lib   &amp;&amp;
-ln -v -sf libnss_winbind.so /lib/libnss_winbind.so.2      &amp;&amp;
-ln -v -sf libnss_wins.so    /lib/libnss_wins.so.2         &amp;&amp;
-install -v -m644 ../examples/smb.conf.default /etc/samba  &amp;&amp;
-if [ -d /etc/openldap/schema ]; then
-    install -v -m644    ../examples/LDAP/README              \
-                        /etc/openldap/schema/README.LDAP     &amp;&amp;
-    install -v -m644    ../examples/LDAP/samba*              \
-                        /etc/openldap/schema                 &amp;&amp;
-    install -v -m755    ../examples/LDAP/{convert*,get*,ol*} \
-                        /etc/openldap/schema                 &amp;&amp;
-fi &amp;&amp;
+mv -v /usr/lib/libnss_win{s,bind}.so*   /lib                       &amp;&amp;
+ln -v -sf ../../lib/libnss_winbind.so.2 /usr/lib/libnss_winbind.so &amp;&amp;
+ln -v -sf ../../lib/libnss_wins.so.2    /usr/lib/libnss_wins.so    &amp;&amp;
+install -v -m644    examples/smb.conf.default /etc/samba &amp;&amp;
+mkdir -pv /etc/openldap/schema                        &amp;&amp;
+install -v -m644    examples/LDAP/README              \
+                    /etc/openldap/schema/README.LDAP  &amp;&amp;
+                    
+install -v -m644    examples/LDAP/samba*              \
+                    /etc/openldap/schema              &amp;&amp;
+                    
+install -v -m755    examples/LDAP/{convert*,get*,ol*} \
+                    /etc/openldap/schema              &amp;&amp;
 install -v -m755 -d /usr/share/doc/samba-&samba-version; &amp;&amp;
-install -v -m644    ../docs/*.pdf \
+install -v -m644    lib/ntdb/doc/design.pdf \
                     /usr/share/doc/samba-&samba-version; &amp;&amp;
 ln -v -s ../../samba/swat  /usr/share/doc/samba-&samba-version;</userinput>
 </screen>
   <para>Pour créer les documents html requis par <command>swat</command>
   (<xref linkend='libxslt'/> requis), faite la suite:</para>
-<screen><userinput>cd docs-xml &amp;&amp;
+<screen>
+<userinput>cd docs-xml &amp;&amp;
 autoreconf  &amp;&amp;
 ./configure &amp;&amp;
-make htmlman</userinput></screen>
+make htmlman</userinput>
+</screen>
     <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
-<screen role="root"><userinput>mkdir -pv                          /usr/share/samba/swat/help/manpages &amp;&amp;
-cp output/htmldocs/manpages/*.html /usr/share/samba/swat/help/manpages</userinput></screen>
+<screen role="root">
+<userinput>mkdir -pv                          /usr/share/samba/swat/help/manpages &amp;&amp;
+cp output/htmldocs/manpages/*.html /usr/share/samba/swat/help/manpages</userinput>
+</screen>
  
-
-
  </sect2>
   <sect2 role="commands">
     <title>Explication des commandes</title>
     <para><command>sed ... source3/wscript_build</command>:
     Cette commande permet à la construction de se terminer en utilisant libtirpc aulieu des
     fonctions obsolètes rpc de glibc.</para>
-
     <para><parameter>--sysconfdir=/etc</parameter>&nbsp;: Paramètre le 
     répertoire des fichiers de configuration pour éviter celui par défaut
     <filename class="directory">/usr/etc</filename>.</para>
@@ -171,11 +166,9 @@ cp output/htmldocs/manpages/*.html /usr/share/samba/swat/help/manpages</userinpu
     <parameter>--enable-selftest</parameter>: ces options sont nécéssaires pour lancer la suite de tests.</para>
     <para><command>mv -v /usr/lib/libnss_win{s,bind}.so* /lib</command>:
     Les bibliothèques nss sont installées dans /usr/lib par défaut. Déplacez les dans /lib.</para>
-
     <para><command>ln -v -sf ../../lib/libnss_winbind.so.2 /usr/lib/libnss_winbind.so</command>
     et <command>ln -v -sf ../../lib/libnss_wins.so.2    /usr/lib/libnss_wins.so</command>:
     Ces liens symboliques sont requis pour faire des constructions contre ses bibliothèques.</para>
-
     <para><command>install -v -m644 examples/LDAP/* /etc/openldap/schema</command>:
     Ces commandes sont utilisées pour copier des schémas d'exemples de Samba dans le
     <filename class='directory'>schema</filename> d'OpenLDAP.</para>

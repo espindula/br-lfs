@@ -10,9 +10,7 @@
   <!ENTITY gcc-buildsize      "~6.2 Go (build, test and install all compilers)">
   <!ENTITY gcc-time           "98 SBU (build, test and install all compilers)">
   <!ENTITY gnat-download-http "https://libre.adacore.com/download/">
-  <!-- We don't know what platform, so this is commented out
-  <!ENTITY gnat-md5sum        "6425f2c7cabbdee4595b4b7c0d47237f">
-  <!ENTITY gnat-size          "110 Mo"> -->
+  
 ]>
 <sect1 id="gcc" xreflabel="GCC-&gcc-version;">
   <?dbhtml filename="gcc.html" ?>
@@ -109,7 +107,7 @@
     Installez 
     <application>GNAT</application> en lançant la commande suivante&nbsp;:</para>
 <screen>
-<userinput>make ins-all prefix=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat</userinput>
+<userinput>make ins-all prefix=/opt/gnat</userinput>
 </screen>
     <para>Vous pouvez appeler le compilateur <application>GNAT</application> en
     exécutant le binaire <command>gcc</command> installé dans
@@ -117,16 +115,16 @@
     <para>Vous pouvez maintenant supprimer le répertoire <application>GNAT</application>
     des sources si vous le souhaitez:</para>
 <screen>
-<userinput>cd .. &amp;&amp;
-rm -rf gnat-2011-*</userinput>
+<userinput>PATH_HOLD=$PATH &amp;&amp;
+export PATH=/opt/gnat/bin:$PATH_HOLD</userinput>
 </screen>
     <para>Préparez la compilation de <application>GCC</application> en
     mettant la version de <application>GNAT</application> de <command>gcc</command> 
     au début de la variable <envar>PATH</envar> en utilisant les commandes
     suivantes en tant qu'utilisateur  <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen>
-<userinput>PATH_HOLD=$PATH &amp;&amp;
-export PATH=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin:$PATH_HOLD</userinput>
+<userinput>find /opt/gnat -name ld -exec mv -v {} {}.old \;
+find /opt/gnat -name as -exec mv -v {} {}.old \;</userinput>
 </screen>
     <para>Cela présente l'inconvénient que les exécutables de <application>GCC</application>
     et <application>Binutils</application> sont pris du paquet
@@ -137,8 +135,31 @@ export PATH=<replaceable>&lt;Your build directory&gt;</replaceable>/gnat/bin:$PA
     <command>ld</command> et <command>as</command> dépassés
     sont utilisés tout du long. Pour utiliser les outils LFS, tapez:</para>
 <screen>
-<userinput>find <replaceable>&lt;Your build directory&gt;</replaceable>/gnat -name ld -exec mv -v {} {}.old ;
-find <replaceable>&lt;Your build directory&gt;</replaceable>/gnat -name as -exec mv -v {} {}.old ;</userinput>
+<userinput>sed -i 's/\(install.*:\) install-.*recursive/\1/' libffi/Makefile.in         &amp;&amp;
+sed -i 's/\(install-data-am:\).*/\1/'             libffi/include/Makefile.in &amp;&amp;
+sed -i 's/install_to_$(INSTALL_DEST) //'          libiberty/Makefile.in      &amp;&amp;
+sed -i 's@\./fixinc\.sh@-c true@'                 gcc/Makefile.in            &amp;&amp;
+case `uname -m` in
+      i?86) sed -i 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in ;;
+esac &amp;&amp;
+mkdir ../gcc-build &amp;&amp;
+cd    ../gcc-build &amp;&amp;
+../gcc-&gcc-version;/configure         \
+    --prefix=/usr              \
+    --libdir=/usr/lib          \
+    --libexecdir=/usr/lib      \
+    --with-system-zlib         \
+    --enable-shared            \
+    --enable-threads=posix     \
+    --enable-__cxa_atexit      \
+    --disable-multilib         \
+    --enable-clocale=gnu       \
+    --enable-lto               \
+    --enable-languages=c,c++,fortran,ada,go,java,objc,obj-c++ &amp;&amp;
+make            &amp;&amp;
+ulimit -s 32768 &amp;&amp;
+make -k check   &amp;&amp;
+../gcc-&gcc-version;/contrib/test_summary</userinput>
 </screen>
 </sect2>
   <sect2 role="installation">
@@ -165,36 +186,23 @@ find <replaceable>&lt;Your build directory&gt;</replaceable>/gnat -name as -exec
     <quote>bootstrap</quote> volontairement. Cela est nécessaire si vous installez le compilateur
     <application>ADA</application>. Même si vous ne le faite pas, 
     un bootstrap est recommandé pour plus de robustesse.</para>
-<screen>
-<userinput>sed -i 's/(install.*:) install-.*recursive/1/' libffi/Makefile.in &amp;&amp;
-sed -i 's/(install-data-am:).*/1/' libffi/include/Makefile.in &amp;&amp;
-sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in &amp;&amp;
-sed -i 's@./fixinc.sh@-c true@'        gcc/Makefile.in       &amp;&amp;
-case `uname -m` in
-      i?86) sed -i 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in ;;
-esac &amp;&amp;
-mkdir ../gcc-build &amp;&amp;
-cd    ../gcc-build &amp;&amp;
-../gcc-&gcc-version;/configure             --prefix=/usr                  --libdir=/usr/lib              --libexecdir=/usr/lib          --with-system-zlib             --enable-shared                --enable-threads=posix         --enable-__cxa_atexit          --disable-multilib             --enable-clocale=gnu           --enable-lto                   --enable-languages=c,c++,fortran,ada,go,java,objc,obj-c++ &amp;&amp;
-make &amp;&amp;
-make -k check  &amp;&amp;
-../gcc-&gcc-version;/contrib/test_summary</userinput>
-</screen>
-    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
 <userinput>make install &amp;&amp;
 ln -v -sf ../usr/bin/cpp /lib &amp;&amp;
-ln -v -sf gcc /usr/bin/cc &amp;&amp;
-chown -v -R root:root     /usr/lib/gcc/*linux-gnu/&gcc-version;/include{,-fixed}     /usr/lib/gcc/*linux-gnu/&gcc-version;/ada{lib,include}</userinput>
+ln -v -sf gcc /usr/bin/cc     &amp;&amp;
+chown -v -R root:root \
+    /usr/lib/gcc/*linux-gnu/&gcc-version;/include{,-fixed} \
+    /usr/lib/gcc/*linux-gnu/&gcc-version;/ada{lib,include}</userinput>
+</screen>
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen>
+<userinput>rm -rf /opt/gnat &amp;&amp;
+export PATH=$PATH_HOLD &amp;&amp;
+unset PATH_HOLD</userinput>
 </screen>
     <para>Vous devriez maintenant 
     supprimer l'installation de <application>GNAT</application> et effectuer
     d'autres nettoyages&nbsp;:</para>
-<screen>
-<userinput>rm -rf <replaceable>&lt;Your build directory&gt;</replaceable>/gnat &amp;&amp;
-export PATH=$PATH_HOLD &amp;&amp;
-unset PATH_HOLD</userinput>
-</screen>
 </sect2>
   <sect2 role="commands">
     <title>Explication des commandes</title>
