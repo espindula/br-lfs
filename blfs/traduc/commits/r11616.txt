@@ -1,0 +1,117 @@
+Révision 11616
+
+fichiers modifiés :
+   x/lib/qt5.xml
+
+Log :
+Add alternate Qt5 build instructions
+
+Le robot a traité 33 % du commit anglais
+Index: x/lib/qt5.xml
+===================================================================
+--- x/lib/qt5.xml	(révision 11615)
++++ x/lib/qt5.xml	(révision 11616)
+@@ -149,25 +149,26 @@
+     </para>
+ 
+ <screen><userinput>patch -Np1 -i ../qt-&qt5-version;-bison_fixes-1.patch &amp;&amp;
+-./configure -confirm-license \
+--opensource \
+--prefix /usr \
+--bindir /usr/lib/qt5/bin \
+--headerdir /usr/include/qt5 \
+--archdatadir /usr/lib/qt5 \
+--datadir /usr/share/qt5 \
++./configure -prefix         /usr                \
++            -sysconfdir     /etc/xdg            \
++            -bindir         /usr/lib/qt5/bin    \
++            -headerdir      /usr/include/qt5    \
++            -archdatadir    /usr/lib/qt5        \
++            -datadir        /usr/share/qt5      \
++            -docdir         /usr/share/doc/qt5  \
+             -translationdir /usr/share/qt5/translations \
+--sysconfdir /etc/xdg \
+--docdir /usr/share/doc/qt5 \
+--examplesdir /usr/share/doc/qt5/examples \
+--dbus-linked \
+--openssl-linked \
+--system-sqlite \
++            -examplesdir    /usr/share/doc/qt5/examples \
++            -confirm-license   \
++            -opensource        \
++            -dbus-linked       \
++            -openssl-linked    \
++            -system-sqlite     \
+             -plugin-sql-sqlite \
+            -no-nis            \
+            -nomake examples   \
+@@ -220,6 +221,86 @@
+ 
+   </sect2>
+ 
++  <sect2 role="installation">
++    <title>Alternate Qt Installation Instructions</title>
++    <para>This section provides an alternate way to install Qt by installing 
++    almost all of the files in the <filename class='directory'>/opt</filename>
++    directory.  This allows management of all Qt related files in one unit.
++    For instance, a new version of Qt5 can be installed without over-writing 
++    the existing installation and entire Qt5 instances can be easily removed.
++    However, it has the disadvantage of needing some extra configuration.</para>
++<screen><userinput>patch -Np1 -i ../qt-&qt5-version;-bison_fixes-1.patch &amp;&amp;
++QT5DIR=/opt/qt-&qt5-version;
++./configure -prefix     $QT5DIR  \
++            -sysconfdir /etc/xdg \
++            -confirm-license     \
++            -opensource          \
++            -dbus-linked         \
++            -openssl-linked      \
++            -system-sqlite       \
++            -plugin-sql-sqlite   \
++            -no-nis              \
++            -nomake examples     \
++            -opengl es2          \
++            -optimized-qmake     &amp;&amp;
++make</userinput></screen>
++    <para>
++      Now, as the <systemitem class="username">root</systemitem> user:
++    </para>
++<screen role="root"><userinput>make install &amp;&amp;
++install -v -Dm644 qttools/src/assistant/assistant/images/assistant-128.png \
++                  /usr/share/pixmaps/assistant-qt5.png &amp;&amp;
++install -v -Dm644 qttools/src/designer/src/designer/images/designer.png \
++                  /usr/share/pixmaps/designer-qt5.png &amp;&amp;
++install -v -Dm644 qttools/src/linguist/linguist/images/icons/linguist-128-32.png \
++                  /usr/share/pixmaps/linguist-qt5.png &amp;&amp;
++install -v -Dm644 qttools/src/qdbus/qdbusviewer/images/qdbusviewer-128.png \
++                  /usr/share/pixmaps/qdbusviewer-qt5.png</userinput></screen>
++    <para>
++      Remove references to the build directory from installed files by
++      running the following commands as the
++      <systemitem class="username">root</systemitem> user:
++    </para>
++<screen role="root"><userinput>find $QT5DIR -name qt_lib_bootstrap.pri \
++   -exec sed -i -e "s:$PWD/qtbase:/$QT5DIR/lib/:g" {} \; &amp;&amp;
++find $QT5DIR -name \*.prl \
++   -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;</userinput></screen>
++    <para>
++      Symlink the <application>Qt</application> executables into
++      <filename class="directory">/usr/bin</filename> by running the
++      following commands as the
++      <systemitem class="username">root</systemitem> user:
++    </para>
++<screen role="root"><userinput>ln -svf $QT5DIR /opt/qt5  &amp;&amp;
++for file in /opt/qt5/bin/*; do
++  ln -sfv $file /usr/bin/$(basename $file)-qt5
++done</userinput></screen>
++    <para>At this point is is useful to add some configuration items as 
++    the <systemitem class="username">root</systemitem> user:</para>
++<screen role="root"><userinput>echo /opt/qt5 &gt;&gt; /etc/ld.so.conf &amp;&amp;
++ldconfig                         &amp;&amp;
++cat &gt;&gt; /etc/profile.d/qt5.sh &lt;&lt; "EOF"
++pathappend /opt/qt5/lib/pkgconfig PKG_CONFIG_PATH
++EOF</userinput></screen>
++  </sect2>
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+
