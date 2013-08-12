@@ -57,26 +57,26 @@ $(BASEDIR)/index.html: $(RENDERTMP)/blfs-html.xml
 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
 	done;
 
-#pdf: $(BASEDIR)/$(PDF_OUTPUT)
-#$(RENDERTMP)/blfs-pdf.xml: $(RENDERTMP)/blfs-full.xml
-#	@echo "Generating profiled XML for PDF..."
-#	$(Q)xsltproc --nonet --stringparam profile.condition pdf \
-	  --output $(RENDERTMP)/blfs-pdf.xml stylesheets/lfs-xsl/profile.xsl \
-	  $(RENDERTMP)/blfs-full.xml
+pdf: $(BASEDIR)/$(PDF_OUTPUT)
+$(RENDERTMP)/blfs-pdf.xml: $(RENDERTMP)/blfs-full.xml
+	@echo "Generating profiled XML for PDF..."
+	$(Q)xsltproc --nonet --stringparam profile.condition pdf \
+        --output $(RENDERTMP)/blfs-pdf.xml stylesheets/lfs-xsl/profile.xsl \
+        $(RENDERTMP)/blfs-full.xml
 
-#$(RENDERTMP)/blfs-pdf.fo: $(RENDERTMP)/blfs-pdf.xml
-#	@echo "Generating FO file..."
-#	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
+$(RENDERTMP)/blfs-pdf.fo: $(RENDERTMP)/blfs-pdf.xml
+	@echo "Generating FO file..."
+	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
 	  --output $(RENDERTMP)/blfs-pdf.fo stylesheets/blfs-pdf.xsl \
 	  $(RENDERTMP)/blfs-pdf.xml
-#	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/blfs-pdf.fo
+	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/blfs-pdf.fo
 
-#$(BASEDIR)/$(PDF_OUTPUT): $(RENDERTMP)/blfs-pdf.fo
-#	@echo "Generating PDF file..."
-#	$(Q)if [ ! -e $(BASEDIR) ]; then \
+$(BASEDIR)/$(PDF_OUTPUT): $(RENDERTMP)/blfs-pdf.fo
+	@echo "Generating PDF file..."
+	$(Q)if [ ! -e $(BASEDIR) ]; then \
 	  mkdir -p $(BASEDIR); \
 	fi;
-#	$(Q)fop $(RENDERTMP)/blfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+	$(Q)fop $(RENDERTMP)/blfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
 
 nochunks: $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 $(BASEDIR)/$(NOCHUNKS_OUTPUT): $(RENDERTMP)/blfs-html.xml
