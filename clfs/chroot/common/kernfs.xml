@@ -35,14 +35,14 @@ mount -vt sysfs sysfs ${CLFS}/sys</userinput></screen>
   l'environnement chroot.</para>
 
   <para>Deux n&oelig;uds de périphériques, /dev/console et /dev/null, doivent être présents sur le système de fichiers. 
-  Ils sont exigés par le noyau même avant le démarrage d'Udev très tôt dans le processus d'amorçage, donc nous les créons  
+  Ils sont exigés par le noyau même avant le démarrage d'Eudev très tôt dans le processus d'amorçage, donc nous les créons  
   ici&nbsp;:</para>
 
 <screen><userinput>mknod -m 600 ${CLFS}/dev/console c 5 1
 mknod -m 666 ${CLFS}/dev/null c 1 3</userinput></screen>
 
   <para>Une fois que le système est complet et qu'il démarre, le reste des n&oelig;uds de périphériques sont créés par le 
-  paquet Udev. Comme ce paquet n'est pas disponible pour nous maintenant, nous devons prendre en charge ces étapes pour
+  paquet Eudev. Comme ce paquet n'est pas disponible pour nous maintenant, nous devons prendre en charge ces étapes pour
   fournir les n&oelig;uds de périphérique sur le système de fichiers CLFS. Nous allons utiliser l'option <quote>bind</quote> 
   dans la commande mount pour faire apparaître la structure du /dev de notre système hôte dans le nouveau système de fichiers 
   CLFS&nbsp;:</para>
@@ -52,7 +52,14 @@ mknod -m 666 ${CLFS}/dev/null c 1 3</userinput></screen>
   <para>Des systèmes de fichiers supplémentaires seront bientôt montés à l'intérieur de l'environnement chroot. Pour 
   maintenir l'hôte à jour, efcectuez un <quote>faux montage</quote> pour chacun d'eux maintenant&nbsp;:</para>
 
-<screen><userinput>mount -f -vt tmpfs tmpfs ${CLFS}/dev/shm
+<screen><userinput>if [ -h ${CLFS}/dev/shm ]; then
+  link=$(readlink ${CLFS}/dev/shm)
+  mkdir -p ${CLFS}/$link
+  mount -f -vt tmpfs shm ${CLFS}/$link
+  unset link
+else
+  mount -f -vt tmpfs shm ${CLFS}/dev/shm
+fi
 mount -f -vt devpts -o gid=&gid-tty;,mode=620 devpts ${CLFS}/dev/pts</userinput></screen>
 
 </sect1>
