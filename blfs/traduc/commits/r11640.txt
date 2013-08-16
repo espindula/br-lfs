@@ -1,0 +1,152 @@
+Révision 11640
+
+fichiers modifiés :
+   general.ent
+   xsoft/office/libreoffice.xml
+   introduction/welcome/changelog.xml
+
+Log :
+LibreOffice: fixes to build dictionaries, help and languages support
+
+Le robot a traité 13 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 11639)
++++ introduction/welcome/changelog.xml	(révision 11640)
+@@ -44,6 +44,15 @@
+ 
+ -->
+     <listitem>
++      <para>August 16th, 2013</para>
++      <itemizedlist>
++        <listitem>
++          <para>[fernando] LibreOffice: fixes to build dictionaries, help and languages support. Thanks to David B.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>August 14th, 2013</para>
+       <itemizedlist>
+         <listitem>
+
+Index: xsoft/office/libreoffice.xml
+===================================================================
+--- xsoft/office/libreoffice.xml	(révision 11639)
++++ xsoft/office/libreoffice.xml	(révision 11640)
+@@ -243,25 +243,34 @@
+ cd libreoffice-&libreoffice-dlversion;</userinput></screen>
+ 
+     <para>
+-Unpack the dictionaries and help files and create symlinks to tarballs from the source
+-directory so they won't get downloaded again:
++      Unpack the dictionaries file and create symlinks to tarballs from the
++      source directory so they won't get downloaded again (it is not necessary
++      to unpack the help nor the translations tarballs):
+     </para>
+ 
+ <screen><userinput>install -dm755 src &amp;&amp;
+ 
+ tar -xf ../libreoffice-dictionaries-&libreoffice-dlversion;.tar.xz --no-overwrite-dir --strip-components=1 &amp;&amp;
+-tar -xf ../libreoffice-help-&libreoffice-dlversion;.tar.xz --no-overwrite-dir --strip-components=1 &amp;&amp;
++<!-- Not necessary for this version
++tar -xf ../libreoffice-help-&libreoffice-dlversion;.tar.xz -\-no-overwrite-dir -\-strip-components=1 &amp;&amp;
++-->
+ ln -sv ../../libreoffice-dictionaries-&libreoffice-dlversion;.tar.xz src/ &amp;&amp;
+ ln -sv ../../libreoffice-help-&libreoffice-dlversion;.tar.xz src/</userinput></screen>
+ 
++<!-- Not necessary for this version
+     <para>
+       If you have downloaded the translations tarball, unpack it:
+     </para>
+ 
+-<screen><userinput>tar -xf ../libreoffice-translations-&libreoffice-dlversion;.tar.xz --no-overwrite-dir --strip-components=1 &amp;&amp;
++<screen><userinput>tar -xf ../libreoffice-translations-&libreoffice-dlversion;.tar.xz -\-no-overwrite-dir -\-strip-components=1 &amp;&amp;
+ ln -sv ../../libreoffice-translations-&libreoffice-dlversion;.tar.xz src/</userinput></screen>
++-->
++    <para>
++      If you have downloaded the translations tarball, create a symlink:
++    </para>
+ 
++<screen><userinput>ln -sv ../../libreoffice-translations-&libreoffice-dlversion;.tar.xz src/</userinput></screen>
+     <note>
+       <para>
+         During the build process, some packages will be downloaded (including
+@@ -272,19 +281,30 @@
+     </note>
+ 
+     <para>
+-Prepare <application>LibreOffice</application> for compilation by
+-running the following commands:
++      In the rest of the page, locales "en-US" and "pt-BR" are examples; the
++      user will change them to suit his needs - you might want to read the
++      "Command Explanations", further below, before proceeding. Prepare
++      <application>LibreOffice</application> for compilation by running the
++      following commands:
+     </para>
+ 
+ <screen><userinput>sed -e "/gzip -f/d"   \
+     -e "s|.1.gz|.1|g" \
+     -i bin/distro-install-desktop-integration &amp;&amp;
+ sed -e "/distro-install-file-lists/d" -i Makefile.in &amp;&amp;
++chmod +x bin/unpack-sources &amp;&amp;
++sed -e "s/target\.mk/langlist\.mk/"                \
++    -e "s/tar -xf/tar -x --strip-components=1 -f/" \
++    -e "/tar -x/s/lo_src_dir/start_dir/"           \
++    -i bin/unpack-sources &amp;&amp;
+ patch -Np1 -i ../libreoffice-&libreoffice-dlversion;-system_poppler-1.patch &amp;&amp;
+ ./autogen.sh --prefix=/usr              \
+              --sysconfdir=/etc          \
+              --with-vendor="BLFS"       \
+---with-lang=""             \
++             --with-lang="en-US pt-BR"  \
++             --with-help                \
+              --with-alloc=system        \
+              --without-java             \
+              --disable-gconf            \
+@@ -330,6 +350,17 @@
+ 
+ <screen role="root"><userinput>make distro-pack-install</userinput></screen>
+ 
++    <para>
++       If the dictionaries have been built, again as
++       <systemitem class="username">root</systemitem> user:
++    </para>
++<screen role="root"><userinput>chown -cR 0:0 dictionaries/                                               &amp;&amp;
++mkdir -pv /usr/lib/libreoffice/share/extensions/dict-en                   &amp;&amp;
++cp -vR dictionaries/en/* /usr/lib/libreoffice/share/extensions/dict-en    &amp;&amp;
++mkdir -pv /usr/lib/libreoffice/share/extensions/dict-pt-BR                &amp;&amp;
++cp -vR dictionaries/en/* /usr/lib/libreoffice/share/extensions/dict-pt-BR</userinput></screen>
+   </sect2>
+ 
+   <sect2 role="commands">
+@@ -337,12 +368,16 @@
+ 
+     <para>
+       <command>sed -e ...</command>: First sed prevents compression of the
+-manual pages and the second one prevents a script that causes
+-install to fail from running.
++      manual pages, the second one prevents a script that causes install to
++      fail from running and the third one fixes the unpack script.
+     </para>
+ 
+     <para>
+-<parameter>--with-vendor=BLFS</parameter>: This switchs sets BLFS as
++      <command>chmod +x ...</command>: Fix the unpack script's permissions.
++    </para>
++    <para>
++      <parameter>--with-vendor=BLFS</parameter>: This switch sets BLFS as
+       the vendor which is mentioned when you click "About" on the toolbar.
+     </para>
+ 
+@@ -354,6 +389,11 @@
+     </para>
+ 
+     <para>
++      <parameter>--with-help</parameter>: Without this switch, the help files
++      are not built.
++    </para>
++    <para>
+       For a list of the available languages, run:
+       <command>ls translations/source</command> after you have extracted
+       the translations tarball.
+
