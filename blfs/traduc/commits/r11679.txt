@@ -1,0 +1,114 @@
+Révision 11679
+
+fichiers modifiés :
+   x/lib/qt4.xml
+   x/lib/qt5.xml
+
+Log :
+qt4 fixes
+
+Le robot a traité 12 % du commit anglais
+Index: x/lib/qt4.xml
+===================================================================
+--- x/lib/qt4.xml	(révision 11678)
++++ x/lib/qt4.xml	(révision 11679)
+@@ -79,6 +79,7 @@
+ 
+     <bridgehead renderas="sect4">Required</bridgehead>
+     <para role="required">
++      <xref linkend="alsa-lib"/>,
+       <xref linkend="mesalib"/> and
+       <xref linkend="qtchooser"/>
+     </para>
+@@ -147,7 +148,10 @@
+       following commands:
+     </para>
+ 
+-<screen><userinput>./configure -confirm-license \
++<screen><userinput>sed -i -e "/#if/d" -e "/#error/d" -e "/#endif/d" \
++     config.tests/unix/libmng/libmng.cpp &amp;&amp;
++./configure -confirm-license \
+             -opensource \
+             -release \
+             -prefix /usr \
+@@ -164,7 +168,6 @@
+             -dbus-linked \
+             -openssl-linked \
+             -system-sqlite \
+--plugin-sql-sqlite \
+             -no-phonon \
+             -no-phonon-backend \
+             -no-nis \
+@@ -197,23 +200,19 @@
+ 
+     <para>
+       Remove references to the build directory from installed files by
+-running the following commands as the
+-<systemitem class="username">root</systemitem> user:
+-</para>
+-<screen role="root"><userinput>find /usr/lib/libQt*.prl -exec sed -i -e \
+-'/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' {} \;
+-find /usr/lib/pkgconfig/Qt*.pc -exec perl -pi -e \
+-"s, -L$(basename $PWD)/?\S+,,g" {} \;</userinput></screen>
+-<para>
+-Fix pkg-config files to point to the correct bindir by
+       running the following command as the
+       <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>find /usr/lib/pkgconfig/Qt*.pc -exec sed -i -e \
+-"s@/usr/bin/@/usr/lib/qt4/bin/@g" {} \;</userinput></screen>
++<screen role="root"><userinput>for file in 3Support CLucene Core DBus Declarative DesignerComponents \
++            Designer Gui Help Multimedia Network OpenGL Script \
++            ScriptTools Sql Svg Test UiTools WebKit XmlPatterns Xml
++do
++  sed -i -e '/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' \
++       /usr/lib/libQt${file}.prl
++  perl -pi -e "s, -L$PWD/?\S+,,g" /usr/lib/pkgconfig/Qt${file}.pc
++done
++unset file</userinput></screen>
+ 
+     <para>
+       Symlink the <application>Qt</application> executables into
+@@ -233,6 +232,11 @@
+     <title>Command Explanations</title>
+ 
+     <para>
++      <command>sed -i "..." ...</command>: This command fixes
++      detection of <application>libmng</application> 2.0.
++    </para>
++    <para>
+       <parameter>-confirm-license</parameter>: Accept license
+       without prompting user during configuration.
+     </para>
+@@ -291,13 +295,6 @@
+       building of the optimized <command>qmake</command> program.
+     </para>
+ 
+-<para>
+-<parameter>-plugin-sql-<replaceable>&lt;driver&gt;</replaceable></parameter>:
+-These switches enable SQL support in the
+-<application>Qt</application> libraries. Available drivers are:
+-ibase, mysql, psql, sqlite and odbc.
+-</para>
+   </sect2>
+ 
+   <sect2 role="configuration">
+
+Index: x/lib/qt5.xml
+===================================================================
+--- x/lib/qt5.xml	(révision 11678)
++++ x/lib/qt5.xml	(révision 11679)
+@@ -166,8 +166,9 @@
+ make</userinput></screen>
+ 
+     <para>
+-Remove references to the build directory from pkg-confg
+-files by running the following command:
++      Remove references to the build directory from the installed
++      <filename class="extension">.pc</filename> files by running
++      the following command:
+     </para>
+ 
+ <screen><userinput>find . -name "*.pc" -exec perl -pi -e "s, -L$PWD/?\S+,,g" {} \;</userinput></screen>
+
