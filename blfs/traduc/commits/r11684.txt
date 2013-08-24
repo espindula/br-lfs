@@ -1,0 +1,213 @@
+Révision 11684
+
+fichiers modifiés :
+   x/lib/qt4.xml
+
+Log :
+re-add qt4 instructions.
+
+Le robot a traité 24 % du commit anglais
+Index: x/lib/qt4.xml
+===================================================================
+--- x/lib/qt4.xml	(révision 11683)
++++ x/lib/qt4.xml	(révision 11684)
+@@ -39,7 +39,7 @@
+       of <application>Qt</application> is <application>KDE</application>.
+     </para>
+ 
+-&lfs73_checked;
++    &lfs74_checked;
+ 
+     <bridgehead renderas="sect3">Package Information</bridgehead>
+     <itemizedlist spacing="compact">
+@@ -117,7 +117,50 @@
+   <sect2 role="installation">
+     <title>Installation of Qt</title>
+ 
+-<warning>
++    <para>
++       There are several ways to install a complicated package such as
++       <application>Qt</application>. The files are not completely position
++       independent. Installation procedures execute the program
++       <command>pkg-config</command> to determine the location of package
++       executables, libraries, headers, and other files. For
++       <application>Qt</application>, <command>pkg-config</command> will look
++       for the appropriate <filename>lib/pkgconfig/Qt*.pc</filename> files
++       which must be modified if relocating the package. These files are set up
++       correctly by the build process.
++    </para>
++    <para>
++       The default installation places the files in <filename
++       class="directory">/usr/local/qt</filename>. Many commercial
++       distributions place the files in the system's <filename
++       class="directory">/usr</filename> hierarchy. The package can also be
++       installed in an arbitrary directory.
++    </para>
++    
++    <para>
++       The advantage of installing in <filename
++       class="directory">/usr</filename> is that no updates to the
++       <filename>/etc/ld.so.conf</filename> or
++       <filename>/etc/man_db.conf</filename> files are required. The package
++       files are distributed within several subdirectories of the <filename
++       class="directory">/usr</filename> hierarchy. This is the method that
++       most commercial distributions use. It is also supported by the
++       <application>qtchooser</application> application.
++    </para>
++    <para>
++       The advantage of installing <application>Qt</application> in a custom
++       directory such as <filename
++       class="directory">/opt/qt-&qt4-version;</filename> is that it keeps all
++       the package files consolidated in a dedicated directory hierarchy. By
++       using this method, an update can be made without overwriting a previous
++       installation and users can easily revert to a previous version by
++       changing one symbolic link or merely changing the PATH variable. It
++       also allows a developer to maintain multiple versions of
++       <application>Qt</application> for testing.
++    </para>
++    <warning>
+       <para>
+         If you did not install some of the recommended dependencies, examine
+         <command>./configure --help</command> output to check how to disable
+@@ -127,7 +170,8 @@
+ 
+     <caution>
+       <para>
+-If <application>Qt</application> is being reinstalled, run the
++        If <application>Qt</application> is being reinstalled into the
++        same directory as an existing instance, run the
+         following commands from a console or non-Qt based window manager.
+         It overwrites <application>Qt</application> libraries that should
+         not be in use during the install process.
+@@ -143,6 +187,8 @@
+       </para>
+     </note>
+ 
++    <bridgehead renderas="sect3">Method 1: Installing in /usr</bridgehead>
+     <para>
+       Install <application>Qt</application> by running the
+       following commands:
+@@ -226,6 +272,71 @@
+   ln -sfv ../lib/qt4/bin/$(basename $file) /usr/bin/$(basename $file)-qt4
+ done</userinput></screen>
+ 
++    <bridgehead renderas="sect3">Method 2: Installing in /opt/qt-&qt4-version;</bridgehead>
++    <para>
++      Install <application>Qt</application> in  /opt/qt-&qt4-version;
++      by running the following commands:
++    </para>
++<screen><userinput>sed -i -e "/#if/d" -e "/#error/d" -e "/#endif/d" \
++     config.tests/unix/libmng/libmng.cpp &amp;&amp;
++export QTDIR=/opt/qt-&qt4-version;
++./configure -prefix $QTDIR       \
++            -sysconfdir /etc/xdg \
++            -confirm-license     \
++            -opensource          \
++            -release             \
++            -dbus-linked         \
++            -openssl-linked      \
++            -system-sqlite       \
++            -plugin-sql-sqlite   \
++            -no-phonon           \
++            -no-phonon-backend   \
++            -no-nis              \
++            -no-openvg           \
++            -nomake demos        \
++            -nomake examples     \
++            -optimized-qmake     &amp;&amp;
++make</userinput></screen>
++    <para>
++      Now, as the <systemitem class="username">root</systemitem> user:
++    </para>
++<screen role="root"><userinput>make install                 &amp;&amp;
++ln -svfn qt-$VERSION /opt/qt &amp;&amp;
++install -v -Dm644 src/gui/dialogs/images/qtlogo-64.png \
++                  /usr/share/pixmaps/qt4logo.png       &amp;&amp;
++install -v -Dm644 tools/assistant/tools/assistant/images/assistant-128.png \
++                  /usr/share/pixmaps/assistant-qt4.png &amp;&amp;
++install -v -Dm644 tools/designer/src/designer/images/designer.png \
++                  /usr/share/pixmaps/designer-qt4.png  &amp;&amp;
++install -v -Dm644 tools/linguist/linguist/images/icons/linguist-128-32.png \
++                  /usr/share/pixmaps/linguist-qt4.png  &amp;&amp;
++install -v -Dm644 tools/qdbus/qdbusviewer/images/qdbusviewer-128.png \
++                  /usr/share/pixmaps/qdbusviewer-qt4.png</userinput></screen>
++    <para>
++      Remove references to the build directory from installed files by
++      running the following command as the
++      <systemitem class="username">root</systemitem> user:
++    </para>
++<screen role="root"><userinput>for file in 3Support CLucene Core DBus Declarative DesignerComponents \
++            Designer Gui Help Multimedia Network OpenGL Script \
++            ScriptTools Sql Svg Test UiTools WebKit XmlPatterns Xml; do
++  sed -i -e '/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' \
++       $QTDIR/lib/libQt${file}.prl
++  perl -pi -e "s, -L$PWD/?\S+,,g" $QTDIR/lib/pkgconfig/Qt${file}.pc
++done
++unset file</userinput></screen>
+   </sect2>
+ 
+   <sect2 role="commands">
+@@ -304,7 +415,9 @@
+       <title>Configuration Information</title>
+ 
+       <para>
+-Create an environment variable needed by certain packages.
++        If you installed <application>Qt</application> in
++        <filename class="directory">/usr</filename>, create
++        an environment variable needed by certain packages.
+         As the <systemitem class="username">root</systemitem> user:
+       </para>
+ 
+@@ -318,12 +431,58 @@
+ # End /etc/profile.d/qt.sh</literal>
+ EOF</userinput></screen>
+ 
++   <para>
++      If you installed <application>Qt</application> in a location other
++      than <filename class="directory">/usr</filename>, you need to update
++      the following configuration files so that <application>Qt</application>
++      is correctly found by other packages and system processes.
++    </para>
++    <para>
++      As the <systemitem class="username">root</systemitem> user, update
++      the <filename>/etc/ld.so.conf</filename> file and the dynamic linker's
++      run-time cache file:
++   </para>
++<screen role="root"><userinput>cat &gt;&gt; /etc/ld.so.conf &lt;&lt; EOF
++<literal># Begin Qt addition
++   
++/opt/qt/lib
++   
++# End Qt addition</literal>
++EOF
++ldconfig</userinput></screen>
++   <para>
++      As the <systemitem class="username">root</systemitem> user, create
++      the <filename>/etc/profile.d/qt.sh</filename> file:
++   </para>
++<screen role="root"><userinput>cat &gt; /etc/profile.d/qt.sh &lt;&lt; EOF
++<literal># Begin /etc/profile.d/qt.sh
++QTDIR=/opt/qt
++pathappend /opt/qt/bin           PATH
++pathappend /opt/qt/lib/pkgconfig PKG_CONFIG_PATH
++export QTDIR
++# End /etc/profile.d/qt.sh</literal>
++EOF</userinput></screen>
++   <indexterm zone="qt4 qtconfig-qt4">
++      <primary sortas="e-etc-profile.d-qt.sh">/etc/profile.d/qt.sh</primary>
++   </indexterm>
+       <para>
+-Create the menu entries for installed applications.
++        For all methods, Create the menu entries for installed applications.
+         As the <systemitem class="username">root</systemitem> user:
+       </para>
+ 
+@@ -416,8 +579,9 @@
+           /usr/lib/qt4,
+          /usr/share/doc/qt4, and
+           /usr/share/qt4
++          (OR $QTDIR)
+         </seg>
+       </seglistitem>
+     </segmentedlist>
+
