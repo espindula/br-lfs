@@ -170,31 +170,32 @@
       Installez <application>Qt</application> en lançant les commandes suivantes
     </para>
 <screen>
-<userinput>./configure -confirm-license \
-            -opensource \
-            -release \
-            -prefix /usr \
-            -bindir /usr/lib/qt4/bin \
-            -headerdir /usr/include/qt4 \
-            -datadir /usr/share/qt4 \
-            -plugindir /usr/lib/qt4/plugins \
-            -importdir /usr/lib/qt4/imports \
+<userinput>sed -i -e "/#if/d" -e "/#error/d" -e "/#endif/d" \
+     config.tests/unix/libmng/libmng.cpp &amp;&amp;
+./configure -prefix         /usr                 \
+            -bindir         /usr/lib/qt4/bin     \
+            -plugindir      /usr/lib/qt4/plugins \
+            -importdir      /usr/lib/qt4/imports \
+            -headerdir      /usr/include/qt4     \
+            -datadir        /usr/share/qt4       \
+            -sysconfdir     /etc/xdg             \
+            -docdir         /usr/share/doc/qt4   \
+            -demosdir       /usr/share/doc/qt4/demos    \
+            -examplesdir    /usr/share/doc/qt4/examples \
             -translationdir /usr/share/qt4/translations \
-            -sysconfdir /etc/xdg \
-            -docdir /usr/share/doc/qt4 \
-            -demosdir /usr/share/doc/qt4/demos \
-            -examplesdir /usr/share/doc/qt4/examples \
-            -dbus-linked \
-            -openssl-linked \
-            -system-sqlite \
-            -plugin-sql-sqlite \
-            -no-phonon \
+            -confirm-license   \
+            -opensource        \
+            -release           \
+            -dbus-linked       \
+            -openssl-linked    \
+            -system-sqlite     \
+            -no-phonon         \
             -no-phonon-backend \
-            -no-nis \
-            -no-openvg \
-            -nomake demos \
-            -nomake examples \
-            -optimized-qmake &amp;&amp;
+            -no-nis            \
+            -no-openvg         \
+            -nomake demos      \
+            -nomake examples   \
+            -optimized-qmake   &amp;&amp;
 make</userinput>
 </screen>
     <para>
@@ -207,13 +208,13 @@ make</userinput>
 <userinput>make install &amp;&amp;
 rm -rf /usr/tests &amp;&amp;
 install -v -Dm644 src/gui/dialogs/images/qtlogo-64.png \
-                  /usr/share/pixmaps/qt4logo.png &amp;&amp;
+                  /usr/share/pixmaps/qt4logo.png       &amp;&amp;
 install -v -Dm644 tools/assistant/tools/assistant/images/assistant-128.png \
                   /usr/share/pixmaps/assistant-qt4.png &amp;&amp;
 install -v -Dm644 tools/designer/src/designer/images/designer.png \
-                  /usr/share/pixmaps/designer-qt4.png &amp;&amp;
+                  /usr/share/pixmaps/designer-qt4.png  &amp;&amp;
 install -v -Dm644 tools/linguist/linguist/images/icons/linguist-128-32.png \
-                  /usr/share/pixmaps/linguist-qt4.png &amp;&amp;
+                  /usr/share/pixmaps/linguist-qt4.png  &amp;&amp;
 install -v -Dm644 tools/qdbus/qdbusviewer/images/qdbusviewer-128.png \
                   /usr/share/pixmaps/qdbusviewer-qt4.png</userinput>
 </screen>
@@ -223,8 +224,15 @@ install -v -Dm644 tools/qdbus/qdbusviewer/images/qdbusviewer-128.png \
       <systemitem class="username">root</systemitem>:
     </para>
 <screen role="root">
-<userinput>find /usr/lib/pkgconfig/Qt*.pc -exec sed -i -e \
-     "s@/usr/bin/@/usr/lib/qt4/bin/@g" {} \;</userinput>
+<userinput>for file in 3Support CLucene Core DBus Declarative DesignerComponents \
+            Designer Gui Help Multimedia Network OpenGL Script \
+            ScriptTools Sql Svg Test UiTools WebKit XmlPatterns Xml
+do
+  sed -i -e '/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' \
+       /usr/lib/libQt${file}.prl
+  perl -pi -e "s, -L$PWD/?\S+,,g" /usr/lib/pkgconfig/Qt${file}.pc
+done
+unset file</userinput>
 </screen>
     <para>
       Créez un lien symbolique entre les exécutables <application>Qt</application>
@@ -243,7 +251,8 @@ done</userinput>
       Installez <application>Qt</application> dans /opt/qt-&qt4-version; 
       en lançant les commendes suivantes:
     </para>
-<screen><userinput>sed -i -e "/#if/d" -e "/#error/d" -e "/#endif/d" \
+<screen>
+<userinput>sed -i -e "/#if/d" -e "/#error/d" -e "/#endif/d" \
      config.tests/unix/libmng/libmng.cpp &amp;&amp;
 export QTDIR=/opt/qt-&qt4-version;
 ./configure -prefix $QTDIR       \
@@ -262,11 +271,13 @@ export QTDIR=/opt/qt-&qt4-version;
             -nomake demos        \
             -nomake examples     \
             -optimized-qmake     &amp;&amp;
-make</userinput></screen>
+make</userinput>
+</screen>
     <para>
       Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>:
     </para>
-<screen role="root"><userinput>make install                 &amp;&amp;
+<screen role="root">
+<userinput>make install                 &amp;&amp;
 ln -svfn qt-$VERSION /opt/qt &amp;&amp;
 install -v -Dm644 src/gui/dialogs/images/qtlogo-64.png \
                   /usr/share/pixmaps/qt4logo.png       &amp;&amp;
@@ -277,20 +288,23 @@ install -v -Dm644 tools/designer/src/designer/images/designer.png \
 install -v -Dm644 tools/linguist/linguist/images/icons/linguist-128-32.png \
                   /usr/share/pixmaps/linguist-qt4.png  &amp;&amp;
 install -v -Dm644 tools/qdbus/qdbusviewer/images/qdbusviewer-128.png \
-                  /usr/share/pixmaps/qdbusviewer-qt4.png</userinput></screen>
+                  /usr/share/pixmaps/qdbusviewer-qt4.png</userinput>
+</screen>
     <para>
       Enlevez les références au répertoire de construction dans les fichiers
       installés en lançant la commande suivante en tant qu'utilisateur
       <systemitem class="username">root</systemitem> :
     </para>
-<screen role="root"><userinput>for file in 3Support CLucene Core DBus Declarative DesignerComponents \
+<screen role="root">
+<userinput>for file in 3Support CLucene Core DBus Declarative DesignerComponents \
             Designer Gui Help Multimedia Network OpenGL Script \
             ScriptTools Sql Svg Test UiTools WebKit XmlPatterns Xml; do
   sed -i -e '/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' \
        $QTDIR/lib/libQt${file}.prl
   perl -pi -e "s, -L$PWD/?\S+,,g" $QTDIR/lib/pkgconfig/Qt${file}.pc
 done
-unset file</userinput></screen>
+unset file</userinput>
+</screen>
 </sect2>
  <sect2 role="commands">
     <title>Explications des commandes</title>
@@ -365,7 +379,6 @@ export QTDIR
 # End /etc/profile.d/qt.sh</literal>
 EOF</userinput>
 </screen>
-
    <para>
       Si vous avez installé <application>Qt</application> dans un endroit autre
       que /usr, vous devez mettre à jour les fichiers de configuration
@@ -377,14 +390,16 @@ EOF</userinput>
       et le fichier de cache du lieur dynamique d'exécution:
    </para>
    
-<screen role="root"><userinput>cat &gt;&gt; /etc/ld.so.conf &lt;&lt; EOF
+<screen role="root">
+<userinput>cat &gt;&gt; /etc/ld.so.conf &lt;&lt; EOF
    <literal># Begin Qt addition
    
 /opt/qt/lib
    
 # End Qt addition</literal>
 EOF
-ldconfig</userinput></screen>
+ldconfig</userinput>
+</screen>
    
    <indexterm zone="qt4 qtconfig-qt4">
       <primary sortas="e-etc-ld.so.conf">/etc/ld.so.conf</primary>
@@ -395,7 +410,8 @@ ldconfig</userinput></screen>
       le fichier <filename>/etc/profile.d/qt.sh</filename> :
    </para>
    
-<screen role="root"><userinput>cat &gt; /etc/profile.d/qt.sh &lt;&lt; EOF
+<screen role="root">
+<userinput>cat &gt; /etc/profile.d/qt.sh &lt;&lt; EOF
    <literal># Begin /etc/profile.d/qt.sh
    
 QTDIR=/opt/qt
@@ -406,7 +422,8 @@ pathappend /opt/qt/lib/pkgconfig PKG_CONFIG_PATH
 export QTDIR
    
 # End /etc/profile.d/qt.sh</literal>
-EOF</userinput></screen>
+EOF</userinput>
+</screen>
      <para>
         Pour toutes les méthodes, créez des entrées de menu pour les applications installées.
         En tant qu'utilisateur <systemitem class="username">root</systemitem>:
