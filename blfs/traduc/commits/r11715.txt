@@ -1,0 +1,168 @@
+Révision 11715
+
+fichiers modifiés :
+   general.ent
+   x/installing/mesalib.xml
+   introduction/welcome/changelog.xml
+
+Log :
+mesalib-9.2.0 (thanks to Armin's patch)
+
+Le robot a traité 17 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 11714)
++++ introduction/welcome/changelog.xml	(révision 11715)
+@@ -47,6 +47,9 @@
+       <para>August 28th, 2013</para>
+       <itemizedlist>
+         <listitem>
++          <para>[igor] - MesaLib-9.2.0 (thanks to Armin's patch).</para>
++        </listitem>
++        <listitem>
+           <para>[ken] - note audacious dependencies for CD playing.</para>
+         </listitem>
+       </itemizedlist>
+
+Index: x/installing/mesalib.xml
+===================================================================
+--- x/installing/mesalib.xml	(révision 11714)
++++ x/installing/mesalib.xml	(révision 11715)
+@@ -115,12 +115,6 @@
+     <itemizedlist spacing="compact">
+       <listitem>
+         <para>
+-Required patch:
+-<ulink url="&patch-root;/MesaLib-&mesalib-version;-llvm_fixes-1.patch"/>
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+           Recommended patch:
+           <ulink url="&patch-root;/MesaLib-&mesalib-version;-add_xdemos-1.patch"/>
+           (Needed if testing the Xorg installation per BLFS instructions).
+@@ -141,6 +135,7 @@
+ 
+     <bridgehead renderas="sect4">Recommended</bridgehead>
+     <para role="recommended">
++      <xref linkend="elfutils"/>,
+       <xref linkend="libvdpau"/> (to build VDPAU drivers) and
+       <xref linkend="llvm"/>
+     </para>
+@@ -152,11 +147,12 @@
+ 
+     <warning>
+       <para>
+-The instructions below assume that <application>LLVM</application>
+-is installed. You will need to modify the instructions if you
+-choose not to install it. Please note that
+-<application>LLVM</application> is <emphasis>required</emphasis> for
+-Radeon 3D drivers.
++        The instructions below assume that <application>elfutils</application>
++        and <application>LLVM</application> are installed. You will
++        need to modify the instructions if you choose not to install them.
++        Please note that <application>elfutils</application> and
++        <application>LLVM</application> are <emphasis>required</emphasis>
++        for Radeon 3D drivers.
+       </para>
+     </warning>
+ 
+@@ -199,9 +195,7 @@
+       commands:
+     </para>
+ 
+-<screen><userinput>patch -Np1 -i ../MesaLib-&mesalib-version;-llvm_fixes-1.patch &amp;&amp;
+-sed -i "/LLVM_VERSION_INT/s:-ne:-lt:" configure.ac &amp;&amp;
+-autoreconf -fi &amp;&amp;
++<screen><userinput>autoreconf -fi &amp;&amp;
+ ./configure CFLAGS="-O2" CXXFLAGS="-O2"    \
+             --prefix=$XORG_PREFIX          \
+             --sysconfdir=/etc              \
+@@ -235,10 +229,7 @@
+       Now, as the <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>make install &amp;&amp;
+-install -v -m755 lib/swrast_dri.so $XORG_PREFIX/lib/dri/swrast_dri.so</userinput></screen>
+-<!-- remove when mesa 9.2 gets released, llvm 3.3 breaks llvmpipe (gallium swrast
+-driver which installed by default) -->
++<screen role="root"><userinput>make install</userinput></screen>
+ 
+     <para>
+       If you have built the demo programs, install them by running the
+@@ -286,13 +277,6 @@
+     <title>Command Explanations</title>
+ 
+     <para>
+-<command>sed -i "..."</command>: This sed fixes building with
+-<application>LLVM</application> 3.3. Please note that
+-R600 LLVM Compiler and Gallium LLVMPipe driver are currently
+-broken with <application>LLVM</application> 3.3.
+-</para>
+-<para>
+       <parameter>CFLAGS="-O2" CXXFLAGS="-O2"</parameter>: By default,
+       <application>Autoconf</application> sets CFLAGS and CXXFLAGS to
+       "-g -O2". That results in binaries and libraries being built with
+@@ -356,7 +340,7 @@
+       <option>--with-llvm-shared-libs</option>: This switch is used so
+       Gallium drivers will link against shared
+       <application>LLVM</application> libraries instead of the static
+-ones. Remove if you did not install <xref linkend="llvm"/>. 
++      ones. Remove if you did not install <application>LLVM</application>. 
+     </para>
+ 
+     <para>
+@@ -368,21 +352,20 @@
+     <para>
+       <parameter>--with-gallium-drivers="..."</parameter>: This parameter
+       controls which Gallium drivers should be built. Available drivers
+-are: i915, nouveau, r300, r600, radeonsi, svga and swrast. You will
+-need to remove r300, r600 and radeonsi from the list if you did not
+-install <xref linkend="llvm"/>.
++      are: i915, ilo, nouveau, r300, r600, radeonsi, svga and swrast. You
++      will need to remove r300, r600 and radeonsi from the list if you did
++      not install <application>elfutils</application> and
++      <application>LLVM</application>.
+     </para>
+ 
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+       href="../../xincludes/static-libraries.xml"/>
+ 
+     <para>
+-<option>- -enable-r600-llvm-compiler</option>: Use this switch to
+-enable experimental <application>LLVM</application> backend for
+-graphics shaders which claims to speed up the driver.
++      <option>--enable-r600-llvm-compiler</option>: Use this switch to
++      enable experimental R600 <application>LLVM</application> backend
++      for graphics shaders which claims to speed up the driver.
+     </para>
+--->
+ 
+   </sect2>
+ 
+@@ -400,9 +383,9 @@
+         </seg>
+         <seg>
+           libdricore&mesalib-version;.so, libEGL.so, libgbm.so, libglapi.so,
+-libGLESv1_CM.so, libGLESv2.so, libGL.so, libGLU.so,
+-libllvmradeon&mesalib-version;.so, libOpenVG.so, libOSMesa.so and
+-libxatracker.so
++          libGLESv1_CM.so, libGLESv2.so, libGL.so, libGLU.so, libOpenVG.so,
++          libOSMesa.so, libxatracker.so, libXvMCnouveau.so, libXvMCr300.so,
++          libXvMCr600.so and libXvMCsoftpipe.so
+         </seg>
+         <seg>
+           $XORG_PREFIX/include/EGL,
+@@ -413,8 +396,9 @@
+           $XORG_PREFIX/include/VG,
+           $XORG_PREFIX/lib/dri,
+           $XORG_PREFIX/lib/egl,
+-$XORG_PREFIX/lib/gallium-pipe and
+-$XORG_PREFIX/lib/gbm
++          $XORG_PREFIX/lib/gallium-pipe,
++          $XORG_PREFIX/lib/gbm and
++          $XORG_PREFIX/lib/vdpau
+         </seg>
+       </seglistitem>
+     </segmentedlist>
+
