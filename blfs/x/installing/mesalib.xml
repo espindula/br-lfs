@@ -92,12 +92,6 @@
     <itemizedlist spacing="compact">
       <listitem>
         <para>
-          Correctif requis:
-          <ulink url="&patch-root;/MesaLib-&mesalib-version;-llvm_fixes-1.patch"/>
-        </para>
-      </listitem>
-      <listitem>
-        <para>
             Correctif recommandé&nbsp;:
          <ulink url="&patch-root;/MesaLib-&mesalib-version;-add_xdemos-1.patch"/>
           (Nécessaire pour tester l'installation de Xorg par les instructions de BLFS).
@@ -115,6 +109,7 @@
     </para>
    <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
+      <xref linkend="elfutils"/>,
       <xref linkend="libvdpau"/> (pour construire les pilotes VDPAU) et
       <xref linkend="llvm"/>
    </para>
@@ -124,10 +119,11 @@
     </para>
      <warning>
       <para>
-        Les instructions qui suivent considèrent que <application>LLVM</application>
-        est installé. vous devrez modifier les instructions si vous choisissez de ne pas l'installer
-        Merci de noter que 
-       <application>LLVM</application> et <emphasis>requis</emphasis> pour les pilotes 3D
+        Les instructions qui suivent considèrent que  <application>elfutils</application>
+        et <application>LLVM</application>
+        sont installés. Vous devrez modifier les instructions si vous choisissez de ne pas les installer
+        Merci de noter que <application>elfutils</application> et
+       <application>LLVM</application> sont <emphasis>requis</emphasis> pour les pilotes 3D
         Radeon.
       </para>
     </warning>
@@ -154,10 +150,7 @@
     <para>
      Installez <application>MesaLib</application> en lançant les commandes
     suivantes&nbsp;:</para>
-<screen>
-<userinput>patch -Np1 -i ../MesaLib-&mesalib-version;-llvm_fixes-1.patch &amp;&amp;
-sed -i "/LLVM_VERSION_INT/s:-ne:-lt:" configure.ac &amp;&amp;
-autoreconf -fi &amp;&amp;
++<screen><userinput>autoreconf -fi &amp;&amp;
 ./configure CFLAGS="-O2" CXXFLAGS="-O2"                --prefix=$XORG_PREFIX                      --sysconfdir=/etc                          --enable-texture-float                     --enable-gles1                             --enable-gles2                             --enable-openvg                            --enable-osmesa                            --enable-xa                                --enable-gbm                               --enable-gallium-egl                       --enable-gallium-gbm                       --enable-glx-tls                           --with-llvm-shared-libs                    --with-egl-platforms="drm,x11"             --with-gallium-drivers="nouveau,r300,r600,radeonsi,svga,swrast" &amp;&amp;
 make</userinput>
 </screen>
@@ -210,12 +203,6 @@ make</userinput>
   </sect2>
   <sect2 role="commands">
     <title>Explications des commandes</title>
-     <para>
-     <command>sed -i "..."</command>: Ce sed corrige la construction avec
-      <application>LLVM</application> 3.3. Merci de noter que
-      R600 LLVM Compiler et le pilote Gallium LLVMPipe sont actuellement
-      cassé avec <application>LLVM</application> 3.3.
-    </para>
     <para>
    <parameter>CFLAGS="-O2" CXXFLAGS="-O2"</parameter>&nbsp;: Par défaut,
       <application>Autoconf</application> initialise CFLAGS et CXXFLAGS à
@@ -271,7 +258,7 @@ make</userinput>
       <option>--with-llvm-shared-libs</option>&nbsp;: Ce paramètre est utilisé pour que les pilotes
       Gallium soient liés à la bibliothèque
       <application>LLVM</application> au lieu d'utiliser la statique.
-      A supprimer si vous n'installez pas <xref linkend="llvm"/>.
+      A supprimer si vous n'installez pas <application>LLVM</application>.
     </para>
     <para>
       <parameter>--with-egl-platforms="..."</parameter>&nbsp;: Ce paramètre contrôle pour quel plate-forme
@@ -281,10 +268,17 @@ make</userinput>
       <parameter>--with-gallium-drivers="..."</parameter>&nbsp;: Ce paramètre
       contrôle quels sont les pilotes Gallium qui doivent être construits. Les pilotes disponibles
       sont&nbsp;!
-      i915, nouveau, r300, r600, radeonsi, svga et swrast. Vous devez effacer
-      r300, r600 de la liste si vous n'installez pas
-       <xref linkend="llvm"/>.
+      i915,  ilo,nouveau, r300, r600, radeonsi, svga et swrast. Vous devez effacer
+      r300, r600 et radeonsi de la liste si vous n'installez pas
+       <application>elfutils</application> et
+      <application>LLVM</application>.
     </para>
+     <para>
+      <option>--enable-r600-llvm-compiler</option>: Utilisez ce paramètre pour
+      activer le serveur <application>LLVM</application> de R600 pour les
+      surfaces graphiques qui réclament d'accélerer le pilote.
+     </para>
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
       href="../../xincludes/static-libraries.xml"/>
   </sect2>
@@ -300,9 +294,9 @@ make</userinput>
         </seg>
         <seg>
           libdricore&mesalib-version;.so, libEGL.so, libgbm.so, libglapi.so,
-          libGLESv1_CM.so, libGLESv2.so, libGL.so, libGLU.so,
-          libllvmradeon&mesalib-version;.so, libOpenVG.so, libOSMesa.so et
-          libxatracker.so
+          libGLESv1_CM.so, libGLESv2.so, libGL.so, libGLU.so, libOpenVG.so,
+          libOSMesa.so, libxatracker.so, libXvMCnouveau.so, libXvMCr300.so,
+          libXvMCr600.so et libXvMCsoftpipe.so
         </seg>
         <seg>
           $XORG_PREFIX/include/EGL,
@@ -313,8 +307,9 @@ make</userinput>
           $XORG_PREFIX/include/VG,
           $XORG_PREFIX/lib/dri,
           $XORG_PREFIX/lib/egl,
-         $XORG_PREFIX/lib/gallium-pipe et
-          $XORG_PREFIX/lib/gbm
+         $XORG_PREFIX/lib/gallium-pipe,
+          $XORG_PREFIX/lib/gbm et
+           $XORG_PREFIX/lib/vdpau
         </seg>
       </seglistitem>
     </segmentedlist>
