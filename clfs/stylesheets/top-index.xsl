@@ -147,6 +147,14 @@ hr {
           </li>
           <li>
             <h4>
+              <a href="ppc64-64">
+                <xsl:text>PowerPC64</xsl:text>
+              </a>
+            </h4>
+          </li>
+
+          <li>
+            <h4>
               <a href="mips64-64">
                 <xsl:text>MIPS</xsl:text>
               </a>
