@@ -10,7 +10,7 @@ DUMPDIR ?= $(HOME)/blfs-commands
 RENDERTMP ?= tmp
 CHUNK_QUIET = 1
 ROOT_ID =
-#PDF_OUTPUT = BLFS-BOOK.pdf
+PDF_OUTPUT = BLFS-BOOK.pdf
 NOCHUNKS_OUTPUT = BLFS-BOOK.html
 SHELL = /bin/bash
 
@@ -26,8 +26,8 @@ else
 endif
 
 blfs: html wget-list
-#all: blfs nochunks pdf
-all: blfs nochunks
+all: blfs nochunks pdf
+#all: blfs nochunks
 world: all blfs-patch-list dump-commands test-links
 
 html: $(BASEDIR)/index.html
