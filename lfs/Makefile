@@ -58,8 +58,7 @@ pdf: validate
 	$(Q)if [ ! -e $(BASEDIR) ]; then \
 	  mkdir -p $(BASEDIR); \
 	fi;
-	$(Q)fop -d $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT) 2>fop.log
-        # $(Q)fop -q  $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT) 2>fop.log
+	$(Q)fop -q  $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT) 2>fop.log
 	@echo "$(BASEDIR)/$(PDF_OUTPUT) created"
 	@echo "fop.log created"
 
@@ -99,13 +98,15 @@ profile-html: validate
 	    --output $(RENDERTMP)/lfs-html.xml stylesheets/lfs-xsl/profile.xsl \
 	    $(RENDERTMP)/lfs-full.xml
 
-$(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.ent
+wget-list: $(BASEDIR)/wget-list
+$(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.ent patches.ent
 	@echo "Generating wget list..."
 	$(Q)mkdir -p $(BASEDIR)
 	$(Q)xsltproc --xinclude --nonet --output $(BASEDIR)/wget-list \
 	    stylesheets/wget-list.xsl chapter03/chapter03.xml
 
-$(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.ent
+md5sums: $(BASEDIR)/md5sums
+$(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.ent patches.ent
 	@echo "Generating md5sum file..."
 	$(Q)mkdir -p $(BASEDIR)
 	$(Q)xsltproc --xinclude --nonet --output $(BASEDIR)/md5sums \
