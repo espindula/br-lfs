@@ -33,7 +33,7 @@
       Un des principaux utilisateurs de <application>Qt</application> est
       <application>KDE</application>.
     </para>
-    &lfs73_checked;
+    &lfs74_checked;
     <bridgehead renderas="sect3">Information sur le paquet </bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
@@ -72,7 +72,6 @@
     <para role="required">
       <xref linkend="alsa-lib"/>,
       <xref linkend="mesalib"/>,
-      <xref linkend="qtchooser"/>,
       <xref linkend="xcb-util-image"/>,
       <xref linkend="xcb-util-keysyms"/>,
       <xref linkend="xcb-util-renderutil"/> et
@@ -101,8 +100,9 @@
       <ulink url="http://xkbcommon.org/">libxkbcommon</ulink>,
       <xref linkend="mysql"/>,
       <xref linkend="postgresql"/>,
-      <xref linkend="pulseaudio"/> et
-      <xref linkend="unixodbc"/>
+      <xref linkend="pulseaudio"/>, 
+      <xref linkend="unixodbc"/>, et
+      <xref linkend="qtchooser"/> (exécution, si Qt4 est aussi installé et dans /usr)
     </para>
     <para condition="html" role="usernotes">Notes utilisateur :
       <ulink url="&blfs-wiki;/qt5"/>
@@ -110,17 +110,85 @@
   </sect2>
   <sect2 role="installation">
     <title>Installation de Qt</title>
-   <warning>
+     <para>
+       Il y a plusieurs façons d'installer un paquet compliqué comme
+       <application>Qt</application>. Les fichiers ne sont pas entièrement
+       indépendant de la position. Les procédures d'installation exécute
+       le programme <command>pkg-config</command> pour déterminer
+       l'emplacement des paquets, des exécutables, des bibliothèques,
+       des entêtes et des autres fichiers. Pour
+       <application>Qt</application>, <command>pkg-config</command> regardera
+       les fichiers <filename>lib/pkgconfig/Qt*.pc</filename> appropriés
+       qui doivent être modifiés si les paquets sont déplacés. Ces fichiers
+       sont initialisés correctement par le processus de construction.
+    </para>
+    
+    <para>
+       L'emplacement des fichiers de l'installation par défaut est <filename
+       class='directory'>/usr/local/qt/</filename>. Beaucoup de distributions
+       commerciales placent les fichier dans la hiérarchie du système <filename
+       class='directory'>/usr</filename>. Le paquet peut aussi être installé
+       dans un répertoire quelconque.
+    </para>
+    
+    <para>
+       Le désavantage d'installer dans <filename
+       class='directory'>/usr</filename> est que les noms de fichiers pour les exécutables
+       <application>Qt4</application> et <application>Qt5</application>
+       sont en conflit avec d'autres paquets installés dans le même répertoire.
+       Les instructions dessous donne un contournement pour ce problème en utilisant un
+       programme d'aide <xref linkend='qtchooser'/>.
+       Cela demande de renommer les exécutables Qt avec un suffixe de version.
+    </para>
+
+     <para>
+       L'avantage d'une installation dans <filename
+       class='directory'>/usr</filename> est qu'il n'est pas requis de mettre à jour
+       les fichiers <filename>/etc/ld.so.conf</filename> ou
+       <filename>/etc/man_db.conf</filename>. Les fichiers du paquet
+       sont répartis dans plusieurs sous-répertoires de la hiérarchie <filename
+       class='directory'>/usr</filename>. C'est la méthode qu'utilise la 
+       plupart des distributions commerciales. C'est également supporté par
+       l'application facultative <application>qtchooser</application>.
+    </para>
+    <para>
+       L'avantage d'installer <application>Qt4</application> dans un répertoire
+       personnalisé tel que <filename
+       class='directory'>/opt/qt-&qt4-version;</filename> est que cela
+       laisse tous les fichiers du paquet rassemblé dans une hiérarchie
+       de répertoires dédié. En utilisant cette méthode, une mise à jour
+       peut être faite sans écraser une ancienne installation et les utilisateurs
+       peuvent facilement retourner vers une ancienne version en changeant
+       un lien symbolique ou simplement en changeant la variable PATH. Cela permet
+       également à un développeur de maintenir plusieurs versions de 
+       <application>Qt4</application> ou <application>Qt5</application> pour tester.
+    </para>
+ 
+    <caution>
       <para>
         Si vous n'installez pas certaine des dépendances recommandées, examinez
         la sortie de <command>./configure --help</command> pour vérifier comment
 	les désactiver ou utiliser les versions internes livrées avec le paquet
 	des sources.
       </para>
-    </warning>
-    <para>
-      Installez <application>Qt</application> en lançant les commandes suivantes
+     </caution>
+      <warning>
+      <para>
+       Si <application>Qt5</application> doit être réinstallé dans le même répertoire
+       qu'une précédente installation,
+      lancez les commandes suivantes depuis une console ou un
+      gestionnaire de fenêtres non Qt5. Elle écrase les bibliothèques
+      <application>Qt5</application> qui ne devraient pas être utilisées pendant
+      le processus d'installation.</para>
+      </warning>
+     <bridgehead renderas="sect3">Méthode 1: Installation dans /usr</bridgehead>    <para>
+      Installez <application>Qt5</application> en lançant les commandes suivantes
     </para>
+    
+    <note><para>
+      Si <application>Qt5</application> <emphasis>n'est pas</emphasis> aussi installé
+      dans le répertoire /usr, modifiez l'entrée pour -bindir dessous en /usr/bin.
+    </para></note>
 <screen>
 <userinput>sed -i "s:Context\* context}:&amp;\n%lex-param {YYLEX_PARAM}:" \
      qtwebkit/Source/ThirdParty/ANGLE/src/compiler/glslang.y &amp;&amp;
@@ -182,7 +250,7 @@ find /usr/lib/*.prl -exec sed -i -e \
      '/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' {} \;</userinput>
 </screen>
     <para>
-      Liez symboliquement les exécutables <application>Qt</application> dans
+      Si vous installez aussi Qt4 dans /usr, liez symboliquement les exécutables <application>Qt</application> dans
       <filename class="directory">/usr/bin</filename> en lançant les commandes
       suivantes en tant qu'utilisateur
       <systemitem class="username">root</systemitem>:
@@ -193,11 +261,9 @@ do
   ln -sfv ../lib/qt5/bin/$(basename $file) /usr/bin/$(basename $file)-qt5
 done</userinput>
 </screen>
-  </sect2>
-  <sect2 role="installation">
-    <title>Instruction d'installation de Qt alternatives</title>
+ <bridgehead renderas="sect3">Method 2: Installing in /opt/qt-&qt5-version;</bridgehead>
     <para>Cette partie fournit une façon alternative
-      d'intaller Qt en installant la plupart des fichiers dans le répertoire
+      d'installer Qt4 en installant la plupart des fichiers dans le répertoire
       <filename class='directory'>/opt</filename>. Cela permet la gestion
       de tous les fichiers relatifs à Qt dans une unité.
       Par exemple, une nouvelle version de Qt5 peut être installée sans 
@@ -247,10 +313,10 @@ find $QT5DIR -name \*.prl \
    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;</userinput>
 </screen>
     <para>
-      Symlink the <application>Qt</application> executables into
-      <filename class="directory">/usr/bin</filename> by running the
-      following commands as the
-      <systemitem class="username">root</systemitem> user:
+      Lier symboliquement les exécutables de <application>Qt</application>
+      dans <filename class="directory">/usr/bin</filename> en lançant les
+      commandes suivantes en tant qu'utilisateur
+      <systemitem class="username">root</systemitem> :
     </para>
 <screen role="root">
 <userinput>ln -svf $QT5DIR /opt/qt5 &amp;&amp;
@@ -322,11 +388,53 @@ EOF</userinput>
     <sect3 id="qt5-config">
       <title>Information de Configuration</title>
       <para>
-        Créez les entrées de menu pour les applications installées.
+        Si vous avez installé <application>Qt</application> dans /usr,
+        créez une variable d'environnement utilisée par certains paquets.
+        En tant qu'utilisateur <systemitem class="username">root</systemitem>:
+      </para>
+<screen role="root"><userinput>cat &gt; /etc/profile.d/qt.sh &lt;&lt; EOF
+<literal># Begin /etc/profile.d/qt.sh
+QTDIR=/usr
+export QT5DIR
+# End /etc/profile.d/qt.sh</literal>
+EOF</userinput></screen>
+    <para>
+      Si vous avez installé <application>Qt</application> dans un endroit autre
+      que /usr, vous devez mettre à jour les fichiers de configuration
+      suivant pour que <application>Qt</application> soit correctement
+      trouvé par les autres paquets et les processus du système.</para>
+   
+      <para>En tant qu'utilisateur <systemitem class="username">root</systemitem>,
+      mettez à jour le fichier <filename>/etc/ld.so.conf</filename> 
+      et le fichier de cache du lieur dynamique d'exécution:
+   </para>
+<screen role="root"><userinput>cat &gt;&gt; /etc/ld.so.conf &lt;&lt; EOF
+<literal># Begin Qt addition
+/opt/qt5/lib
+# End Qt addition</literal>
+EOF
+ldconfig</userinput></screen>
+   <indexterm zone="qt5 qt5-config">
+      <primary sortas="e-etc-ld.so.conf">/etc/ld.so.conf</primary>
+   </indexterm>
+    <para>
+      En tant qu'utilisateur <systemitem class="username">root</systemitem>, créez
+      le fichier <filename>/etc/profile.d/qt.sh</filename> :
+   </para>
+<screen role="root"><userinput>cat &gt; /etc/profile.d/qt.sh &lt;&lt; EOF
+<literal># Begin /etc/profile.d/qt.sh
+QT5DIR=/opt/qt5
+pathappend /opt/qt5/bin           PATH
+pathappend /opt/qt5/lib/pkgconfig PKG_CONFIG_PATH
+export QT5DIR
+# End /etc/profile.d/qt.sh</literal>
+EOF</userinput></screen>
+     <para>
+        Pour toutes les méthodes, créez des entrées de menu pour les applications installées.
         En tant qu'utilisateur <systemitem class="username">root</systemitem>:
       </para>
 <screen role="root">
-<userinput>install -dm755 /usr/share/applications
+userinput>install -dm755 /usr/share/applications
 cat &gt; /usr/share/applications/assistant-qt5.desktop &lt;&lt; "EOF"
 <literal>[Desktop Entry]
 Name=Qt5 Assistant 
