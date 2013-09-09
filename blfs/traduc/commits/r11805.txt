@@ -1,0 +1,173 @@
+Révision 11805
+
+fichiers modifiés :
+   general.ent
+   xsoft/other/transmission.xml
+   x/installing/xorg7.xml
+   x/lib/qt5.xml
+   introduction/welcome/changelog.xml
+
+Log :
+Update to Qt-5.1.1. Tag transmission and add patch to allow Qt4 builds Add an additional config item for xorg
+
+Le robot a traité 26 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 11804)
++++ introduction/welcome/changelog.xml	(révision 11805)
+@@ -47,6 +47,10 @@
+       <para>September 9th, 2013</para>
+       <itemizedlist>
+         <listitem>
++          <para>[bdubbs] - Update to Qt-5.1.1.  Fixes
++          <ulink url="&blfs-ticket-root;4010">#4010</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[ken] - Reinstate seahorse, link to it from epiphany.</para>
+         </listitem>
+       </itemizedlist>
+
+Index: x/installing/xorg7.xml
+===================================================================
+--- x/installing/xorg7.xml	(révision 11804)
++++ x/installing/xorg7.xml	(révision 11805)
+@@ -208,6 +208,13 @@
+ 
+ <screen><userinput role="root">sed "s@/usr/X11R6@<replaceable>$XORG_PREFIX</replaceable>@g" -i /etc/man_db.conf</userinput></screen>
+ 
++    <para>Some applications look for shared files in <filename
++    class="directory">/usr/share/X11</filename>.  Create a symbolic link to the
++    proper location as the <systemitem class="username">root</systemitem>
++    user:</para>
++<screen><userinput role="root">ln -s $XORG_PREFIX/share/X11 /usr/share/X11</userinput></screen>
+     <para>Finally, if building on x86_64, you will need to create the
+     <filename class="directory">$XORG_PREFIX/lib</filename> directory and the
+     <filename>$XORG_PREFIX/lib64</filename> symlink. Again, as the
+
+Index: x/lib/qt5.xml
+===================================================================
+--- x/lib/qt5.xml	(révision 11804)
++++ x/lib/qt5.xml	(révision 11805)
+@@ -297,8 +297,12 @@
+       However, it has the disadvantage of needing some extra configuration.
+     </para>
+ 
+-<screen><userinput>patch -Np1 -i ../qt-&qt5-version;-bison_fixes-1.patch &amp;&amp;
++<screen><userinput>sed -i "s:Context\* context}:&amp;\n%lex-param {YYLEX_PARAM}:" \
++     qtwebkit/Source/ThirdParty/ANGLE/src/compiler/glslang.y &amp;&amp;
+ 
++sed -i -e "/#if/d" -e "/#error/d" -e "/#endif/d" \
++     qtimageformats/config.tests/libmng/libmng.cpp &amp;&amp;
+ QT5DIR=/opt/qt-&qt5-version;
+ 
+ ./configure -prefix     $QT5DIR  \
+@@ -342,6 +346,7 @@
+ find $QT5DIR -name \*.prl \
+    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;</userinput></screen>
+ 
++<!-- This is not needed for method 2
+     <para>
+       Symlink the <application>Qt</application> executables into
+       <filename class="directory">/usr/bin</filename> by running the
+@@ -354,7 +359,7 @@
+ for file in /opt/qt5/bin/*; do
+   ln -sfv $file /usr/bin/$(basename $file)-qt5
+ done</userinput></screen>
++-->
+     <para>
+       At this point is is useful to add some configuration items as 
+       the <systemitem class="username">root</systemitem> user:
+@@ -459,8 +464,16 @@
+      and system processes.
+   </para>
+ 
++   <note><para>
++      If you also installed Qt4 and need to use the Qt5 version of an
++      executable such as qmake for building a program, make sure that 
++      the Qt5 bin directory is listed prior to the Qt4 bin directory in
++      the PATH variable.
++   </para></note>
+       <para>As the <systemitem class="username">root</systemitem> user, update
+       the <filename>/etc/ld.so.conf</filename> file and the dynamic linker's
+       run-time cache file:
+
+Index: xsoft/other/transmission.xml
+===================================================================
+--- xsoft/other/transmission.xml	(révision 11804)
++++ xsoft/other/transmission.xml	(révision 11805)
+@@ -37,7 +37,7 @@
+       bandwidth.
+     </para>
+ 
+-&lfs73_checked;
++    &lfs74_checked;
+ 
+     <bridgehead renderas="sect3">Package Information</bridgehead>
+     <itemizedlist spacing="compact">
+@@ -73,26 +73,37 @@
+       </listitem>
+     </itemizedlist>
+ 
++    <bridgehead renderas="sect3">Additional Downloads</bridgehead>
++    <itemizedlist spacing="compact">
++      <listitem>
++        <para>
++          Optional patch:
++          <ulink url="&patch-root;/transmission-&transmission-version;-qt4-1.patch"/>
++       </para>
++      </listitem>
++    </itemizedlist>
+     <bridgehead renderas="sect3">Transmission Dependencies</bridgehead>
+ 
+     <bridgehead renderas="sect4">Required</bridgehead>
+@@     @@
+ 
+     <bridgehead renderas="sect4">Recommended (to build a GUI)</bridgehead>
+     <para role="recommended">
+-<xref linkend="gtk3"/> or
+-<xref linkend="qt5"/> and
+-<xref linkend="gdb"/>
++      <xref linkend="gtk3"/> and either
++      <xref linkend="qt4"/> or
++      <xref linkend="qt5"/>
+     </para>
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+@@ -103,6 +114,11 @@
+   <sect2 role="installation">
+     <title>Installation of Transmission</title>
+ 
++    <para>If you want to build the Qt interface using <xref linkend="qt4"/>,
++    apply the following patch:</para>
++<screen><userinput>patch -Np1 -i ../transmission-&transmission-version;-qt4-1.patch</userinput></screen>
+     <para>
+       Install <application>Transmission</application> by running the following
+       commands:
+@@ -112,13 +128,13 @@
+ make</userinput></screen>
+ 
+     <para>
+-If you have installed <xref linkend="qt5"/> and would like to compile the
++      If you have installed Qt and would like to compile the
+       Qt GUI, run the following commands:
+     </para>
+ 
+-<screen><userinput>pushd qt &amp;&amp;
+-qmake-qt5 &amp;&amp;
+-make &amp;&amp;
++<screen><userinput>pushd qt        &amp;&amp;
++  qmake qtr.pro &amp;&amp;
++  make          &amp;&amp;
+ popd</userinput></screen>
+ 
+     <para>
+@@ -136,9 +152,10 @@
+       as the <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>INSTALL_ROOT=/usr make -C qt install &amp;&amp;
++<screen role="root"><userinput>make INSTALL_ROOT=/usr -C qt install &amp;&amp;
+ install -m644 qt/transmission-qt.desktop /usr/share/applications/transmission-qt.desktop &amp;&amp;
+install -m644 qt/icons/transmission.png  /usr/share/pixmaps/transmission-qt.png</userinput></screen>
+ 
+
