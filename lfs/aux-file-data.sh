@@ -12,7 +12,7 @@ FILE=$1
 # Bootscript data
 bootscripts=$(ls lfs-bootscripts*.bz2)
 base=$(basename $bootscripts .tar.bz2)
-bootsize=$(ls -lk $bootscripts | cut -f5 -d" ")
+bootsize=$(ls -l --block-size=1024 $bootscripts | cut -f5 -d" ")
 bootmd5=$(md5sum $bootscripts | cut -f1 -d" ")
 
 # Figure intalled size of bootscripts
