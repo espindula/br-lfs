@@ -1,0 +1,299 @@
+<sect1 id="x-installing-dri">
+<?dbhtml filename="dri.html" dir="x"?>
+<title>Adding Direct Rendering Infrastructure (DRI) Support to XFree86</title>
+
+<para><screen>DRI installation depends on: <xref linkend="cvs"/></screen>
+</para>
+
+<para>The DRI provides 3D graphics hardware acceleration for the XFree86 
+project.</para> 
+
+<note><para>These instructions were developed from the DRI Compilation Guide at 
+<userinput><ulink url="http://www.xfree86.org/4.2.0/DRIcomp.html"/></userinput> 
+and modified for more recent versions of the DRI.
+</para></note>
+
+<para>
+The DRI drivers generally work on systems with Intel or AMD CPUs. However, 
+there is limited support for Alpha et PowerPC support underway.
+</para>
+
+<para>
+DRI support is currently in beta status.  The following video cards are 
+presently supported:</para>
+<itemizedlist> 
+ <listitem><para>3dfx (Voodoo 5 5500, Voodoo4 4500, Voodoo3 3500 TV, 
+ Voodoo3 3000 {AGP, PCI}, Voodoo3 2000 {AGP, PCI}, Voodoo Banshee, 
+ Velocity 100/200)
+ </para></listitem>
+ <listitem><para>Matrox (G200, G400)
+ </para></listitem>
+ <listitem><para>Intel Motherboard Chipsets (i810, i810-dc100, i810e, i815, 
+ i830)
+ </para></listitem>
+ <listitem><para>ATI (Rage {128, Fury, Magnum}, XPERT {2000, 128, 99}, 
+ All-in-Wonder 128, Radeon {SDR AGP, DDR AGP, 32MB SDR PCI}
+ </para></listitem>
+ <listitem><para>3Dlabs (Oxygen 2000) [No longer actively being developed]
+ </para></listitem>
+</itemizedlist>
+
+<para>
+For 3dfx Voodoo3 hardware, you'll also need Glide3 headers et runtime library.
+These can be obtained from 
+<userinput><ulink url="http://linux.3dfx.com"/></userinput>.
+</para>
+
+<sect2><title>Updating the Kernel</title>
+<para>
+In the kernel configuration "Character Devices" section, 
+if you havn't already done so, <emphasis>enable</emphasis> Direct Rendering 
+Manager. Also select the type of video card(s) that you want to support as 
+a <emphasis>module</emphasis>.  This is necessary to ensure the kernel
+has the proper linkages when the DRI code is compiled.
+</para>
+<para>If necessary, recompile the kernel with
+<screen>make dep &amp;&amp;
+make bzImage&amp;&amp;
+make modules &amp;&amp;
+make modules_install</screen>
+</para>
+<para>
+Copy <filename>/usr/src/linux/arch/i386/boot/bzImage</filename> et
+<filename>/usr/src/linux/System.map</filename> to 
+<filename>/boot</filename>, edit <filename>/etc/lilo.conf</filename>
+appropriately et run <userinput>lilo</userinput>.
+</para>
+</sect2>
+
+<sect2>
+<title>Getting the DRI driver source code</title>
+<para>
+Get the DRI sources by
+<screen>cd /usr/src
+mkdir DRI-CVS
+cd DRI-CVS
+cvs -d:pserver:anonymous@cvs.dri.sourceforge.net:/cvsroot/dri login
+    (hit ENTER when prompted for a password)
+cvs -z3 -d:pserver:anonymous@cvs.dri.sourceforge.net:/cvsroot/dri co xc</screen>
+</para> 
+<note><para>The -z3 flag causes compression to be used in order to reduce the 
+download time.</para></note>
+
+<para>Since, the DRI drivers are beta, you can update the sources by
+<screen>cd /usr/src/DRI-CVS
+cvs -z3 update -dA xc</screen></para>
+      
+<para>There is no need to download or install the Mesa source files separately.
+</para>
+</sect2>
+
+<sect2><title>Building the DRI</title>
+<para>DRI drivers will be built in a separate directory from the main XFree86 
+sources.  To access the proper files, link the files to a build directoy:
+<screen>cd /usr/src/DRI-CVS
+ln -s xc XFree40
+mkdir build
+cd build
+lndir -silent -ignorelinks ../XFree40</screen>
+</para>
+            
+<para>Now update the <filename>host.def</filename> file. The only change 
+necessary is to uncomment the <parameter>BuildXF86DRM</parameter> define.
+Sinece DRI is still in Beta, changing the optimizations is not recommended.
+</para>
+<para>
+If you do not want to build all the drivers, change 
+<parameter>XF86CardDrivers</parameter> et <parameter>DriDrivers</parameter>
+to eliminate those that you don't want.
+</para>
+<para>Ensure the Linux 2.4.x headers are available in 
+<filename>/usr/src/linux/include/linux</filename>.</para>
+
+<para>You will also need to create <filename>modversions.h</filename> for the 
+drivers to compile correctly.
+<screen>touch /lib/modules/2.4.18/build/include/linux/modversions.h</screen>
+Of course you need to change the version 2.4.18 to your current kernel version
+number.</para>
+
+
+<sect3><title>Compiling the DRI</title>
+<para>Build the system by                    
+<screen>cd xc &amp;&amp;
+make World 2&gt;&amp;1 | tee World.log</screen></para>
+
+<warning><para>Do not use -j option for <filename>make</filename></para>
+</warning>
+
+<para>Using <userinput>less</userinput> or an editor, examine 
+<filename>World.log</filename>
+for errors by searching for the pattern ***.  Also examine the directory
+<filename>/usr/src/DRI-CVS/build/xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/</filename>
+for the drivers you built:</para>
+<itemizedlist>
+<listitem><para>For the 3dfx Voodoo, you should see <filename>tdfx.o</filename>
+</para></listitem>
+<listitem><para>For the Matrox G200/G400, you should see i
+<filename>mga.o</filename>
+</para></listitem>
+<listitem><para>For the ATI Rage 128, you should see <filename>r128.o</filename>
+</para></listitem>
+<listitem><para>For the ATI Radeon, you should see <filename>radeon.o</filename>
+</para></listitem>
+<listitem><para>For the Intel i81x, you should see <filename>i810.o</filename>
+</para></listitem>
+<listitem><para>For the Intel i830, you should see <filename>i830.o</filename>
+</para></listitem>
+</itemizedlist>
+
+</sect3>
+</sect2>
+
+<sect2><title>Installing the DRI drivers</title>
+<para>Copy the kernel module that for your video card to 
+<filename>/lib/modules/2.4.x/kernel/drivers/char/drm/</filename> 
+then run <userinput>modprobe &lt;module name&gt;</userinput>.</para>
+ 
+<note><para>Some DRI modules require that the agpgart module be loaded first, 
+if it is not compiled into the kernel.</para></note>
+
+<para>Now install the other portions of the DRI that were built et ensure the
+libraries can be found correctly
+<screen>make install &amp;&amp;
+ldconfig</screen></para>
+
+<para>
+If you use X locale information, do the following
+<screen>cd /usr/src/DRI-CVS/build/xc/nls
+../config/util/xmkmf -a
+make
+make install</screen></para>
+                        
+</sect2>
+ 
+<sect2><title>Configuring XFree86 for the DRI</title>
+      
+<para>On the DRI web site, 
+<userinput><ulink url="http://dri.sourceforge.net"/></userinput>, 
+in the resources section, you'll find example 
+<filename>XF86Config</filename> 
+files for a number of graphics cards. These configuration files also setup 
+DRI options so it's highly recommended that you look at these examples.
+</para>      
+                                             
+<para>Generally you can start with your existing configuration file,
+<filename>/etc/X11/XFConfig</filename>, but if you run into trouble
+you may want to start with a new file as in the basic XFree86 installation.
+</para>
+
+<para>Edit <filename>XF86Config</filename> to ensure
+the following sections are present
+<screen>Section "Module"
+     ...
+# This loads the GLX module
+     Load       "glx"
+# This loads the DRI module
+     Load       "dri"
+EndSection</screen></para>
+
+<para>If you want all of the users on your system to be able to use 
+direct rendering, then use a simple DRI section like this:
+
+<screen>Section "DRI"
+     Mode 0666
+EndSection</screen></para>
+
+<para>Make any other changes for font paths, screen modes, etc., as needed 
+and save the configuration file.
+</para>
+
+<note><para>
+DMA-based DRI drivers (that's most DRI drivers) cannot function unless 
+bus mastering is enabled for your graphics card. By default, some systems 
+don't having bus mastering on. You should enable it in your BIOS.
+</para></note>
+</sect2>
+ 
+<sect2><title>Testing the DRI installation</title>
+
+<para>Start (or restart) XFree86 with <userinput>startx</userinput>.</para>
+
+<para>
+Check the XFree86 log file, <filename>/var/log/XFree86.0.log</filename>,
+for a statements like
+<screen>(II) R128(0): [drm] installed DRM signal handler
+(II) R128(0): [DRI] installation complete
+(II) R128(0): [drm] Added 128 16384 byte vertex/indirect buffers
+(II) R128(0): [drm] Mapped 128 vertex/indirect buffers
+(II) R128(0): Direct rendering enabled</screen></para>
+
+<para>From an <filename>xterm</filename>, run <userinput>glxinfo</userinput>.
+The output should look something like:
+<screen>name of display: :0.0
+display: :0  screen: 0
+direct rendering: Yes
+server glx vendor string: SGI
+server glx version string: 1.2
+server glx extensions:
+    GLX_EXT_visual_info, GLX_EXT_visual_rating, GLX_EXT_import_context
+client glx vendor string: SGI
+client glx version string: 1.2
+client glx extensions:
+    GLX_EXT_visual_info, GLX_EXT_visual_rating, GLX_EXT_import_context
+GLX extensions:
+    GLX_EXT_visual_info, GLX_EXT_visual_rating, GLX_EXT_import_context
+OpenGL vendor string: VA Linux Systems, Inc.
+OpenGL renderer string: Mesa DRI Rage128 20020221 Pro AGP 1x x86/MMX/SSE
+OpenGL version string: 1.2 Mesa 4.0.2
+OpenGL extensions:
+    GL_ARB_imaging, GL_ARB_multitexture, GL_ARB_texture_env_add,
+    GL_ARB_transpose_matrix, GL_EXT_abgr, GL_EXT_bgra, GL_EXT_blend_color,
+    GL_EXT_blend_minmax, GL_EXT_blend_subtract, GL_EXT_clip_volume_hint,
+    GL_EXT_convolution, GL_EXT_compiled_vertex_array, GL_EXT_histogram,
+    GL_EXT_packed_pixels, GL_EXT_polygon_offset, GL_EXT_rescale_normal,
+    GL_EXT_texture3D, GL_EXT_texture_env_add, GL_EXT_texture_object,
+    GL_EXT_vertex_array, GL_IBM_rasterpos_clip, GL_MESA_window_pos,
+    GL_NV_texgen_reflection, GL_SGI_color_matrix, GL_SGI_color_table
+glu version: 1.3
+glu extensions:
+    GLU_EXT_nurbs_tessellator, GLU_EXT_object_space_tess
+ 
+   visual  x  bf lv rg d st colorbuffer ax dp st accumbuffer  ms  cav
+ id dep cl sp sz l  ci b ro  r  g  b  a bf th cl  r  g  b  a ns b eat
+----------------------------------------------------------------------
+0x23 16 tc  0 16  0 r  y  .  5  6  5  0  0 16  0  0  0  0  0  0 0 Aucun
+0x24 16 tc  0 16  0 r  y  .  5  6  5  0  0 16  8  0  0  0  0  0 0 Slow
+0x25 16 tc  0 16  0 r  y  .  5  6  5  0  0 16  0 16 16 16  0  0 0 Slow
+0x26 16 tc  0 16  0 r  y  .  5  6  5  0  0 16  8 16 16 16  0  0 0 Slow
+0x27 16 dc  0 16  0 r  y  .  5  6  5  0  0 16  0  0  0  0  0  0 0 Aucun
+0x28 16 dc  0 16  0 r  y  .  5  6  5  0  0 16  8  0  0  0  0  0 0 Slow
+0x29 16 dc  0 16  0 r  y  .  5  6  5  0  0 16  0 16 16 16  0  0 0 Slow
+0x2a 16 dc  0 16  0 r  y  .  5  6  5  0  0 16  8 16 16 16  0  0 0 Slow</screen>
+</para>
+
+<para>Run <userinput>ldd /usr/X11R6/bin/glxgears</userinput> et look for 
+the <filename>libGL</filename> library.  For example
+<screen>      libGL.so.1 =&gt; /usr/lib/libGL.so.1 (0x4001b000)
+      libXext.so.6 =&gt; /usr/X11R6/lib/libXext.so.6 (0x40089000)
+      libX11.so.6 =&gt; /usr/X11R6/lib/libX11.so.6 (0x40097000)
+      libpthread.so.0 =&gt; /lib/libpthread.so.0 (0x40158000)
+      libm.so.6 =&gt; /lib/libm.so.6 (0x4016e000)
+      libc.so.6 =&gt; /lib/libc.so.6 (0x40192000)
+      libdl.so.2 =&gt; /lib/libdl.so.2 (0x402c6000)
+      libgcc_s.so.1 =&gt; /lib/libgcc_s.so.1 (0x402ca000)
+      /lib/ld-linux.so.2 =&gt; /lib/ld-linux.so.2 (0x40000000)</screen></para>
+
+<para>You can also run the test program <userinput>glxgears</userinput>.
+This program brings up a window with three gears turning.  The 
+<filename>xterm</filename> will display how many frames were drawn every 
+five seconds so this is a reasonable benchmark.  The window is scalable, et 
+the frames drawn per second is highly dependent on the size of the window.
+</para>
+
+<para>
+For troubleshooting problems, check the DRI Users Guide at
+<userinput><ulink url="http://dri.sourceforge.net/doc/DRIuserguide.html"/></userinput>.
+</para>
+</sect2>
+</sect1>
+
