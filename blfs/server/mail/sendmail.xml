@@ -1,8 +1,353 @@
-<sect1 id="sendmail" xreflabel="sendmail">
-<?dbhtml filename="sendmail.html" dir="server"?>
-<title>sendmail</title>
-
-<para>TO BE DONE</para>
-
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+  
+  <!ENTITY sendmail-download-http " ">
+  <!ENTITY sendmail-download-ftp  "ftp://ftp.sendmail.org/pub/sendmail/sendmail.&sendmail-version;.tar.gz">
+  <!ENTITY sendmail-md5sum        "348eedfab0ed00931f2df94e78f22c43">
+  <!ENTITY sendmail-size          "2.0 Mo">
+  <!ENTITY sendmail-buildsize     "17 Mo">
+  <!ENTITY sendmail-time          "0.3 SBU">
+]>
+<sect1 id="sendmail" xreflabel="sendmail-&sendmail-version;">
+  <?dbhtml filename="sendmail.html"?>
+  <sect1info>
+    <othername>$LastChangedBy&nbsp;: krejzi $</othername>
+    <date>$Date&nbsp;: 2012-08-01 14:04:22 +0200 (Wed, 01 Aug 2012) $</date>
+  </sect1info>
+  <title>sendmail-&sendmail-version;</title>
+  <indexterm zone="sendmail">
+    <primary sortas="a-Sendmail">sendmail</primary>
+  </indexterm>
+  <sect2 role="package">
+    <title>Introduction à sendmail</title>
+    <para>Le paquet <application>sendmail</application> contient un
+    <foreignphrase>Mail Transport Agent</foreignphrase> (MTA).</para>
+    &lfs74_checked;
+    <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Téléchargement (HTTP)&nbsp;: <ulink url="&sendmail-download-http;"/></para>
+      </listitem>
+      <listitem>
+        <para>Téléchargement (FTP)&nbsp;: <ulink url="&sendmail-download-ftp;"/></para>
+      </listitem>
+      <listitem>
+        <para>Somme de contrôle MD5 du téléchargement&nbsp;: &sendmail-md5sum;</para>
+      </listitem>
+      <listitem>
+        <para>Taille du téléchargement&nbsp;: &sendmail-size;</para>
+      </listitem>
+      <listitem>
+        <para>Estimation de l'espace disque requis&nbsp;: &sendmail-buildsize;</para>
+      </listitem>
+      <listitem>
+        <para>Estimation du temps de construction&nbsp;: &sendmail-time;</para>
+      </listitem>
+    </itemizedlist>
+    <bridgehead renderas="sect3">Dépendances de sendmail</bridgehead>
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required">
+      <xref linkend="openldap"/>
+    </para>
+    <bridgehead renderas="sect4">Facultatives</bridgehead>
+    <para role="optional">
+      <xref linkend="openssl"/>,
+     <xref linkend="cyrus-sasl"/>,
+      <xref linkend="procmail"/>,
+      <ulink url="http://www.feep.net/nph/">nph</ulink>, et
+      <xref linkend="gs"/> (pour la création de la documentation PDF)
+    </para>
+    <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
+    <ulink url="&blfs-wiki;/sendmail"/></para>
+  </sect2>
+  <sect2 role="installation">
+    <title>Installation de sendmail</title>
+    <para>Avant de construire <application>sendmail</application>, créez
+    l'utilisateur, le groupe et le répertoire requis en effectuant les commandes
+    suivantes en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen role="root">
+<userinput>groupadd -g 26 smmsp                               &amp;&amp;
+useradd -c "Sendmail Daemon" -g smmsp -d /dev/null \
+        -s /bin/false -u 26 smmsp                  &amp;&amp;
+chmod -v 1777 /var/mail                            &amp;&amp;
+install -v -m700 -d /var/spool/mqueue</userinput>
+</screen>
+    <note><para> Voir le fichier
+    <filename>sendmail/README</filename> de l'arborescence des sources pour des
+    informations sur l'édition de liens avec des paquets facultatifs dans la
+    construction. Utilisez l'exemple ci-dessous qui ajoute le
+    support de SASL, StartTLS
+    (<application>OpenSSL</application>) et
+    <application>OpenLDAP</application>, comme point de départ. Modifiez-le
+    bien entendu pour l'adapter à vos besoins particuliers.</para></note>
+<screen>
+<userinput>cat &gt;&gt; devtools/Site/site.config.m4 &lt;&lt; "EOF"
+<literal>APPENDDEF(`confENVDEF',`-DSTARTTLS -DSASL -DLDAPMAP')
+APPENDDEF(`confLIBS', `-lssl -lcrypto -lsasl2 -lldap -llber')
+APPENDDEF(`confINCDIRS', `-I/usr/include/sasl')</literal>
+EOF</userinput>
+</screen>
+    <para>Installez <application>sendmail</application> avec les commandes
+    suivantes&nbsp;:</para>
+    <note><para>Enlevez <filename>op.pdf</filename> des commandes suivantes
+    <command>make</command> et <command>install</command>  si vous n'avez pas installé
+    <application>Ghostscript</application>.</para></note>
+    
+<screen>
+<userinput>cat &gt;&gt; devtools/Site/site.config.m4 &lt;&lt; "EOF"
+<literal>define(`confMANGRP',`root')
+define(`confMANOWN',`root')
+define(`confSBINGRP',`root')
+define(`confUBINGRP',`root')
+define(`confUBINOWN',`root')</literal>
+EOF
+sed -i -r "s/^# if (DB.*)$/# if (\1) || DB_VERSION_MAJOR >= 5/" \
+    include/sm/bdb.h            &amp;&amp;
+cd sendmail                     &amp;&amp;
+sh Build                        &amp;&amp;
+cd ../cf/cf                     &amp;&amp;
+cp generic-linux.mc sendmail.mc &amp;&amp;
+sh Build sendmail.cf</userinput>
+</screen>
+    <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen role="root">
+<userinput>install -v -d -m755 /etc/mail &amp;&amp;
+sh Build install-cf &amp;&amp;
+cd ../..            &amp;&amp;
+sh Build install    &amp;&amp;
+install -v -m644 cf/cf/{submit,sendmail}.mc /etc/mail &amp;&amp;
+cp -v -R cf/* /etc/mail                               &amp;&amp;
+install -v -m755 -d /usr/share/doc/sendmail-&sendmail-version;/{cf,sendmail} &amp;&amp;
+install -v -m644 CACerts FAQ KNOWNBUGS LICENSE PGPKEYS README RELEASE_NOTES \
+        /usr/share/doc/sendmail-&sendmail-version; &amp;&amp;
+install -v -m644 sendmail/{README,SECURITY,TRACEFLAGS,TUNING} \
+        /usr/share/doc/sendmail-&sendmail-version;/sendmail &amp;&amp;
+install -v -m644 cf/README /usr/share/doc/sendmail-&sendmail-version;/cf &amp;&amp;
+for manpage in sendmail editmap mailstats makemap praliases smrsh
+do
+    install -v -m644 $manpage/$manpage.8 /usr/share/man/man8
+done &amp;&amp;
+install -v -m644 sendmail/aliases.5    /usr/share/man/man5 &amp;&amp;
+install -v -m644 sendmail/mailq.1      /usr/share/man/man1 &amp;&amp;
+install -v -m644 sendmail/newaliases.1 /usr/share/man/man1 &amp;&amp;
+install -v -m644 vacation/vacation.1   /usr/share/man/man1</userinput>
+</screen>
+    <para>Installez le <foreignphrase><application>sendmail</application> Installation and
+    Operations Guide</foreignphrase> (guide d'installation et du fonctionnement)
+    avec les commandes suivantes&nbsp;:</para>
+<screen>
+<userinput>cd doc/op                                       &amp;&amp;
+sed -i 's/groff/GROFF_NO_SGR=1 groff/' Makefile &amp;&amp;
+make op.txt op.pdf</userinput>
+</screen>
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen role="root">
+<userinput>install -v -d -m755 /usr/share/doc/sendmail-&sendmail-version; &amp;&amp;
+install -v -m644 op.ps op.txt op.pdf /usr/share/doc/sendmail-&sendmail-version; &amp;&amp;
+cd ../..</userinput>
+</screen>
+  </sect2>
+  <sect2 role="commands">
+    <title>Explication des commandes</title>
+    <para><command>cat &gt; devtools/Site/site.config.m4 &lt;&lt; "EOF"</command>&nbsp;:
+    Ceci crée un fichier de configuration en modifiant certains des réglages par
+    défaut.</para>
+    <para><command>sed ... include/sm/bdb.h</command>: cela permet à sendmail de se construire
+    correctement avec  <xref linkend='db'/> versions 5 et plus.</para>
+    <para><command>sh Build; sh Build sendmail.cf; sh Build install-cf;
+    sh Build install</command>&nbsp;: <application>sendmail</application>
+    utilise un script de construction basé sur <application>m4</application> pour
+    créer les divers <filename>Makefile</filename>s. Ces commandes construisent
+    et installent le paquet.</para>
+    <para><command>for manpage in...;do...;done; install ...</command>&nbsp;:
+    Les pages de man sont installées déjà formattées et <command>man</command> 
+    les affiche un peu déformées. Ces commandes remplacent les pages formattées
+    par des pages que <command>man</command> peut afficher correctement.</para>
+  </sect2>
+  <sect2 role="configuration">
+    <title>Configuration de sendmail</title>
+    <sect3 id="sendmail-config">
+      <title>Fichiers de configuration</title>
+      <para><filename>/etc/mail/*</filename></para>
+      <indexterm zone="sendmail sendmail-config">
+        <primary sortas="e-etc-mail">/etc/mail/*</primary>
+      </indexterm>
+    </sect3>
+    <sect3>
+      <title>Informations de configuration</title>
+      <para>Créez les fichiers <filename>/etc/mail/local-host-names</filename> et
+      <filename>/etc/mail/aliases</filename> en utilisant les
+      commandes suivantes en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen role="root">
+<userinput>echo $(hostname) > /etc/mail/local-host-names
+cat &gt; /etc/mail/aliases &lt;&lt; "EOF"
+<literal>postmaster: root
+MAILER-DAEMON: root</literal>
+EOF
+newaliases -v</userinput>
+</screen>
+      <para>Le fichier de configuration primitif de <application>sendmail</application>,
+      <filename>/etc/mail/sendmail.cf</filename>, est complexe et n'est pas
+      conçu pour être édité directement. La méthode recommandée pour le modifier
+      est de modifier <filename>/etc/mail/sendmail.mc</filename> et divers
+      fichiers <application>m4</application>, puis lancez le traiteur de
+      macro <command>m4</command> depuis l'intérieur de 
+      <filename class='directory'>/etc/mail</filename> comme suit&nbsp;:</para>
+<screen role="root">
+<userinput>m4 m4/cf.m4 sendmail.mc > sendmail.cf</userinput>
+</screen>
+      <para>Vous pouvez trouver une explication complète des fichiers à modifier,
+      et des paramètres disponibles dans <filename>/etc/mail/README</filename>.</para>
+    </sect3>
+    <sect3  id="sendmail-init">
+      <title>Script de démarrage</title>
+      <para>Pour automatiser le lancement de <application>sendmail</application>
+      au démarrage, installer le script de démarrage <filename>/etc/rc.d/init.d/sendmail</filename>
+      inclu dans le paquet <xref linkend="bootscripts"/>.</para>
+      <indexterm zone="sendmail sendmail-init">
+        <primary sortas="f-sendmail-init">sendmail</primary>
+      </indexterm>
+<screen role="root">
+<userinput>make install-sendmail</userinput>
+</screen>
+      <note>
+        <para>L'option -qNm pour <command>sendmail</command>, où N est le
+        nombre de minutes, contrôle la fréquence de traitement de la file
+        d'attente du courrier par <application>sendmail</application>. On utilise
+        5 minutes par défaut dans le script de démarrage. Il se peut que les 
+        utilisateurs de stations de travail individuelles souhaitent diminuer
+        cette fréquence à 1 minute, il se peut que les grosses installations 
+        gérant plus de courrier souhaitent la régler à un niveau supérieur.</para>
+      </note>
+    </sect3>
+  </sect2>
+  <sect2 role="content">
+    <title>Contenu</title>
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Répertoires installés</segtitle>
+      <seglistitem>
+        <seg>editmap, hoststat, mailstats, mailq, makemap, newaliases,
+        praliases, purgestat, sendmail, smrsh, et vacation</seg>
+        <seg>Aucune</seg>
+        <seg>/etc/mail, /usr/share/doc/sendmail-&sendmail-version;,
+        /var/spool/mqueue, et /var/spool/clientmqueue</seg>
+      </seglistitem>
+    </segmentedlist>
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+      <varlistentry id="editmap">
+        <term><command>editmap</command></term>
+        <listitem>
+          <para>interroge et édite les fichiers de plan <application>sendmail</application>.</para>
+          <indexterm zone="sendmail editmap">
+            <primary sortas="b-editmap">editmap</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="hoststat">
+        <term><command>hoststat</command></term>
+        <listitem>
+          <para>affiche le statut de l'hôte persistant de
+          <application>sendmail</application>.</para>
+          <indexterm zone="sendmail hoststat">
+            <primary sortas="b-hoststat">hoststat</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="mailstats">
+        <term><command>mailstats</command></term>
+        <listitem>
+          <para>affiche les statistiques de <application>sendmail</application>.</para>
+          <indexterm zone="sendmail mailstats">
+            <primary sortas="b-mailstats">mailstats</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="mailq-sendmail">
+        <term><command>mailq</command></term>
+        <listitem>
+          <para>affiche un résumé du courrier outbound attendant d'être
+          envoyés.</para>
+          <indexterm zone="sendmail mailq-sendmail">
+            <primary sortas="b-mailq">mailq</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="makemap">
+        <term><command>makemap</command></term>
+        <listitem>
+          <para>crée des fichiers de plan <application>sendmail</application>.</para>
+          <indexterm zone="sendmail makemap">
+            <primary sortas="b-makemap">makemap</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="newaliases-sendmail">
+        <term><command>newaliases</command></term>
+        <listitem>
+          <para>reconstruit <filename>/etc/mail/aliases.db</filename> à partir
+          du contenu de <filename>/etc/mail/aliases</filename>.</para>
+          <indexterm zone="sendmail newaliases-sendmail">
+            <primary sortas="b-newaliases">newaliases</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="praliases">
+        <term><command>praliases</command></term>
+        <listitem>
+          <para>affiche les aliases <application>sendmail</application>
+          actuels.</para>
+          <indexterm zone="sendmail praliases">
+            <primary sortas="b-praliases">praliases</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="purgestat">
+        <term><command>purgestat</command></term>
+        <listitem>
+          <para>pousse <application>sendmail</application> à vider (purger)
+          toutes ces informations de statut des hôtes.</para>
+          <indexterm zone="sendmail purgestat">
+            <primary sortas="b-purgestat">purgestat</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="sendmail-prog-sendmail">
+        <term><command>sendmail</command></term>
+        <listitem>
+          <para>est l'agent de transport de courrier <application>sendmail</application>.</para>
+          <indexterm zone="sendmail sendmail-prog-sendmail">
+            <primary sortas="b-sendmail">sendmail</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="smrsh">
+        <term><command>smrsh</command></term>
+        <listitem>
+          <para>est un shell restreint pour
+          <application>sendmail</application>.</para>
+          <indexterm zone="sendmail smrsh">
+            <primary sortas="b-smrsh">smrsh</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="vacation-sendmail">
+        <term><command>vacation</command></term>
+        <listitem>
+          <para>est un répondeur aux courriers.</para>
+          <indexterm zone="sendmail vacation-sendmail">
+            <primary sortas="b-vacation">vacation</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect2>
 </sect1>
-

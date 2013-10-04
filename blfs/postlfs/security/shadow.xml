@@ -1,7 +1,507 @@
-<sect1 id="postlfs-security-shadow">
-<?dbhtml filename="shadow.html" dir="postlfs"?>
-<title>Configuring shadow</title>
-
-<para>TO BE WRITTEN - NEW</para>
-
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+  <!ENTITY shadow-download-http "http://pkg-shadow.alioth.debian.org/releases/shadow-&shadow-version;.tar.bz2">
+  <!ENTITY shadow-download-ftp  " ">
+  <!ENTITY shadow-md5sum        "a00449aa439c69287b6d472191dc2247">
+  <!ENTITY shadow-size          "2.1 Mo">
+  <!ENTITY shadow-buildsize     "38 Mo">
+  <!ENTITY shadow-time          "0.3 SBU">
+]>
+<sect1 id="shadow" xreflabel="Shadow-&shadow-version;">
+  <?dbhtml filename="shadow.html"?>
+  <sect1info>
+    <othername>$LastChangedBy : randy $</othername>
+    <date>$Date : 2013-02-11 19:51:17 +0100 (Mon, 11 Feb 2013) $</date>
+  </sect1info>
+  <title>Shadow-&shadow-version;</title>
+  <indexterm zone="shadow">
+    <primary sortas="a-Shadow">Shadow</primary>
+  </indexterm>
+  <sect2 role="package">
+    <title>Introduction à Shadow</title>
+    <para><application>Shadow</application> a effectivement été installé dans
+    LFS et il n'y a aucune raison pour le réinstaller, sauf si vous avez 
+    installé <application>CrackLib</application> ou
+    <application>Linux-PAM</application> après que votre système LFS ai été
+    terminé. Si vous avez installé <application>CrackLib</application> après
+    LFS, la réinstallation de <application>Shadow</application> activera le
+    support des mots de passe renforcés. Si vous avez installé 
+    <application>Linux-PAM</application>, la réinstallation de
+    <application>Shadow</application> permettra à des programmes tels que
+    <command>login</command> et <command>su</command> d'utiliser PAM.</para>
+    &lfs74_checked;
+    <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Téléchargement (HTTP)&nbsp;: <ulink url="&shadow-download-http;"/></para>
+      </listitem>
+      <listitem>
+        <para>Téléchargement (FTP)&nbsp;: <ulink url="&shadow-download-ftp;"/></para>
+      </listitem>
+      <listitem>
+        <para>Somme de contrôle MD5 du téléchargement&nbsp;: &shadow-md5sum;</para>
+      </listitem>
+      <listitem>
+        <para>Taille du téléchargement&nbsp;: &shadow-size;</para>
+      </listitem>
+      <listitem>
+        <para>Estimation de l'espace disque requis&nbsp;: &shadow-buildsize;</para>
+      </listitem>
+      <listitem>
+        <para>Estimation du temps de construction&nbsp;: &shadow-time;</para>
+      </listitem>
+    </itemizedlist>
+    <bridgehead renderas="sect3">Dépendances de Shadow</bridgehead>
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required">
+      <xref linkend="linux-pam"/> ou
+      <xref linkend="cracklib"/>
+    </para>
+    <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
+    <ulink url="&blfs-wiki;/shadow"/></para>
+  </sect2>
+  <sect2 role="installation">
+    <title>Installation de Shadow</title>
+    <important>
+      <para>Les commandes d'installation indiquées ci-dessous valent pour les 
+      installations où on a installé <application>Linux-PAM</application> (avec
+      ou sans installation <application>CrackLib</application>) et
+      <application>Shadow</application> devra être réinstallé pour supporter
+      l'installation <application>Linux-PAM</application>.</para>
+      <para>Si vous réinstallez <application>Shadow</application> pour offrir
+      le support des mots de passe forts en utilisant la bibliothèque
+      <application>CrackLib</application> sans utiliser 
+      <application>Linux-PAM</application>, assurez-vous d'ajouter le paramètre
+      <parameter>--with-libcrack</parameter> au script
+      <command>configure</command> ci-dessous et lancez aussi la commande
+      suivante&nbsp;:</para>
+<screen>
+<userinput>sed -i 's@DICTPATH.*@DICTPATH\t/lib/cracklib/pw_dict@' etc/login.defs</userinput>
+</screen>
+    </important>
+    <para>Réinstallez <application>Shadow</application> en lançant les commandes
+    suivantes&nbsp;:</para>
+<screen>
+<userinput>sed -i 's/groups$(EXEEXT) //' src/Makefile.in &amp;&amp;
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \; &amp;&amp;
+sed -i -e 's/ ko//' -e 's/ zh_CN zh_TW//' man/Makefile.in &amp;&amp;
+sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD SHA512@' \
+       -e 's@/var/spool/mail@/var/mail@' etc/login.defs &amp;&amp;
+sed -i -e 's@PATH=/sbin:/bin:/usr/sbin:/usr/bin@&amp;:/usr/local/sbin:/usr/local/bin@' \
+       -e 's@PATH=/bin:/usr/bin@&amp;:/usr/local/bin@' etc/login.defs &amp;&amp;
+./configure --prefix=/usr --sysconfdir=/etc &amp;&amp;
+make</userinput>
+</screen>
+    <para>Ce paquet n'est pas fourni avec une suite de tests.</para>
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen role="root">
+<userinput>make install &amp;&amp;
+mv -v /usr/bin/passwd /bin</userinput>
+</screen>
+  </sect2>
+  <sect2 role="commands">
+    <title>Explication des commandes</title>
+    <para><command>sed -i 's/groups$(EXEEXT) //' src/Makefile.in</command>&nbsp;:
+    Cette commande est utilisée pour supprimer l'installation du programme
+    <command>groups</command> vu qu'on préfère la version issue du paquet
+    <application>Coreutils</application> installé avec LFS.</para>
+    <para><command>find man -name Makefile.in -exec ... {} ;</command>&nbsp;:
+    Cette commande est utilisée pour supprimer l'installation des pages de man
+    <command>groups</command> pour que ceux existant et issus du paquet
+    <application>Coreutils</application> ne sont pas remplacés.</para>
+    <para><command>sed -i -e '...' -e '...' man/Makefile.in</command>&nbsp;: Cette
+    commande désactive l'installation des pages de manuel chinoises et coréennes,
+    vu que <application>Man-DB</application> ne peut pas les formatter
+    correctement.</para>
+    <para><command>sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD SHA512@'
+    -e 's@/var/spool/mail@/var/mail@' etc/login.defs</command>&nbsp;: Au lieu
+    d'utiliser la méthode 'DES' par défaut, cette commande modifie
+    l'installation pour utiliser la méthode plus sécurisé 'SHA512' de chiffrement des mots de
+    passe plus sécurisée, qui autorise aussi les mots de passe d'une longueur 
+    supérieure à huit caractères. Elle modifie aussi l'emplacement
+    <filename class="directory">/var/spool/mail</filename> obsolète pour les 
+    boîtes aux lettres utilisateur qu'utilise <application>Shadow</application>
+    par défaut en emplacement <filename class="directory">/var/mail</filename>.</para>
+    <para><command>sed -i -e
+    's@PATH=/sbin:/bin:/usr/sbin:/usr/bin@&amp;:/usr/local/sbin:/usr/local/bin@'
+    -e 's@PATH=/bin:/usr/bin@&amp;:/usr/local/bin@' etc/login.defs</command>&nbsp;:
+    Cette commande sed ajoute au PATH <filename class="directory">/usr/local/bin</filename>
+    pour les utilisateurs normaux et pour l'utilisateur <systemitem class="username">root</systemitem>
+    et <filename class="directory">/usr/local/sbin</filename> pour l'utilisateur 
+    <systemitem class="username">root</systemitem> seulement.</para>
+    <para><command>mv -v /usr/bin/passwd /bin</command>&nbsp;: Le programme
+    <command>passwd</command> peut être nécessaire aux moments où le système de
+    fichiers <filename class='directory'>/usr</filename> n'est pas monté
+    pour qu'il soit déplacé dans la partition racine.</para>
+  </sect2>
+  <sect2 role="configuration">
+    <title>Configuration de Shadow</title>
+    <para>La configuration stock de <application>Shadow</application> pour
+    l'outil <command>useradd</command> peut ne pas être désirable pour votre 
+    installation. Un paramètre par défaut a pour conséquence que 
+    <command>useradd</command> crée un fichier de boîte aux lettres pour chaque
+    nouvel utilisateur créé. <command>useradd</command> donnera l'appartanenance
+    de ce groupe au groupe <systemitem class="groupname">mail</systemitem> avec
+    les droits 0660. Si vous préféreriez que ces fichiers boîtes aux lettres ne
+    soient pas créés par <command>useradd</command>, lancez la commande suivante
+    en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen role="root">
+<userinput>sed -i 's/yes/no/' /etc/default/useradd</userinput>
+</screen>
+  </sect2>
+  <sect2 role="configuration">
+    <title>Configuration de Linux-PAM pour fonctionner avec Shadow</title>
+    <note>
+      <para>Le reste de cette page est consacré à la configuration de
+      <application>Shadow</application> pour fonctionner correctement avec
+      <application>Linux-PAM</application>. Si vous n'avez pas installé
+      <application>Linux-PAM</application> et si vous avez réinstallé 
+      <application>Shadow</application> pour supporter les mots de passe forts
+      via la bibliothèque <application>CrackLib</application>, aucune 
+      configuration supplémentaire n'est nécessaire.</para>
+    </note>
+    <sect3 id="pam.d">
+      <title>Fichiers de configuration</title>
+      <para>
+	<filename>/etc/pam.d/*</filename> ou sinon
+	<filename>/etc/pam.conf</filename>,
+	<filename>/etc/login.defs</filename>, et
+	<filename>/etc/security/*</filename>
+      </para>
+      <indexterm zone="shadow pam.d">
+        <primary sortas="e-etc-pam.d">/etc/pam.d/*</primary>
+      </indexterm>
+      <indexterm zone="shadow pam.d">
+        <primary sortas="e-etc-pam.conf">/etc/pam.conf</primary>
+      </indexterm>
+      <indexterm zone="shadow pam.d">
+        <primary sortas="e-etc-login.defs">/etc/login.defs</primary>
+      </indexterm>
+      <indexterm zone="shadow pam.d">
+        <primary sortas="e-etc-security">/etc/security/*</primary>
+      </indexterm>
+    </sect3>
+    <sect3>
+      <title>Informations de configuration</title>
+      <para>La configuration de votre système pour utiliser
+      <application>Linux-PAM</application> peut être une tâche complexe. Les 
+      informations ci-dessous fourniront un paramétrage de base pour que la
+      fonctionnalité de connexion et de mot de passe de <application>Shadow</application> 
+      fonctionne bien avec <application>Linux-PAM</application>. Regardez
+      les informations et les liens sur la page <xref linkend="linux-pam"/> pour
+      des informations de configuration supplémentaires. Pour des
+      informations spécifiques à l'intégration de <application>Shadow</application>, 
+      <application>Linux-PAM</application>
+      et <application>CrackLib</application>, vous pouvez visiter les liens
+      suivants&nbsp;:</para>
+      <itemizedlist spacing="compact">
+      <listitem>
+        <para><ulink
+        url="http://www.deer-run.com/~hal/sysadmin/pam_cracklib.html"/></para>
+      </listitem>
+      </itemizedlist>
+      <sect4 id="pam-login-defs">
+        <title>Configuration de /etc/login.defs</title>
+        <para>Le programme <command>login</command> effectue actuellement 
+        beaucoup de fonctions que les modules <application>Linux-PAM</application> 
+        devraient maintenant gérer. La commande <command>sed</command> suivante
+        va commenter les lignes adéquates dans <filename>/etc/login.defs</filename> et
+        arrêter <command>login</command> d'effectuer ces fonctions (un fichier
+        de sauvegarde appelé <filename>/etc/login.defs.orig</filename> est
+        également créé pour préserver le contenu du fichier d'origine). Exécutez
+        les commandes suivantes en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
+        <indexterm zone="shadow pam-login-defs">
+          <primary sortas="e-etc-login.defs">/etc/login.defs</primary>
+        </indexterm>
+<screen role="root">
+<userinput>install -v -m644 /etc/login.defs /etc/login.defs.orig &amp;&amp;
+for FUNCTION in FAIL_DELAY FAILLOG_ENAB \
+                LASTLOG_ENAB \
+                MAIL_CHECK_ENAB \
+                OBSCURE_CHECKS_ENAB \
+                PORTTIME_CHECKS_ENAB \
+                QUOTAS_ENAB \
+                CONSOLE MOTD_FILE \
+                FTMP_FILE NOLOGINS_FILE \
+                ENV_HZ PASS_MIN_LEN \
+                SU_WHEEL_ONLY \
+                CRACKLIB_DICTPATH \
+                PASS_CHANGE_TRIES \
+                PASS_ALWAYS_WARN \
+                CHFN_AUTH ENCRYPT_METHOD \
+                ENVIRON_FILE
+do
+    sed -i "s/^${FUNCTION}/# &amp;/" /etc/login.defs
+done</userinput>
+</screen>
+      </sect4>
+      <sect4>
+        <title>Configuration des fichiers /etc/pam.d/</title>
+        <para>Comme indiqué précédemment dans les instructions pour
+        <application>Linux-PAM</application>, 
+        <application>Linux-PAM</application> supporte deux méthodes de
+        configuration. Les commandes ci-dessous supposent que vous avez choisi 
+        d'utiliser une configuration basée sur le répertoire, où chaque programme
+        a son propre fichier de configuration. Vous pouvez éventuellement
+        utiliser un seul fichier de configuration <filename>/etc/pam.conf</filename> 
+        en utilisant le texte de configuration des fichiers ci-dessous, en 
+        fournissant le nom du programme comme premier champ à
+        chaque ligne.</para>
+        <para>En tant qu'utilisateur <systemitem class="username">root</systemitem>,
+        remplacez les fichiers de configuration <application>Linux-PAM</application>
+        suivants dans le répertoire <filename class="directory">/etc/pam.d/</filename>
+        (ou ajoutez le contenu du fichier <filename>/etc/pam.conf</filename>)
+        en utilisant les commandes suivantes&nbsp;:</para>
+      </sect4>
+      <sect4>
+        <title>'system-account'</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/system-account &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-account
+account   required    pam_unix.so
+# End /etc/pam.d/system-account</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+      <sect4>
+        <title>'system-auth'</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/system-auth &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-auth
+auth      required    pam_unix.so
+# End /etc/pam.d/system-auth</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+      <sect4>
+        <title>'system-passwd' (avec CrackLib)</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-password
+# check new passwords for strength (man pam_cracklib)
+password  required    pam_cracklib.so   type=Linux retry=3 difok=5 \
+                                        difignore=23 minlen=9 dcredit=1 \
+                                        ucredit=1 lcredit=1 ocredit=1 \
+                                        dictpath=/lib/cracklib/pw_dict
+# use sha512 hash for encryption, use shadow, and use the
+# authentication token (chosen password) set by pam_cracklib
+# above (or any previous modules)
+password  required    pam_unix.so       sha512 shadow use_authtok
+# End /etc/pam.d/system-password</literal>
+EOF</userinput>
+</screen>
+        <note><para>Dans sa configuration par défaut, en fonction des droits,
+        pam_cracklib permettra des mots de passe avec plusieurs casses aussi 
+        brefs que 6 caractères, même avec la valeur <parameter>minlen</parameter>
+        réglé sur 11. Vous devriez relire la page de man de pam_cracklib(8) et
+        déterminer si ces valeurs par défaut sont acceptables pour la sécurité
+        de votre système.</para></note>
+      </sect4>
+      
+      <sect4>
+        <title>'system-passwd' (without cracklib)</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-password
+# use sha512 hash for encryption, use shadow, and try to use any previously
+# defined authentication token (chosen password) set by any prior module
+password  required    pam_unix.so       sha512 shadow try_first_pass
+# End /etc/pam.d/system-password</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+      <sect4>
+        <title>'system-session'</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/system-session &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-session
+session   required    pam_unix.so
+# End /etc/pam.d/system-session</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+ 
+      <sect4>
+        <title>'login'</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/login &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/login
+# Set failure delay before next prompt to 3 seconds
+auth      optional    pam_faildelay.so  delay=3000000
+# Check to make sure that the user is allowed to login
+auth      requisite   pam_nologin.so
+# Check to make sure that root is allowed to login
+# Disabled by default. You will need to create /etc/securetty
+# file for this module to function. See man 5 securetty.
+#auth      required    pam_securetty.so
+# Additional group memberships - disabled by default
+#auth      optional    pam_group.so
+# include the default auth settings
+auth      include     system-auth
+# check access for the user
+account   required    pam_access.so
+# include the default account settings
+account   include     system-account
+# Set default environment variables for the user
+session   required    pam_env.so
+# Set resource limits for the user
+session   required    pam_limits.so
+# Display date of last login - Disabled by default
+#session   optional    pam_lastlog.so
+# Display the message of the day - Disabled by default
+#session   optional    pam_motd.so
+# Check user's mail - Disabled by default
+#session   optional    pam_mail.so      standard quiet
+# include the default session and password settings
+session   include     system-session
+password  include     system-password
+# End /etc/pam.d/login</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+      <sect4>
+        <title>'passwd'</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/passwd &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/passwd
+password  include     system-password
+# End /etc/pam.d/passwd</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+      <sect4>
+        <title>'su'</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/su &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/su
+# always allow root
+auth      sufficient  pam_rootok.so
+auth      include     system-auth
+# include the default account settings
+account   include     system-account
+# Set default environment variables for the service user
+session   required    pam_env.so
+# include system session defaults
+session   include     system-session
+# End /etc/pam.d/su</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+      <sect4>
+        <title>'chage'</title>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/chage &lt;&lt; "EOF"
+<literal>#Begin /etc/pam.d/chage
+# always allow root
+auth      sufficient  pam_rootok.so
+# include system defaults for auth account and session
+auth      include     system-auth
+account   include     system-account
+session   include     system-session
+# Always permit for authentication updates
+password  required    pam_permit.so
+# End /etc/pam.d/chage</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+      <sect4>
+        <title>'chfn', 'chgpasswd', 'chgpasswd', 'chsh', 'groupadd',
+        'groupdel', 'groupmems', 'groupmod', 'newusers', 'useradd', 'userdel'
+        et 'usermod'</title>
+<screen role="root">
+<userinput>for PROGRAM in chfn chgpasswd chpasswd chsh groupadd groupdel \
+               groupmems groupmod newusers useradd userdel usermod
+do
+    install -v -m644 /etc/pam.d/chage /etc/pam.d/${PROGRAM}
+    sed -i "s/chage/$PROGRAM/" /etc/pam.d/${PROGRAM}
+done</userinput>
+</screen>
+        <warning>
+          <para>À cette étape, vous devriez faire un simple test pour voir si
+          <application>Shadow</application> fonctionne comme prévu. Ouvrez
+          un autre terminal et connectez-vous en tant qu'utilisateur, puis
+          <command>su</command> en
+          <systemitem class="username">root</systemitem>. Si vous ne voyez pas 
+          d'erreurs, tout va bien et vous devriez poursuivre le reste de 
+          la configuration. Si vous avez reçu des erreurs, arrêtez-vous maintenant
+          et vérifiez à deux reprises les fichiers de configuration ci-dessus
+          à la main. Vous pouvez aussi lancer la suite de tests à partir du
+          paquet <application>Linux-PAM</application> pour vous aider à déterminer
+          le problème. Si vous n'arrivez pas à trouver et à corriger l'erreur,
+          vous devriez recompiler <application>Shadow</application> en ajoutant
+          le paramètre <option>--without-libpam</option> à la commande
+          <command>configure</command> dans les instructions ci-dessus
+          (déplacez aussi le fichier de sauvegarde <filename>/etc/login.defs.orig</filename>
+          dans <filename>/etc/login.defs</filename>). Si vous n'arrivez pas
+          à faire cela et si les erreurs demeurent, vous ne pourrez pas vous 
+          connecter à votre système.</para>
+        </warning>
+      </sect4>
+      <sect4>
+        <title>Autre</title>
+        <para>Actuellement, <filename>/etc/pam.d/other</filename> est configuré
+        pour autoriser n'importe qui ayant un compte sur la machine à utiliser
+        des programmes utilisant PAM sans fichier de configuration pour ce
+        programme. Après avoir testé la bonne configuration de
+        <application>Linux-PAM</application>, installez un fichier
+        <filename>other</filename> plus restrictif afin que les fichiers de
+        configuration spécifiques au programme soient requis&nbsp;:</para>
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/other &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/other
+auth        required        pam_warn.so
+auth        required        pam_deny.so
+account     required        pam_warn.so
+account     required        pam_deny.so
+password    required        pam_warn.so
+password    required        pam_deny.so
+session     required        pam_warn.so
+session     required        pam_deny.so
+# End /etc/pam.d/other</literal>
+EOF</userinput>
+</screen>
+      </sect4>
+      <sect4 id="pam-access">
+        <title>Configuration de l'accès Login</title>
+        <para>Au lieu d'utiliser le fichier <filename>/etc/login.access</filename>
+        pour contrôler l'accès au système, 
+        <application>Linux-PAM</application> utilise le module
+        <filename class='libraryfile'>pam_access.so</filename> ainsi que le
+        fichier <filename>/etc/security/access.conf</filename>. Renommez le
+        fichier <filename>/etc/login.access</filename> en utilisant la commande
+        suivante&nbsp;:</para>
+        <indexterm zone="shadow pam-access">
+          <primary sortas="e-etc-security-access.conf">/etc/security/access.conf</primary>
+        </indexterm>
+<screen role="root">
+<userinput>[ -f /etc/login.access ] &amp;&amp; mv -v /etc/login.access{,.NOUSE}</userinput>
+</screen>
+      </sect4>
+      <sect4 id="pam-limits">
+        <title>Configuration des limitations de ressources</title>
+        <para>Au lieu d'utiliser le fichier <filename>/etc/limits</filename> 
+        pour limiter l'utilisation des ressources système, 
+        <application>Linux-PAM</application> utilise le module
+        <filename class='libraryfile'>pam_limits.so</filename> ainsi que le
+        fichier <filename>/etc/security/limits.conf</filename>. Renommez le
+        fichier <filename>/etc/limits</filename> en utilisant la commande
+        suivante&nbsp;:</para>
+        <indexterm zone="shadow pam-limits">
+          <primary sortas="e-etc-security-limits.conf">/etc/security/limits.conf</primary>
+        </indexterm>
+<screen role="root">
+<userinput>[ -f /etc/limits ] &amp;&amp; mv -v /etc/limits{,.NOUSE}</userinput>
+</screen>
+      </sect4>
+    </sect3>
+  </sect2>
+  <sect2 role="content">
+    <title>Contenu</title>
+    <para>Vous pouvez trouver une liste des fichiers installés ainsi que leurs 
+    descriptions courtes sur 
+    <ulink url="&lfs-root;/chapter06/shadow.html#contents-shadow"/>.</para>
+  </sect2>
 </sect1>
