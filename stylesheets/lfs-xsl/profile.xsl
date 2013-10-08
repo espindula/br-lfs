@@ -12,13 +12,13 @@ $Date$
        Replaces {docbook-xsl}/profiling/profile.xsl -->
 
   <!-- Include common profiling stylesheet -->
-  <xsl:import href="docbook-xsl-snapshot/profiling/profile-mode.xsl"/>
+  <xsl:import href="docbook-xsl-1.78.1/profiling/profile-mode.xsl"/>
 
-    <!-- This file must be included, because profile-mode is using
-         templates from it -->
-  <xsl:import href="docbook-xsl-snapshot/common/stripns.xsl"/>
+  <!-- This file must be included, because profile-mode uses
+       templates from it -->
+  <xsl:import href="docbook-xsl-1.78.1/common/stripns.xsl"/>
 
-    <!-- In the two pass processing there is no need for base URI fixup -->
+  <!-- In two pass processing there is no need for the base URI fixup -->
   <xsl:param name="profile.baseuri.fixup" select="false()"/>
 
   <!-- Generate DocBook instance with correct DOCTYPE -->
@@ -27,8 +27,8 @@ $Date$
               doctype-system="http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"/>
 
   <!-- Profiling parameters:
-         profile.separator changed from ";" to "," to let it work
-         at command line. -->
+       profile.separator changed from ";" to "," to let it work on the command
+       line. -->
   <xsl:param name="profile.arch" select="''"/>
   <xsl:param name="profile.audience" select="''"/>
   <xsl:param name="profile.condition" select="''"/>

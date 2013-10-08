@@ -9,16 +9,16 @@ $Date$
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-   <!-- Stylesheet for non-chunked XHTML output
-        Replaces {docbook-xsl}/xhtml/profile-docbook.xsl -->
+  <!-- Stylesheet for non-chunked XHTML output
+       Replaces {docbook-xsl}/xhtml/profile-docbook.xsl -->
 
-    <!-- Upstream XHTML templates -->
-  <xsl:import href="docbook-xsl-snapshot/xhtml/docbook.xsl"/>
+  <!-- Upstream XHTML templates -->
+  <xsl:import href="docbook-xsl-1.78.1/xhtml/docbook.xsl"/>
 
-    <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
+  <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
   <xsl:output method="html" encoding="ISO-8859-1" indent="no" />
 
-   <!-- Including our others customized templates -->
+  <!-- Include our customized templates -->
   <xsl:include href="common.xsl"/>
   <xsl:include href="xhtml/lfs-index.xsl"/>
   <xsl:include href="xhtml/lfs-mixed.xsl"/>
@@ -26,7 +26,7 @@ $Date$
   <xsl:include href="xhtml/lfs-toc.xsl"/>
   <xsl:include href="xhtml/lfs-xref.xsl"/>
 
-    <!-- Control generation of ToCs and LoTs -->
+  <!-- Control generation of ToCs and LoTs -->
   <xsl:param name="generate.toc">
     book      toc,title
     preface   nop
@@ -41,23 +41,23 @@ $Date$
     section   nop
   </xsl:param>
 
-    <!-- How deep should recursive sections appear in the TOC? -->
+  <!-- How deep should recursive sections appear in the TOC? -->
   <xsl:param name="toc.section.depth">1</xsl:param>
 
-    <!-- How maximaly deep should be each TOC? -->
+  <!-- How deep, at most, should each TOC be? -->
   <xsl:param name="toc.max.depth">3</xsl:param>
 
-    <!-- Dropping some unwanted style attributes -->
+  <!-- Remove some unwanted style attributes -->
   <xsl:param name="ulink.target" select="''"></xsl:param>
   <xsl:param name="css.decoration" select="0"></xsl:param>
 
-    <!-- Don't use graphics in admonitions -->
+  <!-- Don't use graphics in admonitions -->
   <xsl:param name="admon.graphics" select="0"/>
 
-    <!-- Changing the admonitions output tagging:
-           Removed $admon.style support
-           Hardcoded $admon.textlabel feature -->
-    <!-- The original template is in {docbook-xsl}/xhtml/admon.xsl -->
+  <!-- Change the admonitions output tagging:
+       Remove $admon.style support
+       Hardcode $admon.textlabel feature
+       The original template is in {docbook-xsl}/xhtml/admon.xsl -->
   <xsl:template name="nongraphical.admonition">
     <div class="admon {name(.)}">
       <h3>
@@ -67,11 +67,11 @@ $Date$
     </div>
   </xsl:template>
 
-    <!-- sect2.titlepage:
-           Removed a lot of unneeded code.
-           Skip empty titles.
-           No label in preface (actually, skip the hardcoded dot). -->
-    <!-- The original template is in {docbook-xsl}/xhtml/titlepage.templates.xsl -->
+  <!-- sect2.titlepage:
+       Remove a lot of unneeded code.
+       Skip empty titles.
+       No label in preface (actually, skip the hardcoded dot).
+       The original template is in {docbook-xsl}/xhtml/titlepage.templates.xsl -->
   <xsl:template name="sect2.titlepage">
     <xsl:choose>
       <xsl:when test="string-length(title) = 0"/>
@@ -90,10 +90,10 @@ $Date$
     </xsl:choose>
   </xsl:template>
 
-    <!-- The CSS Stylesheet:
-           Note: there is some diferences with lfs.css code releated
-                 to h* values, admonitions and no navigational code. -->
-    <!-- The original template is in {docbook-xsl}/xhtml/docbook.xsl -->
+  <!-- The CSS Stylesheet:
+       Note: there are some differences with lfs.css code related to h* values,
+       admonitions and no navigational code.  The original template is in
+       {docbook-xsl}/xhtml/docbook.xsl -->
   <xsl:template name='user.head.content'>
     <style type="text/css">
       <xsl:text>

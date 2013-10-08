@@ -28,8 +28,8 @@ lfs: validate profile-html
 	  mkdir -p $(BASEDIR)/images; \
 	fi;
 	$(Q)cp images/*.png $(BASEDIR)/images
-	$(Q)cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html
-	$(Q)cd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html
+#	$(Q)cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html
+#	$(Q)cd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html
 
 	@echo "Running Tidy and obfuscate.sh..."
 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
