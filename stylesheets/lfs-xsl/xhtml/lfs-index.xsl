@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 
 <!--
 $LastChangedBy$
@@ -20,44 +20,29 @@ $Date$
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  <!-- This stylesheet controls how the Index is generated.
-       Due how they are created, the original XHTML stylesheets don't make
-       use of the entities from {docbook-xsl}/common/entities.ent.
-       We add the relevant ones in the DOCTYPE to have more readable templates.
-       Also, we remove support for @role and @type based Index due that it is
-       broken when used with @zone based cross-references. -->
+  <!-- Change the file name of the index page from the default ix01.html.
+       There is no upstream template with match="index", only a global
+       match="*", thus the following is enough to override the index
+       filename. -->
 
-    <!-- The file name of the Index page.
-         There is no upstream template with match="index", only a global
-         match="*", thus the next template is enought to force the Index
-         filename. -->
   <xsl:template match="index" mode="recursive-chunk-filename">
     <xsl:text>longindex.html</xsl:text>
   </xsl:template>
 
-    <!-- The Index title in the longindex.html page:
-           Removed a lot of code not useful for us.
-           Forced h1 title size. -->
-    <!-- The original template is in {docbook-xsl}/xhtml/titlepage.templates.xsl -->
-  <xsl:template name="index.titlepage">
-    <h1 class="index">
-      <xsl:call-template name="gentext">
-        <xsl:with-param name="key" select="$index-title"/>
-      </xsl:call-template>
-    </h1>
-  </xsl:template>
+  <!-- Divisions:
+       Override the default division titles, translating them from the default
+       'A', 'B', etc. to 'Packages', 'Programs', etc.
+       Add gentext support to division titles.
+       Use h2 for division titles instead of the default h3.
+       Change main listings from dl to ul format.
+       The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
 
-    <!--Divisions:
-          Translate alphabetical divisions titles to by-type titles.
-          Added gentext support to divisions titles.
-          Using h2 for divisions titles.
-          Changed output from dl format to ul format. -->
-    <!-- The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
   <xsl:template match="indexterm" mode="index-div-basic">
     <xsl:param name="scope" select="."/>
     <xsl:variable name="key" select="translate(substring(&primary;, 1, 1),&lowercase;,&uppercase;)"/>
     <xsl:variable name="divtitle" select="translate($key, &lowercase;, &uppercase;)"/>
-      <!-- Make sure that we don't generate a div if there are no terms in scope -->
+    <!-- Make sure that we don't generate a div if there are no terms in scope
+   -->
     <xsl:if test="key('letter', $key)[&scope;] [count(.|key('primary', &primary;)[&scope;][1]) = 1]">
       <xsl:if test="contains(concat(&lowercase;, &uppercase;), $key)">
         <h2>
@@ -131,38 +116,24 @@ $Date$
         </h2>
       </xsl:if>
       <ul>
-        <xsl:apply-templates select="key('letter', $key)[&scope;] [count(.|key('primary', &primary;)[&scope;][1])=1]"
-                              mode="index-primary">
-          <xsl:with-param name="scope" select="$scope"/>
-          <xsl:sort select="translate(&primary;, &lowercase;, &uppercase;)"/>
-        </xsl:apply-templates>
+      <xsl:apply-templates select="key('letter', $key)[count(ancestor::node()|$scope) = count(ancestor::node())][count(.|key('primary', normalize-space(concat(primary/@sortas, &quot; &quot;, primary)))[count(ancestor::node()|$scope) = count(ancestor::node())][1])=1]" mode="index-primary">
+        <xsl:with-param name="scope" select="$scope"/>
+        <xsl:sort select="translate(&primary;, &lowercase;, &uppercase;)"/>
+      </xsl:apply-templates>
       </ul>
     </xsl:if>
   </xsl:template>
 
-    <!-- Dropping $term.separator and $number.separator from here.
-         We add our customized ones in the output flow.
-         As all our indexterm have @zone attributes, removed a lot of
-         unused code. -->
-    <!-- The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
-  <xsl:template match="indexterm" mode="reference">
-    <xsl:param name="scope" select="."/>
-    <xsl:call-template name="reference">
-      <xsl:with-param name="zones" select="normalize-space(@zone)"/>
-      <xsl:with-param name="scope" select="$scope"/>
-    </xsl:call-template>
-  </xsl:template>
-
-    <!-- Primary items:
-           Changed the output format from dl to ul.
-           Placed the term and separator into strong tags.
-           Placed the target links into a div.
-           Removed code for unused see and sealso childs. -->
-    <!-- The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
+  <!-- Primary items:
+       Place term and separator into strong tags.
+       Place target links into a div.
+       Change main listings from dl to ul format.
+       Removed code for unused see and sealso children.
+       The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
   <xsl:template match="indexterm" mode="index-primary">
     <xsl:param name="scope" select="."/>
-    <xsl:variable name="key" select="&primary;"/>
-    <xsl:variable name="refs" select="key('primary', $key)[&scope;]"/>
+    <xsl:variable name="key" select="normalize-space(concat(primary/@sortas, &quot; &quot;, primary))"/>
+    <xsl:variable name="refs" select="key('primary', $key)[count(ancestor::node()|$scope) = count(ancestor::node())]"/>
     <li>
       <strong class="item">
         <xsl:value-of select="primary"/>
@@ -170,6 +141,7 @@ $Date$
       </strong>
       <span class='indexref'>
         <xsl:for-each select="$refs[generate-id() = generate-id(key('primary-section',concat($key, &sep;, &section.id;))[&scope;][1])]">
+        <!--<xsl:for-each select="$refs[not(see) and not(secondary)][count(ancestor::node()|$scope) = count(ancestor::node()) = 0]">-->
           <xsl:apply-templates select="." mode="reference">
             <xsl:with-param name="scope" select="$scope"/>
           </xsl:apply-templates>
@@ -177,8 +149,7 @@ $Date$
       </span>
       <xsl:if test="$refs/secondary">
         <ul>
-          <xsl:apply-templates select="$refs[secondary and count(.|key('secondary', concat($key, &sep;, &secondary;))[&scope;][1]) = 1]"
-                               mode="index-secondary">
+          <xsl:apply-templates select="$refs[secondary and count(.|key('secondary', concat($key, &quot; &quot;, normalize-space(concat(secondary/@sortas, &quot; &quot;, secondary))))[count(ancestor::node()|$scope) = count(ancestor::node()) ][1]) = 1]" mode="index-secondary">
             <xsl:with-param name="scope" select="$scope"/>
             <xsl:sort select="translate(&secondary;, &lowercase;, &uppercase;)"/>
           </xsl:apply-templates>
@@ -187,16 +158,16 @@ $Date$
     </li>
   </xsl:template>
 
-    <!-- Secondary items:
-           Changed the output format from dl to ul.
-           Placed the term and separator into strong tags.
-           Placed the target links into a div.
-           Removed code for unused tertiary, see, and sealso childs. -->
-    <!-- The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
+  <!-- Secondary items:
+       Place term and separator into strong tags.
+       Place target links into a div.
+       Change main listings from dl to ul format.
+       Removed code for unused tertiary, see and sealso children.
+       The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
   <xsl:template match="indexterm" mode="index-secondary">
     <xsl:param name="scope" select="."/>
-    <xsl:variable name="key" select="concat(&primary;, &sep;, &secondary;)"/>
-    <xsl:variable name="refs" select="key('secondary', $key)[&scope;]"/>
+    <xsl:variable name="key" select="concat(normalize-space(concat(primary/@sortas, &quot; &quot;, primary)), &quot; &quot;, normalize-space(concat(secondary/@sortas, &quot; &quot;, secondary)))"/>
+    <xsl:variable name="refs" select="key('secondary', $key)[count(ancestor::node()|$scope) = count(ancestor::node())]"/>
     <li>
       <strong class="secitem">
         <xsl:value-of select="secondary"/>
@@ -212,14 +183,27 @@ $Date$
     </li>
   </xsl:template>
 
-    <!-- The target links:
-           Changed links separator.
-           On the second @zone link, we use a fixed string for the text
-           with gentext support.
-           Assume that there is no more than 2 @zone in a indexterm.
-           Use href.target.uri named template to resolve the links. It is faster
-           than the default href.target named template. -->
-    <!-- The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
+  <!-- Drop $term.separator and $number.separator from here as customized ones
+       are added in the output flow.
+       As all the indexterms in the book have @zone attributes, removed a lot of
+       unused code.
+       The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
+  <xsl:template match="indexterm" mode="reference">
+    <xsl:param name="scope" select="."/>
+    <xsl:call-template name="reference">
+      <xsl:with-param name="zones" select="normalize-space(@zone)"/>
+      <xsl:with-param name="scope" select="$scope"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <!-- The target links:
+       Changed link separator
+       On the second @zone link, we use a fixed string for the text with gentext
+       support.
+       Assume that there are no more than 2 @zone in a indexterm.
+       Use href.target.uri named template to resolve the links. It is faster
+       than the default href.target named template.
+       The original template is in {docbook-xsl}/xhtml/autoidx.xsl -->
   <xsl:template name="reference">
     <xsl:param name="scope" select="."/>
     <xsl:param name="zones"/>
