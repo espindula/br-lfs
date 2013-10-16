@@ -14,7 +14,7 @@ $Date$
 
   <!-- Upstream FO templates. Profiled version is not supported by
        xsltproc, thus pofiling must be done in two steps (see Makefile) -->
-  <xsl:import href="docbook-xsl-snapshot/fo/docbook.xsl"/>
+  <xsl:import href="docbook-xsl-1.78.1/fo/docbook.xsl"/>
 
   <!-- Uncomment the following to make debugging the raw FO code easier.
        Note that FOP will complaints about a lot of paragraph overflows
