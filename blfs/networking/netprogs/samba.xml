@@ -120,19 +120,7 @@ install -v -m755 -d /usr/share/doc/samba-&samba-version; &amp;&amp;
 install -v -m644    lib/ntdb/doc/design.pdf                     /usr/share/doc/samba-&samba-version; &amp;&amp;
 ln -v -s ../../samba/swat  /usr/share/doc/samba-&samba-version;</userinput>
 </screen>
-  <para>Pour créer les documents html requis par <command>swat</command>
-  (<xref linkend='libxslt'/> requis), faite la suite:</para>
-<screen>
-<userinput>cd docs-xml &amp;&amp;
-autoreconf  &amp;&amp;
-./configure &amp;&amp;
-make htmlman</userinput>
-</screen>
-    <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
-<screen role="root">
-<userinput>mkdir -pv                          /usr/share/samba/swat/help/manpages &amp;&amp;
-cp output/htmldocs/manpages/*.html /usr/share/samba/swat/help/manpages</userinput>
-</screen>
+
  
  </sect2>
   <sect2 role="commands">
@@ -286,18 +274,17 @@ cp output/htmldocs/manpages/*.html /usr/share/samba/swat/help/manpages</userinpu
         <filename>samba</filename>. Assurez-vous de lancer <command>smbpasswd</command> 
         (avec l'option <option>-a</option>) pour ajouter des utilisateurs) pour
         activer et paramétrer les mots de passe des comptes ayant besoin d'un 
-        accès <application>Samba</application>, ou utilisez l'interface Web SWAT 
-        (voir ci-dessous) pour faire la même chose. En utilisant la
+        accès <application>Samba</application>. En utilisant la
         fondation passdb par défaut de <application>Samba</application>, tout
         utilisateur que vous essaierez d'ajouter devra aussi exister
         dans le fichier <filename>/etc/passwd</filename>.</para>
       </sect4>
       <sect4>
         <title>Exigences avancées</title>
-        <para>Des scénari plus complexes impliquant le contrôle de domaine ou
+        <para>Des scénarios plus complexes impliquant le contrôle de domaine ou
         de la qualité de membre sont envisageables. Ces configurations sont des choses avancées
        qui ne peuvent pas être couvertes correctement par BLFS. De nombreux livres entiers ont été
-        écrit sur ces sujets seuls. Notes que dans certains scénari d'appartenance à un domaine, 
+        écrit sur ces sujets seuls. Notes que dans certains scénario d'appartenance à un domaine, 
         le démon  <command>winbindd</command> et les scripts de démarrage correspondants sont
         nécessaires. </para>
         <para>Il y a très peu de documentation disponible capable de traiter
@@ -321,10 +308,6 @@ cp output/htmldocs/manpages/*.html /usr/share/samba/swat/help/manpages</userinpu
             <para>Samba-3 by Example (Samba-3 par l'exemple)
             <ulink url="http://www.samba/swat/help/Samba-Guide/index.html"/>
             </para>
-          </listitem>
-          <listitem>
-            <para>The Samba-3 man Pages (Les pages de man de Samba-3)
-            <ulink url="http://www.samba/swat/help/samba.7.html"/></para>
           </listitem>
         </itemizedlist>
       </sect4>
@@ -370,104 +353,10 @@ useradd -c "Unprivileged Nobody" -d /dev/null -g nogroup     -s /bin/false -u 99
 <userinput>make install-samba</userinput>
 </screen>
       <para>Si vous avez aussi besoin du script <filename>winbind</filename>&nbsp;pour résoudre les
-      noms depusi les clients Windows, lancez:</para>
+      noms depuis les clients Windows, lancez:</para>
 <screen role="root">
 <userinput>make install-winbindd</userinput>
 </screen>
-    </sect3>
-    <sect3 id="samba-swat-config">
-      <title>Configuration de SWAT</title>
-      <para>On peut utiliser l'outil intégré SWAT (<foreignphrase><application>Samba</application> Web
-      Administration Tool</foreignphrase> (outil d'administration Web Samba) 
-      pour la configuration de de l'installation de 
-      <application>Samba</application>.</para>
-      
-      <sect4>
-        <title>Réglage de SWAT en utilisant xinetd</title>
-        <indexterm zone="samba samba-swat-config">
-          <primary sortas="e-etc-xinetd.conf">/etc/xinetd.conf</primary>
-        </indexterm>
-        <para>Si ce n'est pas déjà fait, ajoutez une entrée au fichier
-        <filename>/etc/services</filename> en tant qu'utilisateur
-        <systemitem class="username">root</systemitem>&nbsp;:</para>
-<screen role="root">
-<userinput>echo "swat            905/tcp" &gt;&gt; /etc/services</userinput>
-</screen>
-        <para>Créez le fichier <xref
-        linkend='xinetd'/> de <application>Samba</application> sous le nom de
-        <filename>/etc/xinetd.d/swat</filename>.</para>
-        
-        <warning>
-          <para>Vous pouvez modifier ou supprimer la ligne
-         <quote>only_from</quote> ci-dessous pour inclure un/d'autre(s) hôte(s). 
-         BLFS ne recommande pas d'utiliser ces procédures du fait des
-          risques de sécurité que cela entraîne. Cependant, dans un environnement
-          de réseau familial et où l'échange du mot de passe
-          <systemitem class='username'>root</systemitem> est un risque 
-          acceptable.</para>
-        </warning>
-<screen role="root">
-<userinput>cat &gt;&gt; /etc/xinetd.d/swat &lt;&lt; "EOF"
-<literal># Begin /etc/xinetd.d/swat
-service swat
-{
-    port            = 905
-    socket_type     = stream
-    wait            = no
-    instances       = 5
-    only_from       = 127.0.0.1
-    user            = root
-    server          = /usr/sbin/swat
-    log_on_failure += USERID
-}
-# End /etc/xinetd.d/swat</literal>
-EOF</userinput>
-</screen>
-        <para>Effectuez un <command>killall -HUP xinetd</command> pour lire
-        le nouveau fichier <filename>/etc/xinetd.d/swat</filename>.</para>
-        <note>
-          <para>Si vous avez lié <application>Linux-PAM</application> à la
-          construction de <application>Samba</application>, vous devrez créer
-          un fichier <filename>/etc/pam.d/samba</filename>.</para>
-        </note>
-        <para>On peut maintenant lancer SWAT en faisant pointer votre navigateur 
-        web vers http://localhost:905.</para>
-       </sect4>
-       
-      <sect4>
-        <title>Réglage de SWAT en utilisant Stunnel</title>
-        <para>La meilleure façon de paramétrer SWAT pour un accès réseau
-        est de passer par 
-        <xref linkend='stunnel'/>.  Pour vous être commode, un script de démarrage
-        a été écrit pour SWAT via stunnel.  Créez d'abord le fichier de configuration 
-        de stunnel&nbsp;:</para>
-        <indexterm zone="samba samba-swat-config">
-          <primary sortas="e-etc-stunnel-swat.conf">/etc/stunnel/swat.conf</primary>
-        </indexterm>
-<screen role="root">
-<userinput>cat &gt;&gt; /etc/stunnel/swat.conf &lt;&lt; "EOF"
-<literal>; File: /etc/stunnel/swat.conf
-pid    = /run/stunnel-swat.pid
-setuid = root
-setgid = root
-cert   = /etc/stunnel/stunnel.pem
-[swat]
-accept = swat
-exec   = /usr/sbin/swat
-</literal>
-EOF</userinput>
-</screen>
-        <para>Ensuite, installez le script de démarrage swat&nbsp;:</para>
-        
-<screen role="root">
-<userinput>make install-swat</userinput>
-</screen>
-        <para>Après avoir lancé le script de démarrage SWAT, on peut accéder à
-        l'outil en faisant pointer son navigateur Web sur 
-        https://localhost:905.  Note:
-        <emphasis>https</emphasis>.  S'il faut davantage restreindre l'accès à
-        l'outil, vous pouvez utiliser <xref linkend='iptables'/>.</para>
-    </sect4>
     </sect3>
  
     <sect3>
@@ -485,22 +374,29 @@ EOF</userinput>
       <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoires installés</segtitle>
       <seglistitem>
-        <seg>cifsdd, dbwrap_tool, eventlogadm, gentest, ldbadd, ldbdel,
-        ldbedit, ldbmodify, ldbrename, ldbsearch, locktest, masktest, ndrdump,
-        net, nmbd, nmblookup, nmblookup4, ntlm_auth, oLschema2ldif, pdbedit,
-        pidl, profiles, regdiff, regpatch, regshell, regtree, rpcclient, samba,
-        samba_dnsupdate samba_kcc, samba_spnupdate, samba-tool,
-        samba_upgradedns, sharesec, smbcacls, smbclient, smbclient4,
-        smbcontrol, smbcquotas, smbd, smbget, smbpasswd, smbspool, smbstatus,
-        smbta-util, smbtar, smbtree, smbtorture, swat, testparm, tdbbackup,
-        tdbdump, tdbrestore, et tdbtool, winbindd, et wbinfo</seg>
-        <seg>libnss_winbind.so, libnss_wins.so, libnetapi.so, libsmbclient.so,
-        libsmbsharemodes.so, libwbclient.so, les bibliothèques PAM pam_winbind.so
-        et pam_smbpass.so, et l'assortiment de caractères,
-        le système de fichier et modules de support.</seg>
-        <seg>/etc/samba, /usr/include/samba-4.0, /usr/lib/samba,
-        /usr/share/samba, /var/cache/samba, /var/lib/samba,
-        /var/log/samba, /var/lock/samba, et /var/run/samba</seg>
+        <seg>cifsdd, dbwrap_tool, eventlogadm, gentest, ldbadd, ldbdel, ldbedit,
+        ldbmodify, ldbrename, ldbsearch, locktest, masktest, ndrdump, net, nmbd,
+        nmblookup, nmblookup4, ntdbbackup, ntdbdump, ntdbrestore, ntdbtool,
+        ntlm_auth, oLschema2ldif, pdbedit, pidl, profiles, regdiff, regpatch,
+        regshell, regtree, rpcclient, samba, samba_dnsupdate, samba_kcc,
+        samba-regedit, samba_spnupdate, samba-tool, samba_upgradedns, sharesec,
+        smbcacls, smbclient, smbclient4, smbcontrol, smbcquotas, smbd, smbget,
+        smbpasswd, smbspool, smbstatus, smbtar, smbta-util, smbtorture, smbtree,
+        tdbbackup, tdbdump, tdbrestore, tdbtool, testparm, wbinfo, et
+        winbindd</seg>
+        <seg>libdcerpc-atsvc.so, libdcerpc-binding.so, libdcerpc-samr.so,
+        libdcerpc-server.so, libdcerpc.so, libgensec.so, libndr-krb5pac.so,
+        libndr-nbt.so, libndr.so, libndr-standard.so, libnetapi.so,
+        libnss_winbind.so, libnss_wins.so, libpdb.so, libregistry.so,
+        libsamba-credentials.so, libsamba-hostconfig.so, libsamba-policy.so,
+        libsamba-util.so, libsamdb.so, libsmbclient-raw.so, libsmbclient.so,
+        libsmbconf.so, libsmbldap.so, libsmbsharemodes.so, libtevent-util.so,
+        libtorture.so, libwbclient.so, mit_samba.so, the pam_winbind.so et
+        pam_smbpass.so Bibliothèques PAM , winbind_krb5_locator.so, et en ensemble de caractères
+	assortis, système de fichier et modules de support.</seg>
+<seg>/etc/samba, /usr/include/samba-4.0, /usr/lib/samba,
+        /usr/share/samba, /var/cache/samba, /var/lib/samba, /var/lock/samba,
+        /var/log/samba, et /var/run/samba</seg>
       </seglistitem>
     </segmentedlist>
     <variablelist>
@@ -764,16 +660,7 @@ EOF</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
-      <varlistentry id="swat">
-        <term><command>swat</command></term>
-        <listitem>
-          <para>est l'outil d'administration Web <application>Samba</application>.</para>
-          <indexterm zone="samba swat">
-            <primary sortas="b-swat">swat</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-      <varlistentry id="tdbbackup">
+       <varlistentry id="tdbbackup">
         <term><command>tdbbackup</command></term>
         <listitem>
           <para>est un outil pour sauvegarder ou valider l'intégrité de fichiers
