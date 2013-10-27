@@ -231,7 +231,6 @@
     <para role="optional">
       <xref linkend="mitkrb"/>
     </para>
-
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/openjdk"/></para>
   </sect2>
@@ -270,7 +269,7 @@ cp -v ../openjdk.tar.gz   .</userinput>
 </screen>
     <para>Appliquez un correctif pour générer un fichier cacerts valide en utilisant le système de certificats CA:</para>
 <screen>
-<userinput>patch -Np1 -i ../icedtea-&icedtea-version;-add_cacerts-2.patch</userinput>
+<userinput>patch -Np1 -i ../icedtea-&icedtea-version;-add_cacerts-1.patch</userinput>
 </screen>
     <para>Appliquez un correctif pour remplacer les chemins corrigés par des plus appropriée pour 
     BLFS:</para>
@@ -286,9 +285,14 @@ cp -v ../openjdk.tar.gz   .</userinput>
    de l'utilisateur):
  </para>
 <screen>
-<userinput>unset JAVA_HOME &amp;&amp;
-./autogen.sh    &amp;&amp;
-./configure --with-jdk-home=/opt/OpenJDK-&openjdk-version;-bin             --enable-nss                                          --with-version-suffix=blfs                            --enable-pulse-java &amp;&amp;
+<userinput>unset JAVA_HOME                                               &amp;&amp;
+./autogen.sh                                                  &amp;&amp;
+./configure --with-jdk-home=/opt/OpenJDK-&openjdk-version;-bin         \
+            --with-version-suffix=blfs                        \
+            --enable-nss                                      \
+            --enable-pulse-java                               \
+            --disable-system-kerberos                         \
+            --with-parallel-jobs=$(getconf _NPROCESSORS_ONLN) &amp;&amp;
 make</userinput>
 </screen>
     <note><para>Si vous n'avez pas installé l'archive spécifiée précédemment,
@@ -322,7 +326,7 @@ rm -f Xvfb.pid</userinput>
 <para>Installez le paquet avec les commandes suivantes en tant qu'utilisateur
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>chmod 0644 openjdk.build/j2sdk-image/lib/sa-jdi.jar  &amp;&amp;
+<userinput>chmod 0644 openjdk.build/j2sdk-image/lib/sa-jdi.jar   &amp;&amp;
 cp -R openjdk.build/j2sdk-image /opt/OpenJDK-&openjdk-version; &amp;&amp;
 chown -R root:root /opt/OpenJDK-&openjdk-version;</userinput>
 </screen>
@@ -531,31 +535,31 @@ get_args ${@}
 # Handle common errors
 if test "${CAFILE}x" == "x" -a "${CADIR}x" == "x" ; then
     echo "ERROR!  You must provide an x509 certificate store!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${CAFILE}x" != "x" -a "${CADIR}x" != "x" ; then
     echo "ERROR!  You cannot provide two x509 certificate stores!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${KEYTOOL}x" == "x" ; then
     echo "ERROR!  You must provide a valid keytool program!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${OPENSSL}x" == "x" ; then
     echo "ERROR!  You must provide a valid path to openssl!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${OUTFILE}x" == "x" ; then
     echo "ERROR!  You must provide a valid output file!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
@@ -597,7 +601,8 @@ do
     certbegin=`grep -n "^-----BEGIN" "${cert}" | cut -d ":" -f 1`
     certend=`grep -n "^-----END" "${cert}" | cut -d ":" -f 1`
     sed -n "${certbegin},${certend}p" "${cert}" > "${tempfile}"
-    echo yes | env LC_ALL=C "${KEYTOOL}" -import -alias `basename "${cert}"` -keystore                    "${OUTFILE}" -storepass 'changeit' -file "${tempfile}"
+    echo yes | env LC_ALL=C "${KEYTOOL}" -import -alias `basename "${cert}"` -keystore \
+                   "${OUTFILE}" -storepass 'changeit' -file "${tempfile}"
     rm "${tempfile}"
 done
 if test "${TEMPDIR}x" != "x" ; then
@@ -618,7 +623,8 @@ chmod -c 0755 /opt/jdk/bin/mkcacerts</userinput>
     Pour créer le nouveau, en tant qu'utilisateur
     <systemitem class="username">root</systemitem> :</para>
 <screen>
-<userinput>/opt/jdk/bin/mkcacerts -d "/etc/ssl/certs/"  -k "/opt/jdk/bin/keytool"                        -s "/usr/bin/openssl" -o "/opt/jdk/jre/lib/security/cacerts"</userinput>
+<userinput>/opt/jdk/bin/mkcacerts -d "/etc/ssl/certs/"  -k "/opt/jdk/bin/keytool" \
+                       -s "/usr/bin/openssl" -o "/opt/jdk/jre/lib/security/cacerts"</userinput>
 </screen>
     </sect3> 
   </sect2>
