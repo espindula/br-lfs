@@ -1,0 +1,158 @@
+Révision 12119
+
+fichiers modifiés :
+   general.ent
+   introduction/welcome/changelog.xml
+   networking/netutils/wireshark.xml
+
+Log :
+Update to wireshark-1.10.3.
+
+Le robot a traité 18 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 12118)
++++ introduction/welcome/changelog.xml	(révision 12119)
+@@ -47,6 +47,10 @@
+       <para>November 2nd, 2013</para>
+       <itemizedlist>
+         <listitem>
++          <para>[fernando] - Update to wireshark-1.10.3. Fixes
++          <ulink url="&blfs-ticket-root;4256">#4256</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[igor] - Update to xorg-server-1.14.4. Fixes
+           <ulink url="&blfs-ticket-root;4251">#4251</ulink>.</para>
+         </listitem>
+
+Index: networking/netutils/wireshark.xml
+===================================================================
+--- networking/netutils/wireshark.xml	(révision 12118)
++++ networking/netutils/wireshark.xml	(révision 12119)
+@@ -65,12 +65,6 @@
+     <bridgehead renderas="sect3">Additional Downloads</bridgehead>
+     <itemizedlist spacing="compact">
+       <listitem>
+-<para>
+-Required patch:
+-<ulink url="&patch-root;/wireshark-&wireshark-version;-packet_gluster_duplicate_enums_fix-1.patch"/>
+-</para>
+-</listitem>
+-<listitem>
+         <para>Additional Documentation:
+            <ulink url="http://www.wireshark.org/download/docs/"/>
+          </para>
+@@ -87,9 +81,10 @@
+       <xref linkend="glib2"/> (to build the TTY-mode front-end only)
+     </para>
+ 
+-<para>Note that if you don't have <application>Gtk+</application>
+-installed, you will need to pass <option>--disable-wireshark</option>
+-to the <command>configure</command> command.</para>
++    <para>Note that you need <application>Gtk+</application> or
++    <application>Qt4</application> installed, otherwise, you will need to pass
++    <option>--disable-wireshark</option> to the
++    <command>configure</command> command.</para>
+ 
+     <bridgehead renderas="sect4">Recommended</bridgehead>
+     <para role="recommended">
+@@ -101,16 +96,21 @@
+       <ulink url="http://www.gnu.org/software/adns/adns.html">adns</ulink>,
+       <ulink url="http://www.maxmind.com/app/c">GeoIP</ulink>,
+       <xref linkend="gnutls"/>,
+-<xref linkend="gtk2"/> or <xref linkend="gtk3"/> (to build the GUI front-end),
+       <xref linkend="libgcrypt"/>,
+       <xref linkend="lua"/>,
+       <xref linkend="mitkrb"/>,
+       <xref linkend="openssl"/>,
+-<xref linkend="pcre"/>,
+-<ulink url="http://www.portaudio.com/download.html">PortAudio</ulink>, and
+-<xref linkend="python2"/>
++      <xref linkend="pcre"/>, and
++      <ulink url="http://www.portaudio.com/download.html">PortAudio</ulink>
+     </para>
+ 
++    <bridgehead renderas="sect4">Optional (to build the GUI front-end)</bridgehead>
++    <para role="optional">
++      <xref linkend="gtk2"/>,
++      <xref linkend="gtk3"/>, or 
++      <xref linkend="qt4"/>
++    </para>
+     <para condition="html" role="usernotes">User Notes:
+     <ulink url="&blfs-wiki;/wireshark"/></para>
+ 
+@@ -165,8 +165,7 @@
+     <para>Continue to install <application>Wireshark</application> by running
+     the following commands:</para>
+ 
+-<screen><userinput>patch -Np1 -i ../wireshark-&wireshark-version;-packet_gluster_duplicate_enums_fix-1.patch &amp;&amp;
+-./configure --prefix=/usr --sysconfdir=/etc                                  &amp;&amp;
++<screen><userinput>./configure --prefix=/usr --sysconfdir=/etc &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>This package does not come with a test suite.</para>
+@@ -183,7 +182,7 @@
+ 
+ pushd /usr/share/doc/wireshark-&wireshark-version; &amp;&amp;
+    for FILENAME in ../../wireshark/*.html; do
+-ln -s -v $FILENAME .
++      ln -s -v -f $FILENAME .
+    done &amp;&amp;
+ popd &amp;&amp;
+ 
+@@ -225,9 +224,6 @@
+     <application>OpenSSL</application>
+     <filename class='libraryfile'>libcrypto</filename> library is found.</para>
+ 
+-<para><option>--with-python</option>: This option is required if you
+-want Python bindings built.</para>
+   </sect2>
+ 
+   <sect2 role="configuration">
+@@ -281,8 +277,8 @@
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-<seg>capinfos, dftest, dumpcap, editcap, idl2wrs, mergecap, randpkt,
+-rawshark, text2pcap, tshark, and wireshark</seg>
++        <seg>capinfos, dftest, dumpcap, editcap, mergecap, randpkt, rawshark,
++        reordercap, text2pcap, tshark, and wireshark</seg>
+         <seg>libwireshark.so, libwiretap.so, libwsutil.so, and
+         numerous plugin modules</seg>
+         <seg>/usr/lib/wireshark, /usr/share/doc/wireshark-&wireshark-version;,
+@@ -342,19 +338,6 @@
+         </listitem>
+       </varlistentry>
+ 
+-<varlistentry id="idl2wrs">
+-<term><command>idl2wrs</command></term>
+-<listitem>
+-<para>takes a user specified CORBA
+-IDL file and generates <quote>C</quote> source code that
+-can be used to create an <application>Wireshark</application>
+-plugin.</para>
+-<indexterm zone="wireshark idl2wrs">
+-<primary sortas="b-idl2wrs">idl2wrs</primary>
+-</indexterm>
+-</listitem>
+-</varlistentry>
+       <varlistentry id="mergecap">
+         <term><command>mergecap</command></term>
+         <listitem>
+@@ -386,6 +369,16 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="reordercap">
++        <term><command>reordercap</command></term>
++        <listitem>
++          <para>reorder timestamps of input file frames into output file.</para>
++          <indexterm zone="wireshark reordercap">
++            <primary sortas="b-reordercap">reordercap</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="text2pcap">
+         <term><command>text2pcap</command></term>
+         <listitem>
+
