@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+
+  <!ENTITY mariadb-download-http "http://tweedo.com/mirror/mariadb/mariadb-&mariadb-version;/kvm-tarbake-jaunty-x86/mariadb-&mariadb-version;.tar.gz">
+  <!ENTITY mariadb-download-ftp  "ftp://mirrors.fe.up.pt/pub/mariadb/mariadb-&mariadb-version;/kvm-tarbake-jaunty-x86/mariadb-&mariadb-version;.tar.gz">
+  <!ENTITY mariadb-md5sum        "299fd67d5f193ac30a30a60b579d8bec">
+  <!ENTITY mariadb-size          "48 Mo">
+  <!ENTITY mariadb-buildsize     "1.5 GB">
+  <!ENTITY mariadb-time          "6.8 SBU">
+]>
+
+<sect1 id="mariadb" xreflabel="MariaDB-&mariadb-version;">
+  <?dbhtml filename="mariadb.html"?>
+
+  <sect1info>
+    <othername>$LastChangedBy: igor $</othername>
+    <date>$Date: 2013-11-11 18:10:53 +0100 (lun. 11 nov. 2013) $</date>
+  </sect1info>
+
+  <title>MariaDB-&mariadb-version;</title>
+
+  <indexterm zone="mariadb">
+    <primary sortas="a-MariaDB">MariaDB</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title>Introduction à MariaDB</title>
+
+    <para>
+      <application>MariaDB</application> is a community-developed fork et a
+      drop-in replacement for the <application>MySQL</application> relational
+      database management system.
+    </para>
+
+    &lfs74_checked;
+
+    <bridgehead renderas="sect3">Information sur le paquet </bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          Téléchargement (HTTP) : <ulink url="&mariadb-download-http;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Téléchargement (FTP) : <ulink url="&mariadb-download-ftp;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Somme de contrôle MD5 du téléchargement : &mariadb-md5sum;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Taille du téléchargement : &mariadb-size;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation de l'espace disque requis : &mariadb-buildsize;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation du temps de construction : &mariadb-time;
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3">Dépendances de MariaDB</bridgehead>
+
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required">
+      <xref linkend="cmake"/> et
+      <xref linkend="openssl"/>
+    </para>
+
+    <bridgehead renderas="sect4">Recommandées</bridgehead>
+    <para role="recommended">
+      <xref linkend="libevent"/>
+    </para>
+
+    <bridgehead renderas="sect4">Facultative</bridgehead>
+    <para role="optional">
+      <ulink url="http://packages.debian.org/source/sid/libaio">libaio</ulink> et
+      <xref linkend="libedit"/>
+    </para>
+
+    <para condition="html" role="usernotes">Notes utilisateur :
+      <ulink url="&blfs-wiki;/mariadb"/>
+    </para>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de MariaDB</title>
+
+    <para>
+      For security reasons, running the server as an unprivileged user
+      et group is strongly encouraged. Issue the following (as
+      <systemitem class="username">root</systemitem>) to create the
+      user et group:
+    </para>
+
+<screen role="root"><userinput>groupadd -g 40 mysql &amp;&amp;
+useradd -c "MySQL Server" -d /srv/mysql -g mysql -s /bin/false -u 40 mysql</userinput></screen>
+
+    <para>
+      Install <application>MariaDB</application> by running the
+      following  
+    </para>
+
+<screen><userinput>sed -i "s@data/test@\${INSTALL_MYSQLTESTDIR}@g" sql/CMakeLists.txt &amp;&amp;
+sed -i "s/srv_buf_size/srv_sort_buf_size/" storage/innobase/row/row0log.cc &amp;&amp;
+mkdir build &amp;&amp;
+cd build &amp;&amp;
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr \
+      -DINSTALL_DOCDIR=share/doc/mysql \
+      -DINSTALL_DOCREADMEDIR=share/doc/mysql \
+      -DINSTALL_MANDIR=share/man \
+      -DINSTALL_MYSQLSHAREDIR=share/mysql \
+      -DINSTALL_MYSQLTESTDIR=share/mysql/test \
+      -DINSTALL_PLUGINDIR=lib/mysql \
+      -DINSTALL_SBINDIR=sbin \
+      -DINSTALL_SCRIPTDIR=bin \
+      -DINSTALL_SQLBENCHDIR=share/mysql \
+      -DINSTALL_SUPPORTFILESDIR=share/mysql \
+      -DMYSQL_DATADIR=/srv/mysql \
+      -DMYSQL_UNIX_ADDR=/run/mysqld/mysqld.sock \
+      -DWITH_EXTRA_CHARSETS=complex \
+      -DWITH_LIBEVENT=system
+      .. &amp;&amp;
+make</userinput></screen>
+
+    <para>
+      Pour tester le résultat, tapez : <command>make test</command>.
+    </para>
+
+    <para>
+      Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :
+    </para>
+
+<screen role="root"><userinput>make install</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="commands">
+    <title>Explications des commandes</title>
+
+    <para>
+      <command>sed -i ...</command> : First sed sets correct installation
+      directory for some components. Second sed fixes a bug in the code.
+    </para>
+
+    <para>
+      <parameter>-DWITH_EXTRA_CHARSETS=complex</parameter> : This switch enables
+      support for the complex character sets.
+    </para>
+
+    <para>
+      <parameter>-DWITH_LIBEVENT=system</parameter> : This switch is used to
+      tell the build system to use installed <application>libevent</application>.
+      Remove it if you didn't install <application>libevent</application>.
+    </para>
+
+    <para>
+      <option>-DWITHOUT_SERVER=ON -DWITH_UNIT_TESTS=OFF</option> : Use these
+      switches if you don't want the server et would like to build the client
+      only.
+    </para>
+
+    <para>
+      <option>-DWITH_EMBEDDED_SERVER=ON</option> : This switch enables compiling
+      the embedded server library needed by certain applications, such as
+      <application>Amarok</application>.
+    </para>
+
+    <note><para>
+      There are numerous options available to <command>cmake</command>. Check
+      the output of the <command>cmake . -LH</command> for additional
+      customization options.
+    </para></note>
+
+
+  </sect2>
+
+  <sect2 role="configuration">
+    <title>Configuring MySQL</title>
+
+    <sect3 id="mariadb-config">
+      <title>Config Files</title>
+
+      <para>
+        <filename>/etc/mysql/my.cnf</filename> et
+        <filename>~/.my.cnf</filename>
+      </para>
+
+      <indexterm zone="mariadb mariadb-config">
+        <primary sortas="e-AA.my.cnf">~/.my.cnf</primary>
+      </indexterm>
+
+      <indexterm zone="mariadb mariadb-config">
+        <primary sortas="e-etc-mysql-my.cnf">/etc/mysql/my.cnf</primary>
+      </indexterm>
+
+    </sect3>
+
+    <sect3>
+      <title>Configuration Information</title>
+
+      <para>
+        Create basic <filename>/etc/mysql/my.cnf</filename>
+        using the following command as the <systemitem
+        class="username">root</systemitem> user:
+      </para>
+
+<screen role="root"><userinput>install -v -dm 755 /etc/mysql &amp;&amp;
+cat &gt; /etc/mysql/my.cnf &lt;&lt; "EOF"
+<literal># Begin /etc/mysql/my.cnf
+
+# The following options will be passed to all MySQL clients
+[client]
+#password       = your_password
+port            = 3306
+socket          = /run/mysqld/mysqld.sock
+
+# The MySQL server
+[mysqld]
+port            = 3306
+socket          = /run/mysqld/mysqld.sock
+datadir         = /srv/mysql
+skip-external-locking
+key_buffer_size = 16M
+max_allowed_packet = 1M
+sort_buffer_size = 512K
+net_buffer_length = 16K
+myisam_sort_buffer_size = 8M
+
+# Don't listen on a TCP/IP port at all.
+skip-networking
+
+# required unique id between 1 et 2^32 - 1
+server-id       = 1
+
+# Uncomment the following if you are using BDB tables
+#bdb_cache_size = 4M
+#bdb_max_lock = 10000
+
+# Uncomment the following if you are using InnoDB tables
+#innodb_data_home_dir = /srv/mysql
+#innodb_data_file_path = ibdata1:10M:autoextend
+#innodb_log_group_home_dir = /srv/mysql
+# You can set .._buffer_pool_size up to 50 - 80 %
+# of RAM but beware of setting memory usage too high
+#innodb_buffer_pool_size = 16M
+#innodb_additional_mem_pool_size = 2M
+# Set .._log_file_size to 25 % of buffer pool size
+#innodb_log_file_size = 5M
+#innodb_log_buffer_size = 8M
+#innodb_flush_log_at_trx_commit = 1
+#innodb_lock_wait_timeout = 50
+
+[mysqldump]
+quick
+max_allowed_packet = 16M
+
+[mysql]
+no-auto-rehash
+# Remove the next comment character if you are not familiar with SQL
+#safe-updates
+
+[isamchk]
+key_buffer = 20M
+sort_buffer_size = 20M
+read_buffer = 2M
+write_buffer = 2M
+
+[myisamchk]
+key_buffer_size = 20M
+sort_buffer_size = 20M
+read_buffer = 2M
+write_buffer = 2M
+
+[mysqlhotcopy]
+interactive-timeout
+
+# End /etc/mysql/my.cnf</literal>
+EOF</userinput></screen>
+
+      <para>
+        You can now install a database et change the ownership to the
+        unprivileged user et group (perform as the <systemitem
+        class="username">root</systemitem> user):
+      </para>
+
+<screen role="root"><userinput>mysql_install_db --basedir=/usr --datadir=/srv/mysql --user=mysql &amp;&amp;
+chown -R mysql:mysql /srv/mysql</userinput></screen>
+
+      <para>
+        Further configuration requires that the
+        <application>MariaDB</application> server is running. Start
+        the server using the following commands as the <systemitem
+        class="username">root</systemitem> user:
+      </para>
+
+<screen role="root"><userinput>install -v -m755 -o mysql -g mysql -d /var/run/mysqld &amp;&amp;
+mysqld_safe --user=mysql 2&gt;&amp;1 &gt;/dev/null &amp;</userinput></screen>
+
+      <para>
+        A default installation does not set up a password for the
+        administrator, so use the following command as the <systemitem
+        class="username">root</systemitem> user to set one. Replace
+        <replaceable>&lt;new-password&gt;</replaceable> with your own.
+      </para>
+
+<screen role="root"><userinput>mysqladmin -u root password <replaceable>&lt;new-password&gt;</replaceable></userinput></screen>
+
+      <para>
+        Configuration of the server is now finished. Shut the server
+        down using the following command as the <systemitem
+        class="username">root</systemitem> user:
+      </para>
+
+<screen role="root"><userinput>mysqladmin -p shutdown</userinput></screen>
+
+    </sect3>
+
+    <sect3 id="mariadb-init">
+      <title>Boot Script</title>
+
+      <para>
+        Install the <filename>/etc/rc.d/init.d/mysql</filename> init script
+        included in the <xref linkend="bootscripts"/> package as
+        the <systemitem class="username">root</systemitem> user to start the
+        <application>MariaDB</application> server during system boot-up.
+      </para>
+
+      <indexterm zone="mariadb mariadb-init">
+        <primary sortas="f-mysql">mysql</primary>
+      </indexterm>
+
+<screen role="root"><userinput>make install-mysql</userinput></screen>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title>Contenu</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Répertoires installés</segtitle>
+
+      <seglistitem>
+        <seg>
+          aria_chk, aria_dump_log, aria_ftdump, aria_pack, aria_read_log, 
+          innochecksum, msql2mysql, myisamchk, myisam_ftdump, myisamlog,
+          myisampack, my_print_defaults, mysql, mysqlaccess,
+          mysqladmin, mysqlbinlog, mysqlbug, mysqlcheck, mysql_client_test,
+          mysql_client_test_embedded, mysql_config,
+          mysql_convert_table_format, mysqld, mysqld_multi, mysqld_safe, mysqldump,
+          mysqldumpslow, mysql_embedded, mysql_find_rows, mysql_fix_extensions,
+          mysqlhotcopy, mysqlimport, mysql_install_db, mysql_plugin,
+          mysql_secure_installation, mysql_setpermission, mysqlshow, mysqlslap,
+          mysqltest, mysqltest_embedded, mysql_tzinfo_to_sql, mysql_upgrade,
+          mysql_waitpid, mysql_zap, mytop, perror, replace, resolveip,
+          resolve_stack_dump, et tokuftdump
+        </seg>
+        <seg>
+          libmysqlclient.{so,a}, libmysqlclient_r.{so,a}, libmysqld.{so,a}, et
+          libmysqlservices.a
+        </seg>
+        <seg>
+          /etc/mysql,
+          /srv/mysql,
+          /usr/include/mysql,
+          /usr/lib/mysql,
+          /usr/share/doc/mysql, et
+          /usr/share/mysql
+        </seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <bridgehead renderas="sect3">Description courte</bridgehead>
+
+    <para>
+      Descriptions of all the programs et libraries would be several
+      pages long. Instead, consult the man pages
+      or the online documentation at <ulink
+      url="https://mariadb.com/kb/en/mariadb-documentation/"/>.
+    </para>
+
+    <para>
+      The <application>Perl</application> DBI modules must be installed
+      for some of the <application>MariaDB</application> support programs to
+      function properly.
+    </para>
+
+  </sect2>
+
+</sect1>
