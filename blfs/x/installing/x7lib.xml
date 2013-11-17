@@ -160,7 +160,8 @@
 &libXxf86vm-md5sum;  libXxf86vm-&libXxf86vm-version;.tar.bz2
 &libdmx-md5sum;  libdmx-&libdmx-version;.tar.bz2
 &libpciaccess-md5sum;  libpciaccess-&libpciaccess-version;.tar.bz2
-&libxkbfile-md5sum;  libxkbfile-&libxkbfile-version;.tar.bz2</literal>
+&libxkbfile-md5sum;  libxkbfile-&libxkbfile-version;.tar.bz2
+&libxshmfence-md5sum;  libxshmfence-&libxshmfence-version;.tar.bz2</literal>
 EOF</userinput>
 </screen>
     <para>Pour télécharger les fichiers nécessaires en utilisant <application>wget</application>,
@@ -168,7 +169,8 @@ EOF</userinput>
 <screen>
 <userinput>mkdir lib &amp;&amp;
 cd lib &amp;&amp;
-grep -v '^#' ../lib-&xorg-version;.md5 | awk '{print $2}' | wget -i- -c     -B http://xorg.freedesktop.org/releases/individual/lib/ &amp;&amp;
+grep -v '^#' ../lib-&xorg-version;.md5 | awk '{print $2}' | wget -i- -c \
+    -B http://xorg.freedesktop.org/releases/individual/lib/ &amp;&amp;
 md5sum -c ../lib-&xorg-version;.md5</userinput>
 </screen>
   </sect2>
@@ -189,11 +191,22 @@ do
   tar -xf $package
   pushd $packagedir
   case $packagedir in
+    libFS-[0-9]* )
+      sed -e '/#include &lt;X11/ i\#include &lt;X11\/Xtrans\/Xtransint.h>' \
+          -e 's/_FSTransReadv(svr->trans_conn/readv(svr->trans_conn->fd/' \
+          -i src/FSlibInt.c
+      ./configure $XORG_CONFIG
+    ;;
     libXfont-[0-9]* )
       ./configure $XORG_CONFIG --disable-devel-docs
     ;;
     libXt-[0-9]* )
-      ./configure $XORG_CONFIG                   --with-appdefaultdir=/etc/X11/app-defaults
+      ./configure $XORG_CONFIG \
+                  --with-appdefaultdir=/etc/X11/app-defaults
+    ;;
+    libxshmfence-[0-9]* )
+      autoreconf -fiv
+      ./configure $XORG_CONFIG
     ;;
     * )
       ./configure $XORG_CONFIG

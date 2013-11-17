@@ -187,6 +187,8 @@
 <screen>
 <userinput>sed -i -e "/#if/d" -e "/#error/d" -e "/#endif/d" \
      config.tests/unix/libmng/libmng.cpp &amp;&amp;
+sed -i '/CONFIG -/ a\isEmpty(OUTPUT_DIR): OUTPUT_DIR = ../..' \
+     src/3rdparty/webkit/Source/WebKit2/DerivedSources.pro &amp;&amp;
 ./configure -prefix         /usr                 \
             -bindir         /usr/lib/qt4/bin     \
             -plugindir      /usr/lib/qt4/plugins \
@@ -220,7 +222,9 @@ make</userinput>
       Enlevez les références au répertoire de construction dans les fichiers
       <filename class="extension">.pc</filename> en lançant la commande suivante:
     </para>
-<screen><userinput>find . -name "*.pc" -exec perl -pi -e "s, -L$PWD/?\S+,,g" {} \;</userinput></screen>
+<screen>
+<userinput>find . -name "*.pc" -exec perl -pi -e "s, -L$PWD/?\S+,,g" {} \;</userinput>
+</screen>
     <para>
         Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :
     </para>
@@ -246,11 +250,10 @@ install -v -Dm644 tools/qdbus/qdbusviewer/images/qdbusviewer-128.png \
 <screen role="root">
 <userinput>for file in 3Support CLucene Core DBus Declarative DesignerComponents \
             Designer Gui Help Multimedia Network OpenGL Script \
-            ScriptTools Sql Svg Test UiTools WebKit XmlPatterns Xml
+            ScriptTools Sql Svg Test UiTools WebKit XmlPatterns Xml phonon
 do
-  sed -i -e '/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' \
-       /usr/lib/libQt${file}.prl
-  perl -pi -e "s, -L$PWD/?\S+,,g" /usr/lib/pkgconfig/Qt${file}.pc
+  [ -e /usr/lib/libQt${file}.prl ] &amp;&amp; sed -i -e '/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' \
+                                              /usr/lib/libQt${file}.prl
 done
 unset file</userinput>
 </screen>
@@ -283,6 +286,8 @@ done</userinput>
 <screen>
 <userinput>sed -i -e "/#if/d" -e "/#error/d" -e "/#endif/d" \
      config.tests/unix/libmng/libmng.cpp &amp;&amp;
+sed -i '/CONFIG -/ a\isEmpty(OUTPUT_DIR): OUTPUT_DIR = ../..' \
+     src/3rdparty/webkit/Source/WebKit2/DerivedSources.pro &amp;&amp;
 export QTDIR=/opt/qt-&qt4-version;
 ./configure -prefix $QTDIR       \
             -sysconfdir /etc/xdg \
@@ -325,12 +330,10 @@ install -v -Dm644 tools/qdbus/qdbusviewer/images/qdbusviewer-128.png \
       <systemitem class="username">root</systemitem> :
     </para>
 <screen role="root">
-<userinput>for file in 3Support CLucene Core DBus Declarative DesignerComponents \
-            Designer Gui Help Multimedia Network OpenGL Script \
-            ScriptTools Sql Svg Test UiTools WebKit XmlPatterns Xml; do
+<userinput>for file in `basename -a -s .prl $QTDIR/lib/lib*.prl`; do
   sed -i -e '/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/' \
-       $QTDIR/lib/libQt${file}.prl
-  perl -pi -e "s, -L$PWD/?\S+,,g" $QTDIR/lib/pkgconfig/Qt${file}.pc
+       $QTDIR/lib/${file}.prl
+  perl -pi -e "s, -L$PWD/?\S+,,g" $QTDIR/lib/pkgconfig/${file##lib}.pc
 done
 unset file</userinput>
 </screen>
