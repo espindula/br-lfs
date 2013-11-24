@@ -28,8 +28,8 @@ lfs: validate profile-html
 	  mkdir -p $(BASEDIR)/images; \
 	fi;
 	$(Q)cp images/*.png $(BASEDIR)/images
-	$(Q)cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html
-	$(Q)cd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html
+#	$(Q)cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html
+#	$(Q)cd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html
 
 	@echo "Running Tidy and obfuscate.sh..."
 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
@@ -74,6 +74,7 @@ nochunks: validate profile-html
 	$(Q)bash obfuscate.sh                                $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g"  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)sed -i -e "s@../wget-list@wget-list@"            $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+	$(Q)sed -i -e "s@../md5sums@md5sums@"                $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)$(MAKE) $(BASEDIR)/wget-list $(BASEDIR)/md5sums
 
 tmpdir:
