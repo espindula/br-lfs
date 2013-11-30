@@ -91,10 +91,10 @@
      <para>Activez les options suivantes dans la configuration du noyau
     et recompilez le noyau si nécessaire&nbsp;:</para>
 <screen>
-<literal>Virtualization: Y
-  Kernel-based Virtual Machine (KVM) support: M or Y
-  KVM for Intel processors support:           M or Y
-  KVM for AMD processors support:             M or Y</literal>
+<literal>Virtualization:  ---&gt;
+  Kernel-based Virtual Machine (KVM) support: Y or M
+    KVM for Intel processors support: Y or M
+    KVM for AMD processors support: Y or M</literal>
 </screen>
     <indexterm zone="qemu qemu-kernel">
       <primary sortas="d-qemu">qemu</primary>
@@ -103,12 +103,16 @@
     est obligatoire.</para>
     <para>Pour le réseau, vérifiez que <xref linkend='bridgeutils'/> est installé et que les options
     suivantes dans la configuration du noyau sont actives :</para>
- +<screen><literal>Networking support  ---&gt;
-+  Networking options  ---&gt;
-+    802.1d Ethernet Bridging: Y or M
-+Device Drivers  ---&gt;
-+  Network device support  ---&gt;
-+    Universal TUN/TAP device driver support: Y or M</literal></screen>   
+ +
+<screen>
+<literal>Networking support  ---&gt;
+  Networking options  ---&gt;
+    802.1d Ethernet Bridging: Y or M
+Device Drivers  ---&gt;
+  Network device support  ---&gt;
+    Universal TUN/TAP device driver support: Y or M</literal>
+</screen>
+   
   </sect2>
   <sect2 role="installation">
     <title>Installation de qemu</title>
@@ -121,15 +125,18 @@
     <para>Installez <application>qemu</application> en lançant les commandes suivantes&nbsp;:
     </para>
 <screen>
-<userinput>./configure --prefix=/usr                            --sysconfdir=/etc                        --target-list=x86_64-softmmu &amp;&amp;
-export ARFLAGS="rv" &amp;&amp;
-make &amp;&amp;
-unset ARFLAGS</userinput>
+<userinput>./configure --prefix=/usr \
+            --sysconfdir=/etc \
+            --libexecdir=/usr/lib/qemu \
+            --docdir=/usr/share/doc/qemu-&qemu-version; \
+            --target-list=x86_64-softmmu &amp;&amp;
+make</userinput>
 </screen>
     <para>Pour lancer la construction en tests, lancez <command>make V=1 check</command>.</para>
 <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>make install</userinput>
+<userinput>make install &amp;&amp;
+[ -e  /usr/lib/libcacard.so ] &amp;&amp; chmod -v 755 /usr/lib/libcacard.so</userinput>
 </screen>
     <note>
     <para>Par confort vous pouvez vouloir créer un lien symbolique pour lancer
@@ -172,7 +179,10 @@ unset ARFLAGS</userinput>
     <filename>Fedora-16-x86_64-Live-LXDE.iso</filename> dans le répertoire courant.
     Exécutez les commandes suivantes&nbsp;:</para>
 <screen>
-<userinput>qemu -enable-kvm -hda vdisk.img                 -cdrom Fedora-16-x86_64-Live-LXDE.iso      -boot d                                    -m 384</userinput>
+<userinput>qemu -enable-kvm -hda vdisk.img            \
+     -cdrom Fedora-16-x86_64-Live-LXDE.iso \
+     -boot d                               \
+     -m 384</userinput>
 </screen>
     <para>Suivre la procédure d'installation normal pour la distribution choisie.
     L'option boot spécifie l'ordre de démarrage des disques comme une chaîne de lettres de
@@ -215,11 +225,11 @@ EOF</userinput>
 <userinput>cat &gt; /etc/qemu-ifup &lt;&lt; EOF
 #!/bin/bash
 switch=br0
-if [ -n "$1" ]; then
+if [ -n "\$1" ]; then
   # Add new tap0 interface to bridge
-  /sbin/ip link set $1 up
+  /sbin/ip link set \$1 up
   sleep 0.5s
-  /usr/sbin/brctl addif $switch $1
+  /usr/sbin/brctl addif \$switch \$1
 else
   echo "Error: no interface specified"
   exit 1
@@ -232,9 +242,9 @@ chmod +x /etc/qemu-ifup</userinput>
 <userinput>cat &gt; /etc/qemu-ifdown &lt;&lt; EOF
 #!/bin/bash
 switch=br0
-if [ -n "$1" ]; then
+if [ -n "\$1" ]; then
   # Remove tap0 interface from bridge
-  /usr/sbin/brctl delif $switch $1
+  /usr/sbin/brctl delif \$switch \$1
 else
   echo "Error: no interface specified"
   exit 1
