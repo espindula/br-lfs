@@ -1,0 +1,170 @@
+Révision 12308
+
+fichiers modifiés :
+   postlfs/virtualization/qemu.xml
+   general.ent
+   introduction/welcome/changelog.xml
+
+Log :
+update to qemu-1.7.0
+
+Le robot a traité 23 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 12307)
++++ introduction/welcome/changelog.xml	(révision 12308)
+@@ -47,6 +47,10 @@
+       <para>November 30th, 2013</para>
+       <itemizedlist>
+         <listitem>
++          <para>[igor] - Update to qemu-1.7.0. Fixes
++          <ulink url="&blfs-ticket-root;4381">#4381</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[igor] - Update to raptor2-2.0.11. Fixes
+           <ulink url="&blfs-ticket-root;4377">#4377</ulink>.</para>
+         </listitem>
+
+Index: postlfs/virtualization/qemu.xml
+===================================================================
+--- postlfs/virtualization/qemu.xml	(révision 12307)
++++ postlfs/virtualization/qemu.xml	(révision 12308)
+@@ -74,11 +74,16 @@
+      <xref linkend="cyrus-sasl"/>
+     </para>
+ 
++    <note>
++      <para>
++        This optional dependencies list is not comprehensive. See the output of
++        <command>./configure --help</command> for a more complete list.
++      </para>
++    </note>
+     <para condition="html" role="usernotes">User Notes:
+     <ulink url="&blfs-wiki;/qemu"/></para>
+ 
+@@ -105,10 +110,10 @@
+     <para>Enable the following options in the kernel configuration
+     and recompile the kernel if necessary:</para>
+ 
+-<screen><literal>Virtualization: Y
+-Kernel-based Virtual Machine (KVM) support: M or Y
+-KVM for Intel processors support:           M or Y
+-KVM for AMD processors support:             M or Y</literal></screen>
++<screen><literal>Virtualization:  ---&gt;
++  Kernel-based Virtual Machine (KVM) support: Y or M
++    KVM for Intel processors support: Y or M
++    KVM for AMD processors support: Y or M</literal></screen>
+ 
+     <indexterm zone="qemu qemu-kernel">
+       <primary sortas="d-qemu">qemu</primary>
+@@ -117,10 +122,16 @@
+     <para>The Intel or AMD settings are not both required, but the one matching
+     your system processor is required.</para>
+ 
+-<para>For networking, check that the settings CONFIG_BRIDGE, CONFIG_STP,
+-CONFIG_TUN are enabled and <xref linkend='bridgeutils'/> is
+-installed.</para>
++    <para>For networking, check that <xref linkend='bridgeutils'/> is installed
++    and the following options in the kernel configuration are enabled:</para>
+ 
++<screen><literal>Networking support  ---&gt;
++  Networking options  ---&gt;
++    802.1d Ethernet Bridging: Y or M
++Device Drivers  ---&gt;
++  Network device support  ---&gt;
++    Universal TUN/TAP device driver support: Y or M</literal></screen>
+   </sect2>
+ 
+   <sect2 role="installation">
+@@ -135,18 +146,19 @@
+            --libexecdir=/usr/lib/qemu \
+            --docdir=/usr/share/doc/qemu-&qemu-version; \
+             --target-list=x86_64-softmmu &amp;&amp;
+-export ARFLAGS="rv" &amp;&amp;
+-make &amp;&amp;
+-unset ARFLAGS</userinput></screen>
++make</userinput></screen>
+ 
+     <para>To run the built in tests, run <command>make V=1 check</command>.</para>
+ 
+     <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
+ 
+-<screen role="root"><userinput>make install</userinput></screen>
++<screen role="root"><userinput>make install &amp;&amp;
++chmod -v 755 /usr/lib/libcacard.so</userinput></screen>
+     
+     <note><!--<para>The main program <command>qemu-system-x86_64</command> doesn't
+     make a distinction between i386 and x86_64 so even on an i386 system you
+@@ -164,7 +176,7 @@
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+-<para><parameter>--target-list=x86_64-softmmu</parameter>: This option
++    <para><parameter>--target-list=x86_64-softmmu</parameter>: This switch
+     limits the build target to the x86_64 architecture.  For other 
+     hardware emulation see the --target-list list in <command>configure</command>'s
+     help output.  Omitting this option will build all architectures.</para>
+@@ -172,10 +184,15 @@
+     <para><parameter>export ARFLAGS="rv"</parameter> : this works around a problem
+     in the <command>configure</command> script exposed by make-4.0.</para>
+ 
++    <para>
++      <option>--audio-drv-list=alsa</option>: This switch sets the audio driver
++      to ALSA. For other drivers see the --audio-drv-list list in
++      <command>configure</command>'s help output. The default audio driver is
++      OSS.
++    </para>
+   </sect2>
+ 
+   <sect2 role="configuration">
+@@ -312,14 +329,28 @@
+     <title>Contents</title>
+ 
+     <segmentedlist>
+-<segtitle>Installed Program</segtitle>
+-<segtitle>Installed Libraries</segtitle>
++      <segtitle>Installed Programs</segtitle>
++      <segtitle>Installed Library</segtitle>
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-<seg>qemu-ga, qemu-img, qemu-io, qemu-nbd, qemu-system-x86_64</seg>
+-<seg>None</seg>
+-<seg>/etc/qemu, /usr/share/qemu, /usr/share/doc/qemu</seg>
++        <seg>
++          qemu-ga,
++          qemu-img,
++          qemu-io,
++          qemu-nbd,
++          qemu-system-x86_64,
++          virtfs-proxy-helper, and
++          vscclient
++        </seg>
++        <seg>libcacard.so</seg>
++        <seg>
++          /etc/qemu,
++          /usr/include/cacard,
++          /usr/lib/qemu,
++          /usr/share/qemu, and
++          /usr/share/doc/qemu-&qemu-version;
++        </seg>
+       </seglistitem>
+     </segmentedlist>
+ 
+@@ -382,6 +413,16 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="libcacard">
++        <term><filename class="libraryfile">libcacard.so</filename></term>
++        <listitem>
++          <para>is the Virtual Smart Card Emulator library.</para>
++          <indexterm zone="qemu libcacard">
++            <primary sortas="c-libcacard">libcacard.so</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+     </variablelist>
+ 
+   </sect2>
+
