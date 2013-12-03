@@ -57,56 +57,52 @@
 <screen os="f"><userinput>make</userinput></screen>
 
     <para os="g">La suite de tests de Coreutils fait plusieurs suppositions sur la présence d'utilisateurs et de groupes
-    système qui ne sont pas valides à l'intérieur de l'environnement minimal existant pour le moment. Donc des étapes 
-    supplémentaires doivent être effectuées avant de lancer les tests. Sautez à <quote>Installer le paquet</quote> si vous ne 
-    lancez pas la suite de tests.</para>
+    système qui ne sont pas valides à l'intérieur de l'environnement minimal existant pour le moment. Donc
+    nous allons réutiliser les groupes et l'utilisateur dummy créés avec
+    Util-linux. Passez à <quote>Installez le paquet</quote> si vous n'avez pas 
+    lancé la suite de tests et si vous n'avez pas créé les groupes et les 
+    utilisateurs dummy à Util-linux.</para>
 
-    <para os="h">Créez deux groupes <systemitem class="groupname">dummy</systemitem> et un utilisateur
-    <systemitem class="username">dummy</systemitem>&nbsp;:</para>
-
-<screen os="i"><userinput>echo "dummy1:x:1000:" &gt;&gt; /etc/group
-echo "dummy2:x:1001:dummy" &gt;&gt; /etc/group
-echo "dummy:x:1000:1000::/root:/bin/bash" &gt;&gt; /etc/passwd</userinput></screen>
-
-    <para os="j">Tout d'abord, lancez les quelques tests qui ont besoin d'être lancés en tant que
+    <para os="h">La suite de tests est maintenant prête à être exécutée. Tout
+    d'abord, lancez les quelques tests qui ont besoin d'être lancés en tant que
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 
-<screen os="k"><userinput>make NON_ROOT_USERNAME=dummy SUBDIRS= check-root</userinput></screen>
+<screen os="i"><userinput>make NON_ROOT_USERNAME=dummy</userinput></screen>
 
-    <para os="l">Nous allons maintenant lancer la suite de tests en tant
+    <para os="j">Nous allons maintenant lancer la suite de tests en tant
     qu'utilisateur <systemitem class="username">dummy</systemitem>. Corrigez les
     droits de quelques fichiers pour autoriser cela&nbsp;:</para>
     
-<screen os="m"><userinput>chown -Rv dummy .</userinput></screen>
+<screen os="k"><userinput>chown -Rv dummy .</userinput></screen>
 
-    <para os="n">Puis, exécutez le reste des tests en tant qu'utilisateur
+    <para os="l">Puis, exécutez le reste des tests en tant qu'utilisateur
     <systemitem class="username">nobody</systemitem>&nbsp;:</para>
 
-<screen os="o"><userinput>su dummy -s /bin/bash \
+<screen os="m"><userinput>su dummy -s /bin/bash \
     -c "PATH=$PATH make RUN_EXPENSIVE_TESTS=yes -k check || true"</userinput></screen>
 
-    <para os="p">Lorsque les tests sont complétés, supprimez l'utilisateur et les groupes
+    <para os="n">Lorsque les tests sont complétés, supprimez l'utilisateur et les groupes
     <systemitem class="username">dummy</systemitem>&nbsp;:</para>
 
-<screen os="q"><userinput>sed -i '/dummy/d' /etc/passwd /etc/group</userinput></screen>
+<screen os="o"><userinput>sed -i '/dummy/d' /etc/passwd /etc/group</userinput></screen>
 
-    <para os="r">Installez le paquet&nbsp;:</para>
+    <para os="p">Installez le paquet&nbsp;:</para>
 
-<screen os="s"><userinput>make install</userinput></screen>
+<screen os="q"><userinput>make install</userinput></screen>
 
-    <para os="t">Déplacez quelques programmes aux emplacements spécifiés par le
+    <para os="s">Déplacez quelques programmes aux emplacements spécifiés par le
     FHS&nbsp;:</para>
 
-<screen os="u"><userinput>mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date} /bin
+<screen os="t"><userinput>mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date} /bin
 mv -v /usr/bin/{dd,df,echo,false,hostname,ln,ls,mkdir,mknod} /bin
 mv -v /usr/bin/{mv,pwd,rm,rmdir,stty,true,uname} /bin
 mv -v /usr/bin/chroot /usr/sbin</userinput></screen>
 
-    <para os="v">D'autres programmes de Coreutils sont utilisés par certains des scripts du paquet CLFS-Bootscripts. Comme il 
+    <para os="u">D'autres programmes de Coreutils sont utilisés par certains des scripts du paquet CLFS-Bootscripts. Comme il 
     se peut que <filename class="directory">/usr</filename> ne soit pas disponible pendant les premières étapes du démarrage, 
     ces binaires doivent être sur la partition racine&nbsp;:</para>
 
-<screen os="w"><userinput>mv -v /usr/bin/{[,basename,head,install,nice} /bin
+<screen os="v"><userinput>mv -v /usr/bin/{[,basename,head,install,nice} /bin
 mv -v /usr/bin/{readlink,sleep,sync,test,touch} /bin
 ln -svf ../../bin/install /usr/bin</userinput></screen>
 
@@ -124,7 +120,7 @@ ln -svf ../../bin/install /usr/bin</userinput></screen>
         cksum, comm, cp, csplit, cut, date, dd, df, dir, dircolors, dirname, du,
         echo, env, expand, expr, factor, false, fmt, fold, groups, head,
         hostid, hostname, id, install, join, link, ln, logname, ls, md5sum,
-        mkdir, mkfifo, mknod, mktemp, mv, nice, nl, nohup, nproc, od, paste,
+        mkdir, mkfifo, mknod, mktemp, mv, nice, nl, nohup, nproc, numfmt, od, paste,
         pathchk, pinky, pr, printenv, printf, ptx, pwd, readlink, realpath, rm,
         rmdir, runcon, seq, sha1sum, sha224sum, sha256sum, sha384sum,
         sha512sum, shred, shuf, sleep, sort, split, stat, stdbuf, stty, sum,
@@ -645,6 +641,16 @@ ln -svf ../../bin/install /usr/bin</userinput></screen>
           processus actuel</para>
           <indexterm zone="ch-system-coreutils nproc">
             <primary sortas="b-nproc">nproc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="numfmt">
+        <term><command>numfmt</command></term>
+        <listitem>
+          <para>Convertit des numéros en chaînes lisibles par un humain ou viie-versa</para>
+          <indexterm zone="ch-system-coreutils numfmt">
+            <primary sortas="b-numfmt">numfmt</primary>
           </indexterm>
         </listitem>
       </varlistentry>
