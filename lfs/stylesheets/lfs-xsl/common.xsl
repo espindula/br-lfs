@@ -406,7 +406,7 @@ $Date: 2012-08-29 22:45:23 +0200 (mer. 29 août 2012) $
     </xsl:choose>
   </xsl:template>
 
-   <!-- Self-made calculation template. -->
+    <!-- Self-made calculation template. -->
   <xsl:template name="calculation">
     <xsl:param name="scope"/>
     <xsl:param name="total">0</xsl:param>
