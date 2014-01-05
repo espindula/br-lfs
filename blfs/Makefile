@@ -159,6 +159,39 @@ $(BASEDIR)/test-links: $(RENDERTMP)/blfs-full.xml
 	    else echo $$URL2 >> $(BASEDIR)/good_urls 2>&1; \
 	    fi; \
 	done
+	
+test-all-links: $(BASEDIR)/test-all-links
+$(BASEDIR)/test-all-links: $(RENDERTMP)/blfs-full.xml
+	@echo "Generating test-all-links file..."
+	$(Q)mkdir -p $(BASEDIR)
+	$(Q)xsltproc --nonet \
+	  --output $(BASEDIR)/test-all-links stylesheets/list_url.xsl \
+	  $(RENDERTMP)/blfs-full.xml
+
+	@echo "Checking URLs, first pass..."
+	$(Q)rm -f $(BASEDIR)/{good,bad,true_bad,broken}_urls
+	$(Q)for URL in `uniq $(BASEDIR)/test-all-links`; do \
+	    wget --spider --tries=2 --timeout=60 $$URL >>/dev/null 2>&1; \
+	    if test $$? -ne 0 ; then echo $$URL >> $(BASEDIR)/bad_urls ; \
+	    else echo $$URL >> $(BASEDIR)/good_urls 2>&1; \
+	    fi; \
+	done
+
+	@echo "Checking URLs, second pass..."
+	$(Q)for URL2 in `cat $(BASEDIR)/bad_urls`; do \
+	    wget --spider --tries=2 --timeout=60 $$URL2 >>/dev/null 2>&1; \
+	    if test $$? -ne 0 ; then echo $$URL2 >> $(BASEDIR)/true_bad_urls ; \
+	    else echo $$URL2 >> $(BASEDIR)/good_urls 2>&1; \
+	    fi; \
+	done
+	
+	@echo "Generating broken_urls file ..."
+	$(Q)for URL in `cat $(BASEDIR)/true_bad_urls`; do \
+		grep -r "$$URL" * >> $(BASEDIR)/broken_urls ; \
+	done
+	
+	$(Q)sed -i $(BASEDIR)/broken_urls -e "/^tmp/d" -e "/xml~/d"
+
 
 dump-commands: $(DUMPDIR)
 $(DUMPDIR): $(RENDERTMP)/blfs-full.xml
