@@ -1,0 +1,262 @@
+Révision 12513
+
+fichiers modifiés :
+   kde/core/phonon-backend-vlc.xml
+   kde/core/phonon-backend-gstreamer.xml
+   kde/core/kde-runtime.xml
+   kde/core/phonon.xml
+   kde/core/attica.xml
+   general/sysutils/strigi.xml
+   introduction/welcome/changelog.xml
+
+Log :
+KDE related fixes (patch received, thanks).
+
+Le robot a traité 13 % du commit anglais
+Index: general/sysutils/strigi.xml
+===================================================================
+--- general/sysutils/strigi.xml	(révision 12512)
++++ general/sysutils/strigi.xml	(révision 12513)
+@@ -88,9 +88,14 @@
+     <para>Install <application>strigi</application> by running the following
+     commands:</para>
+ 
+-<screen><userinput>mkdir build &amp;&amp;
++<!-- CMAKE_INSTALL_LIBDIR is used so the package doesn't write over lib64 symlink on 64 bit system -->
++<screen><userinput>sed -i "s|BufferedStream :|STREAMS_EXPORT &amp;|" libstreams/include/strigi/bufferedstream.h &amp;&amp;
++mkdir build &amp;&amp;
+ cd build &amp;&amp;
+-cmake -DCMAKE_INSTALL_PREFIX=/usr .. &amp;&amp;
++cmake -DCMAKE_INSTALL_PREFIX=/usr \
++      -DCMAKE_INSTALL_LIBDIR=lib  \
++      -DCMAKE_BUILD_TYPE=Release  \
++      .. &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>To test the results, issue <command>make test</command>.</para>
+@@ -105,6 +110,16 @@
+     <title>Command Explanations</title>
+ 
+     <para>
++      <command>sed -i "..."</command>: This command fixes the build with recent
++      <application>GCC</application> versions.
++    </para>
++    <para>
++      <parameter>-DCMAKE_BUILD_TYPE=Release</parameter>: This switch is used to
++      apply higher level of the compiler optimizations.
++    </para>
++    <para>
+       <option>-DENABLE_DBUS=OFF</option>: Use this <command>cmake</command>
+       variable if you don't have <application>D-Bus</application> installed.
+     </para>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 12512)
++++ introduction/welcome/changelog.xml	(révision 12513)
+@@ -47,6 +47,10 @@
+       <para>January 3rd, 2014</para>
+       <itemizedlist>
+         <listitem>
++          <para>[fernando] - KDE related fixes (patch received, thanks). Fixes
++          <ulink url="&blfs-ticket-root;4517">#4517</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[igor] - Patch libcap to fix the uapi/linux include scheme, reported
+           by Armin K. Fixes <ulink url="&blfs-ticket-root;4508">#4508</ulink>.</para>
+         </listitem>
+
+Index: kde/core/attica.xml
+===================================================================
+--- kde/core/attica.xml	(révision 12512)
++++ kde/core/attica.xml	(révision 12513)
+@@ -60,10 +60,17 @@
+ 
+     <bridgehead renderas="sect4">Required</bridgehead>
+     <para role="required">
+-<xref linkend="qt4"/> and
+-<xref linkend="cmake"/>
++      <xref linkend="cmake"/> and
++      <xref linkend="qt4"/>
+     </para>
+ 
++    <bridgehead renderas="sect4">Optional</bridgehead>
++    <para role="optional">
++      <xref linkend="qt5"/> (requires
++      <ulink url="http://quickgit.kde.org/index.php?p=extra-cmake-modules.git">
++      extra-cmake-modules</ulink>)
++    </para>
+     <para condition="html" role="usernotes">User Notes:
+     <ulink url="&blfs-wiki;/attica"/></para>
+ 
+@@ -80,6 +87,7 @@
+ 
+ cmake -DCMAKE_INSTALL_PREFIX=&kde-dir; \
+       -DCMAKE_BUILD_TYPE=Release         \
++      -DQT4_BUILD=ON                     \
+       .. &amp;&amp;
+ make</userinput></screen>
+ 
+@@ -94,9 +102,18 @@
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+-<para><option>-DCMAKE_BUILD_TYPE=Release</option>: This switch is used to apply
+-a higher level of compiler optimizations.</para>
++    <para>
++      <parameter>-DCMAKE_BUILD_TYPE=Release</parameter>: This switch is used
++      to apply a higher level of compiler the optimizations.
++    </para>
+ 
++    <para>
++      <parameter>-DQT4_BUILD=ON</parameter>: This switch forces the package
++      to build against <application>Qt4</application> even if
++      <application>Qt5</application> is present on the system. Remove it if
++       you want to build the package against <application>Qt5</application>.
++    </para>
+   </sect2>
+ 
+   <sect2 role="content">
+
+Index: kde/core/kde-runtime.xml
+===================================================================
+--- kde/core/kde-runtime.xml	(révision 12512)
++++ kde/core/kde-runtime.xml	(révision 12513)
+@@ -123,10 +124,22 @@
+     <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
+ 
+ <screen role="root"><userinput>make install &amp;&amp;
+-ln -s -v ../lib/kde4/libexec/kdesu &kde-dir;/bin/kdesu</userinput></screen>
++ln -sfv ../lib/kde4/libexec/kdesu &kde-dir;/bin/kdesu</userinput></screen>
+ 
+   </sect2>
+ 
++  <sect2 role="commands">
++    <title>Command Explanations</title>
++    <para>
++      <parameter>-DSAMBA_INCLUDE_DIR=/usr/include/samba-4.0</parameter>:
++      This switch is used so that <application>CMake</application> can
++      properly find <application>Samba</application> headers which got
++      moved in version 4.
++    </para>
++  </sect2>
+   <sect2 role="content">
+     <title>Contents</title>
+ 
+
+Index: kde/core/phonon-backend-gstreamer.xml
+===================================================================
+--- kde/core/phonon-backend-gstreamer.xml	(révision 12512)
++++ kde/core/phonon-backend-gstreamer.xml	(révision 12513)
+@@ -87,6 +87,7 @@
+ cd    build &amp;&amp;
+ 
+ cmake -DCMAKE_INSTALL_PREFIX=&kde-dir; \
++      -DCMAKE_INSTALL_LIBDIR=lib         \
+       -DCMAKE_BUILD_TYPE=Release         \
+       .. &amp;&amp;
+ make</userinput></screen>
+
+Index: kde/core/phonon-backend-vlc.xml
+===================================================================
+--- kde/core/phonon-backend-vlc.xml	(révision 12512)
++++ kde/core/phonon-backend-vlc.xml	(révision 12513)
+@@ -79,6 +79,7 @@
+ cd    build &amp;&amp;
+ 
+ cmake -DCMAKE_INSTALL_PREFIX=&kde-dir; \
++      -DCMAKE_INSTALL_LIBDIR=lib         \
+       -DCMAKE_BUILD_TYPE=Release         \
+       .. &amp;&amp;
+ make</userinput></screen>
+
+Index: kde/core/phonon.xml
+===================================================================
+--- kde/core/phonon.xml	(révision 12512)
++++ kde/core/phonon.xml	(révision 12513)
+@@ -61,14 +61,15 @@
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+     <para role="optional">
+-<xref linkend='pulseaudio'/> and
+-<ulink url="http://projects.kde.org/projects/kdesupport/libqzeitgeist/">QZeitgeist</ulink>
++      <xref linkend="pulseaudio"/>,
++      <xref linkend="qt5"/> and
++      <ulink url="http://projects.kde.org/projects/kdesupport/libqzeitgeist/">QZeitgeist</ulink>
+     </para>
+ 
+     <para condition="html" role="usernotes">User Notes:
+@@ -86,11 +87,13 @@
+     <para>Install <application>Phonon</application> by running the following
+     commands:</para>
+ 
++<!-- CMAKE_INSTALL_LIBDIR is used so the package doesn't write over lib64 symlink on 64 bit system -->
+ <screen><userinput>mkdir build &amp;&amp;
+ cd    build &amp;&amp;
+ 
+ cmake -DCMAKE_INSTALL_PREFIX=&qt4-dir; \
+       -DCMAKE_BUILD_TYPE=Release \
++      -DCMAKE_INSTALL_LIBDIR=lib \
+       -DPHONON_INSTALL_QT_EXTENSIONS_INTO_SYSTEM_QT=TRUE \
+       -DDBUS_INTERFACES_INSTALL_DIR=/usr/share/dbus-1/interfaces \
+       .. &amp;&amp;
+@@ -105,17 +108,30 @@
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+-<para><option>-DCMAKE_BUILD_TYPE=Release</option>: This switch is used to apply
+-higher level of compiler optimizations.</para>
++    <para>
++      <parameter>-DCMAKE_BUILD_TYPE=Release</parameter>: This switch is used
++      to apply higher level of the compiler optimizations.
++    </para>
+ 
+-<para><option>-DPHONON_INSTALL_QT_EXTENSIONS_INTO_SYSTEM_QT=TRUE</option>:
+-This option ensures that the plugins and mkspecs files get installed in
+-the correct location.</para>
++    <para>
++      <parameter>-DPHONON_INSTALL_QT_EXTENSIONS_INTO_SYSTEM_QT=TRUE</parameter>:
++      This switch ensures that the plugins and mkspecs files get installed in
++      the correct location.
++    </para>
+ 
+-<para><option>-DDBUS_INTERFACES_INSTALL_DIR=/usr/share/dbus-1/interfaces</option>:
+-This option sets the correct installation path for a D-Bus interfaces file.
++    <para>
++     <parameter>-DDBUS_INTERFACES_INSTALL_DIR=/usr/share/dbus-1/interfaces</parameter>:
++      This switch sets the correct installation path for the 
++      <application>D-Bus</application> interfaces file.
+     </para>
+ 
++    <para>
++      <option>-DPHONON_BUILD_PHONON4QT5=ON</option>: Use this switch if you want to
++      build <application>Phonon</application> against <application>Qt5</application>.
++      Note that both <application>Qt4</application> and <application>Qt5</application>
++      versions can be installed at the same time without any conflicts.
++    </para>
+   </sect2>
+ 
+   <sect2 role="content">
+@@ -127,9 +143,18 @@
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-<seg>none</seg>
+-<seg>libphonon.so and libphononexperimental.so</seg>
+-<seg>none</seg>
++        <seg>
++          None
++        </seg>
++        <seg>
++          libphonon.so and
++          libphononexperimental.so
++        </seg>
++        <seg>
++          &qt4-dir;/include/KDE/Phonon,
++          &qt4-dir;/include/phonon, and
++          &qt4-dir;/share/phonon
++        </seg>
+       </seglistitem>
+     </segmentedlist>
+ 
+
