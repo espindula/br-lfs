@@ -150,10 +150,6 @@
 <userinput>PATH_HOLD=$PATH &amp;&amp;
 export PATH=/opt/gnat/bin:$PATH_HOLD</userinput>
 </screen>
-<screen>
-<userinput>find /opt/gnat -name ld -exec mv -v {} {}.old \;
-find /opt/gnat -name as -exec mv -v {} {}.old \;</userinput>
-</screen>
     
 <para>Cela présente l'inconvénient que les exécutables de <application>GCC</application>
     et <application>Binutils</application> sont pris du paquet
@@ -221,7 +217,40 @@ make
     <quote>bootstrap</quote> volontairement. Cela est nécessaire si vous installez le compilateur
     <application>ADA</application>. Même si vous ne le faite pas, 
     un bootstrap est recommandé pour plus de robustesse.</para>
-<screen>
+<screen><userinput>sed -i 's/\(install.*:\) install-.*recursive/\1/' libffi/Makefile.in         &amp;&amp;
+sed -i 's/\(install-data-am:\).*/\1/'             libffi/include/Makefile.in &amp;&amp;
+sed -i 's/install_to_$(INSTALL_DEST) //'          libiberty/Makefile.in      &amp;&amp;
+sed -i 's@\./fixinc\.sh@-c true@'                 gcc/Makefile.in            &amp;&amp;
+
+case `uname -m` in
+      i?86) sed -i 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in ;;
+esac &amp;&amp;
+
+mkdir ../gcc-build &amp;&amp;
+cd    ../gcc-build &amp;&amp;
+
+../gcc-&gcc-version;/configure          \
+    --prefix=/usr               \
+    --libdir=/usr/lib           \
+    --libexecdir=/usr/lib       \
+    --enable-shared             \
+    --enable-threads=posix      \
+    --enable-__cxa_atexit       \
+    --disable-multilib          \
+    --disable-bootstrap         \
+    --disable-install-libiberty \
+    --with-system-zlib          \
+    --enable-clocale=gnu        \
+    --enable-lto                \
+    --enable-languages=c,c++,fortran,ada,go,java,objc,obj-c++ &amp;&amp;
+make
+</userinput></screen>
+
+    <para>Si vous avez installé des paquets supplémentaires comme valgrind et gdb,
+    la partie de gcc de la suite de tests lancera plus de tests que dans LFS. 
+    Certain d'entre eux signaleront des FAIL et d'autres XPASS (passage quand
+    échec attendu).  Pour lancer les vérifications:</para>
+ <screen>
 <userinput>
 ulimit -s 32768 &amp;&amp;
 make -k check   &amp;&amp;
@@ -241,6 +270,10 @@ chown -v -R root:root \
 <para>Vous devriez maintenant 
     supprimer l'installation de <application>GNAT</application> et effectuer
     d'autres nettoyages&nbsp;:</para>
+  
+<screen><userinput>rm -rf /opt/gnat &amp;&amp;
+export PATH=$PATH_HOLD &amp;&amp;
+unset PATH_HOLD</userinput></screen>  
 </sect2>
   
 <sect2 role="commands">
