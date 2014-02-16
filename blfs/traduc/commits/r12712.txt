@@ -1,0 +1,120 @@
+Révision 12712
+
+fichiers modifiés :
+   pst/typesetting/texlive.xml
+   introduction/welcome/changelog.xml
+
+Log :
+TeX Live - build asymptote.
+
+Le robot a traité 4 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 12711)
++++ introduction/welcome/changelog.xml	(révision 12712)
+@@ -47,6 +47,11 @@
+       <para>February 15th, 2014</para>
+       <itemizedlist>
+         <listitem>
++          <para>[ken] - add instructions to build asymptote within TeX Live.
++          This completes the current work (i.e. everything except xindy) for
++          <ulink url="&blfs-ticket-root;4647">#4647</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[fernando] - Update to cups-filters 1.0.45. Fixes
+           <ulink url="&blfs-ticket-root;4694">#4694</ulink>.</para>
+         </listitem>
+
+Index: pst/typesetting/texlive.xml
+===================================================================
+--- pst/typesetting/texlive.xml	(révision 12711)
++++ pst/typesetting/texlive.xml	(révision 12712)
+@@ -58,6 +58,16 @@
+       </listitem>
+     </itemizedlist>
+ 
++    <bridgehead renderas="sect3">Additional Downloads</bridgehead>
++    <itemizedlist spacing="compact">
++      <listitem>
++        <para>
++          Required patch:
++          <ulink url="&patch-root;/texlive-&texlive-version;-source-fix_asymptote-1.patch"/>
++        </para>
++      </listitem>
++    </itemizedlist>
+     <bridgehead renderas="sect3">TeX Live Dependencies</bridgehead>
+ 
+     <bridgehead renderas="sect4">Recommended</bridgehead>
+@@ -129,10 +139,16 @@
+     what was originally installed.</para>
+ 
+     <para>At the moment, these instructions do not rebuild
+-<application>asy</application> and <application>xindy</application> which were
+-installed by the binary installer.</para> <!-- FIXME -->
++    <application>xindy</application> which was installed by the binary installer.
++    If you wish to rebuild that, please consult
++    <ulink url="&blfs-ticket-root;4647">#4647</ulink>. Asy and the rest of
++    asymptote is by default not rebuilt, so we have to separately run
++    <command>configure</command> and <command>make</command> in its directory.
++    </para>
+ 
+-<screen><userinput>mkdir texlive-build &amp;&amp;
++<screen><userinput>patch -Np1 -i ../texlive-&texlive-version;-source-fix_asymptote-1.patch &amp;&amp;
++mkdir texlive-build &amp;&amp;
+ cd texlive-build    &amp;&amp;
+ 
+ ../configure --prefix=/opt/texlive/2013 \
+@@ -158,14 +174,30 @@
+              --with-system-pixman \
+              --with-system-zlib \
+              --with-banner-add=" - BLFS" &amp;&amp;
+-make</userinput></screen>
+ 
+-<para>To test the results, issue: <command>make -k check</command>.</para>
++pushd ../utils/asymptote &amp;&amp;
++echo "ac_cv_lib_m_sqrt=yes" >config.cache &amp;&amp;
++echo "ac_cv_lib_z_deflate=yes" >>config.cache &amp;&amp;
++./configure LIBS="-ltirpc "  --prefix=/opt/texlive/2013/ \
++ --bindir=/opt/texlive/2013/bin/x86_64-linux \
++ --enable-texlive-build \
++ --datarootdir=/opt/texlive/2013/texmf-dist \
++ --infodir=/opt/texlive/2013/texmf-dist/doc/info/ \
++ --mandir=/opt/texlive/2013/texmf-dist/doc/man \
++ --cache-file=config.cache &amp;&amp;
++popd &amp;&amp;
+ 
++make &amp;&amp;
++make -C ../utils/asymptote</userinput></screen>
++    <para>To test the results, issue: <command>make -k chec &amp;&amp;
++    make -C utils/asymptote checkk</command>.</para>
+     <para>Now, as the <systemitem class="username">root</systemitem>
+     user:</para>
+ 
+-<screen><userinput role="root">make install</userinput></screen>
++<screen><userinput role="root">make install &amp;&amp;
++make -C ../utils/asymptote install</userinput></screen>
+ 
+   </sect2>
+ 
+@@ -210,9 +242,20 @@
+     </para>
+ 
+     <para>
+-<option>--without-x</option>: use this if you do not have Xorg installed.
++      <parameter>echo "ac_cv_lib_m_sqrt=yes" ... LIBS="-ltirpc " &gt;config.cache,
++      ... --cache-file=config.cache</parameter> : The configure scripts in
++      <application>TeX Live</application> are uncommon. Asymptote not only has to
++      be separately configured and built, the configure script fails to find the
++      shared <filename class="libraryfile">libtirpc.so</filename>.  Passing that
++      in LIBS breaks the tests for (static) libm and (shared) libz, so we have to
++      fix things up, in much the same way as when cross-compiling.
+     </para>
+ 
++    <para>
++      <option>--without-x</option>: use this (and omit the configure and make in
++      <filename>utils/asymptote</filename> if you do not have Xorg installed.
++    </para>
+   </sect2>
+ 
+   <sect2 role="content">
+
