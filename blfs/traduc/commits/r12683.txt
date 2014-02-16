@@ -1,0 +1,261 @@
+Révision 12683
+
+fichiers modifiés :
+   pst/typesetting/texlive.xml
+   introduction/welcome/changelog.xml
+
+Log :
+The main part of the changes for using system libraries on Tex Live.
+
+Le robot a traité 4 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 12682)
++++ introduction/welcome/changelog.xml	(révision 12683)
+@@ -47,6 +47,14 @@
+       <para>February 8th, 2014</para>
+       <itemizedlist>
+         <listitem>
++          <para>[ken] -  Changes to the configuration switches and details for
++          building TeX Live from source.  This completes the major work for
++          <ulink url="&blfs-ticket-root;4647">#4647</ulink> but details re the
++          installer&apos;s runtime dependencies, and for building asy and xindy,
++          remain to be investigated.  A big Thank You to Greg Nietsky for
++          raising this and providing details.</para>
++        </listitem>
++        <listitem>
+           <para>[fernando] - IcedTea-Web-1.4.2: add NPAPI-SDK-0.27.2 as
+           required dependency. Thanks Merell Matlock for reporting. Fixes
+           <ulink url="&blfs-ticket-root;4670">#4670</ulink>.</para>
+
+Index: pst/typesetting/texlive.xml
+===================================================================
+--- pst/typesetting/texlive.xml	(révision 12682)
++++ pst/typesetting/texlive.xml	(révision 12683)
+@@ -72,29 +72,42 @@
+ 
+     <bridgehead renderas="sect3">TeX Live Dependencies</bridgehead>
+ 
+-<bridgehead renderas="sect4">Optional (to build from source)</bridgehead>
+-<para role="optional">
+-The source ships with its own versions of <emphasis>many</emphasis> of
+-these libraries, and will use them unless it is forced to use the system
+-versions.  Work is in progress to deal with this, in the meantime please
+-see<ulink url="http://wiki.linuxfromscratch.org/blfs/ticket/4647"> ticket
+-#4647</ulink>.
++    <bridgehead renderas="sect4">Recommended (to build from source)</bridgehead>
++    <para role="recommended">
++      The source ships with its own versions of <emphasis>many</emphasis>
++      libraries, and will use them unless it is forced to use the system
++      versions.
+       <xref linkend="gs"/>,
+-<xref linkend="poppler"/>,
++      <xref linkend="icu"/>,
+       <xref linkend="freetype2"/>,
+       <xref linkend="fontconfig"/>,
++      <xref linkend="graphite2"/>,
++      <xref linkend="harfbuzz"/> (linked to graphite2),
+       <xref linkend="libpng"/>,
+-<xref linkend="x-window-system"/>,
+-<xref linkend="icu"/>,
++      <xref linkend="poppler"/>,
++      <xref linkend="x-window-system"/>
++    </para>
++    <bridgehead renderas="sect4">Optional (to build from source)</bridgehead>
++    <para role="optional">
++      The source ships with its own versions of these libraries, which are either
++      not under active development, or only used for limited functionality.  If
++      you install these, as with some other optional dependencies in this book you
++      will need to tell <command>configure</command> to use the system versions.
+       <ulink url="http://libgd.bitbucket.org">GD</ulink>,
+       <ulink url="http://fossies.org/linux/misc/t1lib-5.1.2.tar.gz/">t1lib</ulink>,
+       <ulink url="http://sourceforge.net/projects/zziplib/">ZZIPlib</ulink>,
+       <ulink url="http://www.gnu.org/software/clisp/">CLISP</ulink>,
+-<xref linkend="lua"/>,
+-<ulink url="http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&amp;id=TECkitDownloads">TECkit</ulink>, and
+-<xref linkend="graphite2"/>
++      <ulink url="http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&amp;id=TECkitDownloads">TECkit</ulink>
+     </para>
+ 
++    <bridgehead renderas="sect4">Runtime dependencies if building from source</bridgehead>
++    <para role="recommended">
++      not yet adequate to rebuild this),
++      <xref linkend="tk"/> for ep2pdftk.
++    </para>
+     <para condition="html" role="usernotes">User Notes:
+     <ulink url="&blfs-wiki;/texlive"/></para>
+ 
+@@ -109,12 +122,12 @@
+     BLFS recommends <filename class='directory'>/opt/texlive</filename>.</para>
+ 
+     <para>First, unpack the installer and change into the installer's
+-directory, <filename class='directory'>install-tl-20130730</filename>.
+-This directory name may change if the installer package is updated
+-by the upstream maintainers.</para>
++    directory, <filename class='directory'>install-tl-&lt;CCYYMMDD&gt;</filename>.
++    This directory name changes frequently when the installer is updated,
++    so replace &lt;CCYYMMDD&gt; by the correct directory name.</para>
+ 
+ <screen><userinput>tar -xf install-tl-unx.tar.gz &amp;&amp;
+-cd install-tl-20130730 </userinput></screen>
++cd install-tl-&lt;CCYYMMDD&gt; </userinput></screen>
+ 
+     <note><para>The distribution binaries installed below use static linking
+     for internal <application>TeX Live</application> libraries.  Additional
+@@ -125,7 +138,7 @@
+     <para>Now, as the <systemitem class="username">root</systemitem>
+     user:</para>
+ 
+-<screen><userinput>TEXLIVE_INSTALL_PREFIX=/opt/texlive ./install-tl</userinput></screen>
++<screen><userinput role="root">TEXLIVE_INSTALL_PREFIX=/opt/texlive ./install-tl</userinput></screen>
+ 
+     <para>This command is interactive and allows selection or modification of
+     platform, packages, directories, and other options.  The full installation
+@@ -137,11 +150,11 @@
+     that the system can properly find the files.  If you set up your login
+     scripts as recommended in <xref linkend='postlfs-config-profile'/>, update
+     the needed paths by appending to the <filename>extrapaths.sh</filename> script.
+-Be sure to adjust the paths below to reflect your actual installation
+-location.  In addition, the path to the binaries will be affected by your
+-system architecture.</para>
++    The programs are always installed in an &lt;ARCH&gt;-linux subdirectory.  If
++    you are not using x86_64, <emphasis>always</emphasis> change that to your
++    actual installation location.</para>
+ 
+-<screen><userinput>cat &gt;&gt; /etc/profile.d/extrapaths.sh &lt;&lt; "EOF"
++<screen><userinput role="root">cat &gt;&gt; /etc/profile.d/extrapaths.sh &lt;&lt; "EOF"
+ pathappend /usr/share/man                        MANPATH
+ pathappend /opt/texlive/&texlive-year;/texmf-dist/doc/man  MANPATH
+ pathappend /usr/share/info                       INFOPATH
+@@ -157,43 +170,113 @@
+     <para>The new paths can be immediately activated by running <command>source
+     /etc/profile</command>.</para>
+ 
+-<para>At this point the installation is complete.  If building from
+-source is desired, extract the source package as usual and continue.</para>
++    <para>At this point the binary installation is complete.</para>
+ 
+-<note>
+-<para>If you do not have Xorg installed add <userinput>--without-x</userinput>
+-to the configure command.</para>
++    <para>Please note that installing from source will recompile the binary
++    programs and recreate the <literal>man</literal> and <literal>info</literal>
++    files.  It will also overwrite the scripts - some of these may be older
++    versions than those from the newer installer.  It will <emphasis>not</emphasis>
++    recreate any of the following: the more than 200 symlinks in the
++    &lt;ARCH&gt;-linux directory (some are alternate names, many are pointers to
++    the scripts), html files, PDF files, licenses, README files, two config
++    files (<filename>texmf.cnf</filename> and <filename>texmfcnf.lua</filename>),
++    nor the many package and font files in
++    <filename class="directory">texmf-dist</filename> and
++    <filename class="directory">texmf-var</filename>, nor the files recording
++    the actions of the installer, and the <filename>ls-R</filename> files listing
++    what was originally installed.</para>
+ 
+-<para>If you do not have fontconfig installed, add
+-<userinput>--disable-xdvipdfmx</userinput> to the configure command.</para>
+-</note>
++    <para>At the moment, these instructions do not rebuild
++    <application>asy</application> and <application>xindy</application> which were
++    installed by the binary installer.</para> <!-- FIXME -->
+ 
+-<screen><userinput>./configure --prefix=/usr                  \
+---disable-native-texlive-build \
+---enable-build-in-source-tree  \
+---without-luatex               \
+---enable-mktextex-default      \
+---with-banner-add=" - BLFS"    &amp;&amp;
++    <para>  If building from
++    source is desired, continue as a normal user.  Extract the source package as
++    usual.  Again, change x86_64-linux to whatever matches your architecture.
++    The developers do not recommend building in the source directory, so enter
++    the following commands:</para>
++<screen><userinput>mkdir texlive-build &amp;&amp;
++cd texlive-build    &amp;&amp;
++../configure --prefix=/opt/texlive/2013 \
++             --bindir=/opt/texlive/2013/bin/x86_64-linux \
++             --datarootdir=/opt/texlive/2013 \
++             --includedir=/usr/include \
++             --infodir=/opt/texlive/2013/texmf-dist/doc/info \
++             --libdir=/usr/lib \
++             --mandir=/opt/texlive/2013/texmf-dist/doc/man \
++             --disable-native-texlive-build \
++             --disable-static --enable-shared \
++             --with-system-libgs \
++             --with-system-poppler \
++             --with-system-freetype2 \
++             --with-system-fontconfig \
++             --with-system-libpng \
++             --with-system-icu \
++             --with-system-graphite2 \
++             --with-system-harfbuzz \
++             --with-system-xpdf \
++             --with-system-poppler \
++             --with-system-cairo \
++             --with-system-pixman \
++             --with-system-zlib \
++             --with-banner-add=" - BLFS" &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>To test the results, issue: <command>make -k check</command>.</para>
+ 
+-<para>In order to gather the built files in one place, use
+-<userinput>make install</userinput> to put then in a temproary location:</para>
++    <para>Now, as the <systemitem class="username">root</systemitem>
++    user:</para>
+ 
+-<screen><userinput>make DESTDIR=$PWD/texlive-tmp install</userinput></screen>
++<screen><userinput role="root">make install</userinput></screen>
+ 
+-<para>Now copy the executables to the <application>TeX Live</application>
+-binary directory.  Be sure to adjust the destination directory for your
+-installation.  As the  <systemitem class="username">root</systemitem>
+-user:</para>
++  </sect2>
+ 
+-<screen><userinput>find texlive-tmp/usr/bin -type f -exec cp -v {} /opt/texlive/2013/bin/x86_64-linux \;</userinput></screen>
++  <sect2 role="commands">
++    <title>Command Explanations</title>
+ 
+-<note><para>If you passed the option <option>--enable-shared</option> to the
+-configure command, the two libraries, libkpathsea.so, libptexenc.so and their
+-symbolic links will also need to be copied to /usr/lib.</para></note>
++    <para>
++      <parameter>--prefix=, --bindir=, --datarootdir=, --infodir=, --mandir= ...
++      </parameter>: these switches ensure that the files installed from source
++      will overwrite the corresponding files previously installed by
++      <application>install-tl</application>.
++    </para>
+ 
++    <para>
++      <parameter>--includedir=, --libdir= ...</parameter> : these switches ensure
++      that the libraries will be found at runtime, and that programs can be
++      compiled against them.
++    </para>
++    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
++      href="../../xincludes/static-libraries.xml"/>
++    <para>
++      <parameter>--enable-shared</parameter>: Use shared versions of
++      <filename class="libraryfile">libkpathsea</filename> and
++      <filename class="libraryfile">libptexenc</filename>.
++    </para>
++    <para>
++      <parameter>--with-system-...</parameter>: Unless this parameter is used,
++      the included versions of these libraries  will be statically compiled
++      into the programs which need them.  If you decided not to install a
++      recommended library, omit the corresponding switches.
++    </para>
++    <para>
++      <parameter>--with-system-xpdf</parameter>: Uniquely, this parameter has
++      a non-standard meaning, it tells <command>configure</command> to use the
++      system-installed <application>poppler</application> headers and library.
++      Again, omit this if you have not installed
++      <application>poppler</application>.
++    </para>
++    <para>
++      <option>--without-x</option>: use this if you do not have Xorg installed.
++    </para>
+   </sect2>
+ 
+   <sect2 role="content">
+
