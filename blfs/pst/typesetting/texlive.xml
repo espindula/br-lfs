@@ -58,28 +58,39 @@
       
     </itemizedlist>
     <bridgehead renderas="sect3">Dépendances de TeX Live</bridgehead>
-    <bridgehead renderas="sect4">Facultative (pour construire depuis les sources)</bridgehead>
-    <para role="optional">
+    <bridgehead renderas="sect4">Recommandées (pour construire depuis les sources)</bridgehead>
+    <para role="recommended">
       Les sources inclus leur propre version de <emphasis>beaucoup</emphasis> de
-      ces bibliothèques, et veulent les utiliser sans être forcé à utiliser celle du
-      système. Le travail progresse pour travailler avec cela,
-      dans le même temps, regardez s'il vous plaît<ulink url="http://wiki.linuxfromscratch.org/blfs/ticket/4647"> ticket
-      #4647</ulink>.
+      bibliothèques, et veulent les utiliser sans être forcé à utiliser celle du
+      système.
       <xref linkend="gs"/>,
-      <xref linkend="poppler"/>,
+      <xref linkend="icu"/>,
       <xref linkend="freetype2"/>,
       <xref linkend="fontconfig"/>,
+      <xref linkend="graphite2"/>,
+      <xref linkend="harfbuzz"/> (lié à graphite2),
       <xref linkend="libpng"/>,
-      <xref linkend="x-window-system"/>,
-         
-      <xref linkend="icu"/>,
+      <xref linkend="poppler"/>,
+      <xref linkend="x-window-system"/>
+    </para>
+    <bridgehead renderas="sect4">Facultative (pour construire depuis les sources)</bridgehead>
+    <para role="optional">
+      Les sources inclus leur propre verson de ces bibliothèques, qui ne sont soit pas dans un developpement
+      actif, ou seulement utilisées pour des fonctions limitées. Si vous les installez, comme avec d'autres
+      dépendances facultatives dans le ce libre, vous devrez appeler
+      <command>configure</command> pour utiliser les versions du système.
       <ulink url="http://libgd.bitbucket.org">GD</ulink>,
       <ulink url="http://fossies.org/linux/misc/t1lib-5.1.2.tar.gz/">t1lib</ulink>,
       <ulink url="http://sourceforge.net/projects/zziplib/">ZZIPlib</ulink>,
       <ulink url="http://www.gnu.org/software/clisp/">CLISP</ulink>,
-      <xref linkend="lua"/>,
-      <ulink url="http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&amp;id=TECkitDownloads">TECkit</ulink>, et
-      <xref linkend="graphite2"/></para>
+      <ulink url="http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&amp;id=TECkitDownloads">TECkit</ulink>
+     </para>
+    <bridgehead renderas="sect4">Dépendances d'éxécution si vous construisez depuis les sources</bridgehead>
+    <para role="recommended">
+      (pas encore adéquate pour reconstruire cela),
+      <xref linkend="tk"/> pour ep2pdftk.
+    </para>
+
     <para condition="html" role="usernotes">Notes utilisaeur:
     <ulink url="&blfs-wiki;/texlive"/></para>
   </sect2>
@@ -91,12 +102,12 @@
     fichiers dans un seul répertoire. BLFS vous recommande
     <filename class='directory'>/opt/texlive</filename>.</para>
     <para>Tout d'abord, déballez l'installeur et rendez-vous dans le répertoire
-    de l'installeur, <filename class='directory'>install-tl-20130730</filename>.
-    Vous pouvez modifier le nom de ce répertoire si le paquet de l'installeur
-    est mis à jour par les mainteneurs en amont.</para>
+    de l'installeur, <filename class='directory'>install-tl-&lt;CCYYMMDD&gt;</filename>.
+    Ce nom de répertoire change souvent quand l'installateur est mis à jour, aussi remplacez
+     &lt;CCYYMMDD&gt; par le nom correct de répertoire.</para>
 <screen>
 <userinput>tar -xf install-tl-unx.tar.gz &amp;&amp;
-cd install-tl-20130730 </userinput>
+cd install-tl-&lt;CCYYMMDD&gt; </userinput>
 </screen>
     <note><para>Les binaires de la distribution installés ci-dessous utilisent
     l'édition de liens statiques pour les bibliothèques 
@@ -117,10 +128,9 @@ cd install-tl-20130730 </userinput>
     assurer que le système puisse bien trouver les fichiers. Si vous paramétrez
     vos scripts de connexion comme recommandé dans <xref linkend='postlfs-config-profile'/>, 
     mettez à jour les chemins nécessaires en les envoyant vers le script
-    <filename>extrapaths.sh</filename>. Assurez-vous d'ajuster les chemins 
-    ci-dessous pour correspondre à votre emplacement d'installation. En outre,
-    le chemin vers les binaires seront concernés par l'architecture de votre 
-    système.</para>
+    <filename>extrapaths.sh</filename>. Les programmes sont également installés dans le sous-répertoire
+   &lt;ARCH&gt;-linux. Si vous n'utilisez pas une architecture  x86_64,  <emphasis>toujours</emphasis>
+   le changer pour votre endroit d'installation.</para>
 <screen>
 <userinput>cat &gt;&gt; /etc/profile.d/extrapaths.sh &lt;&lt; "EOF"
 pathappend /usr/share/man                        MANPATH
@@ -136,37 +146,98 @@ EOF</userinput>
     soient supprimées, donc les mettre ici ne représente aucun danger.</para></note>
     <para>On peut activer immédiatement les nouveaux chemins en lançant 
     <command>source /etc/profile</command>.</para>
-    <para>À ce moment, l'installation est terminée. Si vous souhaitez construire
-    à partir des sources, allez dans les sources du paquet comme d'habitude et 
-    continuez.</para>
-    <note>
-     <para>Si vous n'avez pas installé Xorg, ajoutez <userinput>--without-x</userinput> 
-      à la commande configure.</para>
-     <para>Si vous n'avez pas installé fontconfig, ajoutez 
-      <userinput>--disable-xdvipdfmx</userinput> à la commande configure.</para>
-    </note>
-<screen>
-<userinput>./configure --prefix=/usr                              --disable-native-texlive-build             --enable-build-in-source-tree              --without-luatex                           --enable-mktextex-default                  --with-banner-add=" - BLFS"    &amp;&amp;
+    <para>À ce moment, l'installation des binaires est terminée.</para>
+    
+   <para>Merci de noter que l'installation depuis les sources recompilera les programmes
+    binaires et recréera les fichiers <literal>man</literal> et <literal>info</literal>.
+    Cela écrasera également les scripts - certain peuvent être de versions plus anciennes que
+    ceux du nouvel installateur. Cele <emphasis>ne</emphasis>
+    recréera pas : les plus de 200 liens symboliques dans le répertoire
+   &lt;ARCH&gt;-linux (certains sont des noms alternatifs, beaucoup sont des pointeurs vers 
+    les scripts), les fichiers  html, les fichiers PDF, les licences, les fichiers README, deux fichiers de
+    config (<filename>texmf.cnf</filename> et <filename>texmfcnf.lua</filename>),
+    ni les nombreux paquets et les fichiers de police dans 
+    <filename class="directory">texmf-dist</filename> et
+    <filename class="directory">texmf-var</filename>, ni les fichiers enregistrant les actions de l'installateur,
+    et les fichiers <filename>ls-R</filename> listant ce qui est installé originellement.</para>
+    <para>Actuellement, ces instructions ne construisent pas 
+    <application>asy</application> et <application>xindy</application> qui sont installés pas l'installateur
+    binaires</para>
+    <para>  si la construction depuis les sources est souhaitée, continuez en tant qu'utilisateur normal, Déballez
+    le paquet des sources comme habituellement. De nouveau, changez x86_64-linux pour quelques choses
+    qui correspond à votre architecture.
+    Les developpeurs ne recommandent pas de construire dans le répertoire des sources, donc entrez la commande
+    suivante:</para>
+<screen><userinput>mkdir texlive-build &amp;&amp;
+cd texlive-build    &amp;&amp;
+../configure --prefix=/opt/texlive/2013 \
+             --bindir=/opt/texlive/2013/bin/x86_64-linux \
+             --datarootdir=/opt/texlive/2013 \
+             --includedir=/usr/include \
+             --infodir=/opt/texlive/2013/texmf-dist/doc/info \
+             --libdir=/usr/lib \
+             --mandir=/opt/texlive/2013/texmf-dist/doc/man \
+             --disable-native-texlive-build \
+             --disable-static --enable-shared \
+             --with-system-libgs \
+             --with-system-poppler \
+             --with-system-freetype2 \
+             --with-system-fontconfig \
+             --with-system-libpng \
+             --with-system-icu \
+            --with-system-graphite2 \
+             --with-system-harfbuzz \
+             --with-system-xpdf \
+             --with-system-poppler \
+             --with-system-cairo \
+             --with-system-pixman \
+             --with-system-zlib \
+             --with-banner-add=" - BLFS" &amp;&amp;
 make</userinput>
 </screen>
      <para>Pour tester les résultats, lancez&nbsp;: <command>make -k check</command>.</para>
-    <para>Afin de rassembler les fichiers construits à un seul endroit, utilisez
-    <userinput>make install</userinput> pour les mettre à un endroit 
-    temporaire&nbsp;:</para>
-<screen>
-<userinput>make DESTDIR=$PWD/texlive-tmp install</userinput>
-</screen>
-    <para>Maintenant, copiez les exécutables dans le répertoire binaire de
-    <application>TeX Live</application>. Assurez-vous d'ajuster le répertoire de
-    destination selon votre installation.  En tant qu'utilisateur
-    <systemitem class="username">root</systemitem>&nbsp;:</para>
-<screen>
-<userinput>find texlive-tmp/usr/bin -type f -exec cp -v {} /opt/texlive/2013/bin/x86_64-linux ;</userinput>
-</screen>
-    <note><para>Si vous avez passé l'option <option>--enable-shared</option> à
-    la commande configure, les deux bibliothèques, libkpathsea.so, libptexenc.so
-    et leurs liens symboliques, devront également être copiés vers 
-    /usr/lib.</para></note>
+  
+    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>:</para>
+
+<screen><userinput role="root">make install</userinput></screen>
+
+</sect2>
+
+  <sect2 role="commands">
+    <title>Explications des commandes</title>
+    <para>
+      <parameter>--prefix=, --bindir=, --datarootdir=, --infodir=, --mandir= ...
+      </parameter>: Ces paramètres assurent que les fichiers isntallés depuis les sources
+      écraseront les fichiers correspondants installés précédement par 
+      <application>install-tl</application>.
+    </para>
+    <para>
+      <parameter>--includedir=, --libdir= ...</parameter> : Ces paramètres assurent que les bibliothèques
+      seront trouvés à l'éxécution, et que les programmes peuvent être compilés contre elles.
+  </para>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+      href="../../xincludes/static-libraries.xml"/>
+    <para>
+      <parameter>--enable-shared</parameter>: Utilisation des versions partagées de 
+      <filename class="libraryfile">libkpathsea</filename> et
+      <filename class="libraryfile">libptexenc</filename>.
+    </para>
+    <para>
+      <parameter>--with-system-...</parameter>: Sans ce paramètre utilisé,
+      les versions incluses de ces bibliothèques seront compilés en statiques dans les programmes
+      qui les utilisent. Si vous décidez de ne pas installer une bibliothèque recommandée, ne pas mettre le
+      paramètre correspondant.
+   </para>
+    <para>
+      <parameter>--with-system-xpdf</parameter>: unique, ce paramètre a une signification non standard, il
+      indique à <command>configure</command> d'utiliser les entêtes et la bibliothèque installés sur le système
+       <application>poppler</application>.
+      De nouveau, oubliez le si vous n'avez pas installé
+      <application>poppler</application>.
+    </para>
+    <para>
+     <option>--without-x</option>: utilisez le si vous n'avez pas installé Xorg.
+    </para>
   </sect2>
   <sect2 role="content">
     <title>Contenu</title>
