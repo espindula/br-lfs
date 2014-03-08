@@ -75,6 +75,10 @@ fi</xsl:text>
         <xsl:when test="contains($patch.name, 'X11R6')">
           <xsl:text>/xorg</xsl:text>
         </xsl:when>
+          <!-- net-tools -->
+        <xsl:when test="contains($patch.name, 'net-tools')">
+          <xsl:text>/net-tools</xsl:text>
+        </xsl:when>
           <!-- General rule -->
         <xsl:otherwise>
           <xsl:variable name="cut"
