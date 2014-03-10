@@ -129,14 +129,14 @@ log_att $?
 # détermination de la dernière version traduite selon le wiki
 #---------------------------------------------------------------------
 
-# récupération de la page du wiki et enregistrement dans lfsfr
+# récupération de la page du wiki et enregistrement dans blfsfr
 log_info "Chargement de la page du wiki"
-wget http://traduc.org/lfsfr 2>>$CHEMIN_LOG/robot.err
+wget http://traduc.org/blfsfr 2>>$CHEMIN_LOG/robot.err
 log_err $?
 
 # extraction de toutes les lignes contenant un numéros de 5 chiffres dans le fichier list
 log_info "Recherche des numéros de 5 chiffres dans la page du wiki"
-grep \>\*[0-9][0-9][0-9][0-9][0-9] lfsfr >list
+grep \>\*[0-9][0-9][0-9][0-9][0-9] blfsfr >list
 log_err $?
 
 V_WIKI=0
@@ -170,8 +170,8 @@ fi
 log_info "version $V_WIKI indiquée sur le wiki comme étant la dernière traduite"
 log_err 0
 
-# effacement des fichiers lfsfr et list
-rm lfsfr
+# effacement des fichiers blfsfr et list
+rm blfsfr
 rm list
 
 #---------------------------------------------------------------------
