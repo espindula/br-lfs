@@ -58,17 +58,13 @@
 #
 # Fichier sous licence CC-BY-SA
 # 11/03/12
-
 # initialisation de la variable avec l'adresse mail de l'admin du robot
 # les log d'erreurs sont envoyés à l'admin du robot
 ADMIN_ROBOT="myou72@orange.fr"
-
 # initialisation du chemin pour blfs-fr
 CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
-
 #initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
 CHEMIN_LOG="${CHEMIN_BLFSFR}/traduc/script/robot-html/log"
-
 # fonction pour la gestion des erreurs
 # $1 : code d'erreur
 # dans le cas d'une erreur, un mail est envoyé à l'admin du robot
@@ -100,53 +96,43 @@ function log_info
 {
          echo -n $(date) : $1 >> $CHEMIN_LOG/robot.log
 }
-
 # variable numérique utilisée dans le script
 declare -i VERSION 
 declare -i V_FR        # version de la dernière VF publiée
 declare -i V_WIKI      # dernière VO indiquée traduite sur le wiki
 declare -i V_ANC       # dernière VF traitée par le robot
 declare -i V_FRACT     
-
 # on se déplace à la racine de la copie de travail de BLFS-fr
 cd $CHEMIN_BLFSFR
-
 # initialisation de $CHEMIN_LOG/robot.log
 > $CHEMIN_LOG/robot.log
 > $CHEMIN_LOG/robot.err
 log_info "Démarrage du robot"
 log_err $?
 echo -n "$(date) Exécution du robot" >> $CHEMIN_LOG/jobrobot.log
-
 # initialisation de la dernière version traduite par le robot
 # l'information est enregistrée dans le fichier ./vtraduc
 log_info "initialisation dernière VF traîtée "
 V_ANC=0
 V_ANC=$(cat $CHEMIN_BLFSFR/vtraduc)
 log_att $?
-
 #---------------------------------------------------------------------
 # détermination de la dernière version traduite selon le wiki
 #---------------------------------------------------------------------
-
 # récupération de la page du wiki et enregistrement dans blfsfr
 log_info "Chargement de la page du wiki"
 wget http://traduc.org/blfsfr 2>>$CHEMIN_LOG/robot.err
 log_err $?
-
 # extraction de toutes les lignes contenant un numéros de 5 chiffres dans le fichier list
 log_info "Recherche des numéros de 5 chiffres dans la page du wiki"
 grep \>\*[0-9][0-9][0-9][0-9][0-9] blfsfr >list
 log_err $?
-
 V_WIKI=0
-
 # suppression des balises html de list et ajout d'un \n après chaque numéro à 5 chiffres
 log_info "Nettoyage dans le fichier list"
 sed -e "s/>/>\n/g" -i list
 sed -e "s/<.*>//g" -e "s/\([0-9][0-9][0-9][0-9][0-9]\)/\n\1\n/g" -e "/^$/d" -i list 2>>$CHEMIN_LOG/robot.err
 log_err $?
-
 # parcourt du fichier list, extraction du nb à 5 chiffres de la ligne et
 # détermination du plus grand
 log_info "recherche du numéro de la dernière VO traduite dans le wiki"
@@ -158,7 +144,6 @@ do
       let V_WIKI=$V
    fi
 done < list
-
 if [[ $V_WIKI == 0 ]]
 then
    echo "Aucune VO traduite trouvée sur le wiki" >>$CHEMIN_LOG/robot.err
@@ -166,14 +151,11 @@ then
 else
    log_err 0
 fi
-
 log_info "version $V_WIKI indiquée sur le wiki comme étant la dernière traduite"
 log_err 0
-
 # effacement des fichiers blfsfr et list
 rm blfsfr
 rm list
-
 #---------------------------------------------------------------------
 # Détermination de la liste des fichiers modifiés entre la version de
 # travail du dépôt et la dernière version sur le dépôt.
@@ -181,16 +163,13 @@ rm list
 # On ajoute également a la liste, la liste des derniers fichiers étant
 # connus pour avoir un pb de concordance.
 #---------------------------------------------------------------------
-
 log_info "Recherche de la liste des fichiers modifiés sur le dépôt depuis la dernière visite du robot"
-
 svn diff -r BASE:HEAD | grep -v "traduc/commits" | grep Index | sed -e '/^[+-]Index/d' | sed -e 's/Index: /.\//g' > $CHEMIN_BLFSFR/listxml 2>>$CHEMIN_LOG/robot.err
 log_err $?
 log_info "Ajout de la liste des fichiers de verif.lst"
 sed -e 's/^\(.*\) :.*/\1/g' verif.lst >>$CHEMIN_BLFSFR/listxml 2>>$CHEMIN_LOG/robot.err
 sed -e "/archive/d" -i listxml
 log_att $?
-
 # synchronisation de la copie de travail avec le dépôt
 log_info "synchronisation de la copie de travail avec le dépôt"
 svn up 2>>$CHEMIN_LOG/robot.err
@@ -198,16 +177,12 @@ log_err $?
 #---------------------------------------------------------------------
 # Détermination du numéro de la dernière VO ayant été traduite
 #---------------------------------------------------------------------
-
 log_info "détermination des infos de la copie de travail"
 INFO=$(svn info 2>>$CHEMIN_LOG/robot.err)
 log_err $? 
-
 # initialisation de V_FRACT avec le numéro de la version courante de blfs-fr
 #V_FRACT=$(echo $INFO | sed -re 's/.*Révision : ([0-9][0-9]*).*/\1/')
-
 LOG="------------------------------------------------------------------------"
-
 #while [[ $LOG == "------------------------------------------------------------------------" ]]
 #do
 #   LOG=$(svn -c $V_FRACT log )
@@ -217,13 +192,10 @@ LOG="------------------------------------------------------------------------"
 #   fi
 #   V_FRACT=$V_FRACT-1
 #done
-
 V_EN=0
-
 #V_FR=$(echo $LOG | sed 's/.*r\([0-9][0-9]*\).*/\1/g')
 V_FR=$(echo $INFO | sed -e 's/^.*vision.:.\([0-9][0-9][0-9][0-9]\).*$/\1/')
 VERSION=$V_FR+1
-
 # on cherche tant qu'on n'a pas trouvé un numéro de VO
 log_info "recherche de la dernière VO traduite publiée sur le dépôt"
 while [[ $V_EN == 0 && $VERSION != "1" ]]
@@ -272,22 +244,18 @@ do
       fi
    done
 done
-
 # si on a rien trouvé, on sort du script
 if [[ $VERSION == "1" ]]
 then
    echo "Pas de version traduite trouvée" >> $CHEMIN_LOG/robot.err
    log_err 1
 fi
-
 log_err $?
-
 # on a trouvé un numéro VO traduite, on continue.
 log_info "la dernière version traduite publiée est $V_EN"
 log_err 0
 echo "Bonjour," > $CHEMIN_BLFSFR/mail.txt 2>>$CHEMIN_LOG/robot.err
 echo >>$CHEMIN_BLFSFR/mail.txt
-
 # synchro de la copie de travail angaise a la dernière version traduite
 log_info "Examen de la copie de travail de blfs-en"
 cd ../blfs-en/ 2>>$CHEMIN_LOG/robot.err
@@ -295,19 +263,14 @@ log_err $?
 log_info "Synchro de la copie de travail de blfs_en à la version $V_EN"
 svn -r "$V_EN" up 2>>$CHEMIN_LOG/robot.err
 log_err $?
-
 cd ../blfs-fr/
-
 pbxml="0"
-
 # on vérifie la concordance
 log_info "traîtement des concordances"
 #./traduc/script/robot-html/verif.sh -q 2>>$CHEMIN_LOG/robot.err
 log_err $?
-
 # si la dernière version traduite est également la dernière version traîtée par le robot
 # alors il n'y a rien a faire
-
 if [[ $VERSION == $V_ANC ]]
 then
    log_info "Le robot a trouvé que la dernière version traduite est déjà en ligne"
@@ -362,17 +325,13 @@ elif [[ $V_WIKI != $V_EN ]]
       log_info "Conversion des fichiers au format iso-8859-15"
   #    ./traduc/script/robot-html/conv.sh -q
 #      log_err $?
-
       # on regarde la validité du xml
       log_info "validation du xml"
       make validate > validation.txt 2>&1
       log_att $?
-
       nb_ligne=$(cat validation.txt | wc -l)
-
       echo "La dernière version anglaise traduite est la :" $V_EN >>$CHEMIN_BLFSFR/mail.txt
       echo >>$CHEMIN_BLFSFR/mail.txt
-
       # si pas de problèmes à la validation le fichier validation.txt n'aura qu'une seule ligne
       if [[ $nb_ligne == "1" ]]
       then
@@ -455,7 +414,6 @@ elif [[ $V_WIKI != $V_EN ]]
          echo "Denis_ROBOT">>$CHEMIN_BLFSFR/mail.txt
       fi
 fi
-
 if [[ "$pbxml" == "1" ]]
 then
    log_info "conversion du fichier mail en iso 8959-15"
@@ -469,7 +427,6 @@ then
    cat $CHEMIN_BLFSFR/mail.txt | mail -s "PB XML" -t $ADMIN_ROBOT -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="iso-8859-1"' -a "MIME-Version: 1.0" 2>> $CHEMIN_LOG/robot.err
    log_att $?
 fi
-
 # si on est lundi, on envoi un rapport de concordance sur la ML
 dat=$(date)
 if [[ "${dat:0:3}" == "lun" ]]
@@ -484,8 +441,6 @@ then
             log_err $?
          fi
 fi
-
 #renseignement du log pour la réussite
 echo " ... OK" >> $CHEMIN_LOG/jobrobot.log
-
 exit 0
