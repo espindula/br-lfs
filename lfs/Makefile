@@ -50,11 +50,9 @@ epub: validate
 		mkdir -p $(BASEDIR); \
 	fi;
 	$(Q)mkdir -p $(RENDERTMP)/lfs-epub/
-	$(Q)xsltproc --nonet --output $(RENDERTMP)/lfs-epub/lfs-epub.xml stylesheets/lfs-epub.xsl $(RENDERTMP)/lfs-full.xml
+	$(Q)xsltproc --nonet --output $(RENDERTMP)/lfs-epub/ stylesheets/lfs-xsl/docbook-xsl-1.78.1/epub/docbook.xsl $(RENDERTMP)/lfs-full.xml
 	@echo "Generating EPUB file..."
-	$(Q)echo "application/epub+zip" > $(RENDERTMP)/lfs-epub-mimetype
-	$(Q)zip -0Xq  $(BASEDIR)/$(EPUB_OUTPUT) $(RENDERTMP)/lfs-epub-mimetype
-	$(Q)zip -Xr9Dq $(BASEDIR)/$(EPUB_OUTPUT) $(RENDERTMP)/lfs-epub/*
+	$(Q)./gen-epub.sh $(RENDERTMP) $(BASEDIR) $(EPUB_OUTPUT)
 
 pdf: validate
 	@echo "Generating profiled XML for PDF..."
