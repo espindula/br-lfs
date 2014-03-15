@@ -5,7 +5,10 @@ CHUNK_QUIET = 1
 ROOT_ID =
 PDF_OUTPUT = LFS-BOOK.pdf
 NOCHUNKS_OUTPUT = LFS-BOOK.html
+EPUB_OUTPUT = LFS-BOOK.epub 
 SHELL = /bin/bash
+
+
 
 ifdef V
   Q =
@@ -40,6 +43,18 @@ lfs: validate profile-html
 	done;
 
 	$(Q)$(MAKE) $(BASEDIR)/wget-list $(BASEDIR)/md5sums
+
+epub: validate
+	@echo "Generating HTML/XML for EPUB..."
+	$(Q)if [ ! -e $(BASEDIR) ]; then \
+		mkdir -p $(BASEDIR); \
+	fi;
+	$(Q)mkdir -p $(RENDERTMP)/lfs-epub/
+	$(Q)xsltproc --nonet --output $(RENDERTMP)/lfs-epub/lfs-epub.xml stylesheets/lfs-epub.xsl $(RENDERTMP)/lfs-full.xml
+	@echo "Generating EPUB file..."
+	$(Q)echo "application/epub+zip" > $(RENDERTMP)/lfs-epub-mimetype
+	$(Q)zip -0Xq  $(BASEDIR)/$(EPUB_OUTPUT) $(RENDERTMP)/lfs-epub-mimetype
+	$(Q)zip -Xr9Dq $(BASEDIR)/$(EPUB_OUTPUT) $(RENDERTMP)/lfs-epub/*
 
 pdf: validate
 	@echo "Generating profiled XML for PDF..."
