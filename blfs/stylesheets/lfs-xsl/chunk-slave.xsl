@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='UTF-8'?>
 
 <!--
 $LastChangedBy: manuel $
@@ -16,7 +16,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
   <xsl:import href="docbook-xsl-snapshot/xhtml/docbook.xsl"/>
 
     <!-- Use ISO-8859-1 for output instead of default UTF-8 -->
-  <xsl:param name="chunker.output.encoding" select="'ISO-8859-1'"/>
+  <xsl:param name="chunker.output.encoding" select="'UTF-8'"/>
 
     <!-- Including our customized elements templates -->
   <xsl:include href="common.xsl"/>

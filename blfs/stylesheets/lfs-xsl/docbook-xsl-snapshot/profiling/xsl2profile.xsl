@@ -7,7 +7,7 @@
 
 <xsl:include href="../lib/lib.xsl"/>
 
-<xsl:output method="xml" encoding="US-ASCII"/>
+<xsl:output method="xml" encoding="UTF-8"/>
 
 <xsl:namespace-alias stylesheet-prefix="xslo" result-prefix="xsl"/>
 

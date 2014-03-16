@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='UTF-8'?>
 
 <!--
 $LastChangedBy: manuel $
@@ -16,7 +16,7 @@ $Date: 2007-07-10 21:04:19 +0200 (mar, 10 jui 2007) $
   <xsl:import href="docbook-xsl-snapshot/xhtml/docbook.xsl"/>
 
     <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
-  <xsl:output method="html" encoding="ISO-8859-1" indent="no" />
+  <xsl:output method="html" encoding="UTF-8" indent="no" />
 
    <!-- Including our others customized templates -->
   <xsl:include href="common.xsl"/>
