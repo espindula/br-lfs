@@ -108,7 +108,7 @@ do
     diff=$nbfrc-$nbenc # calcul de la différence
     if [[ "$nbenc" != "$nbfrc" ]] # si différence avec le corrigé
     then
-	echo $k ": diffÃ©rence du nombre de balises (fr-en)= "$diff  >> $CHEMIN_BLFSFR/verif.lst #écriture dans le fichier résultat 'list'
+	echo $k ": différence du nombre de balises (fr-en)= "$diff  >> $CHEMIN_BLFSFR/verif.lst #écriture dans le fichier résultat 'list'
 	echo $k >> $CHEMIN_BLFSFR/verif.detail
         bautre=$diff	
 	for b in $liste_balise

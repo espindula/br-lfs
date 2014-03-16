@@ -319,12 +319,8 @@ elif [[ $V_WIKI != $V_EN ]]
       log_err $?
       # correction de typo
       log_info "correction sur le fichiers xml"
-  #    ./traduc/script/robot-html/typo.sh -q 2>>$CHEMIN_LOG/robot.err
+ #    ./traduc/script/robot-html/typo.sh -q 2>>$CHEMIN_LOG/robot.err
       log_err $?
-      # conversion des fichiers en iso-8859-15
-      log_info "Conversion des fichiers au format iso-8859-15"
-  #    ./traduc/script/robot-html/conv.sh -q
-#      log_err $?
       # on regarde la validité du xml
       log_info "validation du xml"
       make validate > validation.txt 2>&1
@@ -416,9 +412,6 @@ elif [[ $V_WIKI != $V_EN ]]
 fi
 if [[ "$pbxml" == "1" ]]
 then
-   log_info "conversion du fichier mail en iso 8959-15"
-   iconv -f utf-8 -t iso-8859-15 $CHEMIN_BLFSFR/mail.txt > $CHEMIN_BLFSFR/mail.txt.temp 2>>$CHEMIN_LOG/robot.err
-   log_att $?
    mv $CHEMIN_BLFSFR/mail.txt.temp $CHEMIN_BLFSFR/mail.txt
    log_info "envoi du mail à la ML pour indiquer un pb avec le XML"
    cat $CHEMIN_BLFSFR/mail.txt | mail -s "PB XML" -t lfs-traducfr@linuxfromscratch.org -a From:"Robot HTML <$ADMIN_ROBOT>" -a 'Content-Type: text/plain; charset="iso-8859-1"' -a "MIME-Version: 1.0" 2>>$CHEMIN_LOG/robot.err
