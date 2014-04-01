@@ -1,0 +1,329 @@
+Révision 12913
+
+fichiers modifiés :
+   general.ent
+   general/sysutils/bluez.xml
+   introduction/welcome/changelog.xml
+
+Log :
+Update to BlueZ-5.17. Thanks Armin K.
+
+Le robot a traité 12 % du commit anglais
+Index: general.ent
+===================================================================
+--- general.ent	(révision 12912)
++++ general.ent	(révision 12913)
+@@ -334,7 +334,7 @@
+ <!ENTITY acpid-version                "2.0.21">
+ <!ENTITY at-version                   "3.1.14">
+ <!ENTITY autofs-version               "5.0.8">
+-<!ENTITY bluez-version                "4.101">
++<!ENTITY bluez-version                "5.17">
+ <!ENTITY colord-version               "1.0.6">    <!-- Even minors only -->
+ <!ENTITY cpio-version                 "2.11">
+ <!ENTITY dbus-version                 "1.8.0">   <!-- Even minors only -->
+
+Index: general/sysutils/bluez.xml
+===================================================================
+--- general/sysutils/bluez.xml	(révision 12912)
++++ general/sysutils/bluez.xml	(révision 12913)
+@@ -74,19 +74,11 @@
+ 
+     <bridgehead renderas="sect4">Required</bridgehead>
+     <para role="required">
+-<xref linkend="dbus"/> and
+-<xref linkend="glib2"/>
++      <xref linkend="dbus"/>,
++      <xref linkend="glib2"/>,
++      <xref linkend="libical"/>
+     </para>
+ 
+-<bridgehead renderas="sect4">Optional</bridgehead>
+-<para role="optional">
+-<xref linkend="alsa-lib"/>,
+-<xref linkend="check"/>,
+-<xref linkend="gst-plugins-base"/>,
+-<xref linkend="libsndfile"/>, and
+-<xref linkend="libusb-compat"/>
+-</para>
+     <para condition="html" role="usernotes">
+       User Notes: <ulink url="&blfs-wiki;/bluez"/>
+     </para>
+@@ -129,19 +121,12 @@
+       commands:
+     </para>
+ 
+-<screen><userinput>./configure --prefix=/usr        \
+---sysconfdir=/etc    \
+---localstatedir=/var \
+---enable-bccmd       \
+---enable-dfutool     \
+---enable-dund        \
+---enable-hid2hci     \
+---enable-hidd        \
+---enable-pand        \
+---enable-tools       \
+---enable-wiimote     \
+---disable-test       \
+---without-systemdunitdir &amp;&amp;
++<screen><userinput>./configure --prefix=/usr         \
++            --sysconfdir=/etc     \
++            --localstatedir=/var  \
++            --libexecdir=/usr/lib \
++            --enable-library      \
++            --disable-systemd     &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>
+@@ -155,22 +140,21 @@
+ <screen role="root"><userinput>make install</userinput></screen>
+ 
+     <para>
+-Install required configuration files as the
++      Install the main configuration file as the
+       <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>for CONFFILE in audio input network serial ; do
+-install -v -m644 ${CONFFILE}/${CONFFILE}.conf /etc/bluetooth/${CONFFILE}.conf
+-done
+-unset CONFFILE</userinput></screen>
++<screen role="root"><userinput>install -v -dm755 /etc/bluetooth &amp;&amp;
++install -v -m644 src/main.conf /etc/bluetooth/main.conf</userinput></screen>
+ 
+     <para>
+       If desired, install the API documentation as the
+       <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>install -v -m755 -d /usr/share/doc/bluez-&bluez-version; &amp;&amp;
++<screen role="root"><userinput>install -v -dm755 /usr/share/doc/bluez-&bluez-version; &amp;&amp;
+ install -v -m644 doc/*.txt /usr/share/doc/bluez-&bluez-version;</userinput></screen>
+   </sect2>
+ 
+@@ -178,69 +162,17 @@
+     <title>Command Explanations</title>
+ 
+     <para>
+-<parameter>--enable-bccmd</parameter>: This switch enables building of the BCCMD
+-interface utility.
++      <parameter>--enable-library</parameter>: This switch enables building of the
++      <application>BlueZ</application> 4 compatibility library which is required by
++      some applications.
+     </para>
+ 
+     <para>
+-<parameter>--enable-dfutool</parameter>: This switch enables building of the DFU
+-firmware upgrade utility.
++      <parameter>--disable-systemd</parameter>: This switch is needed for
++      <application>systemd</application> is not part of LFS/BLFS. If you are
++      using systemd, remove this switch.
+     </para>
+ 
+-<para>
+-<parameter>--enable-dund</parameter>: This switch enables building of the DUN daemon.
+-</para>
+-<para>
+-<parameter>--enable-hid2hci</parameter>: This switch enables building of the HID
+-mode switching utility.
+-</para>
+-<para>
+-<parameter>--enable-hidd</parameter>: This switch enables building of the HID daemon.
+-</para>
+-<para>
+-<parameter>--enable-pand</parameter>: This switch enables building of the PAN daemon.
+-</para>
+-<para>
+-<parameter>--enable-tools</parameter>: This switch enables building of the Bluetooth
+-utilities.
+-</para>
+-<para>
+-<parameter>--enable-wiimote</parameter>: This switch enables building of the Wii
+-Remote plugin.
+-</para>
+-<para>
+-<parameter>--disable-test</parameter>: This switch disables installation of the
+-test programs.
+-</para>
+-<para>
+-<option>--enable-cups</option>: This switch enables CUPS backend support. Note
+-that CUPS does not need to be installed for this support.
+-</para>
+-<!-- These options are automatically found and used if the packages are
+-available. There is no need to use these switches.
+-<para>
+-<option>-enable-alsa</option>: This switch enables ALSA support. Use if you
+-have <xref linkend="alsa-lib"/> installed.
+-</para>
+-<para>
+-<option>-enable-gstreamer</option>: This switch enables GStreamer support. Use
+-if you have <xref linkend="gst-plugins-base"/> installed.
+-</para>
+-<para>
+-<option>-enable-usb</option>: This switch enables USB support. Use if you have
+-<xref linkend="libusb-compat"/> installed.
+-</para> -->
+   </sect2>
+ 
+   <sect2 role="configuration">
+@@ -249,44 +181,14 @@
+     <sect3 id="bluez-config">
+       <title>Config Files</title>
+       <para>
+-<filename>/etc/bluetooth/audio.conf</filename>,
+-<filename>/etc/bluetooth/input.conf</filename>,
+-<filename>/etc/bluetooth/main.conf</filename>,
+-<filename>/etc/bluetooth/network.conf</filename>,
+-<filename>/etc/bluetooth/rfcomm.conf</filename> and
+-<filename>/etc/bluetooth/serial.conf</filename>
++        <filename>/etc/bluetooth/main.conf</filename>
+       </para>
+ 
+       <indexterm zone="bluez bluez-config">
+         <primary
+-sortas="e-etc-bluetooth-audio.conf">/etc/bluetooth/audio.conf</primary>
+-</indexterm>
+-<indexterm zone="bluez bluez-config">
+-<primary
+-sortas="e-etc-bluetooth-input.conf">/etc/bluetooth/input.conf</primary>
+-</indexterm>
+-<indexterm zone="bluez bluez-config">
+-<primary
+         sortas="e-etc-bluetooth-main.conf">/etc/bluetooth/main.conf</primary>
+       </indexterm>
+ 
+-<indexterm zone="bluez bluez-config">
+-<primary
+-sortas="e-etc-bluetooth-network.conf">/etc/bluetooth/network.conf</primary>
+-</indexterm>
+-<indexterm zone="bluez bluez-config">
+-<primary
+-sortas="e-etc-bluetooth-rfcomm.conf">/etc/bluetooth/rfcomm.conf</primary>
+-</indexterm>
+-<indexterm zone="bluez bluez-config">
+-<primary
+-sortas="e-etc-bluetooth-serial.conf">/etc/bluetooth/serial.conf</primary>
+-</indexterm>
+     </sect3>
+ 
+     <sect3  id="bluez-init">
+@@ -317,9 +221,9 @@
+ 
+       <seglistitem>
+         <seg>
+-bccmd, bluetoothd, ciptool, dfutool, dund, gatttool,
+-hciattach, hciconfig, hcitool, hid2hci, hidd, l2ping,
+-pand, rfcomm, and sdptool
++          bccmd, bluemoon, bluetoothctl, bluetoothd, btmon, ciptool,
++          hciattach, hciconfig, hcidump, hcitool, hid2hci, l2ping,
++          l2test, obexd, rctest, rfcomm, and sdptool
+         </seg>
+         <seg>
+           libbluetooth.so
+@@ -327,9 +231,8 @@
+         <seg>
+           /etc/bluetooth,
+           /usr/include/bluetooth,
+-/usr/lib/bluetooth,
+-/usr/share/doc/bluez-&bluez-version;, and
+-/var/lib/bluetooth
++          /usr/libexec/bluetooth, and
++          /usr/share/doc/bluez-&bluez-version;
+         </seg>
+       </seglistitem>
+     </segmentedlist>
+@@ -377,30 +280,6 @@
+         </listitem>
+       </varlistentry>
+ 
+-<varlistentry id="dfutool">
+-<term><command>dfutool</command></term>
+-<listitem>
+-<para>
+-is used to verify, archive and upgrade firmware files.
+-</para>
+-<indexterm zone="bluez dfutool">
+-<primary sortas="b-dfutool">dfutool</primary>
+-</indexterm>
+-</listitem>
+-</varlistentry>
+-<varlistentry id="dund">
+-<term><command>dund</command></term>
+-<listitem>
+-<para>
+-is the Bluetooth dial-up networking daemon.
+-</para>
+-<indexterm zone="bluez dund">
+-<primary sortas="b-dund">dund</primary>
+-</indexterm>
+-</listitem>
+-</varlistentry>
+       <varlistentry id="hciattach">
+         <term><command>hciattach</command></term>
+         <listitem>
+@@ -452,18 +331,6 @@
+         </listitem>
+       </varlistentry>
+ 
+-<varlistentry id="hidd">
+-<term><command>hidd</command></term>
+-<listitem>
+-<para>
+-is the Bluetooth HID daemon.
+-</para>
+-<indexterm zone="bluez hidd">
+-<primary sortas="b-hidd">hidd</primary>
+-</indexterm>
+-</listitem>
+-</varlistentry>
+       <varlistentry id="l2ping">
+         <term><command>l2ping</command></term>
+         <listitem>
+@@ -477,15 +344,15 @@
+         </listitem>
+       </varlistentry>
+ 
+-<varlistentry id="pand">
+-<term><command>pand</command></term>
++      <varlistentry id="rctest">
++        <term><command>rctest</command></term>
+         <listitem>
+           <para>
+-is the Bluetooth daemon that allows you to connect to
+-ethernet networks using Bluetooth.
++            is used to test RFCOMM communications on the
++            Bluetooth stack.
+           </para>
+-<indexterm zone="bluez pand">
+-<primary sortas="b-pand">pand</primary>
++          <indexterm zone="bluez rctest">
++            <primary sortas="b-rctest">rctest</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
+@@ -520,7 +387,7 @@
+         <term><filename class="libraryfile">libbluetooth.so</filename></term>
+         <listitem>
+           <para>
+-contains the <application>BlueZ</application> API functions.
++            contains the <application>BlueZ</application> 4 API functions.
+           </para>
+           <indexterm zone="bluez libbluetooth">
+             <primary sortas="c-libbluetooth">libbluetooth.so</primary>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 12912)
++++ introduction/welcome/changelog.xml	(révision 12913)
+@@ -48,6 +48,10 @@
+       <para>March 29th, 2014</para>
+       <itemizedlist>
+         <listitem>
++          <para>[fernando] - Update to BlueZ-5.17. Patch from Armin K, thanks.
++          Fixes <ulink url="&blfs-ticket-root;3759">#3759</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[pierre] - Make the Java Binary page versioned, and closer
+           to the layout of other pages.</para>
+         </listitem>
+
