@@ -42,8 +42,12 @@
     avoid this, Udev comes with a script and some rules to assign stable names
     to network cards based on their MAC address.</para>
 
-    <para>The rules were pre-generated in the build instructions for
-    <application>udev (systemd)</application> in the last chapter.  Inspect the
+    <para>If using the traditional network interface names such as eth0 is desired,
+    generate a custom Udev rule:</para>
+
+<screen><userinput>bash /lib/udev/init-net-rules.sh</userinput></screen>    
+
+    <para> Now, inspect the
     <filename>/etc/udev/rules.d/70-persistent-net.rules</filename> file, to
     find out which name was assigned to which network device:</para>
 
@@ -122,11 +126,20 @@
     depends on the files in <filename
     class="directory">/etc/sysconfig/</filename>.  This directory should
     contain a file for each interface to be configured, such as
-    <filename>ifconfig.xyz</filename>, where <quote>xyz</quote> is
-    meaningful to the administrator such as the device name (e.g. eth0).
-    Inside this file are attributes to this interface, such as its IP
-    address(es), subnet masks, and so forth.  It is necessary that
-    the stem of the filename be <emphasis>ifconfig</emphasis>.</para>
+    <filename>ifconfig.xyz</filename>, where <quote>xyz</quote> is required to
+    be a Network Card Interface name (e.g. eth0).  Inside this file are
+    attributes to this interface, such as its IP address(es), subnet masks, and
+    so forth.  It is necessary that the stem of the filename be
+    <emphasis>ifconfig</emphasis>.</para>
+
+    <note><para>If the procedure in the previous section was not used, Udev
+    will assign network card interface names based on system physical
+    characteristics such as enp2s1. If you are not sure what your interface
+    name is, you can always run <command>ip link</command>  after you have
+    booted your system.  Again, it is important that ifconfig.xyz is named
+    after correct network card interface name (e.g. ifconfig.enp2s1 or
+    ifconfig.eth0) or your network interface will not be initialized during
+    the boot process.</para></note>
 
     <para>The following command creates a sample file for the
     <emphasis>eth0</emphasis> device with a static IP address:</para>
@@ -136,8 +149,8 @@ cat &gt; ifconfig.eth0 &lt;&lt; "EOF"
 <literal>ONBOOT=yes
 IFACE=eth0
 SERVICE=ipv4-static
-IP=192.168.1.1
-GATEWAY=192.168.1.2
+IP=192.168.1.2
+GATEWAY=192.168.1.1
 PREFIX=24
 BROADCAST=192.168.1.255</literal>
 EOF</userinput></screen>
@@ -146,7 +159,7 @@ EOF</userinput></screen>
     the proper setup.</para>
 
     <para>If the <envar>ONBOOT</envar> variable is set to <quote>yes</quote> the
-    network script will bring up the Network Interface Card (NIC) during
+    System V network script will bring up the Network Interface Card (NIC) during
     booting of the system. If set to anything but <quote>yes</quote> the NIC
     will be ignored by the network script and not be automatically brought up.
     The interface can be manually started or stopped with the
@@ -178,6 +191,34 @@ EOF</userinput></screen>
     If omitted, the PREFIX defaults to 24.</para>
 
     <para>For more information see the <command>ifup</command> man page.</para>
+
+  </sect2>
+
+  <sect2 id="systemd-net-enable">
+    <title>Configuring the Network Interface Card at boot (systemd)</title>
+
+    <para>Enabling of the network interface card configuration 
+    in systemd is done per interface. To enable network interface card
+    configuration at boot, run:</para>
+
+<screen><userinput>systemctl enable ifupdown@eth0</userinput></screen>
+
+    <para>To disable a previously enabled network interface
+    card configuration at boot, run:</para>
+
+<screen><userinput>systemctl disable ifupdown@eth0</userinput></screen>
+
+    <para>To manually start the network interface card configuration,
+    run:</para>
+
+<screen><userinput>systemctl start ifupdown@eth0</userinput></screen>
+
+    <para>Replace eth0 with the correct network interface card
+    name as described on the beginning of this page.</para>
+
+    <note><para>The network card can also be started or stopped
+    with the traditional <command>ifup &lt;device&gt;</command> or
+    <command>ifdown &lt;device&gt;</command> commands.</para></note>
 
   </sect2>
 
