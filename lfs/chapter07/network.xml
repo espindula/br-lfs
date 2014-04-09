@@ -45,9 +45,13 @@
     avec un script et des règles pour affecter des noms stables aux
     cartes réseau basés sur leur adresse MAC.</para>
 
-    <para>Les règles ont été pré-générées dans les instructions de construction
-    d'<application>udev (systemd)</application> au chapitre précédent. Regardez
-    le fichier <filename>/etc/udev/rules.d/70-persistent-net.rules</filename>
+    <para>Si vous désirez utiliser les noms d'interfaces réseaux traditionnels comme
+    eth0, générez une règle Udev personnalisée&nbsp;:</para>
+
+<screen><userinput>bash /lib/udev/init-net-rules.sh</userinput></screen>    
+
+
+    <para>Maintenant, regardez <filename>/etc/udev/rules.d/70-persistent-net.rules</filename>
     pour trouver les noms affectés à vos périphériques réseaux&nbsp;:</para>
 
 <screen role="nodump"><userinput>cat /etc/udev/rules.d/70-persistent-net.rules</userinput></screen>
@@ -130,11 +134,20 @@
     <para>Les interfaces activées et désactivées par le script réseau
     dépendent des fichiers du répertoire <filename class="directory">/etc/sysconfig/</filename>.
     Ce répertoire devrait contenir un fichier par interface à configurer, tel
-    que <filename>ifconfig.xyz</filename>, où <quote>xyz</quote> signifie,
-    pour l'administrateur, quelque chose comme le nom du périphérique (par
-    exemple eth0). Dans ce fichier, il y a les attributs de cette interface, tels
-    que son ou ses adresses IP, ses masques de sous-réseau, et ainsi de suite.
-    Il faut que la fin du nom de fichier soit <emphasis>ifconfig</emphasis>.</para>
+   que <filename>ifconfig.xyz</filename>, où <quote>xyz</quote> doit être le
+    nom d'une interface de carte réseau (comme eth0). Dans ce fichier, se trouvent
+    les attributs de cette interface, tels que son//ses adresse(s) IP, les
+    masques de sous-réseau, etc.  Il faut que le fichier ait pour nom
+    <emphasis>ifconfig</emphasis>.</para>
+
+    <note><para>Si vous n'avez pas suivi la procédure de la section précédente,
+    Udev affectera un nom à l'interface de carte réseau en se basant sur les 
+    caractéristiques physiques du système comme enp2s1. Si vous n'êtes pas sûr
+    du nom de votre interface, vous pouvez toujours lancer <command>ip link</command>
+    après avoir démarré votre système. De nouveau, il est important qu'ifconfig.xyz
+    ait l'extension correspondant à celui de l'interface de la carte réseau (comme ifconfig.enp2s1 ou
+    ifconfig.eth0), sans quoi votre interface réseau ne sera pas initialisée
+    pendant le processus de démarrage.</para></note>
 
     <para>La commande suivante crée un fichier modèle pour le périphérique
     <emphasis>eth0</emphasis> avec une adresse IP statique&nbsp;:</para>
@@ -144,8 +157,8 @@ cat &gt; ifconfig.eth0 &lt;&lt; "EOF"
 <literal>ONBOOT=yes
 IFACE=eth0
 SERVICE=ipv4-static
-IP=192.168.1.1
-GATEWAY=192.168.1.2
+IP=192.168.1.2
+GATEWAY=192.168.1.1
 PREFIX=24
 BROADCAST=192.168.1.255</literal>
 EOF</userinput></screen>
@@ -154,7 +167,7 @@ EOF</userinput></screen>
     chaque fichier pour correspondre à la bonne configuration.</para>
 
     <para>Si la variable <envar>ONBOOT</envar> est configurée à <quote>yes</quote>,
-    le script réseau configurera le NIC pendant
+    le script réseau de System V configurera le NIC pendant
     le démarrage du système. S'il est configuré avec toute autre valeur
     que <quote>yes</quote>, le NIC sera ignoré par le
     script réseau et ne sera pas configurée automatiquement. On peut démarrer et
@@ -189,6 +202,34 @@ EOF</userinput></screen>
     sous-réseau spécifique. Si vous ne le mettez pas, PREFIX vaut 24 par défaut.</para>
 
     <para>Pour plus d'informations, voir la page de manuel de <command>ifup</command>.</para>
+
+  </sect2>
+
+  <sect2 id="systemd-net-enable">
+    <title>Configurer l'interface de la carte réseau au démarrage (systemd)</title>
+
+    <para>L'activation de la configuration  de l'interface de la carte réseau dans
+    systemd se fait pour chaque interface. Pour activer la configuration d'une 
+    interface de carte réseau au démarrage, lancez&nbsp;:</para>
+
+<screen><userinput>systemctl enable ifupdown@eth0</userinput></screen>
+
+    <para>Pour désactiver la configuration d'une interface de carte réseau au
+    démarrage, lancez&nbsp;:</para>
+
+<screen><userinput>systemctl disable ifupdown@eth0</userinput></screen>
+
+    <para>Pour démarrer manuellement la configuration d'une 
+    interface de carte réseau au démarrage, lancez&nbsp;:</para>
+
+<screen><userinput>systemctl start ifupdown@eth0</userinput></screen>
+
+    <para>Remplacez eth0 par le bon nom de l'interface de carte réseau comme
+    indiqué au début de cette page.</para>
+
+    <note><para>Vous pouvez aussi démarrer ou arrêter une carte réseau par les
+    commandes traditionnelles <command>ifup &lt;device&gt;</command> ou
+    <command>ifdown &lt;device&gt;</command>.</para></note>
 
   </sect2>
 
