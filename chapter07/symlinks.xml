@@ -8,7 +8,151 @@
 <sect1 id="ch-scripts-symlinks">
   <?dbhtml filename="symlinks.html"?>
 
-  <title>Creating Custom Symlinks to Devices</title>
+  <title>Managing Devices</title>
+
+  <sect2>
+
+    <title>Network Devices</title>
+
+    <para>Udev, by default, names network devices according to Firmware/BIOS
+    data or physical characteristics like the bus, slot, or MAC address.  The
+    purpose of this naming convention is to ensure that network devices are
+    named consistently and not based on the time the network card was
+    discovered.  For example, on a computer having two network cards made by
+    Intel and Realtek, the network card manufactured by Intel may become eth0
+    and the Realtek card becomes eth1. In some cases, after a reboot the cards
+    get renumbered the other way around.</para>
+    
+    <para>In the new naming scheme, typical network device names would then
+    be something like enp5s0 or wlp3s0.  If this naming convention is not
+    desired, the traditional naming scheme or a custom scheme can be
+    implemented.</para>
+
+    <sect3>
+      <title>Disabling Persistent Naming on the Kernel Command Line</title>
+   
+      <para>The traditional naming scheme using eth0, eth1, etc can be
+      restored by adding <userinput>net.ifnames=0</userinput> on the 
+      kernel command line.  This is most appropriate for those systems
+      that have only one ethernet device of the same type.  Laptops
+      often have multiple ethernet connections that are named eth0 and 
+      wlan0 and are also candidates for this method.  The command line 
+      is passed in the GRUB configuration file. 
+      See <xref linkend="grub-cfg"/>.</para>
+    </sect3>
+
+    <sect3>
+      <title>Creating Custom Udev Rules</title>
+   
+      <para>The naming scheme can be customized by creating custom Udev
+      rules.  A script has been included that generates the initial rules.
+      Generate these rules by running:</para>
+
+<screen role="nodump"><userinput>bash /lib/udev/init-net-rules.sh</userinput></screen>
+
+      <para> Now, inspect th
+      <filename>/etc/udev/rules.d/70-persistent-net.rules</filename> file, to
+      find out which name was assigned to which network device:</para>
+
+<screen role="nodump"><userinput>cat /etc/udev/rules.d/70-persistent-net.rules</userinput></screen>
+
+      <note><para>In some cases such as when MAC addresess have been assigned to
+      a network card manually or in a virtual environment such as Qemu or Xen,
+      the network rules file may not have been generated because addresses
+      are not consistently assigned.  In these cases, this method cannot
+      be used.</para></note>
+  
+      <para>The file begins with a comment block followed by two lines for each
+      NIC. The first line for each NIC is a commented description showing its
+      hardware IDs (e.g. its PCI vendor and device IDs, if it's a PCI card),
+      along with its driver in parentheses, if the driver can be found. Neither
+      the hardware ID nor the driver is used to determine which name to give an
+      interface; this information is only for reference. The second line is the
+      Udev rule that matches this NIC and actually assigns it a name.</para>
+  
+      <para>All Udev rules are made up of several keys, separated by commas and
+      optional whitespace. This rule's keys and an explanation of each of them
+      are as follows:</para>
+  
+      <itemizedlist>
+        <listitem>
+          <para><literal>SUBSYSTEM=="net"</literal> - This tells Udev to ignore
+          devices that are not network cards.</para>
+        </listitem>
+        <listitem>
+          <para><literal>ACTION=="add"</literal> - This tells Udev to ignore this
+          rule for a uevent that isn't an add ("remove" and "change" uevents also
+          happen, but don't need to rename network interfaces).</para>
+        </listitem>
+        <listitem>
+          <para><literal>DRIVERS=="?*"</literal> - This exists so that Udev will
+          ignore VLAN or bridge sub-interfaces (because these sub-interfaces do
+          not have drivers). These sub-interfaces are skipped because the name
+          that would be assigned would collide with their parent devices.</para>
+        </listitem>
+        <listitem>
+          <para><literal>ATTR{address}</literal> - The value of this key is the
+          NIC's MAC address.</para>
+        </listitem>
+        <listitem>
+          <para><literal>ATTR{type}=="1"</literal> - This ensures the rule only
+          matches the primary interface in the case of certain wireless drivers,
+          which create multiple virtual interfaces. The secondary interfaces are
+          skipped for the same reason that VLAN and bridge sub-interfaces are
+          skipped: there would be a name collision otherwise.</para>
+        </listitem>
+        <listitem>
+          <para><literal>NAME</literal> - The value of this key is the name that
+          Udev will assign to this interface.</para>
+        </listitem>
+      </itemizedlist>
+  
+      <para>The value of <literal>NAME</literal> is the important part. Make sure
+      you know which name has been assigned to each of your network cards before
+      proceeding, and be sure to use that <literal>NAME</literal> value when
+      creating your configuration files below.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Custom Naming in Systemd</title>
+   
+      <para>Network interface names can also be customized with a set of
+      files spcific to systemd.  A file with a name such as 10-eth0.link
+      in the /etc/systemd/network directory can set an interface name. All
+      files in the directory will be applied in lexical order.  Files
+      in the /lib/systemd/network directory with the same name as those
+      in /etc/systemd/network will be overridden.  See the man page
+      for systemd.link for a full explanation.</para>
+
+      <para>An example file looks like:</para>
+
+<screen role="nodump">[Match]
+MACAddress=12:34:56:78:9a:bc
+Driver=brcmsmac
+Path=pci-0000:02:00.0-*
+Type=wlan
+Virtualization=no
+Host=my-laptop
+Architecture=x86-64
+
+[Link]
+Name=wireless0
+MTUBytes=1450
+BitsPerSecond=10M
+WakeOnLan=magic
+MACAddress=cb:a9:87:65:43:21</screen>
+
+    <para>The [Match] section specifies when to apply the rule.  In 
+    the example above, the entries can be shortened to the minimum 
+    needed to uniquely identify the network device.  Similarly,
+    the [Link] section only needs to specify the changes from the 
+    default that are desired.  In many cases, the only thing needed is 
+    the Name entry.</para>
+
+    </sect3>
+
+  </sect2>
 
   <sect2>
 
@@ -108,7 +252,7 @@
     <filename>/dev/video1</filename> refers to the tuner, and sometimes
     after a reboot the order changes to the opposite one.
     For all classes of hardware except sound cards and network cards, this is
-    fixable by creating udev rules for custom persistent symlinks.
+    fixable by creating Udev rules for custom persistent symlinks.
     The case of network cards is covered separately in
     <xref linkend="ch-scripts-network"/>, and sound card configuration can
     be found in <ulink url="&blfs-root;view/svn/postlfs/devices.html">BLFS</ulink>.</para>

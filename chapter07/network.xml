@@ -24,106 +24,11 @@
   class="directory">/etc/rc.d/rc*.d</filename>) after the bootscripts are
   installed in <xref linkend="ch-scripts-bootscripts"/>.</para>
 
-  <sect2 id='stable-net-names'>
-    <title>Creating stable names for network interfaces</title>
-
-    <para>If there is only one network interface in the system to be
-    configured, this section is optional, although it will never be wrong to do
-    it.  In many cases (e.g. a laptop with a wireless and a wired interface),
-    accomplishing the configuration in this section is necessary.</para>
-
-    <para>With Udev and modular network drivers, the network interface numbering
-    is not persistent across reboots by default, because the drivers are loaded
-    in parallel and, thus, in random order. For example, on a computer having
-    two network cards made by Intel and Realtek, the network card manufactured
-    by Intel may become <filename class="devicefile">eth0</filename> and the
-    Realtek card becomes  <filename class="devicefile">eth1</filename>. In some
-    cases, after a reboot the cards get renumbered the other way around. To
-    avoid this, Udev comes with a script and some rules to assign stable names
-    to network cards based on their MAC address.</para>
-
-    <para>If using the traditional network interface names such as eth0 is desired,
-    generate a custom Udev rule:</para>
-
-<screen><userinput>bash /lib/udev/init-net-rules.sh</userinput></screen>    
-
-    <para> Now, inspect the
-    <filename>/etc/udev/rules.d/70-persistent-net.rules</filename> file, to
-    find out which name was assigned to which network device:</para>
-
-<screen role="nodump"><userinput>cat /etc/udev/rules.d/70-persistent-net.rules</userinput></screen>
-
-    <note><para>In some cases such as when MAC addresess have been assigned to
-    a network card manually or in a virtual environment such as Xen,
-    the network rules file may not have been generated because addresses
-    are not consistently assigned.  In these cases, just continue to
-    the next section.</para></note>
-
-    <para>The file begins with a comment block followed by two lines for each
-    NIC. The first line for each NIC is a commented description showing its
-    hardware IDs (e.g. its PCI vendor and device IDs, if it's a PCI card),
-    along with its driver in parentheses, if the driver can be found. Neither
-    the hardware ID nor the driver is used to determine which name to give an
-    interface; this information is only for reference. The second line is the
-    Udev rule that matches this NIC and actually assigns it a name.</para>
-
-    <para>All Udev rules are made up of several keys, separated by commas and
-    optional whitespace. This rule's keys and an explanation of each of them
-    are as follows:</para>
-
-    <itemizedlist>
-      <listitem>
-        <para><literal>SUBSYSTEM=="net"</literal> - This tells Udev to ignore
-        devices that are not network cards.</para>
-      </listitem>
-      <listitem>
-        <para><literal>ACTION=="add"</literal> - This tells Udev to ignore this
-        rule for a uevent that isn't an add ("remove" and "change" uevents also
-        happen, but don't need to rename network interfaces).</para>
-      </listitem>
-      <listitem>
-        <para><literal>DRIVERS=="?*"</literal> - This exists so that Udev will
-        ignore VLAN or bridge sub-interfaces (because these sub-interfaces do
-        not have drivers). These sub-interfaces are skipped because the name
-        that would be assigned would collide with their parent devices.</para>
-      </listitem>
-      <listitem>
-        <para><literal>ATTR{address}</literal> - The value of this key is the
-        NIC's MAC address.</para>
-      </listitem>
-      <listitem>
-        <para><literal>ATTR{type}=="1"</literal> - This ensures the rule only
-        matches the primary interface in the case of certain wireless drivers,
-        which create multiple virtual interfaces. The secondary interfaces are
-        skipped for the same reason that VLAN and bridge sub-interfaces are
-        skipped: there would be a name collision otherwise.</para>
-      </listitem>
-      <listitem>
-        <para><literal>KERNEL=="eth*"</literal> - This key was added to the
-        Udev rule generator to handle machines that have multiple network
-        interfaces, all with the same MAC address (the PS3 is one such
-        machine).  If the independent interfaces have different basenames,
-        this key will allow Udev to tell them apart.  This is generally not
-        necessary for most Linux From Scratch users, but does not hurt.</para>
-      </listitem>
-      <listitem>
-        <para><literal>NAME</literal> - The value of this key is the name that
-        Udev will assign to this interface.</para>
-      </listitem>
-    </itemizedlist>
-
-    <para>The value of <literal>NAME</literal> is the important part. Make sure
-    you know which name has been assigned to each of your network cards before
-    proceeding, and be sure to use that <literal>NAME</literal> value when
-    creating your configuration files below.</para>
-
-  </sect2>
-
   <sect2>
     <title>Creating Network Interface Configuration Files</title>
 
     <para>Which interfaces are brought up and down by the network script
-    depends on the files in <filename
+    usually depends on the files in <filename
     class="directory">/etc/sysconfig/</filename>.  This directory should
     contain a file for each interface to be configured, such as
     <filename>ifconfig.xyz</filename>, where <quote>xyz</quote> is required to
@@ -216,9 +121,35 @@ EOF</userinput></screen>
     <para>Replace eth0 with the correct network interface card
     name as described on the beginning of this page.</para>
 
+    <note><para>These procedures require the configuartion files as specified
+    in the previous section.</para></note>
+
     <note><para>The network card can also be started or stopped
     with the traditional <command>ifup &lt;device&gt;</command> or
     <command>ifdown &lt;device&gt;</command> commands.</para></note>
+
+  </sect2>
+
+  <sect2 id="systemd2-net-enable">
+    <title>Configuring the Network Interface Card for systemd-networkd</title>
+
+    <para>An alternative way to configure a NIC when booting with with
+    systemd is to create a configuration file recognized by the
+    systemd-networkd daemon.  To configure the device create a file similar
+    to this:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/systemd/network/10-static-eth0.network &lt;&lt; "EOF"
+[Match]
+Name=eth0
+
+[Network]
+Address=192.168.0.2/24
+Gateway=192.168.0.1
+EOF</userinput></screen>
+
+  <para>You can use multiple .network files if desired.  You can also specify
+  DHCP=yes instead of the Address and Gateway settings.  See the man page for
+  systemd.network for more details,</para>
 
   </sect2>
 
@@ -261,5 +192,101 @@ EOF</userinput></screen>
     <note><para>The Google Public IPv4 DNS addresses are 8.8.8.8 and 8.8.4.4.</para></note>
 
   </sect2>
+
+  <sect2 id="ch-scripts-hostname">
+    <title>Configuring the system hostname</title>
+
+    <indexterm zone="ch-scripts-hostname">
+      <primary sortas="d-hostname">hostname</primary>
+      <secondary>configuring</secondary>
+    </indexterm>
+
+     <para>During the boot process, both Systemd and System V use the same file
+     for establishing the system's hostname.  This needs to be configured by
+     creating <filename>/etc/hostname</filename>.</para>
+
+     <para>Create the <filename>/etc/hostname</filename> file and enter a
+     hostname by running:</para>
+
+<screen><userinput>echo "<replaceable>&lt;lfs&gt;</replaceable>" &gt; /etc/hostname</userinput></screen>
+
+     <para><replaceable>&lt;lfs&gt;</replaceable> needs to be replaced with the
+     name given to the computer. Do not enter the Fully Qualified Domain Name
+     (FQDN) here. That information is put in the
+     <filename>/etc/hosts</filename> file.</para>
+
+  </sect2>
+
+  <sect2 id="ch-scripts-hosts">
+     <title>Customizing the /etc/hosts File</title>
+
+     <indexterm zone="ch-scripts-hosts">
+       <primary sortas="e-/etc/hosts">/etc/hosts</primary>
+     </indexterm>
+   
+     <indexterm zone="ch-scripts-hosts">
+       <primary sortas="d-localnet">localnet</primary>
+       <secondary>/etc/hosts</secondary>
+     </indexterm>
+   
+     <indexterm zone="ch-scripts-hosts">
+       <primary sortas="d-network">network</primary>
+       <secondary>/etc/hosts</secondary>
+     </indexterm>
+   
+     <para>Decide on the IP address, fully-qualified domain name (FQDN), and
+     possible aliases for use in the <filename>/etc/hosts</filename> file. The
+     syntax is:</para>
+   
+<screen><literal>IP_address myhost.example.org aliases</literal></screen>
+
+     <para>Unless the computer is to be visible to the Internet (i.e., there is
+     a registered domain and a valid block of assigned IP addresses&mdash;most
+     users do not have this), make sure that the IP address is in the private
+     network IP address range. Valid ranges are:</para>
+
+<screen><literal>Private Network Address Range      Normal Prefix
+10.0.0.1 - 10.255.255.254           8
+172.x.0.1 - 172.x.255.254           16
+192.168.y.1 - 192.168.y.254         24</literal></screen>
+
+     <para>x can be any number in the range 16-31. y can be any number in the
+     range 0-255.</para>
+   
+     <para>A valid private IP address could be 192.168.1.1. A valid FQDN for
+     this IP could be lfs.example.org.</para>
+   
+     <para>Even if not using a network card, a valid FQDN is still required.
+     This is necessary for certain programs to operate correctly.</para>
+   
+     <para>Create the  <filename>/etc/hosts</filename> file by running:</para>
+
+<screen><userinput>cat &gt; /etc/hosts &lt;&lt; "EOF"
+<literal># Begin /etc/hosts (network card version)
+
+127.0.0.1 localhost
+<replaceable>&lt;192.168.1.1&gt;</replaceable> <replaceable>&lt;HOSTNAME.example.org&gt;</replaceable> <replaceable>[alias1] [alias2 ...]</replaceable>
+
+# End /etc/hosts (network card version)</literal>
+EOF</userinput></screen>
+
+     <para>The <replaceable>&lt;192.168.1.1&gt;</replaceable> and
+     <replaceable>&lt;HOSTNAME.example.org&gt;</replaceable> values need to be
+     changed for specific uses or requirements (if assigned an IP address by a
+     network/system administrator and the machine will be connected to an
+     existing network). The optional alias name(s) can be omitted.</para>
+   
+     <para>If a network card is not going to be configured, create the
+     <filename>/etc/hosts</filename> file by running:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/hosts &lt;&lt; "EOF"
+<literal># Begin /etc/hosts (no network card version)
+
+127.0.0.1 <replaceable>&lt;HOSTNAME.example.org&gt;</replaceable> <replaceable>&lt;HOSTNAME&gt;</replaceable> localhost
+
+# End /etc/hosts (no network card version)</literal>
+EOF</userinput></screen>
+
+   </sect2>
 
 </sect1>
