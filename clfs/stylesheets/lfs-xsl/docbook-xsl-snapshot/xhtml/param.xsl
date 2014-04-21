@@ -230,7 +230,7 @@ set       toc,title
 <xsl:param name="htmlhelp.chm">htmlhelp.chm</xsl:param>
 <xsl:param name="htmlhelp.default.topic"/>
 <xsl:param name="htmlhelp.display.progress" select="1"/>
-<xsl:param name="htmlhelp.encoding">iso-8859-1</xsl:param>
+<xsl:param name="htmlhelp.encoding">utf-8</xsl:param>
 <xsl:param name="htmlhelp.enhanced.decompilation" select="0"/>
 <xsl:param name="htmlhelp.enumerate.images" select="0"/>
 <xsl:param name="htmlhelp.force.map.and.alias" select="0"/>
@@ -267,7 +267,7 @@ set       toc,title
 <xsl:param name="ignore.image.scaling" select="0"/>
 <xsl:param name="inherit.keywords" select="1"/>
 <xsl:param name="insert.xref.page.number">no</xsl:param>
-<xsl:param name="javahelp.encoding">iso-8859-1</xsl:param>
+<xsl:param name="javahelp.encoding">utf-8</xsl:param>
 <xsl:param name="keep.relative.image.uris" select="1"/>
 
 <xsl:param name="l10n.gentext.default.language">en</xsl:param>

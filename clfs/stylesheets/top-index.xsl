@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE xsl:stylesheet [
  <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
@@ -8,7 +8,7 @@
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  <xsl:output method="html" encoding="iso-8859-1"/>
+  <xsl:output method="html" encoding="utf-8"/>
 
   <xsl:template match="/">
     <html>
@@ -226,7 +226,7 @@ hr {
 
   <xsl:template match="copyright">
     <p class="copyright">
-      <xsl:text>Copyright ©</xsl:text>
+      <xsl:text>Copyright Â©</xsl:text>
       <xsl:apply-templates/>
     </p>
   </xsl:template>
