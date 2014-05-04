@@ -1,0 +1,208 @@
+Révision 13006
+
+fichiers modifiés :
+   general/sysutils/udev-extras.xml
+   introduction/welcome/changelog.xml
+
+Log :
+1 line Synchronize udev extras with LFS
+
+Le robot a traité 13 % du commit anglais
+Index: general/sysutils/udev-extras.xml
+===================================================================
+--- general/sysutils/udev-extras.xml	(revision 13005)
++++ general/sysutils/udev-extras.xml	(revision 13006)
+@@ -29,30 +29,12 @@
+   <sect2 role="package">
+     <title>Introduction to Udev Extras</title>
+ 
+-<para>In 2012, the <application>Udev</application> code distribution was
+-merged with <application>systemd</application>.
+-<application>Systemd</application> is a set of programs that replace the
+-<application>SysVInit</application> package used by LFS and is much more
+-complex.  It is not compatible with the LFS bootscripts and has many
+-problems and few advantages for most LFS users.</para>
++    <para>Udev was installed as a part of systemd in LFS. However, not
++    all components were installed due to dependencies that were unavailable.
++    This procedure adds those missing components.</para>
+ 
+-<para>The procedures below extract libraries and programs from the systemd
+-sources that could not be built in LFS due to library dependency
+-issues.</para>
++    <!-- &lfs75_checked; -->
+ 
+-<para>Unlike any other package in the BLFS book, there is no set version
+-of <application>systemd</application> specified to download. Several version
+-updates to LFS and BLFS means there are probably many different
+-versions of <application>Udev</application> on the platforms that BLFS is
+-being built upon. Therefore, you should download and use the version of
+-<application>systemd</application> your computer currently uses. The BLFS
+-team has no experience updating (or reverting to an older version) the
+-<application>Udev</application> programs <quote>on the fly.</quote> To
+-discover the version of <application>Udev</application> your computer
+-currently uses, issue <command>/sbin/udevadm --version</command>.</para>
+-&lfs75_checked;
+     <bridgehead renderas="sect3">Package Information</bridgehead>
+     <itemizedlist spacing="compact">
+       <listitem>
+@@ -79,9 +61,11 @@
+ 
+     <bridgehead renderas="sect4">Required</bridgehead>
+     <para role="required">
+-<ulink url="http://anduin.linuxfromscratch.org/sources/other/"/>
+-(match the udev-lfs-???.tar.bz2 tarball version to the systemd version used in LFS),
+-<xref linkend="glib2"/> (for the gudev library), and
++      <xref linkend="glib2"/> (for the gudev library)
++    </para>
++    <bridgehead renderas="sect4">Optional Dependencies</bridgehead>
++    <para role="optional">
+       <xref linkend="gobject-introspection"/> (for gir-data, needed for Gnome)
+     </para>
+ 
+@@ -99,103 +83,56 @@
+   <sect2 role="installation">
+     <title>Installation of Udev Extras</title>
+ 
+-<para>First, put the custom LFS files in place:</para>
++    <para>First, build systemd:</para>
+ 
+-<screen><userinput>UDEV=&lt;version&gt;
+-tar -xf ../udev-lfs-$UDEV.tar.bz2</userinput></screen>
++<screen><userinput>./configure --disable-tests &amp;&amp;
++make</userinput></screen>
+ 
+-<note><para>For udev-lfs-197-2.tar.bz2, there is a minor error
+-in the Makefile.  For that version, run:</para>
++   <caution><para>If you maintained the default System V/systemd 
++   installation in LFS, do not run <userinput>make install</userinput>.
++   It will overwrite the symbolic links needed to switch boot 
++   systems.</para></caution>
+ 
+-<screen><userinput>sed -i -e '/samsung-9/d' udev-lfs-197-2/makefile-incl.keymap</userinput></screen></note>
++   <para>Now install gudev as the <systemitem class="username">root</systemitem> 
++   user:</para>
+ 
+-<sect3>
+-<title>keymap</title>
++<screen><userinput>mkdir -pv /usr/include/gudev-1.0/gudev /usr/share/gtk-doc/html/gudev &amp;&amp;
+ 
+-<note><para>
+-Starting with systemd-206, the keymap capabilities are built into the 
+-udev procedures initial installation in LFS.  These procedures only
+-apply to udev versions before 206.
+-</para></note>
++cp -v src/gudev/gudev.h             /usr/include/gudev-1.0/gudev &amp;&amp;
++cp -v src/gudev/gudev[a-e,t]*.h     /usr/include/gudev-1.0/gudev &amp;&amp;
++cp -v .libs/libgudev-1.0.so.0.2.0   /usr/lib                     &amp;&amp;
+ 
+-<para>
+-Support for special keys for many laptops is provided by the
+-<command>keymap</command> program and supporting files.  If the
+-<command>keymap</command> capability is desired, use:
+-</para>
++ln -svfn libgudev-1.0.so.0.2.0      /usr/lib/libgudev-1.0.so     &amp;&amp;
++ln -svfn libgudev-1.0.so.0.2.0      /usr/lib/libgudev-1.0.so.0   &amp;&amp;
+ 
+-<screen><userinput>make -f udev-lfs-$UDEV/Makefile.lfs keymap</userinput></screen>
++cp -v src/gudev/gudev-1.0.pc        /usr/lib/pkgconfig           &amp;&amp;
++cp -v docs/gudev/html/*             /usr/share/gtk-doc/html/gudev</userinput></screen>
+ 
+-<para>To install <command>keymap</command> and its associated files,
+-issue the following command as the
+-<systemitem class="username">root</systemitem> user:</para>
++    <para>If the optional gobject-introspection package was availible, 
++    install the gir-data files as the <systemitem class="username">root</systemitem> 
++    user:</para>
+ 
+-<screen role="root"><userinput>make -f udev-lfs-$UDEV/Makefile.lfs install-keymap</userinput></screen>
++<screen><userinput>mkdir -pv /usr/lib/girepository-1.0 /usr/share/gir-1.0  &amp;&amp;
+ 
+-</sect3>
++cp -v src/gudev/GUdev-1.0.typelib /usr/lib/girepository-1.0 &amp;&amp;
++cp -v src/gudev/GUdev-1.0.gir     /usr/share/gir-1.0</userinput></screen>
+ 
+-<sect3>
+-<title>gudev</title>
+-<para>To build the <application>libgudev-1.0</application> library and
+-interface files, run:</para>
+-<screen><userinput>make -f udev-lfs-$UDEV/Makefile.lfs gudev</userinput></screen>
+-<para>Install the <filename class='libraryfile'>gudev</filename> library,
+-run, as the <systemitem class="username">root</systemitem> user:</para>
+-<screen role="root"><userinput>make -f udev-lfs-$UDEV/Makefile.lfs install-gudev</userinput></screen>
+-</sect3>
+-<sect3>
+-<title>GObject Files</title>
+-<para>To build the <application>gobject-introspection</application>
+-interface (gir) files for the <filename
+-class='libraryfile'>libgudev-1.0</filename> library, run:</para>
+-<screen><userinput>make -f udev-lfs-$UDEV/Makefile.lfs gir-data</userinput></screen>
+-<para>Install the gir data, as the <systemitem
+-class="username">root</systemitem> user:</para>
+-<screen role="root"><userinput>make -f udev-lfs-$UDEV/Makefile.lfs install-gir-data</userinput></screen>
+-<caution><para>There is a shortcut to build and install all of the
+-<application>udev</application> components at once using the
+-<emphasis>all</emphasis> and <emphasis>install-all</emphasis>
+-<filename>Makefile.lfs</filename> targets.  The installation of this target
+-will overwrite the base LFS udev files and has not been thoroughly tested
+-at the time of this writing.  If using this procedure, the udev daemon
+-should be stopped before overwriting the existing <filename>udevd</filename>
+-and udev libraries.</para></caution>
+-</sect3>
+   </sect2>
+ 
+   <sect2 role="content">
+     <title>Contents</title>
+ 
+-<para>A list of the installed files, along with their short descriptions
+-can be found at
+-<ulink url="&lfs-root;/chapter06/udev.html#contents-udev"/>.</para>
+-<para>The following is some additional content information.</para>
+     <segmentedlist>
+       <segtitle>Installed Programs</segtitle>
+       <segtitle>Installed Library</segtitle>
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-<seg>findkeyboards, keyboard-force-release.sh, and keymap</seg>
++        <seg>None</seg>
+ 
+         <seg>libgudev-1.0.so</seg>
+ 
+-<seg>/lib/udev/keymaps/force-release,
+-/usr/include/gudev-1.0/gudev,
++        <seg>/usr/include/gudev-1.0/gudev,
+              /usr/lib/girepository-1.0,
+              /usr/share/gir-1.0, and
+              /usr/share/gtk-doc/html/gudev</seg>
+@@ -207,16 +144,6 @@
+       <?dbfo list-presentation="list"?>
+       <?dbhtml list-presentation="table"?>
+ 
+-<varlistentry id="keymap-systemd">
+-<term><command>keymap</command></term>
+-<listitem>
+-<para>configures computer model specific key mappings.</para>
+-<indexterm zone="udev-extras keymap-systemd">
+-<primary sortas="b-keymap">keymap (from systemd)</primary>
+-</indexterm>
+-</listitem>
+-</varlistentry>
+       <varlistentry id="libgudev-1.0-systemd">
+         <term><filename class='libraryfile'>libgudev-1.0.so</filename></term>
+         <listitem>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(revision 13005)
++++ introduction/welcome/changelog.xml	(revision 13006)
+@@ -48,6 +48,9 @@
+       <para>April 28th, 2014</para>
+       <itemizedlist>
+         <listitem>
++          <para>[bdubbs] - Synchronize udev extras with LFS.</para>
++        </listitem>
++        <listitem>
+           <para>[bdubbs] - Add references to dbus-launch to window
+           managers.</para>
+         </listitem>
+
