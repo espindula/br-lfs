@@ -8,7 +8,7 @@
 <sect1 id="ch-scripts-udev">
   <?dbhtml filename="udev.html"?>
 
-  <title>Gestion des périphériques et modules d'un système LFS</title>
+  <title>Aperçu de la gestion des modules et des périphériques</title>
 
   <indexterm zone="ch-scripts-udev">
     <primary sortas="a-Udev">Udev</primary>
@@ -16,16 +16,16 @@
   </indexterm>
 
   <para>Au <xref linkend="chapter-building-system"/>, nous avons
-  installé le paquet Udev. Avant d'entrer dans les détails concernant son
+  installé le paquet Udev qui fait partie de systemd. Avant d'entrer dans les détails concernant son
   fonctionnement, un bref historique des méthodes précédentes de gestion
   des périphériques est nécessaire.</para>
 
-  <para>Traditionnellement, les systèmes Linux utilisent une
+  <para>Traditionnellement, les systèmes Linux utilisaient une
   méthode de création de périphériques statiques avec laquelle un grand
-  nombre de n&oelig;uds de périphériques sont créés sous
+  nombre de n&oelig;uds de périphériques étaient créés sous
   <filename class="directory">/dev</filename> (quelque fois des milliers de n&oelig;uds),
-  que le matériel correspondant existe ou pas.
-  Ceci est fait typiquement avec un script <command>MAKEDEV</command>,
+  que le matériel correspondant existait ou pas.
+  Ceci était fait le plus souvent avec un script <command>MAKEDEV</command>,
   qui contient des appels au programme <command>mknod</command> avec
   les numéros de périphériques majeurs et mineurs pour chaque périphérique
   possible qui pourrait exister dans le monde.</para>
@@ -54,8 +54,8 @@
     généralement accepté que s'il est possible de configurer les noms des
     périphériques, alors la politique de nommage des périphériques revient à
     l'administrateur du système, et du coup n'est imposée par aucun développeur en particulier.
-    Le système de fichiers <systemitem class="filesystem">devfs</systemitem> souffre aussi de
-    restrictions particulières inhérentes à sa conception et qui ne peuvent
+    Le système de fichiers <systemitem class="filesystem">devfs</systemitem> souffrait aussi de
+    restrictions particulières inhérentes à sa conception et qui ne pouvaient
     être corrigées sans une revue importante du noyau. Il a aussi été
     marqué comme obsolète pendant une longue période &mdash;&nbsp;à cause
     d'un manque de maintenance&nbsp;&mdash; et a finalement été supprimé du
@@ -67,7 +67,7 @@
     <systemitem class="filesystem">sysfs</systemitem> est d'exporter une vue
     de la configuration matérielle du système pour les processus en espace utilisateur.
     Avec cette représentation visible en espace utilisateur,
-    la possibilité de voir un remplacement de l'espace utilisateur pour
+    la possibilité de développer un remplacement de l'espace utilisateur pour
     <systemitem class="filesystem">devfs</systemitem>
     est devenu beaucoup plus réaliste.</para>
 
@@ -85,7 +85,7 @@
       <systemitem class="filesystem">sysfs</systemitem>
       connaît les périphériques présents sur un système et quels numéros
       de périphériques devraient être utilisés. Les pilotes qui ont été
-      compilés directement dans le noyau enregistrent leurs objets avec
+      compilés directement dans le noyau enregistrent leurs objets avec le
       <systemitem class="filesystem">sysfs</systemitem> (en interne, devtmpfs) quand ils sont
       détectés par le noyau. Pour les pilotes compilés en tant que
       modules, cet enregistrement surviendra quand le module sera
@@ -106,7 +106,7 @@
       <para>Les fichiers de périphérique sont créés par le noyau avec le
       système de fichiers <systemitem class="filesystem">devtmpfs</systemitem>.
       Tout pilote souhaitant enregistrer un n&oelig;ud de périphérique ira dans
-      <systemitem class="filesystem">devtmpfs</systemitem> (par le c&oelig;ur du
+      le <systemitem class="filesystem">devtmpfs</systemitem> (par le c&oelig;ur du
       pilote) pour le faire. Quand une instance <systemitem class="filesystem">devtmpfs</systemitem>
       est montée sur <filename class="directory">/dev</filename>, le n&oelig;ud
       de périphérique sera créé dès le départ avec un nom, des droits et un
@@ -123,56 +123,13 @@
       ou son groupe, ou l'entrée dans la base de données interne d'<command>udevd</command>
       concernant cet objet.</para>
 
-      <para>Les règles de ces trois répertoires sont numérotées de la même
-      façon que dans le paquet LFS-Bootscripts et les trois répertoires sont
-      mis à jour ensemble. Si <command>udevd</command> ne peut pas trouver de
+      <para>Les règles de ces trois répertoires sont numérotées et les trois
+      répertoires sont mis à jour ensemble. Si <command>udevd</command> ne peut pas trouver de
       règles pour le périphérique qu'il crée, il en donnera la propriété et les
       droits à n'importe quel <systemitem class="filesystem">devtmpfs</systemitem>
       utilisé au départ.</para>
 
     </sect3> 
-
-    <sect3>
-      <title>Les scripts de démarrage d'Udev</title>
-
-      <para>Le premier script de démarrage de LFS,
-      <filename>/etc/init.d/mountvirtfs</filename>, va copier les périphériques de
-      <filename class="directory">/lib/udev/devices</filename> vers
-      <filename class="directory">/dev</filename>. C'est nécessaire car certains
-      périphériques, certains répertoires et certains liens symboliques sont
-      requis avant que les processus de gestion dynamique des périphériques ne soient
-      disponibles au tout début du démarrage d'un système ou car ils sont exigés
-      par <command>udevd</command> lui-même. La création de n&oelig;uds de
-      périphériques statiques dans <filename
-      class="directory">/lib/udev/devices</filename> offre aussi un contournement
-      facile pour les périphériques qui ne sont pas supportés par l'infrastructure
-      de gestion dynamique des périphériques.</para> 
-
-      <para>Le script de démarrage <filename>/etc/rc.d/init.d/udev</filename> 
-      démarre <command>udevd</command>, récupère tous les périphériques "montés à
-      froid" ayant déjà été créés par le noyau et attend les règles pour
-      se terminer. Le script défait aussi le gestionnaire d'uevent de son
-      paramétrage par défaut <filename>/sbin/hotplug </filename>.  Cela se fait
-      car le noyau n'a plus besoin d'appeler de binaires externes. À la place,
-      <command>udevd</command> listera sur une socket netlink les uevents que
-      le noyau détecte.</para> 
-
-      <para>Le script de démarrage <command>/etc/rc.d/init.d/udev_retry</command>
-      prend soin de ratraper les événements pour les sous-systèmes dont les règles
-      peuvent s'appuyer sur des systèmes de fichiers non montés jusqu'à ce que
-      le script <command>mountfs</command> ne s'exécute (en particulier,
-      <filename class="directory">/usr</filename>
-      et <filename class="directory">/var</filename> peut causer cela).  Ce
-      script se lance après le script <command>mountfs</command>, afin
-      que les règles (si récupérées), réussissent la deuxième fois. Il est
-      configuré à partir du fichier <filename>/etc/sysconfig/udev_retry</filename>&nbsp;;
-      tous les mots de ce fichier différents de commentaires sont considérés comme
-      des noms de sous-systèmes pour les récupérer lors de la nouvelle tentative.
-      Pour trouver le sous-système d'un périphérique, utilisez
-      <command>udevadm info --attribute-walk &lt;périphérique&gt;</command> où
-      &lt;périphérique&gt; est un chemin absolu dans /dev ou /sys tel que /dev/sr0 ou
-      /sys/class/rtc.</para>
-    </sect3>
 
     <sect3>
       <title>Chargement d'un module</title>
@@ -335,29 +292,6 @@
       mettant dans le fichier <filename>/etc/udev/rules.d/10-wait_for_sysfs.rules</filename>
       (créez ce fichier s'il n'existe pas). Merci d'informer la liste de
       développement de LFS si vous faites ainsi et que cela vous aide.</para>
-
-    </sect3>
-
-    <sect3>
-      <title>Udev ne crée pas de périphérique</title>
-
-      <para>Le texte ci-après suppose que le pilote est compilé de
-      manière statique dans le noyau ou qu'il est déjà chargé comme
-      module, et que vous avez déjà vérifié qu'Udev ne crée pas de
-      périphérique mal nommé.</para>
-
-      <para>Udev n'a pas besoin d'information pour créer un n&oelig;ud
-      de périphérique si le pilote du noyau n'envoie pas ses données vers
-      <systemitem class="filesystem">sysfs</systemitem>.
-      C'est ce qu'il y a de plus courant avec les pilotes tierce partie à
-      l'extérieur de l'arborescence du noyau. Créez un n&oelig;ud de
-      périphérique statique dans <filename>/lib/udev/devices</filename>
-      avec les numéros majeurs/mineurs appropriés (voir le fichier
-      <filename>devices.txt</filename> dans la documentation du noyau ou
-      la documentation fournie par le fabricant du pilote tierce
-      partie). Le n&oelig;ud du périphérique statique sera copié vers
-      <filename class="directory">/dev</filename> par le script de
-      démarrage <command>udev</command>.</para>
 
     </sect3>
 
