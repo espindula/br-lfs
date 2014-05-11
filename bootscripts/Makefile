@@ -28,8 +28,7 @@ create-dirs:
 	install -d -m ${DIRMODE}  ${MAN8}
 	install -d -m ${DIRMODE}  ${SBIN}
 	ln -sfn       services    ${LIBDIR}/lsb
-	ln -sfn       rc.d/init.d ${ETCDIR}/init.d-sysv
-	ln -sfn       init.d-sysv ${ETCDIR}/init.d
+	ln -sfn       rc.d/init.d ${ETCDIR}/init.d
 
 files: create-dirs 
 	install -m ${MODE} lfs/init.d/checkfs       ${ETCDIR}/rc.d/init.d/
