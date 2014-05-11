@@ -25,7 +25,6 @@ create-dirs:
 	install -d -m ${DIRMODE}  ${ETCDIR}/sysconfig
 	install -d -m ${DIRMODE}  ${LIBDIR}
 	install -d -m ${DIRMODE}  ${SERVICEDIR}
-	install -d -m ${DIRMODE}  ${UNITDIR}
 	install -d -m ${DIRMODE}  ${MAN8}
 	install -d -m ${DIRMODE}  ${SBIN}
 	ln -sfn       services    ${LIBDIR}/lsb
@@ -59,7 +58,6 @@ files: create-dirs
 	install -m ${MODE}     lfs/lib/services/ipv4-static-route  ${SERVICEDIR}
 	install -m ${MODE}     lfs/lib/services/ipv4-static        ${SERVICEDIR}
 	install -m ${CONFMODE} lfs/lib/services/init-functions     ${SERVICEDIR}
-	install -m ${CONFMODE} lfs/units/ifupdownat.service        ${UNITDIR}/ifupdown@.service
 
 	if [ ! -f ${ETCDIR}/sysconfig/createfiles ]; then \
           install -m ${CONFMODE} lfs/sysconfig/createfiles ${ETCDIR}/sysconfig/ ;\
