@@ -1,0 +1,66 @@
+Révision 13043
+
+fichiers modifiés :
+   postlfs/security/tripwire.xml
+
+Log :
+1 line Fix compilation of tripwire with gcc-4.9.0
+
+Le robot a traité 12 % du commit anglais
+Index: postlfs/security/tripwire.xml
+===================================================================
+--- postlfs/security/tripwire.xml	(revision 13042)
++++ postlfs/security/tripwire.xml	(revision 13043)
+@@ -81,6 +81,8 @@
+ sed -i -e '/stdtwadmin.h/i#include &lt;unistd.h&gt;' src/twadmin/twadmincl.cpp &amp;&amp;
+ sed -i -e '/TWMAN/ s|${prefix}|/usr/share|' \
+        -e '/TWDOCS/s|${prefix}|/usr/share|' install/install.cfg          &amp;&amp;
++sed -i -e 's/eArchiveOpen e\([^)]*)\)/throw ( eArchiveOpen\1 )/' \
++       -e '/throw e;/d' src/core/archive.cpp                             &amp;&amp;
+ 
+ ./configure --prefix=/usr --sysconfdir=/etc/tripwire                     &amp;&amp;
+ make</userinput></screen>
+@@ -113,11 +115,29 @@
+     <para><command>sed ... src/twadmin/twadmincl.cpp</command>:
+     Fix a compilation issue with gcc-4.7.</para>
+ 
++    <para><command>sed ... install/install.cfg</command>:
++    Fix the location of the man and doc directories.</para>
++    <para><command>sed ... src/core/archive.cpp</command>:
++    Fix compilation with gcc-4.9.</para>
+     <para><command>make install</command>: This command creates the
+     <application>Tripwire</application> security keys as well as installing
+     the binaries. There are two keys: a site key and a local key which are
+     stored in <filename class="directory">/etc/tripwire/</filename>.</para>
+ 
++    <note><para>During <command>make install</command>, several questions
++    are asked, including passwords. If you want to make a script, you have
++    to apply a <application>sed</application> before running
++    <command>make install</command>:</para>
++    <para>
++    <command>sed -i -e 's@install/install.sh@&amp; -n -s<replaceable>&lt;site-password&gt;</replaceable> -l<replaceable>&lt;local-password&gt;</replaceable>@' Makefile</command>
++    </para>
++    <para>Of course, you should do this with dummy passwords and change them
++    later.</para></note>
+     <para><command>cp -v policy/*.txt /usr/doc/tripwire</command>: This command
+     installs the <application>tripwire</application> sample policy files with
+     the other <application>tripwire</application> documentation.</para>
+@@ -149,17 +169,15 @@
+ 
+       <para>Policy files should be tailored to each individual distribution
+       and/or installation. Some example policy files can be found in <filename
+-class="directory">/usr/doc/tripwire/</filename> (Note that <filename
+-class="directory">/usr/doc/</filename> is a symbolic link on LFS systems
+-to <filename class="directory">/usr/share/doc/</filename>).</para>
++      class="directory">/usr/share/doc/tripwire/</filename>.</para>
+ 
+       <para>If desired, copy the policy file you'd like to try into <filename
+       class="directory">/etc/tripwire/</filename> instead of using the default
+       policy file, <filename>twpol.txt</filename>.  It is, however, recommended
+       that you edit your policy file. Get ideas from the examples above and
+-read <filename>/usr/doc/tripwire/policyguide.txt</filename> for
++      read <filename>/usr/share/doc/tripwire/policyguide.txt</filename> for
+       additional information. <filename>twpol.txt</filename> is a good policy
+      file for learning about <application>Tripwire</application> as it will
+       note any changes to the file system and can even be used as an annoying
+
