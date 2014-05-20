@@ -13,7 +13,7 @@
 # 11/03/12
 
 # initialisation du chemin pour blfs-fr
-CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
+CHEMIN_BLFSFR="/home/denis/blfs-fr"
 
 #initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
 CHEMIN_LOG="$CHEMIN_BLFSFR/traduc/script/robot-html/log"
@@ -59,7 +59,7 @@ function balises
         bautre=$bautre-$bdiff 
 } 
 
-cd ../../
+
 
 #initialisation du fichier résultat 'list'
 > $CHEMIN_BLFSFR/verif.lst
@@ -73,10 +73,10 @@ do
   k=$i
   j=$CHEMIN_BLFSFR/"../blfs-en/BOOK/"${i:2} # initialisation du chemin vers le fichier anglais à partir du fichier français
   i=$CHEMIN_BLFSFR$( echo $i | sed -e "s@^\.*@@g")
-  cp $j tempen
-  cp $i tempfr
-  j=tempen
-  i=tempfr
+  cp $j ./tempen
+  cp $i ./tempfr
+  j="./tempen"
+  i="./tempfr"
   sed -e "s/<!--/\n<!--\n/g" -e "s/-->/\n-->\n/g" -i $i
   sed -e "s/<!--/\n<!--\n/g" -e "s/-->/\n-->\n/g" -i $j
   sed -e "/<!--/,/-->/ {
