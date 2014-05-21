@@ -62,7 +62,7 @@
 # les log d'erreurs sont envoyés à l'admin du robot
 ADMIN_ROBOT="myou72@orange.fr"
 # initialisation du chemin pour blfs-fr
-CHEMIN_BLFSFR="/mnt/travail/blfs-fr"
+CHEMIN_BLFSFR="/home/denis/blfs-fr"
 #initialisation du chemin relatif des logs par rapport a la racine de la copie de travail de la VF
 CHEMIN_LOG="${CHEMIN_BLFSFR}/traduc/script/robot-html/log"
 # fonction pour la gestion des erreurs
