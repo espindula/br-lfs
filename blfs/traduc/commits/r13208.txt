@@ -1,0 +1,113 @@
+Révision 13208
+
+fichiers modifiés :
+   networking/netprogs/samba.xml
+   general.ent
+   introduction/welcome/changelog.xml
+
+Log :
+samba-4.1.8.
+
+Le robot a traité 21 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 13207)
++++ introduction/welcome/changelog.xml	(révision 13208)
+@@ -47,6 +47,10 @@
+       <para>June 6th, 2014</para>
+       <itemizedlist>
+         <listitem>
++          <para>[fernando] - samba-4.1.8. Fixes
++          <ulink url="&blfs-ticket-root;5132">#5132</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[igor] - Update to wpa_supplicant-2.2. Fixes
+           <ulink url="&blfs-ticket-root;5137">#5137</ulink>.</para>
+         </listitem>
+
+Index: networking/netprogs/samba.xml
+===================================================================
+--- networking/netprogs/samba.xml	(révision 13207)
++++ networking/netprogs/samba.xml	(révision 13208)
+@@ -6,12 +6,10 @@
+ 
+   <!ENTITY samba-download-http "http://ftp.samba.org/pub/samba/stable/samba-&samba-version;.tar.gz">
+   <!ENTITY samba-download-ftp  "ftp://ftp.samba.org/pub/samba/stable/samba-&samba-version;.tar.gz">
+-reputedly up to 500 MB additional for all tests)">
+-reputedly up to 110 SBU to run all tests)">
+ ]>
+ 
+ <sect1 id="samba" xreflabel="Samba-&samba-version;">
+@@ -115,23 +113,30 @@
+     --localstatedir=/var                \
+     --with-piddir=/run/samba            \
+     --with-pammodulesdir=/lib/security  \
++    --without-systemd                   \
+     --enable-fhs                        \
+     --enable-nss-wrapper                &amp;&amp;
+ 
+ make</userinput></screen>
+ 
++    <para>According to <application>Samba</application> developers, the
++    limitation to 108 characters of the path length of a unix named pipe socket
++    may be the cause of errors, so that over 1/3 of the tests might fail. For
++    this reason, the switch <option>--with-selftest-prefix=/tmp/quick</option>
++    (or another path with small number of characters) can be used with
++    configure. Even so, the 
++    <quote><replaceable>samba3.raw.eas</replaceable></quote> test may fail,
++    apparently for the same reason. If one quicktest fails, it can be disabled.
++    For example, <quote><replaceable>samba3.raw.eas</replaceable></quote> may
++    be disabled with the following command:</para>
++<screen><userinput>sed -i "/samba3.blackbox.failure.failure/i \^samba3.raw.eas" selftest/knownfail</userinput></screen>
+     <para>To test the results, as the <systemitem
+     class="username">root</systemitem> user, issue: <command>make
+     quicktest</command>.  There are other targets (test, subunit-test)
+     available, but take a very long time (over 100 SBU).</para>
+ 
+-<para>If one quicktest fails, it can be disabled. For example,
+-<quote><replaceable>samba3.raw.eas</replaceable></quote> has been reported
+-to fail for prior Samba versions. To disable it, run the following 
+-command:</para>
+-<screen><userinput>sed -i "/samba3.blackbox.failure.failure/i \^samba3.raw.eas" selftest/knownfail</userinput></screen>
+     <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
+ 
+ <screen role="root"><userinput>make install &amp;&amp;
+@@ -169,10 +174,18 @@
+     <para><parameter>--enable-nss-wrapper</parameter>: Builds the nss-wrapper
+     library.</para>
+ 
++    <para><parameter>--without-systemd</parameter>: Disable
++    <application>systemd</application> integration, which is not part of
++    LFS/BLFS. If you use <application>systemd</application>, replace by
++    <parameter>--with-systemd</parameter>.</para>
+     <para><option>--enable-socket-wrapper</option> and
+     <option>--enable-selftest</option>: These options are required to run
+     the test suite.</para>
+ 
++    <para><option>--with-selftest-prefix=SELFTEST_PREFIX</option>: This option
++    specify the test suite work directory (default=./st).</para>
+     <para><command>mv -v /usr/lib/libnss_win{s,bind}.so* /lib</command>:
+     The nss libraries are installed in /usr/lib by default. Move them to
+     /lib.</para>
+@@ -464,14 +477,14 @@
+         libsmbconf.so, libsmbldap.so, libsmbsharemodes.so, libtevent-util.so,
+         libtorture.so, libwbclient.so, mit_samba.so, the pam_winbind.so and
+         pam_smbpass.so PAM libraries, winbind_krb5_locator.so, and assorted
+-character set, filesystem and support modules.</seg>
++        character set, filesystem and support modules under
++        /usr/lib/{python&python2-majorver;,samba}</seg>
+         
+         <seg>/etc/samba, /run/samba, /usr/include/samba-4.0,
+-/usr/lib/python&python2-majorver;/site-packages/samba,
+-/usr/lib/samba, /usr/share/doc/samba-&samba-version;,
+-/usr/share/perl5/Parse/Pidl/Samba{3,4},
+-/usr/share/samba, /var/cache/samba, /var/lib/samba, /var/lock/samba,
+-/var/log/samba, and /var/run/samba</seg>
++        /usr/lib/perl5/vendor_perl/5.x.y/Parse/Pidl/Samba{3,4},
++        /usr/lib/python&python2-majorver;/site-packages/samba, /usr/lib/samba,
++        /usr/share/doc/samba-&samba-version;, /usr/share/samba, and
++        /var/{cache,lib,lock,log,run}/samba</seg>
+ 
+       </seglistitem>
+     </segmentedlist>
+
