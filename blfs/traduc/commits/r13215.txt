@@ -1,0 +1,123 @@
+Révision 13215
+
+fichiers modifiés :
+   postlfs/filesystems/initramfs.xml
+   general.ent
+   introduction/welcome/changelog.xml
+
+Log :
+Improve detection and handling of udevd in mkinitramfs; Put correct date in changelog.
+
+Le robot a traité 16 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 13214)
++++ introduction/welcome/changelog.xml	(révision 13215)
+@@ -44,12 +44,22 @@
+ 
+ -->
+     <listitem>
+-<para>June 8th, 2014</para>
++      <para>June 9th, 2014</para>
+       <itemizedlist>
+         <listitem>
++          <para>[pierre] - Improve detection and handling of udevd in
++          mkinitramfs.</para>
++        </listitem>
++        <listitem>
+           <para>[pierre] - Eudev-1.7 (Udev-extras). Fixes
+           <ulink url="&blfs-ticket-root;5128">#5128</ulink>.</para>
+         </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
++      <para>June 8th, 2014</para>
++      <itemizedlist>
+         <listitem>
+           <para>[fernando] - MariaDB-10.0.11: move switch
+           -DWITH_EMBEDDED_SERVER=ON to parameter.</para>
+
+Index: postlfs/filesystems/initramfs.xml
+===================================================================
+--- postlfs/filesystems/initramfs.xml	(révision 13214)
++++ postlfs/filesystems/initramfs.xml	(révision 13215)
+@@ -94,10 +94,13 @@
+ binfiles="sh cat cp dd killall ls mkdir mknod mount "
+ binfiles="$binfiles umount sed sleep ln rm uname"
+ 
+-sbinfiles="udevadm modprobe blkid switch_root"
++# Systemd installs udevadm in /bin. Other udev implementations have it in /sbin
++if [ -x /bin/udevadm ] ; then binfiles="$binfiles udevadm"; fi
+ 
++sbinfiles="modprobe blkid switch_root"
+ #Optional files and locations
+-for f in mdadm udevd; do
++for f in mdadm udevd udevadm; do
+   if [ -x /sbin/$f ] ; then sbinfiles="$sbinfiles $f"; fi
+ done
+ 
+@@ -131,7 +134,7 @@
+ # Install any firmware present
+ cp -a /lib/firmware $WDIR/lib
+ 
+-# Copy the RAID configureation file if present
++# Copy the RAID configuration file if present
+ if [ -f /etc/mdadm.conf ] ; then
+   cp /etc/mdadm.conf $WDIR/etc
+ fi
+@@ -164,7 +167,9 @@
+ 
+ # Add udevd libraries if not in /sbin
+ if [ -x /lib/udev/udevd ] ; then
+-ldd /lib/udev/udevd | sed "s/\t//" | cut -d " " -f1 >> $unsorted
++  ldd /lib/udev/udevd | sed "s/\t//" | cut -d " " -f1 &gt;&gt; $unsorted
++elif [ -x /lib/systemd/systemd-udevd ] ; then
++  ldd /lib/systemd/systemd-udevd | sed "s/\t//" | cut -d " " -f1 &gt;&gt; $unsorted
+ fi
+ 
+ # Add module symlinks if appropriate
+@@ -208,7 +213,12 @@
+   copy $library lib
+ done
+ 
+-cp -a /lib/udev $WDIR/lib
++if [ -d /lib/udev ]; then
++  cp -a /lib/udev $WDIR/lib
++fi
++if [ -d /lib/systemd ]; then
++  cp -a /lib/systemd $WDIR/lib
++fi
+ 
+ # Install the kernel modules if requested
+ if [ -n "$KERNEL_VERSION" ]; then
+@@ -321,12 +331,17 @@
+ 
+ # udevd location depends on version
+ if [ -x /sbin/udevd ]; then
+-UDEV_PATH=/sbin
++  UDEVD=/sbin/udevd
++elif [ -x /lib/udev/udevd ]; then
++  UDEVD=/lib/udev/udevd
++elif [ -x /lib/systemd/systemd-udevd ]; then
++  UDEVD=/lib/systemd/systemd-udevd
+ else
+-UDEV_PATH=/lib/udev
++  echo "Cannot find udevd nor systemd-udevd"
++  problem
+ fi
+ 
+-${UDEV_PATH}/udevd --daemon --resolve-names=never
++${UDEVD} --daemon --resolve-names=never
+ udevadm trigger
+ udevadm settle
+ 
+@@ -336,7 +351,7 @@
+ 
+ do_mount_root
+ 
+-killall -w ${UDEV_PATH}/udevd
++killall -w ${UDEVD##*/}
+ 
+ exec switch_root /.root "$init" "$@"
+ 
+
