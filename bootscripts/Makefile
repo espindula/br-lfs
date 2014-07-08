@@ -1,7 +1,6 @@
 ETCDIR=${DESTDIR}/etc
 LIBDIR=${DESTDIR}/lib
 SERVICEDIR=${LIBDIR}/services
-UNITDIR=${LIBDIR}/systemd/system
 MAN8=${DESTDIR}/usr/share/man/man8
 SBIN=${DESTDIR}/sbin
 MODE=754
