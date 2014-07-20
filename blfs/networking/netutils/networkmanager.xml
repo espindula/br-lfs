@@ -56,9 +56,10 @@
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required">
       <xref linkend="dbus-glib"/>,
-      ,
+      <xref linkend="libndp"/>,
       <xref linkend="libnl"/>,
-      <xref linkend="nss"/> et
+      <xref linkend="nss"/>,
+      (ou <xref linkend="gnutls"/>), et
       <xref linkend="udev-extras"/> (pour GUdev)
     </para>
     <bridgehead renderas="sect4">Recommandées</bridgehead>
@@ -69,6 +70,7 @@
       <xref linkend="gobject-introspection"/>,
       <xref linkend="iptables"/>,
       <xref linkend="libsoup"/>,
+      <xref linkend="newt"/> (pour <command>nmtui</command>),
       <xref linkend="polkit"/>,
       <xref linkend="upower"/> et
       <xref linkend="vala"/>
@@ -76,10 +78,12 @@
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
       <xref linkend="gtk-doc"/>,
+      <xref linkend="qt4"/>,
+      <xref linkend="valgrind"/>,
+      <xref linkend="wpa_supplicant"/> (construit avec le support D-Bus),
+      <ulink url="http://libteam.org/">libteam</ulink>, et
       <ulink url="http://www.freedesktop.org/software/ModemManager/">
       ModemManager</ulink>
-      <xref linkend="qt4"/>, et
-      <xref linkend="wpa_supplicant"/> (construit avec le support D-Bus)
     </para>
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/NetworkManager"/></para>
@@ -106,12 +110,20 @@ make</userinput>
   </sect2>
   <sect2 role="commands">
     <title>Explications des commandes</title>
+     <para>
+      <parameter>--with-nmtui</parameter>: Ce paramètre active la construction de 
+      <command>nmtui</command>.
+    </para>
+    <para>
+      <parameter>--with-systemdsystemunitdir=no</parameter>: Ce paramètre est utilisé pour le système d'initialisation
+       sysv. Si vous utilisez systemd, remplacez "no" par le bon répertoire.
+    </para>
     <para>
       <option>--disable-ppp</option>&nbsp;: Ce paramètre désactive le support facultatif de
       <application>PPP</application> dans <application>NetworkManager</application>.
     </para>
   <para>
-     <option>--enable-doc</option>&nbsp;: Utilisez ce paramètre si vous avez installé 
+     <option>--enable-gtk-doc</option>&nbsp;: Utilisez ce paramètre si vous avez installé 
       <xref linkend="gtk-doc"/> et souhaitez construire les manuels de l'API.
    </para>
    
@@ -119,11 +131,6 @@ make</userinput>
       <option>--wihout-iptables</option>&nbsp;: Utilisez ce paramètre si vous n'avez pas
       installé <application>Iptables</application>.
     </para>
-    <para><option>--libexecdir=/usr/lib/NetworkManager</option>: Cette option
-    crée un répertoire <filename class="directory">NetworkManager</filename> dans
-    <filename class="directory">/usr/lib</filename> pour les programmes du paquet, au lieu d'utiliser <filename
-    class="directory">/usr/libexec</filename> en accord avec l'ancienne version de FHS utilisée
-      avant LFS-7.5.</para>
   </sect2>
   <sect2 role="configuration">
     <title>Configuration de NetworkManager</title>
@@ -154,8 +161,10 @@ plugins=keyfile</literal>
 EOF</userinput>
 </screen>
       <para>
-        Voir <command>man 5 NetworkManager.conf</command> pour les options
-        supplémentaires.
+        Vous pouvez ajouter <option>dns=none</option> pour supprimer les changements de
+         <filename>/etc/resolv.conf</filename>. Voir
+         <command>man 5 NetworkManager.conf</command>
+         pour toutes les options supplémentaires.
       </para>       
     </sect3>
     <sect3 id="NetworkManager-init">
@@ -182,14 +191,17 @@ EOF</userinput>
       <segtitle>Répertoires installés</segtitle>
       <seglistitem>
         <seg>
-          nmcli, nm-online, nm-tool et NetworkManager
+          NetworkManager, nm-avahi-autoipd.action, nm-dhcp-helper,
+          nm-dispatcher, nm-online, nmcli, et, pour chacun des autres liés en dur:
+          nmtui, nmtui-connect, nmtui-edit, et nmtui-hostname
         </seg>
         <seg>
-          libnm-glib.so, libnm-glib-vpn.so et libnm-util.so
+          libnm-glib.so, libnm-glib-vpn.so, libnm-util.so, et des modules sous /usr/lib/NetworkManager
         </seg>
         <seg>
           /etc/NetworkManager, /usr/include/libnm-glib,
           /usr/include/NetworkManager, /usr/lib/NetworkManager,
+          /usr/share/doc/NetworkManager,
           /usr/share/gtk-doc/html/libnm-glib,
           /usr/share/gtk-doc/html/libnm-util,
           /usr/share/gtk-doc/html/NetworkManager,
@@ -221,13 +233,48 @@ EOF</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
-      <varlistentry id="nm-tool">
-        <term><command>nm-tool</command></term>
+      <varlistentry id="nmtui">
+      <term><command>nmtui</command></term>
         <listitem>
-          <para>est utiliser pour donner des informations sur <application>NetworkManager</application>,
-          le périphérique et les réseaux sans fil.</para>
-          <indexterm zone="NetworkManager nm-tool">
-            <primary sortas="b-nm-tool">nm-tool</primary>
+          <para>
+            interface basée sur ncurses pour
+            <application>nmcli</application>
+           </para>
+          <indexterm zone="NetworkManager nmtui">
+            <primary sortas="b-nmtui">nmtui</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
+      <varlistentry id="nmtui-connect">
+        <term><command>nmtui-connect</command></term>
+        <listitem>
+          <para>
+             interface intéractive basée sur ncurses pour activer/désactiver les connexions.
+          </para>
+          <indexterm zone="NetworkManager nmtui-connect">
+            <primary sortas="b-nmtui-connect">nmtui-connect</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="nmtui-edit">
+        <term><command>nmtui-edit</command></term>
+        <listitem>
+          <para>
+            interface intéractive basée sur ncurses pour editer les connexions.
+          </para>
+          <indexterm zone="NetworkManager nmtui-edit">
+            <primary sortas="b-nmtui-edit">nmtui-edit</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="nmtui-hostname">
+        <term><command>nmtui-hostname</command></term>
+        <listitem>
+          <para>
+   interface intéractive basée sur ncurses pour editer le nom d'hote.
+          </para>
+          <indexterm zone="NetworkManager nmtui-hostname">
+            <primary sortas="b-nmtui-hostname">nmtui-hostname</primary>
           </indexterm>
         </listitem>
       </varlistentry>
