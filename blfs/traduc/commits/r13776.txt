@@ -1,0 +1,240 @@
+Révision 13776
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   networking/netutils/wireshark.xml
+   packages.ent
+
+Log :
+Update to wireshark-1.12.0.
+
+Le robot a traité 16 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 13775)
++++ introduction/welcome/changelog.xml	(révision 13776)
+@@ -48,6 +48,10 @@
+       <para>August 1st, 2014</para>
+       <itemizedlist>
+         <listitem>
++          <para>[fernando] - Update to wireshark-1.12.0. Fixes
++          <ulink url="&blfs-ticket-root;5317">#5317</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[igor] - Update to libdrm-2.4.56. Fixes
+           <ulink url="&blfs-ticket-root;5310">#5310</ulink>.</para>
+         </listitem>
+
+Index: networking/netutils/wireshark.xml
+===================================================================
+--- networking/netutils/wireshark.xml	(révision 13775)
++++ networking/netutils/wireshark.xml	(révision 13776)
+@@ -82,32 +82,35 @@
+     </para>
+ 
+     <para>Note that you need <application>Gtk+</application> or
+-<application>Qt4</application> installed, otherwise, you will need to pass
++    <application>Qt4</application> installed, otherwise, pass
+     <option>--disable-wireshark</option> to the
+-<command>configure</command> command.</para>
++    <command>configure</command> command. SBU and disk space required are larger
++    for the Qt GUI.</para>
+ 
+     <bridgehead renderas="sect4">Recommended</bridgehead>
+     <para role="recommended">
++      <xref linkend="gtk3"/> (to build the <application>Gtk+3</application>
++      GUI) and
+       <xref linkend="libpcap"/> (required to capture data)
+     </para>
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+     <para role="optional">
+-<ulink url="http://www.gnu.org/software/adns/adns.html">adns</ulink>,
+-<ulink url="http://www.maxmind.com/app/c">GeoIP</ulink>,
+       <xref linkend="gnutls"/>,
+       <xref linkend="libgcrypt"/>,
+       <xref linkend="lua"/>,
+       <xref linkend="mitkrb"/>,
+-<xref linkend="openssl"/>, and
++      <xref linkend="openssl"/>,
++      <ulink url="http://www.gnu.org/software/adns/adns.html">adns</ulink>,
++      <ulink url="http://www.maxmind.com/app/c">GeoIP</ulink>, and
+       <ulink url="http://www.portaudio.com/download.html">PortAudio</ulink>
+     </para>
+ 
+     <bridgehead renderas="sect4">Optional (to build the GUI front-end)</bridgehead>
+     <para role="optional">
+       <xref linkend="gtk2"/>,
+-<xref linkend="gtk3"/>, or 
+-<xref linkend="qt4"/>
++      <xref linkend="qt4"/>, or 
++      <xref linkend="qt5"/>
+     </para>
+ 
+     <para condition="html" role="usernotes">User Notes:
+@@ -167,10 +170,34 @@
+ 
+ <screen><userinput>usermod -a -G wireshark <replaceable>&lt;username&gt;</replaceable></userinput></screen>
+ 
++    <para>If you have <application>GTK+2</application> and 3, and
++    <application>Qt4</application> and 5, one GUI linked to
++    <application>GTK+3</application> and another one linked to
++    <application>Qt5</application> are built, by default. Instead, we chose to
++    build the <application>GTK+3</application> GUI only, as the BLFS default.
++    If you prefer otherwise, some modifications are mecessary. For
++    modifications in the <command>configure</command> switches, see
++    "Command Explanations".</para>
++    <para>If you want to build a Qt GUI and have both
++    <application>Qt4</application> and 5 installed, issue either:</para>
++<screen><userinput>source setqt5</userinput></screen>
++    <para>if you want the <application>Qt5</application> GUI built, or:</para>
++<screen><userinput>source setqt4 &amp;&amp;
++sed -i 's/Qt5 Qt/Qt/' configure</userinput></screen>
++    <para>if you want the <application>Qt4</application> GUI built.</para>
+     <para>Continue to install <application>Wireshark</application> by running
+     the following commands:</para>
+ 
+-<screen><userinput>./configure --prefix=/usr --sysconfdir=/etc &amp;&amp;
++<screen><userinput>./configure --prefix=/usr     \
++            --with-gtk3=yes   \
++            --with-qt=no      \
++            --sysconfdir=/etc &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>This package does not come with a test suite.</para>
+@@ -213,32 +240,36 @@
+ <screen role="root"><userinput>chown -v root:wireshark /usr/bin/{tshark,dumpcap} &amp;&amp;
+ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput></screen>
+ 
+-<para>Finally, add any users to the wireshark group with <userinput>usermod -a -G
+-wireshark &lt;username&gt;</userinput>.</para>
++  <para>Finally, add any users to the wireshark group (as root user):</para>
+ 
++<screen role="root"><userinput>usermod -a -G wireshark &lt;username&gt;</userinput></screen>
+   </sect2>
+ 
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+-<para><parameter>--enable-threads</parameter>: This parameter enables the
+-use of threads in <command>wireshark</command>.</para>
++    <para><command>sed -i 's/Qt5 Qt/Qt/'</command>: This command is required
++    because without it, libraries and includes from
++    <application>Qt5</application> are found and used first, if both versions
++    are installed, when trying to build with <application>Qt4</application>,
++    and <command>make</command> does not complete.</para>
+ 
+     <para><option>--disable-wireshark</option>: This option is required if you
+     have <application>GTK+</application> installed but do not want to build
+-the GUI.</para>
++    the GTK+ and Qt GUIs.</para>
+ 
+-<para><option>--with-gtk3=yes</option>: This option is required if you want
+-to use <application>GTK+</application>3 instead of 2, for the GUI.</para>
++    <para><parameter>--with-gtk3=yes</parameter>: This switch is required
++    to use <application>GTK+3</application> for the GUI, if you are using
++    <parameter>--with-qt=no</parameter>. Change gtk3 by gtk2,to use
++    <application>GTK+3</application> for the GUI.</para>
+ 
+-<para><option>--with-qt=yes</option>: This option is required if you want to
+-use <application>Qt</application> instead of
+-<application>GTK+</application>, for the GUI.</para>
++    <para><parameter>--with-qt=no</parameter>: This switch disables build of
++    the Qt GUI. Replace "no" by "yes", if you want it to be built.</para>
+ 
+-<para><option>--with-ssl</option>: This option is required if you
+-are linking Kerberos libraries into the build so that the
+-<application>OpenSSL</application>
+-<filename class='libraryfile'>libcrypto</filename> library is found.</para>
++    <para><option>--with-gtk2=yes</option>: This option is required if you want
++    to use <application>GTK+</application>2, instead of 3, for the GUI. Notice
++    that the GUI for only one GTK+ version (either 2 or 3) can be built.</para>
+ 
+   </sect2>
+ 
+@@ -270,8 +301,32 @@
+       Guide</ulink> for configuration information. Most of
+       <application>Wireshark</application>'s configuration can be accomplished
+       using the menu options of the <command>wireshark</command>
+-graphical interface.</para>
++      graphical interfaces.</para>
+ 
++    </sect3>
++    <sect3>
++      <title>Desktop file for the Qt GUI</title>
++      <para>If Qt GUI was built and you wish an entry in the desktop menu,
++      there are two possibilities (instructions must be run as root).</para>
++      <para>If only the Qt GUI was built:</para>
++<screen role="root"><userinput>mv -v /usr/share/applications/wireshark.desktop \
++      /usr/share/applications/wireshark-qt.desktop</userinput></screen>
++      <para>If both, GTK+ and Qt GUIs were built:</para>
++<screen role="root"><userinput>cp -v /usr/share/applications/wireshark.desktop \
++      /usr/share/applications/wireshark-qt.desktop</userinput></screen>
++      <para>Now, fix it for <command>wireshark-qt</command>:</para>
++<screen role="root"><userinput>sed -e 's/ireshark/&amp;-qt/' \
++    -e 's/^\(Icon=wireshark\)-qt/\1/' \
++    -i /usr/share/applications/wireshark-qt.desktop</userinput></screen>
+       <note>
+         <para>If you want to look at packets, make sure you don't filter
+         them out with <xref linkend="iptables"/>. If you want to exclude
+@@ -293,9 +348,10 @@
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-<seg>capinfos, dftest, dumpcap, editcap, mergecap, randpkt, rawshark,
+-reordercap, text2pcap, tshark, and wireshark</seg>
+-<seg>libwireshark.so, libwiretap.so, libwsutil.so, and
++        <seg>capinfos, captype, dftest, dumpcap, editcap, mergecap, randpkt,
++        rawshark, reordercap, text2pcap, tshark,
++        wireshark and wireshark-qt</seg>
++        <seg>libfiletap.so, libwireshark.so, libwiretap.so, libwsutil.so, and
+         numerous modules under /usr/lib/wireshark/plugins</seg>
+         <seg>/usr/lib/wireshark, /usr/share/doc/wireshark-&wireshark-version;,
+         /usr/share/pixmaps/wireshark, and /usr/share/wireshark</seg>
+@@ -319,6 +375,16 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="captype">
++        <term><command>captype</command></term>
++        <listitem>
++          <para>prints the file types of capture files.</para>
++          <indexterm zone="wireshark captype">
++            <primary sortas="b-captype">captype</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="dftest">
+         <term><command>dftest</command></term>
+         <listitem>
+@@ -422,15 +488,27 @@
+       <varlistentry id="wireshark-prog">
+         <term><command>wireshark</command></term>
+         <listitem>
+-<para>is a GUI network protocol analyzer. It lets you interactively
+-browse packet data from a live network or from a previously
+-saved capture file.</para>
++          <para>is the GTK+ GUI network protocol analyzer. It lets you
++          interactively browse packet data from a live network or from a
++          previously saved capture file.</para>
+           <indexterm zone="wireshark wireshark-prog">
+             <primary sortas="b-wireshark">wireshark</primary>
+           </indexterm>
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="wireshark-qt-prog">
++        <term><command>wireshark-qt</command></term>
++        <listitem>
++          <para>is the Qt GUI network protocol analyzer. It lets you
++          interactively browse packet data from a live network or from a
++          previously saved capture file.</para>
++          <indexterm zone="wireshark wireshark-qt-prog">
++            <primary sortas="b-wireshark-qt">wireshark-qt</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="libwireshark">
+         <term><filename class='libraryfile'>libwireshark.so</filename></term>
+         <listitem>
+
