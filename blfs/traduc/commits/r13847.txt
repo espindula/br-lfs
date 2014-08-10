@@ -1,0 +1,178 @@
+Révision 13847
+
+fichiers modifiés :
+   general.ent
+   packages.ent
+   Makefile
+   introduction/welcome/changelog.xml
+   obfuscate.sh
+   postlfs/virtualization/qemu.xml
+
+Log :
+Update to qemu-2.1.0.
+
+Le robot a traité 25 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 13846)
++++ introduction/welcome/changelog.xml	(révision 13847)
+@@ -45,6 +45,16 @@
+ -->
+ 
+     <listitem>
++      <para>August 7th, 2014</para>
++      <itemizedlist>
++        <listitem>
++          <para>[igor] - Update to qemu-2.1.0. Fixes
++          <ulink url="&blfs-ticket-root;5318">#5318</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>August 6th, 2014</para>
+       <itemizedlist>
+         <listitem>
+
+Index: Makefile
+===================================================================
+--- Makefile	(révision 13846)
++++ Makefile	(révision 13847)
+@@ -1,18 +1,15 @@
+ # Makefile for BLFS Book generation.
+ # By Tushar Teredesai <tushar@linuxfromscratch.org>
+ # 2004-01-31
+-# $LastChangedBy$
+-# $Date$
+ 
+ # Adjust these to suit your installation
+ BASEDIR ?= $(HOME)/public_html/blfs-book-xsl
+ DUMPDIR ?= $(HOME)/blfs-commands
+-RENDERTMP ?= tmp
++RENDERTMP ?= /tmp
+ CHUNK_QUIET = 1
+ ROOT_ID =
+-#PDF_OUTPUT = BLFS-BOOK.pdf
+ NOCHUNKS_OUTPUT = BLFS-BOOK.html
+-SHELL = /bin/bash
++SHELL = /bin/sh
+ 
+ ALLXML := $(filter-out $(RENDERTMP)/%, \
+ 	$(wildcard *.xml */*.xml */*/*.xml */*/*/*.xml */*/*/*/*.xml))
+@@ -26,7 +23,6 @@
+ endif
+ 
+ blfs: html wget-list
+-#all: blfs nochunks pdf
+ all: blfs nochunks
+ world: all blfs-patch-list dump-commands test-links
+ 
+@@ -53,31 +49,10 @@
+ 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
+ 	  tidy -config tidy.conf $$filename; \
+ 	  true; \
+-  bash obfuscate.sh $$filename; \
++	  sh obfuscate.sh $$filename; \
+ 	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
+ 	done;
+ 
+-#pdf: $(BASEDIR)/$(PDF_OUTPUT)
+-#$(RENDERTMP)/blfs-pdf.xml: $(RENDERTMP)/blfs-full.xml
+-#	@echo "Generating profiled XML for PDF..."
+-#	$(Q)xsltproc --nonet --stringparam profile.condition pdf \
+-  --output $(RENDERTMP)/blfs-pdf.xml stylesheets/lfs-xsl/profile.xsl \
+-  $(RENDERTMP)/blfs-full.xml
+-#$(RENDERTMP)/blfs-pdf.fo: $(RENDERTMP)/blfs-pdf.xml
+-#	@echo "Generating FO file..."
+-#	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
+-  --output $(RENDERTMP)/blfs-pdf.fo stylesheets/blfs-pdf.xsl \
+-  $(RENDERTMP)/blfs-pdf.xml
+-#	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/blfs-pdf.fo
+-#$(BASEDIR)/$(PDF_OUTPUT): $(RENDERTMP)/blfs-pdf.fo
+-#	@echo "Generating PDF file..."
+-#	$(Q)if [ ! -e $(BASEDIR) ]; then \
+-  mkdir -p $(BASEDIR); \
+-fi;
+-#	$(Q)fop $(RENDERTMP)/blfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT)
+ nochunks: $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+ $(BASEDIR)/$(NOCHUNKS_OUTPUT): $(RENDERTMP)/blfs-html.xml
+ 	@echo "Generating non-chunked XHTML file..."
+@@ -99,8 +74,6 @@
+ clean:
+ 	@echo "Cleaning $(RENDERTMP)"
+ 	$(Q)rm -f $(RENDERTMP)/blfs-{full,html}.xml
+-#	$(Q)rm -f $(RENDERTMP)/blfs-{full,html,pdf}.xml
+-#	$(Q)rm -f $(RENDERTMP)/blfs-pdf.fo
+ 	$(Q)rm -f $(RENDERTMP)/blfs-{patch-list,patches}
+ 	$(Q)rmdir $(RENDERTMP) 2>/dev/null || :
+ 
+@@ -160,17 +133,6 @@
+ 	    fi; \
+ 	done
+ 
+-bootscripts:
+-@VERSION=`grep "bootscripts-version " general.ent | cut -d\" -f2`; \
+-BOOTSCRIPTS="blfs-bootscripts-$$VERSION"; \
+-if [ ! -e $$BOOTSCRIPTS.tar.xz ]; then \
+-rm -rf $(RENDERTMP)/$$BOOTSCRIPTS; \
+-mkdir $(RENDERTMP)/$$BOOTSCRIPTS; \
+-cp -a ../bootscripts/* $(RENDERTMP)/$$BOOTSCRIPTS; \
+-rm -rf ../bootscripts/archive; \
+-tar  -cJhf $$BOOTSCRIPTS.tar.xz -C $(RENDERTMP) $$BOOTSCRIPTS; \
+-fi
+ dump-commands: $(DUMPDIR)
+ $(DUMPDIR): $(RENDERTMP)/blfs-full.xml
+ 	@echo "Dumping book commands..."
+@@ -183,8 +145,4 @@
+ 	$(Q)xmllint --noout --nonet --xinclude --postvalid index.xml
+ 
+ .PHONY: blfs all world html nochunks tmpdir clean validxml \
+-profile-html wget-list test-links dump-commands validate \
+-bootscripts
+-#.PHONY: blfs all world html pdf nochunks tmpdir clean validxml \
+ 	profile-html wget-list test-links dump-commands validate
+
+Index: obfuscate.sh
+===================================================================
+--- obfuscate.sh	(révision 13846)
++++ obfuscate.sh	(révision 13847)
+@@ -1,8 +1,5 @@
+-#!/bin/bash
++#!/bin/sh
+ 
+-# $LastChangedBy$
+-# $Date$
+ # obfuscate.sh
+ # obfuscate email addresses in XML/HTML
+ # Script written (and slight perl modification) by Archaic <archaic AT linuxfromscratch D0T org>
+@@ -33,7 +30,7 @@
+ for i in `grep -o '"mailto:.*@.*"' ${1} |cut -d\" -f2|sed -e 's|^mailto:||' -e 's|"$||'`; do
+   link=`echo $i | perl -pe 's/[^\n]/"\\\&#".ord($&)."\;"/ge'`
+   plaintext=`echo $i | sed -e 's|@| AT |' -e 's|\.| D0T |g'`
+-cp ${1}{,.tmp}
++  cp ${1} ${1}.tmp
+   sed -e "s|mailto:$i|mailto:$link|" \
+       -e "s|$i|$plaintext|" ${1}.tmp > ${1}
+   rm ${1}.tmp
+
+Index: postlfs/virtualization/qemu.xml
+===================================================================
+--- postlfs/virtualization/qemu.xml	(révision 13846)
++++ postlfs/virtualization/qemu.xml	(révision 13847)
+@@ -62,11 +62,15 @@
+     <bridgehead renderas="sect4">Required</bridgehead>
+     <para role="required">
+       <xref linkend="glib2"/>,
+-<xref linkend="python2"/>,
+-<xref linkend="sdl"/>, and
++      <xref linkend="python2"/>, and
+       <xref linkend="x-window-system"/>
+     </para>
+ 
++    <bridgehead renderas="sect4">Recommended</bridgehead>
++    <para role="recommended">
++      <xref linkend="sdl"/>
++    </para>
+     <bridgehead renderas="sect4">Optional</bridgehead>
+     <para role="optional">
+       <xref linkend="alsa"/>,
+
