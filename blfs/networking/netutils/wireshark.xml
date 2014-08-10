@@ -146,7 +146,7 @@ EOF</userinput>
     <application>Qt4</application> et 5, une interface liée à 
     <application>GTK+3</application> et une autre liée à
     <application>Qt5</application> sont construites par défaut. A la place, nous choisissons
-    de construire seulement l'interface <application>GTK+3</application>, comme étant celle par défaut
+    de construire l'interface <application>GTK+3</application>, comme étant celle par défaut
     pour BLFS.
     si vous préférez autrement, quelques modifications sont nécessaires. Pour les modifications dans
     les paramètres de <command>configure</command>, regardez
@@ -199,7 +199,7 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-    <para><command>sed -i 's/Qt5 Qt/Qt/'</command>: Cette commande est requise car sans elle,
+    <para><command>sed -i 's/Qt5 Qt/Qt/' ...</command>: Cette commande est requise car sans elle,
     les bibliothèques et include de 
    <application>Qt5</application> sont trouvés et utilisés en premier, si les deux versions
      sont installées, quand on tente de construire avec
@@ -216,8 +216,12 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
 
     <para><option>--with-qt=yes</option>: Cette option est requise si vous voulez
     utiliser <application>Qt</application> au lieur de <application>GTK+</application>, pour le GUI.</para>
-     <para><option>--with-ssl</option>&nbsp;: Ce paramètre est obligatoire si vous liez les bibliothèques Kerberos à la construction de façon à ce que la bibliothèque <application>OpenSSL</application>
-    <filename class='libraryfile'>libcrypto</filename> soit trouvée.</para>
+
+    <para><option>--with-gtk2=yes</option>: Cette option est requise si vous voulez utiliser
+    <application>GTK+</application>2, au lieu de 3, pour l'interface graphique. Notez que
+    l'interface graphique pour seulement une version de GTK+ (soit 2 ou 3) peut être construite.</para>
+
+
    </sect2>
   <sect2 role="configuration">
     <title>Configurer Wireshark</title>
@@ -233,9 +237,31 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
     </sect3>
     <sect3>
       <title>Informations de configuration</title>
-      <para>Si les paramètres de configuration par défaut sont très clairs, reportez vous à la section de configuration du <ulink url="http://www.wireshark.org/docs/wsug_html/">Guide de l'utilisateur de Wireshark (Wireshark User's Guide)</ulink> pour les informations de configuration. La majorité de la configuration de <application>Wireshark</application> peut être réalisée en utilisant les options du menu de l'interface graphique de <command>wireshark</command>.</para>
+      <para>Si les paramètres de configuration par défaut sont très clairs, reportez vous à la section de configuration 
+    du <ulink url="http://www.wireshark.org/docs/wsug_html/">Guide de l'utilisateur de Wireshark
+      (Wireshark User's Guide)</ulink> pour les informations de configuration.
+ La majorité de la configuration de <application>Wireshark</application> peut être réalisée en utilisant 
+    les options du menu des interfaces graphiques de <command>wireshark</command>.</para>
+
+    </sect3>
+    <sect3>
+      <title>Fichier de bureau pour l'interface Qt</title>
+      <para>Si l'interface Qt est construite et que vous souhaitez une entrée dans le menu du bureau,
+      il y a deux possibilités (les instructions doivent être exécutées en tant que root).</para>
+      <para>Si seulement l'interface Qt est construite:</para>
+<screen role="root"><userinput>mv -v /usr/share/applications/wireshark.desktop \
+      /usr/share/applications/wireshark-qt.desktop</userinput></screen>
+      <para>Si les deux interfaces GTK+ et Qt sont construites:</para>
+<screen role="root"><userinput>cp -v /usr/share/applications/wireshark.desktop \
+      /usr/share/applications/wireshark-qt.desktop</userinput></screen>
+      <para>Maintenant corriger pour <command>wireshark-qt</command>:</para>
+<screen role="root"><userinput>sed -e 's/ireshark/&amp;-qt/' \
+    -e 's/^\(Icon=wireshark\)-qt/\1/' \
+    -i /usr/share/applications/wireshark-qt.desktop</userinput></screen>
+
+
       <note>
-        <para>Si vous voulez regarder les packets, assurez vous que vous ne les filtrez pas avec <xref linkend="iptables"/>. Si vous voulez exclure certaines classes de paquets, il est plus efficace de le faire avec <application>iptables</application> qu'avec <application>Wireshark</application>.</para>
+        <para>Si vous voulez regarder les paquets, assurez vous que vous ne les filtrez pas avec <xref linkend="iptables"/>. Si vous voulez exclure certaines classes de paquets, il est plus efficace de le faire avec <application>iptables</application> qu'avec <application>Wireshark</application>.</para>
       </note>
     </sect3>
   </sect2>
@@ -246,10 +272,11 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
       <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoires installés</segtitle>
       <seglistitem>
-        <seg>capinfos, dftest, dumpcap, editcap, mergecap, randpkt, rawshark,
-        reordercap, text2pcap, tshark, et wireshark</seg>
-        <seg>libwireshark.so, libwiretap.so, libwsutil.so, et de nombreux modules
-        dans /usr/lib/wireshark/plugins</seg>
+        <seg>capinfos, captype, dftest, dumpcap, editcap, mergecap, randpkt,
+        rawshark, reordercap, text2pcap, tshark,
+        wireshark et wireshark-qt</seg>
+        <seg>libfiletap.so, libwireshark.so, libwiretap.so, libwsutil.so, et
+        de nombreux modules dans /usr/lib/wireshark/plugins</seg>
         <seg>/usr/lib/wireshark, /usr/share/doc/wireshark-&wireshark-version;,
         /usr/share/pixmaps/wireshark et /usr/share/wireshark</seg>
       </seglistitem>
@@ -267,6 +294,18 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
+      <varlistentry id="captype">
+        <term><command>captype</command></term>
+        <listitem>
+          <para>affiche les types de fichier des fichiers de capture.</para>
+          <indexterm zone="wireshark captype">
+            <primary sortas="b-captype">captype</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+
+
       <varlistentry id="dftest">
         <term><command>dftest</command></term>
         <listitem>
@@ -351,12 +390,28 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
       <varlistentry id="wireshark-prog">
         <term><command>wireshark</command></term>
         <listitem>
-          <para>est un analyseur de protocole réseau GUI. Il vous permet de parcourir intéractivement en direct les paquets à partir d'un réseau ou à partir d'un fichier de capture sauvegardé précédemment.</para>
+          <para>est l'interface GTK+ de l'analyseur de protocole réseau. Il vous permet de parcourir intéractivement
+             en direct les paquets à partir d'un réseau ou à partir d'un fichier de capture sauvegardé précédemment.</para>
           <indexterm zone="wireshark wireshark-prog">
             <primary sortas="b-wireshark">wireshark</primary>
           </indexterm>
         </listitem>
       </varlistentry>
+      <varlistentry id="wireshark-qt-prog">
+        <term><command>wireshark-qt</command></term>
+        <listitem>
+          <para>est l'interface Qt de l'analyseur de protocole réseau. Il vous permet de parcourir intéractivement
+             en direct les paquets à partir d'un réseau ou à partir d'un fichier de capture sauvegardé précédemment.</para>
+          <indexterm zone="wireshark wireshark-qt-prog">
+            <primary sortas="b-wireshark-qt">wireshark-qt</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+
+
+
+
       <varlistentry id="libwireshark">
         <term><filename class='libraryfile'>libwireshark.so</filename></term>
         <listitem>
