@@ -77,9 +77,11 @@ fi
 printf "Creating $INITRAMFS_FILE... "
 binfiles="sh cat cp dd killall ls mkdir mknod mount "
 binfiles="$binfiles umount sed sleep ln rm uname"
-sbinfiles="udevadm modprobe blkid switch_root"
+# Systemd installs udevadm in /bin. Other udev implementations have it in /sbin
+if [ -x /bin/udevadm ] ; then binfiles="$binfiles udevadm"; fi
+sbinfiles="modprobe blkid switch_root"
 #Optional files and locations
-for f in mdadm udevd; do
+for f in mdadm udevd udevadm; do
   if [ -x /sbin/$f ] ; then sbinfiles="$sbinfiles $f"; fi
 done
 unsorted=$(mktemp /tmp/unsorted.XXXXXXXXXX)
@@ -104,7 +106,7 @@ for file in $(find /etc/udev/rules.d/ -type f) ; do
 done
 # Install any firmware present
 cp -a /lib/firmware $WDIR/lib
-# Copy the RAID configureation file if present
+# Copy the RAID configuration file if present
 if [ -f /etc/mdadm.conf ] ; then
   cp /etc/mdadm.conf $WDIR/etc
 fi
@@ -131,7 +133,9 @@ for f in $sbinfiles ; do
 done
 # Add udevd libraries if not in /sbin
 if [ -x /lib/udev/udevd ] ; then
-  ldd /lib/udev/udevd | sed "s/\t//" | cut -d " " -f1 >> $unsorted
+  ldd /lib/udev/udevd | sed "s/\t//" | cut -d " " -f1 &gt;&gt; $unsorted
+elif [ -x /lib/systemd/systemd-udevd ] ; then
+  ldd /lib/systemd/systemd-udevd | sed "s/\t//" | cut -d " " -f1 &gt;&gt; $unsorted
 fi
 # Add module symlinks if appropriate
 if [ -n "$KERNEL_VERSION" ] &amp;&amp; [ -x /bin/kmod ] ; then
@@ -168,7 +172,12 @@ sort $unsorted | uniq | while read library ; do
   fi
   copy $library lib
 done
-cp -a /lib/udev $WDIR/lib
+if [ -d /lib/udev ]; then
+  cp -a /lib/udev $WDIR/lib
+fi
+if [ -d /lib/systemd ]; then
+  cp -a /lib/systemd $WDIR/lib
+fi
 # Install the kernel modules if requested
 if [ -n "$KERNEL_VERSION" ]; then
   find                                                                        \
@@ -263,18 +272,23 @@ for param in $cmdline ; do
 done
 # udevd location depends on version
 if [ -x /sbin/udevd ]; then
-  UDEV_PATH=/sbin
+  UDEVD=/sbin/udevd
+elif [ -x /lib/udev/udevd ]; then
+  UDEVD=/lib/udev/udevd
+elif [ -x /lib/systemd/systemd-udevd ]; then
+  UDEVD=/lib/systemd/systemd-udevd
 else
-  UDEV_PATH=/lib/udev
+  echo "Cannot find udevd nor systemd-udevd"
+  problem
 fi
-${UDEV_PATH}/udevd --daemon --resolve-names=never
+${UDEVD} --daemon --resolve-names=never
 udevadm trigger
 udevadm settle
 if [ -f /etc/mdadm.conf ] ; then mdadm -As                       ; fi
 if [ -x /sbin/vgchange  ] ; then /sbin/vgchange -a y &gt; /dev/null ; fi
 if [ -n "$rootdelay"    ] ; then sleep "$rootdelay"              ; fi
 do_mount_root
-killall -w ${UDEV_PATH}/udevd
+killall -w ${UDEVD##*/}
 exec switch_root /.root "$init" "$@"
 EOF</userinput>
 </screen>
