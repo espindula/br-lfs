@@ -1,0 +1,227 @@
+Révision 14034
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   xsoft/office/libreoffice.xml
+   xsoft/other/icedtea-web.xml
+   packages.ent
+   general/prog/openjdk.xml
+   general/graphlib/libpng.xml
+
+Log :
+Update to libpng-1.6.13. Update to icedtea-web-1.5.1, reorder some dependencies and add a desktop file. Replace Xulrunner-31.0 dependency by NPAPI-SDK-0.27.2, thanks to Armin K, from systemd branch for remembering (I had asked about this in one list some time ago, but forgot to check). OpenJDK-1.7.0.65/IcedTea-2.5.1: fix man pages and add a desktop file. LibreOffice-4.3.0: reorder some dependencies; add comment about the two SBUs and buildsizes, thanks to Christopher G, from systemd branch, for noticing.
+
+Le robot a traité 26 % du commit anglais
+Index: general/prog/openjdk.xml
+===================================================================
+--- general/prog/openjdk.xml	(révision 14033)
++++ general/prog/openjdk.xml	(révision 14034)
+@@ -389,6 +389,23 @@
+ cp -R openjdk.build/j2sdk-image /opt/OpenJDK-&openjdk-version; &amp;&amp;
+ chown -R root:root /opt/OpenJDK-&openjdk-version;</userinput></screen>
+ 
++    <para>If desired, you may install a .desktop file corresponding to an entry in a desktop menu for <command>policytool</command>, as <systemitem class="username">root</systemitem> user:</para>
++<screen role="root"><userinput>cat &gt;&gt; /usr/share/applications/openjdk-7-policytool.desktop &lt;&lt; "EOF" &amp;&amp;
++<literal>[Desktop Entry]
++Name=OpenJDK Java 7 Policy Tool
++Name[pt_BR]=OpenJDK Java 7 - Ferramenta de Pol&#237;tica
++Comment=OpenJDK Java 7 Policy Tool
++Comment[pt_BR]=OpenJDK Java 7 - Ferramenta de Pol&#237;tica
++Exec=/opt/jdk/bin/policytool
++Terminal=false
++Type=Application
++Icon=javaws
++Categories=Settings;</literal>
++EOF
++install -v -Dm0644 javaws.png /usr/share/pixmaps/javaws.png &amp;&amp;</userinput></screen>
+   </sect2>
+ 
+   <sect2 role="commands">
+@@ -456,7 +473,7 @@
+       following commands as the <systemitem class="username">root</systemitem>
+       user:</para>
+ 
+-<screen role="root"><userinput>cat &gt; /etc/profile.d/openjdk.sh &lt;&lt; "EOF"
++<screen role="root"><userinput>cat &gt;&gt; /etc/profile.d/openjdk.sh &lt;&lt; "EOF"
+ <literal># Begin /etc/profile.d/openjdk.sh
+ 
+ # Set JAVA_HOME directory
+@@ -490,14 +507,25 @@
+     configuration. As the <systemitem class="username">root</systemitem>
+     user:</para>
+ 
+-<screen role="root"><userinput>cat &gt;&gt; /etc/man_db.conf &lt;&lt; "EOF" &amp;&amp;
+-<literal>MANDATORY_MANPATH     /opt/jdk/man
++<screen role="root"><userinput>cat >> /etc/profile.d/extrapaths.sh &lt;&lt; "EOF" &amp;&amp;
++# Begin Java addition
++<literal>pathappend /opt/jdk/man       MANPATH
++# End Java addition</literal>
++EOF
++cat &gt;&gt; /etc/man_db.conf &lt;&lt; "EOF" &amp;&amp;
++<literal># Begin Java addition
++MANDATORY_MANPATH     /opt/jdk/man
+ MANPATH_MAP           /opt/jdk/bin     /opt/jdk/man
+-MANDB_MAP             /opt/jdk/man     /var/cache/man/jdk</literal>
++MANDB_MAP             /opt/jdk/man     /var/cache/man/jdk
++# End Java addition</literal>
+ EOF
+ 
+ mandb -c /opt/jdk/man</userinput></screen>
+ 
++    <para>To test the man pages are correctly installed, issue <command>source /etc/profile</command> and <command>man java</command> to display the respective man page.</para>
+     </sect3>
+ 
+     <sect3 id='ojdk-certs'>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 14033)
++++ introduction/welcome/changelog.xml	(révision 14034)
+@@ -43,16 +43,37 @@
+     <listitem>
+       <para>August 24th, 2014</para>
+       <itemizedlist>
++       <listitem>
++          <para>[fernando] - LibreOffice-4.3.0: reorder some dependencies; 
++          add comment about the two SBUs and buildsizes, thanks to Christopher
++          G, from systemd branch, for noticing.</para>
++        </listitem>
+         <listitem>
++          <para>[fernando] - OpenJDK-1.7.0.65/IcedTea-2.5.1: fix man pages and
++          add a desktop file.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to icedtea-web-1.5.1, reorder some
++          dependencies and add a desktop file. Replace Xulrunner-31.0 dependency
++          by NPAPI-SDK-0.27.2, thanks to Armin K, from systemd branch for
++          remembering (I had asked about this in one list some time ago, but
++          forgot to check). Fixes
++          <ulink url="&blfs-ticket-root;5389">#5389</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to libpng-1.6.13. Fixes
++          <ulink url="&blfs-ticket-root;5418">#5418</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[ken] - Make TeX Live use system gc for asymptote.</para>
+         </listitem>
+       </itemizedlist>
+
+Index: xsoft/office/libreoffice.xml
+===================================================================
+--- xsoft/office/libreoffice.xml	(révision 14033)
++++ xsoft/office/libreoffice.xml	(révision 14034)
+@@ -22,8 +22,17 @@
+   <!ENTITY libreoffice-translations-md5sum        "8e2f7905a0f827f655a1e21d93c6ddf7">
+   <!ENTITY libreoffice-translations-size          "121 MB">
+ 
++  <!-- This package has some peculiarities, some discussed in the text.
++  Two values for SBU and buildsize are given due to the large difference
++  measured by editors, depending on architecture and sometimes installed
++  dependencies (with-system... -->
+   <!ENTITY libreoffice-buildsize          "8.23 GB (497 MB installed) - 9.6 GB (528 MB installed), with translations">
+   <!ENTITY libreoffice-time               "144 SBU - 165 SBU, with translations">
++  <!-- This package has some peculiarities, some discussed in the text.
++  Two values for SBU and buildsize are given due to the large difference
++  measured by editors, depending on architecture and sometimes installed
++  dependencies (with-system... -->
+ ]>
+ 
+ <sect1 id="libreoffice" xreflabel="LibreOffice-&libreoffice-version;">
+@@ -157,17 +166,17 @@
+     </note>
+ 
+     <para role="recommended">
+-<xref linkend="libjpeg"/>,
+-<xref linkend="glu"/>,
+-<xref linkend="gtk2"/>,
+     <!--<xref linkend="boost"/>,-->
+       <xref linkend="clucene"/>,
+       <xref linkend="cups"/>,
+       <xref linkend="curl"/>,
+       <xref linkend="dbus-glib"/>,
++      <xref linkend="libjpeg"/>,
++      <xref linkend="glu"/>,
+       <xref linkend="graphite2"/>,
+       <xref linkend="gst-plugins-base"/> or
+       <xref linkend="gst10-plugins-base"/>,
++      <xref linkend="gtk2"/>,
+       <xref linkend="harfbuzz"/>,
+       <xref linkend="icu"/>,
+       <xref linkend="lcms2"/>,
+
+Index: xsoft/other/icedtea-web.xml
+===================================================================
+--- xsoft/other/icedtea-web.xml	(révision 14033)
++++ xsoft/other/icedtea-web.xml	(révision 14034)
+@@ -61,8 +61,10 @@
+ 
+     <bridgehead renderas="sect4">Required</bridgehead>
+     <para role="required">
+-<xref linkend="openjdk"/> and
+-<xref linkend="xulrunner"/>
++      <xref linkend="npapi-sdk"/>, and
++      <xref linkend="openjdk"/> or
++      <xref linkend="java"/> (remember to configure as described in the
++      <xref linkend="openjdk"/> page),
+     </para>
+ 
+     <bridgehead renderas="sect4">Required at runtime, a web browser,
+@@ -71,16 +73,15 @@
+       <xref linkend="epiphany"/>,
+       <xref linkend="firefox"/>,
+       <xref linkend="midori"/>,
+-<ulink url="http://www.chromium.org/getting-involved/download-chromium">Chromium</ulink>,
+-<ulink url="http://www.opera.com">Opera</ulink>, and
+-<xref linkend="seamonkey"/>
++      <xref linkend="seamonkey"/>,
++      <ulink url="http://www.chromium.org/getting-involved/download-chromium">Chromium</ulink>, and
++      <ulink url="http://www.opera.com">Opera</ulink>
+     </para>
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+     <para role="optional">
+       <xref linkend="libxslt"/>,
+       <xref linkend="mercurial"/>,
+-<xref linkend="npapi-sdk"/>,
+       <ulink url="http://emma.sourceforge.net/">EMMA</ulink>, and
+       <ulink url="http://www.eclemma.org/jacoco/">JACOCO</ulink>
+     </para>
+@@ -109,6 +110,13 @@
+ <screen role="root"><userinput>make install &amp;&amp;
+ mandb -c /opt/jdk/man</userinput></screen>
+ 
++    <para>To test the man pages are correctly installed, issue <command>man policyeditor</command> to display the respective man page.</para>
++    <para>If desired, you may install a .desktop file corresponding to an entry in a desktop menu for <command>policyeditor</command>, as <systemitem class="username">root</systemitem> user:</para>
++<screen role="root"><userinput>install -v -Dm0644 itweb-settings.desktop /usr/share/applications/itweb-settings.desktop &amp;&amp;
++install -v -Dm0644 javaws.png /usr/share/pixmaps/javaws.png</userinput></screen>
+   </sect2>
+ 
+   <sect2 role="commands">
+@@ -150,7 +158,7 @@
+ 
+ 
+       <seglistitem>
+-<seg>itweb-settings and javaws</seg>
++        <seg>itweb-settings, javaws and policyeditor</seg>
+         <seg>IcedTeaPlugin.so, about.jar, netx.jar, plugin.jar</seg>
+         <seg>${JAVA_HOME}/jre/share/icedtea-web</seg>
+       </seglistitem>
+@@ -182,6 +190,17 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="policyeditor-itweb">
++        <term><command>policyeditor</command></term>
++        <listitem>
++          <para>view and modify security policy settings, including
++          certificates, for javaws and the browser plugin.</para>
++          <indexterm zone="icedtea-web policyeditor-itweb">
++            <primary sortas="b-policyeditor">policyeditor</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="IcedTeaPlugin">
+         <term><filename class='libraryfile'>IcedTeaPlugin.so</filename></term>
+         <listitem>
+
