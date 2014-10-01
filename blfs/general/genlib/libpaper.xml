@@ -10,31 +10,23 @@
   <!ENTITY libpaper-buildsize     "2.6 Mo">
   <!ENTITY libpaper-time          "moins de 0.1 SBU">
 ]>
-
 <sect1 id="libpaper" xreflabel="libpaper-&libpaper-version;">
   <?dbhtml filename="libpaper.html"?>
-
   <sect1info>
     <othername>$LastChangedBy: ken $</othername>
     <date>$Date: 2014-08-28 16:44:20 +0200 (jeu. 28 août 2014) $</date>
   </sect1info>
-
   <title>libpaper-&libpaper-version;</title>
-
   <indexterm zone="libpaper">
     <primary sortas="a-libpaper">libpaper</primary>
   </indexterm>
-
   <sect2 role="package">
     <title>Introduction à libpaper</title>
-
     <para>
       Ce paquet est prévu pour fournir une façon simple aux applications pour faire des actions
       basées sur une dimension de papier du système ou donnée par l'utilisateur.
     </para>
-
     &lfs76_checked;
-
     <bridgehead renderas="sect3">Information sur le paquet </bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
@@ -68,60 +60,88 @@
         </para>
       </listitem>
     </itemizedlist>
-
     <para condition="html" role="usernotes">
       Notes utilisateur : <ulink url="&blfs-wiki;/libpaper"/>
     </para>
-
   </sect2>
-
   <sect2 role="installation">
     <title>Installation de libpaper</title>
-
     <para>
       Installez <application>libpaper</application> en lançant les commandes suivantes :  
     </para>
-
-<screen><userinput>./configure --prefix=/usr                 --sysconfdir=/etc             --disable-static &amp;&amp;
-make
-</userinput></screen>
-
+<screen>
+<userinput>./configure --prefix=/usr     \
+            --sysconfdir=/etc \
+            --disable-static &amp;&amp;
+make</userinput>
+</screen>
     <para>ce paquet n'a pas de suite de tests.</para>
-
     <para>
       Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :
     </para>
-
-<screen role="root"><userinput>make install &amp;&amp;
-mkdir -v /etc/libpaper.d &amp;&amp;
-cat &gt; /uetc/papersize &lt;&lt; "EOF"
-<literal>a4</literal>
-EOF</userinput></screen>
-
-
+<screen role="root">
+<userinput>make install &amp;&amp;
+mkdir -vp /etc/libpaper.d &amp;&amp;
+cat &gt; /usr/bin/run-parts &lt;&lt; "EOF"
+#!/bin/sh
+# run-parts:  Runs all the scripts found in a directory.
+# from Slackware, by Patrick J. Volkerding with ideas borrowed
+# from the Red Hat and Debian versions of this utility.
+# keep going when something fails
+set +e
+if [ $# -lt 1 ]; then
+  echo "Usage: run-parts &lt;directory&gt;"
+  exit 1
+fi
+if [ ! -d $1 ]; then
+  echo "Not a directory: $1"
+  echo "Usage: run-parts &lt;directory&gt;"
+  exit 1
+fi
+# There are several types of files that we would like to
+# ignore automatically, as they are likely to be backups
+# of other scripts:
+IGNORE_SUFFIXES="~ ^ , .bak .new .rpmsave .rpmorig .rpmnew .swp"
+# Main loop:
+for SCRIPT in $1/* ; do
+  # If this is not a regular file, skip it:
+  if [ ! -f $SCRIPT ]; then
+    continue
+  fi
+  # Determine if this file should be skipped by suffix:
+  SKIP=false
+  for SUFFIX in $IGNORE_SUFFIXES ; do
+    if [ ! "$(basename $SCRIPT $SUFFIX)" = "$(basename $SCRIPT)" ]; then
+      SKIP=true
+      break
+    fi
+  done
+  if [ "$SKIP" = "true" ]; then
+    continue
+  fi
+  # If we've made it this far, then run the script if it's executable:
+  if [ -x $SCRIPT ]; then
+    $SCRIPT || echo "$SCRIPT failed."
+  fi
+done
+exit 0
+EOF
+chmod -v 755 /usr/bin/run-parts</userinput>
+</screen>
   </sect2>
-
   <sect2 role="commands">
     <title>Explications des commandes</title>
-
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
       href="../../xincludes/static-libraries.xml"/>
-
     <para><command>mkdir -pv /etc/libpaper.d</command>:
     <application>libpaper</application> fait que les paquets installeront les fichiers dans ce répertoire.
     </para>
-
-
     <para><command>cat &gt; /usr/bin/run-parts &lt;&lt; "EOF"</command> :
     <filename>paperconfig</filename> est un script qui appelera
     <command>run-parts</command> si
     <filename class="directory">/etc/libpaper.d</filename> existe. Pas d'autre paquet de BLFS l'intalle, donc
      nous le créons ici.</para>
-
   </sect2>
-
-
-
   <sect2 role="configuration">
     <title>Configuration de libpaper</title>
     <sect3>
@@ -131,21 +151,19 @@ EOF</userinput></screen>
       <systemitem class="username">root</systemitem> pour l'initialiser à
       &apos;A4&apos; (libpaper attend en majustcules). Vous pouvez vouloir utiliser une taille
       différente, comme letter.</para>
-<screen role="root"><userinput>cat &gt; /etc/papersize &lt;&lt; "EOF"
+<screen role="root">
+<userinput>cat &gt; /etc/papersize &lt;&lt; "EOF"
 a4
-EOF</userinput></screen>
+EOF</userinput>
+</screen>
     </sect3>
-
    </sect2>
-
   <sect2 role="content">
     <title>Contenu</title>
-
     <segmentedlist>
       <segtitle>Programmes installés</segtitle>
       <segtitle>Bibliothèque installée</segtitle>
       <segtitle>Répertoires installés</segtitle>
-
       <seglistitem>
         <seg>
           paperconf, paperconfig
@@ -158,12 +176,10 @@ EOF</userinput></screen>
         </seg>
       </seglistitem>
     </segmentedlist>
-
     <variablelist>
       <bridgehead renderas="sect3">Description courte</bridgehead>
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
-
       <varlistentry id="paperconf">
         <term><command>paperconf</command></term>
         <listitem>
@@ -173,7 +189,6 @@ EOF</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-
       <varlistentry id="paperconfig">
         <term><command>paperconfig</command></term>
         <listitem>
@@ -192,7 +207,6 @@ EOF</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-
       <varlistentry id="libpaper-lib">
         <term><filename class="libraryfile">libpaper.so</filename></term>
         <listitem>
@@ -204,9 +218,6 @@ EOF</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-
     </variablelist>
-
   </sect2>
-
 </sect1>

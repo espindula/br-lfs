@@ -223,10 +223,6 @@
         </para>
       </listitem>
     </itemizedlist>
-
-
-
-
     <bridgehead renderas="sect3">Dépendances de OpenJDK</bridgehead>
     <bridgehead renderas="sect4">Dépendances requises</bridgehead>
     <para role="required">
@@ -313,7 +309,6 @@ cp -v ../openjdk.tar.bz2   .</userinput>
 <screen>
 <userinput>patch -Np1 -i ../icedtea-&icedtea-version;-fix_tests-1.patch</userinput>
 </screen>
-
     <note>
       <para>
          Avant de continuer, vous devez vous assurer que votre environnement est correctement
@@ -326,9 +321,6 @@ cp -v ../openjdk.tar.bz2   .</userinput>
          <xref linkend="java"/> et <xref linkend="junit"/>.
        </para>
     </note>
-
-
-
     <para>Configurez et construisez le paquet avec les commandes suivantes 
    (les valeurs de with-pkgversion et de with-version-suffix peuvent être modifiées selon les préférences
    de l'utilisateur):
@@ -336,7 +328,11 @@ cp -v ../openjdk.tar.bz2   .</userinput>
 <screen>
 <userinput>unset JAVA_HOME                                               &amp;&amp;
 ./autogen.sh                                                  &amp;&amp;
-./configure --with-jdk-home=/opt/OpenJDK-&openjdk-version;-bin                     --with-version-suffix=BLFS                                    --enable-nss                                                  --disable-system-kerberos                                     --with-parallel-jobs                              &amp;&amp;
+./configure --with-jdk-home=/opt/OpenJDK-&openjdk-version;-bin         \
+            --with-version-suffix=BLFS                        \
+            --enable-nss                                      \
+            --disable-system-kerberos                         \
+            --with-parallel-jobs                              &amp;&amp;
 make</userinput>
 </screen>
     <note><para>Si vous n'avez pas installé l'archive spécifiée précédemment,
@@ -377,11 +373,17 @@ chown -R root:root /opt/OpenJDK-&openjdk-version;</userinput>
     <para>si vous le souhaitez, vous pouvez installer un fichier .desktop
 correspondant à une netrée dans le menu du bureau pour <command>policytool</command>. En premier,
 vous devez obtenir un icone de <xref linkend="icedtea-web"/>:</para>
-<screen role="root"><userinput>tar -xf icedtea-web-&icedtea-web-version;.tar.gz icedtea-web-&icedtea-web-version;/javaws.png --strip-components=1</userinput></screen>
+<screen>
+<userinput>tar -xf ../icedtea-web-&icedtea-web-version;.tar.gz  \
+        icedtea-web-&icedtea-web-version;/javaws.png \
+        --strip-components=1</userinput>
+</screen>
 <para>
 Maintenant, en tant
 qu'utilisateur <systemitem class="username">root</systemitem> :</para>
-<screen role="root"><userinput>cat &gt;&gt; /usr/share/applications/openjdk-7-policytool.desktop &lt;&lt; "EOF" &amp;&amp;
+<screen role="root">
+<userinput>mkdir -pv /usr/share/applications &amp;&amp;
+cat &gt; /usr/share/applications/openjdk-7-policytool.desktop &lt;&lt; "EOF" &amp;&amp;
 <literal>[Desktop Entry]
 Name=OpenJDK Java 7 Policy Tool
 Name[pt_BR]=OpenJDK Java 7 - Ferramenta de Pol&#237;tica
@@ -393,8 +395,8 @@ Type=Application
 Icon=javaws
 Categories=Settings;</literal>
 EOF
-install -v -Dm0644 javaws.png /usr/share/pixmaps/javaws.png &amp;&amp;</userinput></screen>
-
+install -v -Dm0644 javaws.png /usr/share/pixmaps/javaws.png</userinput>
+</screen>
     <para>Le choix de pt_BR est juste un exemple. Vous pouvez ajouter des traductions en ajoutant
     les lignes correspondantes à votre locale, par exemple
     fr_FR, avec les valeurs 
@@ -448,8 +450,11 @@ install -v -Dm0644 javaws.png /usr/share/pixmaps/javaws.png &amp;&amp;</userinpu
 <literal># Begin /etc/profile.d/openjdk.sh
 # Set JAVA_HOME directory
 JAVA_HOME=/opt/jdk
+# Set ANT_HOME directory
+ANT_HOME=/opt/ant
 # Adjust PATH
 pathappend $JAVA_HOME/bin PATH
+pathappend $ANT_HOME/bin PATH
 # Auto Java CLASSPATH
 # Copy jar files to, or create symlinks in this directory
 AUTO_CLASSPATH_DIR=/usr/share/java
@@ -460,7 +465,7 @@ done
 for jar in `find ${AUTO_CLASSPATH_DIR} -name "*.jar" 2>/dev/null`; do
     pathappend $jar CLASSPATH
 done
-export JAVA_HOME CLASSPATH
+export JAVA_HOME ANT_HOME CLASSPATH
 unset AUTO_CLASSPATH_DIR dir jar
 # End /etc/profile.d/openjdk.sh</literal>
 EOF</userinput>
@@ -468,16 +473,22 @@ EOF</userinput>
     <para>Finalement, ajoutez les pages de man dans la configuration de <application>man_db</application>.
     En tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>cat &gt;&gt; /etc/man_db.conf &lt;&lt; "EOF" &amp;&amp;
-<literal>MANDATORY_MANPATH     /opt/jdk/man
+<userinput>cat >> /etc/profile.d/extrapaths.sh &lt;&lt; "EOF" &amp;&amp;
+# Begin Java addition
+<literal>pathappend /opt/jdk/man       MANPATH
+# End Java addition</literal>
+EOF
+cat &gt;&gt; /etc/man_db.conf &lt;&lt; "EOF" &amp;&amp;
+<literal># Begin Java addition
+MANDATORY_MANPATH     /opt/jdk/man
 MANPATH_MAP           /opt/jdk/bin     /opt/jdk/man
-MANDB_MAP             /opt/jdk/man     /var/cache/man/jdk</literal>
+MANDB_MAP             /opt/jdk/man     /var/cache/man/jdk
+# End Java addition</literal>
 EOF
 mandb -c /opt/jdk/man</userinput>
 </screen>
 <para>Pour tester que les pages de man sont correctement installées, tapez <command>source /etc/profile</command> et <command>man java</command> pour afficher les pages de man respectives.</para>
  
-
     </sect3>
     
     <sect3 id='ojdk-certs'>
@@ -580,17 +591,21 @@ function showhelp()
     {
         echo "`basename ${0}` creates a valid cacerts file for use with IcedTea."
         echo ""
-        echo "        -f  --cafile        The path to a file containing PEM formated CA"
-        echo "                            certificates.  May not be used with -d/--cadir."
-        echo "        -d  --cadir         The path to a diectory of PEM formatted CA"
-        echo "                            certificates.  May not be used with -f/--cafile."
-        echo "        -o  --outfile       The path to the output file."
+        echo "        -f  --cafile     The path to a file containing PEM"
+        echo "                         formated CA certificates. May not be"
+        echo "                         used with -d/--cadir."
         echo ""
-        echo "        -k  --keytool       The path to the java keytool utility."
+        echo "        -d  --cadir      The path to a directory of PEM formatted"
+        echo "                         CA certificates. May not be used with"
+        echo "                         -f/--cafile."
         echo ""
-        echo "        -s  --openssl       The path to the openssl utility."
+        echo "        -o  --outfile    The path to the output file."
         echo ""
-        echo "        -h  --help          Show this help message and exit."
+        echo "        -k  --keytool    The path to the java keytool utility."
+        echo ""
+        echo "        -s  --openssl    The path to the openssl utility."
+        echo ""
+        echo "        -h  --help       Show this help message and exit."
         echo ""
         echo ""
     }
@@ -608,31 +623,31 @@ get_args ${@}
 # Handle common errors
 if test "${CAFILE}x" == "x" -a "${CADIR}x" == "x" ; then
     echo "ERROR!  You must provide an x509 certificate store!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${CAFILE}x" != "x" -a "${CADIR}x" != "x" ; then
     echo "ERROR!  You cannot provide two x509 certificate stores!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${KEYTOOL}x" == "x" ; then
     echo "ERROR!  You must provide a valid keytool program!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${OPENSSL}x" == "x" ; then
     echo "ERROR!  You must provide a valid path to openssl!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${OUTFILE}x" == "x" ; then
     echo "ERROR!  You must provide a valid output file!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
@@ -674,7 +689,11 @@ do
     certbegin=`grep -n "^-----BEGIN" "${cert}" | cut -d ":" -f 1`
     certend=`grep -n "^-----END" "${cert}" | cut -d ":" -f 1`
     sed -n "${certbegin},${certend}p" "${cert}" > "${tempfile}"
-    echo yes | env LC_ALL=C "${KEYTOOL}" -import -alias `basename "${cert}"` -keystore                    "${OUTFILE}" -storepass 'changeit' -file "${tempfile}"
+    echo yes | env LC_ALL=C "${KEYTOOL}" -import                     \
+                                         -alias `basename "${cert}"` \
+                                         -keystore "${OUTFILE}"      \
+                                         -storepass 'changeit'       \
+                                         -file "${tempfile}"
     rm "${tempfile}"
 done
 if test "${TEMPDIR}x" != "x" ; then
@@ -696,7 +715,11 @@ chmod -c 0755 /opt/jdk/bin/mkcacerts</userinput>
     Ensuite vous pouvez en créer un nouveau, en tant qu'utilisateur
     <systemitem class="username">root</systemitem> :</para>
 <screen role="root">
-<userinput>/opt/jdk/bin/mkcacerts -d "/etc/ssl/certs/"  -k "/opt/jdk/bin/keytool"                        -s "/usr/bin/openssl" -o "/opt/jdk/jre/lib/security/cacerts"</userinput>
+<userinput>/opt/jdk/bin/mkcacerts            \
+        -d "/etc/ssl/certs/"      \
+        -k "/opt/jdk/bin/keytool" \
+        -s "/usr/bin/openssl"     \
+        -o "/opt/jdk/jre/lib/security/cacerts"</userinput>
 </screen>
     </sect3> 
   </sect2>

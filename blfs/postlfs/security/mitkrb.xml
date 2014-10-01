@@ -83,16 +83,16 @@
 		<filename>krb5-&mitkrb-version;.tar.gz.asc</filename>.
     </para>
 <screen>
-<userinput>gpg --verify krb5-&mitkrb-version;.tar.gz.asc krb5-&mitkrb-version;.tar.gz</userinput>
+<userinput>gpg2 --verify krb5-&mitkrb-version;.tar.gz.asc krb5-&mitkrb-version;.tar.gz</userinput>
 </screen>
     <para>Vous verrez probablement une sortie similaire à&nbsp;:</para>
 <screen>
-gpg: Signature made Wed Aug  8 22:29:58 2012 GMT using RSA key ID F376813D
-gpg: Can't check signature: public key not found
+<literal>gpg: Signature made Mon Aug 11 22:53:10 2014 GMT using RSA key ID 749D7889
+gpg: Can't check signature: No public key</literal>
 </screen>
     <para>Vous pouvez importer la clef publique avec&nbsp;:</para>
 <screen>
-<userinput>gpg --keyserver pgp.mit.edu --recv-keys 0xF376813D</userinput>
+<userinput>gpg2 --pgp2 --keyserver pgp.mit.edu --recv-keys 0x749D7889</userinput>
 </screen>
     <para>Maintenant revérifiez le paquet avec la première commande susmentionnée. Vous devriez 
     obtenir une indication de bonne signature, mais la clef ne sera toujours pas certifiée 
@@ -103,13 +103,20 @@ gpg: Can't check signature: public key not found
 		commandes suivantes&nbsp;:
     </para>
 <screen>
-<userinput>patch -Np1 -i ../mitkrb-&mitkrb-version;-db2_fix-1.patch &amp;&amp;
-cd src &amp;&amp;
-sed -e "s@python2.5/Python.h@&amp; python2.7/Python.h@g"     -e "s@-lpython2.5]@&amp;,n  AC_CHECK_LIB(python2.7,main,[PYTHON_LIB=-lpython2.7])@g"     -i configure.in &amp;&amp;
-sed -e "s@interp->result@Tcl_GetStringResult(interp)@g"     -i kadmin/testing/util/tcl_kadm5.c &amp;&amp;
-sed -e 's@^u}@^u cols 300}@'     -i tests/dejagnu/config/default.exp &amp;&amp;
+<userinput>cd src &amp;&amp;
+sed -e "s@python2.5/Python.h@&amp; python2.7/Python.h@g" \
+    -e "s@-lpython2.5]@&amp;,\n  AC_CHECK_LIB(python2.7,main,[PYTHON_LIB=-lpython2.7])@g" \
+    -i configure.in &amp;&amp;
+sed -e 's@\^u}@^u cols 300}@' \
+    -i tests/dejagnu/config/default.exp &amp;&amp;
 autoconf &amp;&amp;
-./configure --prefix=/usr                        --sysconfdir=/etc                    --localstatedir=/var/lib             --with-system-et                     --with-system-ss                     --enable-dns-for-realm &amp;&amp;
+./configure --prefix=/usr            \
+            --sysconfdir=/etc        \
+            --localstatedir=/var/lib \
+            --with-system-et         \
+            --with-system-ss         \
+            --with-system-verto=no   \
+            --enable-dns-for-realm &amp;&amp;
 make</userinput>
 </screen>
     <para>
@@ -123,8 +130,9 @@ make</userinput>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
 <userinput>make install &amp;&amp;
-for LIBRARY in gssapi_krb5 gssrpc k5crypto kadm5clnt kadm5srv                kdb5 kdb_ldap krad krb5 krb5support verto ; do
-    [ -e  /usr/lib/lib$LIBRARY.so ] &amp;&amp; chmod -v 755 /usr/lib/lib$LIBRARY.so
+for LIBRARY in gssapi_krb5 gssrpc k5crypto kadm5clnt kadm5srv \
+               kdb5 kdb_ldap krad krb5 krb5support verto ; do
+    chmod -v 755 /usr/lib/lib$LIBRARY.so
 done &amp;&amp;
 mv -v /usr/lib/libkrb5.so.3*        /lib &amp;&amp;
 mv -v /usr/lib/libk5crypto.so.3*    /lib &amp;&amp;
@@ -160,16 +168,12 @@ unset LIBRARY</userinput>
     conséquence que la construction utilise les versions installées sur le 
     système du logiciel support du logiciel d'interface en ligne de commandes du
     sous-système.</para>
-
      <para>
       <parameter>--with-system-verto=no</parameter>: ce paramètre corrige un dans le paquet:
       il ne reconnait pas sa propre bibliothèque verto installé précédement. Ce n'est pas un problème, à la réinstallation
       de la même version, mais si vous mettez à jour, l'ancienne bibliothèque est utilisée comme celle
       du système, au lien d'installer la nouvelle version.
     </para>
-
-
-
     <para>
      <parameter>--enable-dns-for-realm</parameter>: Ce paramètre permet à
       realms d'être résolu en utilisant le serveur DNS.</para>

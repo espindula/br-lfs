@@ -69,10 +69,10 @@
     class="username">root</systemitem>&nbsp;:</para>
   
 <screen role="root">
-<userinput>cat > /bin/make-cert.pl &lt;&lt; "EOF"
+<userinput>cat > /usr/bin/make-cert.pl &lt;&lt; "EOF"
 <literal>#!/usr/bin/perl -w
 # Used to generate PEM encoded files from Mozilla certdata.txt.
-# Run as ./mkcrt.pl > certificate.crt
+# Run as ./make-cert.pl > certificate.crt
 #
 # Parts of this script courtesy of RedHat (mkcabundle.pl)
 #
@@ -113,7 +113,7 @@ while ( &lt;IN&gt; )
     }
 }</literal>
 EOF
-chmod +x /bin/make-cert.pl</userinput>
+chmod +x /usr/bin/make-cert.pl</userinput>
 </screen>
    <para>Le script suivant crée les certificats et un bouquet de tous les
    certificats. Il crée un répertoire <filename class='directory'>./certs</filename>
@@ -121,7 +121,7 @@ chmod +x /bin/make-cert.pl</userinput>
    ce script en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
    
 <screen role="root">
-<userinput>cat > /bin/make-ca.sh &lt;&lt; "EOF"
+<userinput>cat > /usr/bin/make-ca.sh &lt;&lt; "EOF"
 <literal>#!/bin/sh
 # Begin make-ca.sh
 # Script to populate OpenSSL's CApath from a bundle of PEM formatted CAs
@@ -147,10 +147,10 @@ VERSION=$(echo $REVISION | cut -f2 -d" ")
 TEMPDIR=$(mktemp -d)
 TRUSTATTRIBUTES="CKA_TRUST_SERVER_AUTH"
 BUNDLE="BLFS-ca-bundle-${VERSION}.crt"
-CONVERTSCRIPT="/bin/make-cert.pl"
+CONVERTSCRIPT="/usr/bin/make-cert.pl"
 SSLDIR="/etc/ssl"
 mkdir "${TEMPDIR}/certs"
-# Get a list of staring lines for each cert
+# Get a list of starting lines for each cert
 CERTBEGINLIST=$(grep -n "^# Certificate" "${certdata}" | cut -d ":" -f1)
 # Get a list of ending lines for each cert
 CERTENDLIST=`grep -n "^CKA_TRUST_STEP_UP_APPROVED" "${certdata}" | cut -d ":" -f 1`
@@ -164,7 +164,7 @@ for certbegin in ${CERTBEGINLIST}; do
   # Dump to a temp file with the name of the file as the beginning line number
   sed -n "${certbegin},${certend}p" "${certdata}" > "${TEMPDIR}/certs/${certbegin}.tmp"
 done
-unset CERTBEGINLIST CERTDATA CERTENDLIST certebegin certend
+unset CERTBEGINLIST CERTDATA CERTENDLIST certbegin certend
 mkdir -p certs
 rm -f certs/*      # Make sure the directory is clean
 for tempfile in ${TEMPDIR}/certs/*.tmp; do
@@ -199,7 +199,7 @@ fi
 cat certs/*.pem >  ${BUNDLE}
 rm -r "${TEMPDIR}"</literal>
 EOF
-chmod +x /bin/make-ca.sh</userinput>
+chmod +x /usr/bin/make-ca.sh</userinput>
 </screen>
    <para>Ajoutez un script bref pour supprimer les certificats expirés d'un
    répertoire. Créez de nouveau ce script en tant qu'utilisateur
@@ -207,9 +207,9 @@ chmod +x /bin/make-ca.sh</userinput>
    class="username">root</systemitem>&nbsp;:</para>
   
 <screen role="root">
-<userinput>cat > /bin/remove-expired-certs.sh &lt;&lt; "EOF"
+<userinput>cat > /usr/bin/remove-expired-certs.sh &lt;&lt; "EOF"
 <literal>#!/bin/sh
-# Begin /bin/remove-expired-certs.sh
+# Begin /usr/bin/remove-expired-certs.sh
 #
 # Version 20120211
 # Make sure the date is parsed correctly on all systems
@@ -253,7 +253,7 @@ for cert in $certs; do
   fi
 done</literal>
 EOF
-chmod +x /bin/remove-expired-certs.sh</userinput>
+chmod +x /usr/bin/remove-expired-certs.sh</userinput>
 </screen>
    <para>Les commandes suivantes récupèreront les certificats et les convertiront
    dans le bon format.  Si vous le désirez, vous pouvez utiliser un navigateur
@@ -263,22 +263,21 @@ chmod +x /bin/remove-expired-certs.sh</userinput>
    les Certificats CA.</para>
    
 <screen>
-<userinput>certhost='http://mxr.mozilla.org'                        &amp;&amp;
-certdir='/mozilla/source/security/nss/lib/ckfw/builtins' &amp;&amp;
-url="$certhost$certdir/certdata.txt?raw=1"               &amp;&amp;
-wget --output-document certdata.txt $url &amp;&amp;
-unset certhost certdir url               &amp;&amp;
-make-ca.sh                               &amp;&amp;
-remove-expired-certs.sh certs</userinput>
+<userinput>URL=&sources-anduin-other-http;/certdata.txt &amp;&amp;
+rm -f certdata.txt &amp;&amp;
+wget $URL          &amp;&amp;
+make-ca.sh         &amp;&amp;
+remove-expired-certs.sh certs &amp;&amp;
+unset URL</userinput>
 </screen>
    <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>SSLDIR=/etc/ssl                                             &amp;&amp;
-install -d ${SSLDIR}/certs                                  &amp;&amp;
-cp -v certs/*.pem ${SSLDIR}/certs                           &amp;&amp;
-c_rehash                                                    &amp;&amp;
-install BLFS-ca-bundle*.crt ${SSLDIR}/ca-bundle.crt         &amp;&amp;
-ln -sv ../ca-bundle.crt ${SSLDIR}/certs/ca-certificates.crt &amp;&amp;
+<userinput>SSLDIR=/etc/ssl                                              &amp;&amp;
+install -d ${SSLDIR}/certs                                   &amp;&amp;
+cp -v certs/*.pem ${SSLDIR}/certs                            &amp;&amp;
+c_rehash                                                     &amp;&amp;
+install BLFS-ca-bundle*.crt ${SSLDIR}/ca-bundle.crt          &amp;&amp;
+ln -sfv ../ca-bundle.crt ${SSLDIR}/certs/ca-certificates.crt &amp;&amp;
 unset SSLDIR</userinput>
 </screen>
    <para>Enfin, nettoyez le répertoire courant&nbsp;:</para>

@@ -16,20 +16,11 @@
   <!ENTITY libreoffice-translations-download-http "&libreoffice-dl;/libreoffice-translations-&libreoffice-dlversion;.tar.xz">
   <!ENTITY libreoffice-translations-md5sum        "b8d3445100c10bb4f21f6c8f25c5c600">
   <!ENTITY libreoffice-translations-size          "121 Mo">
-  <!-- This package has some peculiarities, some discussed in the text.
-  Two values for SBU and buildsize are given due to the large difference
-  measured by editors, depending on architecture and sometimes installé
-  dependencies (with-system... -->
+  
   <!ENTITY libreoffice-buildsize          "8.1 Go (535 Mo installé), with translations">
   <!ENTITY libreoffice-time               "200 SBU, with translations">
-  <!-- [fo] For version 4.3.1.2 I've got, for i686, statistcs over the upper
-  boundaries for x86_64 of previous versions, thus, temporarily, decided to use
-  single statistcs, instead of a range.
-  -->
-  <!-- This package has some peculiarities, some discussed in the text.
-  Two values for SBU and buildsize are given due to the large difference
-  measured by editors, depending on architecture and sometimes installé
-  dependencies (with-system... -->
+  
+  
 ]>
 <sect1 id="libreoffice" xreflabel="libreoffice-&libreoffice-version;">
   <?dbhtml filename="libreoffice.html"?>
@@ -155,7 +146,6 @@
         (souvent ancienne).</para>
     </note>
     <para role="recommended">
-
       <xref linkend="boost"/>,
        <xref linkend="clucene"/>,
        <xref linkend="cups"/>,
@@ -242,7 +232,6 @@
        <command>chroot</command> ou <command>ssh</command>.
       </para>
     </note>
-
     <note>
       <para>
       Contrairement aux autres paquets, nous supposons que vous n'avez pas encore
@@ -251,9 +240,7 @@
       <systemitem class="username">root</systemitem>.
       </para>
     </note>
-
-
-<screen role="root">
+<screen>
 <userinput>tar -xf libreoffice-&libreoffice-dlversion;.tar.xz --no-overwrite-dir &amp;&amp;
 cd libreoffice-&libreoffice-dlversion;</userinput>
 </screen>
@@ -264,16 +251,20 @@ cd libreoffice-&libreoffice-dlversion;</userinput>
       de déballer les archives de l'aide et des traductions):
      </para>
 <screen>
-<userinput>install -dm755 src &amp;&amp;
-tar -xf ../libreoffice-dictionaries-&libreoffice-dlversion;.tar.xz --no-overwrite-dir --strip-components=1 &amp;&amp;
-ln -sv ../../libreoffice-dictionaries-&libreoffice-dlversion;.tar.xz src/ &amp;&amp;
-ln -sv ../../libreoffice-help-&libreoffice-dlversion;.tar.xz src/</userinput>
+<userinput>install -dm755 external/tarballs &amp;&amp;
+tar -xf ../libreoffice-dictionaries-&libreoffice-dlversion;.tar.xz \
+        --no-overwrite-dir --strip-components=1    &amp;&amp;
+ln -sv ../../../libreoffice-dictionaries-&libreoffice-dlversion;.tar.xz \
+       external/tarballs/ &amp;&amp;
+ln -sv ../../../libreoffice-help-&libreoffice-dlversion;.tar.xz \
+       external/tarballs/</userinput>
 </screen>
     <para>
       Si vous avez chargé l'archive des traductions, créez un lien symbolique:
     </para>
 <screen>
-<userinput>ln -sv ../../libreoffice-translations-&libreoffice-dlversion;.tar.xz src/</userinput>
+<userinput>ln -sv ../../../libreoffice-translations-&libreoffice-dlversion;.tar.xz \
+       external/tarballs/</userinput>
 </screen>
       <note>
       <para>
@@ -311,11 +302,51 @@ ln -sv ../../libreoffice-help-&libreoffice-dlversion;.tar.xz src/</userinput>
       suivantes:
     </para>
 <screen>
-<userinput>sed -e "/gzip -f/d"       -e "s|.1.gz|.1|g"     -i bin/distro-install-desktop-integration        &amp;&amp;
+<userinput>patch -Np1 -i ../libreoffice-&libreoffice-dlversion;-boost_1_56_0-1.patch &amp;&amp;
+sed -e "/gzip -f/d"   \
+    -e "s|.1.gz|.1|g" \
+    -i bin/distro-install-desktop-integration        &amp;&amp;
 sed -e "/distro-install-file-lists/d" -i Makefile.in &amp;&amp;
 chmod -v +x bin/unpack-sources                     &amp;&amp;
-sed -e "s/target.mk/langlist.mk/"                    -e "s/tar -xf/tar -x --strip-components=1 -f/"     -e "/tar -x/s/lo_src_dir/start_dir/"               -i bin/unpack-sources                          &amp;&amp;
-./autogen.sh --prefix=$LO_PREFIX                      --sysconfdir=/etc                        --with-vendor="BLFS"                     --with-lang="en-US pt-BR"                --with-help                              --with-alloc=system                      --without-java                           --disable-gconf                          --disable-odk                            --disable-postgresql-sdbc                --enable-release-build=yes               --enable-python=system                   --with-system-boost                      --with-system-clucene                    --with-system-cairo                      --with-system-curl                       --with-system-expat                      --with-system-graphite                   --with-system-harfbuzz                   --with-system-icu                        --with-system-jpeg                       --with-system-lcms2                      --with-system-libpng                     --with-system-libxml                     --with-system-mesa-headers               --with-system-neon                       --with-system-npapi-headers              --with-system-nss                        --with-system-odbc                       --with-system-openldap                   --with-system-openssl                    --with-system-poppler                    --with-system-redland                    --with-system-zlib                       --with-parallelism=$(getconf _NPROCESSORS_ONLN)</userinput>
+sed -e "s/target\.mk/langlist\.mk/"                \
+    -e "s/tar -xf/tar -x --strip-components=1 -f/" \
+    -e "/tar -x/s/lo_src_dir/start_dir/"           \
+    -i bin/unpack-sources                          &amp;&amp;
+./autogen.sh --prefix=$LO_PREFIX         \
+             --sysconfdir=/etc           \
+             --with-vendor="BLFS"        \
+             --with-lang="en-US pt-BR"   \
+             --with-help                 \
+             --with-alloc=system         \
+             --without-java              \
+             --disable-gconf             \
+             --disable-odk               \
+             --disable-postgresql-sdbc   \
+             --enable-release-build=yes  \
+             --enable-python=system      \
+             --with-system-boost         \
+             --with-system-clucene       \
+             --with-system-cairo         \
+             --with-system-curl          \
+             --with-system-expat         \
+             --with-system-graphite      \
+             --with-system-harfbuzz      \
+             --with-system-icu           \
+             --with-system-jpeg          \
+             --with-system-lcms2         \
+             --with-system-libpng        \
+             --with-system-libxml        \
+             --with-system-mesa-headers  \
+             --with-system-neon          \
+             --with-system-npapi-headers \
+             --with-system-nss           \
+             --with-system-odbc          \
+             --with-system-openldap      \
+             --with-system-openssl       \
+             --with-system-poppler       \
+             --with-system-redland       \
+             --with-system-zlib          \
+             --with-parallelism=$(getconf _NPROCESSORS_ONLN)</userinput>
 </screen>
 <para>
    Les instructions suivantes vont seulement construire le paquet sans lancer aucune
@@ -334,7 +365,8 @@ sed -e "s/target.mk/langlist.mk/"                    -e "s/tar -xf/tar -x --stri
 <screen role="root">
 <userinput>make distro-pack-install                                  &amp;&amp;
 install -v -m755 -d $LO_PREFIX/share/appdata              &amp;&amp;
-install -v -m644    sysui/desktop/appstream-appdata/*.xml                     $LO_PREFIX/share/appdata</userinput>
+install -v -m644    sysui/desktop/appstream-appdata/*.xml \
+                    $LO_PREFIX/share/appdata</userinput>
 </screen>
     <para>
        Si les dictionnaires ont été construits, de nouveau en tant qu'utilisateur
@@ -360,7 +392,8 @@ cp -vR dictionaries/pt_BR/* $LO_PREFIX/lib/libreoffice/share/extensions/dict-pt-
 <userinput>mkdir -pv /usr/share/pixmaps &amp;&amp;
 for i in writer base calc draw impress math startcenter writer
 do
-  ln -svf /opt/libreoffice-&libreoffice-dlversion;/share/icons/hicolor/32x32/apps/libreoffice-$i.png           /usr/share/pixmaps/
+  ln -svf /opt/libreoffice-&libreoffice-dlversion;/share/icons/hicolor/32x32/apps/libreoffice-$i.png \
+          /usr/share/pixmaps/
 done
 unset i</userinput>
 </screen>
