@@ -378,6 +378,10 @@ elif [[ $V_WIKI != $V_EN ]]
          rm -r blfs-html 2>>$CHEMIN_LOG/robot.err
 #         log_err $?
          log_info "déplacement de la version HTML que l'on vient de construire dans blfs-html"
+
+          echo pause
+read a
+
          mv blfs-svn blfs-html 2>>$CHEMIN_LOG/robot.err
          log_err $?
          if [[ -e tmp ]]
