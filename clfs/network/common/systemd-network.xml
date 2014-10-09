@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-systemd-network">
+  <?dbhtml filename="systemd-network.html"?>
+
+  <title>Networking Configuration with Systemd-networkd</title>
+
+  <sect2 role="interface-config">
+    <title>Network Interface Configuration</title>
+
+    <note><para>Udev may assign random Network Card Interface names
+    for some network cards such as enp2s1. If you are not sure what
+    your Network Card Interface name is, you can always run
+    <command>ip l</command> after you have booted your system. It is important
+    that the <envar>Name</envar> variable in
+    <filename>/etc/systemd/network</filename> contain the correct Network Card
+    Interface name (e.g. <envar>Name=enp2s1</envar> or
+    <envar>Name=eth0</envar>) or systemd will fail to bring
+    up your network interface.</para></note>
+
+    <sect3 role="static">
+      <title>Static Network Interface Configuration</title>
+
+      <para><command>systemd-networkd</command> uses
+      <filename>/etc/system/network</filename> for configuration files. Refer
+      to systemd.network(5) and systemd.netdev(5). Configure a network
+      interface with a config file. Adjust Name= as required:</para>
+
+  <screen role="nodump"><userinput>cd /etc/systemd/network &amp;&amp;
+cat &gt; static.network &lt;&lt; "EOF"
+[Match]
+Name=enp2s0
+
+[Network]
+Address=192.168.1.1/24
+Gateway=192.168.1.2
+EOF</userinput></screen>
+
+      <para os="var-ob">The values of these variables must be changed in every
+      file to match the proper setup.</para>
+
+      <para os="var-i">The <envar>Name</envar> variable defines the interface
+      name, for example, eth0. It is required for all network device
+      configuration files.</para>
+
+      <para>The <envar>Gateway</envar> variable should contain the default
+      gateway IP address, if one is present. If not, then comment out the
+      variable entirely.</para>
+
+      <para>For more information see the <command>systemd.netdev</command> man page.</para>
+
+    </sect3>
+
+    <sect3 role="dhcp">
+      <title>Connecting to a network with DHCP</title>
+
+    <para><command>systemd-networkd</command> uses
+    <filename>/etc/systemd/network</filename> for configuration files. Refer
+    to <filename>systemd.network(5)</filename> and
+    <filename>systemd.netdev(5)</filename>. Configure a network interface
+    with a config file. Adjust Name= as required:</para>
+
+<screen role="nodump"><userinput>cd /etc/systemd/network &amp;&amp;
+cat &gt; dhcp.network &lt;&lt; "EOF"
+[Match]
+Name=enp2s0
+
+[Network]
+DHCP=yes
+EOF</userinput></screen>
+
+    <para><command>systemd-networkd</command> will automatically configure
+    <filename>/run/systemd/network/resolv.conf</filename> when using DHCP.
+    If you did not manually create <filename>/etc/resolv.conf</filename>,
+    create a symlink:</para>
+
+<screen role="nodump"><userinput>ln -sv /run/systemd/network/resolv.conf /etc</userinput></screen>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2 role="timesyncd">
+    <title>Using Timesyncd</title>
+
+    <para>Systemd includes a simple NTP client daemon,
+    <command>systemd-timesyncd</command>, though it is disabled by
+    default. If you want to enable it, you will first need to add a required
+    user and group:</para>
+
+<screen role="nodump"><userinput>groupadd -g &gid-systemd-timesync; systemd-timesync
+useradd -g systemd-timesync -u &uid-systemd-timesync; -d /dev/null -s /bin/false systemd-timesync</userinput></screen>
+
+    <para>Then, actually enable <command>systemd-timesyncd</command> so that
+    it will run on system boot:</para>
+
+<screen role="nodump"><userinput>systemctl enable systemd-timesyncd</userinput></screen>
+
+    <para>You can configure <command>systemd-timesyncd</command> by editing
+    <filename>/etc/systemd/timesyncd.conf</filename>.</para>
+
+  <para>Continue to <xref linkend="chapter-bootable"/>.</para>
+
+  </sect2>
+
+</sect1>

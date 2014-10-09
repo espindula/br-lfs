@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-locale">
+  <title>Setting Up Locale Information</title>
+  <?dbhtml filename="locale.html"?>
+
+  <indexterm zone="ch-config-locale">
+    <primary sortas="e-/etc/locale.conf">/etc/locale.conf</primary>
+  </indexterm>
+
+  <para>The <filename>/etc/locale.conf</filename> below sets some environment
+  variables necessary for native language support. Setting them properly
+  results in:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>The output of programs translated into the native language</para>
+    </listitem>
+    <listitem>
+      <para>Correct classification of characters into letters, digits and other
+      classes. This is necessary for <command>bash</command> to properly accept
+      non-ASCII characters in command lines in non-English locales</para>
+    </listitem>
+    <listitem>
+      <para>The correct alphabetical sorting order for the country</para>
+    </listitem>
+    <listitem>
+      <para>Appropriate default paper size</para>
+    </listitem>
+    <listitem>
+      <para>Correct formatting of monetary, time, and date values</para>
+    </listitem>
+  </itemizedlist>
+
+  <para>Replace <replaceable>[ll]</replaceable> below with the
+  two-letter code for the desired language (e.g., <quote>en</quote>) and
+  <replaceable>[CC]</replaceable> with the two-letter code for the
+  appropriate country (e.g., <quote>GB</quote> or <quote>US</quote>).
+  <replaceable>[charmap]</replaceable> should be replaced with the
+  canonical charmap for your chosen locale. Optional modifiers such as
+  <quote>@euro</quote> may also be present.</para>
+
+  <para>The list of all locales supported by Glibc can be obtained by running
+  the following command:</para>
+
+<screen role="nodump"><userinput>locale -a</userinput></screen>
+
+  <para>Locales can have a number of synonyms, e.g. <quote>ISO-8859-1</quote>
+  is also referred to as <quote>iso8859-1</quote> and <quote>iso88591</quote>.
+  Some applications cannot handle the various synonyms correctly, so it is
+  safest to choose the canonical name for a particular locale. To determine
+  the canonical name, run the following command, where <replaceable>[locale
+  name]</replaceable> is the output given by <command>locale -a</command> for
+  your preferred locale (<quote>en_US.utf8</quote> in our example).</para>
+
+<screen role="nodump"><userinput>LC_ALL=<replaceable>[locale name]</replaceable> locale charmap</userinput></screen>
+
+  <para>For the <quote>en_US.utf8</quote> locale, the above command
+  will print:</para>
+
+<screen><computeroutput>UTF-8</computeroutput></screen>
+
+  <para>This results in a final locale setting of <quote>en_US.UTF-8</quote>.
+  It is important that the locale found using the heuristic above is tested
+  prior to it being added to <filename>/etc/locale.conf</filename>:</para>
+
+<screen role="nodump"><userinput>LC_ALL=[locale name] locale territory
+LC_ALL=[locale name] locale language
+LC_ALL=[locale name] locale charmap
+LC_ALL=[locale name] locale int_curr_symbol
+LC_ALL=[locale name] locale int_prefix</userinput></screen>
+
+  <para>The above commands should print the language name, the character
+  encoding used by the locale, the local currency, and the prefix to dial
+  before the telephone number in order to get into the country. If any of the
+  commands above fail with a message similar to the one shown below, this means
+  that your locale was either not installed in Chapter 10 or is not supported by
+  the default installation of Glibc.</para>
+
+<screen><computeroutput>locale: Cannot set LC_* to default locale: No such file or directory</computeroutput></screen>
+
+  <para>If this happens, you should either install the desired locale using
+  the <command>localedef</command> command, or consider choosing a different
+  locale. Further instructions assume that there are no such error messages
+  from Glibc.</para>
+
+  <para>Some packages beyond CLFS may also lack support for your chosen locale.
+  One example is the X library (part of the X Window System), which outputs
+  the following error message:</para>
+
+<screen><computeroutput>Warning: locale not supported by Xlib, locale set to C</computeroutput></screen>
+
+  <para>Sometimes it is possible to fix this by removing the charmap part of
+  the locale specification, as long as that does not change the character map
+  that Glibc associates with the locale (this can be checked by running the
+  <command>locale charmap</command> command in both locales). For example,
+  one would have to change &quot;de_DE.ISO-8859-15@euro&quot; to
+  &quot;de_DE@euro&quot; in order to get this locale recognized by Xlib.</para>
+
+  <para>Other packages can also function incorrectly (but may not necessarily
+  display any error messages) if the locale name does not meet their
+  expectations. In those cases, investigating how other Linux distributions
+  support your locale might provide some useful information.</para>
+
+  <para>Once the proper locale settings have been determined, create the
+  <filename>/etc/locale.conf</filename> file:</para>
+
+<screen><userinput>cat &gt; /etc/locale.conf &lt;&lt; "EOF"
+<literal># Begin /etc/locale.conf
+
+LANG=<replaceable>[ll]</replaceable>_<replaceable>[CC]</replaceable>.<replaceable>[charmap]</replaceable><replaceable>[@modifiers]</replaceable>
+
+# End /etc/locale.conf</literal>
+EOF</userinput></screen>
+
+  <para>Note that you can modify <filename>/etc/locale.conf</filename> with
+  systemd's <command>localectl</command> utility. To use
+  <command>localectl</command> for the example above, run:</para>
+
+<screen role="nodump"><userinput>localectl set-locale LANG="<replaceable>[ll]_[CC][charmap][@modifiers]</replaceable>"</userinput></screen>
+
+  <para>You can also specify other language specific environment variables such
+  as <envar>LANG</envar>, <envar>LC_CTYPE</envar>, <envar>LC_NUMERIC</envar> or
+  any other environment variable from <command>locale</command> output. Just
+  separate them with a space. An example where <envar>LANG</envar> is set as
+  en_US.UTF-8 but <envar>LC_CTYPE</envar> is set as just en_US is:</para>
+
+<screen role="nodump"><userinput>localectl set-locale LANG="en_US.UTF-8" LC_CTYPE="en_US"</userinput></screen>
+
+  <note><para>Please note that <command>localectl</command> command can
+  be used  only on a system booted with systemd.</para></note>
+  <para>Setting the keyboard layout, screen font, and locale-related
+  environment variables are the only internationalization steps needed to
+  support locales that use ordinary single-byte encodings and left-to-right
+  writing direction. UTF-8 has been tested on the English, French, German,
+  Italian, and Spanish locales. All other locales are untested. If you discover
+  issues with any other locale please open a ticket in our Trac system.</para>
+
+  <para>Some locales need additional programs and support. CLFS will not be
+  supporting these locales in the book. We welcome the support for these other
+  locales via <ulink url="&cblfs-root;"/>.</para>
+
+</sect1>
