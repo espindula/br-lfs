@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../../general.ent">
@@ -21,26 +21,28 @@
   <sect2 role="installation">
     <title>Installation of Yaboot</title>
 
-    <para>Yaboot defaults to build as 32bit, so we need to pass appropriate
+    <para>Existing multilib distributions alter gcc to default to 32-bit
+    output.  Because our gcc defaults to 64-bit, we need to pass appropriate
     options to both the compiler and the linker.  To prevent the build from
-    failing due to compiler warnings, the -Werror flag is removed.  The 
-    Makefile already overrides any CC and ignores LDFLAGS in favour of 
-    its own variables, so we need to use the following seds for a 
+    failing due to compiler warnings, the -Werror flag is removed.  The
+    Makefile already overrides any CC and ignores LDFLAGS in favour of
+    its own variables, so we need to use the following seds for a
     successful compile and install.</para>
 
-<screen><userinput>sed -i -e "s/m32/m64/g" \
+<screen><userinput>sed -i -e "s/\(-print-libgcc-file-name\)/${BUILD32} \1/" \
     -e "s/-Werror//" \
-    -e "s/elf32ppclinux/elf64ppc/" Makefile
+    -e "s/\(-Bstatic\)/-melf32ppclinux \1/" Makefile
 </userinput></screen>
 
     <variablelist os="j">
       <title>The meaning of the sed parameters:</title>
 
       <varlistentry>
-        <term><parameter>"s/m32/m64/g"</parameter></term>
+        <term><parameter>"s/\(-print-libgcc-file-name\)/${BUILD32} \1/"</parameter></term>
         <listitem>
-          <para>Replaces -m32 wih -m64 to force <command>gcc</command> to
-          create 64-bit code when compiling yaboot.</para>
+          <para>This picks a convenient place within the Makefile's lgcc
+          variable and inserts the flag to force <command>gcc</command> to
+          create 32-bit code when compiling yaboot.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -50,10 +52,11 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><parameter>"s/elf32ppclinux/elf64ppc/"</parameter></term>
+        <term><parameter>"s/\(-Bstatic\)/-melf32ppclinux \1/"</parameter></term>
         <listitem>
-          <para>This replaces the 32 bit emulation with a 64 bit emulation
-          flag to force <command>ld</command> to use a suitable 64-bit
+          <para>This picks the end of the LFLAGS which the Makefile passes to
+          the linker to create the second-stage linux loader, and inserts a
+          flag to force <command>ld</command> to use a suitable 32-bit
           emulation picked from the output of <command>'ld -V'</command>.</para>
         </listitem>
       </varlistentry>
@@ -88,18 +91,18 @@
     href="../ppc/yaboot.xml"
     xpointer="xpointer(//*[@os='c'])"/>
 
-<screen os="d"><userinput>make PREFIX=/usr</userinput></screen>
+<screen os="d"><userinput>CFLAGS="${BUILD32}" make PREFIX=/usr</userinput></screen>
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../ppc/yaboot.xml"
     xpointer="xpointer(//*[@os='e'])"/>
 
     <important os="j0">
-      <para>The install of yaboot can fail if you miss any of the
-      patches or seds. <command>ld</command> will issue warnings,
-      but the install will appear to complete successfully. That
-      would result in an unbootable system, so you need to log the
-      output to check it.</para>
+      <para>The multilib install of yaboot can fail if you miss any of the
+      patches or seds, or omit the CFLAGS variable. <command>ld</command> will
+      issue warnings, but the install will appear to complete successfully.
+      That would result in an unbootable system, so you need to log the output
+      to check it.</para>
     </important>
 
 <screen os='f'><userinput>make PREFIX=/usr install 2&gt;&amp;1 | tee instlog</userinput></screen>
