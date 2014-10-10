@@ -22,6 +22,16 @@
   <sect2 role="installation">
     <title>Installation du compilateur GCC croisé avec libgcc statique et sans Threads</title>
 
+    <para os="e">ici nous compilerons GCC, comme un compilateur croisé qui pourra créer
+    des exécutables pour notre architecture cible, statiquement pour qu'il n'ai pas besoin de regarder
+    dans les Startfiles de Glibc, qui n'existe pas encore dans 
+    <filename class="directory">/tools</filename>. Nous utiliserons ce compilateur croisé, plus l'éditeur
+    de liens croisé que nous venons juste d'installer avec binutils, pour compiler glibc. Après que 
+    glibc soit installé dans 
+    <filename class="directory">/tools</filename>, nous pourrons reconstruire GCC pour qu'il 
+    soit capable de construire des exécutables qui se lient contre les bibliothèques dans
+    <filename class="directory">/tools</filename>.</para>
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
     href="../../final-system/common/gcc.xml"
     xpointer="xpointer(//*[@os='p1'])"/>
@@ -30,7 +40,7 @@
     href="../../final-system/common/gcc.xml"
     xpointer="xpointer(//*[@os='p2'])"/>
 
-    <para os="aa">Faites deux ajustements essentiels pour le fichier <filename>specs</filename>
+    <para os="aa">Faites deux ajustements essentiels pour le fichier specs
     de GCC pour vous assurer que GCC utilise notre environnement de construction&nbsp;:</para>
 
 <screen os="ab"><userinput>patch -Np1 -i ../&gcc-specs-patch;</userinput></screen>
@@ -38,8 +48,8 @@
     <para os="ag">Modifiez la spec StartFile afin que GCC regarde dans
     <filename class="directory">/tools</filename>&nbsp;:</para>
 
-<screen os="ah"><userinput>echo -en '\n#undef STANDARD_STARTFILE_PREFIX_1\n#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"\n' >> gcc/config/linux.h
-echo -en '\n#undef STANDARD_STARTFILE_PREFIX_2\n#define STANDARD_STARTFILE_PREFIX_2 ""\n' >> gcc/config/linux.h</userinput></screen>
+<screen os="ah"><userinput>echo -en '\n#undef STANDARD_STARTFILE_PREFIX_1\n#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"\n' &gt;&gt; gcc/config/linux.h
+echo -en '\n#undef STANDARD_STARTFILE_PREFIX_2\n#define STANDARD_STARTFILE_PREFIX_2 ""\n' &gt;&gt; gcc/config/linux.h</userinput></screen>
 
     <para os="t1">Nous allons créer un faux limits.h pour que la construction n'utilise pas celui fourni par la distrib 
     hôte&nbsp;:</para>
@@ -59,26 +69,25 @@ echo -en '\n#undef STANDARD_STARTFILE_PREFIX_2\n#define STANDARD_STARTFILE_PREFI
     xpointer="xpointer(//*[@os='h'])"/>
 
 <screen os="al"><userinput>AR=ar LDFLAGS="-Wl,-rpath,/cross-tools/lib" \
-  ../gcc-&gcc-version;/configure --prefix=/cross-tools \
-  --build=${CLFS_HOST} --host=${CLFS_HOST} --target=${CLFS_TARGET} \
-  --with-sysroot=${CLFS} --with-local-prefix=/tools \
-  --with-native-system-header-dir=/tools/include --disable-nls \
-  --with-isl=/cross-tools --with-cloog=/cross-tools --with-mpc=/cross-tools \
-  --without-headers --with-newlib --disable-decimal-float --disable-libgomp \
-  --disable-libmudflap --disable-libssp --disable-threads --disable-multilib \
-  --disable-libatomic --disable-libitm --disable-libsanitizer \
-  --disable-libquadmath --disable-target-libiberty --disable-target-zlib \
-  --with-system-zlib --enable-cloog-backend=isl --disable-isl-version-check \
-  --enable-languages=c --enable-checking=release</userinput></screen>
+    ../gcc-&gcc-version;/configure --prefix=/cross-tools \
+    --build=${CLFS_HOST} --host=${CLFS_HOST} --target=${CLFS_TARGET} \
+    --with-sysroot=${CLFS} --with-local-prefix=/tools \
+    --with-native-system-header-dir=/tools/include --disable-nls \
+    --disable-shared --with-mpfr=/cross-tools --with-gmp=/cross-tools \
+    --with-isl=/cross-tools --with-cloog=/cross-tools --with-mpc=/cross-tools \
+    --without-headers --with-newlib --disable-decimal-float --disable-libgomp \
+    --disable-libmudflap --disable-libssp --disable-libatomic --disable-libitm \
+    --disable-libsanitizer --disable-libquadmath --disable-threads \
+    --disable-multilib --disable-target-zlib --with-system-zlib \
+    --enable-languages=c --enable-checking=release</userinput></screen>
 
     <variablelist os="am">
       <title>Voici la signification des nouvelles options de configure&nbsp;:</title>
 
       <varlistentry>
-        <term><parameter>--with-sysroot=${CLFS}</parameter></term>
+        <term><parameter>--build=${CLFS_HOST}</parameter></term>
         <listitem>
-          <para>Dit à GCC de considérer ${CLFS} comme le système de fichiers
-          racine.</para>
+          <para>cela spécifie le système pour lequel le compilateur croisé sera construit.</para>
         </listitem>
       </varlistentry>
 
@@ -102,10 +111,9 @@ echo -en '\n#undef STANDARD_STARTFILE_PREFIX_2\n#define STANDARD_STARTFILE_PREFI
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-nls</parameter></term>
+        <term><parameter>--disable-shared</parameter></term>
         <listitem>
-          <para>Ceci désactive l'internationalisation car l'i18n n'est pas
-          nécessaire pour les outils de compilation croisée.</para>
+          <para>Cela dit à GCC de ne pas créer de bibliothèques partagé.</para>
         </listitem>
       </varlistentry>
 
