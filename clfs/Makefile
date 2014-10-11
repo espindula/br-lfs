@@ -20,8 +20,7 @@ ROOT_ID		:=
 ARCHS		:= x86 x86_64 x86_64-64 \
 		   sparc sparc64 sparc64-64 \
 		   mips mips64 mips64-64 \
-		   ppc ppc64 ppc64-64 \
-		   alpha
+		   ppc ppc64 ppc64-64
 
 ifdef V
   Q =
@@ -238,5 +237,6 @@ help:
 	@echo
 	@echo "Download-List Targets"
 	@echo "  $(FG_GREEN)download-list $(FG_BLUE)$(ARCHS_DLLIST)$(FG_DEFAULT)"
+	@echo
 	@echo "md5-List Targets"
 	@echo "  $(FG_GREEN)md5-list $(FG_BLUE)$(ARCHS_MD5LIST)$(FG_DEFAULT)"
