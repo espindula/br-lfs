@@ -1,0 +1,155 @@
+Révision 14468
+
+fichiers modifiés :
+   xfce/core/thunar.xml
+   general.ent
+   xsoft/graphweb/seamonkey.xml
+   xsoft/graphweb/firefox.xml
+   xsoft/other/thunderbird.xml
+   packages.ent
+   introduction/welcome/changelog.xml
+
+Log :
+Update to thunderbird-31.1.2. Thunar-1.6.3, Firefox-32.0.1 and SeaMonkey-2.29.1: fixes and tweaks.
+
+Le robot a traité 33 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 14467)
++++ introduction/welcome/changelog.xml	(révision 14468)
+@@ -45,6 +45,20 @@
+ -->
+ 
+     <listitem>
++      <para>October 3rd, 2014</para>
++      <itemizedlist>
++        <listitem>
++          <para>[fernando] - Thunar-1.6.3, Firefox-32.0.1 and SeaMonkey-2.29.1:
++          fixes and tweaks.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to thunderbird-31.1.2.  Fixes
++          <ulink url="&blfs-ticket-root;5577">#5577</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>October 2nd, 2014</para>
+       <itemizedlist>
+         <listitem>
+
+Index: xfce/core/thunar.xml
+===================================================================
+--- xfce/core/thunar.xml	(révision 14467)
++++ xfce/core/thunar.xml	(révision 14468)
+@@ -82,6 +82,7 @@
+ 
+     <bridgehead renderas="sect4">Required (Runtime)</bridgehead>
+     <para role="required runtime">
++      <xref linkend="gvfs"/> (for remote browsing and automounting) and
+       <xref linkend="gnome-icon-theme"/> or
+       <xref linkend="lxde-icon-theme"/>
+     </para>
+
+Index: xsoft/graphweb/firefox.xml
+===================================================================
+--- xsoft/graphweb/firefox.xml	(révision 14467)
++++ xsoft/graphweb/firefox.xml	(révision 14468)
+@@ -159,7 +159,7 @@
+     </para>
+ 
+ <screen><userinput>cat &gt; mozconfig &lt;&lt; "EOF"
+-# If you have a multicore machine, firefox will now use all the cores by
++<literal># If you have a multicore machine, firefox will now use all the cores by
+ # default. Exceptionally, you can reduce the number of cores, e.g. to 1,
+ # by uncommenting the next line and setting a valid number of CPU cores.
+ #mk_add_options MOZ_MAKE_FLAGS="-j1"
+
+Index: xsoft/graphweb/seamonkey.xml
+===================================================================
+--- xsoft/graphweb/seamonkey.xml	(révision 14467)
++++ xsoft/graphweb/seamonkey.xml	(révision 14468)
+@@ -145,8 +145,8 @@
+       issuing the following command:
+     </para>
+ 
+-<screen><?dbfo keep-together="auto"?><userinput>cat &gt; mozconfig &lt;&lt; EOF
+-# If you have a multicore machine you can speed up the build by running
++<screen><?dbfo keep-together="auto"?><userinput>cat &gt; mozconfig &lt;&lt; "EOF"
++<literal># If you have a multicore machine you can speed up the build by running
+ # several jobs at once, but if you have a single core, delete this line:
+ mk_add_options MOZ_MAKE_FLAGS="-j$(getconf _NPROCESSORS_ONLN)"
+ 
+@@ -188,6 +188,7 @@
+ ac_add_options --disable-tests
+ ac_add_options --disable-updater
+ ac_add_options --enable-application=suite
++ac_add_options --enable-optimize
+ ac_add_options --enable-shared
+ ac_add_options --enable-system-cairo
+ ac_add_options --enable-system-ffi
+@@ -217,7 +218,8 @@
+ export C_INCLUDE_PATH=$XORG_PREFIX/include</userinput></screen>
+     </note>
+ 
+-<screen><userinput>make -f client.mk</userinput></screen>
++<screen><userinput>test $(uname -m) = "i686" &amp;&amp; sed -i 's/enable-optimize/disable-optimize/' mozconfig || true &amp;&amp;
++make -f client.mk</userinput></screen>
+ 
+     <para>
+       This package does not come with a test suite. However, if
+@@ -252,8 +254,15 @@
+     <title>Command Explanations</title>
+ 
+     <para>
++      <command>test $(uname -m) = "i686" &amp;&amp; sed ...</command>:
++      On this version of seamonkey, an old bug has reappeared in 32-bit builds.
++      With optimization, the install fails with a Python error.  This
++      command will fix i686 builds and preserve the optimization on x86_64.
++    </para>
++    <para>
+       <command>mkdir -vp mozilla/moz-build-dir</command>: fixes a build failure
+-at the beginning of the build.
++      of Makefile at the beginning of the build, where a file cannot be found.
+     </para>
+ 
+     <para>
+
+Index: xsoft/other/thunderbird.xml
+===================================================================
+--- xsoft/other/thunderbird.xml	(révision 14467)
++++ xsoft/other/thunderbird.xml	(révision 14468)
+@@ -235,6 +235,8 @@
+       the value used in mozconfig (above) for the object directory (MOZ_OBJDIR):
+     </para>
+ 
++<!-- might be necessary
++test $(uname -m) = "i686" && sed -i 's/enable-optimize/disable-optimize/' mozconfig || true &&-->
+ <screen><userinput>mkdir -vp mozilla/thunderbuild</userinput></screen>
+ 
+     <para>
+@@ -279,6 +281,13 @@
+ 
+   <sect2 role="commands">
+     <title>Command Explanations</title>
++<!-- might be necessary
++    <para>
++      <command>test $(uname -m) = "i686" &amp;&amp; sed ...</command>: On this
++      version of thunderbird, an old bug has reappeared in 32-bit builds.  With
++      optimization, the install fails with a Python error.  This command will
++      fix i686 builds and preserve the optimization on x86_64.
++    </para>-->
+ 
+     <para>
+       <command>mkdir -vp mozilla/thunderbuild</command>: fixes a build failure
+@@ -353,8 +362,7 @@
+       commands as the <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>mkdir -pv /usr/share/applications &amp;&amp;
+-mkdir -pv /usr/share/pixmaps &amp;&amp;
++<screen role="root"><userinput>mkdir -pv /usr/share/{applications,pixmaps} &amp;&amp;
+ 
+ cat &gt; /usr/share/applications/thunderbird.desktop &lt;&lt; "EOF" &amp;&amp;
+ <literal>[Desktop Entry]
+

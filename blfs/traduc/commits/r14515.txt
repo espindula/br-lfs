@@ -1,0 +1,207 @@
+Révision 14515
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   general.ent
+   packages.ent
+   pst/printing/cups.xml
+
+Log :
+Update to CUPS-2.0.0. Thanks Armin for suggestions, including the replacement of a patch by more visible commands.
+
+Le robot a traité 45 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 14514)
++++ introduction/welcome/changelog.xml	(révision 14515)
+@@ -45,6 +45,18 @@
+ -->
+ 
+     <listitem>
++      <para>October 6th, 2014</para>
++      <itemizedlist>
++        <listitem>
++          <para>[fernando] - Update to CUPS-2.0.0.  Thanks Armin for
++          suggestions, including the replacement of a patch by more visible
++          commands. Fixes <ulink
++          url="&blfs-ticket-root;5617">#5617</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>October 5th, 2014</para>
+       <itemizedlist>
+         <listitem>
+
+Index: pst/printing/cups.xml
+===================================================================
+--- pst/printing/cups.xml	(révision 14514)
++++ pst/printing/cups.xml	(révision 14515)
+@@ -71,22 +71,16 @@
+         </para>
+       </listitem>
+     </itemizedlist>
++<!--
+     <bridgehead renderas="sect3">Additional Downloads</bridgehead>
+     <itemizedlist spacing="compact">
+       <listitem>
+         <para>
+-Required patch:
+-<ulink url="&patch-root;/cups-&cups-version;-blfs-1.patch"/>
+-</para>
+-</listitem>
+-<listitem>
+-<para>
+           Optional patch:
+           <ulink url="&patch-root;/cups-&cups-version;-content_type-1.patch"/>
+         </para>
+@@ -207,34 +201,55 @@
+       Replace <command>firefox</command> with the web browser of your
+       choice.
+     </para>
++<!--
+     <para>
+        If you need to access a remote <application>Cups</application> print
+        server, use the following patch:
+@@     @@
+<screen><userinput>patch -Np1 -i ../cups-&cups-version;-content_type-1.patch</userinput></screen>-->
+ 
+     <para>
+-Install <application>Cups</application> by running the
+-following commands:
++      PAM module needs to be modified for BLFS:
+     </para>
+     <!-- docdir is also document root for cups administration interface, so
+     let's just put it in /usr/share/cups/doc and create symlink in
+@@     @@
+     When not using libdir switch, CUPS will install libraries into /usr/lib64
+     on a 64 bit system, and since /usr/lib64 is symlink to /usr/lib it might
+     introduce some difficulties with packaging -->
+-<screen><userinput>patch -Np1 -i ../cups-&cups-version;-blfs-1.patch &amp;&amp;
+-aclocal -I config-scripts &amp;&amp;
++<screen><userinput>cat &gt; conf/pam.std.in  &lt;&lt; "EOF"
++<literal># Begin /etc/pam.d/cups
++auth    include system-auth
++account include system-account
++session include system-session
++# End /etc/pam.d/cups</literal>
++EOF</userinput></screen>
++    <para>
++      Install <application>Cups</application> by running the
++      following commands:
++    </para>
++<screen><userinput>sed -i '/MAN.*.EXT/s:.gz::g' \
++       configure config-scripts/cups-manpages.m4 &amp;&amp;
++sed -i 's:555:755:g;s:444:644:g' Makedefs.in     &amp;&amp;
++aclocal  -I config-scripts &amp;&amp;
+ autoconf -I config-scripts &amp;&amp;
+ 
+ CC=gcc \
+-./configure --libdir=/usr/lib                 \
+---with-rcdir=/tmp/cupsinit        \
+---with-docdir=/usr/share/cups/doc \
+---with-system-groups=lpadmin      &amp;&amp;
++./configure --libdir=/usr/lib            \
++            --disable-systemd            \
++            --with-rcdir=/tmp/cupsinit   \
++            --with-system-groups=lpadmin \
++            --with-docdir=/usr/share/doc/cups-&cups-version; &amp;&amp;
+ make</userinput></screen>
+ 
+    <para>
+@@ -252,19 +267,19 @@
+ 
+ <screen role="root"><userinput>make install &amp;&amp;
+ rm -rf /tmp/cupsinit &amp;&amp;
+-ln -svfn ../cups/doc /usr/share/doc/cups-&cups-version;</userinput></screen>
++ln -svnf ../doc/cups-&cups-version; /usr/share/cups/doc</userinput></screen>
+ 
+     <para>
+      Create a basic <application>Cups</application> client configuration file
+@@ -287,21 +302,36 @@
+     <title>Command Explanations</title>
+ 
+     <para>
++      <command>sed ... cups-manpages.m4</command>: In BLFS, uncompressed man
++      pages are preferred.
++    </para>
++    <para>
++      <command>sed ... Makedefs.in</command>: Fix files and directories
++      permissions.
++    </para>
++    <para>
+       <envar>CC=gcc</envar>: This environment variable ensures that gcc
+       is used if clang is installed.  The build fails with the clang compiler.
+     </para>
+ 
+     <para>
+-<parameter>--with-rcdir=/tmp/cupsinit</parameter>: This switch tells
+-the build process to install the shipped bootscript into
+-<filename class="directory">/tmp</filename> instead of
+-<filename class="directory">/etc/rc.d</filename>.
++      <parameter>--disable-systemd</parameter>: Systemd is not supported by
++      BLFS.
+     </para>
+ 
+     <para>
++      <parameter>--with-rcdir=/tmp/cupsinit</parameter>: This switch tells the
++      build process to install the shipped bootscript into <filename
++      class="directory">/tmp</filename> instead of <filename
++      class="directory">/etc/rc.d</filename>.
++    </para>
++    <para>
+       <parameter>--with-system-groups=lpadmin</parameter>: This switch ensures
+      that only <systemitem class="groupname">lpadmin</systemitem> will be used
+      as the <application>Cups</application> administrative group.
+@@ -315,13 +345,6 @@
+       <application>Cups</application>.
+     </para>
+ 
+-<para>
+-<option>--disable-gnutls --enable-openssl</option>: This switch tells the build
+-process to use <xref linkend="openssl"/> instead of <xref linkend="gnutls"/>.
+-The current version of <application>GnuTLS</application> might produce lot of
+-warnings during the <application>Cups</application> build.
+-</para>
+   </sect2>
+ 
+   <sect2 role="configuration">
+@@ -394,16 +417,15 @@
+ 
+       <seglistitem>
+         <seg>
+-accept, cancel, cupsaccept, cupsaddsmb, cups-config,
+-cupsctl, cupsd, cupsdisable, cupsenable, cupsfilter,
+-cupsreject, cupstestdsc, cupstestppd, ippfind, ipptool,
+-lp, lpadmin, lpc, lpinfo, lpmove, lpoptions, lppasswd,
+-lpq, lpr, lprm, lpstat, ppdc, ppdhtml, ppdi, ppdmerge,
+-ppdpo and reject
++          accept, cancel, cupsaccept, cupsaddsmb, cups-config, cupsctl, cupsd,
++          cupsdisable, cupsenable, cupsfilter, cupsreject, cupstestdsc,
++          cupstestppd, ippfind, ipptool, lp, lpadmin, lpc, lpinfo, lpmove,
++          lpoptions, lpq, lpr, lprm, lpstat, ppdc, ppdhtml, ppdi, ppdmerge,
++          ppdpo, and reject
+         </seg>
+         <seg>
+           libcupscgi.so, libcupsimage.so, libcupsmime.so,
+@@ -637,20 +659,6 @@
+         </listitem>
+       </varlistentry>
+ 
+-<varlistentry id="lppasswd">
+-<term><command>lppasswd</command></term>
+-<listitem>
+-<para>
+-adds, changes or deletes passwords in the
+-<application>Cups</application> digest password file
+-<filename>passwd.md5</filename>.
+-</para>
+-<indexterm zone="cups lppasswd">
+-<primary sortas="b-lppasswd">lppasswd</primary>
+-</indexterm>
+-</listitem>
+-</varlistentry>
+       <varlistentry id="lpq-cups">
+         <term><command>lpq</command></term>
+         <listitem>
+
