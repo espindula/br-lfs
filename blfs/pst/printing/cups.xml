@@ -73,14 +73,11 @@
     <para role="optional">
       <xref linkend="cups-filters"/>
     </para>
-
     <bridgehead renderas="sect4">Facultative (après l'installation)</bridgehead>
     <para role="optional runtime">
       <xref linkend="gutenprint"/> et
       <ulink url="http://hplipopensource.com/hplip-web/index.html">hplip</ulink> (HP printers)
     </para>
-
-
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/cups"/></para>
   </sect2>
@@ -101,11 +98,11 @@
       noyau&nbsp;:
     </para>
 <screen>
-Device Drivers  ---&gt;
+<literal>Device Drivers  ---&gt;
   USB support  ---&gt;
-    OHCI HCD (USB 1.1) support: Y or M
-    UHCI HCD (most Intel and VIA) support: Y or M
-    USB Printer support: Y or M
+    OHCI HCD (USB 1.1) support: Y or M            [CONFIG_USB_OHCI_HCD]
+    UHCI HCD (most Intel and VIA) support: Y or M [CONFIG_USB_UHCI_HCD]
+    USB Printer support: Y or M                   [CONFIG_USB_PRINTER]</literal>
 </screen>
     <para>
       Si vous avez une imprimante en port parallèle, activez les options suivantes
@@ -113,10 +110,10 @@ Device Drivers  ---&gt;
     </para>
 <screen>
 <literal>Device Drivers  ---&gt;
-  Parallel port support  ---&gt;
-    PC-style hardware: Y or M
+  Parallel port support  ---&gt;                     [CONFIG_PARPORT]
+    PC-style hardware: Y or M                     [CONFIG_PARPORT_PC]
   Character devices  ---&gt;
-    Parallel printer support: Y or M</literal>
+    Parallel printer support: Y or M              [CONFIG_PRINTER]</literal>
 </screen>
     <indexterm zone="cups cups-kernel">
       <primary sortas="d-cups">cups</primary>
@@ -170,10 +167,17 @@ Device Drivers  ---&gt;
        Construisez <application>Cups</application> en lançant les commandes suivantes:
      </para>
 <screen>
-<userinput>patch -Np1 -i ../cups-&cups-version;-blfs-1.patch &amp;&amp;
-aclocal -I config-scripts &amp;&amp;
+<userinput>sed -i 's:555:755:g;s:444:644:g' Makedefs.in           &amp;&amp;
+sed -i '/MAN.*.EXT/s:.gz::g' \
+       configure config-scripts/cups-manpages.m4       &amp;&amp;
+sed -i '/LIBGCRYPTCONFIG/d' config-scripts/cups-ssl.m4 &amp;&amp;
+aclocal  -I config-scripts &amp;&amp;
 autoconf -I config-scripts &amp;&amp;
-CC=gcc ./configure --libdir=/usr/lib                             --with-rcdir=/tmp/cupsinit                    --with-docdir=/usr/share/cups/doc             --with-system-groups=lpadmin      &amp;&amp;
+./configure --libdir=/usr/lib            \
+            --disable-systemd            \
+            --with-rcdir=/tmp/cupsinit   \
+            --with-system-groups=lpadmin \
+            --with-docdir=/usr/share/cups/doc-&cups-version; &amp;&amp;
 make</userinput>
 </screen>
     <para>Pour tester les résultats, tapez :  <command>make -k check</command>. Un session graphique déjà
@@ -187,7 +191,7 @@ make</userinput>
 <screen role="root">
 <userinput>make install &amp;&amp;
 rm -rf /tmp/cupsinit &amp;&amp;
-ln -svfn ../cups/doc /usr/share/doc/cups-&cups-version;</userinput>
+ln -svnf ../cups/doc-&cups-version; /usr/share/doc/cups-&cups-version;</userinput>
 </screen>
     <para>Créez le fichier de configuration de base du client
     <application>Cups</application> en lançant la commande suivante en tant qu'utilisateur
@@ -226,11 +230,9 @@ rm -rf /usr/share/cups/data/testprint</userinput>
       <command>libgcrypt-config</command>, car
       <application>libgcrypt</application> n'est pas utilisé ailleurs dans le paquet.
      </para>
-
      <para>
       <parameter>--disable-systemd</parameter>: Systemd n'est pas supporté par BLFS.
      </para>
-
     <para>
       <parameter>--with-rcdir=/tmp/cupsinit</parameter>&nbsp;: Ce paramètre dit
       au processus de construction d'installer le script de démarrage inclu dans
@@ -267,7 +269,6 @@ rm -rf /usr/share/cups/data/testprint</userinput>
     </sect3>
     <sect3>
       <title>Information de configuration</title>
-
        <para>
         Normalement, les imprimantes sont initialisées via un navigateur web. Le serveur
         <application>Cups</application> sera accessible normalement par l'url
@@ -278,8 +279,6 @@ rm -rf /usr/share/cups/data/testprint</userinput>
         <command>lpadmin</command>, <command>lpoptions</command>,
         et <command>lpstat</command>.
       </para>
-
-
 <para>La configuration de <application>Cups</application> dépend du
     type d'imprimante et elle peut être complexe. En général, les imprimantes
     PostScript sont plus simples. Pour des instructions détaillées sur la 
@@ -298,7 +297,6 @@ rm -rf /usr/share/cups/data/testprint</userinput>
     imprimable, mais les développeurs de <application>Cups</application> 
     considèrent cela comme du bricolage.</para>
     </sect3>
-
     <sect3>
       <title>Configuration de Linux PAM</title>
       <para>
@@ -311,15 +309,16 @@ rm -rf /usr/share/cups/data/testprint</userinput>
         class="username">root</systemitem> pour créer le fichier de configuration pour
         <application>Linux PAM</application>:
       </para>
-<screen><userinput>cat &gt; /etc/pam.d/cups &lt;&lt; "EOF"
+<screen>
+<userinput>cat &gt; /etc/pam.d/cups &lt;&lt; "EOF"
 <literal># Begin /etc/pam.d/cups
 auth    include system-auth
 account include system-account
 session include system-session
 # End /etc/pam.d/cups</literal>
-EOF</userinput></screen>
+EOF</userinput>
+</screen>
     </sect3>
-
     <sect3 id="cups-init">
       <title>Script de démarrage</title>
       <para>Si vous voulez que <application>Cups</application> démarre
