@@ -69,10 +69,18 @@
       <xref linkend="python2"/> et
       <xref linkend="xdg-utils"/>.
     </para>
-    <bridgehead renderas="sect4">Requises (au moment de l'exécution)</bridgehead>
+    <bridgehead renderas="sect4">Requises (après l'installation)</bridgehead>
     <para role="optional">
       <xref linkend="cups-filters"/>
     </para>
+
+    <bridgehead renderas="sect4">Facultative (après l'installation)</bridgehead>
+    <para role="optional runtime">
+      <xref linkend="gutenprint"/> et
+      <ulink url="http://hplipopensource.com/hplip-web/index.html">hplip</ulink> (HP printers)
+    </para>
+
+
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/cups"/></para>
   </sect2>
@@ -158,11 +166,9 @@ Device Drivers  ---&gt;
       Remplacez <command>firefox</command> par le navigateur Web de votre
       choix.
     </para>
-
-<para>
-le moudle PAM doit être modifié pour BLFS:
-</para>
-    
+     <para>
+       Construisez <application>Cups</application> en lançant les commandes suivantes:
+     </para>
 <screen>
 <userinput>patch -Np1 -i ../cups-&cups-version;-blfs-1.patch &amp;&amp;
 aclocal -I config-scripts &amp;&amp;
@@ -208,19 +214,18 @@ rm -rf /usr/share/cups/data/testprint</userinput>
   </sect2>
   <sect2 role="commands">
     <title>Explication des commandes</title>
-     <para>
-      <command>sed ... cups-manpages.m4</command>: Dans BLFS, les pages ne manuel non compressées sont
-      préférées.
-    </para>
     <para>
       <command>sed ... Makedefs.in</command>: Corrige les permissions des fichiers et répertoires.
     </para>
-
-
-    <para>
-      <envar>CC=gcc</envar>: Cette variable d'environnement assure que gcc
-      est utilisé si clang est installé. La construction échoue avec le compilateur clang.
+     <para>
+      <command>sed ... cups-manpages.m4</command>: Ce sed empêche la compression des pages de manuel par défaut.
     </para>
+ <para>
+      <command>sed ... cups-ssl.m4</command>: Empêche le script
+      <command>configure</command> de chercher
+      <command>libgcrypt-config</command>, car
+      <application>libgcrypt</application> n'est pas utilisé ailleurs dans le paquet.
+     </para>
 
      <para>
       <parameter>--disable-systemd</parameter>: Systemd n'est pas supporté par BLFS.
@@ -262,6 +267,19 @@ rm -rf /usr/share/cups/data/testprint</userinput>
     </sect3>
     <sect3>
       <title>Information de configuration</title>
+
+       <para>
+        Normalement, les imprimantes sont initialisées via un navigateur web. Le serveur
+        <application>Cups</application> sera accessible normalement par l'url
+        http://localhost:631.  Les imprimantes, les travaux d'impressions, et la configuration
+        du serveur peuvent être initialisés et gérés. L'administration de système distant
+        peut également être initialisée. La configuration peut également être faite depuis la ligne
+        de commande via les commandes
+        <command>lpadmin</command>, <command>lpoptions</command>,
+        et <command>lpstat</command>.
+      </para>
+
+
 <para>La configuration de <application>Cups</application> dépend du
     type d'imprimante et elle peut être complexe. En général, les imprimantes
     PostScript sont plus simples. Pour des instructions détaillées sur la 
@@ -276,10 +294,32 @@ rm -rf /usr/share/cups/data/testprint</userinput>
     et un pilote (comme ceux de <xref linkend="gutenprint"/>) pour convertir
     les images raster résultantes sous une forme compréhensible par l'imprimante.
     Les pilotes de <ulink url="http://www.linuxprinting.org/foomatic.html">Foomatic</ulink>
-    utilisent Ghostscript pour convertir du PostScript en forme directement
+    utilisent <xref linkend="gs"/> pour convertir du PostScript en forme directement
     imprimable, mais les développeurs de <application>Cups</application> 
     considèrent cela comme du bricolage.</para>
     </sect3>
+
+    <sect3>
+      <title>Configuration de Linux PAM</title>
+      <para>
+        Si <application>CUPS</application> a été construit avec le support
+        <application>Linux PAM</application>, vous devez créer un fichier de configuation 
+        <application>PAM</application>, pour le rendre fonctionnel correctement avec BLFS.
+      </para>
+      <para>
+        Tapez la commande suivante en tant qu'utilisateur <systemitem
+        class="username">root</systemitem> pour créer le fichier de configuration pour
+        <application>Linux PAM</application>:
+      </para>
+<screen><userinput>cat &gt; /etc/pam.d/cups &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/cups
+auth    include system-auth
+account include system-account
+session include system-session
+# End /etc/pam.d/cups</literal>
+EOF</userinput></screen>
+    </sect3>
+
     <sect3 id="cups-init">
       <title>Script de démarrage</title>
       <para>Si vous voulez que <application>Cups</application> démarre
