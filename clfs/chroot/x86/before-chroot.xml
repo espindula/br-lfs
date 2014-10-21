@@ -7,78 +7,82 @@
 
 <sect1 id="ch-chroot-before-chroot">
   <?dbhtml filename="before-chroot.html"?>
-  <title>Before Entering the Chroot Environment</title>
+  <title>Avant d'entrer dans l'environnement Chroot</title>
 
   <sect2 role="determining-ifneeded">
-    <title>Determining if steps need to be taken</title>
+    <title>Détermination si des étapes doivent être faites</title>
 
-    <para>Before we can enter the chroot we have to make sure that the system is
-    in the proper state. From this point on the <envar>${CLFS_TARGET}</envar>
-    environment variable will no longer exist, so it will have no bearing on the
-    rest of the book - most packages will rely on
-    <command>config.guess</command> provided by
-    <xref linkend="ch-system-automake"/>. Packages that do not use autotools
-    either do not care about the target triplet, or have their own means
-    of determining its value.</para>
+    <para>Avant que nous puissions entrer dans le chroot nous devons être certain que le système
+    est dans un état propre. A ce point la variable d'environnement <envar>${CLFS_TARGET}</envar>
+    n'existera plus, alors elle n'aura plus d'incidence sur le reste du libre - la plupart des paquets
+    s'appuieront sur
+    <command>config.guess</command> fourni par
+    <xref linkend="ch-system-automake"/>. Les paquets qui n'utilisent pas autotools
+    soit ne font pas attention à la triplette cible, ou ont leurs propres façons de déterminer
+    sa valeur.   
+   </para>
 
-    <para>In both cases, the information about the host cpu used to determine
-    the target triplet is gathered from the same place,
-    <command>uname -m</command>. Executing this command outside of the chroot
-    as well as inside the chroot will have the exact same output.</para>
+    <para>Dans les deux cas, l'information sur le cpu de l'hôte utilisé pour déterminer
+    la triplette cible est verrouillé à la même valeur, 
+    <command>uname -m</command>. En exécutant cette commande en dehors du chroot aussi bien que dans le 
+    chroot retournera exactement la même sortie.
+   </para>
 
-   <para>If you're unsure if your host and target have the same target
-    triplet, you can use this test to determine what the host's target triplet
-    is and if you need to take any steps to ensure that you don't build for the
-    wrong architecture. Extract the <xref linkend="ch-system-automake"/> tarball
-    and <command>cd</command> into the created directory. Then execute the
-    following to see what the detected target triplet is by
+   <para>Si vous n'êtes pas certain que votre hôte et la cible ont la même triplette cible, vous pouvez
+    utiliser ce test pour déterminer quel est la triplette cible de l'hôte et si vous devez faire
+    quelques étapes pour vous assurer que vous ne construisez pas pour la mauvaise architecture.
+    Déballer l'archive
+   <xref linkend="ch-system-automake"/> et
+    <command>cd</command> dans le repertoire créé. Ensuite exécutez la suite pour voir
+    quel est la triplette source détecté par 
     <command>config.guess</command>:</para>
 
 <screen><userinput>build-aux/config.guess</userinput></screen>
 
-    <para>If the output of that command does not equal what is in
-    <envar>${CLFS_TARGET}</envar> then you need to read on. If it does then you
-    can safely continue onto <xref linkend="ch-chroot-chroot"/>.</para>
+    <para>si la sortie de cette commande n'est pas égale à ce qui est dans 
+    <envar>${CLFS_TARGET}</envar> alors vous devez relire. Si c'est égal pour pouvez
+     continuer dans
+    <xref linkend="ch-chroot-chroot"/> en toute sécurité.</para>
 
   </sect2>
 
   <sect2 role="using-setarch">
-    <title>Using Setarch</title>
+    <title>Utilisation de Setarch</title>
 
-    <para>If your host has a tool called <command>setarch</command> this may
-    solve your problems. The reason for saying may is because on a architecture
-    such as x86_64, using <command>setarch linux32 uname -m</command> will only
-    ever output i686. It is not possible to get an output of i486 or i586.</para>
+    <para>Si votre hôte à un outil appelé <command>setarch</command>, cela peux résoudre votre problème, au moins
+    si vous construisez pour i686. Dans un architecture tel que x86_64, l'utilisation de
+    <command>setarch linux32 uname -m</command> donnera toujours i686 en sortie. Il n'est pas possible
+    d'avoir une sortie à i486 ou i586.
+</para>
 
-    <para>To test if setarch does everything you need it to, execute the
-    following command from inside the <xref linkend="ch-system-automake"/>
-    directory:</para>
+    <para>Pour tester si setarch peut faire tous ce que vous voulez faire, exécutez la commande suivante depuis 
+    l'intérieur du répertoire
+    <xref linkend="ch-system-automake"/>:</para>
 
 <screen><userinput>setarch linux32 build-aux/config.guess</userinput></screen>
 
-    <para>If the output of the command above equals what is in
-    <envar>${CLFS_TARGET}</envar> then you have a viable solution. You can
-    wrap the chroot command on the next page with
-    <command>setarch linux32</command>. It will look like the following:</para>
+    <para>Si la sortie de la commande précédente égale ce qui est dans 
+    <envar>${CLFS_TARGET}</envar> alors vous avez une solution viable. Vous pouvez
+    envelopper la commande chroot de la page suivante avec
+    <command>setarch linux32</command>. Cela ressemblera à :</para>
 
 <screen><userinput>setarch linux32 chroot "${CLFS}" /tools/bin/env -i \
     HOME=/root TERM="${TERM}" PS1='\u:\w\$ ' \
     PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin \
     /tools/bin/bash --login +h</userinput></screen>
 
-    <para>If setarch works for you then you can safely continue onto
-    <xref linkend="ch-chroot-chroot"/>. If not, there is one more option
-    covered in this book.</para>
+    <para>Si setarch fonctionne pour vous alors vous pouvez continuer en toute sécurité dans
+    <xref linkend="ch-chroot-chroot"/>. Si non, il y a une option en plus couverte par ce livre.
+    </para>
 
   </sect2>
 
   <sect2 role="using-uname_hack">
-    <title>Using a Uname Hack</title>
+    <title>Utilisation d'un Uname Hack</title>
 
-    <para os="uua">The Uname Hack is a kernel module that modifies the output of
-    <command>uname -m</command> by directly changing the value of the
-    detected machine type. The kernel module will save the original value
-    and restore it when the module is unloaded.</para>
+    <para os="uua">Uname Hack est un module du noyau qui modifie la sortie de
+    <command>uname -m</command> en changeant directement la valeur détectée par la machine. Le module noyau 
+    enregistre la valeur originales et la restaure quand le module est déchargé.</para>
 
     <variablelist os="uub" role="materials">
       <varlistentry>
@@ -92,45 +96,46 @@
       </varlistentry>
     </variablelist>
 
-    <para os="uuc">Extract the tarball and <command>cd</command> into the
-    created directory. To build the Uname Hack you must have the kernel sources
-    for your currently running kernel available. Build the Uname Hack with the
-    following or similar command:</para>
+    <para os="uuc">Extraire l'archive et <command>cd</command> dans le répertoire créé.
+    Pour construire Uname Hack vous devez avoir les sources du noyau pour votre noyau
+    actuellement en cours d'exécution . Construisez uname Hack avec la commande suivante ou similaire:
+    </para>
 
 <screen os="uud"><userinput>make uname_hack_fake_machine=i486</userinput></screen>
 
     <variablelist os="uue">
-      <title>The meaning of the make and install options:</title>
+      <title>La signification des options de make et install:</title>
 
       <varlistentry os="uue1">
         <term><parameter>uname_hack_fake_machine=i486</parameter></term>
         <listitem>
-          <para>This parameter sets the value that the uts machine type will be
-          changed to. Alternatively this could be set to i586 or i686.</para>
+          <para>Ce paramètre initialise la valeur par laquelle le type de machine sera
+          changé. Elle peut être initialisée à i586 ou i686.
+          </para>
         </listitem>
       </varlistentry>
 
     </variablelist>
 
-    <para os="uuf">In the top level directory of the Uname Hack package you
-    should see a file named <filename>uname_hack.ko</filename>. As soon as
-    that module is loaded into the running kernel the output of
-    <command>uname -m</command> will be affected immediately system-wide.
-    Load the kernel module with the following command:</para>
+    <para os="uuf">Dans le répertoire supérieure du paquet Uname Hack vous pouvez voir un fichier
+     appelé <filename>uname_hack.ko</filename>. Dans que le module est chargé dans le noyau la sortie
+    de 
+    <command>uname -m</command> sera immédiatement changée.
+     chargez le module noyau avec la commande suivante:
+    </para>
 
 <screen os="uug"><userinput>insmod uname_hack.ko</userinput></screen>
 
-    <para os="uuh">To test if the Uname Hack is working properly, execute the
-    following command from inside the <xref linkend="ch-system-automake"/>
-    directory:</para>
+    <para os="uuh">Pour tester si Uname Hack fonctionne correctement, exécutez la commande
+     suivant depuis l'intérieur du répertoire <xref linkend="ch-system-automake"/>:</para>
 
 <screen os="uui"><userinput>build-aux/config.guess</userinput></screen>
 
-    <para os="uuj">The output of the above command should be the same as the
-    <envar>${CLFS_TARGET}</envar> environment variable. If this is not the
-    case, you can try and get help on the CLFS Support Mailing List or the
-    IRC Channel. See <xref linkend="ch-intro-askforhelp"/> for more
-    information.</para>
+    <para os="uuj">La sortie de la commande précédente devra être
+    la même que la variable d'environnement
+    <envar>${CLFS_TARGET}</envar>. si ce n'est pas le cas, vous pouvez essayer et obtenir de l'aude
+     de la liste de diffusion de CLFS ou le canal IRC. Regardez
+    <xref linkend="ch-intro-askforhelp"/> pour plus d'information.</para>
 
   </sect2>
 
