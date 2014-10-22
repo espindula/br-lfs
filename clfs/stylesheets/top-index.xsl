@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='ISO-8859-1'?>
 <!DOCTYPE xsl:stylesheet [
  <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
@@ -8,7 +8,7 @@
                 xmlns="http://www.w3.org/1999/xhtml"
                 version="1.0">
 
-  <xsl:output method="html" encoding="utf-8"/>
+  <xsl:output method="html" encoding="iso-8859-1"/>
 
   <xsl:template match="/">
     <html>
@@ -96,121 +96,112 @@ hr {
       </div>
       <div class="toc">
         <h3>
-          <xsl:text>32 Bit Builds</xsl:text>
+          <xsl:text>Select your target architecture:</xsl:text>
+        </h3>
+        <h3>
+          <xsl:text>Intel/AMD x86</xsl:text>
         </h3>
         <ul>
-	  <h3>
-	    <xsl:text>Working. Testers and comments welcomed.</xsl:text>
-          </h3>
           <li>
             <h4>
               <a href="x86">
-                <xsl:text>Intel/AMD x86</xsl:text>
+                <xsl:text>32 Bits</xsl:text>
               </a>
             </h4>
           </li>
-          <li>
-            <h4>
-              <a href="ppc">
-                <xsl:text>PowerPC</xsl:text>
-              </a>
-            </h4>
-          </li>
-          <li>
-            <h4>
-              <a href="mips">
-                <xsl:text>MIPS</xsl:text>
-              </a>
-            </h4>
-          </li>
-          <li>
-            <h4>
-              <a href="sparc">
-                <xsl:text>Sparc v8</xsl:text>
-              </a>
-            </h4>
-          </li>
-	</ul>
-        <h3>
-          <xsl:text>64 Bit Builds</xsl:text>
-        </h3>
-	<ul>
-          <h3>
-            <xsl:text>Working. Testers and comments welcomed.</xsl:text>
-          </h3>
           <li>
             <h4>
               <a href="x86_64-64">
-                <xsl:text>x86_64</xsl:text>
+                <xsl:text>64 Bits</xsl:text>
               </a>
             </h4>
           </li>
           <li>
             <h4>
-              <a href="ppc64-64">
-                <xsl:text>PowerPC64</xsl:text>
+              <a href="x86_64">
+                <xsl:text>Multilib</xsl:text>
               </a>
-            </h4>
-          </li>
-
-          <li>
-            <h4>
-              <a href="mips64-64">
-                <xsl:text>MIPS</xsl:text>
-              </a>
-            </h4>
-          </li>
-          <li>
-            <h4>
-             <a href="sparc64-64">
-                <xsl:text>Sparc v9/Ultrasparc</xsl:text>
-             </a>
-            </h4>
-          </li>
-          <li>
-            <h4>
-             <a href="alpha">
-                <xsl:text>Alpha</xsl:text>
-             </a>
             </h4>
           </li>
 	</ul>
         <h3>
-          <xsl:text>Multilib Builds</xsl:text>
+          <xsl:text>MIPS</xsl:text>
         </h3>
 	<ul>
-          <h3>
-             <xsl:text>Working. Testers and comments welcomed.</xsl:text>
-          </h3>
           <li>
             <h4>
-              <a href="x86_64">
-                <xsl:text>x86_64</xsl:text>
+              <a href="mips">
+                <xsl:text>32 Bits</xsl:text>
+              </a>
+            </h4>
+          </li>
+          <li>
+            <h4>
+              <a href="mips64-64">
+                <xsl:text>64 Bits</xsl:text>
               </a>
             </h4>
           </li>
           <li>
             <h4>
               <a href="mips64">
-                <xsl:text>MIPS</xsl:text>
+                <xsl:text>Multilib</xsl:text>
+              </a>
+            </h4>
+          </li>
+	</ul>
+        <h3>
+          <xsl:text>PowerPC</xsl:text>
+        </h3>
+	<ul>
+          <li>
+            <h4>
+              <a href="ppc">
+                <xsl:text>32 Bits</xsl:text>
               </a>
             </h4>
           </li>
           <li>
             <h4>
-             <a href="sparc64">
-                <xsl:text>Sparc v9/Ultrasparc</xsl:text>
-             </a>
+              <a href="ppc64-64">
+                <xsl:text>64 Bits</xsl:text>
+              </a>
             </h4>
           </li>
           <li>
             <h4>
               <a href="ppc64">
-                <xsl:text>PowerPC64</xsl:text>
+                <xsl:text>Multilib</xsl:text>
               </a>
             </h4>
           </li>
         </ul>
+        <h3>
+          <xsl:text>Sparc</xsl:text>
+        </h3>
+	<ul>
+          <li>
+            <h4>
+              <a href="sparc">
+                <xsl:text>32 Bits</xsl:text>
+              </a>
+            </h4>
+          </li>
+          <li>
+            <h4>
+              <a href="sparc64-64">
+                <xsl:text>64 Bits</xsl:text>
+              </a>
+            </h4>
+          </li>
+          <li>
+            <h4>
+              <a href="sparc64">
+                <xsl:text>Multilib</xsl:text>
+              </a>
+            </h4>
+          </li>
+	</ul>
       </div>
     </div>
   </xsl:template>
@@ -226,7 +217,7 @@ hr {
 
   <xsl:template match="copyright">
     <p class="copyright">
-      <xsl:text>Copyright Â©</xsl:text>
+      <xsl:text>Copyright ©</xsl:text>
       <xsl:apply-templates/>
     </p>
   </xsl:template>
