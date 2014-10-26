@@ -30,18 +30,10 @@
 
     <screen os="p2"><userinput>patch -Np1 -i ../&gcc-branch_update-patch;</userinput></screen>
 
-    <para os="fix1">Appliquez une subsitution <command>sed</command> qui
+    <para os="fix1">Appliquez une substitution <command>sed</command> qui
     supprimera l'exécution du script <command>fixincludes</command>&nbsp;:</para>
 
-<screen os="fix2"><userinput>cp -v gcc/Makefile.in{,.orig}
-sed 's@\./fixinc\.sh@-c true@' gcc/Makefile.in.orig > gcc/Makefile.in</userinput></screen>
-
-    <para os="d">Appliquez une substitution <command>sed</command> qui va supprimer l'installation de
-    <filename class="libraryfile">libiberty.a</filename>. La
-    version of <filename class="libraryfile">libiberty.a</filename> fournie par Binutils sera utilisée à la 
-    place&nbsp;:</para>
-
-<screen os="e"><userinput>sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in</userinput></screen>
+<screen os="fix2"><userinput>sed -i 's@\./fixinc\.sh@-c true@' gcc/Makefile.in</userinput></screen>
 
     <para os="f">La documentation de GCC recommande de construire GCC en dehors
     du répertoire source, c'est-à-dire dans un répertoire dédié&nbsp;:</para>
@@ -52,25 +44,37 @@ cd ../gcc-build</userinput></screen>
 
     <para os="h">Préparez la compilation de GCC&nbsp;:</para>
 
-<screen os="i"><userinput>CC="gcc -isystem /usr/include" \
+<screen os="i"><userinput>SED=sed CC="gcc -isystem /usr/include" \
 CXX="g++ -isystem /usr/include" \
 LDFLAGS="-Wl,-rpath-link,/usr/lib:/lib" \
   ../gcc-&gcc-version;/configure --prefix=/usr \
-    --libexecdir=/usr/lib --enable-shared --enable-threads=posix \
-    --enable-__cxa_atexit --enable-c99 --enable-long-long \
-    --enable-clocale=gnu --enable-languages=c,c++ \
+    --libexecdir=/usr/lib --enable-threads=posix \
+    --enable-__cxa_atexit --enable-clocale=gnu --enable-languages=c,c++ \
     --disable-multilib --disable-libstdcxx-pch \
-    --enable-cloog-backend=isl --disable-isl-version-check --with-system-zlib \
-    --enable-checking=release --enable-libstdcxx-time \
-    --disable-install-libiberty</userinput></screen>
+    --with-system-zlib --enable-checking=release --enable-libstdcxx-time</userinput></screen>
+
+    <variablelist os="i1">
+      <title>Voici la signification de la nouvelle option de configuration&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>SED=sed</parameter></term>
+        <listitem>
+          <para>Ceci empêche un chemin codé en dur, vers 
+          <filename>/tools/bin/sed</filename>, de figurer dans le programme
+          <command>fixincl</command>.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
 
     <para os="j">Compilez le paquet&nbsp;:</para>
 
 <screen os="k"><userinput>make</userinput></screen>
 
     <important os="l">
-      <para>Dans cette section, la suite de tests pour GCC est considérée
-      critique. Ne les sautez sous aucun prétexte.</para>
+      <para>Étant donné le rôle critique de GCC dans le bon fonctionnement
+      d'un système, les développeurs de CLFS recommandent fortement de lancer la
+      suite de tests.</para>
     </important>
 
    <para os="s1">Augmentez la taille de la pile avant de lancer les tests&nbsp;:</para>
@@ -99,22 +103,27 @@ LDFLAGS="-Wl,-rpath-link,/usr/lib:/lib" \
 
 <screen os="t"><userinput>make install</userinput></screen>
 
-    <para os="u">Quelques paquets s'attendent à ce que le préprocesseur C soit
+    <para os="u">Installez le fichier d'en-tête <filename class="headerfile">libiberty</filename>
+    exigée par certains paquets&nbsp;:</para>
+
+<screen os="v"><userinput>cp -v ../gcc-&gcc-version;/include/libiberty.h /usr/include</userinput></screen>
+
+    <para os="w">Quelques paquets s'attendent à ce que le préprocesseur C soit
     installé dans le répertoire 
     <filename class="directory">/lib</filename> Pour supporter ces
     paquets, créez ce lien symbolique&nbsp;:</para>
 
-<screen os="v"><userinput>ln -sv ../usr/bin/cpp /lib</userinput></screen>
+<screen os="x"><userinput>ln -sv ../usr/bin/cpp /lib</userinput></screen>
 
-    <para os="w">Beaucoup de paquets utilisent le nom <command>cc</command>
+    <para os="y">Beaucoup de paquets utilisent le nom <command>cc</command>
     pour appeler le compilateur C. Pour satisfaire ces paquets, créez un
     lien symbolique&nbsp;:</para>
 
-<screen os="x"><userinput>ln -sv gcc /usr/bin/cc</userinput></screen>
+<screen os="z"><userinput>ln -sv gcc /usr/bin/cc</userinput></screen>
 
-    <para os="y">Enfin, déplacez un fichier mal placé&nbsp;:</para>
+    <para os="aa">Enfin, déplacez un fichier mal placé&nbsp;:</para>
 
-<screen os="z"><userinput>mv -v /usr/lib/*gdb.py /usr/share/gdb/auto-load/usr/lib</userinput></screen>
+<screen os="ab"><userinput>mv -v /usr/lib/*gdb.py /usr/share/gdb/auto-load/usr/lib</userinput></screen>
 
   </sect2>
 
@@ -127,10 +136,11 @@ LDFLAGS="-Wl,-rpath-link,/usr/lib:/lib" \
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>c++, cc (link to gcc), cpp, g++, gcc et gcov</seg>
-        <seg>libasan.[a,so], libgcc.a, libgcc_eh.a, libgcc_s.so, libgcov.a,
-        libgomp.[a,so], libmudflap.[a,so], libmudflapth.[a,so], libssp.[a,so],
-        libssp_nonshared.a, libstdc++.[a,so], libsupc++.a, and libtsan.[a,so]</seg>
+        <seg>c++, cc (lien vers gcc), cpp, g++, gcc, gcov</seg>
+        <seg>libasan.[a,so], libatomic.[a,so], libgcc.a, libgcc_eh.a, libgcc_s.so, libgcov.a,
+        libgomp.[a,so], libiberty.a, libitm.[a,so], liblto_plugin.so, libmudflap.[a,so], libmudflapth.[a,so],
+        libquadmath.[a,so], libssp.[a,so], libssp_nonshared.a, libstdc++.[a,so], libsupc++.a,
+        libtsan.[a,so]</seg>
         <seg>/usr/include/c++, /usr/lib/gcc, /usr/share/gcc-&gcc-version;</seg>
       </seglistitem>
     </segmentedlist>
@@ -213,6 +223,16 @@ LDFLAGS="-Wl,-rpath-link,/usr/lib:/lib" \
         </listitem>
       </varlistentry>
 
+      <varlistentry id="libatomic">
+        <term><filename class="libraryfile">libatomic</filename></term>
+        <listitem>
+          <para>Une bibliothèque d'exécution de support GCC pour les opérations
+          atomic non supportées par le matériel</para>
+          <indexterm zone="ch-system-gcc libatomic">
+            <primary sortas="c-libatomic*">libatomic*</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
 
       <varlistentry id="libgcc">
         <term><filename class="libraryfile">libgcc</filename></term>
@@ -245,6 +265,41 @@ LDFLAGS="-Wl,-rpath-link,/usr/lib:/lib" \
           </indexterm>
         </listitem>
       </varlistentry>
+
+      <varlistentry id="libiberty">
+        <term><filename class="libraryfile">libiberty</filename></term>
+        <listitem>
+          <para>Contient des routines utilisés par divers programmes GNU, dont
+          <command>getopt</command>, <command>obstack</command>,
+          <command>strerror</command>, <command>strtol</command> et
+          <command>strtoul</command></para>
+          <indexterm zone="ch-system-gcc libiberty">
+            <primary sortas="c-libiberty">libiberty</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libitm">
+        <term><filename class="libraryfile">libitm</filename></term>
+        <listitem>
+          <para>La bibliothèque GNU Transactional Memory, qui fournit un support
+          de transaction pour les accès à la mémoire d'un processus</para>
+          <indexterm zone="ch-system-gcc libitm">
+            <primary sortas="c-libitm*">libitm*</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="liblto_plugin">
+        <term><filename class="libraryfile">liblto_plugin</filename></term>
+        <listitem>
+          <para>Bibliothèque d'exécution du greffon d'optimisation du temps des
+          liens de GCC</para>
+          <indexterm zone="ch-system-gcc liblto_plugin">
++            <primary sortas="c-liblto_plugin">liblto_plugin</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
 
       <varlistentry id="libmudflap">
         <term><filename class="libraryfile">libmudflap</filename></term>

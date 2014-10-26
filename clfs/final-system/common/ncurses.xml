@@ -34,14 +34,34 @@
 
 <screen os="b"><userinput>./configure --prefix=/usr --libdir=/lib \
     --with-shared --without-debug --enable-widec \
-    --with-manpage-format=normal \
+    --with-manpage-format=normal --enable-pc-files \
     --with-default-terminfo-dir=/usr/share/terminfo</userinput></screen>
+
+    <variablelist os="b1">
+      <title>Voici la signification de la nouvelle option de configuration&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--with-manpage-format=normal</parameter></term>
+        <listitem>
+          <para>Ceci dit à Ncurses de ne pas compresser ses pages de man comme
+          installées.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-pc-files</parameter></term>
+        <listitem>
+          <para>Ceci dit à Ncurses de générer et d'installer des fichiers .pc 
+          pour <command>pkg-config</command>.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
 
     <para os="c">Compilez le paquet&nbsp;:</para>
 
 <screen os="d"><userinput>make</userinput></screen>
 
-    <para os="e">Ce paquet a une suite de tests qu'on peut lancer après avoir
+    <para os="e">Ce paquet a une suite de tests, mais on ne peut le lancer qu'après avoir
     installé le paquet. Les tests se trouvent dans le répertoire
     <filename class="directory">test/</filename>. Voir le fichier
     <filename>README</filename> de ce répertoire pour les détails.</para>
@@ -56,27 +76,25 @@
 
     <para os="j">Créez des liens symboliques dans <filename class="directory">/usr/lib:</filename></para>
 
-<screen os="k"><userinput>rm -v /lib/lib{ncursesw,menuw,panelw,formw}.so
-ln -svf ../../lib/libncursesw.so.5 /usr/lib/libncursesw.so
-ln -svf ../../lib/libmenuw.so.5 /usr/lib/libmenuw.so
-ln -svf ../../lib/libpanelw.so.5 /usr/lib/libpanelw.so
-ln -svf ../../lib/libformw.so.5 /usr/lib/libformw.so</userinput></screen>
+<screen os="k"><userinput>ln -svf ../../lib/$(readlink /lib/libncursesw.so) /usr/lib/libncursesw.so
+ln -svf ../../lib/$(readlink /lib/libmenuw.so) /usr/lib/libmenuw.so
+ln -svf ../../lib/$(readlink /lib/libpanelw.so) /usr/lib/libpanelw.so
+ln -svf ../../lib/$(readlink /lib/libformw.so) /usr/lib/libformw.so
+rm -v /lib/lib{ncursesw,menuw,panelw,formw}.so</userinput></screen>
 
-    <para os="l">Maintenant, nous allons rendre notre Ncurses compatible pour que les vieux programmes non compatibles avec widec se construisent correctement&nbsp;:</para>
+    <para os="l">De nombreux paquets utilisant Ncurses se compileront très bien
+    avec les bibliothèques widechar (étendues), mais ils ne sauront pas les chercher.
+    Créez des scripts de l'éditeur de liens et des liens symboliques pour permettre
+    à d'anciens programmes non compatibles widec de se construire correctement&nbsp;:</para>
 
 <screen os="m"><userinput>for lib in curses ncurses form panel menu ; do
-        echo "INPUT(-l${lib}w)" > /usr/lib/lib${lib}.so
+        echo "INPUT(-l${lib}w)" &gt; /usr/lib/lib${lib}.so
         ln -sfv lib${lib}w.a /usr/lib/lib${lib}.a
 done
 ln -sfv libncursesw.so /usr/lib/libcursesw.so
 ln -sfv libncursesw.a /usr/lib/libcursesw.a
 ln -sfv libncurses++w.a /usr/lib/libncurses++.a
 ln -sfv ncursesw5-config /usr/bin/ncurses5-config</userinput></screen>
-
-    <para os="n">Maintenant, nous allons créer un lien symbolique pour /usr/share/terminfo dans
-     <filename class="directory">/usr/lib</filename> pour des questions de compatibilité&nbsp;:</para>
- 
-<screen os="o"><userinput>ln -sfv ../share/terminfo /usr/lib/terminfo</userinput></screen>
 
   </sect2>
 
@@ -90,8 +108,8 @@ ln -sfv ncursesw5-config /usr/bin/ncurses5-config</userinput></screen>
 
       <seglistitem>
         <seg>captoinfo (lien vers tic), clear, infocmp, infotocap (lien vers tic),
-        ncursesw5-config, reset (lien vers tset), tabs, tic, toe, tput et tset</seg>
-        <seg>libcursesw.so (link to libncursesw.so), libformw.[a,so] et
+        ncursesw5-config, reset (lien vers tset), tabs, tic, toe, tput, tset</seg>
+        <seg>libcursesw.so (link to libncursesw.so), libformw.[a,so],
         libpanelw.[a,so]</seg>
         <seg>/usr/share/tabset, /usr/share/terminfo</seg>
       </seglistitem>
@@ -242,7 +260,7 @@ ln -sfv ncursesw5-config /usr/bin/ncurses5-config</userinput></screen>
         <listitem>
           <para>Contient des fonctions pour implémenter des formulaires</para>
           <indexterm zone="ch-system-ncurses libformw">
-            <primary sortas="c-libform">libformw</primary>
+            <primary sortas="c-libformw">libformw</primary>
           </indexterm>
         </listitem>
       </varlistentry>
