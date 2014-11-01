@@ -238,8 +238,6 @@
     <note>
       <para>
        Construire ce paquet dans un environnement graphique est recommandé.
-       Il y a eu des signalements d'échecs en utilisant 
-       <command>chroot</command> ou <command>ssh</command>.
       </para>
     </note>
     <important>
@@ -255,10 +253,9 @@
 cd libreoffice-&libreoffice-dlversion;</userinput>
 </screen>
     <para>
-      Déballez les fichiers de dictionnaires et d'aide et créez les liens symboliques
+      Créez les liens symboliques
       des paquets depuis le répertoire des sources pour qu'ils ne soient pas
-      téléchargé de nouveau. Ce n'est pas nécessaire
-      de déballer les archives de l'aide et des traductions:
+      téléchargé de nouveau:
      </para>
 <screen>
 <userinput>install -dm755 external/tarballs &amp;&amp;
@@ -280,12 +277,6 @@ ln -sv ../../../libreoffice-help-&libreoffice-dlversion;.tar.xz         external
         de construction peut être différents pour chacun.
       </para>
     </note>
-  <para>
-      Dans le reste de la page, locales "en-US" et "pt-BR" sont les examples;
-      l'utilisateur les changera en fonction de ses besoins - 
-      Vous devrez lire 
-      "les explications des commandes", plus bas, avant de faire la compilation.
-   </para>
    <para>
       A cause de la grande taille du paquet, l'utilisateur peut préférer installer dans 
       <filename class="directory">/opt</filename>, au lieu de 
@@ -303,6 +294,12 @@ ln -sv ../../../libreoffice-help-&libreoffice-dlversion;.tar.xz         external
 <screen>
 <userinput>patch -Np1 -i ../libreoffice-&libreoffice-dlversion;-gcc_4_9_0-1.patch &amp;&amp;</userinput>
 </screen>
+  <para>
+      Dans le reste de la page, locales "en-US" et "pt-BR" sont les examples;
+      l'utilisateur les changera en fonction de ses besoins - 
+      Vous devrez lire 
+      "les explications des commandes", plus bas, avant de faire la compilation.
+   </para>
     <para>
        Preparez <application>LibreOffice</application> pour la compilation en lançant les commandes
       suivantes:
@@ -321,7 +318,7 @@ sed -e "s/target.mk/langlist.mk/"                    -e "s/tar -xf/tar -x --stri
     <command>make build</command> par <command>make</command>
 </para>
 <para>
-   Construisez le paquet.
+   Construisez le paquet (souvenez vous que cela doit être fait dans un environnement graphique).
 </para>
 <screen>
 <userinput>make build</userinput>
@@ -333,17 +330,6 @@ sed -e "s/target.mk/langlist.mk/"                    -e "s/tar -xf/tar -x --stri
 <userinput>make distro-pack-install                                  &amp;&amp;
 install -v -m755 -d $LO_PREFIX/share/appdata              &amp;&amp;
 install -v -m644    sysui/desktop/appstream-appdata/*.xml                     $LO_PREFIX/share/appdata</userinput>
-</screen>
-    <para>
-       Si les dictionnaires ont été construits, de nouveau en tant qu'utilisateur
-       <systemitem class="username">root</systemitem> :
-    </para>
-<screen role="root">
-<userinput>chown -cR 0:0 dictionaries/                                                        &amp;&amp;
-mkdir -pv $LO_PREFIX/lib/libreoffice/share/extensions/dict-en                      &amp;&amp;
-cp -vR dictionaries/en/*    $LO_PREFIX/lib/libreoffice/share/extensions/dict-en    &amp;&amp;
-mkdir -pv $LO_PREFIX/lib/libreoffice/share/extensions/dict-pt-BR                   &amp;&amp;
-cp -vR dictionaries/pt_BR/* $LO_PREFIX/lib/libreoffice/share/extensions/dict-pt-BR</userinput>
 </screen>
     <para>
        Si vous avez installé dans <filename class="directory">/opt/libreoffice-&libreoffice-dlversion;</filename>
@@ -368,7 +354,7 @@ unset i</userinput>
     <para>
       <command>sed -e ...</command>&nbsp;: Le premier sed empêche la compression
       des pages de manuel, le second empêche l'installation
-      d'échouer, le troisième corrige le script de déballage.
+      d'échouer.
     </para>
    <para>
       <command>chmod -v +x ...</command>: Corrige les permissions du script de déballage.
@@ -386,7 +372,7 @@ unset i</userinput>
       <parameter>--with-lang=ALL</parameter>.
     </para>
     <note><para>
-      Pour avoir la liste des 117 langues disponibles, vous pouvez regarder 
+      Pour avoir la liste des langues disponibles, vous pouvez regarder 
       l'archive des traductions, <command>tar -tf
       ../libreoffice-translations-&libreoffice-dlversion;.tar.xz | grep translations/source
        cut -d/ -f4 | uniq</command>.
@@ -395,11 +381,22 @@ unset i</userinput>
       <parameter>--with-help</parameter>: Sans ce paramètre, les fichiers d'aides
       ne sont pas construits.
     </para>
+     <para>
+      <parameter>--with-myspell-dicts</parameter>: Ce paramètre ajoute les dictionnaires
+      myspell dans l'installation de <application>LibreOffice</application>.
+    </para>
+
     <para>
       <parameter>--with-alloc=system</parameter>&nbsp;: Ce paramètre indique à
       <application>LibreOffice</application> d'utiliser l'allocateur du sytème
       au lieu de celui en interne.
     </para>
+     <para>
+      <parameter>--without-system-dicts</parameter>: Ce paramètre désactive l'utilisation
+      des dicitionnaires depuis les chemins système, donc les seuls installés par ce paquet
+      sont utilisés.
+    </para>
+
     <para>
       <parameter>--without-java</parameter>&nbsp;: Cette option compile
       <application>Libre Office</application> sans le support
@@ -466,9 +463,15 @@ unset i</userinput>
       utiliser <xref linkend="gst10-plugins-base"/> à la place de 
       <xref linkend="gst-plugins-base"/> pour le module avmedia.
     </para>
+     <para>
+      <option>--enable-gtk3</option>: Utilisez ce paramètre si vous voulez construire le module
+      d'intégration 
+      <application>GTK+ 3</application>.
+     </para>
+
       <para>
       <option>--enable-kde4</option>&nbsp;: Utilisez ce paramètre si vous voulez
-      construire le module d'intégration à <application>KDE</application>.
+      construire le module d'intégration <application>KDE</application>.
       </para>
  </sect2>
      
