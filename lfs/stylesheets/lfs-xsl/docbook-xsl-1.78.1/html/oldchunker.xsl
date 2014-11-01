@@ -23,7 +23,7 @@
 
 <!-- ==================================================================== -->
 
-<xsl:param name="default.encoding" select="'ISO-8859-1'" doc:type='string'/>
+<xsl:param name="default.encoding" select="'utf-8'" doc:type='string'/>
 
 <doc:param name="default.encoding" xmlns="">
 <refpurpose>Encoding used in generated HTML pages</refpurpose>
