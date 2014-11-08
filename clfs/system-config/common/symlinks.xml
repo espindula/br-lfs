@@ -90,34 +90,28 @@ EOF</userinput></screen>
     <para>Comme expliqué dans <xref linkend="ch-config-udev"/>, l'ordre dans lequel les périphériques ayant la même
     fonction apparaîssent dans 
     <filename class="directory">/dev</filename> est principalement aléatoire.
-    
-------------------------------------------------------------------------------------------
+    Par exemple, si vous avez une caméra web UST et un tunner TV, parfois
+    <filename>/dev/video0</filename> pointera vers la caméra et
+    <filename>/dev/video1</filename> pointera vers le tunner, et parfois après un redémarrage l'ordre changera pour être
+    opposé. Pour toutes les classes de matériel saus les cartes sons et les cartes réseaux, c'est corrigeable en créant
+    des rêgles udev pour des liens symboliques persistants. Le cas des cartes réseaux est couvert séparément dans
+    <xref linkend="chapter-network"/>, et la configuration des cartes sons peut être trouvées dans 
+    <ulink url="&cblfs-root;">CBLFS</ulink>.</para>
 
-
-    E.g., if you have a USB web camera and a TV tuner, sometimes
-    <filename>/dev/video0</filename> refers to the camera and
-    <filename>/dev/video1</filename> refers to the tuner, and sometimes
-    after a reboot the order changes to the opposite one.
-    For all classes of hardware except sound cards and network cards, this is
-    fixable by creating udev rules for custom persistent symlinks.
-    The case of network cards is covered separately in
-    <xref linkend="chapter-network"/>, and sound card configuration can
-    be found in <ulink url="&cblfs-root;">CBLFS</ulink>.</para>
-
-    <para>For each of your devices that is likely to have this problem
-    (even if the problem doesn't exist in your current Linux distribution),
-    find the corresponding directory under
-    <filename class="directory">/sys/class</filename> or
+    <para>Pour chacun de vos périphériques qui peut avoir ce problème
+    (même si le problème n'existe pas dans votre distribution Linux actuelle), trouver le répertoire
+     correspondant sous
+    <filename class="directory">/sys/class</filename> ou
     <filename class="directory">/sys/block</filename>.
-    For video devices, this may be
+    Pour les périphériques vidéo, cela peut être
     <filename
     class="directory">/sys/class/video4linux/video<replaceable>X</replaceable></filename>.
-    Figure out the attributes that identify the device uniquely (usually,
-    vendor and product IDs and/or serial numbers work):</para>
+    Mettez en évidence les attributs qui identifient le périphériques de façon unique (souvent,
+    le vendeur et l'identifiant du produit et/ou le numéro de série fonctionne):</para>
 
 <screen role="nodump"><userinput>udevadm info -a -p /sys/class/video4linux/video0</userinput></screen>
 
-    <para>Then write rules that create the symlinks, e.g.:</para>
+    <para>Ensuite écrivez les rêgles qui crée les liens symboliques, par exemple:</para>
 
 <screen role="nodump"><userinput>cat &gt;/etc/udev/rules.d/83-duplicate_devs.rules &lt;&lt; EOF
 <literal>
@@ -129,12 +123,11 @@ KERNEL=="video*", SYSFS{device}=="0x036f", SYSFS{vendor}=="0x109e", \
 </literal>
 EOF</userinput></screen>
 
-    <para>The result is that <filename>/dev/video0</filename> and
-    <filename>/dev/video1</filename> devices still refer randomly to the tuner
-    and the web camera (and thus should never be used directly), but there are
-    symlinks <filename>/dev/tvtuner</filename> and
-    <filename>/dev/webcam</filename> that always point to the correct
-    device.</para>
+    <para>Le résultat est que les périphériques <filename>/dev/video0</filename> et
+    <filename>/dev/video1</filename> resteront pointés aléatoirement vers le tunner ou la caméra web (et donc ne pourront
+    jamais être utilisé directement), mais il y a les liens symboliques
+    <filename>/dev/tvtuner</filename> et
+    <filename>/dev/webcam</filename> qui pointeront toujours vers les bons périphériques.</para>
 
  </sect2>
 
