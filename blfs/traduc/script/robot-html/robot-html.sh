@@ -120,42 +120,44 @@ log_att $?
 # détermination de la dernière version traduite selon le wiki
 #---------------------------------------------------------------------
 # récupération de la page du wiki et enregistrement dans blfsfr
-log_info "Chargement de la page du wiki"
-wget http://traduc.org/blfsfr 2>>$CHEMIN_LOG/robot.err
-log_err $?
+#log_info "Chargement de la page du wiki"
+#wget http://traduc.org/blfsfr 2>>$CHEMIN_LOG/robot.err
+#log_err $?
 # extraction de toutes les lignes contenant un numéros de 5 chiffres dans le fichier list
-log_info "Recherche des numéros de 5 chiffres dans la page du wiki"
-grep \>\*[0-9][0-9][0-9][0-9][0-9] blfsfr >list
-log_err $?
-V_WIKI=0
+#log_info "Recherche des numéros de 5 chiffres dans la page du wiki"
+#grep \>\*[0-9][0-9][0-9][0-9][0-9] blfsfr >list
+#log_err $?
+#V_WIKI=0
 # suppression des balises html de list et ajout d'un \n après chaque numéro à 5 chiffres
-log_info "Nettoyage dans le fichier list"
-sed -e "s/>/>\n/g" -i list
-sed -e "s/<.*>//g" -e "s/\([0-9][0-9][0-9][0-9][0-9]\)/\n\1\n/g" -e "/^$/d" -i list 2>>$CHEMIN_LOG/robot.err
-log_err $?
+#log_info "Nettoyage dans le fichier list"
+#sed -e "s/>/>\n/g" -i list
+#sed -e "s/<.*>//g" -e "s/\([0-9][0-9][0-9][0-9][0-9]\)/\n\1\n/g" -e "/^$/d" -i list 2>>$CHEMIN_LOG/robot.err
+#log_err $?
 # parcourt du fichier list, extraction du nb à 5 chiffres de la ligne et
 # détermination du plus grand
-log_info "recherche du numéro de la dernière VO traduite dans le wiki"
-while read LIGNE
-do
-   V=$(echo $LIGNE | sed 's/.*\([0-9][0-9][0-9][0-9][0-9]\).*/\1/g')
-   if [[ $V > $V_WIKI ]]
-   then
-      let V_WIKI=$V
-   fi
-done < list
-if [[ $V_WIKI == 0 ]]
-then
-   echo "Aucune VO traduite trouvée sur le wiki" >>$CHEMIN_LOG/robot.err
-   log_err 1
-else
-   log_err 0
-fi
-log_info "version $V_WIKI indiquée sur le wiki comme étant la dernière traduite"
-log_err 0
+#log_info "recherche du numéro de la dernière VO traduite dans le wiki"
+#while read LIGNE
+#do
+#   V=$(echo $LIGNE | sed 's/.*\([0-9][0-9][0-9][0-9][0-9]\).*/\1/g')
+#   if [[ $V > $V_WIKI ]]
+#   then
+#      let V_WIKI=$V
+#   fi
+#done < list
+#if [[ $V_WIKI == 0 ]]
+#then
+#   echo "Aucune VO traduite trouvée sur le wiki" >>$CHEMIN_LOG/robot.err
+#   log_err 1
+#else
+#   log_err 0
+#fi
+#log_info "version $V_WIKI indiquée sur le wiki comme étant la dernière traduite"
+#log_err 0
 # effacement des fichiers blfsfr et list
-rm blfsfr
-rm list
+#rm blfsfr
+#rm list
+echo "dernière version traduite ?"
+read V_WIKI
 #---------------------------------------------------------------------
 # Détermination de la liste des fichiers modifiés entre la version de
 # travail du dépôt et la dernière version sur le dépôt.
@@ -319,7 +321,7 @@ elif [[ $V_WIKI != $V_EN ]]
       log_err $?
       # correction de typo
       log_info "correction sur le fichiers xml"
- #    ./traduc/script/robot-html/typo.sh -q 2>>$CHEMIN_LOG/robot.err
+      ./traduc/script/robot-html/typo.sh -q 2>>$CHEMIN_LOG/robot.err
       log_err $?
       # on regarde la validité du xml
       log_info "validation du xml"
@@ -368,11 +370,11 @@ elif [[ $V_WIKI != $V_EN ]]
             echo "Il faudrait analyser les fichiers suivants car le nombre de balises entre le français et l'anglais n'est pas concordant (un nombre négatif indique des balises manquantes dans la version française alors qu'un nombre positif indique des balises en trop) :" >>$CHEMIN_BLFSFR/mail.txt
             cat verif.lst >>$CHEMIN_BLFSFR/mail.txt 
          fi
-         log_info "publication de la version HTML sur le site traduc.org"
-         rsync $1 -lrugop --delete blfs-svn traduc.org:/home/traduc.org/www/lfs.traduc.org/view/ 2>&1 2>>$CHEMIN_LOG/robot.err
+         log_info "publication de la version HTML sur le site linuxfromscratch.org"
+         rsync $1 -lrugop --delete blfs-svn linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/ 2>&1 2>>$CHEMIN_LOG/robot.err
          log_err $?
          log_info "publication de l'archive sur le site traduc.org"
-         rsync $1 -lrugop --delete blfs-svn.tar.bz2 traduc.org:/home/traduc.org/www/lfs.traduc.org/archives/blfs-svn/ 2>&1 2>>$CHEMIN_LOG/robot.err
+         rsync $1 -lrugop --delete blfs-svn.tar.bz2 linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/archives/blfs-svn/ 2>&1 2>>$CHEMIN_LOG/robot.err
          log_err $?
          log_info "suppression du rep blfs-html"
          rm -r blfs-html 2>>$CHEMIN_LOG/robot.err
