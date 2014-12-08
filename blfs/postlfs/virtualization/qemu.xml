@@ -237,52 +237,20 @@ EOF</userinput>
 </screen>
       </listitem>
       <listitem>
-        <para>Créez des scripts pour qemu pour lier les cartes réseau cliente,
-        normalement visible en tant que tap0, dans le pont hôte.</para>
-<screen role="root">
-<userinput>cat &gt; /etc/qemu-ifup &lt;&lt; EOF
-#!/bin/bash
-switch=br0
-if [ -n "\$1" ]; then
-  # Add new tap0 interface to bridge
-  /sbin/ip link set \$1 up
-  sleep 0.5s
-  /usr/sbin/brctl addif \$switch \$1
-else
-  echo "Error: no interface specified"
-  exit 1
-fi
-exit 0
-EOF
-chmod +x /etc/qemu-ifup</userinput>
-</screen>
-<screen role="root">
-<userinput>cat &gt; /etc/qemu-ifdown &lt;&lt; EOF
-#!/bin/bash
-switch=br0
-if [ -n "\$1" ]; then
-  # Remove tap0 interface from bridge
-  /usr/sbin/brctl delif \$switch \$1
-else
-  echo "Error: no interface specified"
-  exit 1
-fi
-exit 0
-EOF
-chmod +x /etc/qemu-ifdown</userinput>
-</screen>
+        <para>Permettre les connections réseaux quand l'exécution en tant que membre du groupe kvm:</para>
+<screen role="root"><userinput>chgrp kvm  /usr/libexec/qemu-bridge-helper &amp;&amp;
+chmod 4750 /usr/libexec/qemu-bridge-helper</userinput></screen>
       </listitem>
-    </itemizedlist>
-      <note><para>Les antislashs dans le script précédent sont pour la cohérence des opérations
-      de copier/coller. Les antislashs <emphasis>ne</emphasis>
-      doivent pas apparaître dans le script final.</para></note>
-    <itemizedlist spacing="compact">
       <listitem>
-        <para>Démarrer qemu avec les options "-net nic -net tap".  </para>
+        <para>Initialisez un fichier de configuration requis:</para>
+<screen role="root"><userinput>echo 'allow br0' &gt; /etc/qemu/bridge.conf</userinput></screen>
+      </listitem>
+      <listitem>
+        <para>Démarrer qemu avec les options "-net nic -net bridge".  </para>
       </listitem>
       <listitem>
         <para>Si une connexion, en ssh par exemple, depuis le réseau local vers la VM cliente est souhaitée,
-        le client devra être surement configuré avec une adresse IP statique.</para>
+        le client devra être configuré avec une adresse IP statique.</para>
       </listitem>
     </itemizedlist>
   </sect2>
