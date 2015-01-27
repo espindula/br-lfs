@@ -1,0 +1,79 @@
+Révision 15397
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   pst/typesetting/xindy.xml
+
+Log :
+Build xindy in the POSIX locale, thanks to Pierre and Bruce for help in debugging what I miscategorised as an i686 problem.
+
+Le robot a traité 4 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 15396)
++++ introduction/welcome/changelog.xml	(révision 15397)
+@@ -48,6 +48,10 @@
+       <para>January 26th, 2015</para>
+       <itemizedlist>
+         <listitem>
++          <para>[ken] - Use the POSIX locale to build xindy. Fixes
++          <ulink url="&blfs-ticket-root;5926">#5926</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[pierre] - Update to OpenJDK-1.8.0.31. Fixes
+           <ulink url="&blfs-ticket-root;6062">#6062</ulink>.</para>
+         </listitem>
+
+Index: pst/typesetting/xindy.xml
+===================================================================
+--- pst/typesetting/xindy.xml	(révision 15396)
++++ pst/typesetting/xindy.xml	(révision 15397)
+@@ -38,13 +38,6 @@
+       generate indexing information.
+     </para>
+ 
+-<note>
+-<para>
+-At the moment, this works on x86_64 but does not work on 32-bit x86.
+-Help in debugging this will be welcomed.
+-</para>
+-</note>
+     &lfs76_checked;
+ 
+     <bridgehead renderas="sect3">Package Information</bridgehead>
+@@ -104,13 +97,18 @@
+ 
+ <screen><userinput>export TEXARCH=$(uname -m | sed -e 's/i.86/i386/' -e 's/$/-linux/') &amp;&amp;
+ 
++SAVE_LC_ALL=$LC_ALL &amp;&amp;
++LC_ALL=POSIX &amp;&amp;
+ ./configure --prefix=/opt/texlive/&texlive-year;              \
+             --bindir=/opt/texlive/&texlive-year;/bin/$TEXARCH \
+             --datarootdir=/opt/texlive/&texlive-year;         \
+             --includedir=/usr/include                         \
+             --libdir=/opt/texlive/&texlive-year;/texmf-dist   \
+             --mandir=/opt/texlive/&texlive-year;/texmf-dist/doc/man &amp;&amp;
+-make</userinput></screen>
++make &amp;&amp;
++LC_ALL=$SAVE_LC_ALL &amp;&amp; unset SAVE_LC_ALL
++</userinput></screen>
+ 
+     <para>
+       This package does not have a testsuite.
+@@ -127,6 +125,16 @@
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
++    <para>
++      <parameter>SAVE_LC_ALL=...</parameter>: with the current version of
++      <application>coreutils</application> it is essential to build
++      <application>xindy</application> in the POSIX (or C) locale because in a
++      UTF-8 locale the file <filename>latin.xdy</filename> will contain only a
++      heading and then a line '<literal>Binary file (standard input)
++      matches</literal>' instead of the many lines of
++      <application>lisp</application> merge-rule commands it ought to contain.
++    </para>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+      href="../../xincludes/tex-prefix.xml"/>
+ 
+
