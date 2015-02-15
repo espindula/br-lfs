@@ -1,0 +1,208 @@
+Révision 15486
+
+fichiers modifiés :
+   packages.ent
+   x/installing/xorg-server.xml
+   x/installing/x7driver.xml
+   x/installing/x7driver-ati.xml
+   introduction/welcome/changelog.xml
+
+Log :
+xorg-server-1.17.0
+
+Le robot a traité 18 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 15485)
++++ introduction/welcome/changelog.xml	(révision 15486)
+@@ -48,6 +48,10 @@
+       <para>February 9th, 2015</para>
+       <itemizedlist>
+         <listitem>
++          <para>[ken] - Update to xorg-server-1.17.0. Fixes
++          <ulink url="&blfs-ticket-root;6112">#6112</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[bdubbs] - Update to nfs-utils-1.3.2. Fixes
+           <ulink url="&blfs-ticket-root;6098">#6098</ulink>.</para>
+         </listitem>
+
+Index: x/installing/x7driver-ati.xml
+===================================================================
+--- x/installing/x7driver-ati.xml	(révision 15485)
++++ x/installing/x7driver-ati.xml	(révision 15486)
+@@ -196,27 +196,23 @@
+         <ulink url="&radeon-marketing-names;">
+         Decoder ring for engineering vs marketing names</ulink>. Please note
+         that Glamor acceleration can be used with other chips as well, from the
+-R300 onwards, but it has not been tested recently.
++        R300 onwards. On at least some Northern Islands chips it is beneficial.
+       </para>
+ 
+       <para>
+@@     @@
+        use "radeonsi" Gallium3D driver. You have to use an
+         <filename>xorg.conf</filename> file to enable it. To enable
+         Glamor for cards other than "Southern Islands" and later, create the
+-following <filename>/etc/X11/xorg.conf</filename> as the
+-<systemitem class="username">root</systemitem> user:
++        following file in
++        <filename class="directory">${XORG_PREFIX}/share/X11/xorg.conf.d/</filename>
++        as the <systemitem class="username">root</systemitem> user:
+       </para>
+ 
+-<screen role="root"><userinput>cat &gt;&gt; /etc/X11/xorg.conf &lt;&lt; "EOF"
+-<literal>Section "Module"
+-Load "dri2"
+-Load "glamoregl"
+-EndSection
+-Section "Device"
++<screen role="root"><userinput>cat &gt;&gt; ${XORG_PREFIX}/share/X11/xorg.conf.d/20-glamor.conf &lt;&lt; "EOF"
++<literal>Section "Device"
+         Identifier "radeon"
+-Driver "radeon"
++        Driver "ati"
+         Option "AccelMethod" "glamor"
+ EndSection</literal>
+ EOF</userinput></screen>
+
+Index: x/installing/x7driver.xml
+===================================================================
+--- x/installing/x7driver.xml	(révision 15485)
++++ x/installing/x7driver.xml	(révision 15486)
+@@ -27,11 +27,19 @@
+     <para>
+       The <application>Xorg Drivers</application> page contains the
+       instructions for building Xorg drivers that are necessary in order
+-for Xorg Server to take the advantage of the hardware that it is
+-running on. At least one input and one video driver is required
++      for Xorg Server to take advantage of the hardware that it is
++      running on. At least one input and one video driver are required
+       for Xorg Server to start.
+     </para>
+ 
++    <para>
++      On machines using KMS, the modesetting driver is provided by
++      <application>xorg-server</application> and can be used instead of the
++      video driver for the specific hardware, but with reduced performance.
++      It can also be used (without hardware acceleration) in virtual machines
++      running under <application>qemu</application>.
++    </para>
+     <note>
+       <para>
+         If you are unsure which video hardware you have, you can use
+
+Index: x/installing/xorg-server.xml
+===================================================================
+--- x/installing/xorg-server.xml	(révision 15485)
++++ x/installing/xorg-server.xml	(révision 15486)
+@@ -96,6 +96,7 @@
+     <para role="recommended">
+       <xref linkend="libepoxy"/> (required for glamor, see command
+       explanations below)
++      <xref linkend="xcb-util-keysyms"/> (used by Xnest)
+     </para>
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+@@ -103,8 +104,11 @@
+       <xref linkend="acpid"/> (runtime),
+       <xref linkend="doxygen"/> (to build API documentation),
+       <xref linkend="fop"/>, (to build documentation),
+-<xref linkend="gs"/> (to build documentation), and
+-<xref linkend="xmlto"/>, (to build documentation)
++      <xref linkend="gs"/> (to build documentation),
++      <xref linkend="xcb-util-image"/>,
++      <xref linkend="xcb-util-renderutil"/>,
++      <xref linkend="xcb-util-wm"/> (all three to build Xephyr) and
++      <xref linkend="xmlto"/> (to build documentation)
+     </para>
+ 
+     <para condition="html" role="usernotes">User Notes:
+@@ -128,7 +132,6 @@
+ 
+ <screen><userinput>./configure $XORG_CONFIG                    \
+            --with-xkb-output=/var/lib/xkb   \
+---enable-dmx                     \
+            --enable-glamor                  \
+            --enable-install-setuid          \
+            --enable-suid-wrapper            &amp;&amp;
+@@ -156,15 +159,12 @@
+     <title>Command Explanations</title>
+ 
+     <para>
+-<parameter>--enable-dmx</parameter>: Build DMX (Distributed Multihead X)
+-server.
+-</para>
+-<para>
+       <parameter>--enable-glamor</parameter>: Build the Glamor DIX (Device
+       Independent X) module which is currently required for Southern Islands and
+       Sea Islands radeon video chipsets, optional for some other radeons, and
+@@ -186,6 +186,17 @@
+       required by the server.
+     </para>
+ 
++    <para>
++      <option>--enable-dmx</option>: Build DMX (Distributed Multihead X)
++      server.
++    </para>
++    <para>
++      <option>--enable-kdrive</option>: this option allows the
++      <command>configure</command> script to enable Xephyr if its dependencies
++      are met.
++    </para>
+   </sect2>
+ 
+   <sect2 role="content">
+@@ -200,10 +211,11 @@
+         <seg>
+           cvt, dmxaddinput, dmxaddscreen, dmxinfo, dmxreconfig, dmxresize,
+           dmxrminput, dmxrmscreen, dmxtodmx, dmxwininfo, gtf, vdltodmx, X,
+-Xdmx, xdmxconfig, Xnest, Xorg, and Xvfb
++          Xdmx, xdmxconfig, Xephyr, Xnest, Xorg, and Xvfb
+         </seg>
+         <seg>
+-several under $XORG_PREFIX/lib/xorg/modules/{,extensions,multimedia}
++          several under $XORG_PREFIX/lib/xorg/modules/{,drivers,extensions}
++          including modesetting_drv.so
+         </seg>
+         <seg>
+           $XORG_PREFIX/include/xorg,
+@@ -280,6 +292,18 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="Xephyr-x7">
++        <term><command>Xephyr</command></term>
++        <listitem>
++          <para>
++            is a nested X server which supports modern X extensions.
++          </para>
++          <indexterm zone="xorg-server Xephyr-x7">
++            <primary sortas="b-Xephyr">Xephyr</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="Xnest-x7">
+         <term><command>Xnest</command></term>
+         <listitem>
+@@ -328,6 +352,20 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="modesetting_drv-x7">
++        <term><filename class="libraryfile">modesetting_drv.so</filename></term>
++        <listitem>
++          <para>
++            provides a video driver for machines using Kernel Mode Setting (KMS).
++            This will use glamor if that has been enabled and the hardware offers
++            acceleration.
++          </para>
++          <indexterm zone="xorg-server modesetting_drv-x7">
++            <primary sortas="c-modesetting_drv">modesetting_drv.so</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+     </variablelist>
+ 
+   </sect2>
+
