@@ -98,17 +98,24 @@
       Il peut y avoir d'autres paramètres utiles pour utiliser les dépendances facultatives.
       </para>
     </note>
-
       <para>Installez <application>Samba</application> en lançant les commandes
 	suivantes&nbsp;:</para>
       
 <screen>
-<userinput>./configure                                 --prefix=/usr                           --sysconfdir=/etc                       --localstatedir=/var                    --with-piddir=/run/samba                --with-pammodulesdir=/lib/security      --without-systemd                       --enable-fhs                            --enable-nss-wrapper                &amp;&amp;
+<userinput>./configure                             \
+    --prefix=/usr                       \
+    --sysconfdir=/etc                   \
+    --localstatedir=/var                \
+    --with-piddir=/run/samba            \
+    --with-pammodulesdir=/lib/security  \
+    --without-systemd                   \
+    --enable-fhs                        \
+    --enable-nss-wrapper                &amp;&amp;
 make</userinput>
 </screen>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>:</para>
 <screen>
-<userinput>sed -i "/samba3.blackbox.failure.failure/i ^samba3.raw.eas" selftest/knownfail</userinput>
+<userinput>sed -i "/samba3.blackbox.failure.failure/i \^samba3.raw.eas" selftest/knownfail</userinput>
 </screen>
     <para>Selon les développeurs de <application>Samba</application>, la limitation
     de 108 caractères de la longueur du chemin d'un socket tunnel unix nommé peut causer des erreurs, et donc plus
@@ -120,9 +127,25 @@ make</userinput>
     apparement pour la même raison. Si un test rapide échoue, il peut être désactivé.
     Par exemple, <quote><replaceable>samba3.raw.eas</replaceable></quote> peut être désactivé avec la commande suivante :
     </para>
-<screen><userinput>sed -i "/samba3.blackbox.failure.failure/i \^samba3.raw.eas" selftest/knownfail</userinput></screen>
-
-
+<screen role="root">
+<userinput>make install &amp;&amp;
+mv -v /usr/lib/libnss_win{s,bind}.so*   /lib                       &amp;&amp;
+ln -v -sf ../../lib/libnss_winbind.so.2 /usr/lib/libnss_winbind.so &amp;&amp;
+ln -v -sf ../../lib/libnss_wins.so.2    /usr/lib/libnss_wins.so    &amp;&amp;
+install -v -m644    examples/smb.conf.default /etc/samba &amp;&amp;
+mkdir -pv /etc/openldap/schema                        &amp;&amp;
+install -v -m644    examples/LDAP/README              \
+                    /etc/openldap/schema/README.LDAP  &amp;&amp;
+                    
+install -v -m644    examples/LDAP/samba*              \
+                    /etc/openldap/schema              &amp;&amp;
+                    
+install -v -m755    examples/LDAP/{get*,ol*} \
+                    /etc/openldap/schema              &amp;&amp;
+install -v -m755 -d /usr/share/doc/samba-&samba-version; &amp;&amp;
+install -v -m644    lib/ntdb/doc/design.pdf \
+                    /usr/share/doc/samba-&samba-version;</userinput>
+</screen>
     <para>Pour tester les résultats, en tant qu'utilisateur
     <systemitem class="username">root</systemitem>, tapez:
     <command>make quicktest 2>&amp;1 | tee quicktest.log</command>.  Un résumé des résultats de tests et quelques
@@ -139,12 +162,10 @@ make</userinput>
 	    Standard</foreignphrase> (standard de hiérarchie de système de fichiers) (FHS).</para>
 	
 	<para><parameter>--enable-nss-wrapper</parameter>&nbsp;: Construit la bibliothèque nss-wrapper.</para>
-
     <para><parameter>--without-systemd</parameter>: Désactive l'intégration de
     <application>systemd</application>, qui ne fait pas parti de 
     LFS/BLFS. Si vous utilisez <application>systemd</application>, remplacez par
     <parameter>--with-systemd</parameter>.</para>
-
         <para><command>mv -v /usr/lib/libnss_win{s,bind}.so* /lib</command>:
 	  Les bibliothèques nss sont installées dans /usr/lib par défaut. Déplacez les dans /lib.</para>
 	<para><command>ln -v -sf ../../lib/libnss_winbind.so.2 /usr/lib/libnss_winbind.so</command>
@@ -179,19 +200,7 @@ make</userinput>
 	    <systemitem class="username">root</systemitem>&nbsp;:</para>
 	  
 <screen role="root">
-<userinput>make install &amp;&amp;
-mv -v /usr/lib/libnss_win{s,bind}.so*   /lib                       &amp;&amp;
-ln -v -sf ../../lib/libnss_winbind.so.2 /usr/lib/libnss_winbind.so &amp;&amp;
-ln -v -sf ../../lib/libnss_wins.so.2    /usr/lib/libnss_wins.so    &amp;&amp;
-install -v -m644    examples/smb.conf.default /etc/samba &amp;&amp;
-mkdir -pv /etc/openldap/schema                        &amp;&amp;
-install -v -m644    examples/LDAP/README                                  /etc/openldap/schema/README.LDAP  &amp;&amp;
-                    
-install -v -m644    examples/LDAP/samba*                                  /etc/openldap/schema              &amp;&amp;
-                    
-install -v -m755    examples/LDAP/{get*,ol*}                     /etc/openldap/schema              &amp;&amp;
-install -v -m755 -d /usr/share/doc/samba-&samba-version; &amp;&amp;
-install -v -m644    lib/ntdb/doc/design.pdf                     /usr/share/doc/samba-&samba-version;</userinput>
+<userinput>ln -v -sf /usr/bin/smbspool /usr/lib/cups/backend/smb</userinput>
 </screen>
 	</sect3>
 	<sect3>
@@ -222,8 +231,11 @@ install -v -m644    lib/ntdb/doc/design.pdf                     /usr/share/doc/s
 	    <para>Un fichier <filename>/etc/samba/smb.conf</filename> avec les
 	      trois paramètres suivants suffit&nbsp;:</para>
 	    
-<screen role="root">
-<userinput>ln -v -sf /usr/bin/smbspool /usr/lib/cups/backend/smb</userinput>
+<screen role='root'>
+<literal>[global]
+    workgroup = <replaceable>MYGROUP</replaceable>
+    dos charset = <replaceable>cp850</replaceable>
+    unix charset = <replaceable>ISO-8859-1</replaceable></literal>
 </screen>
 	    <para>Les valeurs de cet exemple indiquent que l'ordinateur appartient
 	      à un groupe de travail Windows appelé <quote><replaceable>MONGROUPE</replaceable></quote>, 
@@ -267,15 +279,6 @@ install -v -m644    lib/ntdb/doc/design.pdf                     /usr/share/doc/s
 <literal>[global]
     workgroup = <replaceable>MYGROUP</replaceable>
     dos charset = <replaceable>cp850</replaceable>
-    unix charset = <replaceable>ISO-8859-1</replaceable></literal>
-</screen>
-	    <para>Les autres paramètres que vous pourriez vouloir personnaliser dans
-	      la section <quote>[global]</quote> comprennent&nbsp;:</para>
-	    
-<screen role='root'>
-<literal>[global]
-    workgroup = <replaceable>MYGROUP</replaceable>
-    dos charset = <replaceable>cp850</replaceable>
     unix charset = <replaceable>ISO-8859-1</replaceable>
 [homes]
     comment = Home Directories
@@ -287,6 +290,19 @@ install -v -m644    lib/ntdb/doc/design.pdf                     /usr/share/doc/s
     browseable = no
     guest ok = no
     printable = yes</literal>
+</screen>
+	    <para>Les autres paramètres que vous pourriez vouloir personnaliser dans
+	      la section <quote>[global]</quote> comprennent&nbsp;:</para>
+	    
+<screen role='root'>
+<literal>    server string =
+    security =
+    hosts allow =
+    load printers =
+    log file =
+    max log size =
+    socket options =
+    local master =</literal>
 </screen>
 	    <para>Reportez-vous aux commentaires dans le fichier
 	      <filename>/etc/samba/smb.conf.default</filename> pour des informations
@@ -364,29 +380,23 @@ install -v -m644    lib/ntdb/doc/design.pdf                     /usr/share/doc/s
 		  l'utilisateur par défaut, lancez les commandes suivantes en tant 
 		  qu'utilisateur <systemitem class='username'>root</systemitem>&nbsp;:</para>
 		
-<screen role='root'>
-<literal>    server string =
-    security =
-    hosts allow =
-    load printers =
-    log file =
-    max log size =
-    socket options =
-    local master =</literal>
+<screen role="root">
+<userinput>groupadd -g 99 nogroup &amp;&amp;
+useradd -c "Unprivileged Nobody" -d /dev/null -g nogroup \
+    -s /bin/false -u 99 nobody</userinput>
 </screen>
 		<para>Installez le script <filename>samba</filename> avec
 		  la commande suivante effectuée en tant qu'utilisateur 
 		  <systemitem class="username">root</systemitem>&nbsp;:</para>
 		
 <screen role="root">
-<userinput>groupadd -g 99 nogroup &amp;&amp;
-useradd -c "Unprivileged Nobody" -d /dev/null -g nogroup     -s /bin/false -u 99 nobody</userinput>
+<userinput>make install-samba</userinput>
 </screen>
 		<para>Si vous avez aussi besoin du script <filename>winbind</filename>&nbsp;pour résoudre les
 		  noms depuis les clients Windows, lancez:</para>
 		
 <screen role="root">
-<userinput>make install-samba</userinput>
+<userinput>make install-winbindd</userinput>
 </screen>
 	      </sect4>
 	    </sect3>
