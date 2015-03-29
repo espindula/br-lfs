@@ -1,0 +1,246 @@
+Révision 15706
+
+fichiers modifiés :
+   networking/netprogs/samba.xml
+   postlfs/security/cyrus-sasl.xml
+   general.ent
+   xsoft/office/libreoffice.xml
+   packages.ent
+   server/other/openldap.xml
+   introduction/welcome/changelog.xml
+
+Log :
+Update to samba-4.2.0. Fix modification of OpenLDAP-2.4.40 instructions disabling incompatible use of Berkeley DB-6.1.23. Typos in LibreOffice-4.4.1.2 and Cyrus SASL-2.1.26.
+
+Le robot a traité 37 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 15705)
++++ introduction/welcome/changelog.xml	(révision 15706)
+@@ -45,6 +45,20 @@
+ -->
+ 
+     <listitem>
++      <para>March 26th, 2015</para>
++      <itemizedlist>
++        <listitem>
++          <para>[fernando] - Fix modification of openldap instructions
++          disabling incompatible use of Berkeley DB.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to samba-4.2.0. Fixes
++          <ulink url="&blfs-ticket-root;6201">#6201</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>March 25th, 2015</para>
+       <itemizedlist>
+         <listitem>
+
+Index: networking/netprogs/samba.xml
+===================================================================
+--- networking/netprogs/samba.xml	(révision 15705)
++++ networking/netprogs/samba.xml	(révision 15706)
+@@ -77,20 +78,23 @@
+       <xref linkend="avahi"/>,
+       <xref linkend="cups"/>,
+       <xref linkend="gnutls"/>,
++      <xref linkend="libarchive"/>,
+       <xref linkend="libcap-pam"/>,
+       <xref linkend="libgpg-error"/>,
+       <xref linkend="linux-pam"/>,
+       <xref linkend="mitkrb"/>,
+-<xref linkend="openldap"/>,
+       <xref linkend="popt"/>,
+       <xref linkend="valgrind"/> (optionally used by the test suite),
+       <xref linkend="xfsprogs"/>,
++      <ulink url="https://ctdb.samba.org/">ctdb</ulink>,
+       <ulink url="https://people.gnome.org/~veillard/gamin/">Gamin</ulink>,
+-<ulink url="http://ctdb.samba.org/">ctdb</ulink>,
++      <ulink url="http://www.h5l.org/">Heimdal</ulink>,
+       <ulink url="http://ftp.de.debian.org/debian/pool/main/liba/libaio/">libaio</ulink>,
+       <ulink url="http://www.nongnu.org/libunwind/">libunwind</ulink>,
+-<ulink url="http://www.openafs.org/">OpenAFS</ulink>, and
+-<ulink url="http://tdb.samba.org/">tdb</ulink>
++      <ulink url="https://www.samba.org/ftp/ldb/">ldb</ulink>,
++      <ulink url="http://www.openafs.org/">OpenAFS</ulink>,
++      <ulink url="https://tevent.samba.org/">tevent</ulink>, and
++      <ulink url="https://tdb.samba.org/">tdb</ulink>
+     </para>
+ 
+     <para condition="html" role="usernotes">User Notes:
+@@ -102,13 +106,12 @@
+     <title>Installation of Samba</title>
+ 
+     <note>
+-<para>If you wish to run the test suite after the binaries are built,
+-you must add the <option>-/-enable-socket-wrapper</option> 
+-and <option>-/-enable-selftest</option> parameters to
+-the <command>configure</command> script below. You may want to run
+-<command>configure</command> with the <option>-/-help</option> parameter
+-first. There may be other parameters needed to take advantage of
+-optional dependencies.</para>
++      <para>If you wish to run the test suite after the binaries are built, you
++      must add the <option>--enable-selftest</option> parameter to the
++      <command>configure</command> script below. You may want to run
++      <command>configure</command> with the <option>--help</option> parameter
++      first. There may be other parameters needed to take advantage of optional
++      dependencies.</para>
+     </note>
+ 
+     <para>Install <application>Samba</application> by running the following
+@@ -121,8 +124,7 @@
+     --with-piddir=/run/samba            \
+     --with-pammodulesdir=/lib/security  \
+     --without-systemd                   \
+---enable-fhs                        \
+---enable-nss-wrapper                &amp;&amp;
++    --enable-fhs                        &amp;&amp;
+ 
+ make</userinput></screen>
+ 
+@@ -181,9 +183,6 @@
+     <para><parameter>--enable-fhs</parameter>: Assigns all other file paths in
+     a manner compliant with the Filesystem Hierarchy Standard (FHS).</para>
+ 
+-<para><parameter>--enable-nss-wrapper</parameter>: Builds the nss-wrapper
+-library.</para>
+     <para><parameter>--without-systemd</parameter>: Disable
+     <application>systemd</application> integration, which is not part of
+     LFS/BLFS. If you use <application>systemd</application>, replace by
+@@ -467,34 +466,40 @@
+          tdbrestore, tdbtool, testparm, wbinfo, and winbindd
+        </seg>
+ 
+-<seg>libdcerpc-atsvc.so, libdcerpc-binding.so, libdcerpc-samr.so,
+-libdcerpc-server.so, libdcerpc.so, libgensec.so, libndr-krb5pac.so,
+-libndr-nbt.so, libndr.so, libndr-standard.so, libnetapi.so,
+-libnss_winbind.so, libnss_wins.so, libpdb.so, libregistry.so,
+-libsamba-credentials.so, libsamba-hostconfig.so, libsamba-policy.so,
+-libsamba-util.so, libsamdb.so, libsmbclient-raw.so, libsmbclient.so,
+-libsmbconf.so, libsmbldap.so, libsmbsharemodes.so, libtevent-util.so,
+-libtorture.so, libwbclient.so, mit_samba.so, and
+-winbind_krb5_locator.so; the pam_winbind.so and pam_smbpass.so PAM
+-libraries; and assorted character set, filesystem and support modules
+-under /usr/lib/{python&python2-majorver;,samba}</seg>
++        <seg>
++          libdcerpc-atsvc.so, libdcerpc-binding.so, libdcerpc-samr.so,
++          libdcerpc-server.so, libdcerpc.so, libgensec.so, libndr-krb5pac.so,
++          libndr-nbt.so, libndr.so, libndr-standard.so, libnetapi.so,
++          libnss_winbind.so, libnss_wins.so, libregistry.so,
++          libsamba-credentials.so, libsamba-hostconfig.so, libsamba-passdb.so,
++          libsamba-policy.so, libsamba-util.so, libsamdb.so,
++          libsmbclient-raw.so, libsmbclient.so, libsmbconf.so, libsmbldap.so,
++          libtevent-util.so, libtorture.so, libwbclient.so, mit_samba.so, and
++          winbind_krb5_locator.so; the pam_winbind.so and pam_smbpass.so PAM
++          libraries; and assorted character set, filesystem and support modules
++          under /usr/lib/{python&python2-majorver;,samba}
++        </seg>
+         
+        <seg>
+          /etc/samba, /run/samba, /usr/include/samba-4.0,
+@@ -894,7 +899,7 @@
+           </indexterm>
+         </listitem>
+       </varlistentry>
++<!--
+       <varlistentry id="libsmbsharemodes">
+         <term><filename class='libraryfile'>libsmbsharemodes.so</filename></term>
+         <listitem>
+
+Index: postlfs/security/cyrus-sasl.xml
+===================================================================
+--- postlfs/security/cyrus-sasl.xml	(révision 15705)
++++ postlfs/security/cyrus-sasl.xml	(révision 15706)
+@@ -248,20 +248,20 @@
+ 
+       <para>
+         See
+-<ulink url="file:///usr/share/doc/cyrus-sasl-&cyrus-sasl-version;/sysadmin.html"/>
++        <ulink url="/usr/share/doc/cyrus-sasl-&cyrus-sasl-version;/sysadmin.html"/>
+         for information on what to include in the application configuration files.
+       </para>
+ 
+       <para>
+         See
+-<ulink url="file:///usr/share/doc/cyrus-sasl-&cyrus-sasl-version;/LDAP_SASLAUTHD"/>
++        <ulink url="/usr/share/doc/cyrus-sasl-&cyrus-sasl-version;/LDAP_SASLAUTHD"/>
+         for configuring <command>saslauthd</command> with
+         <application>OpenLDAP</application>.
+       </para>
+ 
+       <para>
+         See
+-<ulink url="file:///usr/share/doc/cyrus-sasl-&cyrus-sasl-version;/gssapi.html"/>
++        <ulink url="/usr/share/doc/cyrus-sasl-&cyrus-sasl-version;/gssapi.html"/>
+         for configuring <command>saslauthd</command> with <application>Kerberos</application>.
+       </para>
+ 
+
+Index: server/other/openldap.xml
+===================================================================
+--- server/other/openldap.xml	(révision 15705)
++++ server/other/openldap.xml	(révision 15706)
+@@ -142,6 +142,19 @@
+ <screen role="root"><userinput>make install</userinput></screen>
+ 
+     </note>
++ 
++    <warning>
++      <para>If upgrading from a previos installation that used Berkely DB as
++      the backend, you will need to dump the database(s) using the
++      <command>slapcat</command> utility, relocate all files in
++      <filename class="directory">/var/lib/openldap</filename>, change all
++      instances of <option>bdb</option> to <option>mdb</option> in
++      <filename>/etc/openldap/slapd.conf</filename> and any files in
++      <filename class="directory">/etc/openldap/slapd.d</filename>, and import
++      using the <command>slapadd</command> utility after the installation is
++      completed.
++      </para>
++    </warning>
+ 
+     <para>
+       There should be a dedicated user and group to take control
+@@ -182,7 +195,7 @@
+             --disable-shell       \ 
+             --disable-bdb         \ 
+             --disable-hdb         \ 
+---enable-overlays=mod \
++            --enable-overlays=mod &amp;&amp;
+ 
+ make depend &amp;&amp;
+ make</userinput></screen>
+@@ -198,15 +211,16 @@
+ 
+ <screen role="root"><userinput>make install &amp;&amp;
+ 
+-chmod -v 700 /var/lib/openldap                                         &amp;&amp;
+-chown -v -R ldap:ldap /var/lib/openldap                                &amp;&amp;
+-chmod -v 640 /etc/openldap/{slapd.{conf,ldif},DB_CONFIG.example}       &amp;&amp;
+-chown -v root:ldap /etc/openldap/{slapd.{conf,ldif},DB_CONFIG.example} &amp;&amp;
+-install -v -dm700 -o ldap -g ldap /etc/openldap/slapd.d                &amp;&amp;
++chmod -v 700 /var/lib/openldap                          &amp;&amp;
++chown -v -R ldap:ldap /var/lib/openldap                 &amp;&amp;
++chmod -v 640 /etc/openldap/slapd.{conf,ldif}            &amp;&amp;
++chown -v root:ldap /etc/openldap/slapd.{conf,ldif}      &amp;&amp;
++sed 's@bdb@mdb@g' -i /etc/openldap/slapd.conf           &amp;&amp;
++install -v -dm700 -o ldap -g ldap /etc/openldap/slapd.d &amp;&amp;
+ 
+install -v -dm755  /usr/share/doc/openldap-&openldap-version;  &amp;&amp;
+cp -vfr doc/drafts /usr/share/doc/openldap-&openldap-version;  &amp;&amp;
+@@ -293,6 +307,13 @@
+       SLPv2 support. Use it if you have installed
+       <ulink url="http://www.openslp.org/">OpenSLP</ulink>.
+     </para>
++ 
++    <para>
++      <command>sed 's@bdb@mdb@g' -i /etc/openldap/slapd.conf</command>: This
++      command changes the default backend from the deprecated Berkely DB
++      (which was not included in the available backends) to LMDB as is
++      recommended by the OpenLDAP developers.
++    </para>
+ 
+     <note>
+       <para>
+
