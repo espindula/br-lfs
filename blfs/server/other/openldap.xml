@@ -71,9 +71,6 @@
       <ulink url="http://www.openslp.org/">OpenSLP</ulink>, et
       <xref linkend="db"/> (pas recommandée par les développeurs)
     </para>
-
-
-
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/openldap"/></para>
   </sect2>
@@ -86,11 +83,14 @@
 	  installation comme <quote>client-seul</quote>), taper ces commandes
 	  au lieu des autres suivantes (pas de suite de test disponible):</para>
 <screen>
-<userinput>patch -Np1 -i ../openldap-&openldap-version;-blfs_paths-1.patch &amp;&amp;
-patch -Np1 -i ../openldap-&openldap-version;-symbol_versions-1.patch &amp;&amp;
+<userinput>patch -Np1 -i ../openldap-&openldap-version;-consolidated-1.patch &amp;&amp;
 autoconf &amp;&amp;
-sed -i '/6.0.20/ a\t__db_version_compat' configure &amp;&amp;
-./configure --prefix=/usr                 --sysconfdir=/etc             --disable-static              --enable-dynamic              --disable-debug               --disable-slapd &amp;&amp;
+./configure --prefix=/usr     \
+            --sysconfdir=/etc \
+            --disable-static  \
+            --enable-dynamic  \
+            --disable-debug   \
+            --disable-slapd &amp;&amp;
 make depend &amp;&amp;
 make</userinput>
 </screen>
@@ -101,8 +101,6 @@ make</userinput>
 <userinput>make install</userinput>
 </screen>
             </note>
-
-
     <warning>
       <para>Pour une mise à jour depuis une installation précédente qui utilise Berkely DB comme
       moteur, vous devrez copier le(s) base(s) de données utilisant l'utilitaire
@@ -114,10 +112,6 @@ make</userinput>
        <command>slapadd</command> après que l'installation soit terminée.
       </para>
     </warning>
-
-
-
-
     <para>
       Il doit y avoir un utilisateur et un groupe dédié pour prendre le contrôle
       du démon <command>slapd</command> après qu'il soit démarré.
@@ -126,17 +120,35 @@ make</userinput>
     </para>
 <screen role="root">
 <userinput>groupadd -g 83 ldap &amp;&amp;
-useradd -c "OpenLDAP Daemon Owner" -d /var/lib/openldap -u 83         -g ldap -s /bin/false ldap</userinput>
+useradd -c "OpenLDAP Daemon Owner" -d /var/lib/openldap -u 83 \
+        -g ldap -s /bin/false ldap</userinput>
 </screen>
     <para>
      Installez <application>OpenLDAP</application> en
     lançant les commandes suivantes&nbsp;:</para>
 <screen>
-<userinput>patch -Np1 -i ../openldap-&openldap-version;-blfs_paths-1.patch &amp;&amp;
-patch -Np1 -i ../openldap-&openldap-version;-symbol_versions-1.patch &amp;&amp;
+<userinput>patch -Np1 -i ../openldap-&openldap-version;-consolidated-1.patch &amp;&amp;
 autoconf &amp;&amp;
-sed -i '/6.0.20/ a\t__db_version_compat' configure &amp;&amp;
-./configure --prefix=/usr                     --sysconfdir=/etc                 --localstatedir=/var              --libexecdir=/usr/lib             --disable-static                  --disable-debug                   --enable-dynamic                  --enable-crypt                    --enable-spasswd                  --enable-modules                  --enable-rlookups                 --enable-backends=mod             --enable-overlays=mod             --disable-ndb                     --disable-sql &amp;&amp;
+./configure --prefix=/usr         \
+            --sysconfdir=/etc     \
+            --localstatedir=/var  \
+            --libexecdir=/usr/lib \
+            --disable-static      \
+            --disable-debug       \
+            --with-tls=openssl    \
+            --with-cyrus-sasl     \
+            --enable-dynamic      \
+            --enable-crypt        \
+            --enable-spasswd      \
+            --enable-slapd        \
+            --enable-modules      \
+            --enable-backends=mod \
+            --disable-ndb         \
+            --disable-sql         \
+            --disable-shell       \ 
+            --disable-bdb         \ 
+            --disable-hdb         \ 
+            --enable-overlays=mod &amp;&amp;
 make depend &amp;&amp;
 make</userinput>
 </screen>
@@ -144,15 +156,12 @@ make</userinput>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
 <userinput>make install &amp;&amp;
-chmod -v 700 /var/lib/openldap                                         &amp;&amp;
-chown -v -R ldap:ldap /var/lib/openldap                                &amp;&amp;
-chmod -v 640 /etc/openldap/{slapd.{conf,ldif},DB_CONFIG.example}       &amp;&amp;
-chown -v root:ldap /etc/openldap/{slapd.{conf,ldif},DB_CONFIG.example} &amp;&amp;
-install -v -dm700 -o ldap -g ldap /etc/openldap/slapd.d                &amp;&amp;
-install -v -dm755  /usr/share/doc/openldap-&openldap-version; &amp;&amp;
-cp -vfr doc/drafts /usr/share/doc/openldap-&openldap-version; &amp;&amp;
-cp -vfr doc/rfc    /usr/share/doc/openldap-&openldap-version; &amp;&amp;
-cp -vfr doc/guide  /usr/share/doc/openldap-&openldap-version;</userinput>
+install -v -dm700 -o ldap -g ldap /var/lib/openldap     &amp;&amp;
+install -v -dm700 -o ldap -g ldap /etc/openldap/slapd.d &amp;&amp;
+chmod -v 640       /etc/openldap/slapd.{conf,ldif}      &amp;&amp;
+chown -v root:ldap /etc/openldap/slapd.{conf,ldif}      &amp;&amp;
+install -v -dm755              /usr/share/doc/openldap-&openldap-version; &amp;&amp;
+cp -vfr doc/{drafts,rfc,guide} /usr/share/doc/openldap-&openldap-version;</userinput>
 </screen>
     <para>
       Avoir les fichiers de configuration sldap et les bases de données ldap dans /var/lib/openldap
@@ -201,17 +210,12 @@ cp -vfr doc/guide  /usr/share/doc/openldap-&openldap-version;</userinput>
     <para><option>--enable-slp</option>&nbsp;: Ce paramètre active le support
     SLPv2. Utilisez ce paramètre si vous avez installé
     <ulink url="http://www.openslp.org/">OpenSLP</ulink>.</para>
-
-
-
 <note>
       <para>Vous pouvez lancer <command>./configure --help</command> pour
       voir s'il y a d'autres paramètres que vous pouvez passer à la commande 
       <command>configure</command> pour activer d'autres options ou d'autres
       paquets de dépendance.</para>
     </note>
-
-
     <para>
       <command>install ...</command>, <command>chown ...</command>,
       et <command>chmod ...</command>:
@@ -222,8 +226,6 @@ cp -vfr doc/guide  /usr/share/doc/openldap-&openldap-version;</userinput>
       ldap, pour que le groupe à qui appartient le démon slapd puisse lire mais pas modifier
       le fichier dans le cas d'une faille de sécurité.
     </para>
-
-
   </sect2>
   <sect2 role="configuration">
     <title>Configuration de OpenLDAP</title>
@@ -319,7 +321,7 @@ cp -vfr doc/guide  /usr/share/doc/openldap-&openldap-version;</userinput>
 <computeroutput># extended LDIF
 #
 # LDAPv3
-# base &lt;&gt; with scope base
+# base &lt;&gt; with scope baseObject
 # filter: (objectclass=*)
 # requesting: namingContexts
 #
