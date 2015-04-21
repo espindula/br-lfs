@@ -44,11 +44,18 @@
 
 <screen><userinput remap="pre">sed -r -i 's|/usr(/bin/test)|\1|' test/udev-test.pl</userinput></screen>
 
+    <para>Next, add a workaround to prevent the /tools directory from being 
+    hard coded into Eudev binary files library locations:</para>
+
+<screen><userinput remap="pre">cat &gt; config.cache &lt;&lt; "EOF"
+HAVE_BLKID=1
+BLKID_LIBS="-lblkid"
+BLKID_CFLAGS="-I/tools/include"
+EOF</userinput></screen>
+
 <para>Prepare Eudev for compilation:</para>
 
-<screen><userinput remap="configure">BLKID_CFLAGS=-I/tools/include       \
-BLKID_LIBS='-L/tools/lib -lblkid'   \
-./configure --prefix=/usr           \
+<screen><userinput remap="configure">./configure --prefix=/usr           \
             --bindir=/sbin          \
             --sbindir=/sbin         \
             --libdir=/usr/lib       \
@@ -57,17 +64,15 @@ BLKID_LIBS='-L/tools/lib -lblkid'   \
             --with-rootprefix=      \
             --with-rootlibdir=/lib  \
             --enable-split-usr      \
-            --enable-libkmod        \
-            --enable-rule_generator \
-            --enable-keymap         \
             --disable-introspection \
             --disable-gudev         \
             --disable-static        \
+            --config-cache          \
             --disable-gtk-doc-html</userinput></screen>
 
 <para>Compile the package:</para>
 
-<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="make">LIBRARY_PATH=/tools/lib make</userinput></screen>
 
 <para>Create some directories now that are needed for tests, but
 will also be used as a part of installation:</para>
@@ -77,11 +82,11 @@ mkdir -pv /etc/udev/rules.d</userinput></screen>
 
 <para>To test the results, issue:</para>
 
-<screen><userinput remap="test">make check</userinput></screen>
+<screen><userinput remap="test">make LD_LIBRARY_PATH=/tools/lib check</userinput></screen>
 
     <para>Install the package:</para>
 
-<screen><userinput remap="install">make install</userinput></screen>
+<screen><userinput remap="install">make LD_LIBRARY_PATH=/tools/lib install</userinput></screen>
 
     <para>Now, install the man pages:</para>
 
@@ -89,7 +94,7 @@ mkdir -pv /etc/udev/rules.d</userinput></screen>
 make install-man7 install-man8
 popd</userinput></screen>
 
-    <para>Finally, install some custom rules and support files useful in an LFS 
+    <para>Install some custom rules and support files useful in an LFS 
     environment:</para>
 
 <screen><userinput remap="install">tar -xvf ../&udev-lfs-version;.tar.bz2
@@ -116,7 +121,7 @@ make -f &udev-lfs-version;/Makefile.lfs install</userinput></screen>
     into a binary database <filename>/etc/udev/hwdb.bin</filename>. Create the
     initial database:</para>
 
-<screen><userinput>udevadm hwdb --update</userinput></screen>
+<screen><userinput>LD_LIBRARY_PATH=/tools/lib udevadm hwdb --update</userinput></screen>
 
     <para>This command needs to be run each time the hardware information is
     updated.</para>
