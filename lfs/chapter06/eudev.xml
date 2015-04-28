@@ -44,11 +44,21 @@
 
 <screen><userinput remap="pre">sed -r -i 's|/usr(/bin/test)|\1|' test/udev-test.pl</userinput></screen>
 
+ <screen><userinput remap="pre">sed -r -i 's|/usr(/bin/test)|\1|' test/udev-test.pl</userinput></screen>
+ 
+    <para>Ensuite, ajoutez un contournement pour empêcher le répertoire /tools
+    de se coder en dur dans les emplacements des bibliothèques mentionnés dans 
+    les fichiers binaires d'Eudev&nbsp;:</para>
+
+<screen><userinput remap="pre">cat &gt; config.cache &lt;&lt; "EOF"
++HAVE_BLKID=1
+BLKID_LIBS="-lblkid"
+BLKID_CFLAGS="-I/tools/include"
+EOF</userinput></screen>
+
     <para>Préparez la compilation d'Eudev&nbsp;:</para>
 
-<screen><userinput remap="configure">BLKID_CFLAGS=-I/tools/include       \
-BLKID_LIBS='-L/tools/lib -lblkid'   \
-./configure --prefix=/usr           \
+<screen><userinput remap="configure">./configure --prefix=/usr           \
             --bindir=/sbin          \
             --sbindir=/sbin         \
             --libdir=/usr/lib       \
@@ -57,17 +67,15 @@ BLKID_LIBS='-L/tools/lib -lblkid'   \
             --with-rootprefix=      \
             --with-rootlibdir=/lib  \
             --enable-split-usr      \
-            --enable-libkmod        \
-            --enable-rule_generator \
-            --enable-keymap         \
             --disable-introspection \
             --disable-gudev         \
             --disable-static        \
+            --config-cache          \
             --disable-gtk-doc-html</userinput></screen>
  
     <para>Compilez le paquet&nbsp;:</para>
 
-<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="make">LIBRARY_PATH=/tools/lib make</userinput></screen>
 
     <para>Créez des répertoires nécessaires pour les tests, mais qui feront
     aussi partie de l'installation&nbsp;:</para>
@@ -77,11 +85,11 @@ mkdir -pv /etc/udev/rules.d</userinput></screen>
 
     <para>Pour tester les résultats, lancez&nbsp;:</para>
 
-<screen><userinput remap="test">make check</userinput></screen>
+<screen><userinput remap="test">make LD_LIBRARY_PATH=/tools/lib check</userinput></screen>
 
     <para>Installez le paquet&nbsp;:</para>
 
-<screen><userinput remap="install">make install</userinput></screen>
+<screen><userinput remap="install">make LD_LIBRARY_PATH=/tools/lib install</userinput></screen>
 
     <para>Maintenant, installez les pages de man&nbsp;:</para>
 
@@ -89,7 +97,7 @@ mkdir -pv /etc/udev/rules.d</userinput></screen>
 make install-man7 install-man8
 popd</userinput></screen>
 
-    <para>Enfin, installez quelques règles personnalisées et des fichiers support
+    <para>Installez quelques règles personnalisées et des fichiers support
     utiles dans un environnement LFS&nbsp;:</para>
 
 <screen><userinput remap="install">tar -xvf ../&udev-lfs-version;.tar.bz2
@@ -117,7 +125,7 @@ make -f &udev-lfs-version;/Makefile.lfs install</userinput></screen>
     une base de données binaire <filename>/etc/udev/hwdb.bin</filename>. Créez
     la base de données initiale&nbsp;:</para>
 
-<screen><userinput>udevadm hwdb --update</userinput></screen>
+<screen><userinput>LD_LIBRARY_PATH=/tools/lib udevadm hwdb --update</userinput></screen>
 
     <para>Il faut lancer cette commande à chaque fois que vous mettez à jour les
     informations sur le matériel.</para>
