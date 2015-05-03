@@ -1,0 +1,206 @@
+Révision 15878
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   networking/netlibs/neon.xml
+   networking/netprogs/samba.xml
+   postlfs/security/nettle.xml
+   postlfs/security/gnutls.xml
+   postlfs/security/p11-kit.xml
+   postlfs/editors/emacs.xml
+   general.ent
+   packages.ent
+
+Log :
+Update to p11-kit-0.23.1. Update to nettle-3.1.1. Update to gnutls-3.4.0. emacs-24.5: code broken with gnutls-3.4 and later. samba-4.2.1: fix some code when building with gnutls-3.4 and later. neon-0.30.1: fix some code when building with gnutls-3.4 and later.
+
+Le robot a traité 48 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 15877)
++++ introduction/welcome/changelog.xml	(révision 15878)
+@@ -45,6 +45,36 @@
+ -->
+ 
+     <listitem>
++      <para>April 26th, 2015</para>
++      <itemizedlist>
++        <listitem>
++          <para>[fernando] - neon-0.30.1: fix some code when building
++          with gnutls-3.4 and later.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - samba-4.2.1: fix some code when building
++          with gnutls-3.4 and later.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - emacs-24.5: code broken with gnutls-3.4
++          and later.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to gnutls-3.4.0. Fixes
++          <ulink url="&blfs-ticket-root;6380">#6380</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to nettle-3.1.1. Fixes
++          <ulink url="&blfs-ticket-root;5152">#5152</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to p11-kit-0.23.1. Fixes
++          <ulink url="&blfs-ticket-root;6355">#6355</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>April 25th, 2015</para>
+       <itemizedlist>
+         <listitem>
+
+Index: networking/netlibs/neon.xml
+===================================================================
+--- networking/netlibs/neon.xml	(révision 15877)
++++ networking/netlibs/neon.xml	(révision 15878)
+@@ -94,6 +94,12 @@
+   <sect2 role="installation">
+     <title>Installation of neon</title>
+ 
++    <para>Fix some code when building with gnutls-3.4 and later:</para>
++<screen><userinput>sed -e 's/gnutls_retr_st/gnutls_retr2_st/' \
++    -e 's/type = type/cert_&amp;/' \
++    -i src/ne_gnutls.c</userinput></screen>
+     <para>
+       Install <application>neon</application> by running the following
+       commands:
+
+Index: networking/netprogs/samba.xml
+===================================================================
+--- networking/netprogs/samba.xml	(révision 15877)
++++ networking/netprogs/samba.xml	(révision 15878)
+@@ -114,6 +114,16 @@
+       dependencies.</para>
+     </note>
+ 
++    <para>Fix some code when building with gnutls-3.4 and later:</para>
++<screen><userinput>sed -e 's/.*set_priority.*/   gnutls_priority_set_direct(tls->session, "NORMAL:+CTYPE-OPENPGP", NULL);/' \
++    -e '/cert_type_priority/d' \
++    -i source4/lib/tls/tls.c &amp;&amp;
++sed -e 's/.*set_priority.*/   gnutls_priority_set_direct(tlss->tls_session, "NORMAL:+CTYPE-OPENPGP", NULL);/' \
++    -e '/t cert_type_priority/ s:^:/*:' \
++    -e '/t cert_type_priority/{n;N;N;N;s:$:*/:}' \
++    -i source4/lib/tls/tls_tstream.c</userinput></screen>
+     <para>Install <application>Samba</application> by running the following
+     commands:</para>
+ 
+
+Index: postlfs/editors/emacs.xml
+===================================================================
+--- postlfs/editors/emacs.xml	(révision 15877)
++++ postlfs/editors/emacs.xml	(révision 15878)
+@@ -99,6 +99,7 @@
+     commands:</para>
+ 
+ <screen><userinput>./configure --prefix=/usr        \
++            --without-gnutls     \
+             --localstatedir=/var &amp;&amp;
+ make bootstrap</userinput></screen>
+ 
+@@ -139,6 +140,9 @@
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
++    <para><parameter>--without-gnutls</parameter>: Currently, build is broken
++    with gnutls-3.4 and later.</para>
+     <para><option>--localstatedir=/var</option>: Create game score files
+     in <filename class='directory'>/var/games/emacs</filename> instead
+     of <filename class='directory'>/usr/var/games/emacs</filename>.</para>
+
+Index: postlfs/security/gnutls.xml
+===================================================================
+--- postlfs/security/gnutls.xml	(révision 15877)
++++ postlfs/security/gnutls.xml	(révision 15878)
+@@ -104,10 +104,12 @@
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+     <para role="optional">
++      <xref linkend="doxygen"/>,
+       <xref linkend="gtk-doc"/>,
+       <xref linkend="guile"/>,
+       <xref linkend="libidn"/>,
+       <xref linkend="p11-kit"/>,
++      <xref linkend="texlive"/> or <xref linkend="tl-installer"/>,
+       <xref linkend="unbound"/> (to build the DANE library), 
+       <xref linkend="valgrind"/> (used during the test suite),
+       <ulink url="http://ftp.gnu.org/gnu/autogen/">autogen</ulink>, and
+@@ -133,7 +135,13 @@
+       following commands:
+     </para>
+ 
+-<screen><userinput>./configure --prefix=/usr \
++<screen><userinput>sed -e '/FUNCS=/ s/-d/&amp;|uniq/'    \
++    -e '/get_x509_crt/ {n;d}'     \
++    -e '/get_x509_key/ {n;d}'     \
++    -e '/get_verify_flags/ {n;d}' \
++    -i doc/manpages/Makefile      &amp;&amp;
++./configure --prefix=/usr \
+             --with-default-trust-store-file=/etc/ssl/ca-bundle.crt &amp;&amp;
+ make</userinput></screen>
+ 
+@@ -164,6 +173,11 @@
+     <title>Command Explanations</title>
+ 
+     <para>
++      <command>sed -e ... -i doc/manpages/Makefile</command>:
++      This command removes some duplicate lines and fixes the doc Makefile.
++    </para>
++    <para>
+       <parameter>--with-default-trust-store-file=/etc/ssl/ca-bundle.crt</parameter>:
+       This switch tells <command>configure</command> where to find the
+       CA Certificates.
+@@ -172,6 +186,11 @@
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+       href="../../xincludes/gtk-doc-rebuild.xml"/>
+ 
++    <para>
++      <option>--enable-openssl-compatibility</option>:
++      Use this switch if you wish building the OpenSSL compatibility library.
++    </para>
+   </sect2>
+ 
+   <sect2 role="content">
+
+Index: postlfs/security/nettle.xml
+===================================================================
+--- postlfs/security/nettle.xml	(révision 15877)
++++ postlfs/security/nettle.xml	(révision 15878)
+@@ -122,13 +122,14 @@
+ 
+       <seglistitem>
+         <seg>
+-nettle-hash, nettle-lfib-stream, pkcs1-conv and sexp-conv
++          nettle-hash, nettle-lfib-stream, nettle-pbkdf2,
++          pkcs1-conv and sexp-conv
+         </seg>
+         <seg>
+           libhogweed.{so,a} and libnettle.{so,a}
+@@ -165,6 +166,21 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="nettle-pbkdf2">
++        <term><command>nettle-pbkdf2</command></term>
++        <listitem>
++          <para>
++            password-based key derivation function that take as input a
++            password or passphrase and typically strengthen it and protect
++            against certain pre-computation attacks by using salting and
++            expensive computation.
++          </para>
++          <indexterm zone="nettle nettle-pbkdf2">
++            <primary sortas="b-nettle-pbkdf2">nettle-pbkdf2</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="pkcs1-conv">
+         <term><command>pkcs1-conv</command></term>
+         <listitem>
+
