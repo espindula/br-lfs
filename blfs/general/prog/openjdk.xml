@@ -59,7 +59,7 @@
       <application>Java</application>, et forunir un environnement d'exécution complet pour lancer
       des programmes <application>Java</application>.
     </para>
-   &lfs77_checked;
+       &lfs77_checked;lfs77_checked;
     <note>
       <para>
         Un greffon de navigateur et une implémentation de webstart, aussi bien que le moteur de sons pulseaudio
@@ -253,13 +253,15 @@ tar -xf ../nashorn.tar.xz</userinput>
       Si vous avez téléchargé la suite de tests, décompressez la également:
     </para>
 <screen>
-<userinput>tar -xf ../jtreg&jtreg-version;.tar.gz</userinput>
+<userinput>tar -xf ../jtreg&jtreg-version;.tar.xz</userinput>
 </screen>
     <para>
       Corrigez un problème avec la nouvelle API de giflib (depuis 5.1.0):
     </para>
 <screen>
-<userinput>sed -e 's/DGifCloseFile(gif/&amp;, NULL/'     -e '/DGifOpen/s/c)/c, NULL)/'         -i jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c</userinput>
+<userinput>sed -e 's/DGifCloseFile(gif/&amp;, NULL/' \
+    -e '/DGifOpen/s/c)/c, NULL)/'     \
+    -i jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c</userinput>
 </screen>
     <note>
       <para>
@@ -278,8 +280,16 @@ tar -xf ../nashorn.tar.xz</userinput>
     (la valeur --with-milestone peut être modifiée selon les préférences de l'utilisateur):</para>
 <screen>
 <userinput>unset JAVA_HOME               &amp;&amp;
-sh ./configure                   --with-update-version=&ojdk-upd;      --with-build-number=&ojdk-bd;       --with-milestone=BLFS         --enable-unlimited-crypto     --with-zlib=system            --with-giflib=system       &amp;&amp;
-make DEBUG_BINARIES=true all</userinput>
+sh ./configure                \
+   --with-update-version=&ojdk-upd;   \
+   --with-build-number=&ojdk-bd;    \
+   --with-milestone=BLFS      \
+   --enable-unlimited-crypto  \
+   --with-zlib=system         \
+   --with-giflib=system       &amp;&amp;
+make DEBUG_BINARIES=true all  &amp;&amp;
+find build/*/images/j2sdk-image -iname \*.diz -delete
+</userinput>
 </screen>
     <para>
       Il semble que l'infrastructure de tests de OpenJDK est en cours de réalisation, donc tester la nouvelle version construite
@@ -292,10 +302,13 @@ make DEBUG_BINARIES=true all</userinput>
   OLD_DISP=$DISPLAY
 fi
 export DISPLAY=:20
-nohup Xvfb $DISPLAY                                         -fbdir $(pwd)                                    -pixdepths 8 16 24 32 > Xvfb.out 2>&amp;1 &amp;
+nohup Xvfb $DISPLAY                              \
+           -fbdir $(pwd)                         \
+           -pixdepths 8 16 24 32 > Xvfb.out 2>&amp;1 &amp;
 echo $! > Xvfb.pid
 echo Waiting for Xvfb to initialize; sleep 1
-nohup twm -display $DISPLAY           -f /dev/null > twm.out 2>&amp;1            &amp;
+nohup twm -display $DISPLAY \
+          -f /dev/null > twm.out 2>&amp;1            &amp;
 echo $! > twm.pid
 echo Waiting for twm to initialize; sleep 1
 xhost +</userinput>
@@ -305,20 +318,21 @@ xhost +</userinput>
     </para>
 <screen role='nodump'>
 <userinput>echo -e "
-jdk_all = :jdk_core           \
-          :jdk_svc            \
-          :jdk_beans          \
-          :jdk_imageio        \
-          :jdk_sound          \
-          :jdk_sctp           \
-          com/sun/awt         \
-          javax/accessibility \
-          javax/print         \
-          sun/pisces          \
+jdk_all = :jdk_core           \\
+          :jdk_svc            \\
+          :jdk_beans          \\
+          :jdk_imageio        \\
+          :jdk_sound          \\
+          :jdk_sctp           \\
+          com/sun/awt         \\
+          javax/accessibility \\
+          javax/print         \\
+          sun/pisces          \\
           com/sun/java/swing" >> jdk/test/TEST.groups &amp;&amp;
-sed -e 's/all:.*jck.*/all: jtreg/'          -i langtools/test/Makefile          &amp;&amp;
-sed -i 's@/win32@@' jdk/test/Makefile   &amp;&amp;
-sed -e 's@JTREG_HOME@JT_PLATFORM="" &amp;@'     -e 's@TEST="@CONCURRENCY=&lt;N&gt; &amp;@'        -i test/Makefile</userinput>
+sed -e 's/all:.*jck.*/all: jtreg/'      \
+    -e '/^JTREG /s@\$(JT_PLATFORM)/@@'  \
+    -i langtools/test/Makefile
+</userinput>
 </screen>
     <para>
       Quelques variables doivent être initialisée:
@@ -332,8 +346,15 @@ PRODUCT_HOME=$(echo $(pwd)/build/*/images/j2sdk-image)</userinput>
       Les tests sont lancé comme suivant:
     </para>
 <screen role='nodump'>
-<userinput>LANG=C make -k -C test                                  JT_HOME=${JT_HOME}                          JT_JAVA=${JT_JAVA}                          PRODUCT_HOME=${PRODUCT_HOME} all
-LANG=C ${JT_HOME}/bin/jtreg -a -v:fail,error                 -dir:$(pwd)/hotspot/test                     -k:!ignore                                  -jdk:${PRODUCT_HOME}                         -agentvm -conc:&lt;N&gt;                           :jdk</userinput>
+<userinput>LANG=C make -k -C test                      \
+            JT_HOME=${JT_HOME}              \
+            JT_JAVA=${JT_JAVA}              \
+            PRODUCT_HOME=${PRODUCT_HOME} all
+LANG=C ${JT_HOME}/bin/jtreg -a -v:fail,error \
+                -dir:$(pwd)/hotspot/test     \
+                -k:\!ignore                  \
+                -jdk:${PRODUCT_HOME}         \
+                :jdk</userinput>
 </screen>
     <para>
       Les résultats des tests peuvent être comparé avec ces 
@@ -343,7 +364,6 @@ LANG=C ${JT_HOME}/bin/jtreg -a -v:fail,error                 -dir:$(pwd)/hotspot
        condition, comme si l'ordinateur est connecté sur un résau. Ausi, certain test
        peuvent dépasser le temps si la machine est sous chargé.
      </para>
-
     <para>
       Ensuite quelques nettoyages doivent être fait. Les instructions suivantes arrêtent seulement le frame buffer, mais il a été signalé
       que quelque VM java peuvent rester lancées après les tests, il est donc nécessaire de vérifier les processus
@@ -361,11 +381,7 @@ fi</userinput>
 <para>Installez le paquet avec les commandes suivantes en tant qu'utilisateur
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>find build/*/images/j2sdk-image -iname *.jar -exec chmod a+r {} ; &amp;&amp;
-chmod a+r build/*/images/j2sdk-image/lib/ct.sym &amp;&amp;
-find build/*/images/j2sdk-image -iname *.diz -delete &amp;&amp;
-find build/*/images/j2sdk-image -iname *.debuginfo -delete &amp;&amp;
-cp -R build/*/images/j2sdk-image /opt/OpenJDK-&openjdk-version; &amp;&amp;
+<userinput>cp -R build/*/images/j2sdk-image /opt/OpenJDK-&openjdk-version; &amp;&amp;
 chown -R root:root /opt/OpenJDK-&openjdk-version;</userinput>
 </screen>
     <para>
@@ -382,7 +398,9 @@ chown -R root:root /opt/OpenJDK-&openjdk-version;</userinput>
 correspondant à une netrée dans le menu du bureau pour <command>policytool</command>. En premier,
 vous devez obtenir un icone de <xref linkend="icedtea-web"/>:</para>
 <screen>
-<userinput>tar -xf ../icedtea-web-&icedtea-web-version;.tar.gz          icedtea-web-&icedtea-web-version;/javaws.png         --strip-components=1</userinput>
+<userinput>tar -xf ../icedtea-web-&icedtea-web-version;.tar.gz  \
+        icedtea-web-&icedtea-web-version;/javaws.png \
+        --strip-components=1</userinput>
 </screen>
 <para>
 Maintenant, en tant
@@ -599,31 +617,31 @@ get_args ${@}
 # Handle common errors
 if test "${CAFILE}x" == "x" -a "${CADIR}x" == "x" ; then
     echo "ERROR!  You must provide an x509 certificate store!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${CAFILE}x" != "x" -a "${CADIR}x" != "x" ; then
     echo "ERROR!  You cannot provide two x509 certificate stores!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${KEYTOOL}x" == "x" ; then
     echo "ERROR!  You must provide a valid keytool program!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${OPENSSL}x" == "x" ; then
     echo "ERROR!  You must provide a valid path to openssl!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
 if test "${OUTFILE}x" == "x" ; then
     echo "ERROR!  You must provide a valid output file!"
-    echo "'$(basename ${0}) --help' for more info."
+    echo "\'$(basename ${0}) --help\' for more info."
     echo ""
     exit 1
 fi
@@ -665,7 +683,11 @@ do
     certbegin=`grep -n "^-----BEGIN" "${cert}" | cut -d ":" -f 1`
     certend=`grep -n "^-----END" "${cert}" | cut -d ":" -f 1`
     sed -n "${certbegin},${certend}p" "${cert}" > "${tempfile}"
-    echo yes | env LC_ALL=C "${KEYTOOL}" -import                                                              -alias `basename "${cert}"`                                          -keystore "${OUTFILE}"                                               -storepass 'changeit'                                                -file "${tempfile}"
+    echo yes | env LC_ALL=C "${KEYTOOL}" -import                     \
+                                         -alias `basename "${cert}"` \
+                                         -keystore "${OUTFILE}"      \
+                                         -storepass 'changeit'       \
+                                         -file "${tempfile}"
     rm "${tempfile}"
 done
 if test "${TEMPDIR}x" != "x" ; then
@@ -687,7 +709,11 @@ chmod -c 0755 /opt/jdk/bin/mkcacerts</userinput>
     Ensuite vous pouvez en créer un nouveau, en tant qu'utilisateur
     <systemitem class="username">root</systemitem> :</para>
 <screen role="root">
-<userinput>/opt/jdk/bin/mkcacerts                    -d "/etc/ssl/certs/"              -k "/opt/jdk/bin/keytool"         -s "/usr/bin/openssl"             -o "/opt/jdk/jre/lib/security/cacerts"</userinput>
+<userinput>/opt/jdk/bin/mkcacerts            \
+        -d "/etc/ssl/certs/"      \
+        -k "/opt/jdk/bin/keytool" \
+        -s "/usr/bin/openssl"     \
+        -o "/opt/jdk/jre/lib/security/cacerts"</userinput>
 </screen>
     <para>Utilisez les commandes suivantes pour vérifier si le fichier
     <filename>cacerts</filename> a été installé avec succès:</para>
