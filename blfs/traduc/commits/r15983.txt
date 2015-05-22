@@ -1,0 +1,425 @@
+Révision 15983
+
+fichiers modifiés :
+M       scripts/blfs-include.php
+M       scripts/blfs-chapter04.php
+M       scripts/blfs-chapter05.php
+
+Log :
+Tweak included php file for ftp access. Update through Chapter 5.
+
+Le robot a traité 11 % du commit anglais
+Index: scripts/blfs-chapter04.php
+===================================================================
+--- scripts/blfs-chapter04.php	(révision 15982)
++++ scripts/blfs-chapter04.php	(révision 15983)
+@@ -14,21 +14,23 @@
+ $ignores = array();
+ $ignores[ 'openssh1' ] = "";
+ 
+-//$current="haveged";   // For debugging
++//$current="p11-kit";   // For debugging
+ 
+-// Special cases
+-$exceptions = array();
+-$exceptions[ 'gnutls' ] = "UPDIR=/.*(v\d[\d\.-]*\d).*$/:DOWNDIR=";
+ $regex = array();
+ $regex[ 'krb5'     ] = "/^.*Kerberos V5 Release ([\d\.]+).*$/";
+ $regex[ 'tripwire' ] = "/^.*Download tripwire-([\d\.]+)-src.*$/";
+ $regex[ 'haveged'  ] = "/^.*haveged-([\d\.]+)\.tar.*$/";
+ 
+ $url_fix = array(
+-array( 'match'   => 'ftp.gnu(pg|tls).org', 
+-'replace' => 'ftp.heanet.ie/mirrors/ftp.gnupg.org' ),
+ 
++   array( 'pkg'     => 'gnupg',
++          'match'   => '^.*$', 
++          'replace' => 'ftp://ftp.gnupg.org/gcrypt/gnupg/' ),
++   array( 'pkg'     => 'gnutls',
++          'match'   => '^.*$', 
++          'replace' => 'ftp://ftp.gnupg.org/gcrypt/gnutls/' ),
+    array( 'pkg'     => 'haveged',
+           'match'   => '^.*$', 
+           'replace' => 'http://sourceforge.net/projects/haveged/files' ),
+@@ -92,62 +94,15 @@
+   // Check for ftp
+   if ( preg_match( "/^ftp/", $dirpath ) ) 
+   { 
+-$dirpath  = substr( $dirpath, 6 );           // Remove ftp://
+-$dirpath  = rtrim ( $dirpath, "/" );         // Trim any trailing slash
+-$position = strpos( $dirpath, "/" );         // Divide at first slash
+-$server   = substr( $dirpath, 0, $position );
+-$path     = substr( $dirpath, $position );
++     if ( $package == 'gnutls' )
++     {
++       $lines1 = http_get_file( $dirpath );
++       $dir = find_max( $lines1, "/v\d\.\d/", "/.*(v\d[\d\.-]*\d).*$/" );
++       $dirpath .= "$dir/";
++     }
+ 
+-$conn = ftp_connect( $server );
+-if ( ! isset( $conn ) )
+-{
+-//echo "No connection\n";
+-return -7;
+-}
+-if ( ! ftp_login( $conn, "anonymous", "a@b" ) )
+-{
+-//echo "anonymous ftp login failed\n";
+-return -8;
+-}
+-// See if we need special handling
+-if ( isset( $exceptions[ $package ] ) )
+-{
+-$specials = explode( ":", $exceptions[ $package ] );
+-foreach ( $specials as $i )
+-{
+-list( $op, $regexp ) = explode( "=", $i );
+-switch ($op)
+-{
+-case "UPDIR":
+-// Remove last dir from $path
+-$position = strrpos( $path, "/" );
+-$path = substr( $path, 0, $position );
+-// Get dir listing
+-$lines = ftp_rawlist ($conn, $path);              
+-$max   = find_max( $lines, $regexp, $regexp );
+-break;
+-case "DOWNDIR":
+-// Append found directory
+-$path .= "/$max";
+-break;
+-default:
+-echo "Error in specials array for $package\n";
+-return 0;
+-break;
+-}
+-}
+-}
+-$lines = ftp_rawlist ($conn, $path);
+-//print_r($lines);
+-ftp_close( $conn );
++     $lines = http_get_file( "$dirpath/" );
++     if ( ! is_array( $lines ) ) return $lines;
+   }
+   else // http
+   {
+@@ -213,7 +168,7 @@
+      return find_max( $lines, "/$package/", "/^.*$package-([\d\.p]*\d.?).tar.*$/" );
+ 
+   if ( $book_index == "p11-kit" )
+-return find_even_max( $lines, "/$package/", "/^.*$package-([\d\.]*\d).tar.*$/" );
++     return find_max( $lines, "/$package/", "/^.*$package-([\d\.]*\d).tar.*$/" );
+ 
+   if ( $book_index == "shadow_" )
+      return find_max( $lines, "/$package/", "/^.*$package([\d\.]*\d).orig.tar.*$/" );
+@@ -222,10 +177,10 @@
+      return find_max( $lines, "/\d\.\d+\.\d+/", "/^.*(\d\.\d+\.\d+).*$/" );
+ 
+   if ( $book_index == "nettle" )
+-return find_max( $lines, "/nettle-2/", "/^.*nettle-(2\.\d+\.\d+).tar.*$/" );
++     return find_max( $lines, "/nettle/", "/^.*nettle-([\.\d]+\d).tar.*$/" );
+ 
+   if ( $book_index == "gnupg" )
+-return find_max( $lines, "/gnupg-2.0/", "/^.*gnupg-(2\.0\.\d+).tar.*$/" );
++     return find_max( $lines, "/gnupg-2/", "/^.*gnupg-([\.\d]+).tar.*$/" );
+ 
+   if ( $book_index == "nss" )
+   {
+
+Index: scripts/blfs-chapter05.php
+===================================================================
+--- scripts/blfs-chapter05.php	(révision 15982)
++++ scripts/blfs-chapter05.php	(révision 15983)
+@@ -1,25 +1,17 @@
+ #! /usr/bin/php
+ <?php
+ 
+-$CHAPTER=5;
+-$START_PACKAGE='fuse';
+-$STOP_PACKAGE='xfsprogs';
++include 'blfs-include.php';
+ 
+-$specials = array();
+-$specials[ 'Linux-PAM' ] = "documentation";
++$CHAPTER       = '5';
++$START_PACKAGE = 'fuse';
++$STOP_PACKAGE  = 'xfsprogs';
+ 
+-$book = array();
+-$book_index = 0;
++$renames = array();
++$ignores = array();
+ 
+-$vers = array();
+-//$current="sshfs-fuse";
++//$current="jfsutils";   // For debugging
+ 
+-date_default_timezone_set( "GMT" );
+-$date = date( "Y-m-d (D) H:i:s" );
+-// Special cases
+-$exceptions = array();
+ $regex = array();
+ $regex[ 'fuse'     ] = "/^.*Download fuse-([\d\.]+).tar.*$/";
+ $regex[ 'jfsutils' ] = "/^.*jfsutils release ([\d\.]+) is available.*$/";
+@@ -27,106 +19,35 @@
+ 
+ $sf = 'sourceforge.net';
+ 
+-$url_fix[ 0 ] = array( 'pkg'     => 'fuse',
+-'match'   => '^.*$', 
+-'replace' => "http://$sf/projects/fuse/files" );
++$url_fix = array (
+ 
+-$url_fix[ 1 ] = array( 'pkg'     => 'jfsutils',
+-'match'   => '^.*$', 
+-'replace' => "http://jfs.$sf/jfs_lr.html" );
++ array( 'pkg'     => 'fuse',
++        'match'   => '^.*$', 
++        'replace' => "http://$sf/projects/fuse/files" ),
+ 
+-$url_fix[ 2 ] = array( 'pkg'     => 'ntfs-3g_ntfsprogs',
+-'match'   => '^.*$', 
+-'replace' => 'http://www.tuxera.com/community/ntfs-3g-download' );
++ array( 'pkg'     => 'jfsutils',
++        'match'   => '^.*$', 
++        'replace' => "http://jfs.$sf/jfs_lr.html" ),
+ 
+-$url_fix[ 3 ] = array( 'pkg'     => 'gptfdisk',
+-'match'   => '^.*$', 
+-'replace' => "http://$sf/projects/gptfdisk/files/gptfdisk/" );
++ array( 'pkg'     => 'ntfs-3g_ntfsprogs',
++        'match'   => '^.*$', 
++        'replace' => 'http://www.tuxera.com/community/ntfs-3g-download' ),
+ 
+-$url_fix[ 4 ] = array( 'pkg'     => 'sshfs-fuse',
+-'match'   => '^.*$', 
+-'replace' => "http://$sf/projects/fuse/files/sshfs-fuse/" );
++ array( 'pkg'     => 'gptfdisk',
++        'match'   => '^.*$', 
++        'replace' => "http://$sf/projects/gptfdisk/files/gptfdisk/" ),
+ 
+-$url_fix[ 5 ] = array( 'pkg'     => 'reiserfsprogs',
+-'match'   => '^.*$', 
+-'replace' => "https://www.kernel.org/pub/linux/kernel/people/jeffm/reiserfsprogs/" );
++ array( 'pkg'     => 'sshfs-fuse',
++        'match'   => '^.*$', 
++        'replace' => "http://$sf/projects/fuse/files/sshfs-fuse/" ),
+ 
+-function find_max( $lines, $regex_match, $regex_replace )
+-{
+-$a = array();
+-//echo "regex_match=$regex_match; regex_replace=$regex_replace\n";     
+-foreach ( $lines as $line )
+-{
+-//echo "line=$line\n";     
+-if ( ! preg_match( $regex_match, $line ) ) continue; 
+-//echo "match\n";     
+-// Isolate the version and put in an array
+-$slice = preg_replace( $regex_replace, "$1", $line );
+-//echo "slice=$slice\n";     
++ array( 'pkg'     => 'reiserfsprogs',
++        'match'   => '^.*$', 
++        'replace' => "https://www.kernel.org/pub/linux/kernel/people/jeffm/reiserfsprogs/" ),
++);
+ 
+-if ( "x$slice" == "x$line" ) continue;  // Numbers and whitespace 
+-array_push( $a, $slice );     
+-}
+-// SORT_NATURAL requires php-5.4.0 or later
+-rsort( $a, SORT_NATURAL );  // Max version is at the top
+-return ( isset( $a[0] ) ) ? $a[0] : 0;
+-}
+-function find_even_max( $lines, $regex_match, $regex_replace )
+-{
+-$a = array();
+-foreach ( $lines as $line )
+-{
+-if ( ! preg_match( $regex_match, $line ) ) continue; 
+-
+-// Isolate the version and put in an array
+-$slice = preg_replace( $regex_replace, "$1", $line );
+-if ( $slice == $line ) continue; 
+-// Skip odd numbered minor versions
+-list( $major, $minor ) = explode( ".", $slice . ".0", 2 );
+-if ( $minor % 2 == 1 ) continue;
+-array_push( $a, $slice );     
+-}
+-// SORT_NATURAL requires php-5.4.0 or later
+-rsort( $a, SORT_NATURAL );  // Max version is at the top
+-return ( isset( $a[0] ) ) ? $a[0] : 0;
+-}
+-function http_get_file( $url )
+-{
+-exec( "curl -L -s -m30 $url", $dir );
+-//echo "printing url results";
+-//print_r($dir);
+-$s   = implode( "\n", $dir );
+-$dir = strip_tags( $s );
+-return explode( "\n", $dir );
+-}
+-function max_parent( $dirpath, $prefix )
+-{
+-// First, remove a directory
+-$dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
+-$position = strrpos( $dirpath, "/" );
+-$dirpath  = substr ( $dirpath, 0, $position );
+-$lines = http_get_file( $dirpath );
+-$regex_match   = "#${prefix}[\d\.]+/#";
+-$regex_replace = "#^.*(${prefix}[\d\.]+)/.*$#";
+-$max           = find_max( $lines, $regex_match, $regex_replace );
+-return "$dirpath/$max"; 
+-}
+ function get_packages( $package, $dirpath )
+ {
+-global $exceptions;
+   global $regex;
+   global $book_index;
+   global $url_fix;
+@@ -158,18 +79,10 @@
+      }
+   }
+ 
+-// Check for ftp
+-if ( preg_match( "/^ftp/", $dirpath ) ) 
+-{ 
+-exec( "echo 'ls -1' | ncftp $dirpath", $lines );
+-}
+-else // http
+-{
+-// Customize http directories as needed
+-$lines = http_get_file( $dirpath );
++  if ( preg_match( "/ftp/", $dirpath ) ) $dirpath .= "/";
++  $lines = http_get_file( "$dirpath" );
+ 
+  if ( ! is_array( $lines ) ) return $lines;
+ 
+@@ -240,121 +153,22 @@
+    return "/\D*(\d.*\d)\D*$/";
+ }
+ 
+-function get_current()
+-{
+-global $vers;
+-global $book;
+ 
+-$wget_file = "/home/bdubbs/public_html/blfs-book-xsl/wget-list";
++get_current();  // Get what is in the book (in include file)
+ 
+-$contents = file_get_contents( $wget_file );
+-$wget  = explode( "\n", $contents );
+-foreach ( $wget as $line )
+-{
+-if ( $line == "" ) continue;
+-if ( preg_match( "/patch$/", $line ) ) continue;     // Skip patches
+-$file =  basename( $line );
+-$url  =  dirname ( $line );
+-$file = preg_replace( "/\.tar\..z.*$/", "", $file ); // Remove .tar.?z*$
+-$file = preg_replace( "/\.tar$/",       "", $file ); // Remove .tar$
+-$file = preg_replace( "/\.gz$/",        "", $file ); // Remove .gz$
+-$file = preg_replace( "/\.orig$/",      "", $file ); // Remove .orig$
+-$file = preg_replace( "/\.src$/",       "", $file ); // Remove .src$
+-$file = preg_replace( "/\.tgz$/",       "", $file ); // Remove .tgz$
+-$pattern = get_pattern( $line );
+-
+-$version = preg_replace( $pattern, "$1", $file );   // Isolate version
+-$version = preg_replace( "/^-/", "", $version );    // Remove leading #-
+-$basename = strstr( $file, $version, true );
+-$basename = rtrim( $basename, "-" );
+-$index = $basename;
+-while ( isset( $book[ $index ] ) ) $index .= "1";
+-
+-$book[ $index ] = array( 'basename' => $basename,
+-'url'      => $url, 
+-'version'  => $version );
+-if ( preg_match( "/xfsprogs/", $line ) ) break;
+-}
+-}
+-function html()
+-{
+-global $CHAPTER;
+-global $book;
+-global $date;
+-global $vers;
+-$leftnav = file_get_contents( 'leftnav.html' );
+-$f = "<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
+-'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+-<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
+-<head>
+-<title>BLFS Chapter $CHAPTER Package Currency Check - $date</title>
+-<link rel='stylesheet' href='currency.css' type='text/css' />
+-</head>
+-<body>
+-$leftnav
+-<h1>BLFS Chapter $CHAPTER Package Currency Check</h1>
+-<h2>As of $date GMT</h2>
+-<table>
+-<tr><th>BLFS Package</th> <th>BLFS Version</th> <th>Latest</th> <th>Flag</th></tr>\n";
+-// Get the latest version of each package
+-foreach ( $vers as $pkg => $v )
+-{
+-$v    = $book[ $pkg ][ 'version' ];
+-$flag = ( $vers[ $pkg ] != $v ) ? "*" : "";
+-
+-$name = $pkg;
+-if ( $pkg == "gnupg1"     ) $name = 'gnupg2';
+-if ( $pkg == "Linux-PAM1" ) $name = 'Linux-PAM-docs';
+-if ( $pkg == "LVM2."      ) $name = 'LVM2';
+-$f .= "<tr><td>$name</td>";
+-$f .= "<td>$v</td>";
+-$f .= "<td>${vers[ $pkg ]}</td>";
+-$f .= "<td class='center'>$flag</td></tr>\n";
+-}
+-$f .= "</table>
+-</body>
+-</html>\n";
+-file_put_contents( "/home/bdubbs/public_html/chapter$CHAPTER.html", $f );
+-}
+-get_current();  // Get what is in the book
+-$start = false;
+ // Get latest version for each package 
+ foreach ( $book as $pkg => $data )
+ {
+    $book_index = $pkg; 
+ 
+-if ( $book_index == $START_PACKAGE ) $start = true;
+-if ( ! $start ) continue;
+    $base = $data[ 'basename' ];
+    $url  = $data[ 'url' ];
+    $bver = $data[ 'version' ];
+ 
+-echo "book index: $book_index  bver=$bver url=$url \n";
++echo "book index: $book_index $bver $url\n";
+    $v = get_packages( $base, $url );
+ 
+    $vers[ $book_index ] = $v;
+-// Stop at the end of the chapter 
+-if ( $book_index == $STOP_PACKAGE ) break; 
+ }
+ 
+ html();  // Write html output
+
+Index: scripts/blfs-include.php
+===================================================================
+--- scripts/blfs-include.php	(révision 15982)
++++ scripts/blfs-include.php	(révision 15983)
+@@ -44,9 +44,8 @@
+ 
+      // Isolate the version and put in an array
+      $slice = preg_replace( $regex_replace, "$1", $line );
++     if ( "x$slice" == "x$line" ) continue; 
+ 
+-if ( $slice == $line ) continue; 
+      array_push( $a, $slice );     
+   }
+ 
+@@ -66,7 +65,7 @@
+      // Isolate the version and put in an array
+      $slice = preg_replace( $regex_replace, "$1", $line );
+ 
+-if ( $slice == $line ) continue; 
++     if ( "x$slice" == "x$line" ) continue; 
+ 
+      // Skip odd numbered minor versions
+      list( $major, $minor ) = explode( ".", $slice . ".0", 2 );
+
