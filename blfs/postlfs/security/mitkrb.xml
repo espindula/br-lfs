@@ -28,7 +28,7 @@
     applications kerberizées pour fonctionner avec des serveurs ou des services 
     qui supportent Kerberos, ce qui permet des connexions isolées et une
     communication chiffrée sur des réseaux internes ou sur Internet.</para>
-    &lfs77_checked;
+    &lfs77_checked; &gcc5_checked;
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
@@ -81,12 +81,7 @@
 		commandes suivantes&nbsp;:
     </para>
 <screen>
-<userinput>cd src &amp;&amp;
-sed -e "s@python2.5/Python.h@&amp; python2.7/Python.h@g"     -e "s@-lpython2.5]@&amp;,n  AC_CHECK_LIB(python2.7,main,[PYTHON_LIB=-lpython2.7])@g"     -i configure.in &amp;&amp;
-sed -e 's@^u}@^u cols 300}@'     -i tests/dejagnu/config/default.exp &amp;&amp;
-autoconf &amp;&amp;
-./configure --prefix=/usr                        --sysconfdir=/etc                    --localstatedir=/var/lib             --with-system-et                     --with-system-ss                     --with-system-verto=no               --enable-dns-for-realm &amp;&amp;
-make</userinput>
+<userinput>gpg2 --verify krb5-&mitkrb-version;.tar.gz.asc krb5-&mitkrb-version;.tar.gz</userinput>
 </screen>
     <para>
       Pour testez la construction, tapez: <command>make check</command>. Vous devez au moins avoir
@@ -97,22 +92,9 @@ make</userinput>
       après l'installation.
 </para>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
-<screen role="root">
-<userinput>make install &amp;&amp;
-for LIBRARY in gssapi_krb5 gssrpc k5crypto kadm5clnt kadm5srv                kdb5 kdb_ldap krad krb5 krb5support verto ; do
-    chmod -v 755 /usr/lib/lib$LIBRARY.so
-done          &amp;&amp;
-unset LIBRARY &amp;&amp;
-mv -v /usr/lib/libkrb5.so.3*        /lib &amp;&amp;
-mv -v /usr/lib/libk5crypto.so.3*    /lib &amp;&amp;
-mv -v /usr/lib/libkrb5support.so.0* /lib &amp;&amp;
-ln -v -sf ../../lib/libkrb5.so.3.3        /usr/lib/libkrb5.so        &amp;&amp;
-ln -v -sf ../../lib/libk5crypto.so.3.1    /usr/lib/libk5crypto.so    &amp;&amp;
-ln -v -sf ../../lib/libkrb5support.so.0.1 /usr/lib/libkrb5support.so &amp;&amp;
-mv -v /usr/bin/ksu /bin &amp;&amp;
-chmod -v 755 /bin/ksu   &amp;&amp;
-install -v -dm755 /usr/share/doc/krb5-&mitkrb-version; &amp;&amp;
-cp -vfr ../doc/*  /usr/share/doc/krb5-&mitkrb-version;</userinput>
+<screen>
+<literal>gpg: Signature made Fri May  8 23:40:13 2015 utc using RSA key ID 0055C305
+gpg: Can't check signature: No public key</literal>
 </screen>
   </sect2>
   <sect2 role="commands">
@@ -187,6 +169,65 @@ cp -vfr ../doc/*  /usr/share/doc/krb5-&mitkrb-version;</userinput>
         <para>Créez le fichier de configuration Kerberos avec les 
         commandes suivantes, que vous lancerez en tant qu'utilisateur
         <systemitem class="username">root</systemitem>&nbsp;:</para>
+<screen>
+<userinput>gpg2 --keyserver pgp.mit.edu --recv-keys 0055C305</userinput>
+</screen>
+        <para>Vous devrez mettre votre nom de domaine et d'hôte à la place 
+	  des occurrences des noms <replaceable>&lt;belgarath&gt;</replaceable> et
+        de <replaceable>&lt;lfs.org&gt;</replaceable>.</para>
+        <para><option>default_realm</option> devrait être le nom de votre
+        domaine, modifié en MAJUSCULES. Ce n'est pas nécessaire mais tant
+        <application>Heimdal</application> que MIT le recommandent.</para>
+        <para><option>encrypt = true</option> fournit le chiffrement de
+        tout le trafic entre les clients et les serveurs kerberizés. Ce
+        n'est pas nécessaire et vous pouvez le laisser désactivé. Si vous le 
+        laissez désactivé, vous pouvez plutôt chiffrer tout le trafic du client vers 
+        le serveur en utilisant un paramètre sur le client.</para>
+        <para>Les paramètres <option>[realms]</option> disent aux clients où
+        chercher les services d'authentication KDC.</para>
+        <para>La section <option>[domain_realm]</option> associe un nom de
+        domaine à un domaine.</para>
+        <para>Créez la base de données KDC&nbsp;:</para>
+<screen>
+<userinput>cd src &amp;&amp;
+sed -e "s@python2.5/Python.h@&amp; python2.7/Python.h@g" \
+    -e "s@-lpython2.5]@&amp;,\n  AC_CHECK_LIB(python2.7,main,[PYTHON_LIB=-lpython2.7])@g" \
+    -i configure.in &amp;&amp;
+sed -e 's@\^u}@^u cols 300}@' \
+    -i tests/dejagnu/config/default.exp &amp;&amp;
+autoconf &amp;&amp;
+./configure --prefix=/usr            \
+            --sysconfdir=/etc        \
+            --localstatedir=/var/lib \
+            --with-system-et         \
+            --with-system-ss         \
+            --with-system-verto=no   \
+            --enable-dns-for-realm &amp;&amp;
+make</userinput>
+</screen>
+        <para>Maintenant vous devriez peupler la base de données avec des utilisateurs clés 
+        (utilisateurs). Utilisez pour l'instant votre identifiant normal ou
+        <systemitem class="username">root</systemitem>.</para>
+<screen role="root">
+<userinput>make install &amp;&amp;
+for LIBRARY in gssapi_krb5 gssrpc k5crypto kadm5clnt kadm5srv \
+               kdb5 kdb_ldap krad krb5 krb5support verto ; do
+    chmod -v 755 /usr/lib/lib$LIBRARY.so
+done          &amp;&amp;
+unset LIBRARY &amp;&amp;
+mv -v /usr/lib/libkrb5.so.3*        /lib &amp;&amp;
+mv -v /usr/lib/libk5crypto.so.3*    /lib &amp;&amp;
+mv -v /usr/lib/libkrb5support.so.0* /lib &amp;&amp;
+ln -v -sf ../../lib/libkrb5.so.3.3        /usr/lib/libkrb5.so        &amp;&amp;
+ln -v -sf ../../lib/libk5crypto.so.3.1    /usr/lib/libk5crypto.so    &amp;&amp;
+ln -v -sf ../../lib/libkrb5support.so.0.1 /usr/lib/libkrb5support.so &amp;&amp;
+mv -v /usr/bin/ksu /bin &amp;&amp;
+chmod -v 755 /bin/ksu   &amp;&amp;
+install -v -dm755 /usr/share/doc/krb5-&mitkrb-version; &amp;&amp;
+cp -vfr ../doc/*  /usr/share/doc/krb5-&mitkrb-version;</userinput>
+</screen>
+        <para>Le serveur KDC et les machines qui font fonctionner des démons
+        kerberizés doivent avoir installée une clé d'hôte&nbsp;:</para>
 <screen role="root">
 <userinput>cat &gt; /etc/krb5.conf &lt;&lt; "EOF"
 <literal># Begin /etc/krb5.conf
@@ -208,42 +249,10 @@ cp -vfr ../doc/*  /usr/share/doc/krb5-&mitkrb-version;</userinput>
 # End /etc/krb5.conf</literal>
 EOF</userinput>
 </screen>
-        <para>Vous devrez mettre votre nom de domaine et d'hôte à la place 
-	  des occurrences des noms <replaceable>&lt;belgarath&gt;</replaceable> et
-        de <replaceable>&lt;lfs.org&gt;</replaceable>.</para>
-        <para><option>default_realm</option> devrait être le nom de votre
-        domaine, modifié en MAJUSCULES. Ce n'est pas nécessaire mais tant
-        <application>Heimdal</application> que MIT le recommandent.</para>
-        <para><option>encrypt = true</option> fournit le chiffrement de
-        tout le trafic entre les clients et les serveurs kerberizés. Ce
-        n'est pas nécessaire et vous pouvez le laisser désactivé. Si vous le 
-        laissez désactivé, vous pouvez plutôt chiffrer tout le trafic du client vers 
-        le serveur en utilisant un paramètre sur le client.</para>
-        <para>Les paramètres <option>[realms]</option> disent aux clients où
-        chercher les services d'authentication KDC.</para>
-        <para>La section <option>[domain_realm]</option> associe un nom de
-        domaine à un domaine.</para>
-        <para>Créez la base de données KDC&nbsp;:</para>
-<screen role="root">
-<userinput>kdb5_util create -r <replaceable>&lt;LFS.ORG&gt;</replaceable> -s</userinput>
-</screen>
-        <para>Maintenant vous devriez peupler la base de données avec des utilisateurs clés 
-        (utilisateurs). Utilisez pour l'instant votre identifiant normal ou
-        <systemitem class="username">root</systemitem>.</para>
-<screen role="root">
-<userinput>kadmin.local
-<prompt>kadmin.local:</prompt> add_policy dict-only
-<prompt>kadmin.local:</prompt> addprinc -policy dict-only <replaceable>&lt;loginname&gt;</replaceable></userinput>
-</screen>
-        <para>Le serveur KDC et les machines qui font fonctionner des démons
-        kerberizés doivent avoir installée une clé d'hôte&nbsp;:</para>
-<screen role="root">
-<userinput><prompt>kadmin.local:</prompt> addprinc -randkey host/<replaceable>&lt;belgarath.lfs.org&gt;</replaceable></userinput>
-</screen>
         <para>Après avoir choisi les paramètres par défaut quand on vous y invite,
         vous devrez exporter les données vers un fichier de table de clé&nbsp;:</para>
 <screen role="root">
-<userinput><prompt>kadmin.local:</prompt> ktadd host/<replaceable>&lt;belgarath.lfs.org&gt;</replaceable></userinput>
+<userinput>kdb5_util create -r <replaceable>&lt;LFS.ORG&gt;</replaceable> -s</userinput>
 </screen>
         <para>Cela devrait créer un fichier dans
         <filename class="directory">/etc</filename> nommé
@@ -257,25 +266,25 @@ EOF</userinput>
         l'invite du shell. Démarrez à la main le démon KDC, simplement pour
         tester l'installation&nbsp;:</para>
 <screen role="root">
-<userinput>/usr/sbin/krb5kdc</userinput>
+<userinput>kadmin.local
+<prompt>kadmin.local:</prompt> add_policy dict-only
+<prompt>kadmin.local:</prompt> addprinc -policy dict-only <replaceable>&lt;loginname&gt;</replaceable></userinput>
 </screen>
         <para>Essayez d'obtenir un ticket avec la commande suivante&nbsp;:</para>
-<screen>
-<userinput>kinit <replaceable>&lt;loginname&gt;</replaceable></userinput>
+<screen role="root">
+<userinput><prompt>kadmin.local:</prompt> addprinc -randkey host/<replaceable>&lt;belgarath.lfs.org&gt;</replaceable></userinput>
 </screen>
         <para>On vous demandera le mot de passe que vous avez créé. Après avoir
         obtenu votre ticket, vous pouvez le lister avec la commande 
         suivante&nbsp;:</para>
-<screen>
-<userinput>klist</userinput>
+<screen role="root">
+<userinput><prompt>kadmin.local:</prompt> ktadd host/<replaceable>&lt;belgarath.lfs.org&gt;</replaceable></userinput>
 </screen>
         <para>Des informations sur le ticket devrait apparaître à l'écran.</para>
         <para>Pour tester le 
         fonctionnement du fichier de table de clé, exécutez la commande suivante&nbsp;:</para>
-<screen>
-<userinput>ktutil
-<prompt>ktutil:</prompt> rkt /etc/krb5.keytab
-<prompt>ktutil:</prompt> l</userinput>
+<screen role="root">
+<userinput>/usr/sbin/krb5kdc</userinput>
 </screen>
         <para>Cela devrait renvoyer une liste d'utilisateurs clés hôtes, 
         ainsi que les méthodes de chiffrement utilisées pour accéder à
@@ -303,8 +312,8 @@ EOF</userinput>
       <indexterm zone="mitkrb mitkrb-init">
         <primary sortas="f-krb5">krb5</primary>
       </indexterm>
-<screen role="root">
-<userinput>make install-krb5</userinput>
+<screen>
+<userinput>kinit <replaceable>&lt;loginname&gt;</replaceable></userinput>
 </screen>
     </sect3>
   </sect2>
