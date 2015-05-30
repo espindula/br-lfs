@@ -1,0 +1,102 @@
+Révision 16014
+
+fichiers modifiés :
+   x/installing/x7driver-intel.xml
+   introduction/welcome/changelog.xml
+
+Log :
+Work around segfault in the Xorg intel driver with gcc-5 and a 4.0 kernel by reinstating UXA and adding a conf file to force that to be used. Tagged as gcc5-checked because it now works in this form, but with misgivings because it clearly does nt work _correctly_. This is a first-stage fix for #6526, but not a final fix.
+
+Le robot a traité 9 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 16013)
++++ introduction/welcome/changelog.xml	(révision 16014)
+@@ -48,6 +48,12 @@
+       <para>May 22st, 2015</para>
+       <itemizedlist>
+         <listitem>
++          <para>[ken] - Use UXA acceleration for the intel Xorg driver as
++          a temporary measure, until the gcc-5 and kernel-4.0 problem is
++          better understood.  This is a workaround for
++          <ulink url="&blfs-ticket-root;6526">#6526</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[fernando] - GnuPG 2.1.3 and 4: openpgp tests might fail. Fixes
+           <ulink url="&blfs-ticket-root;6479">#6479</ulink>.</para>
+         </listitem>
+
+Index: x/installing/x7driver-intel.xml
+===================================================================
+--- x/installing/x7driver-intel.xml	(révision 16013)
++++ x/installing/x7driver-intel.xml	(révision 16014)
+@@ -10,7 +10,9 @@
+   <!ENTITY xorg-intel-driver-download-ftp  "&xorg-download-ftp;/driver/xf86-video-intel-&xorg-intel-driver-version;.tar.bz2">
+   <!ENTITY xorg-intel-driver-md5sum        "fa196a66e52c0c624fe5d350af7a5e7b">
+   <!ENTITY xorg-intel-driver-size          "2.2 MB">
++<!-- commented, remeasured for re-enabling uxa as well as sna
+   <!ENTITY xorg-intel-driver-time          "0.6 SBU">
+ ]>
+ 
+@@ -32,7 +34,7 @@
+         and HD graphics processors (SandyBridge, IvyBridge and Haswell).
+       </para>
+ 
+-&lfs77_checked; &gcc5_built;
++      &lfs77_checked; &gcc5_checked;
+ 
+       <note><para>This is a development version of the Intel driver 
+       which is needed to work properly with the latest hardware.</para></note>
+@@ -116,7 +118,7 @@
+         commands:
+       </para>
+ 
+-<screen><userinput>./configure $XORG_CONFIG --enable-kms-only &amp;&amp;
++<screen><userinput>./configure $XORG_CONFIG --enable-kms-only --enable-uxa &amp;&amp;
+ make</userinput></screen>
+ 
+       <para>
+@@ -131,6 +133,36 @@
+ 
+     </sect3>
+ 
++    <sect3>
++      <title>Working around problems with the Intel driver</title>
++      <para>
++        The SandyBridge New Acceleration (SNA) code is intended to replace the
++        old UXA (UMA Acceleration Architecture), but it is a large body of code
++        and sometimes causes problems. In particular, when a system is built
++        with gcc-5 and kernel headers from linux-4.0, trying to run this driver
++        using SNA will cause a segfault on some, or perhaps all, of the
++        supported chips iff a 4.0 or newer kernel is used (a 3.19.0 kernel, also
++        built with gcc-5, worked ok). To work around this, as well as enabling
++        support for UXA it is necessary to force it to be used by creating a
++        configuration file.
++       </para>
++      <para>
++        If this problem applies to you, create the following file as
++        the <systemitem class="username">root</systemitem> user:
++      </para>
++<screen role="root"><userinput>cat &gt;&gt; /etc/X11/xorg.conf.d/20-intel.conf &lt;&lt; "EOF"
++<literal>Section "Device"
++        Identifier "Intel Graphics"
++        Driver "intel"
++        Option "AccelMethod" "uxa"
++EndSection</literal>
++EOF</userinput></screen>
++    </sect3>
+     <sect3 role="commands">
+       <title>Command Explanations</title>
+ 
+@@ -139,6 +171,11 @@
+         (User Mode Setting) code.
+       </para>
+ 
++      <para>
++        <parameter>--enable-uxa</parameter>: This switch allows the old UXA code
++        to be compiled in addition to the default SNA.
++      </para>
+     </sect3>
+ 
+     <sect3 role="content">
+
