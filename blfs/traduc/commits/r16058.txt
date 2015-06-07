@@ -1,0 +1,165 @@
+Révision 16058
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   postlfs/security/linux-pam.xml
+   postlfs/security/shadow.xml
+
+Log :
+Move generic PAM configuration from shadow to the PAM section
+
+Le robot a traité 20 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 16057)
++++ introduction/welcome/changelog.xml	(révision 16058)
+@@ -45,6 +45,16 @@
+ -->
+ 
+     <listitem>
++      <para>June 1st, 2015</para>
++      <itemizedlist>
++        <listitem>
++          <para>[bdubbs] - Move generic PAM configuration from shadow
++          to the PAM section.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>May 30th, 2015</para>
+       <itemizedlist>
+         <listitem>
+
+Index: postlfs/security/linux-pam.xml
+===================================================================
+--- postlfs/security/linux-pam.xml	(révision 16057)
++++ postlfs/security/linux-pam.xml	(révision 16058)
+@@ -270,6 +270,74 @@
+ 
+ # End /etc/pam.d/other</literal></screen>
+ 
++      <para>Now set up some generic files.  As root:</para>
++<screen role="root"><userinput>cat &gt; /etc/pam.d/system-account &lt;&lt; "EOF"
++<literal># Begin /etc/pam.d/system-account
++account   required    pam_unix.so
++# End /etc/pam.d/system-account</literal>
++EOF
++cat &gt; /etc/pam.d/system-auth &lt;&lt; "EOF"
++<literal># Begin /etc/pam.d/system-auth
++auth      required    pam_unix.so
++# End /etc/pam.d/system-auth</literal>
++EOF
++cat &gt; /etc/pam.d/system-session &lt;&lt; "EOF"
++<literal># Begin /etc/pam.d/system-session
++session   required    pam_unix.so
++# End /etc/pam.d/system-session</literal>
++EOF</userinput></screen>
++    <para>The remaining generic file depends on wheather <xref linkend="cracklib"/>
++    is installed.  If it is installed, use:</para>
++<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
++<literal># Begin /etc/pam.d/system-password
++# check new passwords for strength (man pam_cracklib)
++password  required    pam_cracklib.so   type=Linux retry=3 difok=5 \
++                                        difignore=23 minlen=9 dcredit=1 \
++                                        ucredit=1 lcredit=1 ocredit=1 \
++                                        dictpath=/lib/cracklib/pw_dict
++# use sha512 hash for encryption, use shadow, and use the
++# authentication token (chosen password) set by pam_cracklib
++# above (or any previous modules)
++password  required    pam_unix.so       sha512 shadow use_authtok
++# End /etc/pam.d/system-password</literal>
++EOF</userinput></screen>
++   
++        <note>
++          <para>
++            In its default configuration, pam_cracklib will
++            allow multiple case passwords as short as 6 characters, even with
++            the <parameter>minlen</parameter> value set to 11. You should review
++            the pam_cracklib(8) man page and determine if these default values
++            are acceptable for the security of your system.
++          </para>
++        </note>
++   <para>If <xref linkend="cracklib"/> is <emphasis>NOT</emphasis> installed, 
++   use:</para>
++<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
++<literal># Begin /etc/pam.d/system-password
++# use sha512 hash for encryption, use shadow, and try to use any previously
++# defined authentication token (chosen password) set by any prior module
++password  required    pam_unix.so       sha512 shadow try_first_pass
++# End /etc/pam.d/system-password</literal>
++EOF</userinput></screen>
+       <para>
+         The <application>PAM</application> man page (<command>man
+         pam</command>) provides a good starting point for descriptions
+
+Index: postlfs/security/shadow.xml
+===================================================================
+--- postlfs/security/shadow.xml	(révision 16057)
++++ postlfs/security/shadow.xml	(révision 16058)
+@@ -336,86 +336,6 @@
+       </sect4>
+ 
+       <sect4>
+-<title>'system-account'</title>
+-<screen role="root"><userinput>cat &gt; /etc/pam.d/system-account &lt;&lt; "EOF"
+-<literal># Begin /etc/pam.d/system-account
+-account   required    pam_unix.so
+-# End /etc/pam.d/system-account</literal>
+-EOF</userinput></screen>
+-</sect4>
+-<sect4>
+-<title>'system-auth'</title>
+-<screen role="root"><userinput>cat &gt; /etc/pam.d/system-auth &lt;&lt; "EOF"
+-<literal># Begin /etc/pam.d/system-auth
+-auth      required    pam_unix.so
+-# End /etc/pam.d/system-auth</literal>
+-EOF</userinput></screen>
+-</sect4>
+-<sect4>
+-<title>'system-passwd' (with cracklib)</title>
+-<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+-<literal># Begin /etc/pam.d/system-password
+-# check new passwords for strength (man pam_cracklib)
+-password  required    pam_cracklib.so   type=Linux retry=3 difok=5 \
+-difignore=23 minlen=9 dcredit=1 \
+-ucredit=1 lcredit=1 ocredit=1 \
+-dictpath=/lib/cracklib/pw_dict
+-# use sha512 hash for encryption, use shadow, and use the
+-# authentication token (chosen password) set by pam_cracklib
+-# above (or any previous modules)
+-password  required    pam_unix.so       sha512 shadow use_authtok
+-# End /etc/pam.d/system-password</literal>
+-EOF</userinput></screen>
+-<note>
+-<para>
+-In its default configuration, owing to credits, pam_cracklib will
+-allow multiple case passwords as short as 6 characters, even with
+-the <parameter>minlen</parameter> value set to 11. You should review
+-the pam_cracklib(8) man page and determine if these default values
+-are acceptable for the security of your system.
+-</para>
+-</note>
+-</sect4>
+-<sect4>
+-<title>'system-passwd' (without cracklib)</title>
+-<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+-<literal># Begin /etc/pam.d/system-password
+-# use sha512 hash for encryption, use shadow, and try to use any previously
+-# defined authentication token (chosen password) set by any prior module
+-password  required    pam_unix.so       sha512 shadow try_first_pass
+-# End /etc/pam.d/system-password</literal>
+-EOF</userinput></screen>
+-</sect4>
+-<sect4>
+-<title>'system-session'</title>
+-<screen role="root"><userinput>cat &gt; /etc/pam.d/system-session &lt;&lt; "EOF"
+-<literal># Begin /etc/pam.d/system-session
+-session   required    pam_unix.so
+-# End /etc/pam.d/system-session</literal>
+-EOF</userinput></screen>
+-</sect4>
+-<sect4>
+         <title>'login'</title>
+ 
+ <screen role="root"><userinput>cat &gt; /etc/pam.d/login &lt;&lt; "EOF"
+

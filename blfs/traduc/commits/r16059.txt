@@ -1,0 +1,95 @@
+Révision 16059
+
+fichiers modifiés :
+   postlfs/security/linux-pam.xml
+   postlfs/security/shadow.xml
+
+Log :
+Move 'other' pam configuration from shadow to pam
+
+Le robot a traité 13 % du commit anglais
+Index: postlfs/security/linux-pam.xml
+===================================================================
+--- postlfs/security/linux-pam.xml	(révision 16058)
++++ postlfs/security/linux-pam.xml	(révision 16059)
+@@ -195,7 +195,7 @@
+       <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+-<screen role="root"><userinput>rm -rfv /etc/pam.d</userinput></screen>
++<screen role="root"><userinput>rm -fv /etc/pam.d/*</userinput></screen>
+ 
+     <para>
+       Now, as the <systemitem class="username">root</systemitem>
+@@ -337,7 +337,27 @@
+ 
+ # End /etc/pam.d/system-password</literal>
+ EOF</userinput></screen>
++  
++      <para>Now add a restrictive <filename>/etc/pam.d/other</filename>
++      configuration file.  With this file, programs that are PAM aware will not
++      run unless a configuration file specifically for that application is
++      created.</para>
+ 
++<screen role="root"><userinput>cat &gt; /etc/pam.d/other &lt;&lt; "EOF"
++<literal># Begin /etc/pam.d/other
++auth        required        pam_warn.so
++auth        required        pam_deny.so
++account     required        pam_warn.so
++account     required        pam_deny.so
++password    required        pam_warn.so
++password    required        pam_deny.so
++session     required        pam_warn.so
++session     required        pam_deny.so
++# End /etc/pam.d/other</literal>
++EOF</userinput></screen>
+       <para>
+         The <application>PAM</application> man page (<command>man
+         pam</command>) provides a good starting point for descriptions
+
+Index: postlfs/security/shadow.xml
+===================================================================
+--- postlfs/security/shadow.xml	(révision 16058)
++++ postlfs/security/shadow.xml	(révision 16059)
+@@ -477,34 +477,6 @@
+         </warning>
+       </sect4>
+ 
+-<sect4>
+-<title>Other</title>
+-<para>
+-Currently, <filename>/etc/pam.d/other</filename> is configured to
+-allow anyone with an account on the machine to use PAM-aware programs
+-without a configuration file for that program. After testing
+-<application>Linux-PAM</application> for proper configuration, install
+-a more restrictive <filename>other</filename> file so that
+-program-specific configuration files are required:
+-</para>
+-<screen role="root"><userinput>cat &gt; /etc/pam.d/other &lt;&lt; "EOF"
+-<literal># Begin /etc/pam.d/other
+-auth        required        pam_warn.so
+-auth        required        pam_deny.so
+-account     required        pam_warn.so
+-account     required        pam_deny.so
+-password    required        pam_warn.so
+-password    required        pam_deny.so
+-session     required        pam_warn.so
+-session     required        pam_deny.so
+-# End /etc/pam.d/other</literal>
+-EOF</userinput></screen>
+-</sect4>
+       <sect4 id="pam-access">
+         <title>Configuring Login Access</title>
+ 
+@@ -541,8 +513,15 @@
+         </indexterm>
+ 
+ <screen role="root"><userinput>[ -f /etc/limits ] &amp;&amp; mv -v /etc/limits{,.NOUSE}</userinput></screen>
++        <caution><para>Be sure to test the login capabilities of the system
++        before logging out.  Errors in the configuration can casue a permanent
++        lockout requiring a boot from an external source to correct the
++        problem.</para></caution>
+       </sect4>
+     </sect3>
+   </sect2>
+
