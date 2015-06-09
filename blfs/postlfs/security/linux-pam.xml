@@ -197,6 +197,79 @@ session         required        pam_unix.so
 password        required        pam_unix.so     nullok
 # End /etc/pam.d/other</literal>
 </screen>
+      <para>Maintenant, initialisez certains fichiers génériques. En root:</para>
+<screen role="root"><userinput>cat &gt; /etc/pam.d/system-account &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-account
+account   required    pam_unix.so
+# End /etc/pam.d/system-account</literal>
+EOF
+cat &gt; /etc/pam.d/system-auth &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-auth
+auth      required    pam_unix.so
+# End /etc/pam.d/system-auth</literal>
+EOF
+cat &gt; /etc/pam.d/system-session &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-session
+session   required    pam_unix.so
+# End /etc/pam.d/system-session</literal>
+EOF</userinput></screen>
+    <para>Le fichier générique suivant dépend de l'installation de <xref linkend="cracklib"/>. S'il est installé, utilisez:
+</para>
+<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-password
+# check new passwords for strength (man pam_cracklib)
+password  required    pam_cracklib.so   type=Linux retry=3 difok=5 \
+                                        difignore=23 minlen=9 dcredit=1 \
+                                        ucredit=1 lcredit=1 ocredit=1 \
+                                        dictpath=/lib/cracklib/pw_dict
+# use sha512 hash for encryption, use shadow, and use the
+# authentication token (chosen password) set by pam_cracklib
+# use sha512 hash for encryption, use shadow, and use the
+# authentication token (chosen password) set by pam_cracklib
+# above (or any previous modules)
+password  required    pam_unix.so       sha512 shadow use_authtok
+# End /etc/pam.d/system-password</literal>
+EOF</userinput></screen>
+
+        <note>
+          <para>
+            Dans la configuration par défaut, pam_cracklib permettra les mots de passe
+            avec une case multiple d'au moins 6 caractères, avec la valeur
+            <parameter>minlen</parameter> initialisée à 11. Vous devez revoir la page
+            de man pam_cracklib(8) et déterminer si ces valeurs par défaut sont acceptable pour la
+            sécurité de votre système.
+          </para>
+        </note>
+   <para>Si <xref linkend="cracklib"/> n'est <emphasis>PAS</emphasis> installé,
+   utilisez:</para>
+<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/system-password
+# use sha512 hash for encryption, use shadow, and try to use any previously
+# defined authentication token (chosen password) set by any prior module
+password  required    pam_unix.so       sha512 shadow try_first_pass
+# End /etc/pam.d/system-password</literal>
+EOF</userinput></screen>
+
+
+      <para>Maintenant ajoutez un fichier de configuration <filename>/etc/pam.d/other</filename>
+      restrictif. Avec ce fichier, les programmes qui ne sont pas sous PAM ne pourront pas se lancer
+      sans qu'un fichier de configration spécifique pour l'application ne soit créé.
+      </para>
+
+<screen role="root"><userinput>cat &gt; /etc/pam.d/other &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/other
+auth        required        pam_warn.so
+auth        required        pam_deny.so
+account     required        pam_warn.so
+account     required        pam_deny.so
+password    required        pam_warn.so
+password    required        pam_deny.so
+session     required        pam_warn.so
+session     required        pam_deny.so
+# End /etc/pam.d/other</literal>
+EOF</userinput></screen>
+
+
       <para>La page de man de <application>PAM</application>
       (<command>man pam</command>) offre un bon point de départ pour  des
       descriptions des champs et des entrées autorisées. Le <ulink
