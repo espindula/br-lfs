@@ -122,19 +122,11 @@
 
   <sect2 role="qt5-prefix">
     <title>Initialisation du préfixe d'installation</title>
-    <bridgehead renderas="sect3">Installation dans /usr</bridgehead>
-    <para>
-      Si vous voulez installer <application>Qt5</application>
-      dans <filename class="directory">/usr</filename>, initialisez la variable
-      d'environnement suivante:
-    </para>
-<screen><userinput>export QT5PREFIX=/usr</userinput></screen>
     <bridgehead renderas="sect3">Installation dans /opt/qt5</bridgehead>
     <para>
-      Si vous voulez installer <application>Qt5</application>
-      dans un répertoire autre que <filename
-      class="directory">/usr</filename>, par exemple
-      <filename class="directory">/opt/qt5</filename>, initialisez la varaiable
+      Les éditeurs de BLFS recommandent d'installer <application>Qt5</application>
+      dans un répertoire autre que <filename class="directory">/usr</filename>, par exemple
+       <filename class="directory">/opt/qt5</filename>. Pour cela initialisez la variable
       d'environnement suivante:
     </para>
 <screen><userinput>export QT5PREFIX=/opt/qt5</userinput></screen>
@@ -162,14 +154,6 @@ ln -sfnv qt-&qt5-version; /opt/qt5</userinput></screen>
 
  <sect2 role="installation">
     <title>Installation de Qt5</title>
-    <caution>
-      <para>
-        Si vous n'installez pas certaine des dépendances recommandées, examinez
-        la sortie de <command>./configure --help</command> pour vérifier comment
-	les désactiver ou utiliser les versions internes livrées avec le paquet
-	des sources.
-      </para>
-     </caution>
       <warning>
      <para>
        Si <application>Qt5</application> doit être réinstallé dans le même répertoire
@@ -181,6 +165,41 @@ ln -sfnv qt-&qt5-version; /opt/qt5</userinput></screen>
       <application>Qt5</application> qui ne devraient pas être utilisées pendant
       le processus d'installation.</para>
       </warning>
+    <caution>
+      <para>
+        Si vous n'installez pas certaine des dépendances recommandées, examinez
+        la sortie de <command>./configure --help</command> pour vérifier comment
+	les désactiver ou utiliser les versions internes livrées avec le paquet
+	des sources.
+      </para>
+     </caution>
+    <note>
+      <para>Le temps et l'espace de construction requis pour tout
+      <application>Qt5</application> est considérable. Les instructions
+      ci-dessous ne construisent pas les tutoriels et les exemples. La
+      suppression des lignes <parameter>-nomake</parameter> créera une
+      construction complète.</para>
+    </note>
+    <note>
+      <para>
+        Les éditeurs de BLFS ne reocmmandent pas d'installer <application>Qt5</application>
+        dans la hiérarchie /usr car il devient difficile de trouver des composants et de mettre à jour
+        vers une nouvelle version. Si vous voulez installer
+        <application>Qt5</application> dans /usr, les répertoires ont besoin d'être spécifiés explicitement.
+        Dans ce cas, initialisez QT5PREFIX=/usr et ajoutez
+        la suite aux arguments de configuration:</para>
+        <screen><userinput>-bindir         /usr/bin/qt5                \
+-plugindir      /usr/lib/qt5/plugins        \
+-importdir      /usr/lib/qt5/imports        \
+-headerdir      /usr/include/qt5            \
+-datadir        /usr/share/qt5              \
+-docdir         /usr/share/doc/qt5          \
+-translationdir /usr/share/qt5/translations \
+-demosdir       /usr/share/doc/qt5/demos    \
+-examplesdir    /usr/share/doc/qt5/examples </userinput></screen>
+    </note>
+<para>
+
    <para>
       Installez <application>Qt5</application> en lançant les commandes suivantes
     </para>
@@ -193,21 +212,22 @@ make</userinput>
       Ce paquet n'a pas de suite de tests.
     </para>
     <para>
-      Enlevez les références au répertoire de construction des fichiers  <filename class="extension">.pc</filename>
-      en lançant la commande suivante:
+            Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :
     </para>
 <screen>
 <userinput>find . -name "*.pc" -exec perl -pi -e "s, -L$PWD/?S+,,g" {} ;</userinput>
 </screen>
     <para>
-      Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :
+Enlevez les références au répertoire de construction des fichiers  <filename class="extension">.pc</filename>
+      en lançant la commande suivante:
     </para>
 <screen role="root">
 <userinput>make install</userinput>
 </screen>
     <para>
-      Enlevez les références au répertoire de construction des fichiers installés
-      en lançant la commande suivante en tant qu'utilisateur
+      Effacez les références au répertoire d'installation dans les fichiers de dépendances
+      de bibliothèques installées (prl)
+      en lançant les commandes suivantes en tant qu'utilisateur
       <systemitem class="username">root</systemitem>:
     </para>
 <screen role="root">
@@ -215,10 +235,12 @@ make</userinput>
 find /usr/lib/lib{qgsttools_p,Qt5*}.prl -exec sed -i -r      '/^QMAKE_PRL_BUILD_DIR/d;s/(QMAKE_PRL_LIBS =).*/1/' {} ;</userinput>
 </screen>
     <para>
-      Installez les images et créez les entrées de menu pour les
-      applications installées. Soyez certain que la variable <envar>QT5PREFIX</envar>
-      est définie dans l'environnement root et en tant qu'utilisateur
-      <systemitem class="username">root</systemitem> :
+        Installez les images et créez les entrées
+        de menu pour les applications installées. La variable <envar>QT5BINDIR</envar> est utilisée ici
+        pour pointer le répertoire des programmes exécutables. Si vous avez modifiez le bindir,
+        <envar>QT5BINDIR</envar> devra être modifié. Soyez certain que la variable
+        <envar>QT5BINDIR</envar> est définie dans l'environnement root et en tant
+        qu'utilisateur <systemitem class="username">root</systemitem> :
     </para>
 <screen role="root">
 <userinput>install -v -dm755 /usr/share/pixmaps/                  &amp;&amp;
@@ -276,6 +298,14 @@ Type=Application
 Categories=Qt;Development;Debugger;</literal>
 EOF</userinput>
 </screen>
+    <para>Certains paquets comme <xref linkend='vlc'/> cherche certains exécutables avec le suffix -qt4.
+    Lancez la commande suivant en tant qu'utilisateur root pour créer les liens symboliques nécessaires:
+    </para>
+<screen role="root"><userinput>for file in moc uic rcc qmake lconvert lrelease lupdate; do
+  ln -sfrvn $QT4BINDIR/$file /usr/bin/$file-qt4
+done</userinput></screen>
+
+
   </sect2>
   <sect2 role="commands">
     <title>Explications des commandes</title>
@@ -293,11 +323,6 @@ EOF</userinput>
       <parameter>-nomake examples</parameter> :
       Ce paramètre désactive la construction des programmes d'exemple inclus dans
       les sources. Enlevez le si vous voulez les construire.
-    </para>
-     <para>
-      <parameter>-nomake tests</parameter>: Ce paramètre
-      désactive la construction des programmes de test inclus dans les sources.
-      Enlevez le si vous voulez les construire.
     </para>
 
     <para>
