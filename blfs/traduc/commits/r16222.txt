@@ -1,0 +1,130 @@
+Révision 16222
+
+fichiers modifiés :
+M       scripts/blfs-chapter10.php
+M       scripts/blfs-chapter39.php
+M       scripts/blfs-include.php
+
+Log :
+Fix opencv, gstreamer, and frei0r
+
+Le robot a traité 6 % du commit anglais
+Index: scripts/blfs-chapter10.php
+===================================================================
+--- scripts/blfs-chapter10.php	(révision 16221)
++++ scripts/blfs-chapter10.php	(révision 16222)
+@@ -11,7 +11,7 @@
+ $renames = array();
+ $ignores = array();
+ 
+-//$current="freetype";   // For debugging
++//$current="opencv";   // For debugging
+ 
+ $regex = array();
+ $regex[ 'aalib'         ] = "/^.*Download aalib-([\d\.]+rc\d).tar.*$/";
+@@ -22,7 +22,6 @@
+ $regex[ 'libmng'        ] = "/^.*Download libmng-(\d[\d\.]+\d).tar.*$/";
+ $regex[ 'libpng'        ] = "/^.*Download libpng-(\d[\d\.]+\d).tar.*$/";
+ $regex[ 'LibRaw'        ] = "/^.*LibRaw-(\d[\d\.]+\d).tar.*$/";
+-$regex[ 'opencv'        ] = "/^.*Download opencv-(\d[\d\.]+\d).zip*$/";
+ $regex[ 'openjpeg1'     ] = "/^.*Download openjpeg-([\d\.]+\d).*$/";
+ $regex[ 'poppler'       ] = "/^.*poppler-([\d\.]+\d).tar.*$/";
+ $regex[ 'popplerdata'   ] = "/^.*poppler-data([\d\.]+\d).tar.*$/";
+@@ -106,7 +105,7 @@
+ 
+  array( 'pkg'     => 'opencv',
+         'match'   => '^.*$', 
+-'replace' => "http://sourceforge.net/projects/opencvlibrary/files" ),
++        'replace' => "http://sourceforge.net/projects/opencvlibrary/files/opencv-unix" ),
+ 
+  array( 'pkg'     => 'openjpeg',
+         'match'   => '^.*$', 
+@@ -241,6 +240,11 @@
+     return find_max( $lines, '/1\.[\d\.]+/', '/^\s*(1[\d\.]+)\s*$/' );
+   }
+ 
++  if ( $book_index == "opencv" )
++  {
++    return find_max( $lines, '/\d\.[\d\.]+/', '/^\s*(\d\.[\d\.]+)\s*$/' );
++  }
+   // lcms2
+   if ( $book_index == "lcms2" )
+   {
+
+Index: scripts/blfs-chapter39.php
+===================================================================
+--- scripts/blfs-chapter39.php	(révision 16221)
++++ scripts/blfs-chapter39.php	(révision 16222)
+@@ -17,7 +17,7 @@
+ 
+ $ignores = array();
+ 
+-//$current="libvpx";
++//$current="frei0r-snapshot";
+ 
+ $regex = array();
+ $regex[ 'faac'             ] = "/^.*Download faac-(\d[\d\.]+\d).tar.*$/";
+@@ -48,6 +48,10 @@
+           'match'   => '^.*$', 
+           'replace' => "http://sourceforge.net/projects/opencore-amr/files" ),
+ 
++   array( 'pkg'     => 'frei',
++          'match'   => '^.*$', 
++          'replace' => "https://files.dyne.org/frei0r/snapshots" ),
+    array( 'pkg'     => 'a52dec',
+           'match'   => '^.*$', 
+           'replace' => "http://liba52.sourceforge.net/" ),
+@@ -227,21 +231,24 @@
+   if ( $package == "faad2" )
+       return find_max( $lines, "/faad2-\d/", "/^.*faad2-([\d\.]+).*$/" );
+ 
++  if ( $package == "frei0r-snapshot" )
++      return find_max( $lines, "/frei0r/", "/^.*snapshot-([\d\-]+).tar.*$/" );
++  if ( $package == "gstreamer" )
++      return find_even_max( $lines, "/gstreamer/", "/^.*gstreamer-(1\.[\d\.]+).tar.*$/" );
++  if ( $package == "gst-plugins-base" )
++      return find_even_max( $lines, "/base-/", "/^.*base-(1\.[\d\.]+).tar.*$/" );
++  if ( $package == "gst-plugins-good" )
++      return find_even_max( $lines, "/good-/", "/^.*good-(1\.[\d\.]+).tar.*$/" );
+   if ( $package == "gst-plugins-bad" )
+-return find_max( $lines, "/^.*bad-/", "/^.*bad-(0.10[\d\.]+).tar.*$/" );
++      return find_even_max( $lines, "/bad-/", "/^.*bad-(1\.[\d\.]+).tar.*$/" );
+ 
+   if ( $package == "gst-plugins-ugly" )
+-return find_max( $lines, "/^.*ugly-/", "/^.*ugly-(0.10[\d\.]+).tar.*$/" );
++      return find_even_max( $lines, "/ugly-/", "/^.*ugly-(1\.[\d\.]+).tar.*$/" );
+ 
+-if ( $package == "gst-ffmpeg" )
+-return find_even_max( $lines, "/^.*ffmpeg/", "/^.*ffmpeg-([\d\.]+).tar.*$/" );
+-if ( preg_match(  "/gst.*1/", $package ) )
+-{
+-$package = preg_replace( "/(.*)1/", "$1", $package );
+-return find_even_max( $lines, "/$package/", "/^.*$package-([\d\.]+).tar.*$/" );
+-}
+   if ( $package == "gst-libav" )
+       return find_even_max( $lines, "/$package/", "/^.*$package-([\d\.]+).tar.*$/" );
+ 
+@@ -289,6 +296,9 @@
+      array( 'pkg'   => 'faad2', 
+             'regex' => "/^.*faad2-(\d[\d\.]+).*$/" ),
+      
++     array( 'pkg'   => 'frei0r', 
++            'regex' => "/^.*frei0r-snapshot-(\d[\d\-]+).*$/" ),
++     
+      array( 'pkg'   => 'libmpeg2', 
+             'regex' => "/^.*libmpeg2-(\d[\d\.]+).*$/" ),
+      
+
+Index: scripts/blfs-include.php
+===================================================================
+--- scripts/blfs-include.php	(révision 16221)
++++ scripts/blfs-include.php	(révision 16222)
+@@ -144,7 +144,6 @@
+       $file = preg_replace( "/\.src$/",       "", $file ); // Remove .src$
+       $file = preg_replace( "/\.tgz$/",       "", $file ); // Remove .tgz$
+ 
+-//$pattern = get_pattern( $line );
+       $pattern = get_pattern( $file );
+       
+       $version = preg_replace( $pattern, "$1", $file );   // Isolate version
+
