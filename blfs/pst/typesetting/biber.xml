@@ -28,9 +28,7 @@
   <sect2 role="package">
     <title>Introduction à biber</title>
     <para>Biber est une alternative à BibTeX pour les utilisateurs de biblatex, écrit en 
-    <application>Perl</application>.  Les développeurs préfèrent fournir des binaires et n'offrent pas de paquet source, 
-    ce qui peut etre fait depuis la version marquée dans l'arborescence git : voir le fichier <filename>Fixes-from-git</filename>
-    pour voir quelles modifications (depuis la version 2.1) ont été incluses.</para>
+    <application>Perl</application>, avec le support complet pour unicode.</para>
     &lfs77_checked; &gcc5_checked;
     <bridgehead renderas="sect3">Information sur le paquet </bridgehead>
     <itemizedlist spacing="compact">
@@ -53,13 +51,20 @@
         <para>Estimation du temps de construction : &biber-time;</para>
       </listitem>
     </itemizedlist>
-    <bridgehead renderas="sect3">Téléchargement supplémentaire requis</bridgehead>
+    <bridgehead renderas="sect3">Téléchargements supplémentaires requis</bridgehead>
+    <itemizedlist spacing="compact">
+       <listitem>
+        <para>
+          Correctif requis:
+          <ulink url="&patch-root;/biblatex-biber-&biber-version;-upstream_fixes-1.patch"/>
+        </para>
+       </listitem>
+       <listitem>
       <para>La version correspondante de <application>biblatex</application> est un projet séparé
        - la version tds est pré-emballée pour être déballée dans le répertoire
-      <filename class="directory">texmf-dist</filename>.</para>
-    <itemizedlist spacing="compact">
-      <listitem>
-        <para>Téléchargement (HTTP): <ulink url="&biblatex-download-http;"/></para>
+      <filename class="directory">texmf-dist</filename>.
+       Téléchargement (HTTP): <ulink url="&biblatex-download-http;"/>
+      </para>
       </listitem>
       <listitem>
         <para>Somme de contrôle MD5 du téléchargement: &biblatex-md5sum;</para>
@@ -86,6 +91,7 @@
       <xref linkend="perl-log-log4perl"/>
       <xref linkend="perl-lwp"/>
       <xref linkend="perl-list-allutils"/>
+      <xref linkend="perl-module-build"/>
       <xref linkend="perl-regexp-common"/>
       <xref linkend="perl-text-bibtex"/>
       <xref linkend="perl-text-roman"/>
@@ -105,24 +111,50 @@
     </para>
     <note>
       <para>
+        Comme le nom de l'archive est sans version, il faudra le déballer dans un répertoire
+        correctement versionné biblatex-biber-&biber-version;.
+      </para>
+      <para>
         Il est possible d'installer toutes les dépendances manquantes automatiquement
-        Commencez par lancer <command>perl ./Build.PL</command> et ensuite quand il vous donne la main, devenez utilisateur
+        Depuis <application>perl-5.22.0</application>,
+        <xref linkend="perl-module-build"/> n'est pas une partie du coeur de la distribution. Pour installer
+        automatiquement les dépendances de perl vous devrez installer cela en premier
+        Vous pouvez ensuite lancer <command>perl ./Build.PL</command> et quand il vous donne la main, devenez utilisateur
         root et lancez
         <command>./Build installdeps</command>
       </para>
+      <para>
+        Si vous lancez <command>./Build.PL</command> sous une version de 
+        <application>perl</application> après 5.20.2 il vous dira que la version de 
+        <application>Unicode::Normalize</application> est trop
+        <emphasis>nouvelle</emphasis>. En fait, la nouvelle version fonctionne, mais est maintenant en perl pure et
+        prend plus de temps pour se lancer : <emphasis>plus</emphasis> de temps si vous avez une grande
+        bibliographie. Vous pouvez trouver l'ancienne version à <ulink
+        url="http://backpan.perl.org/authors/id/S/SA/SADAHIRO/Unicode-Normalize-1.17.tar.gz"/>
+        et utilisez le standard <xref linkend="perl-standard-install"/>
+        pour l'installer si vous souhaitez. Plus de détails sont dans les notes utilisateurs.
+      </para>
+
     </note>
     <para condition="html" role="usernotes">Notes utilisateur :
     <ulink url='&blfs-wiki;/biber'/></para>
   </sect2>
   <sect2 role="installation">
     <title>Installation de Biber</title>
-    <para>Installez <application>Biber</application> en lançant les commandes suivantes :
+    <para>Installez <application>Biber</application> en lançant les commandes suivantes (corriger des fichiers
+    en lecture seul produira des avertissement) :
     </para>
 <screen>
 <userinput>perl ./Build.PL &amp;&amp;
 ./Build</userinput>
 </screen>
-    <para>Pour tester les résultats, entrez:  <command>./Build test</command></para>
+    <para>Pour tester les résultats, entrez:  <command>./Build test</command> - vous devrez avoir les locales
+    en_GB.UTF-8 et sv_SE.UTF-8. Deux tests (et deux sous tests)
+    échoueront : pour gagner du temps les tests utilisent les locales du système au lieu de l'algorithm par défaut
+    Unicode::Collation, et quelques détails sur les locales en OSX
+    (ou le développement est en cours) sont différents de ceux dans
+    <application>glibc</application>
+</para>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :</para>
 <screen role="root">
 <userinput>tar -xf ../biblatex-&biblatex-version;a.tds.tgz -C /opt/texlive/&texlive-year;/texmf-dist &amp;&amp;
@@ -132,6 +164,16 @@ texhash &amp;&amp;
   </sect2>
   <sect2 role="commands">
     <title>Explications des commandes</title>
+     <para>
+      <parameter>patch -Np1 -i
+      ../biblate-biber-&biber-version;-upstream_fixes-1.patch</parameter>:
+      <application>perl-5.22</application> est devenu plus strict sur ce qu'il est nécessaire d'échapper.
+    </para>
+    <para>
+      <parameter>sed -i 's/ 44/ 43/' t/bcfvalidation.t</parameter>: Contrairement à la branche
+      maître de git qui a 44 paires de fichiers pour ce test, l'archive embarquée en contient seulement 43.
+       Le sed empêche l'échec.
+    </para>
     <para>
       <parameter>tar -xf biblatex-&biblatex-version;a.tds.tar.gz -C
       /opt/texlive/&texlive-year;/texmf-dist</parameter>:
