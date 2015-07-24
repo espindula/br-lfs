@@ -92,12 +92,16 @@
     <para>Si vous avez téléchargé la documentation, déballez l'archive tar en
     exécutant la commande suivante.</para>
 <screen>
-<userinput>tar -xf ../Linux-PAM-&linux-pam-version;-docs.tar.bz2 --strip-components=1</userinput>
+<userinput>tar -xf ../Linux-PAM-&linux-pam-docs-version;-docs.tar.bz2 --strip-components=1</userinput>
 </screen>
     <para>Installez <application>Linux-PAM</application> en
     lançant les commandes suivantes&nbsp;:</para>
 <screen>
-<userinput>./configure --prefix=/usr             --sysconfdir=/etc             --libdir=/usr/lib             --enable-securedir=/lib/security             --docdir=/usr/share/doc/Linux-PAM-&linux-pam-version; &amp;&amp;
+<userinput>./configure --prefix=/usr \
+            --sysconfdir=/etc \
+            --libdir=/usr/lib \
+            --enable-securedir=/lib/security \
+            --docdir=/usr/share/doc/Linux-PAM-&linux-pam-version; &amp;&amp;
 make</userinput>
 </screen>
     <para>Pour tester les résultats,
@@ -137,7 +141,7 @@ EOF</userinput>
     <para>Seulement dans le cas d'une première installation, supprimez le fichier de configuration créé plus haut en lançant la
     commande suivante en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>rm -rfv /etc/pam.d</userinput>
+<userinput>rm -fv /etc/pam.d/*</userinput>
 </screen>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
@@ -194,7 +198,8 @@ password        required        pam_unix.so     nullok
 # End /etc/pam.d/other</literal>
 </screen>
       <para>Maintenant, initialisez certains fichiers génériques. En root:</para>
-<screen role="root"><userinput>cat &gt; /etc/pam.d/system-account &lt;&lt; "EOF"
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/system-account &lt;&lt; "EOF"
 <literal># Begin /etc/pam.d/system-account
 account   required    pam_unix.so
 # End /etc/pam.d/system-account</literal>
@@ -208,22 +213,25 @@ cat &gt; /etc/pam.d/system-session &lt;&lt; "EOF"
 <literal># Begin /etc/pam.d/system-session
 session   required    pam_unix.so
 # End /etc/pam.d/system-session</literal>
-EOF</userinput></screen>
+EOF</userinput>
+</screen>
     <para>Le fichier générique suivant dépend de l'installation de <xref linkend="cracklib"/>. S'il est installé, utilisez:
 </para>
-<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
 <literal># Begin /etc/pam.d/system-password
 # check new passwords for strength (man pam_cracklib)
-password  required    pam_cracklib.so   type=Linux retry=3 difok=5                                         difignore=23 minlen=9 dcredit=1                                         ucredit=1 lcredit=1 ocredit=1                                         dictpath=/lib/cracklib/pw_dict
-# use sha512 hash for encryption, use shadow, and use the
-# authentication token (chosen password) set by pam_cracklib
+password  required    pam_cracklib.so   type=Linux retry=3 difok=5 \
+                                        difignore=23 minlen=9 dcredit=1 \
+                                        ucredit=1 lcredit=1 ocredit=1 \
+                                        dictpath=/lib/cracklib/pw_dict
 # use sha512 hash for encryption, use shadow, and use the
 # authentication token (chosen password) set by pam_cracklib
 # above (or any previous modules)
 password  required    pam_unix.so       sha512 shadow use_authtok
 # End /etc/pam.d/system-password</literal>
-EOF</userinput></screen>
-
+EOF</userinput>
+</screen>
         <note>
           <para>
             Dans la configuration par défaut, pam_cracklib permettra les mots de passe
@@ -235,21 +243,21 @@ EOF</userinput></screen>
         </note>
    <para>Si <xref linkend="cracklib"/> n'est <emphasis>PAS</emphasis> installé,
    utilisez:</para>
-<screen role="root"><userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/system-password &lt;&lt; "EOF"
 <literal># Begin /etc/pam.d/system-password
 # use sha512 hash for encryption, use shadow, and try to use any previously
 # defined authentication token (chosen password) set by any prior module
 password  required    pam_unix.so       sha512 shadow try_first_pass
 # End /etc/pam.d/system-password</literal>
-EOF</userinput></screen>
-
-
+EOF</userinput>
+</screen>
       <para>Maintenant ajoutez un fichier de configuration <filename>/etc/pam.d/other</filename>
       restrictif. Avec ce fichier, les programmes qui ne sont pas sous PAM ne pourront pas se lancer
       sans qu'un fichier de configration spécifique pour l'application ne soit créé.
       </para>
-
-<screen role="root"><userinput>cat &gt; /etc/pam.d/other &lt;&lt; "EOF"
+<screen role="root">
+<userinput>cat &gt; /etc/pam.d/other &lt;&lt; "EOF"
 <literal># Begin /etc/pam.d/other
 auth        required        pam_warn.so
 auth        required        pam_deny.so
@@ -260,9 +268,8 @@ password    required        pam_deny.so
 session     required        pam_warn.so
 session     required        pam_deny.so
 # End /etc/pam.d/other</literal>
-EOF</userinput></screen>
-
-
+EOF</userinput>
+</screen>
       <para>La page de man de <application>PAM</application>
       (<command>man pam</command>) offre un bon point de départ pour  des
       descriptions des champs et des entrées autorisées. Le <ulink

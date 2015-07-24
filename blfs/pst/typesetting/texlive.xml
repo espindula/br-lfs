@@ -114,12 +114,13 @@
     <para>Les bibliothèques partagées seront installées dans le répertoire de texlive.
     En tant qu'utilisateur <systemitem class="username">root</systemitem>, ajoutez le à votre
     <filename>/etc/ld.so.conf</filename>:</para>
-
-<screen role="root"><userinput>cat &gt;&gt; /etc/ld.so.conf &lt;&lt; EOF
+<screen role="root">
+<userinput>cat &gt;&gt; /etc/ld.so.conf &lt;&lt; EOF
 <literal># Begin texlive &texlive-year; addition
 /opt/texlive/&texlive-year;/lib
 # End texlive &texlive-year; addition</literal>
-EOF</userinput></screen>
+EOF</userinput>
+</screen>
     <note>
       <para>
         Depuis la version 2015, une installation complête demande que des commandes de texlive
@@ -130,21 +131,48 @@ EOF</userinput></screen>
     <para>
       Maintenant, en tant qu'utilisateur normal:
     </para>
-<screen><userinput>export TEXARCH=$(uname -m | sed -e 's/i.86/i386/' -e 's/$/-linux/') &amp;&amp;
+<screen>
+<userinput>export TEXARCH=$(uname -m | sed -e 's/i.86/i386/' -e 's/$/-linux/') &amp;&amp;
 mkdir texlive-build &amp;&amp;
 cd texlive-build    &amp;&amp;
-../configure                                            --prefix=/opt/texlive/&texlive-year;                          --bindir=/opt/texlive/&texlive-year;/bin/$TEXARCH             --datarootdir=/opt/texlive/&texlive-year;                     --includedir=/usr/include                           --infodir=/opt/texlive/&texlive-year;/texmf-dist/doc/info     --libdir=/usr/lib                                   --mandir=/opt/texlive/&texlive-year;/texmf-dist/doc/man       --disable-native-texlive-build                      --disable-static --enable-shared                    --with-system-cairo                                 --with-system-fontconfig                            --with-system-freetype2                             --with-system-graphite2                             --with-system-harfbuzz                              --with-system-icu                                   --with-system-libgs                                 --with-system-libpaper                              --with-system-libpng                                --with-system-pixman                                --with-system-poppler                               --with-system-xpdf                                  --with-system-zlib                                  --with-banner-add=" - BLFS" &amp;&amp;
-unset TEXARCH &amp;&amp;
+../configure                                        \
+    --prefix=/opt/texlive/&texlive-year;                      \
+    --bindir=/opt/texlive/&texlive-year;/bin/$TEXARCH         \
+    --datarootdir=/opt/texlive/&texlive-year;                 \
+    --includedir=/opt/texlive/&texlive-year;/include          \
+    --infodir=/opt/texlive/&texlive-year;/texmf-dist/doc/info \
+    --libdir=/opt/texlive/&texlive-year;/lib                  \
+    --mandir=/opt/texlive/&texlive-year;/texmf-dist/doc/man   \
+    --disable-native-texlive-build                  \
+    --disable-static --enable-shared                \
+    --with-system-cairo                             \
+    --with-system-fontconfig                        \
+    --with-system-freetype2                         \
+    --with-system-gmp                               \
+    --with-system-graphite2                         \
+    --with-system-harfbuzz                          \
+    --with-system-icu                               \
+    --with-system-libgs                             \
+    --with-system-libpaper                          \
+    --with-system-libpng                            \
+    --with-system-mpfr                              \
+    --with-system-pixman                            \
+    --with-system-poppler                           \
+    --with-system-xpdf                              \
+    --with-system-zlib                              \
+    --with-banner-add=" - BLFS" &amp;&amp;
 make</userinput>
 </screen>
-
     <para>Pour tester le résultat, tapez : <command>make check</command>
     Un test de web2c, dvipng et ttf2pk2 seront passé ("SKIP") car kpathsea
     n'est pas encore installé.</para>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>:</para>
 <screen role="root">
-<userinput>make install &amp;&amp;
-make texlinks</userinput>
+<userinput>make install-strip &amp;&amp;
+make texlinks &amp;&amp;
+ldconfig &amp;&amp;
+mkdir -pv /opt/texlive/${TEXYEAR}/tlpkg/TeXLive/ &amp;&amp;
+install -v -m444 ../texk/tests/TeXLive/* /opt/texlive/${TEXYEAR}/tlpkg/TeXLive/</userinput>
 </screen>
     <note>
       <para>
@@ -153,24 +181,20 @@ make texlinks</userinput>
         et soient inutiles.
       </para>
     </note>
-
     <para>Et maintenant, installez les fichiers supplémentaires en tant qu'utilisateur
     <systemitem class="username">root</systemitem>:</para>
 <screen role="root">
-<userinput>mkdir -pv /opt/texlive/&texlive-year; &amp;&amp;
-tar -xf ../../texlive-&texlive-version;-texmf.tar.xz -C /opt/texlive/&texlive-year; --strip-components=1</userinput>
+<userinput>tar -xf ../../texlive-&texmf-version;-texmf.tar.xz -C /opt/texlive/&texlive-year; --strip-components=1</userinput>
 </screen>
     <para>Restez en utilisateur <systemitem class="username">root</systemitem>,
     initialisez le nouveau système (les commandes
     <command>fmtutil-sys --all</command> et <command>mtxrun --generate</command>
     produiront <emphasis>beaucoup</emphasis> de lignes d'affichage):</para>
-<screen role="root"><userinput>ldconfig &amp;&amp;
-mkdir -pv /opt/texlive/${TEXYEAR}/tlpkg/TeXLive/ &amp;&amp;
-install -v -m444 ../texk/tests/TeXLive/* /opt/texlive/${TEXYEAR}/tlpkg/TeXLive/ &amp;&amp;
-mktexlsr &amp;&amp;
+<screen role="root">
+<userinput>mktexlsr &amp;&amp;
 fmtutil-sys --all &amp;&amp;
-mtxrun --generate</userinput></screen>
-
+mtxrun --generate</userinput>
+</screen>
     <para> Vous pouvez maintenant faire <xref linkend="asymptote"/>,
     <xref linkend="biber"/> et  / ou <xref linkend="xindy"/> si vous souhaitez les installer.
    </para>
@@ -221,7 +245,6 @@ mtxrun --generate</userinput></screen>
     <para>
       <parameter>mtxrun --generate</parameter>: Cela initialise le système ConTeXt.
     </para>
-
   </sect2>
   <sect2 role="content">
     <title>Contenu</title>
@@ -307,7 +330,6 @@ mtxrun --generate</userinput></screen>
           </indexterm>
         </listitem>
       </varlistentry>
-
     </variablelist>
   </sect2>
 </sect1>

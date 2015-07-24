@@ -31,7 +31,7 @@
       de boutons), et est également utilisée pour le développement de programmes
       sans GUI comme est outils en ligne de commande et les consoles pour serveurs.
     </para>
-    &lfs77_checked;
+    &lfs77_checked;  &gcc5_checked;
     <bridgehead renderas="sect3">Information sur le paquet </bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
@@ -107,7 +107,6 @@
       <xref linkend="unixodbc"/>,
       <ulink url="https://code.google.com/p/ibus/">IBus</ulink> et
       <ulink url="http://xkbcommon.org/">libxkbcommon</ulink>.
-
     </para>
  
   
@@ -117,7 +116,6 @@
   </sect2>
 <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
                href="../../xincludes/qt-alternatives.xml"/>
-
   <sect2 role="qt5-prefix">
     <title>Initialisation du préfixe d'installation</title>
     <bridgehead renderas="sect3">Installation dans /opt/qt5</bridgehead>
@@ -127,7 +125,9 @@
        <filename class="directory">/opt/qt5</filename>. Pour cela initialisez la variable
       d'environnement suivante:
     </para>
-<screen><userinput>export QT5PREFIX=/opt/qt5</userinput></screen>
+<screen>
+<userinput>export QT5PREFIX=/opt/qt5</userinput>
+</screen>
     <tip>
       <para>
         Parfois, les chemins d'installation sont codés en durs dans les fichiers installés.
@@ -136,8 +136,10 @@
         class="directory">/opt/qt-&qt5-version;</filename>. Pour créer un répertoire versionné
         de <application>Qt5</application>, vous devez renommer le répertoire et créez un lien symbolique:
       </para>
-<screen role="root"><userinput>mkdir /opt/qt-&qt5-version;
-ln -sfnv qt-&qt5-version; /opt/qt5</userinput></screen>
+<screen role="root">
+<userinput>mkdir /opt/qt-&qt5-version;
+ln -sfnv qt-&qt5-version; /opt/qt5</userinput>
+</screen>
       <para>
         Plus tard, vous pouvez vouloir installer d'autres versions de
         <application>Qt5</application>. Pour faire cela, supprimez juste le lien symbolique
@@ -147,9 +149,6 @@ ln -sfnv qt-&qt5-version; /opt/qt5</userinput></screen>
       </para>
     </tip>
   </sect2>
-
-
-
  <sect2 role="installation">
     <title>Installation de Qt5</title>
       <warning>
@@ -186,14 +185,35 @@ ln -sfnv qt-&qt5-version; /opt/qt5</userinput></screen>
         <application>Qt5</application> dans /usr, les répertoires ont besoin d'être spécifiés explicitement.
         Dans ce cas, initialisez QT5PREFIX=/usr et ajoutez
         la suite aux arguments de configuration:</para>
-        <screen><userinput>-bindir         /usr/bin/qt5                -plugindir      /usr/lib/qt5/plugins        -importdir      /usr/lib/qt5/imports        -headerdir      /usr/include/qt5            -datadir        /usr/share/qt5              -docdir         /usr/share/doc/qt5          -translationdir /usr/share/qt5/translations -demosdir       /usr/share/doc/qt5/demos    -examplesdir    /usr/share/doc/qt5/examples </userinput></screen>
+        
+<screen>
+<userinput>-bindir         /usr/bin/qt5                \
+-plugindir      /usr/lib/qt5/plugins        \
+-importdir      /usr/lib/qt5/imports        \
+-headerdir      /usr/include/qt5            \
+-datadir        /usr/share/qt5              \
+-docdir         /usr/share/doc/qt5          \
+-translationdir /usr/share/qt5/translations \
+-demosdir       /usr/share/doc/qt5/demos    \
+-examplesdir    /usr/share/doc/qt5/examples </userinput>
+</screen>
     </note>
    <para>
       Installez <application>Qt5</application> en lançant les commandes suivantes
     </para>
 <screen>
-<userinput>export QT5LINK=/usr
-./configure -prefix         /usr                           -sysconfdir     /etc/xdg                       -bindir         /usr/bin                       -headerdir      /usr/include/qt5               -archdatadir    /usr/lib/qt5                   -datadir        /usr/share/qt5                 -docdir         /usr/share/doc/qt5             -translationdir /usr/share/qt5/translations             -examplesdir    /usr/share/doc/qt5/examples             -confirm-license               -opensource                    -dbus-linked                   -openssl-linked                -system-sqlite                 -no-nis                        -skip qtwebengine              -nomake examples               -optimized-qmake   &amp;&amp;
+<userinput>./configure -prefix         $QT5PREFIX \
+            -sysconfdir     /etc/xdg   \
+            -confirm-license           \
+            -opensource                \
+            -dbus-linked               \
+            -openssl-linked            \
+            -system-harfbuzz           \
+            -system-sqlite             \
+            -nomake examples           \
+            -no-rpath                  \
+            -optimized-qmake           \
+            -skip qtwebengine          &amp;&amp;
 make</userinput>
 </screen>
     <para>
@@ -202,15 +222,15 @@ make</userinput>
     <para>
             Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :
     </para>
-<screen>
-<userinput>find . -name "*.pc" -exec perl -pi -e "s, -L$PWD/?S+,,g" {} ;</userinput>
+<screen role="root">
+<userinput>make install</userinput>
 </screen>
     <para>
 Enlevez les références au répertoire de construction des fichiers  <filename class="extension">.pc</filename>
       en lançant la commande suivante:
     </para>
-<screen role="root">
-<userinput>make install</userinput>
+<screen>
+<userinput>find $QT5PREFIX/lib/pkgconfig -name "*.pc" -exec perl -pi -e "s, -L$PWD/?\S+,,g" {} \;</userinput>
 </screen>
     <para>
       Effacez les références au répertoire d'installation dans les fichiers de dépendances
@@ -219,8 +239,10 @@ Enlevez les références au répertoire de construction des fichiers  <filename 
       <systemitem class="username">root</systemitem>:
     </para>
 <screen role="root">
-<userinput>sed -e "s:$PWD/qtbase:/usr/lib/qt5:g"     -i /usr/lib/qt5/mkspecs/modules/qt_lib_bootstrap_private.pri &amp;&amp;
-find /usr/lib/lib{qgsttools_p,Qt5*}.prl -exec sed -i -r      '/^QMAKE_PRL_BUILD_DIR/d;s/(QMAKE_PRL_LIBS =).*/1/' {} ;</userinput>
+<userinput>find $QT5PREFIX -name qt_lib_bootstrap_private.pri \
+   -exec sed -i -e "s:$PWD/qtbase:/$QT5PREFIX/lib/:g" {} \; &amp;&amp;
+find $QT5PREFIX -name \*.prl \
+   -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;</userinput>
 </screen>
     <para>
         Installez les images et créez les entrées
@@ -231,17 +253,22 @@ find /usr/lib/lib{qgsttools_p,Qt5*}.prl -exec sed -i -r      '/^QMAKE_PRL_BUILD_
         qu'utilisateur <systemitem class="username">root</systemitem> :
     </para>
 <screen role="root">
-<userinput>install -v -dm755 /usr/share/pixmaps/                  &amp;&amp;
-install -v -Dm644 qttools/src/assistant/assistant/images/assistant-128.png                   /usr/share/pixmaps/assistant-qt5.png &amp;&amp;
-install -v -Dm644 qttools/src/designer/src/designer/images/designer.png                   /usr/share/pixmaps/designer-qt5.png  &amp;&amp;
-install -v -Dm644 qttools/src/linguist/linguist/images/icons/linguist-128-32.png                   /usr/share/pixmaps/linguist-qt5.png  &amp;&amp;
-install -v -Dm644 qttools/src/qdbus/qdbusviewer/images/qdbusviewer-128.png                   /usr/share/pixmaps/qdbusviewer-qt5.png &amp;&amp;
+<userinput>QT5BINDIR=$QT5PREFIX/bin
+install -v -dm755 /usr/share/pixmaps/                  &amp;&amp;
+install -v -Dm644 qttools/src/assistant/assistant/images/assistant-128.png \
+                  /usr/share/pixmaps/assistant-qt5.png &amp;&amp;
+install -v -Dm644 qttools/src/designer/src/designer/images/designer.png \
+                  /usr/share/pixmaps/designer-qt5.png  &amp;&amp;
+install -v -Dm644 qttools/src/linguist/linguist/images/icons/linguist-128-32.png \
+                  /usr/share/pixmaps/linguist-qt5.png  &amp;&amp;
+install -v -Dm644 qttools/src/qdbus/qdbusviewer/images/qdbusviewer-128.png \
+                  /usr/share/pixmaps/qdbusviewer-qt5.png &amp;&amp;
 install -dm755 /usr/share/applications &amp;&amp;
 cat &gt; /usr/share/applications/assistant-qt5.desktop &lt;&lt; EOF
 <literal>[Desktop Entry]
 Name=Qt5 Assistant 
 Comment=Shows Qt5 documentation and examples
-Exec=$QT5LINK/bin/assistant
+Exec=$QT5BINDIR/assistant
 Icon=assistant-qt5.png
 Terminal=false
 Encoding=UTF-8
@@ -253,7 +280,7 @@ cat &gt; /usr/share/applications/designer-qt5.desktop &lt;&lt; EOF
 Name=Qt5 Designer
 GenericName=Interface Designer
 Comment=Design GUIs for Qt5 applications
-Exec=$QT5LINK/bin/designer
+Exec=$QT5BINDIR/designer
 Icon=designer-qt5.png
 MimeType=application/x-designer;
 Terminal=false
@@ -265,7 +292,7 @@ cat &gt; /usr/share/applications/linguist-qt5.desktop &lt;&lt; EOF
 <literal>[Desktop Entry]
 Name=Qt5 Linguist
 Comment=Add translations to Qt5 applications
-Exec=$QT5LINK/bin/linguist
+Exec=$QT5BINDIR/linguist
 Icon=linguist-qt5.png
 MimeType=text/vnd.trolltech.linguist;application/x-linguist;
 Terminal=false
@@ -278,7 +305,7 @@ cat &gt; /usr/share/applications/qdbusviewer-qt5.desktop &lt;&lt; EOF
 Name=Qt5 QDbusViewer 
 GenericName=D-Bus Debugger
 Comment=Debug D-Bus applications
-Exec=$QT5LINK/bin/qdbusviewer
+Exec=$QT5BINDIR/qdbusviewer
 Icon=qdbusviewer-qt5.png
 Terminal=false
 Encoding=UTF-8
@@ -289,11 +316,11 @@ EOF</userinput>
     <para>Certains paquets comme <xref linkend='vlc'/> cherche certains exécutables avec le suffix -qt4.
     Lancez la commande suivant en tant qu'utilisateur root pour créer les liens symboliques nécessaires:
     </para>
-<screen role="root"><userinput>for file in moc uic rcc qmake lconvert lrelease lupdate; do
-  ln -sfrvn $QT4BINDIR/$file /usr/bin/$file-qt4
-done</userinput></screen>
-
-
+<screen role="root">
+<userinput>for file in moc uic rcc qmake lconvert lrelease lupdate; do
+  ln -sfrvn $QT5BINDIR/$file /usr/bin/$file-qt5
+done</userinput>
+</screen>
   </sect2>
   <sect2 role="commands">
     <title>Explications des commandes</title>
@@ -312,7 +339,6 @@ done</userinput></screen>
       Ce paramètre désactive la construction des programmes d'exemple inclus dans
       les sources. Enlevez le si vous voulez les construire.
     </para>
-
     <para>
            <parameter>-system-sqlite</parameter> : Ce paramètre active l'utilisation
       de la version du système de <application>SQLite</application>.
@@ -394,8 +420,8 @@ ldconfig</userinput>
 <userinput>cat &gt; /etc/profile.d/qt5.sh &lt;&lt; EOF
 <literal># Begin /etc/profile.d/qt5.sh
 QT5DIR=/opt/qt5
-pathappend /opt/qt5/bin           PATH
-pathappend /opt/qt5/lib/pkgconfig PKG_CONFIG_PATH
+pathappend $QT5DIR/bin           PATH
+pathappend $QT5DIR/lib/pkgconfig PKG_CONFIG_PATH
 export QT5DIR
 # End /etc/profile.d/qt5.sh</literal>
 EOF</userinput>
