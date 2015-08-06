@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+  <!-- Place this in the general.ent file
+  <!ENTITY TEMPLATE-version "">
+  -->
+  <!ENTITY sddm-download-http "&sources-anduin-other-http;/sddm-&sddm-version;.tar.gz">
+  <!ENTITY sddm-download-ftp  " ">
+  <!ENTITY sddm-md5sum        "e110a7683867400dc9484d4744fd41dd">
+  <!ENTITY sddm-size          "4.6 Ko">
+  <!ENTITY sddm-buildsize     "18 Mo">
+  <!ENTITY sddm-time          "0.6 SBU ">
+]>
+
+<sect1 id="sddm" xreflabel="sddm-&sddm-version;">
+  <?dbhtml filename="sddm.html"?>
+
+  <sect1info>
+    <othername>$LastChangedBy: fernando $</othername>
+    <date>$Date: 2015-08-01 21:49:50 +0200 (sam. 01 août 2015) $</date>
+  </sect1info>
+
+  <title>sddm-&sddm-version;</title>
+
+  <indexterm zone="sddm">
+    <primary sortas="a-SDDM">SDDM</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title>Introduction à SDDM</title>
+
+    <para>
+      The <application>SDDM</application> package contains a lightweight
+      display manager written in <application>Qt</application> et QML.
+    </para>
+
+    &lfs77_checked; &gcc5_checked;
+
+    <bridgehead renderas="sect3">Information sur le paquet </bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          Téléchargement (HTTP) : <ulink url="&sddm-download-http;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Téléchargement (FTP) : <ulink url="&sddm-download-ftp;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Somme de contrôle MD5 du téléchargement : &sddm-md5sum;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Taille du téléchargement : &sddm-size;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation de l'espace disque requis : &sddm-buildsize;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation du temps de construction : &sddm-time;
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3">Dépendances de SDDM</bridgehead>
+
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required">
+      <xref linkend="cmake"/> et
+      <xref linkend="qt5"/>
+    </para>
+
+    <bridgehead renderas="sect4">Recommandées</bridgehead>
+    <para role="recommended">
+      <xref linkend="linux-pam"/>
+    </para>
+
+    <bridgehead renderas="sect4">Facultative</bridgehead>
+    <para role="optional">
+      <ulink url="http://sourceforge.net/projects/docutils/">Docutils</ulink>
+    </para>
+
+    <bridgehead renderas="sect4">Dépendances de Runtime</bridgehead>
+    <para role="required">
+      <xref linkend="consolekit"/>
+    </para>
+
+    <para condition="html" role="usernotes">Notes utilisateur :
+      <ulink url="&blfs-wiki;/sddm"/>
+    </para>
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de SDDM</title>
+
+    <para>
+      It is recommended to have a dedicated user et group to take
+      control of the <command>sddm</command> daemon after it is
+      started. Issue the following commands as the
+      <systemitem class="username">root</systemitem> user:
+    </para>
+
+<screen role="root"><userinput>groupadd -g 64 sddm &amp;&amp;
+useradd -c "SDDM Daemon Owner" -d /var/lib/sddm -u 64         -g sddm -s /bin/false sddm</userinput></screen>
+
+    <para>
+      Installez <application>SDDM</application> en lançant les commandes suivantes :
+       
+    </para>
+
+<screen><userinput>mkdir build &amp;&amp;
+cd    build &amp;&amp;
+
+cmake -DCMAKE_INSTALL_PREFIX=/usr       -DCMAKE_BUILD_TYPE=Release        -DENABLE_JOURNALD=OFF             -DBUILD_MAN_PAGES=ON
+      -Wno-dev .. &amp;&amp;
+make</userinput></screen>
+
+    <para>
+      This package does not come with a test suite.
+    </para>
+
+    <para>
+      Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem> :
+    </para>
+
+<screen role="root"><userinput>make install &amp;&amp;
+install -v -dm755 -o sddm -g sddm /var/lib/sddm</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="commands">
+    <title>Explications des commandes</title>
+
+    <para>
+      <parameter>-DCMAKE_BUILD_TYPE=Release</parameter> : This switch is used to
+      apply higher level of the compiler optimizations.
+    </para>
+
+    <para>
+      <parameter>-DENABLE_JOURNALD=OFF</parameter> : This switch is used because
+      BLFS does not support <application>systemd</application>.
+    </para>
+
+  </sect2>
+
+  <sect2 role="configuration">
+    <title>Configuring SDDM</title>
+
+    <sect3>
+      <title>Linux PAM Configuration</title>
+
+      <para>
+        If you have built <application>SDDM</application>
+        with <application>Linux PAM</application> support,
+        create the necessary configuration files by running
+        the following commands as the <systemitem
+        class="username">root</systemitem> user:
+      </para>
+
+<screen role="root"><userinput>cat &gt; /etc/pam.d/sddm &lt;&lt; "EOF"  &amp;&amp;
+<literal># Begin /etc/pam.d/sddm
+
+auth     requisite      pam_nologin.so
+auth     required       pam_env.so
+
+auth     required       pam_succeed_if.so uid &gt;= 1000 quiet
+auth     include        system-auth
+
+account  include        system-account
+password include        system-password
+
+session  required       pam_limits.so
+session  include        system-session
+
+# End /etc/pam.d/sddm</literal>
+EOF
+cat &gt; /etc/pam.d/sddm-autologin &lt;&lt; "EOF" &amp;&amp;
+<literal># Begin /etc/pam.d/sddm-autologin
+
+auth     requisite      pam_nologin.so
+auth     required       pam_env.so
+
+auth     required       pam_succeed_if.so uid &gt;= 1000 quiet
+auth     required       pam_permit.so
+
+account  include        system-account
+
+password required       pam_deny.so
+
+session  required       pam_limits.so
+session  include        system-session
+
+# End /etc/pam.d/sddm-autologin</literal>
+EOF
+cat &gt; /etc/pam.d/sddm-greeter &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/sddm-greeter
+
+auth     required       pam_env.so
+auth     required       pam_permit.so
+
+account  required       pam_permit.so
+password required       pam_deny.so
+session  required       pam_unix.so
+-session optional       pam_systemd.so
+
+# End /etc/pam.d/sddm-greeter</literal>
+EOF</userinput></screen>
+
+    </sect3>
+
+    <sect3 id="sddm-init">
+      <title>Starting sddm</title>
+
+      <para>
+        You can manually start <command>sddm</command>, e.g, if the bootscript
+        has been installed, by running, as <systemitem
+        class="username">root</systemitem> user:
+      </para>
+
+<screen role="root"><userinput>/etc/rc.d/init.d/sddm start</userinput></screen>
+
+      <para>
+        By definition, X should be executed at runlevel 5, consequently, the
+        same is true for <application>sddm</application>. However, BLFS default
+        runlevel is 3. Changing to runlevel 5, from the terminal, as
+        <systemitem class="username">root</systemitem> user, makes the
+        <command>sddm</command> bootscript to be executed, obtaining the
+        greeter screen:
+      </para>
+
+<screen role="root"><userinput>init 5</userinput></screen>
+
+      <para>
+        In order to permanently set the default to 5, obtaining the
+        <command>sddm</command> greeter screen automatically, you can modify
+        <filename>/etc/inittab</filename>, as <systemitem
+        class="username">root</systemitem> user (the instructions below also
+        make a backup, so you can easily revert the modification):
+      </para>
+
+<screen role="root"><userinput>cp -v /etc/inittab{,-orig} &amp;&amp;
+sed -i '/initdefault/ s/3/5/' /etc/inittab</userinput></screen>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title>Contenu</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Répertoires installés</segtitle>
+
+      <seglistitem>
+        <seg>
+          sddm et sddm-greeter
+        </seg>
+        <seg>
+          Aucun
+        </seg>
+        <seg>
+          $QT5DIR/qml/SddmComponents,
+          /usr/share/sddm et
+          /var/lib/sddm
+        </seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Description courte</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="sddm-prog">
+        <term><command>sddm</command></term>
+        <listitem>
+          <para>
+            is a display et login manager based on
+            <application>Qt</application> technologies.
+          </para>
+          <indexterm zone="sddm sddm-prog">
+            <primary sortas="b-sddm">sddm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="sddm-greeter">
+        <term><command>sddm-greeter</command></term>
+        <listitem>
+          <para>
+            is an auxiliary process that displays the greeter,
+            a graphical user interface to perform the
+            authentication et select the session to run.
+          </para>
+          <indexterm zone="sddm sddm-greeter">
+            <primary sortas="b-sddm-greeter">sddm-greeter</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>
