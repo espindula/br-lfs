@@ -31,7 +31,8 @@ $Date$
   <!-- Print CSS Stylesheet -->
   <!-- The original template is in {docbook-xsl}/xhtml/docbook.xsl -->
   <xsl:template name='user.head.content'>
-    <link rel="stylesheet" href="stylesheets/lfs-print.css" type="text/css" media="print"/>
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type="text/css" media="print"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </xsl:template>
 
   <!-- Drop some unwanted style attributes -->
