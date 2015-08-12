@@ -32,8 +32,8 @@
     <title>Introduction à SDDM</title>
 
     <para>
-      The <application>SDDM</application> package contains a lightweight
-      display manager written in <application>Qt</application> et QML.
+      Le paquet <application>SDDM</application> contient un gestionnaire d'affichage léger
+      écrit en <application>Qt</application> et QML.
     </para>
 
     &lfs77_checked; &gcc5_checked;
@@ -88,6 +88,7 @@
     <bridgehead renderas="sect4">Facultative</bridgehead>
     <para role="optional">
       <ulink url="http://sourceforge.net/projects/docutils/">Docutils</ulink>
+     ( pour les pages de manuel)
     </para>
 
     <bridgehead renderas="sect4">Dépendances de Runtime</bridgehead>
@@ -104,14 +105,21 @@
     <title>Installation de SDDM</title>
 
     <para>
-      It is recommended to have a dedicated user et group to take
-      control of the <command>sddm</command> daemon after it is
-      started. Issue the following commands as the
-      <systemitem class="username">root</systemitem> user:
+      Pour commencer, créez un utilisateur et un groupe dédié pour prendre le controle du démon
+      <command>sddm</command> après son démarrage. Tapez les commandes suivantes en tant qu'utilisateur
+      <systemitem class="username">root</systemitem>:
     </para>
 
 <screen role="root"><userinput>groupadd -g 64 sddm &amp;&amp;
 useradd -c "SDDM Daemon Owner" -d /var/lib/sddm -u 64         -g sddm -s /bin/false sddm</userinput></screen>
+
+     <para>
+      Par défaut, <application>SDDM</application> démarre le serveur X avec le paramètre
+      <parameter>-nolisten tcp</parameter>. SI vous avez besoin de vous connecter à X à distance, ce n'est pas souhaitable.
+      Vous pouvez facultativement effacer ce paramètre en lançant:
+    </para>
+<screen><userinput>sed -e '/nolisten/d' \
+    -i src/daemon/XorgDisplayServer.cpp</userinput></screen>
 
     <para>
       Installez <application>SDDM</application> en lançant les commandes suivantes :
@@ -126,7 +134,7 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr       -DCMAKE_BUILD_TYPE=Release        -DENAB
 make</userinput></screen>
 
     <para>
-      This package does not come with a test suite.
+       Ce paquet n'a pas de suite de tests.
     </para>
 
     <para>
@@ -142,29 +150,58 @@ install -v -dm755 -o sddm -g sddm /var/lib/sddm</userinput></screen>
     <title>Explications des commandes</title>
 
     <para>
-      <parameter>-DCMAKE_BUILD_TYPE=Release</parameter> : This switch is used to
-      apply higher level of the compiler optimizations.
+      <parameter>-DCMAKE_BUILD_TYPE=Release</parameter> : Ce paramètre est utilisé pour appliquer le plus haut
+     niveau d'optimisation de compilation.
     </para>
 
     <para>
-      <parameter>-DENABLE_JOURNALD=OFF</parameter> : This switch is used because
-      BLFS does not support <application>systemd</application>.
+      <parameter>-DENABLE_JOURNALD=OFF</parameter> : Ce paramètre est utilisé car 
+      BLFS ne supporte pas <application>systemd</application>.
+    </para>
+
+    <para>
+      <option>-DBUILD_MAN_PAGES=ON</option>: Ce paramètre peut être utilisé si vous voulez que les pages
+      de manuel soient installées. Notez que vous devez avoir
+      <ulink url="http://sourceforge.net/projects/docutils/">Docutils</ulink>
+      pour les construire.
     </para>
 
   </sect2>
 
   <sect2 role="configuration">
-    <title>Configuring SDDM</title>
+    <title>Configuration de SDDM</title>
+
+    <sect3 id="sddm-config">
+      <title>Fichier de configuration</title>
+      <para>
+        /etc/sddm.conf
+      </para>
+      <indexterm zone="sddm sddm-config">
+        <primary sortas="e-sddm.conf">/etc/sddm.conf</primary>
+      </indexterm>
+    </sect3>
+
+
+    <sect3 id="sddm-bootscript">
+      <title>Script de démarrage</title>
+      <para>
+        Installez le fichier d'init <filename>/etc/rc.d/init.d/sddm</filename> depuis le paquet
+        <xref linkend="bootscripts"/>.
+      </para>
+      <indexterm zone="sddm sddm-bootscript">
+        <primary sortas="f-sddm">sddm</primary>
+      </indexterm>
+<screen role="root"><userinput>make install-sddm</userinput></screen>
+    </sect3>
 
     <sect3>
-      <title>Linux PAM Configuration</title>
+      <title>Configuration de Linux PAM</title>
 
       <para>
-        If you have built <application>SDDM</application>
-        with <application>Linux PAM</application> support,
-        create the necessary configuration files by running
-        the following commands as the <systemitem
-        class="username">root</systemitem> user:
+        Si vous avez construit <application>SDDM</application>
+        avec le support <application>Linux PAM</application>,
+        créez les fichiers de configuration nécessaire en lançant les commandes suivantes en tant qu'utilisateur
+        <systemitem class="username">root</systemitem>:
       </para>
 
 <screen role="root"><userinput>cat &gt; /etc/pam.d/sddm &lt;&lt; "EOF"  &amp;&amp;
@@ -219,39 +256,113 @@ EOF</userinput></screen>
     </sect3>
 
     <sect3 id="sddm-init">
-      <title>Starting sddm</title>
+      <title>Démarrage de sddm</title>
 
       <para>
-        You can manually start <command>sddm</command>, e.g, if the bootscript
-        has been installed, by running, as <systemitem
-        class="username">root</systemitem> user:
+        Si le script de démarrage à été installé, démarrez le en lançant
+        en tant qu'utilisateur <systemitem
+        class="username">root</systemitem>:
       </para>
 
 <screen role="root"><userinput>/etc/rc.d/init.d/sddm start</userinput></screen>
 
       <para>
-        By definition, X should be executed at runlevel 5, consequently, the
-        same is true for <application>sddm</application>. However, BLFS default
-        runlevel is 3. Changing to runlevel 5, from the terminal, as
-        <systemitem class="username">root</systemitem> user, makes the
-        <command>sddm</command> bootscript to be executed, obtaining the
-        greeter screen:
+        Par convention, X doit être éxécuté avec le niveau de lancement 5, par conséquence, c'est vrai pour
+        <application>sddm</application>. Cependant, le niveau de lancement par défaut de LFS est 3.
+        Pour changer au niveau de lancement 5, depuis le terminal, en tant qu'utilisateur
+        <systemitem class="username">root</systemitem>, faite que le script de démarrage de 
+        <command>sddm</command> soit éxécuté, pour obtenir l'affichage du greeter:
       </para>
 
 <screen role="root"><userinput>init 5</userinput></screen>
 
       <para>
-        In order to permanently set the default to 5, obtaining the
-        <command>sddm</command> greeter screen automatically, you can modify
-        <filename>/etc/inittab</filename>, as <systemitem
-        class="username">root</systemitem> user (the instructions below also
-        make a backup, so you can easily revert the modification):
+        Afin d'initialisé en permanence par défaut le niveau 5, et obtenir automatiquement l'affichage du greeter de
+        <command>sddm</command>, vous pouvez modifier
+        <filename>/etc/inittab</filename>, en tant qu'utilisateur <systemitem
+        class="username">root</systemitem> (les instructions suivantes font aussi une sauvegarde, donc vous pouvez
+        facilement annuler les modifications):
       </para>
 
 <screen role="root"><userinput>cp -v /etc/inittab{,-orig} &amp;&amp;
 sed -i '/initdefault/ s/3/5/' /etc/inittab</userinput></screen>
 
     </sect3>
+
+    <sect3 id="sddm-sessions">
+      <title>Sessions disponibles</title>
+      <para>
+        L'écran de bienvenue offre une liste des sessions disponibles,
+        en fonction des gestionnaires de fenêtre et des environnements de bureau installés. La liste inclu les sessions
+        qui correspondent au fichier
+        <filename>.desktop</filename> installé sous
+        <filename class="directory">/usr/share/xsessions</filename>. La plupart des gestionnaires de fenêtres
+        et des environnements de bureau fournissent automatiquement ces fichiers, mais si nécessaire, vous pouvez en mettre
+        un personnalisé.
+      </para>
+    </sect3>
+    <sect3 id="sddm-themes">
+      <title>Themes</title>
+      <para>
+        Quate thèmes sont installés dans <filename class="directory">
+        /usr/share/sddm/themes</filename>:
+        circles,
+        elarun,
+        maldives, et
+        maui.
+        Le thème par défaut est <quote>maui</quote>. Vous pouvez installer d'autres thèmes dans ce répertoire.
+        Afin de changer le thème, vous devez éditer 
+        <filename>/etc/sddm.conf</filename>, qui n'est pas installé par défaut.
+        Avant de le faire, faite une sauvegarde de ce fichier, s'il y en a déjà un d'installé. Afin de générer
+        <filename>/etc/sddm.conf</filename>,
+        tapez, en tant qu'utilisateur <systemitem class="username">root</systemitem>:
+    </para>
+<screen role="root"><userinput>sddm --example-config > /etc/sddm.conf</userinput></screen>
+      <para>
+        Maintenant, en utilisant votre éditeur de textes préféré, changez le thème par défaut
+        <quote>maui</quote>, en remplaçant <quote>Current=maui</quote> par
+        <quote>Current=<replaceable>&lt;le nom de votre thème ici&gt;</replaceable></quote>,
+        par exemple <quote>Current=maldives</quote>.
+      </para>
+      <para>
+        Afin de voir le thème sans quiter la session, tapez:
+      </para>
+<screen><userinput>sddm-greeter --test-mode --theme <replaceable>&lt;theme path&gt;</replaceable></userinput></screen>
+    </sect3>
+    <sect3 id="sddm-Issues">
+      <title>Problèmes connus</title>
+      <para>
+        Cette application fonctionne bien, mais il y a des problèmes. Vous trouvez les problèmes connus par les
+        développeur sur
+        <ulink url="https://github.com/sddm/sddm/issues">Issues</ulink>. L'équipe de développement de BLFS
+        a trouvé quelques problèmes.
+      </para>
+      <para>
+       Sélection du clavier : l'écran de bienvenue montre une double case de question ou le mauvais clavier.
+        Quand vous commencez à taper le mot de passe ou le nom de l'utilisateur (en fonction du thème, seulement
+        le mot de passe), la bonne sélection de clavier apparaît magiquement. Facultativement, un contournement
+        est d'inclure la liste des clavier dans le script
+        <command>/usr/share/sddm/scripts/Xsetup</command>, en tant qu'utilisateur
+        <systemitem class="username">root</systemitem>:
+      </para>
+<screen role="root"><userinput>echo "setxkbmap -option <replaceable>&lt;your keyboard option&gt;</replaceable>" &gt;&gt; /usr/share/sddm/scripts/Xsetup</userinput></screen>
+      <para>
+        Par exemple <command>echo 'setxkbmap "gb,br,us"' &gt;&gt;
+        /usr/share/sddm/scripts/Xsetup</command>
+      </para>
+      
+<para>
+        Dircolors: le fichier <filename>/etc/dircolors</filename> n'est pas considéré. En particulier, les fichiers
+        compressés ne sont pas affichés en rouge. Si cela arrive, un contournement est de taper, en tant qu'utilisateur
+        <systemitem class="username">root</systemitem>:
+      </para>
+<screen role="root"><userinput>echo "source /etc/profile.d/dircolors.sh" &gt;&gt; /etc/bashrc</userinput></screen>
+      <para>
+        Il a été signalé que ce paquet ne fonctionne pas avec Xorg installé
+        avec un préfixe autre que <filename class="directory">/usr</filename>.
+      </para>
+    </sect3>
+
 
   </sect2>
 
@@ -287,8 +398,8 @@ sed -i '/initdefault/ s/3/5/' /etc/inittab</userinput></screen>
         <term><command>sddm</command></term>
         <listitem>
           <para>
-            is a display et login manager based on
-            <application>Qt</application> technologies.
+            est un gestionnaire d'affichage et de connexion basé sur les biblothèques
+            <application>Qt</application>.
           </para>
           <indexterm zone="sddm sddm-prog">
             <primary sortas="b-sddm">sddm</primary>
@@ -300,9 +411,9 @@ sed -i '/initdefault/ s/3/5/' /etc/inittab</userinput></screen>
         <term><command>sddm-greeter</command></term>
         <listitem>
           <para>
-            is an auxiliary process that displays the greeter,
-            a graphical user interface to perform the
-            authentication et select the session to run.
+            est un processus auxiliaire qui affiche le greeter,
+            une interface utilisateur graphique pour permettre l'identification et initialiser le gestionnaire
+            de fenêtres ou l'environnement de bureau sélectionnés.
           </para>
           <indexterm zone="sddm sddm-greeter">
             <primary sortas="b-sddm-greeter">sddm-greeter</primary>
