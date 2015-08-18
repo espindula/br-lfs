@@ -1,8 +1,8 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='ISO-8859-1'?>
 
 <!--
-$LastChangedBy: matthew $
-$Date: 2013-10-08 22:03:29 +0200 (mar. 08 oct. 2013) $
+$LastChangedBy: bdubbs $
+$Date: 2015-08-10 19:53:57 +0200 (lun. 10 août 2015) $
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -15,8 +15,8 @@ $Date: 2013-10-08 22:03:29 +0200 (mar. 08 oct. 2013) $
   <!-- Upstream XHTML presentation templates -->
   <xsl:import href="docbook-xsl-1.78.1/xhtml/docbook.xsl"/>
 
-  <!-- Use utf-8 for output instead of default UTF-8 -->
-  <xsl:param name="chunker.output.encoding" select="'utf-8'"/>
+  <!-- Use ISO-8859-1 for output instead of default UTF-8 -->
+  <xsl:param name="chunker.output.encoding" select="'ISO-8859-1'"/>
 
   <!-- Including our customized elements templates -->
   <xsl:include href="common.xsl"/>
@@ -31,7 +31,8 @@ $Date: 2013-10-08 22:03:29 +0200 (mar. 08 oct. 2013) $
   <!-- Print CSS Stylesheet -->
   <!-- The original template is in {docbook-xsl}/xhtml/docbook.xsl -->
   <xsl:template name='user.head.content'>
-    <link rel="stylesheet" href="stylesheets/lfs-print.css" type="text/css" media="print"/>
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type="text/css" media="print"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </xsl:template>
 
   <!-- Drop some unwanted style attributes -->

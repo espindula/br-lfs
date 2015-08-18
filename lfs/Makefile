@@ -5,10 +5,7 @@ CHUNK_QUIET = 1
 ROOT_ID =
 PDF_OUTPUT = LFS-BOOK.pdf
 NOCHUNKS_OUTPUT = LFS-BOOK.html
-EPUB_OUTPUT = LFS-BOOK.epub 
 SHELL = /bin/bash
-
-
 
 ifdef V
   Q =
@@ -27,12 +24,13 @@ lfs: validate profile-html
 	  mkdir -p $(BASEDIR)/stylesheets; \
 	fi;
 	$(Q)cp stylesheets/lfs-xsl/*.css $(BASEDIR)/stylesheets
+	$(Q)pushd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html; popd
+
 	$(Q)if [ ! -e $(BASEDIR)/images ]; then \
 	  mkdir -p $(BASEDIR)/images; \
 	fi;
 	$(Q)cp images/*.png $(BASEDIR)/images
-#	$(Q)cd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html
-#	$(Q)cd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html
+#	$(Q)pushd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html; popd
 
 	@echo "Running Tidy and obfuscate.sh..."
 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
@@ -43,16 +41,6 @@ lfs: validate profile-html
 	done;
 
 	$(Q)$(MAKE) $(BASEDIR)/wget-list $(BASEDIR)/md5sums
-
-epub: validate
-	@echo "Generating HTML/XML for EPUB..."
-	$(Q)if [ ! -e $(BASEDIR) ]; then \
-		mkdir -p $(BASEDIR); \
-	fi;
-	$(Q)mkdir -p $(RENDERTMP)/lfs-epub/
-	$(Q)xsltproc --nonet --output $(RENDERTMP)/lfs-epub/ stylesheets/lfs-xsl/docbook-xsl-1.78.1/epub/docbook.xsl $(RENDERTMP)/lfs-full.xml
-	@echo "Generating EPUB file..."
-	$(Q)./gen-epub.sh $(RENDERTMP) $(BASEDIR) $(EPUB_OUTPUT)
 
 pdf: validate
 	@echo "Generating profiled XML for PDF..."
