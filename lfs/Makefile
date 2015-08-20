@@ -25,7 +25,6 @@ lfs: validate profile-html
 	fi;
 	$(Q)cp stylesheets/lfs-xsl/*.css $(BASEDIR)/stylesheets
 	$(Q)pushd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html; popd
-
 	$(Q)if [ ! -e $(BASEDIR)/images ]; then \
 	  mkdir -p $(BASEDIR)/images; \
 	fi;
