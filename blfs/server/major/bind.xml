@@ -112,25 +112,31 @@ make</userinput>
     <note><para>Si IPv6 n'est pas activé dans le noyau, il y aura plusieurs messages d'erreur:
    "RTNETLINK answers: Operation not permitted". ces messages n'affectent pas les tests.
     </para></note>
-<screen role="root"><userinput>bin/tests/system/ifconfig.sh up</userinput></screen>
-
-
-    <para>La suite de test peut indiquer des échecs en fonction des dépendances facultatives et des options de configuration
-    utilisées. Pour exécuter la suite de tests en tant qu'utilisateur non 
-    privilégié, lancez&nbsp;:</para>
 <screen role="root">
 <userinput>bin/tests/system/ifconfig.sh up</userinput>
 </screen>
-    <para>De nouveau en tant qu'utilisateur <systemitem class="username">root</systemitem>, 
-    nettoyez les interfaces de test&nbsp;:</para>
+    <para>La suite de test peut indiquer des échecs en fonction des dépendances facultatives et des options de configuration
+    utilisées. Pour exécuter la suite de tests en tant qu'utilisateur non 
+    privilégié, lancez&nbsp;:</para>
 <screen>
 <userinput>make -k check</userinput>
+</screen>
+    <para>De nouveau en tant qu'utilisateur <systemitem class="username">root</systemitem>, 
+    nettoyez les interfaces de test&nbsp;:</para>
+<screen role="root">
+<userinput>bin/tests/system/ifconfig.sh down</userinput>
 </screen>
  
     <para>Enfin, installez le paquet en tant qu'utilisateur <systemitem
     class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>bin/tests/system/ifconfig.sh down</userinput>
+<userinput>make install &amp;&amp;
+chmod -v 0755 /usr/lib/lib{bind9,dns,isc{,cc,cfg},lwres}.so &amp;&amp;
+install -v -m755 -d /usr/share/doc/bind-&bind-version;/{arm,misc} &amp;&amp;
+install -v -m644    doc/arm/*.html \
+                    /usr/share/doc/bind-&bind-version;/arm &amp;&amp;
+install -v -m644    doc/misc/{dnssec,ipv6,migrat*,options,rfc-compliance,roadmap,sdb} \
+                    /usr/share/doc/bind-&bind-version;/misc</userinput>
 </screen>
   </sect2>
   <sect2 role="commands">
@@ -195,26 +201,12 @@ make</userinput>
       <para>Créez l'utilisateur et le groupe non privilégiés <systemitem
       class="username">named</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>make install &amp;&amp;
-chmod -v 0755 /usr/lib/lib{bind9,dns,isc{,cc,cfg},lwres}.so &amp;&amp;
-install -v -m755 -d /usr/share/doc/bind-&bind-version;/{arm,misc} &amp;&amp;
-install -v -m644    doc/arm/*.html \
-                    /usr/share/doc/bind-&bind-version;/arm &amp;&amp;
-install -v -m644    doc/misc/{dnssec,ipv6,migrat*,options,rfc-compliance,roadmap,sdb} \
-                    /usr/share/doc/bind-&bind-version;/misc</userinput>
-</screen>
-      <para>Paramétrez des fichiers, des répertoires et des périphériques 
-      dont a besoin <application>BIND</application>&nbsp;:</para>
-<screen role="root">
 <userinput>groupadd -g 20 named &amp;&amp;
 useradd -c "BIND Owner" -g named -s /bin/false -u 20 named &amp;&amp;
 install -d -m770 -o named -g named /srv/named</userinput>
 </screen>
-      <para>Le fichier <filename>rndc.conf</filename> contient des informations
-      pour contrôler les opérations de <command>named</command> avec l'outil
-      <command>rndc</command>. Générez une clé à utiliser dans <filename>named.conf</filename> 
-      et <filename>rdnc.conf</filename> avec la commande 
-      <command>rndc-confgen</command>&nbsp;:</para>
+      <para>Paramétrez des fichiers, des répertoires et des périphériques 
+      dont a besoin <application>BIND</application>&nbsp;:</para>
 <screen role="root">
 <userinput>cd /srv/named &amp;&amp;
 mkdir -p dev etc/namedb/{slave,pz} usr/lib/engines var/run/named &amp;&amp;
@@ -226,14 +218,18 @@ touch /srv/named/managed-keys.bind &amp;&amp;
 cp /usr/lib/engines/libgost.so usr/lib/engines &amp;&amp;
 [ $(uname -m) = x86_64 ] &amp;&amp; ln -sv lib usr/lib64</userinput>
 </screen>
-       <para>Complétez le fichier <filename>named.conf</filename> à partir duquel
-      <command>named</command> lira l'emplacement des fichiers de zone, le serveur
-      de DNS racine, et les clés DNS sécurisées&nbsp;:</para>
+      <para>Le fichier <filename>rndc.conf</filename> contient des informations
+      pour contrôler les opérations de <command>named</command> avec l'outil
+      <command>rndc</command>. Générez une clé à utiliser dans <filename>named.conf</filename> 
+      et <filename>rdnc.conf</filename> avec la commande 
+      <command>rndc-confgen</command>&nbsp;:</para>
 <screen role="root">
 <userinput>rndc-confgen -r /dev/urandom -b 512 > /etc/rndc.conf &amp;&amp;
 sed '/conf/d;/^#/!d;s:^# ::' /etc/rndc.conf > /srv/named/etc/named.conf</userinput>
 </screen>
-      <para>Créez un fichier de zone ayant le contenu suivant&nbsp;:</para>
+       <para>Complétez le fichier <filename>named.conf</filename> à partir duquel
+      <command>named</command> lira l'emplacement des fichiers de zone, le serveur
+      de DNS racine, et les clés DNS sécurisées&nbsp;:</para>
 <screen role="root">
 <?dbfo keep-together="auto"?><userinput>cat &gt;&gt; /srv/named/etc/named.conf &lt;&lt; "EOF"
 <literal>options {
@@ -282,12 +278,7 @@ logging {
 };</literal>
 EOF</userinput>
 </screen>
-      <para>Créez le fichier <filename>root.hints</filename> avec les commandes
-      suivantes&nbsp;:</para>
-      <note>
-        <para>Faites bien attention à vous assurer qu'il n'y a pas de grands
-        espaces dans ce fichier.</para>
-      </note>
+      <para>Créez un fichier de zone ayant le contenu suivant&nbsp;:</para>
 <screen role="root">
 <userinput>cat &gt; /srv/named/etc/namedb/pz/127.0.0 &lt;&lt; "EOF"
 <literal>$TTL 3D
@@ -301,18 +292,11 @@ EOF</userinput>
 1               PTR     localhost.</literal>
 EOF</userinput>
 </screen>
-      <para>Le fichier <filename>root.hints</filename> est une liste de serveurs
-      de DNS racines. Il faut mettre régulièrement à jour ce fichier avec l'outil
-      <command>dig</command>. Vous pouvez obtenir une copie actuelle de root.hints
-      sur <ulink url="ftp://rs.internic.net/domain/named.root" />.
-      Consultez le the <ulink url="http://www.bind9.net/Bv9ARM.html">BIND 9
-      Administrator Reference Manual</ulink> (manuel de référence de l'administrateur
-      BIND 9) pour des détails.</para>
-      <para>Créez ou modifiez <filename>resolv.conf</filename> pour utiliser
-      le nouveau serveur de DNS avec les commandes suivantes&nbsp;:</para>
+      <para>Créez le fichier <filename>root.hints</filename> avec les commandes
+      suivantes&nbsp;:</para>
       <note>
-        <para>Remplacez <replaceable>&lt;votredomaine.com&gt;</replaceable> par
-        votre propre nom de domaine valide.</para>
+        <para>Faites bien attention à vous assurer qu'il n'y a pas de grands
+        espaces dans ce fichier.</para>
       </note>
 <screen role="root">
 <userinput>cat &gt; /srv/named/etc/namedb/root.hints &lt;&lt; "EOF"
@@ -344,14 +328,30 @@ L.ROOT-SERVERS.NET.     6D  IN      A       199.7.83.42
 M.ROOT-SERVERS.NET.     6D  IN      A       202.12.27.33</literal>
 EOF</userinput>
 </screen>
-      <para>Réglez les droits de la cage <command>chroot</command> avec la
-      commande suivante&nbsp;:</para>
+      <para>Le fichier <filename>root.hints</filename> est une liste de serveurs
+      de DNS racines. Il faut mettre régulièrement à jour ce fichier avec l'outil
+      <command>dig</command>. Vous pouvez obtenir une copie actuelle de root.hints
+      sur <ulink url="ftp://rs.internic.net/domain/named.root" />.
+      Consultez le the <ulink url="http://www.bind9.net/Bv9ARM.html">BIND 9
+      Administrator Reference Manual</ulink> (manuel de référence de l'administrateur
+      BIND 9) pour des détails.</para>
+      <para>Créez ou modifiez <filename>resolv.conf</filename> pour utiliser
+      le nouveau serveur de DNS avec les commandes suivantes&nbsp;:</para>
+      <note>
+        <para>Remplacez <replaceable>&lt;votredomaine.com&gt;</replaceable> par
+        votre propre nom de domaine valide.</para>
+      </note>
 <screen role="root">
 <userinput>cp /etc/resolv.conf /etc/resolv.conf.bak &amp;&amp;
 cat &gt; /etc/resolv.conf &lt;&lt; "EOF"
 <literal>search <replaceable>&lt;yourdomain.com&gt;</replaceable>
 nameserver 127.0.0.1</literal>
 EOF</userinput>
+</screen>
+      <para>Réglez les droits de la cage <command>chroot</command> avec la
+      commande suivante&nbsp;:</para>
+<screen role="root">
+<userinput>chown -R named:named /srv/named</userinput>
 </screen>
     </sect3>
     <sect3  id="bind-init">
@@ -363,12 +363,12 @@ EOF</userinput>
         <primary sortas="f-bind">bind</primary>
       </indexterm>
 <screen role="root">
-<userinput>chown -R named:named /srv/named</userinput>
+<userinput>make install-bind</userinput>
 </screen>
       <para>Maintenant démarrez <application>BIND</application> avec le nouveau
       script de démarrage&nbsp;:</para>
 <screen role="root">
-<userinput>make install-bind</userinput>
+<userinput>/etc/rc.d/init.d/bind start</userinput>
 </screen>
     </sect3>
     <sect3>
@@ -376,15 +376,16 @@ EOF</userinput>
       <para>Testez la nouvelle installation de
       <application>BIND</application> 9. Cherchez tout d'abord l'adresse de l'hôte
       local avec <command>dig</command>&nbsp;:</para>
-<screen role="root">
-<userinput>/etc/rc.d/init.d/bind start</userinput>
+<screen>
+<userinput>dig -x 127.0.0.1</userinput>
 </screen>
       <para>Maintenant essayez une recherche de nom externe, en observant la
       différence de vitesse dans des recherches répétées du fait de la mise en 
       cache. Lancez la commande <command>dig</command> deux fois sur la
       même adresse&nbsp;:</para>
 <screen>
-<userinput>dig -x 127.0.0.1</userinput>
+<userinput>dig www.&lfs-domainname; &amp;&amp;
+dig www.&lfs-domainname;</userinput>
 </screen>
       <para>Vous pouvez voir presque des résultats instantanés avec les recherches
       de mise en cache nommées. Consultez le <foreignphrase>Administrator
@@ -464,8 +465,6 @@ EOF</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
-
-
       <varlistentry id="dig">
         <term><command>dig</command></term>
         <listitem>
@@ -499,7 +498,6 @@ EOF</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
-
       <varlistentry id="dnssec-dsfromkey">
        <term><command>dnssec-dsfromkey</command></term>
         <listitem>
@@ -535,7 +533,6 @@ EOF</userinput>
           </indexterm>
         </listitem>
      </varlistentry>
-
       <varlistentry id="dnssec-keygen">
         <term><command>dnssec-keygen</command></term>
         <listitem>
@@ -567,7 +564,6 @@ EOF</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
-
       <varlistentry id="dnssec-signzone">
         <term><command>dnssec-signzone</command></term>
         <listitem>
@@ -601,7 +597,6 @@ EOF</userinput>
          </indexterm>
         </listitem>
       </varlistentry>
-
       <varlistentry id="host">
         <term><command>host</command></term>
         <listitem>
@@ -633,7 +628,6 @@ EOF</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
-
       <varlistentry id="lwresd">
         <term><command>lwresd</command></term>
         <listitem>
@@ -717,7 +711,6 @@ EOF</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
-
       <varlistentry id="nslookup">
         <term><command>nslookup</command></term>
         <listitem>
@@ -766,7 +759,6 @@ EOF</userinput>
           </indexterm>
         </listitem>
       </varlistentry>
-
     </variablelist>
   </sect2>
 </sect1>
