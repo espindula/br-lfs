@@ -97,6 +97,17 @@
 <userinput>groupadd -g 64 sddm &amp;&amp;
 useradd  -c "SDDM Daemon"          -d /var/lib/sddm          -u 64 -g sddm             -s /bin/false sddm</userinput>
 </screen>
+
+     <para>
+      Commencez par corriger le démarrage de l'application <command>upowerd</command>,
+      si nécessaire, et après le login, démarrez la session avec
+      <command>ck-launch-session</command>:
+    </para>
+<screen><userinput>sed -e '/UPOWER_SERVICE)/ s:^://:' \
+    -i src/daemon/PowerManager.cpp &amp;&amp;
+sed -e 's/eval exec/&amp; ck-launch-session /' \
+    -i data/scripts/Xsession</userinput></screen>
+
     <para>
       Installez <application>SDDM</application> en lançant les commandes suivantes :
        
@@ -128,6 +139,12 @@ install -v -dm755 -o sddm -g sddm /var/lib/sddm</userinput>
       <parameter>-DENABLE_JOURNALD=OFF</parameter> : Ce paramètre est utilisé car 
       BLFS ne supporte pas <application>systemd</application>.
     </para>
+     <para>
+      <parameter>-DDBUS_CONFIG_FILENAME=sddm_org.freedesktop.DisplayManager.conf</parameter>:
+      CE paramètre est utilisé pour des raisons de sécurité: d'autres DM utilise déjà
+      <filename>org.freedesktop.DisplayManager.conf</filename>. Vérifiez sur votre système que ce n'est pas le cas,
+      si vous souhaitez le supprimer.
+    </para>
     <para>
       <option>-DBUILD_MAN_PAGES=ON</option>: Ce paramètre peut être utilisé si vous voulez que les pages
       de manuel soient installées. Notez que vous devez avoir
@@ -148,18 +165,34 @@ install -v -dm755 -o sddm -g sddm /var/lib/sddm</userinput>
       <para>
         Ce fichier n'est pas installé avec les instructions de construction, et des valeurs par défaut sont
         utilisées par sddm. Afin de générer le fichier
-        <filename>/etc/sddm.conf</filename>, tapez, en tant qu'utilisateur <systemitem
-        class="username">root</systemitem> :
+        <filename>sddm.example.conf</filename>, tapez
       </para>
 <screen role="root">
 <userinput>sddm --example-config > /etc/sddm.conf</userinput>
 </screen>
+     <note>
       <para>
-        Vous devrez éditer ce fichier, si votre système a des caractéristiques non
-        standard. Par exemple, si Xorg est installé dans /opt, utilisez votre éditeur préféré en tant
+        Cette commande génère un fichier de config <emphasis>example</emphasis>, qui dépend
+        de plusieurs conditions systèmes ou il est généré. Quelques options sont par <emphasis>défauts</emphasis>.
+         S'il y a déjà un fichier 
+        <filename>/etc/sddm.conf</filename> installé, il y aura génération d'un doublon.
+        Quand il est généré pendant une session X, certaines configurations de session sont repliquées, c'est à dire si 
+        le curseur du thème Adwaita est déjà configuré, vous obtiendrez  <emphasis>CursorTheme=Adwaita</emphasis>
+        dans le fichier exemple généré.
+        </para>
+      </note>
+      <para>
+      S'il n'y a pas
+        encore le fichier <filename>/etc/sddm.conf</filename>, en tant qu'utilisateur
+        <systemitem class="username">root</systemitem>, copiez le fichier d'exemple dans <filename>/etc/sddm.conf</filename>:
+    </para>
+<screen role="root"><userinput>cp -v sddm.example.conf /etc/sddm.conf</userinput></screen>
+       <para> 
+        Normalement, vous voudrez éditer ce fichier.
+        Par exemple, si Xorg est installé dans /opt, utilisez votre éditeur préféré en tant
         qu'utilisateur <systemitem class="username">root</systemitem>
         pour remplacer les valeurs par défaut <emphasis>ServerPath</emphasis> et <emphasis>XauthPath</emphasis> par
-        <emphasis>/opt/xorg/bin</emphasis>. Ou, en tant qu'utilisateur <systemitem
+        <emphasis>/opt/xorg/bin/xauth</emphasis>. Ou, en tant qu'utilisateur <systemitem
         class="username">root</systemitem>, tapez
       </para>
 <screen role="root">
@@ -168,6 +201,29 @@ install -v -dm755 -o sddm -g sddm /var/lib/sddm</userinput>
       <para>
         Cette commande fera la substitution et créera une copie du fichier original avec le nom
         <filename>/etc/sddm.conf.orig</filename>.
+      </para>
+
+
+      <para>
+        A partir de maintenant, nous décrirons comment modifier les configurations en utilisant sed, mais
+        biensur vous pouvez bien utiliser à la place votre éditeur préféré en tant que
+        <systemitem class="username">root</systemitem>. Pour des raisons de sécurité, normalement vous voudrez
+        les options serveur par défaut dans sddm.example.conf, sauf si vous voulez qu'une machine distante
+         utilise le serveur X local. Dans ce cas, en tant qu'utilisateur <systemitem class="username">root</systemitem>
+        tapez:
+      </para>
+<screen role="root"><userinput>sed -e 's/-nolisten tcp//'\
+    -i /etc/sddm.conf</userinput></screen>
+      <para>
+        Les utilisateurs de PC de bureau (portables), normallement souhaite la touche Num Lock activée (désactivée). Pour cela,
+        en tant qu'utilisateur <systemitem
+        class="username">root</systemitem>, tapez:
+      </para>
+<screen role="root"><userinput>sed -e 's/\"none\"/\"on\"/' \
+    -i /etc/sddm.conf</userinput></screen>
+      <para>
+        pour les utilisateurs de bureau. Pour les utilisateurs de portable remplacez
+        \"on\" par \"off\", dans la commande précédente.
       </para>
    </sect3>
     <sect3 id="sddm-bootscript">
@@ -231,7 +287,7 @@ EOF</userinput>
     <sect3 id="sddm-init">
       <title>Démarrage de sddm</title>
       <para>
-        Si le script de démarrage à été installé, démarrez le en lançant
+        Si le script de démarrage à été installé, démarrez sddm en lançant
         en tant qu'utilisateur <systemitem
         class="username">root</systemitem>:
       </para>
@@ -303,6 +359,15 @@ sed -i '/initdefault/ s/3/5/' /etc/inittab</userinput>
         <ulink url="https://github.com/sddm/sddm/issues">Issues</ulink>. L'équipe de développement de BLFS
         a trouvé quelques problèmes.
       </para>
+      <note>
+        <para>
+          Dans les paragraphes suivants, à cause de problèmes avec sddm-greeter,
+          nous mentionnons comment définir le clavier utilisé ici. Notez que c'est aussi le clavier qui sera utilisé dans
+          la sessions X, seulement il y a une configuration dans l'environnement de bureau ou dans le gestionnaire
+          de fenêtre qui l'écrasera après.
+        </para>
+      </note>
+
       <para>
        Sélection du clavier : l'écran de bienvenue montre une double case de question ou le mauvais clavier.
         Quand vous commencez à taper le mot de passe ou le nom de l'utilisateur (en fonction du thème, seulement
@@ -315,8 +380,12 @@ sed -i '/initdefault/ s/3/5/' /etc/inittab</userinput>
 <userinput>echo 'setxkbmap <replaceable>"&lt;your keyboard comma separated list&gt;"</replaceable>' &gt;&gt;      /usr/share/sddm/scripts/Xsetup</userinput>
 </screen>
       <para>
-        Par exemple <command>echo 'setxkbmap "gb,br,us"' &gt;&gt;
-        /usr/share/sddm/scripts/Xsetup</command>
+        Par exemple <command>echo 'setxkbmap "fr,gb,br,us"' &gt;&gt;
+        /usr/share/sddm/scripts/Xsetup</command>. Une définition très précise de(s) clavier(s) est possible,
+        par exemple: <command>echo 'setxkbmap -model pc105
+        -layout br,us -variant abnt2,dvorak -keycodes evdev' &gt;&gt;
+        /usr/share/sddm/scripts/Xsetup</command>. Voir le man de setxkbmap.
+
       </para>
       
 <para>
@@ -328,8 +397,9 @@ sed -i '/initdefault/ s/3/5/' /etc/inittab</userinput>
 <userinput>echo "source /etc/profile.d/dircolors.sh" &gt;&gt; /etc/bashrc</userinput>
 </screen>
       <para>
-        Il a été signalé que ce paquet ne fonctionne pas avec Xorg installé
-        avec un préfixe autre que <filename class="directory">/usr</filename>.
+        Il a été signalé que des problèmes peuvent survenir avec ce paquet, si Xorg est installé
+        avec un préfixe autre que <filename class="directory">/usr</filename>. Cependant, l'équipe de développement
+        de BLFS n'a pas eu de problème dans ce cas.
       </para>
     </sect3>
   </sect2>
