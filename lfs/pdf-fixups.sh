@@ -14,3 +14,5 @@ LINE=$(( LINE - 1 ))
 # Not needed
 #sed -i -e "$LINE s/monospace/&\" font-size=\"9pt/" $FILE
 
+# Break a block of code at the right place
+sed -i -e 's@gcc --version | head -n1@<fo:block page-break-before="always"></fo:block>gcc --version | head -n1@' $FILE
