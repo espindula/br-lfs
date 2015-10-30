@@ -1,0 +1,133 @@
+Révision 16565
+
+fichiers modifiés :
+   introduction/welcome/changelog.xml
+   postlfs/filesystems/lvm2.xml
+   general.ent
+
+Log :
+LVM2: Update introduction and give more details in the test section
+
+Le robot a traité 22 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 16564)
++++ introduction/welcome/changelog.xml	(révision 16565)
+@@ -45,6 +45,15 @@
+ -->
+ 
+     <listitem>
++      <para>October 25th, 2015</para>
++      <itemizedlist>
++        <listitem>
++          <para>[pierre] - LVM2: Update introduction and test sections.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>October 24th, 2015</para>
+       <itemizedlist>
+         <listitem>
+
+Index: postlfs/filesystems/lvm2.xml
+===================================================================
+--- postlfs/filesystems/lvm2.xml	(révision 16564)
++++ postlfs/filesystems/lvm2.xml	(révision 16565)
+@@ -30,10 +30,11 @@
+     <title>Introduction to LVM2</title>
+ 
+     <para>
+-The <application>LVM2</application> package is a package that manages
++      The <application>LVM2</application> package is a set of tools that manage
+       logical partitions. It allows spanning of file systems across multiple
+       physical disks and disk partitions and provides for dynamic growing or
+-shrinking of logical partitions.
++      shrinking of logical partitions, mirroring and low storage footprint
++      snapshots.
+     </para>
+ 
+     &lfs78_checked;
+@@ -76,8 +77,14 @@
+ 
+     <bridgehead renderas="sect4">Optional</bridgehead>
+     <para role="optional">
+-<xref linkend='mdadm'/> (for checks) and
+-<xref linkend='xfsprogs'/> (for checks)
++      <xref linkend='mdadm'/>,
++      <xref linkend='reiserfs'/>,
++      <xref linkend='valgrind'/>,
++      <xref linkend='which'/>,
++      <xref linkend='xfsprogs'/> (all five may be used, but are not required,
++        for tests), and
++      <ulink url='https://github.com/jthornber/thin-provisioning-tools'>
++        thin-provisioning-tools</ulink>
+     </para>
+ 
+     <para condition="html" role="usernotes">User Notes:
+@@ -104,6 +111,7 @@
+     &lt;*/M&gt;   Device mapper support                         [CONFIG_BLK_DEV_DM]
+     &lt;*/M/ &gt;   Crypt target support                        [CONFIG_DM_CRYPT]
+     &lt;*/M/ &gt;   Snapshot target                             [CONFIG_DM_SNAPSHOT]
++    &lt;*/M/ &gt;   Thin provisioning target                    [CONFIG_DM_THIN_PROVISIONING]
+     &lt;*/M/ &gt;   Mirror target                               [CONFIG_DM_MIRROR]</literal></screen>
+ 
+     <indexterm zone="lvm2 lvm2-kernel">
+@@ -130,21 +138,34 @@
+ make</userinput></screen>
+ 
+     <para>
+-To test the results, issue: <command>make -k
+-check</command> as the <systemitem class="username">root</systemitem>
+-user. At least one partition on a hard drive must be set up as a Linux
+-LVM partition (type 8e00). The test timings are very dependent on the
+-speed of the disk(s), and on the number of enabled kernel options. A
+-number of tests may fail. Tests have been reported to hang when run in
+-a virtual machine under <application>QEMU</application>.
+-<!-- My results: 460 tests: 121 passed, 307 skipped, 21 broken, 11 failed
+-version LVM2-2.02.132. Not all kernel settings enabled, but those
+-above all were set. Previous reported test results for LVM2-2.02.125
+-by Bruce were better (448 tests: 141 passed, 302 skipped, 5 broken,
+-0 failed). - Pierre -->
++      The tests use <application>udev</application> for logical volume
++      synchronization, so that the LVM udev rules and some utilities need to
++      be installed before running the tests. If you are installing
++      <application>LVM2</application> for the first time, and do not
++      want to install the full package before running the tests, the minimal
++      set of utilities can be installed by running the following instructions
++      as the <systemitem class="username">root</systemitem> user:
+     </para>
+ 
++<screen role="root"><userinput>make -C tools install_dmsetup_dynamic &amp;&amp;
++make -C udev  install                 &amp;&amp;
++make -C libdm install</userinput></screen>
+     <para>
++      To test the results, issue: <command>make check_local</command> as the
++      <systemitem class="username">root</systemitem> user. Other targets are
++      available and can be listed with <command>make -C test help</command>.
++      The test timings are very dependent on the speed of the disk(s), and on
++      the number of enabled kernel options. A number of tests may fail. Two
++      tests have been reported to hang, and can be disabled via <command>rm
++      test/shell/lvcreate-large-raid.sh</command> and <command>rm
++      test/shell/snapshot-remove-dmsetup.sh</command>. The tests generate a lot
++      of kernel messages, which may clutter your terminal. You can disable them
++      by issuing <command>dmesg -D</command> before running the tests (do not
++      forget to issue <command>dmesg -E</command> when tests are done).
++    </para>
++    <para>
+       Now, as the <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+@@ -182,6 +203,13 @@
+       event daemon.
+     </para>
+ 
++    <para>
++      <option>--enable-lvmetad</option>: This switch enables
++      building of the <application>LVM</application> metadata daemon,
++      which avoids scanning all the filesystems when an lvm command is
++      run.
++    </para>
+   </sect2>
+ 
+   <sect2 role="content">
+
