@@ -79,6 +79,10 @@ fi</xsl:text>
         <xsl:when test="contains($patch.name, 'net-tools')">
           <xsl:text>/net-tools</xsl:text>
         </xsl:when>
+          <!-- x265 -->
+        <xsl:when test="contains($patch.name, 'x265')">
+          <xsl:text>/x265</xsl:text>
+        </xsl:when>
           <!-- General rule -->
         <xsl:otherwise>
           <xsl:variable name="cut"
