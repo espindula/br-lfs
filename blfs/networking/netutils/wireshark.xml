@@ -80,24 +80,29 @@
     <bridgehead renderas="sect4">Recommandés</bridgehead>
     <para role="recommended">
       <xref linkend="gtk3"/> (pour contruire l'interface <application>Gtk+3</application>
-      ) et
- <xref linkend="libpcap"/> (requis pour capturer les données)</para>
+      )
+ <xref linkend="libpcap"/> (requis pour capturer les données) et
+      <xref linkend="qt5"/> (pour l'interface <application>Qt5</application>)
+</para>
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
       <xref linkend="gnutls"/>,
       <xref linkend="libgcrypt"/>,
+      <xref linkend="libnl"/>,
       <xref linkend="lua"/>,
       <xref linkend="mitkrb"/>,
       <xref linkend="openssl"/>,
+      <xref linkend="sbc"/>,
       <ulink url="http://www.gnu.org/software/adns/adns.html">adns</ulink>,
-      <ulink url="http://www.maxmind.com/app/c">GeoIP</ulink>, and
-      <ulink url="http://www.portaudio.com/download.html">PortAudio</ulink>
+      <ulink url="http://c-ares.haxx.se/">c-ares</ulink>,
+      <ulink url="http://www.ibr.cs.tu-bs.de/projects/libsmi/">libsmi</ulink>,
+      <ulink url="http://www.maxmind.com/app/c">GeoIP</ulink>, et
+      <ulink url="http://www.portaudio.com/download.html">PortAudio</ulink> (pour le player RTP GTK+)
      </para>
-    <bridgehead renderas="sect4">Facultatives (pour construire plus d'interfaces graphiques)</bridgehead>
+    <bridgehead renderas="sect4">Facultatives (pour les interfaces graphiques)</bridgehead>
     <para role="optional">
-      <xref linkend="gtk2"/>,
-      <xref linkend="qt4"/> ou
-      <xref linkend="qt5"/>
+      <xref linkend="gtk2"/> ou
+      <xref linkend="qt4"/> 
     </para>
     <note>
       <para>
@@ -111,12 +116,10 @@
         est utilisé par défaut.
       </para>
       <para>
-        Les interfaces GTK+ et Qt peuvent être construite en même temps. Si vous voulez écraser les valeurs par défaut, quelques
+        Les interfaces GTK+ et Qt sont construites, comme recommandé par les développeurs.
+       Si vous voulez écraser les valeurs par défaut, quelques
         paramètres de configure doivent être initialisés (voir
-        <quote>Explications des commances</quote>) ou quelques instructions spéciales doivent être tapées (voir dessous) quand
-        Qt4 et Qt5 sont installés et que vous voulez utiliser Qt4. SBU et l'espace disque requis sont plus
-        important pour l'interface Qt. Les instructions suivantes supposent que vous voulez seulement construire
-        l'interface GTK+3.
+        <quote>Explications des commances</quote>).
       </para>
     </note>
      <para condition="html" role="usernotes">Notes d'utilisateur&nbsp;:
@@ -140,19 +143,6 @@
   </sect2>
   <sect2 role="installation">
     <title>Installation de Wireshark</title>
-    <para>Éventuellement, corrigez la description du programme dans titre. Le
-    premier changement écrase le <quote>SVN Unknown</quote> (SVN inconnu) par défaut dans le
-    titre et le second écrase un script qui réinitialise la version à
-    to <quote>unknown</quote> (inconnue).</para>
-<screen>
-<userinput>cat > svnversion.h &lt;&lt; "EOF" &amp;&amp;
-#define SVNVERSION "BLFS"
-#define SVNPATH "source"
-EOF
-cat > make-version.pl &lt;&lt; "EOF"
-<literal>#!/usr/bin/perl</literal>
-EOF</userinput>
-</screen>
     <para><application>Wireshark</application> est une application très grosse et
     très complexe. Ces instructions donnent les mesures de sécurité pour garantir
     que seuls les utilisateurs de confiance soient autorisés à voir le trafic réseau.
@@ -161,21 +151,6 @@ EOF</userinput>
     class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
 <userinput>groupadd -g 62 wireshark</userinput>
-</screen>
-    <para>
-      Si vous voulez construire une interface Qt (voir <quote>Explications des commandes</quote>),
-      pour une interface <application>Qt5</application>, tapez:
-</para>
-<screen>
-<userinput>source setqt5 &amp;&amp;
-sed -e 's/"-fPIE"/""/'     -e 's/"-pie"/""/'      -i configure</userinput>
-</screen>
-    <para> et ajoutez <envar>CXXFLAGS="-fPIC"</envar> à la ligen de configuration, ou, pour l'interface
-    <application>Qt4</application>, tapez :
-</para>
-<screen>
-<userinput>source setqt4 &amp;&amp;
-sed -i 's/Qt5 Qt/Qt/' configure</userinput>
 </screen>
     <para>Continuez à installer <application>Wireshark</application> en lançant
     les commandes suivantes&nbsp;:</para>
@@ -218,45 +193,42 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
 <screen role="root">
 <userinput>usermod -a -G wireshark &lt;username&gt;</userinput>
 </screen>
+    <para>
+      Si vous installez wireshark pour la première fois, il sera nécessaire de quitter la session et de se loguer
+      de nouveau, afin que vous ayez maintenant wireshark dans vos groupes, sinon, il ne fonctionnera pas
+      correctement.
+    </para>
+
+
+
   </sect2>
   <sect2 role="commands">
     <title>Explication des commandes</title>
      <para>
-      <command>sed -e 's/"-fPIE"/""/' ... configure</command>: Cette commande est requise pour
-      Qt-5.5, car il est nécéssaire de compiler avec
-      <envar>CXXFLAGS="-fPIC"</envar>.
-    </para>
-    <para><command>sed -i 's/Qt5 Qt/Qt/' ...</command>: Cette commande est requise car sans elle,
-    les bibliothèques et include de
-   <application>Qt5</application> sont trouvés et utilisés en premier, si les deux versions
-     sont installées, quand on tente de construire avec
-     <application>Qt4</application>,
-    et que <command>make</command> ne se termine pas.</para>
-    <para>
-      <parameter>--with-gtk3</parameter>: Par défaut, la machine de construction construira une interface
-      pour Qt et GTK+, si ces bibliothèques sont trouvées. Si Qt est installé et que vous ne voulez pas que l'interface
-      soit créé, vous devez passer
-      <parameter>--without-qt</parameter> au script configure. Cela écrasera les valeurs par défaut, et vous devrez passer
-      <parameter>--with-gtk3</parameter>  ou <parameter>--with-gtk2</parameter>
-      pour avoir l'insterface GTK+ de construite.
-    </para>
-    <para>
-      <parameter>--without-qt</parameter>: désactive la construction de l'interface Qt.
+      <option>--with-gtk2=[yes/no]</option>: Pour l'interface Gtk+2. Si Gtk+2
+      et 3 sont installés, la valeur par défaut est no. Notez que l'interface pour seulement une des versions
+     de Gtk+ (soit 2 ou 3) peut être construite.
+     </para>
+     <para>
+      <option>--with-gtk3=[yes/no]</option>: Pour l'interface Gtk+3. Si Gtk+2
+      et 3 sont installé, la valeur par défaut est yes.
+     </para>
+     <para>
+      <option>--with-qt=[yes/no/4/5]</option>: Pour l'interface Qt. La valeur par défaut est yes.
+      Si Qt4 et 5 sont installés, Qt5 est choisi par défaut. Notez que seulement l'interface
+      pour une version de Qt (soit 4 ou 5) peut être construite.
     </para>
    <para><option>--disable-wireshark</option>: Cette option est requise si vous
     avez installé <application>GTK+</application> mais ne voulez pas construire les interfaces.
     </para>
-    <para>
-      <option>--with-gtk2</option>: Utilisez cette option si vous voulez l'interface
-      <application>GTK+2</application>
-      Notez que
-    l'interface graphique pour seulement une version de GTK+ (soit 2 ou 3) peut être construite.</para>
    </sect2>
   <sect2 role="configuration">
     <title>Configurer Wireshark</title>
     <sect3 id="wireshark-config">
       <title>Fichiers de configuration</title>
-      <para><filename>/etc/wireshark.conf</filename> et <filename>~/.wireshark/*</filename></para>
+      <para><filename>/etc/wireshark.conf</filename> et 
+      <filename>~/.config/wireshark/*</filename> (sans qu'il y ai déjà
+      <filename>~/.wireshark/*</filename> dans le système)</para>
       <indexterm zone="wireshark wireshark-config">
         <primary sortas="e-AA.wireshark-star">~/.wireshark/*</primary>
       </indexterm>
@@ -272,26 +244,6 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
  La majorité de la configuration de <application>Wireshark</application> peut être réalisée en utilisant
     les options du menu des interfaces graphiques de <command>wireshark</command>.</para>
     </sect3>
-    <sect3>
-      <title>Fichier de bureau pour l'interface Qt</title>
-      <para>Si l'interface Qt est construite et que vous souhaitez une entrée dans le menu du bureau,
-      il y a deux possibilités (les instructions doivent être exécutées en tant que root).</para>
-      <para>Si seulement l'interface Qt est construite:</para>
-<screen role="root">
-<userinput>mv -v /usr/share/applications/wireshark.desktop       /usr/share/applications/wireshark-qt.desktop</userinput>
-</screen>
-      <para>Si les deux interfaces GTK+ et Qt sont construites:</para>
-<screen role="root">
-<userinput>cp -v /usr/share/applications/wireshark.desktop       /usr/share/applications/wireshark-qt.desktop</userinput>
-</screen>
-      <para>Maintenant corriger pour <command>wireshark-qt</command>:</para>
-<screen role="root">
-<userinput>sed -e 's/ireshark/&amp;-qt/'     -e 's/^(Icon=wireshark)-qt/1/'     -i /usr/share/applications/wireshark-qt.desktop</userinput>
-</screen>
-      <note>
-        <para>Si vous voulez regarder les paquets, assurez vous que vous ne les filtrez pas avec <xref linkend="iptables"/>. Si vous voulez exclure certaines classes de paquets, il est plus efficace de le faire avec <application>iptables</application> qu'avec <application>Wireshark</application>.</para>
-      </note>
-    </sect3>
   </sect2>
   <sect2 role="content">
     <title>Contenu</title>
@@ -300,14 +252,20 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
       <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoires installés</segtitle>
       <seglistitem>
-        <seg>capinfos, captype, dftest, dumpcap, editcap, mergecap, randpkt,
-        rawshark, reordercap, text2pcap, tshark,
-        wireshark et facultativement wireshark-qt</seg>
-        <seg>libfiletap.so, libwireshark.so, libwiretap.so, libwsutil.so, et
-        de nombreux modules dans /usr/lib/wireshark/plugins</seg>
-        <seg>/usr/lib/wireshark, /usr/share/doc/wireshark-&wireshark-version;,
-        /usr/share/pixmaps/wireshark et /usr/share/wireshark</seg>
-      </seglistitem>
+        <seg>
+          androiddump, capinfos, captype, dftest, dumpcap, editcap, idl2wrs,
+          mergecap, randpkt, rawshark, reordercap, text2pcap, tshark, wireshark,
+          et wireshark-gtk
+        </seg>
+        <seg>
+          libwireshark.so, libwiretap.so, libwsutil.so, et de nombreux modules dans 
+          /usr/lib/wireshark/plugins
+        </seg>
+        <seg>
+          /usr/{lib,share}/wireshark et
+          /usr/share/doc/wireshark-&wireshark-version;
+         </seg>
+     </seglistitem>
     </segmentedlist>
     <variablelist>
       <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
@@ -415,20 +373,20 @@ chmod -v 6550 /usr/bin/{tshark,dumpcap}</userinput>
       <varlistentry id="wireshark-prog">
         <term><command>wireshark</command></term>
         <listitem>
-          <para>est l'interface GTK+ de l'analyseur de protocole réseau. Il vous permet de parcourir intéractivement
+          <para>est l'interface Qt de l'analyseur de protocole réseau. Il vous permet de parcourir intéractivement
              en direct les paquets à partir d'un réseau ou à partir d'un fichier de capture sauvegardé précédemment.</para>
           <indexterm zone="wireshark wireshark-prog">
             <primary sortas="b-wireshark">wireshark</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-      <varlistentry id="wireshark-qt-prog">
-        <term><command>wireshark-qt</command></term>
+      <varlistentry id="wireshark-gtk-prog">
+        <term><command>wireshark-gtk</command></term>
         <listitem>
-          <para>est l'interface Qt de l'analyseur de protocole réseau. Il vous permet de parcourir intéractivement
+          <para>est l'interface GTK+ de l'analyseur de protocole réseau. Il vous permet de parcourir intéractivement
              en direct les paquets à partir d'un réseau ou à partir d'un fichier de capture sauvegardé précédemment.</para>
-          <indexterm zone="wireshark wireshark-qt-prog">
-            <primary sortas="b-wireshark-qt">wireshark-qt</primary>
+          <indexterm zone="wireshark wireshark-gtk-prog">
+            <primary sortas="b-wireshark-gtk">wireshark-gtk</primary>
           </indexterm>
         </listitem>
       </varlistentry>
