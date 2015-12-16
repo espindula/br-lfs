@@ -72,7 +72,6 @@
       et
       <ulink url="http://ftp.gnome.org/pub/gnome/sources/yelp-tools/">Yelp Tools</ulink>
     </para>
-
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/dbus"/></para>
   </sect2>
@@ -83,19 +82,27 @@
     messages système&nbsp;:</para>
 <screen role="root">
 <userinput>groupadd -g 18 messagebus &amp;&amp;
-useradd -c "D-Bus Message Daemon User" -d /var/run/dbus         -u 18 -g messagebus -s /bin/false messagebus</userinput>
+useradd -c "D-Bus Message Daemon User" -d /var/run/dbus \
+        -u 18 -g messagebus -s /bin/false messagebus</userinput>
 </screen>
     <para>Installez <application>D-BUS</application> en lançant les commandes
     suivantes (vous pouvez d'abord souhaiter observer la sortie de
     <command>./configure --help</command> et ajouter des paramètres désirés
     à la commande <command>configure</command> affichée ci-dessous)&nbsp;:</para>
-
 <screen>
-<userinput>./configure --prefix=/usr                              --sysconfdir=/etc                          --localstatedir=/var                       --disable-doxygen-docs                     --disable-xml-docs                         --disable-static                           --disable-systemd                          --without-systemdsystemunitdir             --with-console-auth-dir=/run/console/             --docdir=/usr/share/doc/dbus-&dbus-version;   &amp;&amp;
+<userinput>./configure --prefix=/usr                  \
+            --sysconfdir=/etc              \
+            --localstatedir=/var           \
+            --disable-doxygen-docs         \
+            --disable-xml-docs             \
+            --disable-static               \
+            --disable-systemd              \
+            --without-systemdsystemunitdir \
+            --with-console-auth-dir=/run/console/ \
+            --docdir=/usr/share/doc/dbus-&dbus-version;   &amp;&amp;
 make</userinput>
 </screen>
     <para>Voir ci-dessous pour les instructions de test.</para>
-
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
 <userinput>make install</userinput>
@@ -134,10 +141,12 @@ chmod -v      4750       /usr/libexec/dbus-daemon-launch-helper</userinput>
 		de production de <application>D-BUS</application>. Si vous souhaitez lancer la suite de tests,
 		tapez les commandes suivantes (pour les tests, vous n'avez pas besoin de construire les docs)&nbsp;:
 		    </para>
-
 <screen>
 <userinput>make distclean                     &amp;&amp;
-./configure --enable-tests                     --enable-asserts                   --disable-doxygen-docs             --disable-xml-docs     &amp;&amp;
+./configure --enable-tests         \
+            --enable-asserts       \
+            --disable-doxygen-docs \
+            --disable-xml-docs     &amp;&amp;
 make                               &amp;&amp;
 make check</userinput>
 </screen>
@@ -147,9 +156,16 @@ make check</userinput>
       Cela et l'utilisation de la commande <command>make distclean</command> impliquent que la taille du répertoire de
       construction est plus petit que celui obtenu par une construction complète avec les documents générés.
     </para>
-
-<screen>
-<userinput>sed -i -e 's:run-test.sh:$(NULL):g' test/name-test/Makefile.in</userinput>
+<screen role="root">
+<userinput>cat &gt; /etc/dbus-1/session-local.conf &lt;&lt; "EOF"
+<literal>&lt;!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd"&gt;
+&lt;busconfig&gt;
+  &lt;!-- Search for .service files in /usr/local --&gt;
+  &lt;servicedir&gt;/usr/local/share/dbus-1/services&lt;/servicedir&gt;
+&lt;/busconfig&gt;</literal>
+EOF</userinput>
 </screen>
     <para>Il y a un signalement indiquant que les tests peuvent échouer s'ils sont
       lancés depuis un shell Midnight Commander. Il se peut vous vous ayez des
@@ -241,15 +257,7 @@ make check</userinput>
       ajouté en effectuant les commandes suivantes en tant qu'utilisateur
       <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
-<userinput>cat &gt; /etc/dbus-1/session-local.conf &lt;&lt; "EOF"
-<literal>&lt;!DOCTYPE busconfig PUBLIC
- "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
- "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd"&gt;
-&lt;busconfig&gt;
-  &lt;!-- Search for .service files in /usr/local --&gt;
-  &lt;servicedir&gt;/usr/local/share/dbus-1/services&lt;/servicedir&gt;
-&lt;/busconfig&gt;</literal>
-EOF</userinput>
+<userinput>make install-dbus</userinput>
 </screen>
     </sect3>
     <sect3  id="dbus-init">
@@ -261,8 +269,10 @@ EOF</userinput>
       <indexterm zone="dbus dbus-init">
         <primary sortas="f-dbus">dbus</primary>
       </indexterm>
-<screen role="root">
-<userinput>make install-dbus</userinput>
+<screen>
+<userinput><literal># Start the D-Bus session daemon
+eval `dbus-launch`
+export DBUS_SESSION_BUS_ADDRESS</literal></userinput>
 </screen>
       <para>Remarquez que ce script de démarrage ne démarre que démon
       <application>D-BUS</application> de tout le système. Chaque utilisateur
@@ -277,7 +287,6 @@ EOF</userinput>
         <listitem>
           <para>Ajouter <command>dbus-launch</command> à la ligne dans le fichier
           <filename>~/.xinitrc</filename> qui démarre votre environnement graphique
-
 .</para>
         </listitem>
         <listitem>
@@ -301,17 +310,12 @@ EOF</userinput>
             en ajoutant les lignes suivantes&nbsp;:
           </para>
 <screen>
-<userinput><literal># Start the D-Bus session daemon
-eval `dbus-launch`
-export DBUS_SESSION_BUS_ADDRESS</literal></userinput>
+<userinput><literal># Kill the D-Bus session daemon
+kill $DBUS_SESSION_BUS_PID</literal></userinput>
 </screen>
           <para>Cette méthode n'arrêtera pas le démon de session quand vous quittez
           votre shell, donc vous devriez ajouter la ligne suivante à votre
           fichier <filename>~/.bash_logout</filename>&nbsp;:</para>
-<screen>
-<userinput><literal># Kill the D-Bus session daemon
-kill $DBUS_SESSION_BUS_PID</literal></userinput>
-</screen>
         </listitem>
         <listitem>
           <para>Une astuce a été écrite offrant des moyens de démarrer

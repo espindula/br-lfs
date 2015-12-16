@@ -94,7 +94,8 @@
     <systemitem class="username">root</systemitem>&nbsp;:</para>
 <screen role="root">
 <userinput>groupadd -g 99 nogroup &amp;&amp;
-useradd -c "Unprivileged Nobody" -d /dev/null -g nogroup     -s /bin/false -u 99 nobody</userinput>
+useradd -c "Unprivileged Nobody" -d /dev/null -g nogroup \
+    -s /bin/false -u 99 nobody</userinput>
 </screen>
     <note>
       <para>Les valeurs d'uid et de gid classiques sont 65534, ce qui signifie
@@ -112,13 +113,18 @@ useradd -c "Unprivileged Nobody" -d /dev/null -g nogroup     -s /bin/false -u 99
     </note>
     <para>Corrigez un problème qui empécherait <command>rpd.statd</command> de démarrer:</para>
 <screen>
-<userinput>sed -i "/daemon_init/s:!::" utils/statd/statd.c</userinput>
+<userinput>./configure --prefix=/usr          \
+            --sysconfdir=/etc      \
+            --without-tcp-wrappers \
+            --disable-nfsv4        \
+            --disable-gss &amp;&amp;
+make</userinput>
 </screen>
     <para>Installez <application>NFS Utilities</application> en lançant
     les commandes suivantes&nbsp;:</para>
-<screen>
-<userinput>./configure --prefix=/usr                      --sysconfdir=/etc                  --without-tcp-wrappers             --disable-nfsv4                    --disable-gss &amp;&amp;
-make</userinput>
+<screen role='root'>
+<userinput>make install &amp;&amp;
+chmod u+w,go+r /sbin/mount.nfs</userinput>
 </screen>
     <para>Si votre répertoire <filename class="directory">/usr</filename> est
     monté en NFS, vous devriez installer les exécutables dans
@@ -126,11 +132,10 @@ make</userinput>
     supplémentaire <option>--sbindir=/sbin</option> à la commande
     <command>./configure</command> ci-dessus.</para>
     <para>Maintenant, en tant qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:</para>
- <screen role='root'><userinput>make install &amp;&amp;
- chmod u+w,go+r /sbin/mount.nfs</userinput></screen>
-
-
-
+ 
+<screen role="root">
+<userinput>/home <replaceable>192.168.0.0/24</replaceable>(rw,subtree_check,anonuid=99,anongid=99)</userinput>
+</screen>
 <para>Les tests de ce paquet demande que le démon de <xref
     linkend="rpcbind"/> soit lancé et que les tests soient lancés en tant qu'utilisateur
    <systemitem class="username">root</systemitem>.</para>
@@ -160,7 +165,7 @@ Pour tester les résultats, tapez: <command>make check</command></para>
       <filename class="directory">/home</filename> via le réseau local,
       vous pouvez ajouter la ligne suivante&nbsp;:</para>
 <screen role="root">
-<userinput>/home <replaceable>192.168.0.0/24</replaceable>(rw,subtree_check,anonuid=99,anongid=99)</userinput>
+<userinput>make install-nfs-server</userinput>
 </screen>
       <note><para>Soyez certain de remplacer le répertoire, l'adresse réseau et le préfixe pour correspondre à
       votre réseau. Le seul espace dans la ligne dessus doit être entre le répertoire et l'adresse réseau.
@@ -174,7 +179,12 @@ Pour tester les résultats, tapez: <command>make check</command></para>
         fourni dans le paquet <xref linkend="bootscripts"/> pour lancer le
         serveur au démarrage.</para>
 <screen role="root">
-<userinput>make install-nfs-server</userinput>
+<userinput>cat &gt; /etc/sysconfig/nfs-server &lt;&lt; "EOF"
+<literal>PORT="2049"
+PROCESSES="8"
+QUOTAS="no"
+KILLDELAY="10"</literal>
+EOF</userinput>
 </screen>
         <indexterm zone="nfs-utils nfs-utils-server-init">
           <primary sortas="f-nfs-server">nfs-server</primary>
@@ -182,12 +192,8 @@ Pour tester les résultats, tapez: <command>make check</command></para>
         <para>Maintenant créez le fichier de configuration
          <filename>/etc/sysconfig/nfs-server</filename>&nbsp;:</para>
 <screen role="root">
-<userinput>cat &gt; /etc/sysconfig/nfs-server &lt;&lt; "EOF"
-<literal>PORT="2049"
-PROCESSES="8"
-QUOTAS="no"
-KILLDELAY="10"</literal>
-EOF</userinput>
+<userinput><replaceable>&lt;server-name&gt;</replaceable>:/home  /home nfs   rw,_netdev 0 0
+<replaceable>&lt;server-name&gt;</replaceable>:/usr   /usr  nfs   ro,_netdev 0 0</userinput>
 </screen>
         <note><para>Les paramètres ci-dessus peuvent être mis, éventuellement,
         dans <filename>/etc/sysconfig/rc.site</filename>.</para></note>
@@ -206,8 +212,7 @@ EOF</userinput>
       et <filename class="directory">/usr</filename>, ajoutez ce qui suit au
       fichier <filename>/etc/fstab</filename>&nbsp;:</para>
 <screen role="root">
-<userinput><replaceable>&lt;server-name&gt;</replaceable>:/home  /home nfs   rw,_netdev 0 0
-<replaceable>&lt;server-name&gt;</replaceable>:/usr   /usr  nfs   ro,_netdev 0 0</userinput>
+<userinput>make install-nfs-client</userinput>
 </screen>
       <para>Les options qui peuvent être utilisées sont spécifiées dans <command>man 5 nfs</command>.
       Si le client et le server utilisent des versions récentes de linux, la plupart des
@@ -235,9 +240,6 @@ EOF</userinput>
         <para>Installez le script de démarrage <filename>/etc/rc.d/init.d/nfs-client</filename>
         fourni dans le paquet <xref linkend="bootscripts"/> pour lancer les
         services clients au démarrage.</para>
-<screen role="root">
-<userinput>make install-nfs-client</userinput>
-</screen>
         <indexterm zone="nfs-utils nfs-utils-client-config">
           <primary sortas="f-nfs-client">nfs-client</primary>
         </indexterm>
