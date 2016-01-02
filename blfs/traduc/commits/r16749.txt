@@ -1,0 +1,149 @@
+Révision 16749
+
+fichiers modifiés :
+   multimedia/libdriv/frei0r.xml
+   general.ent
+   packages.ent
+   general/graphlib/opencv.xml
+   introduction/welcome/changelog.xml
+
+Log :
+• Update to opencv-3.1.0. • Fix build of frei0r-snapshot-27-01-15 with opencv-3.1.0.
+
+Le robot a traité 38 % du commit anglais
+Index: general/graphlib/opencv.xml
+===================================================================
+--- general/graphlib/opencv.xml	(révision 16748)
++++ general/graphlib/opencv.xml	(révision 16749)
+@@ -74,8 +78,8 @@
+ 
+     <bridgehead renderas="sect3">Additional Downloads</bridgehead>
+     <para>Optional file: <ulink
+-url="&sourceforge-repo2;&cvdir;/3rdparty/ippicv/ippicv_linux_20141027.tgz">
+-&sourceforge-repo2;&cvdir;/3rdparty/ippicv/ippicv_linux_20141027.tgz</ulink>
++      url="https://raw.githubusercontent.com/Itseez/opencv_3rdparty/&ippicv_binaries_commit;/ippicv/ippicv_linux_&ippicv-version;.tgz">
++           https://raw.githubusercontent.com/Itseez/opencv_3rdparty/&ippicv_binaries_commit;/ippicv/ippicv_linux_&ippicv-version;.tgz</ulink>
+     </para>
+ 
+     <bridgehead renderas="sect3">opencv Dependencies</bridgehead>
+@@ -140,7 +144,7 @@
+       it again:
+     </para>
+ 
+-<screen><userinput>ipp_file=../ippicv_linux_20141027.tgz             &amp;&amp;
++<screen><userinput>ipp_file=../ippicv_linux_&ippicv-version;.tgz             &amp;&amp;
+ ipp_hash=$(md5sum $ipp_file | cut -d" " -f1)      &amp;&amp;
+ ipp_dir=3rdparty/ippicv/downloads/linux-$ipp_hash &amp;&amp;
+ 
+@@ -176,11 +180,11 @@
+   <sect2 role="commands">
+     <title>Command Explanations</title>
+ 
+-<para><option>-DWITH_XINE=ON</option>: This option instucts the make procedure to
+-use <xref linkend="xine-lib"/>.</para>
++    <para><parameter>-DWITH_XINE=ON</parameter>: This option instructs the make
++    procedure to use <xref linkend="xine-lib"/>.</para>
+ 
+-<para><option>-DWITH_IPP=ON</option>: This option instucts the make procedure to
+-use the downloaded IPP package.</para>
++    <para><parameter>-DWITH_IPP=ON</parameter>: This option instructs the make
++    procedure to use the downloaded IPP package.</para>
+ 
+   </sect2>
+ 
+@@ -212,12 +216,13 @@
+           libopencv_shape.so,
+           libopencv_stitching.so,
+           libopencv_superres.so,
++          libopencv_ts.a,
+           libopencv_video.so,
+           libopencv_videoio.so, and
+           libopencv_videostab.so
+         </seg>
+         <seg>
+-/usr/include/opencv and
++          /usr/include/opencv{,2} and
+           /usr/share/OpenCV
+         </seg>
+       </seglistitem>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 16748)
++++ introduction/welcome/changelog.xml	(révision 16749)
+@@ -45,10 +45,25 @@
+ -->
+ 
+     <listitem>
++      <para>December 23rd, 2015</para>
++      <itemizedlist>
++        <listitem>
++          <para>[fernando] - Fix build of frei0r-snapshot-27-01-15 with
++          opencv-3.1.0. Fixes
++          <ulink url="&blfs-ticket-root;7281">#7281</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to opencv-3.1.0. Fixes
++          <ulink url="&blfs-ticket-root;7276">#7276</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>December 21th, 2015</para>
+       <itemizedlist>
+         <listitem>
+
+Index: multimedia/libdriv/frei0r.xml
+===================================================================
+--- multimedia/libdriv/frei0r.xml	(révision 16748)
++++ multimedia/libdriv/frei0r.xml	(révision 16749)
+@@ -70,7 +70,7 @@
+ 
+     <bridgehead renderas="sect3">Frei0r Dependencies</bridgehead>
+ 
+-<bridgehead renderas="sect4">Required</bridgehead>
++    <bridgehead renderas="sect4">Recommended</bridgehead>
+     <para>
+       <xref linkend='gavl'/> and
+       <xref linkend='opencv'/>
+@@ -94,7 +94,14 @@
+ 
+ <screen><userinput>patch -Np1 -i ../frei0r-snapshot-&frei0r-version;-gcc5_fix-1.patch &amp;&amp;
+ 
+-cmake -DCMAKE_INSTALL_PREFIX=/usr .. &amp;&amp;
++mkdir -vp build &amp;&amp;
++cd        build &amp;&amp;
++cmake -DCMAKE_INSTALL_PREFIX=/usr    \
++      -DCMAKE_BUILD_TYPE=Release     \
++      -DOpenCV_DIR=/usr/share/OpenCV \
++      -Wno-dev ..                    &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>This package does not come with a test suite.</para>
+@@ -105,6 +112,21 @@
+ 
+   </sect2>
+ 
++  <sect2 role="commands">
++    <title>Command Explanations</title>
++    <para><parameter>-DOpenCV_DIR=/usr/share/OpenCV</parameter>: This parameter
++    helps the make procedure to find the <filename>libippicv.a</filename>
++    library, installed under that directory tree.</para>
++    <para><option>-DWITHOUT_GAVL=ON</option>: This option instructs the make
++    procedure to disable building plugins dependent upon gavl.</para>
++    <para><option>-DWITHOUT_OPENCV=ON</option>: This option instructs the make
++    procedure to disable building plugins dependent upon OpenCV.</para>
++  </sect2>
+   <sect2 role="content">
+     <title>Contents</title>
+ 
+@@ -115,7 +137,7 @@
+ 
+       <seglistitem>
+         <seg>None</seg>
+-<seg>Over 120 vieeo effects plugins</seg>
++        <seg>Over 120 video effects plugins</seg>
+         <seg>/usr/lib/frei0r-1</seg>
+       </seglistitem>
+     </segmentedlist>
+

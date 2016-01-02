@@ -1,0 +1,834 @@
+Révision 16779
+
+fichiers supprimés :
+D       scripts/blfs-chapter27.php
+D       scripts/blfs-chapter30.php
+D       scripts/blfs-chapter32.php
+D       scripts/blfs-chapter34.php
+
+fichiers ajoutés :
+A       scripts/blfs-chapter35.php
+A       scripts/blfs-chapter37.php
+A       scripts/blfs-chapter39.php
+A       scripts/blfs-chapter43.php
+
+fichiers modifiés :
+M       scripts/leftnav.html
+M       scripts/blfs-chapter31.php
+M       scripts/blfs-chapter50.php
+M       scripts/blfs-chapter36.php
+M       scripts/blfs-include.php
+M       scripts/blfs-chapter26.php
+M       scripts/blfs-chapter29.php
+M       scripts/blfs-currency.html
+
+Log :
+Relatively major update to scripts to account for new packages and book organization. Updates are still needed for kf5/plasma5.
+
+Le robot a traité 72 % du commit anglais
+
+ATTENTION : il faut relire les fichiers suivants qui sont ajoutés
+Index: scripts/blfs-chapter26.php
+===================================================================
+--- scripts/blfs-chapter26.php	(révision 16778)
++++ scripts/blfs-chapter26.php	(révision 16779)
+@@ -4,20 +4,21 @@
+ include 'blfs-include.php';
+ 
+ $CHAPTER       = '26';
+-$CHAPTERS      = 'Chapter 26';
+-$START_PACKAGE = 'fluxbox';
+-$STOP_PACKAGE  = 'sawfish';
++$CHAPTERS      = 'Chapters 26-28';
++$START_PACKAGE = 'lxdm';
++$STOP_PACKAGE  = 'oxygen-icons5';
+ 
+ $renames = array();
+-//$renames[ 'sawfish_' ] = 'sawfish';
++$renames[ 'oxygen-icons1' ] = 'oxygen-icons5';
+ 
+ $ignores = array();
+ 
+ $regex = array();
+ $regex[ 'fluxbox' ] = "/^.*current version of Fluxbox is (\d[\d\.]+\d).*$/";
+ $regex[ 'icewm'   ] = "/^.*Download icewm-(\d[\d\.]+\d).*$/";
++$regex[ 'lxdm'    ] = "/^.*Download lxdm-(\d[\d\.]+\d).*$/";
+ 
+-//$current="sawfish";
++//$current="lxde-icon-theme";  # For debugging
+ 
+ $url_fix = array (
+ 
+@@ -29,10 +30,26 @@
+           'match'   => '^.*$', 
+           'replace' => "http://sourceforge.net/projects/icewm/files" ),
+ 
++   array( 'pkg'     => 'lxdm',
++          'match'   => '^.*$', 
++          'replace' => "http://sourceforge.net/projects/lxdm/files" ),
++   array( 'pkg'     => 'lxde-icon-theme',
++          'match'   => '^.*$', 
++          'replace' => "http://sourceforge.net/projects/lxde/files/LXDE%20Icon%20Theme" ),
+    array( 'pkg'     => 'openbox',
+           'match'   => '^.*$', 
+           'replace' => "http://pkgs.fedoraproject.org/repo/pkgs/openbox" ),
+ 
++   array( 'pkg'     => 'sddm',
++          'match'   => '^.*$', 
++          'replace' => "https://github.com/sddm/sddm/releases" ),
++   array( 'pkg'     => 'oxygen-icons5',
++          'match'   => '^.*$', 
++          'replace' => "http://download.kde.org/stable/frameworks" ),
+ );
+ function get_packages( $package, $dirpath )
+ {
+@@ -77,6 +94,13 @@
+   {
+     $lines = http_get_file( $dirpath );
+     if ( ! is_array( $lines ) ) return $lines;
++    if ( $package == 'oxygen-icons5' )  # Same as KF5 version
++    {
++      $max = find_max( $lines, "/5/", "/^.*(5[\d\.]+)\/.*$/" );
++      return $max . ".0" ;
++    }
+   } // End fetch
+ 
+   if ( isset( $regex[ $package ] ) )
+@@ -97,9 +121,15 @@
+   if ( $package == 'sawfish' )
+     return find_max( $lines, "/sawfish/", "/^.*sawfish_([\d\.]*\d)\.tar.*$/" );
+ 
++  if ( $package == 'sddm' )
++    return find_max( $lines, "/v\d/", "/^.*v([\d\.]*\d)*$/" );
++  if ( $package == 'lxde-icon-theme' )
++    return find_max( $lines, "/theme/", "/^.*theme-([\d\.]+)*$/" );
+   // Most packages are in the form $package-n.n.n
+   // Occasionally there are dashes (e.g. 201-1)
++print_r($lines);
+   $max = find_max( $lines, "/$package/", "/^.*${package}-?([\d\.]*\d)\.tar.*$/" );
+   return $max;
+ }
+@@ -108,12 +138,12 @@
+ {
+    global $start;
+ 
+-// Set up specific patter matches for extracting book versions
++   // Set up specific pattern matches for extracting book versions
+    $match = array();
+ 
+    $match = array(
+-//array( 'pkg'   => 'at-spi', 
+-//       'regex' => "/^.*at-spi2-.{3,4}-(\d[\d\.]+).*$/" ),
++     array( 'pkg'   => 'oxygen-icons5', 
++            'regex' => "/^.*-(\d[\d\.]+).*$/" ),
+    );
+ 
+    foreach( $match as $m )
+
+Index: scripts/blfs-chapter29.php
+===================================================================
+--- scripts/blfs-chapter29.php	(révision 16778)
++++ scripts/blfs-chapter29.php	(révision 16779)
+@@ -4,32 +4,26 @@
+ include 'blfs-include.php';
+ 
+ $CHAPTER       = '29';
+-$CHAPTERS      = 'Chapter 29';
+-$START_PACKAGE = 'konsole';
+-$STOP_PACKAGE  = 'gwenview';
++$CHAPTERS      = 'Chapters 29-30';
++$START_PACKAGE = 'phonon';
++$STOP_PACKAGE  = 'kde-workspace';
+ 
+ $renames = array();
+ $ignores = array();
+-$ignores[ 'ark'            ] = '';
+-$ignores[ 'kdepim'         ] = '';
+-$ignores[ 'kdepim-runtime' ] = '';
+-$ignores[ 'kmix'           ] = '';
+-$ignores[ 'libkdcraw'      ] = '';
+-$ignores[ 'libkexiv2'      ] = '';
++$ignores[ 'kde-workspace' ] = '';
+ 
++//$current="kde-workspace";
+ $kde_ver   = "";
+ $kde_lines = "";
+ 
+ $regex = array();
+ //$regex[ 'agg'      ] = "/^.*agg-(\d[\d\.]+\d).tar.*$/";
+ 
+-//$current="libkcddb";
+ $url_fix = array (
+-//   array( 'pkg'     => 'shared-desktop-ontologies',
++//   array( 'pkg'     => 'kde-workspace',
+ //          'match'   => '^.*$', 
+-//          'replace' => "http://$sf/projects/oscaf/files" ),
++//          'replace' => "http://download.kde.org/stable/4.14.2/src" ),
+ );
+ 
+ function get_packages( $package, $dirpath )
+@@ -43,6 +37,11 @@
+ 
+   if ( isset( $current ) && $book_index != "$current" ) return 0;
+ 
++  # ftp.kde.org seems to be down
++  if ( preg_match( "/ftp:..ftp.kde.org/", $dirpath ) )
++    $dirpath = preg_replace( "/ftp:..ftp.kde.org.pub.kde/",  
++                             "http://download.kde.org", $dirpath );
+   // Fix up directory path
+   foreach ( $url_fix as $u )
+   {
+@@ -70,33 +69,102 @@
+   // Check for ftp
+   if ( preg_match( "/^ftp/", $dirpath ) ) 
+   { 
+-// No ftp for kde apps
++    if ( $book_index == "automoc4" )
++    {
++      $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
++      $position = strrpos( $dirpath, "/" );
++      $dirpath  = substr ( $dirpath, 0, $position );  // Up 1
++    }
++    if ( $book_index == "kactivities" ) return "check manually";
++    
++    if ( $book_index == "phonon-backend-vlc" || 
++         $book_index == "phonon"             ||
++         $book_index == "phonon-backend-gstreamer" )
++    {
++      $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
++      $position = strrpos( $dirpath, "/" );
++      $dirpath  = substr ( $dirpath, 0, $position ); // Up 1
++      $position = strrpos( $dirpath, "/" );
++      $dirpath  = substr ( $dirpath, 0, $position ); // Up 2
++      //$dirpath .= "/$book_index";
++    }
+     // Get listing
+     $lines = http_get_file( "$dirpath/" );
+   }
+   else // http
+   {
+-if ( $package == "konsole"          ||
+-$package == "kdeplasma-addons" ||
+-$package == "kate"             ||
+-$package == "ark"              ||
+-$package == "kmix"             ||
+-$package == "kdepim"           ||
+-$package == "kdepim-runtime"   ||
+-$package == "gwenview" ) return "check manually";
++     if ( $book_index == "kdepimlibs"         ) return "check manually";
++     if ( $book_index == "oxygen-icons"       ) return "check manually";
++     if ( $book_index == "kfilemetadata"      ) return "check manually";
++     if ( $book_index == "kde-workspace"      ) return "check manually";
++     if ( preg_match( '/baloo/', $book_index) ) return "check manually";
+ 
++     # Copy from ftp above for now
++    if ( $book_index == "automoc4" )
++    {
++      $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
++      $position = strrpos( $dirpath, "/" );
++      $dirpath  = substr ( $dirpath, 0, $position );  // Up 1
++      $lines = http_get_file( "$dirpath" );
++      return find_max( $lines, "/\d\./", "/^.*;([\d\.]+)\/.*$/" );
++    }
++    if ( $book_index == "akonadi" ||
++         $book_index == "qimageblitz" ||
++         $book_index == "polkit-qt-1" ||
++         $book_index == "polkit-kde-agent-1" ||
++         $book_index == "attica" )
++    {
++      $lines = http_get_file( "$dirpath" );
++      return find_max( $lines, "/$book_index/", "/^.*$book_index-([\d\.]+).tar.*$/" );
++    }
++    if ( $book_index == "kactivities" ) return "check manually";
++    
++    if ( $book_index == "phonon-backend-vlc" || 
++         $book_index == "phonon"             ||
++         $book_index == "phonon-backend-gstreamer" )
++    {
++      $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
++      $position = strrpos( $dirpath, "/" );
++      $dirpath  = substr ( $dirpath, 0, $position ); // Up 1
++      $position = strrpos( $dirpath, "/" );
++      $dirpath  = substr ( $dirpath, 0, $position ); // Up 2
++      $lines = http_get_file( "$dirpath" );
++      return find_max( $lines, "/\d\./", "/^.*;([\d\.]+)\/.*$/" );
++    }
+      if ( ! is_array($kde_lines) )
+      {
+-$dirpath   = "http://download.kde.org/stable/applications/";
+-$lines     = http_get_file( $dirpath );
+-$kde_ver   = find_max( $lines, "/1\d/", "/^.*;(1[\d\.]+\d)\/.*$/" );
+-$kde_lines = http_get_file( "$dirpath/$kde_ver/src" );
++       // All http for kde
++       /*
++       $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
++       $position = strrpos( $dirpath, "/" );
++       $dirpath  = substr ( $dirpath, 0, $position ); // Up 1
++       $position = strrpos( $dirpath, "/" );
++       $dirpath  = substr ( $dirpath, 0, $position ); // Up 2
++       */
++       $dirpath="http://download.kde.org/stable/applications/";
++       $lines = http_get_file( $dirpath );
++       $kde_ver = find_max( $lines, "/1\d\./", "/^.*;(1[\d\.]+\d)\/.*$/" );
++       $kde_lines = http_get_file( "$dirpath$kde_ver/src/" );
+      }
+ 
+-if ( ! is_array( $kde_lines ) ) return $lines;
+      return find_max( $kde_lines, "/$package/", "/^.*$package-([\d\.]*\d)\.tar.*$/" );
++     //if ( ! is_array( $lines ) ) return $lines;
+   } // End fetch
+ 
++  // automoc4 and similar
++  if ( $book_index == "automoc4" || 
++       $book_index == "phonon"   ||
++       $book_index == "phonon-backend-gstreamer"  ||
++       $book_index == "phonon-backend-vlc"  )
++    return find_max( $lines, "/\d\./", "/^.* (\d\.[\d\.]+).*$/" );
+   // Most packages are in the form $package-n.n.n
+   // Occasionally there are dashes (e.g. 201-1)
+   $max = find_max( $lines, "/$package/", "/^.*$package-([\d\.]*\d)\.tar.*$/" );
+@@ -105,11 +173,20 @@
+ 
+ function get_pattern( $line )
+ {
+-// Set up specific pattern matches for extracting book versions
++   global $start;
+ 
++   // Set up specific patter matches for extracting book versions
++   $match = array();
+    $match = array(
+-array( 'pkg'   => 'libkexiv', 
+-'regex' => "/^.*libkexiv2-(\d[\d\.]+).*$/" ),
++     array( 'pkg'   => 'automoc', 
++            'regex' => "/^.*automoc4-(\d[\d\.]+).*$/" ),
++     array( 'pkg'   => 'polkit-qt', 
++            'regex' => "/^.*polkit-qt-1-(\d[\d\.]+).*$/" ),
++     array( 'pkg'   => 'polkit-kde-agent', 
++            'regex' => "/^.*polkit-kde-agent-1-(\d[\d\.]+).*$/" ),
+    );
+ 
+    foreach( $match as $m )
+
+Index: scripts/blfs-chapter31.php
+===================================================================
+--- scripts/blfs-chapter31.php	(révision 16778)
++++ scripts/blfs-chapter31.php	(révision 16779)
+@@ -5,21 +5,31 @@
+ 
+ $CHAPTER       = '31';
+ $CHAPTERS      = 'Chapter 31';
+-$START_PACKAGE ='baobab';
+-$STOP_PACKAGE  ='seahorse';
++$START_PACKAGE = 'konsole';
++$STOP_PACKAGE  = 'gwenview';
+ 
+ $renames = array();
+ $ignores = array();
++$ignores[ 'ark'            ] = '';
++$ignores[ 'kdepim'         ] = '';
++$ignores[ 'kdepim-runtime' ] = '';
++$ignores[ 'kmix'           ] = '';
++$ignores[ 'libkdcraw'      ] = '';
++$ignores[ 'libkexiv2'      ] = '';
+ 
++$kde_ver   = "";
++$kde_lines = "";
+ $regex = array();
+-//$regex[ 'libzeitgeist' ] = "/^.*Latest version is (\d[\d\.]+\d).*$/";
++//$regex[ 'agg'      ] = "/^.*agg-(\d[\d\.]+\d).tar.*$/";
+ 
+-//$current="ixxgcr";
++//$current="libkcddb";
+ 
+ $url_fix = array (
+-//   array( 'pkg'     => 'freeglut',
++//   array( 'pkg'     => 'shared-desktop-ontologies',
+ //          'match'   => '^.*$', 
+-//          'replace' => "http://$sf/projects/freeglut/files" ),
++//          'replace' => "http://$sf/projects/oscaf/files" ),
+ );
+ 
+ function get_packages( $package, $dirpath )
+@@ -28,6 +38,8 @@
+   global $book_index;
+   global $url_fix;
+   global $current;
++  global $kde_ver;
++  global $kde_lines;
+ 
+   if ( isset( $current ) && $book_index != "$current" ) return 0;
+ 
+@@ -58,50 +70,32 @@
+   // Check for ftp
+   if ( preg_match( "/^ftp/", $dirpath ) ) 
+   { 
+-if ( $package == 'network-manager-applet' )
+-{
+-$dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
+-$position = strrpos( $dirpath, "/" );
+-$dirpath  = substr ( $dirpath, 0, $position );  // Up 1
+-$dirs     = http_get_file( "$dirpath/" );
+-$dir      = find_max( $dirs, "/\d$/", "/^.* ([\d\.]+)$/" ); // Not even
+-$dirpath .= "/$dir/";
+-}
+-else
+-{
+-// All other ftp enties for this chapter
+-$dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
+-$position = strrpos( $dirpath, "/" );
+-$dirpath  = substr ( $dirpath, 0, $position );  // Up 1
+-$dirs     = http_get_file( "$dirpath/" );
+-$dir      = find_even_max( $dirs, "/\d$/", "/^.* ([\d\.]+)$/" );
+-$dirpath .= "/$dir/";
+-}
++    // No ftp for kde apps
+     // Get listing
+     $lines = http_get_file( "$dirpath/" );
+   }
+   else // http
+   {
+-$lines = http_get_file( $dirpath );
+-if ( ! is_array( $lines ) ) return $lines;
+-} // End fetch
++     if ( $package == "konsole"          ||
++          $package == "kdeplasma-addons" ||
++          $package == "kate"             ||
++          $package == "ark"              ||
++          $package == "kmix"             ||
++          $package == "kdepim"           ||
++          $package == "kdepim-runtime"   ||
++          $package == "gwenview" ) return "check manually";
+ 
+-if ( isset( $regex[ $package ] ) )
+-{
+-// Custom search for latest package name
+-foreach ( $lines as $l )
++     if ( ! is_array($kde_lines) )
+      {
+-if ( preg_match( '/^\h*$/', $l ) ) continue;
+-$ver = preg_replace( $regex[ $package ], "$1", $l );
+-if ( $ver == $l ) continue;
+-return $ver;  // Return first match of regex
++       $dirpath   = "http://download.kde.org/stable/applications/";
++       $lines     = http_get_file( $dirpath );
++       $kde_ver   = find_max( $lines, "/1\d/", "/^.*;(1[\d\.]+\d)\/.*$/" );
++       $kde_lines = http_get_file( "$dirpath/$kde_ver/src" );
+      }
+ 
+-return 0;  // This is an error
+-}
++     if ( ! is_array( $kde_lines ) ) return $lines;
++     return find_max( $kde_lines, "/$package/", "/^.*$package-([\d\.]*\d)\.tar.*$/" );
++  } // End fetch
+ 
+   // Most packages are in the form $package-n.n.n
+   // Occasionally there are dashes (e.g. 201-1)
+@@ -111,10 +105,11 @@
+ 
+ function get_pattern( $line )
+ {
+-// Set up specific patter matches for extracting book versions
++   // Set up specific pattern matches for extracting book versions
+    $match = array(
+-//array( 'pkg'   => 'ORBit', 
+-//       'regex' => "/^.*ORBit2-(\d[\d\.]+).*$/" ),
++     array( 'pkg'   => 'libkexiv', 
++            'regex' => "/^.*libkexiv2-(\d[\d\.]+).*$/" ),
+    );
+ 
+    foreach( $match as $m )
+
+Index: scripts/blfs-chapter36.php
+===================================================================
+--- scripts/blfs-chapter36.php	(révision 16778)
++++ scripts/blfs-chapter36.php	(révision 16779)
+@@ -4,110 +4,22 @@
+ include 'blfs-include.php';
+ 
+ $CHAPTER       = '36';
+-$CHAPTERS      = 'Chapters 36-38';
+-$START_PACKAGE = 'abiword';
+-$STOP_PACKAGE  = 'xscreensaver';
++$CHAPTERS      = 'Chapter 36';
++$START_PACKAGE ='baobab';
++$STOP_PACKAGE  ='seahorse';
+ 
+ $renames = array();
+ $ignores = array();
+-$ignores[ 'xorg-server' ] = '';
+ 
+-$libreoffice = array();
++$regex = array();
++//$regex[ 'libzeitgeist' ] = "/^.*Latest version is (\d[\d\.]+\d).*$/";
+ 
+-//$current="rxvt-unicode";
++//$current="ixxgcr";
+ 
+-$regex = array();
+-$regex[ 'inkscape'     ] = "/^.*Latest.*(\d[\d\.]+\d).*$/";
+-$regex[ 'gnucash'      ] = "/^.*Download gnucash-(\d[\d\.]+\d).tar.*$/";
+-$regex[ 'pidgen'       ] = "/^.*Download pidgin-(\d[\d\.]+\d).*$/";
+-$regex[ 'fontforge'    ] = "/^.*fontforge-(20\d+).tar.*$/";
+-$regex[ 'xscreensaver' ] = "/^.*xscreensaver-(\d[\d\.]+\d).tar.*$/";
+-$regex[ 'tigervnc'     ] = "/^.*TigerVNC (\d[\d\.]+\d)$/";
+-$regex[ 'transmission' ] = "/^.*release version.*(\d[\d\.]+\d).*$/";
+-$regex[ 'xarchiver'    ] = "/^.*Download xarchiver-(\d[\d\.]+\d).tar.*$/";
+ $url_fix = array (
+-array( 'pkg'     => 'gnucash',
+-'match'   => '^.*$',
+-'replace' => "http://sourceforge.net/projects/gnucash/files" ),
+-array( 'pkg'     => 'gnucash-docs',
+-'match'   => '^.*$',
+-'replace' => "http://sourceforge.net/projects/gnucash/files/gnucash-docs" ),
+-array( 'pkg'     => 'libreoffice',
+-'match'   => '^.*$',
+-'replace' => "http://download.documentfoundation.org/libreoffice/stable" ),
+-array( 'pkg'     => 'libreoffice-help',
+-'match'   => '^.*$',
+-'replace' => "http://download.documentfoundation.org/libreoffice/stable" ),
+-array( 'pkg'     => 'libreoffice-dictionaries',
+-'match'   => '^.*$',
+-'replace' => "http://download.documentfoundation.org/libreoffice/stable" ),
+-array( 'pkg'     => 'libreoffice-translations',
+-'match'   => '^.*$',
+-'replace' => "http://download.documentfoundation.org/libreoffice/stable" ),
+-array( 'pkg'     => 'gimp',
+-'match'   => '^.*$',
+-'replace' => "http://download.gimp.org/pub/gimp" ),
+-array( 'pkg'     => 'gimp-help',
+-'match'   => '^.*$',
+-'replace' => "http://download.gimp.org/pub/gimp/help" ),
+-array( 'pkg'     => 'balsa',
+-'match'   => '^.*$',
+-'replace' => "https://pawsa.fedorapeople.org/balsa/" ),
+-array( 'pkg'     => 'gparted',
+-'match'   => '^.*$',
+-'replace' => "http://sourceforge.net/projects/gparted/files/gparted" ),
+-array( 'pkg'     => 'inkscape',
+-'match'   => '^.*$',
+-'replace' => "https://launchpad.net/inkscape" ),
+-array( 'pkg'     => 'pidgin',
+-'match'   => '^.*$',
+-'replace' => "http://sourceforge.net/projects/pidgin/files" ),
+-array( 'pkg'     => 'rox-filer',
+-'match'   => '^.*$',
+-'replace' => "http://sourceforge.net/projects/rox/files/rox" ),
+-array( 'pkg'     => 'tigervnc',
+-'match'   => '^.*$',
+-'replace' => "https://github.com/TigerVNC/tigervnc/releases" ),
+-array( 'pkg'     => 'xchat',
+-'match'   => '^.*$',
+-'replace' => "http://xchat.org/files/source" ),
+-array( 'pkg'     => 'fontforge',
+-'match'   => '^.*$',
+-'replace' => "https://github.com/fontforge/fontforge/releases" ),
+-array( 'pkg'     => 'xscreensaver',
+-'match'   => '^.*$',
+-'replace' => "http://www.jwz.org/xscreensaver/download.html" ),
+-array( 'pkg'     => 'transmission',
+-'match'   => '^.*$',
+-'replace' => "https://www.transmissionbt.com/download" ),
+-array( 'pkg'     => 'xarchiver',
+-'match'   => '^.*$',
+-'replace' => "http://sourceforge.net/projects/xarchiver/files" ),
+-array( 'pkg'     => 'rxvt-unicode',
+-'match'   => '^.*$',
+-'replace' => "http://pkgs.fedoraproject.org/repo/pkgs/rxvt-unicode" ),
++//   array( 'pkg'     => 'freeglut',
++//          'match'   => '^.*$', 
++//          'replace' => "http://$sf/projects/freeglut/files" ),
+ );
+ 
+ function get_packages( $package, $dirpath )
+@@ -116,7 +28,6 @@
+   global $book_index;
+   global $url_fix;
+   global $current;
+-global $libreoffice;
+ 
+   if ( isset( $current ) && $book_index != "$current" ) return 0;
+ 
+@@ -145,76 +56,34 @@
+   }
+ 
+   // Check for ftp
+-if ( preg_match( "/^ftp/", $dirpath ) )
+-{
+-// Get listing
+-$lines = http_get_file( "$dirpath/" );
+-}
+-else // http
+-{
+-if ( $package == "seamonkey"   ||
+-$package == "firefox"     ||
+-$package == "thunderbird" )
+-{
+-$dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
+-$position = strrpos( $dirpath, "/" );
+-$dirpath  = substr ( $dirpath, 0, $position );  // Up 1
+-$position = strrpos( $dirpath, "/" );
+-$dirpath  = substr ( $dirpath, 0, $position );  // Up 2
+-$dirpath .= "/";
+-$dirs = http_get_file( $dirpath );
+-if ( $package == "seamonkey" )
+-return find_max( $dirs, "/\d\./", "/^.*\t(\d\.\d+)\/.*$/" );
+-else
+-return find_max( $dirs, "/\d/", "/^.*(\d{2}[\.\d]+)\/.*/" );
+-}
+-if ( preg_match( "/abiword/", $dirpath ) )
+-{
++  if ( preg_match( "/^ftp/", $dirpath ) ) 
++  { 
++    if ( $package == 'network-manager-applet' )
++    {
+         $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
+         $position = strrpos( $dirpath, "/" );
+         $dirpath  = substr ( $dirpath, 0, $position );  // Up 1
+-$position = strrpos( $dirpath, "/" );
+-$dirpath  = substr ( $dirpath, 0, $position );  // Up 2
+-}
+-if ( $book_index == "gnucash-docs" )
+-{
+-$dirs     = http_get_file( $dirpath );
+-$dir      = find_max( $dirs, "/^\s+\d\./", "/^\s+(\d\.[\d\.]+)$/" );
++        $dirs     = http_get_file( "$dirpath/" );
++        $dir      = find_max( $dirs, "/\d$/", "/^.* ([\d\.]+)$/" ); // Not even
+         $dirpath .= "/$dir/";
+    }
+ 
+-if ( $book_index == "xchat" )
+-{
+-$dirs     = http_get_file( $dirpath );
+-$dir      = find_max( $dirs, "/^\s*\d\./", ":^\s*(\d\.[\d\.]+)/.*$:" );
++    else
++    {
++        // All other ftp enties for this chapter
++        $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
++        $position = strrpos( $dirpath, "/" );
++        $dirpath  = substr ( $dirpath, 0, $position );  // Up 1
++        $dirs     = http_get_file( "$dirpath/" );
++        $dir      = find_even_max( $dirs, "/\d$/", "/^.* ([\d\.]+)$/" );
+         $dirpath .= "/$dir/";
+    }
+ 
+-if ( preg_match( "/^libre/", "$package" ) )
+-{
+-if ( count( $libreoffice ) == 0 )
+-{
+-$dirs        = http_get_file( $dirpath );
+-$dir         = find_max( $dirs, "/\d\./", "/^.*;([\d\.]+)\/.*$/" );
+-$dirpath     = "http://download.documentfoundation.org/libreoffice/src/$dir";
+-$libreoffice = http_get_file( $dirpath );
+-}
+-return find_max( $libreoffice, "/$package/", "/^.*$package-([\d\.]*\d)\.tar.*$/" );
+-}
+-if ( $package == "gimp" )
+-{
+-$dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
+-$dirs     = http_get_file( "$dirpath/" );
+-$dir      = find_even_max( $dirs, "/v\d\./", "/^.*(v\d\.[\d\.]+).*$/" );
+-$dirpath .= "/$dir/";
+-}
++    // Get listing
++    $lines = http_get_file( "$dirpath/" );
++  }
++  else // http
++  {
+      $lines = http_get_file( $dirpath );
+      if ( ! is_array( $lines ) ) return $lines;
+   } // End fetch
+@@ -234,45 +103,25 @@
+      return 0;  // This is an error
+   }
+ 
+-if ( preg_match( "/inkscape/", "$dirpath" ) )
+-return find_max( $lines, "/\d\./", "/^.* (\d[\d\.]+\d)$/" );
+-if ( preg_match( "/abiword/", "$dirpath" ) )
+-return find_max( $lines, "/^\d/", "/^([\d\.]+).*$/" );
+-if ( $package == "balsa" )
+-return find_max( $lines, "/^.*balsa-/", "/^.*balsa-([\d\.]+).*$/" );
+-if ( $package == "gparted" )
+-return find_max( $lines, "/$package/", "/^.*$package-([\d\.]+).*$/" );
+-if ( $package == "rox-filer" )
+-return find_max( $lines, "/^\s*\d/", "/^\s*(\d\.[\d\.]+).*$/" );
+-if ( $package == "tigervnc" )
+-return find_max( $lines, "/^\s*\d\./", "/^\s*(\d\.[\d\.]+).*$/" );
+-if ( $package == "xdg-utils" )
+-return find_max( $lines, "/$package/", "/^$package-(\d\.[\d\.]+).tar.*$/" );
+   // Most packages are in the form $package-n.n.n
+   // Occasionally there are dashes (e.g. 201-1)
+-$max = find_max( $lines, "/$package/", "/^.*$package-([\d\.]*\d)\.ta.*$/" );
++  $max = find_max( $lines, "/$package/", "/^.*$package-([\d\.]*\d)\.tar.*$/" );
+   return $max;
+ }
+ 
+ function get_pattern( $line )
+ {
++   // Set up specific patter matches for extracting book versions
+    $match = array(
+-//array( 'pkg'   => 'gimp-help',
+-//       'regex' => "/^.*gimp-help-(\d[\d\.]+).*$/" ),
++     //array( 'pkg'   => 'ORBit', 
++     //       'regex' => "/^.*ORBit2-(\d[\d\.]+).*$/" ),
+    );
+ 
+    foreach( $match as $m )
+
+Index: scripts/blfs-chapter50.php
+===================================================================
+--- scripts/blfs-chapter50.php	(révision 16778)
++++ scripts/blfs-chapter50.php	(révision 16779)
+@@ -13,7 +13,7 @@
+ $ignores[ 'install-tl-unx' ] = '';
+ $ignores[ 'texlive1'       ] = '';
+ 
+-//$current="docbook";  // For debugging
++//$current="biblatex-biber";  // For debugging
+ 
+ $regex = array();
+ $regex[ 'gutenprint'      ] = "/^.*Download gutenprint-(\d[\d\.]+\d).*$/";
+@@ -22,7 +22,6 @@
+ $regex[ 'paps'            ] = "/^.*Download paps-(\d[\d\.]+\d).tar.*$/";
+ $regex[ 'asymptote'       ] = "/^.*Download asymptote-(\d[\d\.]+\d).*$/";
+ $regex[ 'biblatex'        ] = "/^.*Download biblatex-(\d[\d\.]+\d).*$/";
+-$regex[ 'biblatex-biber'  ] = "/^.*v(\d[\d\.]+\d).*$/";
+ $regex[ 'ghostscript-fonts-std' ] =
+     "/^.*Download ghostscript-fonts-std-(\d[\d\.]+\d).tar.*$/";
+ 
+@@ -203,7 +202,7 @@
+       return find_max( $lines, "/mupdf/", "/^.*$package-([\d\.]+)-source.tar.*$/" );
+ 
+   if ( $package == "biblatex-biber" )
+-return find_max( $lines, "/$package/", "/^.*$package-([\d\.]+).tar.*$/" );
++      return find_max( $lines, "/v\d/", "/^.*v([\d\.]+).*$/" );
+ 
+   // Most packages are in the form $package-n.n.n
+   // Occasionally there are dashes (e.g. 201-1)
+@@ -214,6 +213,9 @@
+ function get_pattern( $line )
+ {
+    $match = array(
++     array( 'pkg'   => 'biblatex-biber',
++            'regex' => "/^.*v(\d[\d\.]+).*$/" ),
+      array( 'pkg'   => 'a2ps',
+             'regex' => "/^.*a2ps-(\d[\d\.]+).*$/" ),
+ 
+
+Index: scripts/blfs-currency.html
+===================================================================
+--- scripts/blfs-currency.html	(révision 16778)
++++ scripts/blfs-currency.html	(révision 16779)
+@@ -75,34 +75,35 @@
+ <ul>
+   <li><a href='chapter24.html'>Chapter 24 - X Window System Environment</a></li>
+   <li><a href='chapter25.html'>Chapter 25 - X Libraries</a></li>
+-<li><a href='chapter26.html'>Chapter 26 - Window Managers</a></li>
++  <li><a href='chapter26.html'>Chapters 26-28 - Display Managers, Window Manangers, and Icons</a></li>
+ </ul>
+ 
+ <h2>Part VII - KDE</h2>
+ <ul>
+-<li><a href='chapter27.html'>Chapters 27-28 - KDE Core</a></li>
+-<li><a href='chapter29.html'>Chapter 29 - KDE Additional Packages</a></li>
++  <li><a href='chapter29.html'>Chapters 29-30 - KDE Intro and Core</a></li>
++  <li><a href='chapter31.html'>Chapter 31 - KDE Additional Packages</a></li>
++  <li><a href='chapter32.html'>Chapter 32-34 - KDE5</a></li>
+ </ul>
+ 
+ <h2>Part VIII - GNOME</h2>
+ <ul>
+-<li><a href='chapter30.html'>Chapter 30 - GNOME Core Packages</a></li>
+-<li><a href='chapter31.html'>Chapter 31 - GNOME Apps</a></li>
++  <li><a href='chapter35.html'>Chapter 35 - GNOME Core Packages</a></li>
++  <li><a href='chapter36.html'>Chapter 36 - GNOME Apps</a></li>
+ </ul>
+ 
+ <h2>Part IX - Xfce</h2>
+ <ul>
+-<li><a href='chapter32.html'>Chapters 32-33 - Xfce and Applications</a></li>
++  <li><a href='chapter37.html'>Chapters 37-38 - Xfce and Applications</a></li>
+ </ul>
+ 
+-<h2>Part X - LXDE</h2>
++<h2>Parts X and XI - LXDE and LXQt</h2>
+ <ul>
+-<li><a href='chapter34.html'>Chapters 34-35 - LXDE and Applications</a></li>
++  <li><a href='chapter39.html'>Chapters 39-32 - LXDE, LXQt, and Applications</a></li>
+ </ul>
+ 
+-<h2>Part XI - X Software</h2>
++<h2>Part XII - X Software</h2>
+ <ul>
+-<li><a href='chapter36.html'>Chapters 36-38 - Office, Grapical Web Browsers. 
++  <li><a href='chapter43.html'>Chapters 43-45 - Office, Grapical Web Browsers. 
+                                and other X Software</a></li>
+ </ul>
+ 
+
+Index: scripts/blfs-include.php
+===================================================================
+--- scripts/blfs-include.php	(révision 16778)
++++ scripts/blfs-include.php	(révision 16779)
+@@ -94,7 +94,7 @@
+ 
+ function http_get_file( $url )
+ {
+-exec( "curl -L -s -m40 -A Firefox/22.0 $url", $dir );
++  exec( "curl -L -s -m40 -A Firefox/41.0 $url", $dir );
+   $s   = implode( "\n", $dir );
+   $dir = strip_tags( $s );
+   return explode( "\n", $dir );
+@@ -156,13 +156,19 @@
+       if ( $basename == $START_PACKAGE ) $start = true;
+       if ( ! $start ) continue;
+ 
+-// Custom for Chapter 48
++      // Custom for Chapter 55
+       if ( $version == "install-tl-unx" ) 
+       {
+         $version = "Unversioned";
+         $basename = "install-tl-unx";
+       }
+ 
++      else if ( $version == "biblatex-biber" ) 
++      {
++        $version = basename( $url ); 
++        $basename = "biblatex-biber";
++      }
+       $index = $basename;
+       while ( isset( $book[ $index ] ) ) $index .= "1";
+ 
+
+Index: scripts/leftnav.html
+===================================================================
+--- scripts/leftnav.html	(révision 16778)
++++ scripts/leftnav.html	(révision 16779)
+@@ -14,16 +14,16 @@
+         <li><a href="chapter20.html">C20-23 - Servers</a></li>
+         <li><a href="chapter24.html">C24 - Xorg</a></li>
+         <li><a href="chapter25.html">C25 - X Libs</a></li>
+-<li><a href="chapter26.html">C26 - Win Mgrs</a></li>
+-<li><a href="chapter27.html">C27-28 - KDE</a></li>
+-<li><a href="chapter29.html">C29 - KDE Apps</a></li>
+-<li><a href="chapter30.html">C30 - GNOME</a></li>
+-<li><a href="chapter31.html">C31 - GNOME Apps</a></li>
+-<li><a href="chapter32.html">C32-33 - Xfce and Apps</a></li>
+-<li><a href="chapter34.html">C34-35 - LXDE and Apps</a></li>
+-<li><a href="chapter36.html">C36-38 - X Software</a></li>
+-<li><a href="chapter39.html">C39 - Multimedia Libs</a></li>
+-<li><a href="chapter40.html">C40-42 - Audio/Video Utils</a></li>
+-<li><a href="chapter43.html">C43-48 - Printing</a></li>
++        <li><a href="chapter26.html">C26-28 - Win Mgrs</a></li>
++        <li><a href="chapter29.html">C29-30 - KDE4</a></li>
++        <li><a href="chapter31.html">C31 - KDE Apps</a></li>
++        <li><a href="chapter35.html">C35 - GNOME</a></li>
++        <li><a href="chapter36.html">C36 - GNOME Apps</a></li>
++        <li><a href="chapter37.html">C37-38 - Xfce and Apps</a></li>
++        <li><a href="chapter39.html">C39-42 - LXDE/LXQt and Apps</a></li>
++        <li><a href="chapter43.html">C43-45 - X Software</a></li>
++        <li><a href="chapter46.html">C46 - Multimedia Libs</a></li>
++        <li><a href="chapter47.html">C47-49 - Audio/Video Utils</a></li>
++        <li><a href="chapter50.html">C50-55 - Printing</a></li>
+       </ul>
+ </div>
+
