@@ -65,13 +65,18 @@
       <xref linkend="check"/>,
       <xref linkend="curl"/>,
       <xref linkend="cyrus-sasl"/>,
+      <xref linkend="gnutls"/>,
       <xref linkend="gtk2"/>,
       <xref linkend="gtk3"/>,
       <xref linkend="libusb"/>,
+      <xref linkend="libgcrypt"/>,
       <xref linkend="lzo"/>,
+      <xref linkend="nettle"/>,
       <xref linkend="nss"/> (pour libcacard.so),
-      <xref linkend="mesa"/>, et
+      <xref linkend="mesa"/>,
+      <xref linkend="sdl"/>,
       <xref linkend="vte"/>.
+      <ulink url="http://www.libssh2.org">libssh2</ulink>
     </para>
     <note>
       <para>
@@ -180,7 +185,7 @@ EOF</userinput>
   <sect2 role="commands">
     <title>Explications des commandes</title>
     <para>
-      <option>--audio-drv-list=alsa</option>: Ce paramètre initialise
+      <parameter>--audio-drv-list=alsa</parameter>: Ce paramètre initialise
       le pilote audio pour ALSA. Pour les autres pilotes regardez la liste --audio-drv-list
       dans la sortie de l'aide de
       <command>configure</command>. Le pilote audio par défaut est
@@ -216,7 +221,64 @@ EOF</userinput>
 <screen>
 <userinput>qemu -enable-kvm vdisk.img -m 384</userinput>
 </screen>
-    <para>Pour ajouter le réseau à la machine virtuelle ajoutez "-net nic -net user" à la commande précédente.
+    <para>Vous pouvez avoir des problèmes avec <parameter>-enable-kvm</parameter>.  Alors, vous pouvez vouloir définir les pilotes audio et vidéo,
+    le nombre de coeur du CPU et les threads. Une commande alternative pour installer le système d'exploitation est (voir les pages de man de qemu pour
+    les définitions des paramètres):</para>
+<screen><userinput>qemu -enable-kvm             \
+     -cdrom /home/fernando/ISO/linuxmint-17.1-mate-32bit.iso \
+     -boot order=d           \
+     -m 1G,slots=3,maxmem=4G \
+     -machine smm=off        \
+     -soundhw es1370         \
+     -cpu host               \
+     -smp cores=4,threads=2  \
+     -vga std                \
+     vdisk.img</userinput></screen>
+    <para>Un paramètre n'apparaît pas dans la page de man de qemu
+    <parameter>-machine smm=off</parameter>, et il est utilisé pour permettre d'activer
+    <parameter>-enable-kvm</parameter> sur certains systèmes. Afin de pouvoir lancer la machine, vous pouver taper alternativement:</para>
+<screen><userinput>qemu -enable-kvm             \
+     -machine smm=off        \
+     -boot order=d           \
+     -m 1G,slots=3,maxmem=4G \
+     -soundhw es1370         \
+     -cpu host               \
+     -smp cores=4,threads=2  \
+     -vga vmware             \
+     -hda vdisk.img</userinput></screen>
+    <para>Parfois, vous vouldrez que la machine aie une taille d'écran différente que celle offerte nativement par la carte graphique virtuelle. L'exemple suivant
+    est pour la carte graphiqe vmware de qemu, qui utilise <xref
+    linkend="xorg-vmmouse-driver"/> et qui initialise la taille maximale à
+    1600x900. En tant qu'utilisateur <systemitem class="username">root</systemitem>,
+    tapez:</para>
+<screen role="root"><userinput>cat &gt; /usr/share/X11/xorg.conf.d/20-vmware.conf &lt;&lt; "EOF"
+<literal>Section "Monitor"
+    Identifier  "Monitor0"
+    # cvt 1600 900
+    # 1600x900 59.95 Hz (CVT 1.44M9) hsync: 55.99 kHz; pclk: 118.25 MHz
+    Modeline    "1600x900"  118.25  1600 1696 1856 2112  900 903 908 934 -hsync +vsync
+         Option      "PreferredMode" "1600x900"
+         HorizSync   1-200
+         VertRefresh 1-200
+EndSection
+Section "Device"
+  Identifier    "VMware SVGA II Adapter"
+  Option        "Monitor" "default"
+  Driver        "vmware"
+EndSection
+Section "Screen"
+  Identifier    "Default Screen"
+  Device        "VMware SVGA II Adapter"
+  Monitor       "Monitor0"
+  SubSection    "Display"
+    Depth       24
+    Modes       "1600x900" "1440x900" "1366x768" "1280x720" "800x480"
+  EndSubSection
+EndSection</literal>
+EOF</userinput></screen>
+    <para>Les nouvelles tailles seront disponibles à coté des tailles natives. Vous devrez redémarrer X afin d'avoir les nouvelles tailles disponibles.
+    </para>
+    <para>
     qemu fournit un serveur DHCP pour les machines virtuelles et en fonction de votre système client,
     initialise le réseau au travers de l'hôte.</para>
     <para>un problème avec la solution réseau précédente est qu'elle ne fournit pas la possibilité de se connecter
@@ -270,20 +332,20 @@ chmod 4750 /usr/libexec/qemu-bridge-helper</userinput>
       <segtitle>Répertoires installés</segtitle>
       <seglistitem>
         <seg>
+          ivshmem-client,
+          ivshmem-server,
+          qemu (lien symbolique),
           qemu-ga,
           qemu-img,
           qemu-io,
           qemu-nbd,
-          qemu-system-x86_64,
+          qemu-system-&lt;arch&gt;,
           virtfs-proxy-helper, et
           vscclient
         </seg>
         <seg>libcacard.so</seg>
         <seg>
-          /etc/qemu,
-          /usr/include/cacard,
-          /usr/lib/qemu,
-          /usr/share/qemu, et
+          /etc/qemu, et
           /usr/share/doc/qemu-&qemu-version;
         </seg>
       </seglistitem>
