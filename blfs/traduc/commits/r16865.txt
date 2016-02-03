@@ -1,0 +1,182 @@
+Révision 16865
+
+fichiers modifiés :
+   networking/netutils/traceroute.xml
+   gnome.ent
+   multimedia/videoutils/vlc.xml
+   postlfs/filesystems/mdadm.xml
+   postlfs/security/openssl.xml
+   postlfs/security/stunnel.xml
+   postlfs/security/nettle.xml
+   general.ent
+   packages.ent
+   gnome/platform/vte.xml
+   gnome/applications/gnome-calculator.xml
+   x/lib/gtk+3.xml
+   general/genutils/time.xml
+   general/sysutils/unzip.xml
+   introduction/welcome/changelog.xml
+
+Log :
+• VLC-2.2.1: fixes to build with opencv-3.1.0. • Update to nettle-3.2. • Update to openssl-1.0.2f. • Update to stunnel-5.30. • Traceroute-2.0.21, Time-1.7 and UnZip-6.0: s/Less/less/ in repective time ENTITYs (SBU). • Update to mdadm-3.4 (tests not run). • Update to gtk+-3.18.7 (gtk+3.18.7). • Update to vte-0.42.3. • Update to gnome-calculator-3.18.3.
+
+Le robot a traité 60 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 16864)
++++ introduction/welcome/changelog.xml	(révision 16865)
+@@ -45,6 +45,40 @@
+ -->
+ 
+     <listitem>
++      <para>January 29th, 2016</para>
++      <itemizedlist>
++        <listitem>
++          <para>[fernando] - Update to gnome-calculator-3.18.3. Fixes
++          <ulink url="&blfs-ticket-root;7410">#7410</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to vte-0.42.3. Fixes
++          <ulink url="&blfs-ticket-root;7409">#7409</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to gtk+-3.18.7 (gtk+3.18.7). Fixes
++          <ulink url="&blfs-ticket-root;7408">#7408</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to mdadm-3.4 (tests not run). Partially
++          fixes <ulink url="&blfs-ticket-root;7407">#7407</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to stunnel-5.30. Fixes
++          <ulink url="&blfs-ticket-root;7406">#7406</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to openssl-1.0.2f. Fixes
++          <ulink url="&blfs-ticket-root;7405">#7405</ulink>.</para>
++        </listitem>
++        <listitem>
++          <para>[fernando] - Update to nettle-3.2. Fixes
++          <ulink url="&blfs-ticket-root;7404">#7404</ulink>.</para>
++        </listitem>
++      </itemizedlist>
++    </listitem>
++    <listitem>
+       <para>January 27th, 2016</para>
+       <itemizedlist>
+         <listitem>
+
+Index: multimedia/videoutils/vlc.xml
+===================================================================
+--- multimedia/videoutils/vlc.xml	(révision 16864)
++++ multimedia/videoutils/vlc.xml	(révision 16865)
+@@ -219,12 +219,19 @@
+ sed -e '/LUA_C/ i #define LUA_COMPAT_APIINTCASTS' \
+     -i modules/lua/vlc.h    &amp;&amp;
+ 
++sed -e '/core.h/ {
++        a #include &lt;opencv2/imgproc/imgproc_c.h&gt;
++        a #include &lt;opencv2/imgproc/imgproc.hpp&gt;
++    }' \
++    -i modules/video_filter/opencv_example.cpp &amp;&amp;
+ ./bootstrap &amp;&amp;
+ 
+-./configure --prefix=/usr --enable-opencv=no &amp;&amp;
++OPENCV_LIBS="-L/usr/share/OpenCV" \
++./configure --prefix=/usr &amp;&amp;
+ 
+ sed -e '/seems to be moved/s/^/#/' \
+--i.orig autotools/ltmain.sh libtool &amp;&amp;
++    -i autotools/ltmain.sh libtool &amp;&amp;
+ 
+ make</userinput></screen>
+ 
+@@ -266,6 +273,18 @@
+     </para>
+ 
+     <para>
++      <command>sed -e ... -i modules/video_filter/opencv_example.cpp</command>
++      This sed partially fixes compilation with
++      <application>OpenCV</application> 3.
++    </para>
++    <para>
++      <envar>OPENCV_LIBS="-L/usr/share/OpenCV"</envar> This environment variable
++      helps the linker to find <filename>libippicv.a</filename> installed by
++      <application>OpenCV</application> 3.
++    </para>
++    <para>
+       <command>./bootstrap</command>: This command calls autoreconf to generate
+       m4 macros and prepare Makefiles.
+     </para>
+@@ -277,9 +296,8 @@
+     </para>
+ 
+     <para>
+-<parameter>--enable-opencv=no</parameter>: This switch disables
+-<application>opencv</application> suport, because build is broken with
+-opencv-3.1.
++      <option>--enable-opencv=no</option>: This switch disables
++      <application>OpenCV</application> suport.
+     </para>
+ 
+     <para>
+
+Index: postlfs/filesystems/mdadm.xml
+===================================================================
+--- postlfs/filesystems/mdadm.xml	(révision 16864)
++++ postlfs/filesystems/mdadm.xml	(révision 16865)
+@@ -6,10 +6,11 @@
+ 
+   <!ENTITY mdadm-download-http "&kernel;linux/utils/raid/mdadm/mdadm-&mdadm-version;.tar.xz">
+   <!ENTITY mdadm-download-ftp " ">
++  <!-- tests statistcs repeated from previous one, given by Pierre-->
+ ]>
+ 
+ <sect1 id="mdadm" xreflabel="mdadm-&mdadm-version;">
+
+Index: postlfs/security/nettle.xml
+===================================================================
+--- postlfs/security/nettle.xml	(révision 16864)
++++ postlfs/security/nettle.xml	(révision 16865)
+@@ -88,7 +88,7 @@
+     <para>Install <application>Nettle</application> by running the following
+     commands:</para>
+ 
+-<screen><userinput>./configure --prefix=/usr &amp;&amp;
++<screen><userinput>./configure --prefix=/usr --disable-static &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>
+@@ -96,22 +96,24 @@
+     </para>
+ 
+     <para>
+-If you want to disable installing the static library, use this sed:
+-</para>
+-<screen><userinput>sed -i '/^install-here/ s/ install-static//' Makefile</userinput></screen>
+-<para>
+       Now, as the <systemitem class="username">root</systemitem> user:
+     </para>
+ 
+@@     @@
+ 
+   </sect2>
+ 
++  <sect2 role="commands">
++    <title>Command Explanations</title>
++    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
++      href="../../xincludes/static-libraries.xml"/>
++  </sect2>
+   <sect2 role="content">
+     <title>Contents</title>
+ 
+@@ -126,7 +128,7 @@
+           pkcs1-conv and sexp-conv
+         </seg>
+         <seg>
+-libhogweed.{so,a} and libnettle.{so,a}
++          libhogweed.so and libnettle.so
+         </seg>
+         <seg>
+           /usr/include/nettle and /usr/share/doc/nettle-&nettle-version;
+
