@@ -1,0 +1,208 @@
+Révision 16959
+
+fichiers modifiés :
+   packages.ent
+   x/wm/icewm.xml
+   introduction/welcome/changelog.xml
+
+Log :
+icewm-1.3.12
+
+Le robot a traité 21 % du commit anglais
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 16958)
++++ introduction/welcome/changelog.xml	(révision 16959)
+@@ -48,6 +48,10 @@
+       <para>February 12th, 2016</para>
+       <itemizedlist>
+         <listitem>
++          <para>[ken] - Updated to icewm-13.12.  Fixes
++          <ulink url="&blfs-ticket-root;7456">#7456</ulink>.</para>
++        </listitem>
++        <listitem>
+           <para>[bdubbs] - Updated to plasma-5.5.4.  Fixes
+           <ulink url="&blfs-ticket-root;7398">#7398</ulink>.</para>
+         </listitem>
+
+Index: x/wm/icewm.xml
+===================================================================
+--- x/wm/icewm.xml	(révision 16958)
++++ x/wm/icewm.xml	(révision 16959)
+@@ -67,6 +67,12 @@
+       <xref linkend="gdk-pixbuf"/>
+     </para>
+ 
++    <bridgehead renderas="sect4">Optional</bridgehead>
++    <para role="optional">
++      <xref linkend="libsndfile"/> and
++      <xref linkend="alsa-lib"/> (for the experimental icesound program)
++    </para>
+     <para condition="html" role="usernotes">User Notes:
+     <ulink url="&blfs-wiki;/icewm"/></para>
+ 
+@@ -75,17 +81,13 @@
+   <sect2 role="installation">
+     <title>Installation of IceWM</title>
+ 
+-<note>
+-<para>This version of <application>IceWM</application> is nominally a
+-development release, but it provides a stable working environment and can
+-be built without using obsolete libraries.</para>
+-</note>
+     <para>Install <application>IceWM</application> by running the following
+     commands:</para>
+ 
+-<screen><userinput>sed -i '/^LIBS/s/\(.*\)/\1 -lfontconfig/' src/Makefile.in &amp;&amp;
+-./configure --prefix=/usr &amp;&amp;
++<screen><userinput>
++./configure --prefix=/usr                     \
++            --sysconfdir=/etc                 \
++            --docdir=/usr/share/icewm-&icewm-version; &amp;&amp;
+ make</userinput></screen>
+ 
+     <para>This package does not have a working testsuite.</para>
+@@ -93,9 +95,7 @@
+     <para>Now, as the <systemitem class="username">root</systemitem> user:</para>
+ 
+ <screen role="root"><userinput>make install         &amp;&amp;
+-make install-docs    &amp;&amp;
+-make install-man     &amp;&amp;
+-make install-desktop</userinput></screen>
++rm /usr/share/xsessions/icewm.desktop</userinput></screen>
+ 
+   </sect2>
+ 
+@@ -103,11 +103,17 @@
+     <title>Command Explanations</title>
+ 
+     <para>
+-<parameter>sed -i '/^LIBS/s/\(.*\)/\1 -lfontconfig/'
+-src/Makefile.in</parameter>: this fixes the build with recent versions of
+-<application>binutils</application>.
++      <parameter>rm /usr/share/xsessions/icewm.desktop</parameter>: The package
++      ships with both icewm,desktop and icewm-xsession.desktop. The former has
++      apparently been used in the past, but it will hang if used with a modern
++      desktop-manager such as <xref linkend="sddm"/>.
+     </para>
+ 
++    <para>
++      <option>--enable-guievents --with-icesound=ALSA</option>: these two switches
++      permit <command>icesound</command> to be compiled.
++    </para>
+   </sect2>
+ 
+   <sect2 role="configuration">
+@@ -178,6 +185,10 @@
+       changed preferences, but changes to the background only take effect when
+       <application>IceWM</application> is started.</para>
+ 
++      <para>At this point you can <emphasis>either</emphasis> modify the
++      traditional menu files to suit your requirements, <emphasis>or</emphasis>
++      use the newer <command>icewm-menu-fdo</command> described later.</para>
+       <para>The syntax of the menus is explained in the help files, which you
+       can access by running <command>help</command> from the menu, but some of
+       the detail is out of date and the default selections in the menus (a few
+@@ -216,36 +227,20 @@
+         </listitem>
+       </itemizedlist>
+ 
+-<para>It is unlikely that these examples meet your desires, but if you
+-wish to use them run the following commands:</para>
++      <para>If you wish to use this traditional method, there are more examples in
++        previous releases of this book (e.g. BLFS-7.8).
++      </para>
+ 
+-<screen role="nodump"><userinput>cat &gt; ~/.icewm/menu &lt;&lt; "EOF" &amp;&amp;
+-<literal>prog Urxvt xterm urxvt
+-prog GVolWheel /usr/share/pixmaps/gvolwheel/audio-volume-medium gvolwheel
+-separator
+-menufile General folder general
+-menufile Multimedia folder multimedia
+-menufile Tool_bar folder toolbar</literal>
+-EOF
+-cat &gt; ~/.icewm/general &lt;&lt; "EOF" &amp;&amp;
+-<literal>prog Firefox firefox firefox
+-prog Epiphany /usr/share/icons/gnome/16x16/apps/web-browser epiphany
+-prog Midori /usr/share/icons/hicolor/24x24/apps/midori midori
+-separator
+-prog Gimp /usr/share/icons/hicolor/16x16/apps/gimp gimp
+-separator
+-prog Evince /usr/share/icons/hicolor/16x16/apps/evince evince
+-prog Epdfview /usr/share/epdfview/pixmaps/icon_epdfview-48 epdfview</literal>
+-EOF
+-cat &gt; ~/.icewm/multimedia &lt;&lt; "EOF"
+-<literal>prog Audacious /usr/share/icons/hicolor/48x48/apps/audacious audacious
+-separator
+-prog Parole /usr/share/icons/hicolor/16x16/apps/parole parole
+-prog Totem /usr/share/icons/hicolor/16x16/apps/totem totem
+-prog Vlc /usr/share/icons/hicolor/16x16/apps/vlc vlc
+-prog Xine /usr/share/pixmaps/xine xine</literal>
+-EOF</userinput></screen>
++      <para><emphasis>Alternatively</emphasis>, you can create a menu which conforms
++        to the FDO Desktop Menu Specifications, where programs can be found because
++        they have a .desktop file in the XDG_DATA_HOME or XDG_DATA_DIR directories.
++        Unlike most windowmanagers, <application>icewm</application> does not search
++        for programs when the menu is invoked, so if you take this route you will
++        need to rerun the following command after installing or removing programs:
++      </para>
+ 
++<screen><userinput>icewm-menu-fdo >~/.icewm/menu</userinput></screen>
+       <para>If you wish to put icons on your desktop, you will need to install
+       a program such as <xref linkend="rox-filer"/> which provides a pinboard.
+       If you do that you will no longer be able to access the menu by
+@@ -291,8 +286,8 @@
+       <segtitle>Installed Directories</segtitle>
+ 
+       <seglistitem>
+-<seg>icehelp, icesh, icewm, icewm-session, icewm-set-gnomewm, icewmbg,
+-icewmhint, icewmtray</seg>
++        <seg>icehelp, icesh, icesound, icewm, icewm-menu-fdo, icewm-session,
++        icewm-set-gnomewm, icewmbg, icewmhint, icewmtray</seg>
+         <seg>None</seg>
+         <seg>/usr/share/doc/icewm-&icewm-version;, /usr/share/icewm and ~/.icewm</seg>
+       </seglistitem>
+@@ -324,6 +319,16 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="icesound">
++        <term><command>icesound</command></term>
++        <listitem>
++          <para>plays audio files on GUI events raised by IceWM.</para>
++          <indexterm zone="icewm icesound">
++            <primary sortas="b-icesound">icesound</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="icewm-prog">
+         <term><command>icewm</command></term>
+         <listitem>
+@@ -334,6 +339,18 @@
+         </listitem>
+       </varlistentry>
+ 
++      <varlistentry id="icewm-menu-fdo">
++        <term><command>icewm-menu-fdo</command></term>
++        <listitem>
++          <para>can create a file in a format suitable for an IceWM menu, which
++          lists those programs currently installed in a layout conforming to the
++          FDO Desktop Menu Specifications.</para>
++          <indexterm zone="icewm icewm-menu-fdo">
++            <primary sortas="b-icewm-menu-fdo">icewm-menu-fdo</primary>
++          </indexterm>
++        </listitem>
++      </varlistentry>
+       <varlistentry id="icewm-session">
+         <term><command>icewm-session</command></term>
+         <listitem>
+@@ -348,7 +365,7 @@
+       <varlistentry id="icewm-set-gnomewm">
+         <term><command>icewm-set-gnomewm</command></term>
+         <listitem>
+-<para>is a script to set the <application>GNOME</application> to
++          <para>is a script to set the <application>GNOME</application>windowmanager to
+           <application>icewm</application> using <application>gconftool</application>.
+           </para>
+           <indexterm zone="icewm icewm-set-gnomewm">
+
