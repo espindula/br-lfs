@@ -53,16 +53,17 @@
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required"><xref linkend="x-window-system"/> et
     <xref linkend="gdk-pixbuf"/></para>
+    <bridgehead renderas="sect4">Facultative</bridgehead>
+    <para role="optional">
+      <xref linkend="libsndfile"/> et
+      <xref linkend="alsa-lib"/> (pour le programme expérimental icesoundm)
+    </para>
+
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;:
     <ulink url="&blfs-wiki;/icewm"/></para>
    </sect2>
   <sect2 role="installation">
     <title>Installation de IceWM</title>
-    <note>
-      <para>Cette version de <application>IceWM</application> est normalement
-      une version de développement, mais elle fournit une environnement de travail
-      stable et peut se construire sans des bibliothèques obsolètes.</para>
-    </note>
     <para>Installez <application>IceWM</application> en lançant les commandes suivantes&nbsp;:
     </para>
 <screen>
@@ -81,8 +82,15 @@ make install-desktop</userinput>
   </sect2>
   <sect2 role="commands">
     <title>Explications des commandes</title>
-    <para><parameter>sed -i '/^LIBS/s/(.*)/1 -lfontconfig/' src/Makefile.in</parameter>&nbsp;:
-    cela corrige la construction avec des versions récentes de <application>binutils</application>.
+     <para>
+      <parameter>rm /usr/share/xsessions/icewm.desktop</parameter>: Le paquet est livré avec
+       icewm.desktop et icewm-xsession.desktop. Le format a été utilisé dans le passé, mais il plantera s'il est utilisé avec un gestionnaire de bureau moderne comme
+       <xref linkend="sddm"/>.
+     </para>
+
+    <para>
+      <option>--enable-guievents --with-icesound=ALSA</option>: ces deux paramètres permettent à
+      <command>icesound</command> d'être compilé.
     </para>
   </sect2>
   <sect2 role="configuration">
@@ -139,7 +147,10 @@ cp -v /usr/share/icewm/winoptions ~/.icewm/winoptions</userinput>
       <command>Logout -> Restart-IceWM</command> dans le menu principal pour charger vos préférences modifiées,
       mais les modifications de fond ne prendront effet seulement quand
       <application>IceWM</application> est redémarré.</para>
-      <para>LA syntaxe des menus est expliquée dans les fichiers d'aide, auxquels vous pouvez
+      <para>A ce point vous pouvez <emphasis>soit</emphasis> modifier les fichiers de menu traditionnels en fonction de vos choix, 
+      <emphasis>ou</emphasis> utiliser le nouveau <command>icewm-menu-fdo</command> descrit ensuite.</para>
+ 
+     <para>La syntaxe des menus est expliquée dans les fichiers d'aide, auxquels vous pouvez
 	accéder en lançant <command>help</command> depuis le menu, mais certains des détails
 	sont dépassés et les sélections par défaut dans les menus (quelques vieilles applications dans le
 	menu principal, et toutes celles dans le menu <command>Programs</command> )
@@ -172,36 +183,16 @@ cp -v /usr/share/icewm/winoptions ~/.icewm/winoptions</userinput>
           <para>La bar d'outil par défaut n'est pas altérée.</para>
         </listitem>
       </itemizedlist>
-      <para>Il est peu probable que ces exemples répondent à vos désirs, mais si vous souhaitez les
-       utiliser exécuter ce qui suit </para>
-<screen role="nodump">
-<userinput>cat &gt; ~/.icewm/menu &lt;&lt; "EOF" &amp;&amp;
-<literal>prog Urxvt xterm urxvt
-prog GVolWheel /usr/share/pixmaps/gvolwheel/audio-volume-medium gvolwheel
-separator
-menufile General folder general
-menufile Multimedia folder multimedia
-menufile Tool_bar folder toolbar</literal>
-EOF
-cat &gt; ~/.icewm/general &lt;&lt; "EOF" &amp;&amp;
-<literal>prog Firefox firefox firefox
-prog Epiphany /usr/share/icons/gnome/16x16/apps/web-browser epiphany
-prog Midori /usr/share/icons/hicolor/24x24/apps/midori midori
-separator
-prog Gimp /usr/share/icons/hicolor/16x16/apps/gimp gimp
-separator
-prog Evince /usr/share/icons/hicolor/16x16/apps/evince evince
-prog Epdfview /usr/share/epdfview/pixmaps/icon_epdfview-48 epdfview</literal>
-EOF
-cat &gt; ~/.icewm/multimedia &lt;&lt; "EOF"
-<literal>prog Audacious /usr/share/icons/hicolor/48x48/apps/audacious audacious
-separator
-prog Parole /usr/share/icons/hicolor/16x16/apps/parole parole
-prog Totem /usr/share/icons/hicolor/16x16/apps/totem totem
-prog Vlc /usr/share/icons/hicolor/16x16/apps/vlc vlc
-prog Xine /usr/share/pixmaps/xine xine</literal>
-EOF</userinput>
-</screen>
+      <para>Si vous souhaitez utiliser cette méthode traditionnelle, il y a plus d'exemples dans les versions précédentes de ce livre (comme BLFS-7.8)
+       </para>
+      <para><emphasis>Alternativement</emphasis>, vous pouvez créer un menu qui est conforme aux spécifications FDO des menus de bureau, ou les programmes
+        peuvent être trouvé car ils ont un fichier .desktop dans les répertoires XDG_DATA_HOME ou XDG_DATA_DIR.
+        Contrairement à la plupart des gestionnaires de fenêtres, <application>icewm</application> ne cherche pas les programmes quand le menu est appelé, donc si vous prenez
+       cette voie vous devrez relancer la commande suivant après avoir installé ou supprimé des programmes:
+      </para>
+<screen><userinput>icewm-menu-fdo >~/.icewm/menu</userinput></screen>
+
+
       <para>Si vous voulez mettre les icônes sur votre bureau, vous devrez installer un programme comme
       <xref linkend="rox-filer"/> qui fournit un tableau d'affichage. Si vous le faite
       vous ne serez plus en mesure d'accéder au menu par un clic droit sur le
@@ -241,8 +232,8 @@ chmod +x ~/.icewm/startup</literal></userinput>
       <segtitle>Bibliothèques installées</segtitle>
       <segtitle>Répertoires installés</segtitle>
       <seglistitem>
-        <seg>icehelp, icesh, icewm, icewm-session, icewm-set-gnomewm, icewmbg,
-        icewmhint, icewmtray</seg>
+        <seg>icehelp, icesh, icesound, icewm, icewm-menu-fdo, icewm-session,
+        icewm-set-gnomewm, icewmbg, icewmhint, icewmtray</seg>
         <seg>Aucun</seg>
         <seg>/usr/share/doc/icewm-&icewm-version;, /usr/share/icewm et ~/.icewm</seg>
       </seglistitem>
@@ -270,6 +261,16 @@ chmod +x ~/.icewm/startup</literal></userinput>
           </indexterm>
         </listitem>
       </varlistentry>
+      <varlistentry id="icesound">
+        <term><command>icesound</command></term>
+        <listitem>
+          <para>joue des fichiers audios sur les événements GUI gérés par IceWM.</para>
+          <indexterm zone="icewm icesound">
+            <primary sortas="b-icesound">icesound</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="icewm-prog">
         <term><command>icewm</command></term>
         <listitem>
@@ -279,6 +280,17 @@ chmod +x ~/.icewm/startup</literal></userinput>
           </indexterm>
         </listitem>
       </varlistentry>
+      <varlistentry id="icewm-menu-fdo">
+        <term><command>icewm-menu-fdo</command></term>
+        <listitem>
+          <para>peut créer un fichier dans un format correct pour le menu IceWM, qui liste ces programmes actuellement installés conformément
+          aux spécifications FDO.</para>
+          <indexterm zone="icewm icewm-menu-fdo">
+            <primary sortas="b-icewm-menu-fdo">icewm-menu-fdo</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="icewm-session">
         <term><command>icewm-session</command></term>
         <listitem>
@@ -292,7 +304,7 @@ chmod +x ~/.icewm/startup</literal></userinput>
       <varlistentry id="icewm-set-gnomewm">
         <term><command>icewm-set-gnomewm</command></term>
         <listitem>
-          <para>est un script pour initialiser <application>GNOME</application> en
+          <para>est un script pour initialiser le gestionnaire de fenêtres de <application>GNOME</application> avec
           <application>icewm</application> en utilisant <application>gconftool</application>.
           </para>
           <indexterm zone="icewm icewm-set-gnomewm">
