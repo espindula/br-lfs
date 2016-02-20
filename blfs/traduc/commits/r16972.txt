@@ -1,0 +1,151 @@
+Révision 16972
+
+fichiers modifiés :
+   multimedia/videoutils/vlc.xml
+   general/prog/lua.xml
+   introduction/welcome/changelog.xml
+
+Log :
+• Lua-5.3.2 and VLC-2.2.2 need to be compiled with Lua compat 5.1
+
+Le robot a traité 8 % du commit anglais
+Index: general/prog/lua.xml
+===================================================================
+--- general/prog/lua.xml	(révision 16971)
++++ general/prog/lua.xml	(révision 16972)
+@@ -119,6 +119,32 @@
+   <sect2 role="installation">
+     <title>Installation of Lua</title>
+ 
++    <para>Some packages check for the <application>pkg-config</application> file
++    for <application>Lua</application>, wich is created with:</para>
++<screen role="root"><userinput>cat &gt; lua.pc &lt;&lt; "EOF"
++<literal>V=5.3
++R=&lua-version;
++prefix=/usr
++INSTALL_BIN=${prefix}/bin
++INSTALL_INC=${prefix}/include
++INSTALL_LIB=${prefix}/lib
++INSTALL_MAN=${prefix}/share/man/man1
++INSTALL_LMOD=${prefix}/share/lua/${V}
++INSTALL_CMOD=${prefix}/lib/lua/${V}
++exec_prefix=${prefix}
++libdir=${exec_prefix}/lib
++includedir=${prefix}/include
++Name: Lua
++Description: An Extensible Extension Language
++Version: ${R}
++Requires:
++Libs: -L${libdir} -llua -lm
++Cflags: -I${includedir}</literal>
++EOF</userinput></screen>
+     <para>
+       Install <application>Lua</application> by running the following
+       commands:
+@@ -128,7 +154,7 @@
+ 
+ sed -i '/#define LUA_ROOT/s:/usr/local/:/usr/:' src/luaconf.h &amp;&amp;
+ 
+-make MYCFLAGS="-DLUA_COMPAT_5_1" linux</userinput></screen>
++make MYCFLAGS="-DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1" linux</userinput></screen>
+ 
+     <para>
+       To test the results, issue: <command>make test</command>.
+@@ -146,35 +172,10 @@
+      INSTALL_DATA="cp -d" INSTALL_MAN=/usr/share/man/man1 install &amp;&amp;
+ 
+ mkdir -pv /usr/share/doc/lua-&lua-version; &amp;&amp;
+-cp -v doc/*.{html,css,gif,png} /usr/share/doc/lua-&lua-version;</userinput></screen>
++cp -v doc/*.{html,css,gif,png} /usr/share/doc/lua-&lua-version; &amp;&amp;
+ 
+-<para>Some packages check for the <application>pkg-config</application> file
+-for <application>Lua</application>. As the
+-<systemitem class="username">root</systemitem> user:</para>
++install -v -m644 -D lua.pc /usr/lib/pkgconfig/lua.pc</userinput></screen>
+ 
+-<screen role="root"><userinput>cat &gt; /usr/lib/pkgconfig/lua.pc &lt;&lt; "EOF"
+-<literal>V=5.3
+-R=&lua-version;
+-prefix=/usr
+-INSTALL_BIN=${prefix}/bin
+-INSTALL_INC=${prefix}/include
+-INSTALL_LIB=${prefix}/lib
+-INSTALL_MAN=${prefix}/share/man/man1
+-INSTALL_LMOD=${prefix}/share/lua/${V}
+-INSTALL_CMOD=${prefix}/lib/lua/${V}
+-exec_prefix=${prefix}
+-libdir=${exec_prefix}/lib
+-includedir=${prefix}/include
+-Name: Lua
+-Description: An Extensible Extension Language
+-Version: ${R}
+-Requires:
+-Libs: -L${libdir} -llua -lm
+-Cflags: -I${includedir}</literal>
+-EOF</userinput></screen>
+     <para>
+       We are going to describe only the "Basic tests". Untar the tarball and
+       change to the
+@@ -196,10 +197,9 @@
+     </para>
+ 
+     <para>
+-<parameter>MYCFLAGS="-DLUA_COMPAT_5_1"</parameter>: This parameter
+-enables building of the <application>Lua</application> 5.1
+-functions into the shared library to allow applications which
+-still require them to function properly.
++      <envar>MYCFLAGS="-DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1"</envar>: This
++      environment variable includes compatibility layers with Lua 5.1 and 5.2
++      in the build.
+     </para>
+ 
+   </sect2>
+
+Index: introduction/welcome/changelog.xml
+===================================================================
+--- introduction/welcome/changelog.xml	(révision 16971)
++++ introduction/welcome/changelog.xml	(révision 16972)
+@@ -48,9 +48,10 @@
+       <para>February 14th, 2016</para>
+       <itemizedlist>
+         <listitem>
+-<para>[krejzi] - Fixed Lua instructions to enable
+-building of the Lua 5.1 compatibility functions. Fixes
+-<ulink url="&blfs-ticket-root;7462">#7462</ulink>.</para>
++          <para>[fernando] - Lua-5.3.2 and VLC-2.2.2 need to be compiled with
++          Lua compat 5.1. Fixes
++          <ulink url="&blfs-ticket-root;7462">#7462</ulink> and
++          <ulink url="&blfs-ticket-root;7465">#7465</ulink>.</para>
+         </listitem>
+         <listitem>
+           <para>[fernando] - Update to thunderbird-38.6.0. Fixes
+
+Index: multimedia/videoutils/vlc.xml
+===================================================================
+--- multimedia/videoutils/vlc.xml	(révision 16971)
++++ multimedia/videoutils/vlc.xml	(révision 16972)
+@@ -220,6 +220,12 @@
+ `echo $PKG_CONFIG_PATH | sed 's@:/opt/qt5/lib/pkgconfig@@'`"</userinput></screen>
+ 
+     <para>
++      If you wish to avoid thousands of annoying warnings, issue:
++    </para>
++<screen><userinput>sed -i 's/ifndef __FAST_MATH__/if 0/g' configure.ac</userinput></screen>
++    <para>
+       Install <application>VLC</application> by running the following commands:
+     </para>
+ 
+@@ -241,10 +247,14 @@
+ sed -e '/seems to be moved/s/^/#/' \
+    -i autotools/ltmain.sh libtool &amp;&amp;</userinput></screen>
+ 
+-make</userinput></screen>
++    <para>
++      In order to build with Lua 5.1 compatiblity, issue:
++    </para>
+ 
++<screen><userinput>CFLAGS='-fPIC -O2 -Wall -Wextra -DLUA_COMPAT_5_1' make </userinput></screen>
+     <para>
+       Again, if both Qt4 and 5 are installed, restore
+       <envar>PKG_CONFIG_PATH</envar>:
+
