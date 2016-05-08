@@ -80,12 +80,12 @@ function comment
 }
 
 if ! mountpoint -q /sys; then
-  msg="/sys mut be mounted"
+  msg="/sys must be mounted"
   usage
 fi
 
 if ! mountpoint -q /proc; then
-  msg="/proc mut be mounted"
+  msg="/proc must be mounted"
   usage
 fi
 
