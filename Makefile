@@ -1,4 +1,5 @@
 BASEDIR = ~/lfs-book
+SYSDDIR = ~/lfs-systemd
 DUMPDIR = ~/lfs-commands
 RENDERTMP = $(HOME)/tmp
 CHUNK_QUIET = 1
@@ -13,11 +14,20 @@ else
   Q = @
 endif
 
-lfs: validate profile-html
+sysv: validate profile-html
+	$(Q)xsltproc --nonet                   \
+      --output $(RENDERTMP)/lfs-html2.xml \
+      --stringparam profile.revision sysv \
+      stylesheets/lfs-xsl/profile.xsl     \
+      $(RENDERTMP)/lfs-html.xml
+
 	@echo "Generating chunked XHTML files..."
-	$(Q)xsltproc --nonet -stringparam chunk.quietly $(CHUNK_QUIET) \
-	  -stringparam rootid "$(ROOT_ID)" -stringparam base.dir $(BASEDIR)/ \
-	  stylesheets/lfs-chunked.xsl $(RENDERTMP)/lfs-html.xml
+	$(Q)xsltproc --nonet                          \
+      --stringparam chunk.quietly $(CHUNK_QUIET) \
+      --stringparam rootid "$(ROOT_ID)"          \
+      --stringparam base.dir $(BASEDIR)/         \
+      stylesheets/lfs-chunked.xsl                \
+      $(RENDERTMP)/lfs-html2.xml
 
 	@echo "Copying CSS code and images..."
 	$(Q)if [ ! -e $(BASEDIR)/stylesheets ]; then \
@@ -37,10 +47,50 @@ lfs: validate profile-html
 	  tidy -config tidy.conf $$filename; \
 	  true; \
 	  /bin/bash obfuscate.sh $$filename; \
-	  sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
+	  sed -e "s@text/html@application/xhtml+xml@g" \
+         -e "s/\xa9/\&copy;/ "                    \
+         -i $$filename; \
 	done;
 
 	$(Q)$(MAKE) $(BASEDIR)/wget-list $(BASEDIR)/md5sums
+
+systemd: validated profile-html
+	$(Q)xsltproc --nonet                      \
+      --output $(RENDERTMP)/lfs-html2.xml    \
+      --stringparam profile.revision systemd \
+      stylesheets/lfs-xsl/profile.xsl        \
+      $(RENDERTMP)/lfs-html.xml
+
+	@echo "Generating chunked XHTML files..."
+	$(Q)xsltproc --nonet                          \
+      --stringparam chunk.quietly $(CHUNK_QUIET) \
+      --stringparam rootid "$(ROOT_ID)"          \
+      --stringparam base.dir $(SYSDDIR)/         \
+      stylesheets/lfs-chunked.xsl                \
+      $(RENDERTMP)/lfs-html2.xml
+
+	@echo "Copying CSS code and images..."
+	$(Q)if [ ! -e $(SYSDDIR)/stylesheets ]; then \
+	  mkdir -p $(SYSDDIR)/stylesheets; \
+	fi;
+	$(Q)cp stylesheets/lfs-xsl/*.css $(SYSDDIR)/stylesheets
+
+	$(Q)if [ ! -e $(SYSDDIR)/images ]; then \
+	  mkdir -p $(SYSDDIR)/images; \
+	fi;
+	$(Q)cp images/*.png $(SYSDDIR)/images
+
+	@echo "Running Tidy and obfuscate.sh..."
+	$(Q)for filename in `find $(SYSDDIR) -name "*.html"`; do \
+	  tidy -config tidy.conf $$filename; \
+	  true; \
+	  /bin/bash obfuscate.sh $$filename; \
+	  sed -e "s@text/html@application/xhtml+xml@g" \
+         -e "s/\xa9/\&copy;/ "                    \
+         -i $$filename; \
+	done;
+
+#	$(Q)$(MAKE) $(SYSDDIR)/wget-list $(SYSDDIR)/md5sumsd
 
 pdf: validate
 	@echo "Generating profiled XML for PDF..."
@@ -94,7 +144,13 @@ validate: tmpdir
 	$(Q)./aux-file-data.sh $(RENDERTMP)/lfs-full.xml
 	@echo "Validation complete."
 
-profile-html: validate
+validated: tmpdir
+	@echo "Validating the book..."
+	$(Q)xmllint --nonet --noent --xinclude --postvalid \
+	  -o $(RENDERTMP)/lfs-full.xml indexd.xml
+	@echo "Validation complete."
+
+profile-html: 
 	@echo "Generating profiled XML for XHTML..."
 	$(Q)xsltproc --nonet --stringparam profile.condition html \
 	    --output $(RENDERTMP)/lfs-html.xml stylesheets/lfs-xsl/profile.xsl \
@@ -116,6 +172,13 @@ $(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.e
 	$(Q)sed -i -e \
        "s/BOOTSCRIPTS-MD5SUM/$(shell md5sum lfs-bootscripts*.tar.bz2 | cut -d' ' -f1)/" \
        $(BASEDIR)/md5sums
+
+md5sumsd: $(SYSDDIR)/md5sumsd
+$(SYSDDIR)/md5sumsd: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.ent patches.ent
+	@echo "Generating md5sum file..."
+	$(Q)mkdir -p $(SYSDDIR)
+	$(Q)xsltproc --xinclude --nonet --output $(SYSDDIR)/md5sums \
+	    stylesheets/md5sum.xsl chapter03/chapter03.xml
 
 dump-commands: validate
 	@echo "Dumping book commands..."
