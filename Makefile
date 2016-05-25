@@ -5,6 +5,7 @@ RENDERTMP = $(HOME)/tmp
 CHUNK_QUIET = 1
 ROOT_ID =
 PDF_OUTPUT = LFS-BOOK.pdf
+PDF_SYSD_OUTPUT = LFS-SYSD-BOOK.pdf
 NOCHUNKS_OUTPUT = LFS-BOOK.html
 NOCHUNKS_SYSD_FILE = LFS-SYSD-BOOK.html
 SHELL = /bin/bash
@@ -97,10 +98,10 @@ pdf: validate
 
 	@echo "Generating FO file..."
 	$(Q)xsltproc --nonet                           \
-                --stringparam rootid "$(ROOT_ID)" \
-                --output $(RENDERTMP)/lfs-pdf.fo  \
-                stylesheets/lfs-pdf.xsl           \
-                $(RENDERTMP)/lfs-pdf.xml
+                 --stringparam rootid "$(ROOT_ID)" \
+                 --output $(RENDERTMP)/lfs-pdf.fo  \
+                 stylesheets/lfs-pdf.xsl           \
+                 $(RENDERTMP)/lfs-pdf.xml
 
 	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/lfs-pdf.fo
 	$(Q)bash pdf-fixups.sh $(RENDERTMP)/lfs-pdf.fo
@@ -110,6 +111,32 @@ pdf: validate
 
 	$(Q)fop -q  $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT) 2>fop.log
 	@echo "$(BASEDIR)/$(PDF_OUTPUT) created"
+	@echo "fop.log created"
+
+pdfd: validated
+	@echo "Generating profiled XML for PDF..."
+	$(Q)xsltproc --nonet                                \
+                 --stringparam profile.condition pdf    \
+                 --stringparam profile.revision systemd \
+                 --output $(RENDERTMP)/lfs-pdf.xml      \
+                 stylesheets/lfs-xsl/profile.xsl        \
+                 $(RENDERTMP)/lfs-full.xml
+
+	@echo "Generating FO file..."
+	$(Q)xsltproc --nonet                          \
+                --stringparam rootid "$(ROOT_ID)" \
+                --output $(RENDERTMP)/lfs-pdf.fo  \
+                stylesheets/lfs-pdf.xsl           \
+                $(RENDERTMP)/lfs-pdf.xml
+
+	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/lfs-pdf.fo
+	$(Q)bash pdf-fixups.sh $(RENDERTMP)/lfs-pdf.fo
+
+	@echo "Generating PDF file..."
+	$(Q)mkdir -p $(SYSDDIR)
+
+	$(Q)fop -q  $(RENDERTMP)/lfs-pdf.fo $(SYSDDIR)/$(PDF_SYSD_OUTPUT) 2>fop.log
+	@echo "$(SYSDDIR)/$(PDF_SYSD_OUTPUT) created"
 	@echo "fop.log created"
 
 nochunks: validate profile-html
