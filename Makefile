@@ -6,6 +6,7 @@ CHUNK_QUIET = 1
 ROOT_ID =
 PDF_OUTPUT = LFS-BOOK.pdf
 NOCHUNKS_OUTPUT = LFS-BOOK.html
+NOCHUNKS_SYSD_FILE = LFS-SYSD-BOOK.html
 SHELL = /bin/bash
 
 ifdef V
@@ -30,29 +31,26 @@ sysv: validate profile-html
       $(RENDERTMP)/lfs-html2.xml
 
 	@echo "Copying CSS code and images..."
-	$(Q)if [ ! -e $(BASEDIR)/stylesheets ]; then \
-	  mkdir -p $(BASEDIR)/stylesheets; \
-	fi;
+	$(Q)mkdir -p $(BASEDIR)/stylesheets
 	$(Q)cp stylesheets/lfs-xsl/*.css $(BASEDIR)/stylesheets
-	$(Q)pushd $(BASEDIR)/; sed -i -e "s@../stylesheets@stylesheets@g" *.html; popd
+	$(Q)pushd $(BASEDIR)/ > /dev/null;                     \
+       sed -i -e "s@../stylesheets@stylesheets@g" *.html; \
+       popd > /dev/null
 
-	$(Q)if [ ! -e $(BASEDIR)/images ]; then \
-	  mkdir -p $(BASEDIR)/images; \
-	fi;
+	$(Q)mkdir -p $(BASEDIR)/images
 	$(Q)cp images/*.png $(BASEDIR)/images
-#	$(Q)pushd $(BASEDIR)/; sed -i -e "s@../images@images@g" *.html; popd
 
 	@echo "Running Tidy and obfuscate.sh..."
 	$(Q)for filename in `find $(BASEDIR) -name "*.html"`; do \
-	  tidy -config tidy.conf $$filename; \
-	  true; \
-	  /bin/bash obfuscate.sh $$filename; \
-	  sed -e "s@text/html@application/xhtml+xml@g" \
-         -e "s/\xa9/\&copy;/ "                    \
-         -i $$filename; \
-	done;
+         tidy -config tidy.conf $$filename;           \
+         true;                                        \
+         /bin/bash obfuscate.sh $$filename;           \
+         sed -e "s@text/html@application/xhtml+xml@g" \
+             -e "s/\xa9/\&copy;/ "                    \
+             -i $$filename;                           \
+   done;
 
-	$(Q)$(MAKE) $(BASEDIR)/wget-list $(BASEDIR)/md5sums
+	$(Q)$(MAKE) --no-print-directory wget-list md5sums
 
 systemd: validated profile-html
 	$(Q)xsltproc --nonet                      \
@@ -70,123 +68,242 @@ systemd: validated profile-html
       $(RENDERTMP)/lfs-html2.xml
 
 	@echo "Copying CSS code and images..."
-	$(Q)if [ ! -e $(SYSDDIR)/stylesheets ]; then \
-	  mkdir -p $(SYSDDIR)/stylesheets; \
-	fi;
+	$(Q)mkdir -p $(SYSDDIR)/stylesheets
 	$(Q)cp stylesheets/lfs-xsl/*.css $(SYSDDIR)/stylesheets
 
-	$(Q)if [ ! -e $(SYSDDIR)/images ]; then \
-	  mkdir -p $(SYSDDIR)/images; \
-	fi;
+	$(Q)mkdir -p $(SYSDDIR)/images
 	$(Q)cp images/*.png $(SYSDDIR)/images
 
 	@echo "Running Tidy and obfuscate.sh..."
 	$(Q)for filename in `find $(SYSDDIR) -name "*.html"`; do \
-	  tidy -config tidy.conf $$filename; \
-	  true; \
-	  /bin/bash obfuscate.sh $$filename; \
-	  sed -e "s@text/html@application/xhtml+xml@g" \
-         -e "s/\xa9/\&copy;/ "                    \
-         -i $$filename; \
-	done;
+         tidy -config tidy.conf $$filename;           \
+         true;                                        \
+         /bin/bash obfuscate.sh $$filename;           \
+         sed -e "s@text/html@application/xhtml+xml@g" \
+             -e "s/\xa9/\&copy;/ "                    \
+             -i $$filename;                           \
+       done;
 
-#	$(Q)$(MAKE) $(SYSDDIR)/wget-list $(SYSDDIR)/md5sumsd
+	$(Q)$(MAKE) --no-print-directory wget-listd md5sumsd
 
 pdf: validate
 	@echo "Generating profiled XML for PDF..."
-	$(Q)xsltproc --nonet --stringparam profile.condition pdf \
-	  --output $(RENDERTMP)/lfs-pdf.xml stylesheets/lfs-xsl/profile.xsl \
-	  $(RENDERTMP)/lfs-full.xml
+	$(Q)xsltproc --nonet \
+                --stringparam profile.condition pdf \
+                --stringparam profile.revision sysv \
+                --output $(RENDERTMP)/lfs-pdf.xml   \
+                stylesheets/lfs-xsl/profile.xsl     \
+                $(RENDERTMP)/lfs-full.xml
 
 	@echo "Generating FO file..."
-	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
-	  --output $(RENDERTMP)/lfs-pdf.fo stylesheets/lfs-pdf.xsl \
-	  $(RENDERTMP)/lfs-pdf.xml
+	$(Q)xsltproc --nonet                           \
+                --stringparam rootid "$(ROOT_ID)" \
+                --output $(RENDERTMP)/lfs-pdf.fo  \
+                stylesheets/lfs-pdf.xsl           \
+                $(RENDERTMP)/lfs-pdf.xml
+
 	$(Q)sed -i -e 's/span="inherit"/span="all"/' $(RENDERTMP)/lfs-pdf.fo
 	$(Q)bash pdf-fixups.sh $(RENDERTMP)/lfs-pdf.fo
 
 	@echo "Generating PDF file..."
-	$(Q)if [ ! -e $(BASEDIR) ]; then \
-	  mkdir -p $(BASEDIR); \
-	fi;
+	$(Q)mkdir -p $(BASEDIR)
+
 	$(Q)fop -q  $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT) 2>fop.log
 	@echo "$(BASEDIR)/$(PDF_OUTPUT) created"
 	@echo "fop.log created"
 
 nochunks: validate profile-html
+	$(Q)xsltproc --nonet                             \
+                --output $(RENDERTMP)/lfs-html2.xml \
+                --stringparam profile.revision sysv \
+                stylesheets/lfs-xsl/profile.xsl     \
+                $(RENDERTMP)/lfs-html.xml
+
 	@echo "Generating non chunked XHTML file..."
-	$(Q)xsltproc --nonet -stringparam rootid "$(ROOT_ID)" \
-	  --output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
-	  stylesheets/lfs-nochunks.xsl $(RENDERTMP)/lfs-html.xml
+	$(Q)xsltproc --nonet                                \
+                --stringparam rootid "$(ROOT_ID)"      \
+                --output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
+                stylesheets/lfs-nochunks.xsl           \
+                $(RENDERTMP)/lfs-html2.xml
 
 	@echo "Running Tidy..."
 	$(Q)tidy -config tidy.conf $(BASEDIR)/$(NOCHUNKS_OUTPUT) || true
+
 	@echo "Running obfuscate.sh..."
 	$(Q)bash obfuscate.sh                                $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g"  $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)sed -i -e "s@../wget-list@wget-list@"            $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 	$(Q)sed -i -e "s@../md5sums@md5sums@"                $(BASEDIR)/$(NOCHUNKS_OUTPUT)
-	$(Q)$(MAKE) $(BASEDIR)/wget-list $(BASEDIR)/md5sums
+	$(Q)sed -i -e "s@\xa9@\&copy;@"                      $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+
+	@echo "Output at $(BASEDIR)/$(NOCHUNKS_OUTPUT)"
+
+nochunksd: validated profile-html
+	$(Q)xsltproc --nonet                                \
+                --output $(RENDERTMP)/lfs-html2.xml    \
+                --stringparam profile.revision systemd \
+                stylesheets/lfs-xsl/profile.xsl        \
+                $(RENDERTMP)/lfs-html.xml
+
+	@echo "Generating non chunked XHTML file..."
+	$(Q)xsltproc --nonet                                   \
+                --stringparam rootid "$(ROOT_ID)"         \
+                --output $(SYSDDIR)/$(NOCHUNKS_SYSD_FILE) \
+                stylesheets/lfs-nochunks.xsl              \
+                $(RENDERTMP)/lfs-html2.xml
+
+	@echo "Running Tidy..."
+	$(Q)tidy -config tidy.conf $(SYSDDIR)/$(NOCHUNKS_SYSD_FILE) || true
+
+	@echo "Running obfuscate.sh..."
+	$(Q)bash obfuscate.sh                                $(SYSDDIR)/$(NOCHUNKS_SYSD_FILE)
+	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g"  $(SYSDDIR)/$(NOCHUNKS_SYSD_FILE)
+	$(Q)sed -i -e "s@../wget-list@wget-list@"            $(SYSDDIR)/$(NOCHUNKS_SYSD_FILE)
+	$(Q)sed -i -e "s@../md5sums@md5sums@"                $(SYSDDIR)/$(NOCHUNKS_SYSD_FILE)
+	$(Q)sed -i -e "s@\xa9@\&copy;@"                      $(SYSDDIR)/$(NOCHUNKS_SYSD_FILE)
+
+	@echo "Output at $(SYSDDIR)/$(NOCHUNKS_SYSD_FILE)"
 
 tmpdir:
 	@echo "Creating and cleaning $(RENDERTMP)"
-	$(Q)[ -d $(RENDERTMP) ] || mkdir -p $(RENDERTMP)
-	$(Q)rm -f $(RENDERTMP)/lfs-{full,html,pdf}.xml
-	$(Q)rm -f $(RENDERTMP)/lfs-pdf.fo
+	$(Q)mkdir -p $(RENDERTMP)
+	$(Q)rm -f $(RENDERTMP)/lfs*.xml
+	$(Q)rm -f $(RENDERTMP)/sysd*.xml
+	$(Q)rm -f $(RENDERTMP)/*pdf.fo
 
 validate: tmpdir
 	@echo "Processing bootscripts..."
 	$(Q)bash process-scripts.sh
 	@echo "Validating the book..."
-	$(Q)xmllint --nonet --noent --xinclude --postvalid \
-	  -o $(RENDERTMP)/lfs-full.xml index.xml
+	$(Q)xmllint --nonet                      \
+               --noent                      \
+               --xinclude                   \
+               --postvalid                  \
+	            -o $(RENDERTMP)/lfs-full.xml \
+               index.xml
 	$(Q)rm -f appendices/*.script
 	$(Q)./aux-file-data.sh $(RENDERTMP)/lfs-full.xml
 	@echo "Validation complete."
 
 validated: tmpdir
 	@echo "Validating the book..."
-	$(Q)xmllint --nonet --noent --xinclude --postvalid \
-	  -o $(RENDERTMP)/lfs-full.xml indexd.xml
+	$(Q)xmllint --nonet                      \
+               --noent                      \
+               --xinclude                   \
+               --postvalid                  \
+	            -o $(RENDERTMP)/lfs-full.xml \
+               indexd.xml
 	@echo "Validation complete."
 
 profile-html: 
 	@echo "Generating profiled XML for XHTML..."
-	$(Q)xsltproc --nonet --stringparam profile.condition html \
-	    --output $(RENDERTMP)/lfs-html.xml stylesheets/lfs-xsl/profile.xsl \
-	    $(RENDERTMP)/lfs-full.xml
+	$(Q)xsltproc --nonet                              \
+                --stringparam profile.condition html \
+	             --output $(RENDERTMP)/lfs-html.xml   \
+                stylesheets/lfs-xsl/profile.xsl      \
+	             $(RENDERTMP)/lfs-full.xml
 
 wget-list: $(BASEDIR)/wget-list
-$(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.ent patches.ent
-	@echo "Generating wget list..."
+$(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml \
+                      packages.ent patches.ent
+	@echo "Generating wget list for sysv..."
 	$(Q)mkdir -p $(BASEDIR)
-	$(Q)xsltproc --xinclude --nonet --output $(BASEDIR)/wget-list \
-	    stylesheets/wget-list.xsl chapter03/chapter03.xml
+
+	$(Q)xsltproc --nonet --xinclude                  \
+                --stringparam profile.revision sysv \
+                --output $(RENDERTMP)/sysd-wget.xml \
+                stylesheets/lfs-xsl/profile.xsl     \
+                chapter03/chapter03.xml
+
+	$(Q)xsltproc --xinclude --nonet            \
+                --output $(BASEDIR)/wget-list \
+	             stylesheets/wget-list.xsl     \
+                chapter03/chapter03.xml
+
+wget-listd: $(SYSDDIR)/wget-listd
+$(SYSDDIR)/wget-listd: stylesheets/wget-list.xsl chapter03/chapter03.xml \
+                       packages.ent patches.ent
+	@echo "Generating wget list for systemd..."
+	$(Q)mkdir -p $(SYSDDIR)
+
+	$(Q)xsltproc --xinclude --nonet                     \
+                --stringparam profile.revision systemd \
+                --output $(RENDERTMP)/sysd-wget.xml    \
+                stylesheets/lfs-xsl/profile.xsl        \
+                chapter03/chapter03.xml
+
+	$(Q)xsltproc --xinclude --nonet            \
+                --output $(SYSDDIR)/wget-list \
+                stylesheets/wget-list.xsl     \
+                $(RENDERTMP)/sysd-wget.xml
 
 md5sums: $(BASEDIR)/md5sums
-$(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.ent patches.ent
-	@echo "Generating md5sum file..."
+$(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml \
+                    packages.ent patches.ent
+	@echo "Generating md5sum file for sysv..."
 	$(Q)mkdir -p $(BASEDIR)
-	$(Q)xsltproc --xinclude --nonet --output $(BASEDIR)/md5sums \
-	    stylesheets/md5sum.xsl chapter03/chapter03.xml
+
+	$(Q)xsltproc --nonet --xinclude                    \
+                --stringparam profile.revision sysv   \
+                --output $(RENDERTMP)/sysv-md5sum.xml \
+                stylesheets/lfs-xsl/profile.xsl       \
+                chapter03/chapter03.xml
+
+	$(Q)xsltproc --xinclude --nonet          \
+                --output $(BASEDIR)/md5sums \
+                stylesheets/md5sum.xsl      \
+                $(RENDERTMP)/sysv-md5sum.xml
 	$(Q)sed -i -e \
        "s/BOOTSCRIPTS-MD5SUM/$(shell md5sum lfs-bootscripts*.tar.bz2 | cut -d' ' -f1)/" \
        $(BASEDIR)/md5sums
 
-md5sumsd: $(SYSDDIR)/md5sumsd
-$(SYSDDIR)/md5sumsd: stylesheets/wget-list.xsl chapter03/chapter03.xml packages.ent patches.ent
-	@echo "Generating md5sum file..."
+md5sumsd: $(SYSDDIR)/md5sums
+$(SYSDDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml \
+                    packages.ent patches.ent
+	@echo "Generating md5sum file for systemd..."
 	$(Q)mkdir -p $(SYSDDIR)
-	$(Q)xsltproc --xinclude --nonet --output $(SYSDDIR)/md5sums \
-	    stylesheets/md5sum.xsl chapter03/chapter03.xml
+	$(Q)xsltproc --nonet --xinclude                     \
+                --stringparam profile.revision systemd \
+                --output $(RENDERTMP)/sysd-md5sum.xml  \
+                stylesheets/lfs-xsl/profile.xsl        \
+                chapter03/chapter03.xml
+
+	$(Q)xsltproc --xinclude --nonet          \
+                --output $(SYSDDIR)/md5sums \
+	             stylesheets/md5sum.xsl      \
+                $(RENDERTMP)/sysd-md5sum.xml
 
 dump-commands: validate
 	@echo "Dumping book commands..."
-	$(Q)xsltproc --output $(DUMPDIR)/ \
-	   stylesheets/dump-commands.xsl $(RENDERTMP)/lfs-full.xml
+	$(Q)xsltproc --nonet                   \
+      --output $(RENDERTMP)/lfs-html.xml  \
+      --stringparam profile.revision sysv \
+      stylesheets/lfs-xsl/profile.xsl     \
+      $(RENDERTMP)/lfs-full.xml
 
+	$(Q)rm -rf $(DUMPDIR)
+
+	$(Q)xsltproc --output $(DUMPDIR)/          \
+                stylesheets/dump-commands.xsl \
+                $(RENDERTMP)/lfs-html.xml
+	@echo "Dumping book commands complete in $(DUMPDIR)"
+
+dump-commandsd: validated
+	@echo "Dumping book commands..."
+	$(Q)xsltproc --nonet                      \
+      --output $(RENDERTMP)/lfs-html.xml     \
+      --stringparam profile.revision systemd \
+      stylesheets/lfs-xsl/profile.xsl        \
+      $(RENDERTMP)/lfs-full.xml
+
+	$(Q)rm -rf $(DUMPDIR)
+  
+	$(Q)xsltproc --output $(DUMPDIR)/          \
+                stylesheets/dump-commands.xsl \
+                $(RENDERTMP)/lfs-html.xml
+	@echo "Dumping book commands complete in $(DUMPDIR)"
 
 all: lfs nochunks pdf dump-commands
 
-.PHONY : all dump-commands lfs nochunks pdf profile-html tmpdir validate 
+.PHONY : all sysv systemd dump-commands lfs nochunks pdf profile-html tmpdir validate 
 
