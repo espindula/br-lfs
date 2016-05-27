@@ -188,11 +188,11 @@ $(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml \
 
 dump-commands: validate
 	@echo "Dumping book commands..."
-	$(Q)xsltproc --nonet                     \
-      --output $(RENDERTMP)/lfs-html.xml    \
-      --stringparam profile.revision $(REV) \
-      stylesheets/lfs-xsl/profile.xsl       \
-      $(RENDERTMP)/lfs-full.xml
+#	$(Q)xsltproc --nonet                     \
+#      --output $(RENDERTMP)/lfs-html.xml    \
+#      --stringparam profile.revision $(REV) \
+#      stylesheets/lfs-xsl/profile.xsl       \
+#      $(RENDERTMP)/lfs-full.xml
 
 	$(Q)rm -rf $(DUMPDIR)
 
