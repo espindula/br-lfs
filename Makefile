@@ -23,15 +23,15 @@ ifneq ($(REV), sysv)
 endif
 
 ifeq ($(REV), sysv)
-  BASEDIR         = ~/lfs-book
-  PDF_OUTPUT      = LFS-BOOK.pdf
-  NOCHUNKS_OUTPUT = LFS-BOOK.html
-  DUMPDIR         = ~/lfs-commands
+  BASEDIR         ?= ~/lfs-book
+  PDF_OUTPUT      ?= LFS-BOOK.pdf
+  NOCHUNKS_OUTPUT ?= LFS-BOOK.html
+  DUMPDIR         ?= ~/lfs-commands
 else
-  BASEDIR         = ~/lfs-systemd
-  PDF_OUTPUT      = LFS-SYSD-BOOK.pdf
-  NOCHUNKS_OUTPUT = LFS-SYSD-BOOK.html
-  DUMPDIR         = ~/lfs-sysd-commands
+  BASEDIR         ?= ~/lfs-systemd
+  PDF_OUTPUT      ?= LFS-SYSD-BOOK.pdf
+  NOCHUNKS_OUTPUT ?= LFS-SYSD-BOOK.html
+  DUMPDIR         ?= ~/lfs-sysd-commands
 endif
 
 book: validate profile-html
