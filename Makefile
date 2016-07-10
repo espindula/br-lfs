@@ -41,7 +41,7 @@ book: validate profile-html
       --stringparam rootid "$(ROOT_ID)"          \
       --stringparam base.dir $(BASEDIR)/         \
       stylesheets/lfs-chunked.xsl                \
-      $(RENDERTMP)/lfs-html2.xml
+      $(RENDERTMP)/lfs-html.xml
 
 	@echo "Copying CSS code and images..."
 	$(Q)mkdir -p $(BASEDIR)/stylesheets
@@ -147,7 +147,7 @@ profile-html:
                 --stringparam profile.condition html \
 	             --output $(RENDERTMP)/lfs-html.xml   \
                 stylesheets/lfs-xsl/profile.xsl      \
-	             $(RENDERTMP)/lfs-html2.xml
+	             $(RENDERTMP)/lfs-full.xml
 
 wget-list: $(BASEDIR)/wget-list
 $(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml \
