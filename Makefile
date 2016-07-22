@@ -152,7 +152,7 @@ profile-html:
 wget-list: $(BASEDIR)/wget-list
 $(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml \
                       packages.ent patches.ent
-	@echo "Generating wget list for sysv at $(BASEDIR)/wget-list ..."
+	@echo "Generating consolidated wget list at $(BASEDIR)/wget-list ..."
 	$(Q)mkdir -p $(BASEDIR)
 
 	$(Q)xsltproc --nonet --xinclude                    \
@@ -169,7 +169,7 @@ $(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml \
 md5sums: $(BASEDIR)/md5sums
 $(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml \
                     packages.ent patches.ent
-	@echo "Generating md5sum file for sysv at $(BASEDIR)/md5sums ..."
+	@echo "Generating consolidated md5sum file at $(BASEDIR)/md5sums ..."
 	$(Q)mkdir -p $(BASEDIR)
 
 	$(Q)xsltproc --nonet --xinclude                    \
