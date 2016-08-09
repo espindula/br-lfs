@@ -173,4 +173,60 @@ EOF</userinput></screen>
     </itemizedlist>
 
   </sect2>
+
+  <sect2>
+    <title>Long Running Processes</title>
+
+    <para>Beginning with systemd-230, all user processes are killed when a
+    user session is ended, even if nohup is used, or the process uses
+    <function>daemon()</function> or <function>setsid()</function>. This is a
+    deliberate change from a historically permissive environment to a more
+    restrictive one. The new behavior may cause issues if you depend on long
+    running programs (e.g., <command>screen</command> or
+    <command>tmux</command>) to remain active after ending your user
+    session. There are three ways to enable lingering processes to remain after
+    a user session is ended.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          <emphasis>Enable process lingering for only needed users</emphasis>:
+          normal users have permission to enabling process lingering
+          with the command <command>loginctl enable-linger</command> for their
+          own user. System administrators can use the same command with a
+          <parameter>user</parameter> argument to enable for a user. That user
+          can then use the <command>systemd-run</command> command to start
+          long running processes. For example: <command>systemd-run --scope
+          --user /usr/bin/screen</command>. If you enable lingering for your
+          user, the user@.service will remain even after all login sessions are
+          closed, and will automatically start at system boot. This has the
+          advantage of explicitly allowing and disallowing processes to run
+          after the user session has ended, but breaks backwards compatibility
+          with tools like <command>nohup</command> and utilities that use
+          <function>deamon()</function>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <emphasis>Enable system-wide process lingering</emphasis>:
+          you can set <parameter>KillUserProcesses=no</parameter> in
+          <filename>/etc/logind.conf</filename> to enable process lingering
+          globally for all users. This has the benefit of leaving the old
+          method available to all users at the expense of explicit control.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <emphasis>Disable at build-time</emphasis>: You can enable
+          lingering by default while building systemd by adding the switch
+          <parameter>--without-kill-user-processes</parameter> to the
+          <command>configure</command> command for systemd. This completely
+          disables the ability of systemd to kill user processes at session
+          end.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+  </sect2>
+
 </sect1>
