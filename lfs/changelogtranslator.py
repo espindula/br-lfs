@@ -13,7 +13,7 @@
 import re
 import polib
 
-po = polib.pofile('../chapter01/changelog.po')
+po = polib.pofile('fr/chapter01/changelog.po')
 
 # regexps
 simpleDateRe = re.compile('(20[0-9]{2})-([0-9]{2})-([0-9]{2})')

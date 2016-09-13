@@ -7,8 +7,8 @@ GENDIR := lfsgen-$(LANG)
 ORIGDIR := lfs-en
 PODIR := $(LANG)
 VERSION = trunk
-EN_VER := tags/7.10
-#EN_VER := trunk/BOOK
+#EN_VER := tags/7.10
+EN_VER := trunk/BOOK
 DIFFDIR = diff
 
 filestocopy := INSTALL process-scripts.sh obfuscate.sh pdf-fixups.sh README bootscripts udev-lfs aux-file-data.sh make-aux-files.sh
