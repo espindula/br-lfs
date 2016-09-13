@@ -29,12 +29,10 @@ EN_REPO:=svn://svn.linuxfromscratch.org/LFS
 STYLE_BRANCH=trunk/lfs
 
 SVN_en := "$(EN_REPO)/$(EN_VER)"
-SVN_stylesheets := "$(FR_REPO)/$(STYLE_BRANCH)/stylesheets"
-SVN_images := "$(FR_REPO)/$(STYLE_BRANCH)/images"
 
 
 
-.PHONY: $(GENDIR)/stylesheets $(GENDIR)/images svnup
+.PHONY: svnup
 
 all: genhtml genpdf
 	@echo DONE
@@ -77,13 +75,13 @@ $(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po $(GENDIR)
 	sed -e 's|<book>|<book lang="fr">|g' -i $@
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
 
-$(GENDIR)/images: images $(GENDIR)
+$(GENDIR)/images: $(GENDIR)
 	rm -rf $@
-	cp -r $< $(GENDIR)
+	cp -r images $(GENDIR)
 
-$(GENDIR)/stylesheets: stylesheets $(GENDIR)
+$(GENDIR)/stylesheets: $(GENDIR)
 	rm -rf $@
-	cp -r $< $@
+	cp -r stylesheets $@
 
 $(GENDIR)/general.ent: $(ORIGDIR)/general.ent $(GENDIR)
 	#cp $< $@
@@ -126,7 +124,7 @@ $(GENDIR)/Makefile: $(ORIGDIR)/Makefile $(GENDIR)
 lfsgen-%:
 	mkdir -p $@
 
-init: $(ORIGDIR) $(PODIR) stylesheets images
+init: $(ORIGDIR)
 
 $(ORIGDIR)/%: $(ORIGDIR)
 	
@@ -134,25 +132,13 @@ $(ORIGDIR)/%: $(ORIGDIR)
 $(ORIGDIR):
 	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/ 
 
-stylesheets:
-	[ -d $@ ] || svn co $(SVN_stylesheets) stylesheets/
-
-images:
-	[ -d $@ ] || svn co $(SVN_images) images/
-
 svnup: init
 	if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
 	svn update $(ORIGDIR);\
 	fi
-	if [ "$$(svn status -u stylesheets | wc -l)" != "1" ]; then \
-	svn update stylesheets;\
-	fi
-	if [ "$$(svn status -u images | wc -l)" != "1" ]; then \
-	svn update images;\
-	fi
 
 clean:
-	rm -rf $(DIFFDIR) $(GENDIR) $(ORIGDIR) stylesheets images include.mk html pdf
+	rm -rf $(DIFFDIR) $(GENDIR) $(ORIGDIR) include.mk html-sysv html-systemd pdf
 
 $(ORIGDIR)/%.xml: $(ORIGDIR)
 	
@@ -165,3 +151,5 @@ $(DIFFDIR):
 
 gendiff: $(PO) $(DIFFDIR)
 	svn diff $(PODIR) | xz  -zec9 > $(DIFFDIR)/lfs-$(VERSION)-`date "+%d%m%y%H%M%S"`.diff.xz
+
+update: $(PO)
