@@ -3,6 +3,8 @@
 include include.mk
 
 LANG := fr
+LANGUAGE := fr_FR.UTF-8
+
 GENDIR := lfsgen-$(LANG)
 ORIGDIR := lfs-en
 PODIR := $(LANG)
@@ -10,6 +12,8 @@ VERSION = trunk
 #EN_VER := tags/7.10
 EN_VER := trunk/BOOK
 DIFFDIR = diff
+
+LANG_EXPORT := LC_ALL=$(LANGUAGE) LANGUAGE=$(LANGUAGE) LANG=$(LANGUAGE)
 
 filestocopy := INSTALL process-scripts.sh obfuscate.sh pdf-fixups.sh README bootscripts udev-lfs aux-file-data.sh make-aux-files.sh
 filestoget := $(filestocopy) packages.ent tidy.conf patches.ent general.ent Makefile
@@ -53,14 +57,14 @@ $(addprefix $(GENDIR)/,$(filestocopy)): $$(INPUT) $(GENDIR)
 	
 
 genhtml: $(XML) $(GENDIR)/stylesheets $(GENDIR)/images $(COPY)
-	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=$(BASEDIR)
+	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=$(BASEDIR)
 
 genpdf: $(XML) $(GENDIR)/stylesheets $(GENDIR)/images $(COPY)
-	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
+	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
 
 
 $(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po $(GENDIR)
-	po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
+	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' \
 	    -e 's|xreflabel="Chapter 1 - Mailing Lists|xreflabel="Chapitre 1 - Listes de diffusion|g' \
 	    -e 's|xreflabel="Chapter 1 - Mirror sites|xreflabel="Chapitre 1 - Sites miroirs|g' \
@@ -71,7 +75,7 @@ $(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po $(GENDIR)
 	    -e 's|xreflabel="Appendix|xreflabel="Appendice|g'  -i $@
 
 $(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po $(GENDIR)
-	po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
+	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
 	sed -e 's|<book>|<book lang="fr">|g' -i $@
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
 
@@ -144,7 +148,7 @@ $(ORIGDIR)/%.xml: $(ORIGDIR)
 	
 
 $(PODIR)/%.po: $(ORIGDIR)/%.xml
-	po4a-updatepo -f docbook -m $< -p $@
+	$(LANG_EXPORT) po4a-updatepo -f docbook -m $< -p $@
 
 $(DIFFDIR):
 	mkdir $@
