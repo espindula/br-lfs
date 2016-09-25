@@ -31,7 +31,8 @@ SVN_en := "$(EN_REPO)/$(VERSION)/"
 
 .PHONY: $(GENDIR)/stylesheets $(GENDIR)/images svnup
 
-all: genhtml genpdf
+#all: genhtml genpdf
+all: genhtml
 	@echo DONE
 
 include.mk: $(ORIGDIR)
@@ -55,19 +56,20 @@ genhtml: $(XML) $(GENDIR)/stylesheets $(GENDIR)/images $(COPY)
 genpdf: $(XML) $(GENDIR)/stylesheets $(GENDIR)/images $(COPY)
 	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
 
+TRANSLATE_CMD = $(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
+
 $(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po $(GENDIR)
-	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
+	$(TRANSLATE_CMD)
+	./sed_$(LANG).sh $@
+	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\1|' -i $@
+	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\2|' -i $@
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
 
 $(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po $(GENDIR)
-	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
+	$(TRANSLATE_CMD)
+	./sed_$(LANG).sh $@
 	sed -i -e 's|<book>|<book lang="fr">|g' \
 	       -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
-
-$(GENDIR)/general/progs/perl-modules.xml: $(ORIGDIR)/general/progs/perl-modules.xml $(PODIR)/general/progs/perl-modules.po $(GENDIR)
-	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
-	sed -e 's|build and installation instructions|instructions de configuration et d\'installaton|g' \
-	    -i $@
 
 $(GENDIR)/images: $(GENDIR)
 	rm -rf $@
