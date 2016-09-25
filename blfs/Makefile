@@ -29,7 +29,7 @@ EN_REPO:=svn://svn.linuxfromscratch.org/BLFS
 
 SVN_en := "$(EN_REPO)/$(VERSION)/"
 
-.PHONY: $(GENDIR)/stylesheets $(GENDIR)/images svnup
+.PHONY: $(GENDIR) svnup
 
 #all: genhtml genpdf
 all: genhtml
@@ -41,6 +41,12 @@ include.mk: $(ORIGDIR)
 	echo >> $@
 	echo -n 'PO := ' >> $@
 	find $(ORIGDIR) -type d -name stylesheets -prune -o -name '*.xml' -print | sed 's|$(ORIGDIR)/|$(PODIR)/|g' | sed 's|.xml$$|.po|g' | tr '\n' ' ' >> $@
+	echo >> $@
+	echo -n 'IMAGES := ' >> $@
+	find images -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
+	echo >> $@
+	echo -n 'STYLESHEETS := ' >> $@
+	find stylesheets -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
 
 
 
@@ -50,37 +56,38 @@ $(addprefix $(GENDIR)/,$(filestocopy)): $$(INPUT) $(GENDIR)
 	cp -r $< $@
 	
 
-genhtml: $(XML) $(GENDIR)/stylesheets $(GENDIR)/images $(COPY)
+genhtml: $(XML) $(STYLESHEETS) $(IMAGES) $(COPY)
 	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=$(BASEDIR)
 
-genpdf: $(XML) $(GENDIR)/stylesheets $(GENDIR)/images $(COPY)
+genpdf: $(XML) $(STYLESHEETS) $(IMAGES) $(COPY)
 	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
 
 TRANSLATE_CMD = $(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
 
-$(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po $(GENDIR)
+$(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po
 	$(TRANSLATE_CMD)
 	./sed_$(LANG).sh $@
 	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\1|' -i $@
 	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\2|' -i $@
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
 
-$(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po $(GENDIR)
+$(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po
 	$(TRANSLATE_CMD)
 	./sed_$(LANG).sh $@
 	sed -i -e 's|<book>|<book lang="fr">|g' \
 	       -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
 
-$(GENDIR)/images: $(GENDIR)
+$(GENDIR)/images/%: images/%
+	mkdir -p $$(dirname $@)
 	rm -rf $@
-	cp -r images $(GENDIR)
+	cp $< $@
 
-$(GENDIR)/stylesheets: $(GENDIR)
+$(GENDIR)/stylesheets/%: stylesheets/%
+	mkdir -p $$(dirname $@)
 	rm -rf $@
-	cp -r stylesheets $@
+	cp $< $@
 
-$(GENDIR)/general.ent: $(ORIGDIR)/general.ent $(GENDIR)
-	#cp $< $@
+$(GENDIR)/general.ent: $(ORIGDIR)/general.ent
 	cat $< | tr '\n' '\r' | \
 	sed -e "s|The BLFS Team|L'équipe de BLFS|g" \
 	    -e "s|The BLFS Development Team|L'équipe de développement de BLFS|g" \
@@ -97,18 +104,18 @@ $(GENDIR)/general.ent: $(ORIGDIR)/general.ent $(GENDIR)
 	    | tr '\r' '\n' > $@
 		cat general.ent.as_root >> $@
 
-$(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent $(GENDIR)
+$(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent
 	cp $< $@
 
-$(GENDIR)/gnome.ent: $(ORIGDIR)/gnome.ent $(GENDIR)
+$(GENDIR)/gnome.ent: $(ORIGDIR)/gnome.ent
 	cp $< $@
 
-$(GENDIR)/tidy.conf: $(ORIGDIR)/tidy.conf $(GENDIR)
+$(GENDIR)/tidy.conf: $(ORIGDIR)/tidy.conf
 	cp $< $@
 	sed -e "s/latin1/UTF8/g" \
 	    $< > $@
 
-$(GENDIR)/Makefile: $(ORIGDIR)/Makefile $(GENDIR)
+$(GENDIR)/Makefile: $(ORIGDIR)/Makefile
 	sed '/&copy;/d' $< > $@
 
 blfsgen-%:
@@ -136,8 +143,3 @@ $(ORIGDIR)/%.xml: $(ORIGDIR)
 $(PODIR)/%.po: $(ORIGDIR)/%.xml $(PODIR)
 	$(LANG_EXPORT) po4a-updatepo -f docbook -m $< -p $@ -M ascii
 
-$(DIFFDIR):
-	mkdir $@
-
-gendiff: $(PO) $(DIFFDIR)
-	svn diff $(PODIR) | xz  -zec9 > $(DIFFDIR)/lfs-$(VERSION)-`date "+%d%m%y%H%M%S"`.diff.xz
