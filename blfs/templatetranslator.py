@@ -16,7 +16,7 @@ import polib
 files = sys.argv
 files.pop(0)
 
-def convert(entry, regexp, template, unfuzzy=False):
+def convert(entry, regexp, template):
 	m = regexp.match(entry.msgid)
 	# do not modify anything if the translation is already correct
 	if m and ("fuzzy" in entry.flags or not entry.msgstr):
@@ -29,9 +29,8 @@ def convert(entry, regexp, template, unfuzzy=False):
 		except:
 			x=1
 		entry.msgstr = msgstr
-		# not too sure yet if we can trust this script enough to mark a translation done.
-		if unfuzzy:
-			Entry.flags.remove("fuzzy")
+		if "fuzzy" in entry.flags:
+			entry.flags.remove("fuzzy")
 
 
 # regexps
@@ -97,7 +96,7 @@ regexps.append([re.compile('To run the test suite, issue:? (<command>.*</command
 regexps.append([re.compile('This package does not come with a test suite.$'), 'Ce paquet n\'est pas fourni avec une suite de tests.'])
 regexps.append([re.compile('Additional Downloads$'), 'Téléchargements supplémentaires'])
 regexps.append([re.compile('Required patch: (.*)$'), 'Correctif requis&nbsp;: #1'])
-regexps.append([re.compile('(<othername>.*)$'), '#1', True])
+regexps.append([re.compile('(<othername>.*)$'), '#1'])
 regexps.append([re.compile('Introduction to (.*)$'), 'Introduction à #1'])
 regexps.append([re.compile('(<xref [^>]*>)$'), '#1'])
 regexps.append([re.compile('(<command>[^ <]*</command>)$'), '#1'])
@@ -112,8 +111,8 @@ regexps.append([re.compile('several in (&kde-dir;/[^ ]*)$'), 'plusieurs dans #1'
 regexps.append([re.compile('This package does not come with a working test suite.?$'), 'Ce paquet ne contient pas de suite de tests utilisable.'])
 regexps.append([re.compile('contains the (<application>.*</application>) API functions.$'), 'Contient les fonctions de l\'API de #1'])
 regexps.append([re.compile('Now as the <systemitem class="username">root</systemitem> user:'), 'Maintenant en tant qu\'utilisateur <systemitem class="username">root</systemitem>&nbsp;:'])
-regexps.append([re.compile('Project Home Page: (<ulink .*/>)$', re.MULTILINE|re.DOTALL), 'Page d\'accueil du projet&nbsp;: #1', True])
-regexps.append([re.compile('Download Location: (<ulink .*/>)$', re.MULTILINE|re.DOTALL), 'Emplacement du téléchargement&nbsp;: #1', True])
+regexps.append([re.compile('Project Home Page: (<ulink .*/>)$', re.MULTILINE|re.DOTALL), 'Page d\'accueil du projet&nbsp;: #1'])
+regexps.append([re.compile('Download Location: (<ulink .*/>)$', re.MULTILINE|re.DOTALL), 'Emplacement du téléchargement&nbsp;: #1'])
 regexps.append([re.compile('(<.*>): This switch is used to apply( a)? higher level of( the)? compiler( the)? optimizations?.?$', re.MULTILINE|re.DOTALL), '#1&nbsp;: Ce paramètre est utilisé pour appliquer un plus haut niveau d\'optimisation du compilateur.'])
 
 
@@ -129,10 +128,6 @@ for filename in files:
 	po = polib.pofile(filename)
 	for entry in po:
 		for reg in regexps:
-			try:
-				unfuzzy = reg[2]
-			except:
-				unfuzzy = False
 			convert(entry, reg[0], reg[1])
 	po.save()
 print('')

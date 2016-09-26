@@ -30,8 +30,7 @@ def convert(entry, regexp, template):
 		except:
 			x=1
 		entry.msgstr = msgstr
-		# not too sure yet if we can trust this script enough to mark a translation done.
-		#entry.flags.remove("fuzzy")
+		entry.flags.remove("fuzzy")
 
 
 frenchMonth = {
@@ -39,7 +38,7 @@ frenchMonth = {
 	'February': 'Février',
 	'March': 'Mars',
 	'April': 'Avril',
-	'Mai': 'Mai',
+	'May': 'Mai',
 	'June': 'Juin',
 	'July': 'Juillet',
 	'August': 'Août',
@@ -81,6 +80,7 @@ for filename in files:
 			month = frenchMonth[m.group(1)]
 			year = m.group(4)
 			entry.msgstr = day + " " + month + " " + year
+			entry.flags.remove("fuzzy")
 	po.save()
 print('')
 
