@@ -8,7 +8,7 @@ LANGUAGE := fr_FR.UTF-8
 GENDIR := blfsgen-$(LANG)
 ORIGDIR := blfs-en
 PODIR := $(LANG)
-VERSION = tags/7.9
+VERSION = tags/7.10
 DIFFDIR = diff
 
 LANG_EXPORT := LC_ALL=$(LANGUAGE) LANGUAGE=$(LANGUAGE) LANG=$(LANGUAGE)
@@ -29,7 +29,7 @@ EN_REPO:=svn://svn.linuxfromscratch.org/BLFS
 
 SVN_en := "$(EN_REPO)/$(VERSION)/"
 
-.PHONY: $(GENDIR) svnup
+.PHONY: svnup
 
 #all: genhtml genpdf
 all: genhtml
@@ -37,10 +37,10 @@ all: genhtml
 
 include.mk: $(ORIGDIR)
 	echo -n 'XML := ' > $@
-	find $(ORIGDIR) -type d -name stylesheets -prune -o -name '*.xml' -print | sed 's|$(ORIGDIR)/|$(GENDIR)/|g' | tr '\n' ' ' >> $@
+	find $(ORIGDIR) -type d -name stylesheets -prune -o -name '*.xml' -a -type f -print | sed 's|$(ORIGDIR)/|$(GENDIR)/|g' | tr '\n' ' ' >> $@
 	echo >> $@
 	echo -n 'PO := ' >> $@
-	find $(ORIGDIR) -type d -name stylesheets -prune -o -name '*.xml' -print | sed 's|$(ORIGDIR)/|$(PODIR)/|g' | sed 's|.xml$$|.po|g' | tr '\n' ' ' >> $@
+	find $(ORIGDIR) -type d -name stylesheets -prune -o -name '*.xml' -a -type f -print | sed 's|$(ORIGDIR)/|$(PODIR)/|g' | sed 's|.xml$$|.po|g' | tr '\n' ' ' >> $@
 	echo >> $@
 	echo -n 'IMAGES := ' >> $@
 	find images -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
@@ -70,6 +70,8 @@ $(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po
 	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\1|' -i $@
 	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\2|' -i $@
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
+	touch $(word 2,$^)
+	touch $@
 
 $(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po
 	$(TRANSLATE_CMD)
@@ -118,13 +120,7 @@ $(GENDIR)/tidy.conf: $(ORIGDIR)/tidy.conf
 $(GENDIR)/Makefile: $(ORIGDIR)/Makefile
 	sed '/&copy;/d' $< > $@
 
-blfsgen-%:
-	mkdir -p $@
-
 init: $(ORIGDIR)
-
-$(ORIGDIR)/%: $(ORIGDIR)
-	
 
 $(ORIGDIR):
 	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/ 
@@ -137,9 +133,12 @@ svnup: init
 clean:
 	rm -rf $(DIFFDIR) $(GENDIR) $(ORIGDIR) include.mk html-sysv html-systemd pdf
 
-$(ORIGDIR)/%.xml: $(ORIGDIR)
+$(ORIGDIR)/%.xml: init
 	
 
 $(PODIR)/%.po: $(ORIGDIR)/%.xml $(PODIR)
 	$(LANG_EXPORT) po4a-updatepo -f docbook -m $< -p $@ -M ascii
+	touch $<
+	touch $@
 
+update: $(PO)
