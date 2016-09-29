@@ -30,7 +30,8 @@ def convert(entry, regexp, template):
 		except:
 			x=1
 		entry.msgstr = msgstr
-		entry.flags.remove("fuzzy")
+		if "fuzzy" in entry.flags:
+			entry.flags.remove("fuzzy")
 
 
 frenchMonth = {
@@ -52,6 +53,7 @@ frenchMonth = {
 regexps = []
 
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige #3'])
+regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Partially fixes (<ulink [^>]+> *#[0-9]+ *</ulink>).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige partiellement #3'])
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) (\([^ ]+\)). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 #3. Corrige #4'])
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) \(([^ ]+) module\). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 (module #3). Corrige #4'])
 
@@ -80,7 +82,8 @@ for filename in files:
 			month = frenchMonth[m.group(1)]
 			year = m.group(4)
 			entry.msgstr = day + " " + month + " " + year
-			entry.flags.remove("fuzzy")
+			if "fuzzy" in entry.flags:
+				entry.flags.remove("fuzzy")
 	po.save()
 print('')
 
