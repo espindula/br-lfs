@@ -47,6 +47,12 @@ include.mk: $(ORIGDIR)
 	echo >> $@
 	echo -n 'PO := ' >> $@
 	ls $(ORIGDIR)/*.xml $(ORIGDIR)/*/*.xml | sed 's|$(ORIGDIR)/|$(PODIR)/|g' | sed 's|.xml$$|.po|g' | tr '\n' ' ' >> $@
+	echo >> $@
+	echo -n 'IMAGES := ' >> $@
+	find images -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
+	echo >> $@
+	echo -n 'STYLESHEETS := ' >> $@
+	find stylesheets -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
 
 
 
@@ -56,10 +62,10 @@ $(addprefix $(GENDIR)/,$(filestocopy)): $$(INPUT) $(GENDIR)
 	cp -r $< $@
 	
 
-genhtml: $(XML) $(GENDIR)/stylesheets $(GENDIR)/images $(COPY)
+genhtml: $(XML) $(COPY) $(STYLESHEETS) $(IMAGES)
 	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=$(BASEDIR)
 
-genpdf: $(XML) $(GENDIR)/stylesheets $(GENDIR)/images $(COPY)
+genpdf: $(XML) $(COPY) $(STYLESHEETS) $(IMAGES)
 	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
 
 
@@ -73,19 +79,25 @@ $(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po $(GENDIR)
 	    -e 's|xreflabel="Creating the /etc/shells File|xreflabel="Créaction du fichier /etc/shells|g' \
 	    -e 's|xreflabel="Chapter|xreflabel="Chapitre|g' \
 	    -e 's|xreflabel="Appendix|xreflabel="Appendice|g'  -i $@
+	touch $(word 2,$^)
+	touch $@
 
 $(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po $(GENDIR)
 	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
 	sed -e 's|<book>|<book lang="fr">|g' -i $@
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
+	touch $(word 2,$^)
+	touch $@
 
-$(GENDIR)/images: $(GENDIR)
+$(GENDIR)/images/%: images/%
+	mkdir -p $$(dirname $@)
 	rm -rf $@
-	cp -r images $(GENDIR)
+	cp $< $@
 
-$(GENDIR)/stylesheets: $(GENDIR)
+$(GENDIR)/stylesheets/%: stylesheets/%
+	mkdir -p $$(dirname $@)
 	rm -rf $@
-	cp -r stylesheets $@
+	cp $< $@
 
 $(GENDIR)/general.ent: $(ORIGDIR)/general.ent $(GENDIR)
 	#cp $< $@
@@ -149,6 +161,8 @@ $(ORIGDIR)/%.xml: $(ORIGDIR)
 
 $(PODIR)/%.po: $(ORIGDIR)/%.xml
 	$(LANG_EXPORT) po4a-updatepo -f docbook -m $< -p $@
+	touch $<
+	touch $@
 
 $(DIFFDIR):
 	mkdir $@
@@ -157,3 +171,7 @@ gendiff: $(PO) $(DIFFDIR)
 	svn diff $(PODIR) | xz  -zec9 > $(DIFFDIR)/lfs-$(VERSION)-`date "+%d%m%y%H%M%S"`.diff.xz
 
 update: $(PO)
+
+upload:
+	(cd html-systemd; rsync --progress --recursive * jlepiller@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/lfs-systemd-svn/)
+	(cd html-sysv; rsync --progress --recursive * jlepiller@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/lfs-svn/)
