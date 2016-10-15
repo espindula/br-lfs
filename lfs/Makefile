@@ -2,18 +2,18 @@
 
 include include.mk
 
-LANG := fr
-LANGUAGE := fr_FR.UTF-8
+LANGUAGE := fr
+LANG := fr_FR.UTF-8
 
-GENDIR := lfsgen-$(LANG)
+GENDIR := lfsgen-$(LANGUAGE)
 ORIGDIR := lfs-en
-PODIR := $(LANG)
+PODIR := $(LANGUAGE)
 VERSION = trunk
 #EN_VER := tags/7.10
 EN_VER := trunk/BOOK
 DIFFDIR = diff
 
-LANG_EXPORT := LC_ALL=$(LANGUAGE) LANGUAGE=$(LANGUAGE) LANG=$(LANGUAGE)
+LANG_EXPORT := LC_CTYPE=$(LANG) LC_ALL=$(LANG) LANGUAGE=$(LANG) LANG=$(LANG)
 
 filestocopy := INSTALL process-scripts.sh obfuscate.sh pdf-fixups.sh README bootscripts udev-lfs aux-file-data.sh make-aux-files.sh
 filestoget := $(filestocopy) packages.ent tidy.conf patches.ent general.ent Makefile
@@ -103,7 +103,7 @@ $(GENDIR)/general.ent: $(ORIGDIR)/general.ent $(GENDIR)
 	#cp $< $@
 	date1=$$(sed -n $(VERSION_LINE)p $< | sed 's/.*"\([^"]\+\)".*/\1/');\
 	date2=$$(sed -n 10p $< | sed 's/.*"\([^"]\+\)".*/\1/');\
-	sed -e "s/$$date2/$$(LANG=fr_FR.UTF-8 date -d "$${date2}" "+%d %B %Y")/g"\
+	sed -e "s/$$date2/$$(LANG=$(LANG) date -d "$${date2}" "+%d %B %Y")/g"\
 	    -e "s/Approximate build time/Temps de construction approximatif/g"\
 	    -e "s/Required disk space/Espace disque requis/g"\
 	    -e "s/Installation depends on/L'installation dépend de/g"\
@@ -150,7 +150,7 @@ $(ORIGDIR):
 
 svnup: init
 	if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
-	svn update $(ORIGDIR);\
+	$(LANG_EXPORT) svn update $(ORIGDIR);\
 	fi
 
 clean:
