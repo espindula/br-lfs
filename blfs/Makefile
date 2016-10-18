@@ -2,16 +2,14 @@
 
 include include.mk
 
-LANG := fr
-LANGUAGE := fr_FR.UTF-8
+LANGUAGE := fr
+#LANG := fr_FR.UTF-8
 
-GENDIR := blfsgen-$(LANG)
+GENDIR := blfsgen-$(LANGUAGE)
 ORIGDIR := blfs-en
-PODIR := $(LANG)
+PODIR := $(LANGUAGE)
 VERSION = tags/7.10
 DIFFDIR = diff
-
-LANG_EXPORT := LC_ALL=$(LANGUAGE) LANGUAGE=$(LANGUAGE) LANG=$(LANGUAGE)
 
 filestocopy := INSTALL obfuscate.sh README
 filestoget := $(filestocopy) general.ent gnome.ent packages.ent tidy.conf Makefile
@@ -57,16 +55,16 @@ $(addprefix $(GENDIR)/,$(filestocopy)): $$(INPUT) $(GENDIR)
 	
 
 genhtml: $(XML) $(STYLESHEETS) $(IMAGES) $(COPY)
-	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=$(BASEDIR)
+	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=$(BASEDIR)
 
 genpdf: $(XML) $(STYLESHEETS) $(IMAGES) $(COPY)
-	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
+	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
 
-TRANSLATE_CMD = $(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
+TRANSLATE_CMD = po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
 
 $(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po
 	$(TRANSLATE_CMD)
-	./sed_$(LANG).sh $@
+	./sed_$(LANGUAGE).sh $@
 	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\1|' -i $@
 	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\2|' -i $@
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
@@ -75,7 +73,7 @@ $(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po
 
 $(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po
 	$(TRANSLATE_CMD)
-	./sed_$(LANG).sh $@
+	./sed_$(LANGUAGE).sh $@
 	sed -i -e 's|<book>|<book lang="fr">|g' \
 	       -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
 
@@ -137,7 +135,7 @@ $(ORIGDIR)/%.xml: init
 	
 
 $(PODIR)/%.po: $(ORIGDIR)/%.xml $(PODIR)
-	$(LANG_EXPORT) po4a-updatepo -f docbook -m $< -p $@ -M ascii
+	po4a-updatepo -f docbook -m $< -p $@ -M ascii
 	touch $<
 	touch $@
 
