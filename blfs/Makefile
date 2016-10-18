@@ -3,7 +3,6 @@
 include include.mk
 
 LANGUAGE := fr
-#LANG := fr_FR.UTF-8
 
 GENDIR := blfsgen-$(LANGUAGE)
 ORIGDIR := blfs-en
@@ -16,11 +15,9 @@ filestoget := $(filestocopy) general.ent gnome.ent packages.ent tidy.conf Makefi
 COPY:=$(addprefix $(GENDIR)/,$(filestoget))
 REV=sysv
 VERSION_LINE=1
-BASEDIR=../html-sysv
 
 ifeq ($(REV), systemd)
 VERSION_LINE=4
-BASEDIR=../html-systemd
 endif
 
 EN_REPO:=svn://svn.linuxfromscratch.org/BLFS
@@ -55,10 +52,10 @@ $(addprefix $(GENDIR)/,$(filestocopy)): $$(INPUT) $(GENDIR)
 	
 
 genhtml: $(XML) $(STYLESHEETS) $(IMAGES) $(COPY)
-	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=$(BASEDIR)
+	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../html-$(REV)-$(LANGUAGE)
 
 genpdf: $(XML) $(STYLESHEETS) $(IMAGES) $(COPY)
-	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
+	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf-$(REV)-$(LANGUAGE) pdf
 
 TRANSLATE_CMD = po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
 
@@ -140,3 +137,7 @@ $(PODIR)/%.po: $(ORIGDIR)/%.xml $(PODIR)
 	touch $@
 
 update: $(PO)
+
+upload:
+	(cd html-systemd-$(LANGUAGE); rsync --progress --recursive * jlepiller@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/blfs-systemd-svn/)
+	(cd html-sysv-$(LANGUAGE); rsync --progress --recursive * jlepiller@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/blfs-svn/)
