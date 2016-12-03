@@ -33,10 +33,10 @@ all: genhtml
 
 include.mk: $(ORIGDIR)
 	echo -n 'XML := ' > $@
-	find $(ORIGDIR) -type d -name stylesheets -prune -o -name '*.xml' -a -type f -print | sed 's|$(ORIGDIR)/|$(GENDIR)/|g' | tr '\n' ' ' >> $@
+	find $(ORIGDIR) -type d -name stylesheets -prune -o -name archive -prune -o -name '*.xml' -a -type f -print | sed 's|$(ORIGDIR)/|$(GENDIR)/|g' | tr '\n' ' ' >> $@
 	echo >> $@
 	echo -n 'PO := ' >> $@
-	find $(ORIGDIR) -type d -name stylesheets -prune -o -name '*.xml' -a -type f -print | sed 's|$(ORIGDIR)/|$(PODIR)/|g' | sed 's|.xml$$|.po|g' | tr '\n' ' ' >> $@
+	find $(ORIGDIR) -type d -name stylesheets -prune -o -name archive -prune -o -name '*.xml' -a -type f -print | sed 's|$(ORIGDIR)/|$(PODIR)/|g' | sed 's|.xml$$|.po|g' | tr '\n' ' ' >> $@
 	echo >> $@
 	echo -n 'IMAGES := ' >> $@
 	find images -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
