@@ -68,8 +68,7 @@ mv -v mpc-&mpc-version; mpc</userinput></screen>
     class="directory">/usr/include</filename> from GCC's include search path.
     Issue:</para>
 
-<screen><userinput remap="pre">for file in \
- $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
+<screen><userinput remap="pre">for file in gcc/config/{linux,i386/linux{,64}}.h
 do
   cp -uv $file{,.orig}
   sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
@@ -97,7 +96,18 @@ done</userinput></screen>
     Finally, we use <command>touch</command> to update the timestamp on the
     copied files.  When used in conjunction with <command>cp -u</command>, this
     prevents unexpected changes to the original files in case the commands are
-    inadvertently run twice.  </para>
+    inadvertently run twice.</para>
+
+    <para>Finally, on x86_64 hosts, set the default directory name for
+    64-bit libraries to <quote>lib</quote>:</para>
+
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' \
+        -i.orig gcc/config/i386/t-linux64
+ ;;
+esac</userinput></screen>
+
 <!--
     <para>GCC doesn't detect stack protection correctly, which causes problems
     for the build of Glibc-&glibc-version;, so fix that by issuing the following
