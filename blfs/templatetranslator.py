@@ -58,6 +58,7 @@ regexps.append([re.compile('(http://[^ ]*)$'), '#1'])
 regexps.append([re.compile('(https://[^ ]*)$'), '#1'])
 regexps.append([re.compile('(ftp://[^ ]*)$'), '#1'])
 # Dépendances
+regexps.append([re.compile('Optional Runtime Dependencies$'), 'Dépendances à l\'exécution facultatives'])
 regexps.append([re.compile('(.*) Dependencies$'), 'Dépendances de #1'])
 regexps.append([re.compile('Required$'), 'Requises'])
 regexps.append([re.compile('Optional$'), 'Facultatives'])
