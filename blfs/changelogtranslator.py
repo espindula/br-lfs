@@ -52,7 +52,7 @@ frenchMonth = {
 # regexps
 regexps = []
 
-regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige #3'])
+regexps.appeNd([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige #3'])
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Partially fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige partiellement #3'])
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) (\([^ ]+\)). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 #3. Corrige #4'])
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) \(([^ ]+) module\). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 (module #3). Corrige #4'])
@@ -79,11 +79,14 @@ for filename in files:
 			day = m.group(2)
 			if int(day) == 1:
 				day = '1er'
-			month = frenchMonth[m.group(1)]
-			year = m.group(4)
-			entry.msgstr = day + " " + month + " " + year
-			if "fuzzy" in entry.flags:
-				entry.flags.remove("fuzzy")
+			try:
+				month = frenchMonth[m.group(1)]
+				year = m.group(4)
+				entry.msgstr = day + " " + month + " " + year
+				if "fuzzy" in entry.flags:
+					entry.flags.remove("fuzzy")
+			except:
+				pass
 	po.save()
 print('')
 
