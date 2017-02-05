@@ -35,29 +35,29 @@ def convert(entry, regexp, template):
 
 
 frenchMonth = {
-	'January': 'Janvier',
-	'February': 'Février',
-	'March': 'Mars',
-	'April': 'Avril',
-	'May': 'Mai',
-	'June': 'Juin',
-	'July': 'Juillet',
-	'August': 'Août',
-	'September': 'Septembre',
-	'October': 'Octobre',
-	'November': 'Novembre',
-	'December': 'Décembre'
+	'January': 'janvier',
+	'February': 'février',
+	'March': 'mars',
+	'April': 'avril',
+	'May': 'mai',
+	'June': 'juin',
+	'July': 'juillet',
+	'August': 'août',
+	'September': 'septembre',
+	'October': 'octobre',
+	'November': 'novembre',
+	'December': 'décembre'
 }
 
 # regexps
 regexps = []
 
-regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige #3'])
-regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Partially fixes (<ulink [^>]+> *#[0-9]+ *</ulink>).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige partiellement #3'])
-regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) (\([^ ]+\)). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 #3. Corrige #4'])
-regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) \(([^ ]+) module\). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 (module #3). Corrige #4'])
+regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige #3'])
+regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Partially fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige partiellement #3'])
+regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) (\([^ ]+\)). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 #3. Corrige #4'])
+regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) \(([^ ]+) module\). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 (module #3). Corrige #4'])
 
-datereg = re.compile('([^ ]+) ([0-9]{1,2})(th|nd|st|rd), (20[0-9]{2})')
+datereg = re.compile('([^ ]+) ([0-9]{1,2})(th|nd|st|rd),? (20[0-9]{2})')
 
 
 
