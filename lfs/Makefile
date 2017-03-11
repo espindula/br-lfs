@@ -110,9 +110,9 @@ $(GENDIR)/general.ent: $(ORIGDIR)/general.ent $(GENDIR)
 	    -e "s/Test suite depends on/La suite de tests dépend de/g"\
 	    -e "s/Must be installed before/Doit être installé avant/g"\
 	    -e "s/Optional dependencies/Dépendances facultatives/g"\
-	    -e "s/&lfs-root;blfs\//http:\/\/www.fr.linuxfromscratch.org\/view\/blfs-$(version)/g"\
+	    -e "s/&lfs-root;blfs\//http:\/\/fr.linuxfromscratch.org\/view\/blfs-$(version)/g"\
 	    -e "s/&blfs-root;view\/&short-version;/\&blfs-root;\&short-version;/g"\
-	    -e "s/&lfs-root;hints\/downloads\/files\//http:\/\/www.fr.linuxfromscratch.org\/view\/astuces\//g"\
+	    -e "s/&lfs-root;hints\/downloads\/files\//http:\/\/fr.linuxfromscratch.org\/view\/astuces\//g"\
 	    $< > $@
 
 $(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent $(GENDIR)
