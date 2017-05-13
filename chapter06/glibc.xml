@@ -57,14 +57,21 @@
 
 <screen><userinput remap="pre">patch -Np1 -i ../&glibc-fhs-patch;</userinput></screen>
 
-    <para>Create a symlink for LSB compliance and, for x86_64, a
-    compatibility symlink required for the dynamic loader to function
-    correctly:</para>
+    <para>First create a compatibility symlink to avoid references to /tools in
+    our final glibc:</para>
+
+<screen><userinput remap="pre">ln -sfv /tools/lib/gcc /usr/lib</userinput></screen>
+
+    <para>Determine the GCC include directory and create a symlink for LSB
+    compliance. Additionally, for x86_64, create a compatibility symlink
+    required for the dynamic loader to function correctly:</para>
 
 <screen><userinput remap="pre">case $(uname -m) in
-    x86) ln -s ld-linux.so.2 /lib/ld-lsb.so.3
+    x86)    GCC_INCDIR=/usr/lib/gcc/x86-pc-linux-gnu/&gcc-version;/include
+            ln -s ld-linux.so.2 /lib/ld-lsb.so.3
     ;;
-    x86_64) ln -s ../lib/ld-linux-x86-64.so.2 /lib64
+    x86_64) GCC_INCDIR=/usr/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/include
+            ln -s ../lib/ld-linux-x86-64.so.2 /lib64
             ln -s ../lib/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
     ;;
 esac</userinput></screen>
@@ -77,15 +84,25 @@ cd       build</userinput></screen>
 
     <para>Prepare Glibc for compilation:</para>
 
-<screen><userinput remap="configure">../configure --prefix=/usr                   \
-             --disable-werror                \
-             --enable-kernel=&min-kernel;          \
-             --enable-obsolete-rpc           \
-             --enable-stack-protector=strong \
-             libc_cv_slibdir=/lib</userinput></screen>
+<screen><userinput remap="configure">CC="gcc -isystem $GCC_INCDIR -isystem /usr/include" \
+../configure --prefix=/usr                          \
+             --disable-werror                       \
+             --enable-kernel=&min-kernel;                 \
+             --enable-obsolete-rpc                  \
+             --enable-stack-protector=strong        \
+             libc_cv_slibdir=/lib
+unset GCC_INCDIR</userinput></screen>
 
    <variablelist>
-      <title>The meaning of the new configure options:</title>
+      <title>The meaning of the options and new configure parameters:</title>
+
+      <varlistentry>
+        <term><parameter>CC="gcc -isystem $GCC_INCDIR -isystem /usr/include"</parameter></term>
+        <listitem>
+          <para>Setting the location of both gcc and system include directories
+          avoids introduction of invalid paths in debuging symbols.</para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><parameter>--disable-werror</parameter></term>
