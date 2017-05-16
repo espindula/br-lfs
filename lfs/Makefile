@@ -69,7 +69,7 @@ genpdf: $(XML) $(COPY) $(STYLESHEETS) $(IMAGES)
 	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
 
 
-$(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po $(GENDIR)
+$(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po
 	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' \
 	    -e 's|xreflabel="Chapter 1 - Mailing Lists|xreflabel="Chapitre 1 - Listes de diffusion|g' \
@@ -82,7 +82,7 @@ $(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po $(GENDIR)
 	touch $(word 2,$^)
 	touch $@
 
-$(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po $(GENDIR)
+$(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po
 	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
 	sed -e 's|<book>|<book lang="fr">|g' -i $@
 	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
@@ -99,7 +99,7 @@ $(GENDIR)/stylesheets/%: stylesheets/%
 	rm -rf $@
 	cp $< $@
 
-$(GENDIR)/general.ent: $(ORIGDIR)/general.ent $(GENDIR)
+$(GENDIR)/general.ent: $(ORIGDIR)/general.ent
 	#cp $< $@
 	date1=$$(sed -n $(VERSION_LINE)p $< | sed 's/.*"\([^"]\+\)".*/\1/');\
 	date2=$$(sed -n 10p $< | sed 's/.*"\([^"]\+\)".*/\1/');\
@@ -115,7 +115,7 @@ $(GENDIR)/general.ent: $(ORIGDIR)/general.ent $(GENDIR)
 	    -e "s/&lfs-root;hints\/downloads\/files\//http:\/\/fr.linuxfromscratch.org\/view\/astuces\//g"\
 	    $< > $@
 
-$(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent $(GENDIR)
+$(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent
 	cp $< $@
 	sed -e "s/KB/Ko/g" -e "s/MB/Mo/g" -e "s/GB/Go/g"\
 	    -e "s/less than/moins de/g"\
@@ -124,26 +124,23 @@ $(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent $(GENDIR)
 	    -e "s/with tests/avec les tests/g"\
 	    $< > $@
 
-$(GENDIR)/patches.ent: $(ORIGDIR)/patches.ent $(GENDIR)
+$(GENDIR)/patches.ent: $(ORIGDIR)/patches.ent
 	cp $< $@
 	sed -e "s/KB/Ko/g" \
 	    $< > $@
 
-$(GENDIR)/tidy.conf: $(ORIGDIR)/tidy.conf $(GENDIR)
+$(GENDIR)/tidy.conf: $(ORIGDIR)/tidy.conf
 	cp $< $@
 	sed -e "s/latin1/UTF8/g" \
 	    $< > $@
 
-$(GENDIR)/Makefile: $(ORIGDIR)/Makefile $(GENDIR)
+$(GENDIR)/Makefile: $(ORIGDIR)/Makefile
 	sed '/&copy;/d' $< > $@
 
 lfsgen-%:
 	mkdir -p $@
 
 init: $(ORIGDIR)
-
-$(ORIGDIR)/%: $(ORIGDIR)
-	
 
 $(ORIGDIR):
 	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/ 
