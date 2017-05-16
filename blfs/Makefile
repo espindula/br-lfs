@@ -92,6 +92,7 @@ $(GENDIR)/general.ent: $(ORIGDIR)/general.ent
 	    -e "s|Unknown|Inconnu|g" \
 	    -e "s|<!ENTITY lfs\([0-9]\)\([0-9]\)_checked [^\r]*\r[^\r]*\">|<!ENTITY lfs\1\2_checked \"<para>Ce paquet est connu pour se construire correctement sur une plateforme LFS-\1.\2.</para>\">|g" \
 	    -e "s|<!ENTITY lfs\([0-9]\)\([0-9]\)_built [^\r]*\r[^\r]*\">|<!ENTITY lfs\1\2_built \"<para>Ce paquet est connu pour se construire correctement sur une plateforme LFS-\1.\2 mais n'a pas été testé.</para>\">|g" \
+            -e "s|<!ENTITY gcc7_checked [^\r]*\r[^\r]*\">|<!ENTITY gcc7_checked \"<para>Ce paquet est connu pour se construire correctement avec gcc-7.1.</para>\">|g" \
 	    -e "s|<!ENTITY lfssvn_checked [^\r]*\r[^\r]*\">|<!ENTITY lfssvn_checked \"Ce paquet est connu pour se construire correctement sur une plateforme LFS-SVN-\">|g" \
 	    -e "s|<!ENTITY lfssvn_built [^\r]*\">|<!ENTITY lfssvn_checked \"Ce paquet est connu pour se construire correctement sur une plateforme LFS-SVN-\">|g" \
 	    -e "s|<!ENTITY lfssvn_checked2 [^\r]*\">|<!ENTITY lfssvn_checked2 \" .\">|g" \
