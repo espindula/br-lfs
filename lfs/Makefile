@@ -1,122 +1,241 @@
 #!/usr/bin/make -f
 
-include include.mk
+# Use make L=... to build only a subset of the languages.
 
-LANGUAGE := fr
-LANG := fr_FR.UTF-8
+LANGUAGES := fr
+LANG_fr := fr_FR.UTF-8
+L = all
 
-GENDIR := lfsgen-$(LANGUAGE)
 ORIGDIR := lfs-en
-PODIR := $(LANGUAGE)
-VERSION = trunk
-#EN_VER := tags/7.10
+
+# What we follow from upstream.
+TAG := trunk
+
+ifeq ($(TAG), trunk)
 EN_VER := trunk/BOOK
-DIFFDIR = diff
+else
+EN_VER := tags/$(TAG)
+endif
 
-LANG_EXPORT := LC_CTYPE=$(LANG) LC_ALL=$(LANG) LANGUAGE=$(LANG) LANG=$(LANG)
-
-filestocopy := INSTALL process-scripts.sh obfuscate.sh pdf-fixups.sh README bootscripts udev-lfs aux-file-data.sh make-aux-files.sh
+# Files that are needed for the build process once translations are generated.
+filestocopy := INSTALL README process-scripts.sh obfuscate.sh pdf-fixups.sh \
+               bootscripts udev-lfs aux-file-data.sh make-aux-files.sh
+# Additional files that may require some changes.
 filestoget := $(filestocopy) packages.ent tidy.conf patches.ent general.ent Makefile
-COPY:=$(addprefix $(GENDIR)/,$(filestoget))
-REV=sysv
-VERSION_LINE=1
-BASEDIR=../html-sysv
 
+# Use REV=sysv or REV=systemd to only build that version.
+REV=all
+
+ifeq ($(REV), all)
+SYSV=1
+SYSD=1
+else
 ifeq ($(REV), systemd)
-VERSION_LINE=4
-BASEDIR=../html-systemd
+SYSV=
+SYSD=1
+else
+SYSV=1
+SYSD=
+endif
 endif
 
 FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
 EN_REPO:=svn://svn.linuxfromscratch.org/LFS
 
-STYLE_BRANCH=trunk/lfs
-
+# The complete URI we follow.
 SVN_en := "$(EN_REPO)/$(EN_VER)"
 
-
-
 .PHONY: svnup
+.SECONDARY:
+
+default:
+	@echo 'Hi!'
+	@echo 'To build the HTML documentation, please run `make genhtml`. For'
+	@echo 'the PDF version, run `make genpdf`. For both run `make all`.'
+	@echo 'Restrict to a subset of the available language with L=... and'
+	@echo 'to a subset of the versions with REV=<sysv or systemd>.'
+	@echo 'Good luck!'
 
 all: genhtml genpdf
 	@echo DONE
 
-include.mk: $(ORIGDIR)
-	echo -n 'XML := ' > $@
-	ls $(ORIGDIR)/*.xml $(ORIGDIR)/*/*.xml | sed 's|$(ORIGDIR)/|$(GENDIR)/|g' | tr '\n' ' ' >> $@
-	echo >> $@
-	echo -n 'PO := ' >> $@
-	ls $(ORIGDIR)/*.xml $(ORIGDIR)/*/*.xml | sed 's|$(ORIGDIR)/|$(PODIR)/|g' | sed 's|.xml$$|.po|g' | tr '\n' ' ' >> $@
-	echo >> $@
-	echo -n 'IMAGES := ' >> $@
-	find images -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
-	echo >> $@
-	echo -n 'STYLESHEETS := ' >> $@
-	find stylesheets -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
+include include.mk
 
+init: $(ORIGDIR)
 
+$(ORIGDIR):
+	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/
 
-.SECONDEXPANSION:
-$(addprefix $(GENDIR)/,$(filestocopy)): INPUT=$(ORIGDIR)$(subst $(GENDIR),,$@)
-$(addprefix $(GENDIR)/,$(filestocopy)): $$(INPUT) $(GENDIR)
-	cp -r $< $@
-	
+svnup: init
+	if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
+		LANG=en_US.UTF-8 svn update $(ORIGDIR);\
+	fi
 
-genhtml: $(XML) $(COPY) $(STYLESHEETS) $(IMAGES)
-	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=$(BASEDIR)
+clean: clean-gen
+	rm -rf $(ORIGDIR) include.mk
 
-genpdf: $(XML) $(COPY) $(STYLESHEETS) $(IMAGES)
-	$(LANG_EXPORT) $(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf pdf
+# include.mk contains most of the logic of the Makefile.
+# We generate lists of XML files to translated, PO files that contain translations,
+# images and stylesheet files, and the list of files to copy from the english repo.
+#
+# It also contains targets to build different html versions, to refresh the PO
+# files and to generate the translated XML files. We need to use this target
+# because the language in the name of the target and the file name are both
+# wildcards, which cannot be used.
+include.mk: $(ORIGDIR) Makefile
+	echo -n 'XML := ' > $@.tmp
+	for lang in $(LANGUAGES); do \
+		find $(ORIGDIR) -name '*.xml' -o -name '*stylesheets*' -prune -a -type f |\
+			sed "s|$(ORIGDIR)/|lfsgen-$$lang/|g" | \
+			tr '\n' ' ' >> $@.tmp; \
+	done
+	echo >> $@.tmp
+	echo -n 'PO := ' >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		find $(ORIGDIR) -name '*.xml' -o -name '*stylesheets*' -prune -a -type f |\
+			sed "s|$(ORIGDIR)/|$$lang/|g" | \
+			sed 's|.xml$$|.po|' | tr '\n' ' ' >> $@.tmp; \
+	done
+	echo >> $@.tmp
+	echo -n 'IMAGES := ' >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		find images -type f | sed "s|^|lfsgen-$$lang/|g" | tr '\n' ' ' >> $@.tmp; \
+	done
+	echo >> $@.tmp
+	echo -n 'STYLESHEETS := ' >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		find stylesheets -type f | sed "s|^|lfsgen-$$lang/|g" | tr '\n' ' ' >> $@.tmp;\
+	done
+	echo >> $@.tmp
+	echo -n 'COPY = ' >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		echo -n ' $$(addprefix lfsgen-'"$$lang"'/,$$(filestoget))' >> $@.tmp ;\
+	done
+	echo >> $@.tmp
+	echo >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		echo "lfsgen-$$lang/images/%: images/%" >> $@.tmp ;\
+		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		echo -e '\t@rm -f $$@' >> $@.tmp ;\
+		echo -e '\tcp $$< $$@' >> $@.tmp ;\
+	done
+	echo >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		echo "lfsgen-$$lang/stylesheets/%: stylesheets/%" >> $@.tmp ;\
+		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		echo -e '\t@rm -f $$@' >> $@.tmp ;\
+		echo -e '\tcp $$< $$@' >> $@.tmp ;\
+	done
+	echo >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		echo "lfsgen-$$lang/%.xml: $(ORIGDIR)/%.xml $$lang/%.po sed-$$lang" \
+			>> $@.tmp ;\
+		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		echo -e '\tLANG=$$(LANG_'"$$lang"') po4a-translate -k 0 -f docbook' \
+			'-m $$< -l $$@.tmp -p $$(word 2,$$^)' >> $@.tmp ;\
+		echo -e '\t./$$(word 3,$$^) $$@' >> $@.tmp ;\
+		echo -e '\trm $$@.tmp' >> $@.tmp ;\
+	done
+	echo >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		echo "$$lang/%.po: $(ORIGDIR)/%.xml" \
+			>> $@.tmp ;\
+		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		echo -e '\tLANG=$$(LANG_'"$$lang"') po4a-updatepo -f docbook' \
+			'-m $$< -p $$@' >> $@.tmp ;\
+		echo -e '\t@touch $$@' >> $@.tmp ;\
+	done
+	echo >> $@.tmp
+	echo 'clean-gen:' >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		echo -e "\trm -rf lfsgen-$$lang" >> $@.tmp ;\
+	done
+	echo >> $@.tmp
+	echo .SECONDEXPANSION: >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		echo '$$(addprefix lfsgen-'"$$lang"'/,$$(filestocopy)):' \
+			'INPUT=$$(ORIGDIR)$$(subst lfsgen-'"$$lang"',,$$@)' >> $@.tmp ;\
+		echo '$$(addprefix lfsgen-'"$$lang"'/,$$(filestocopy)):' \
+			'$$$$(INPUT)' >> $@.tmp ;\
+		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		echo -e '\tcp -r $$< $$@' >> $@.tmp ;\
+	done
+	echo >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		echo 'genhtml-'"$$lang"'-sysv: $$(COPY) $$(IMAGES) $$(STYLESHEETS) $$(XML)' >> $@.tmp ;\
+		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../html-'"$$lang"'-sysv' >> $@.tmp ;\
+		echo 'genhtml-'"$$lang"'-systemd: $$(COPY) $$(IMAGES) $$(STYLESHEETS) $$(XML)' >> $@.tmp ;\
+		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd' >> $@.tmp ;\
+		echo 'genpdf-'"$$lang"'-sysv: $$(COPY) $$(IMAGES) $$(STYLESHEETS) $$(XML)' >> $@.tmp ;\
+		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
+		echo 'genpdf-'"$$lang"'-systemd: $$(COPY) $$(IMAGES) $$(STYLESHEETS) $$(XML)' >> $@.tmp ;\
+		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
+	done
+	echo >> $@.tmp
+	mv $@.tmp $@
 
+ifeq ($(L),all)
+L=$(LANGUAGES)
+endif
 
-$(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po
-	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
-	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' \
-	    -e 's|xreflabel="Chapter 1 - Mailing Lists|xreflabel="Chapitre 1 - Listes de diffusion|g' \
-	    -e 's|xreflabel="Chapter 1 - Mirror sites|xreflabel="Chapitre 1 - Sites miroirs|g' \
-	    -e 's|xreflabel="Host System Requirements|xreflabel="Prérequis du système hôte|g' \
-	    -e "s|xreflabel='Package build instructions|xreflabel='Instructions de compilation des paquets|g" \
-	    -e 's|xreflabel="Creating the /etc/shells File|xreflabel="Créaction du fichier /etc/shells|g' \
-	    -e 's|xreflabel="Chapter|xreflabel="Chapitre|g' \
-	    -e 's|xreflabel="Appendix|xreflabel="Appendice|g'  -i $@
-	touch $(word 2,$^)
-	touch $@
+HTMLDEPS=
+ifeq ($(SYSV),1)
+HTMLDEPS+=$(addsuffix -sysv,$(addprefix genhtml-,$(L)))
+endif
+ifeq ($(SYSD),1)
+HTMLDEPS+=$(addsuffix -systemd,$(addprefix genhtml-,$(L)))
+endif
 
-$(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po
-	$(LANG_EXPORT) po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^)
-	sed -e 's|<book>|<book lang="fr">|g' -i $@
-	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
-	touch $(word 2,$^)
-	touch $@
+PDFDEPS=
+ifeq ($(SYSV),1)
+PDFDEPS+=$(addsuffix -sysv,$(addprefix genpdf-,$(L)))
+endif
+ifeq ($(SYSD),1)
+PDFDEPS+=$(addsuffix -systemd,$(addprefix genpdf-,$(L)))
+endif
 
-$(GENDIR)/images/%: images/%
-	mkdir -p $$(dirname $@)
-	rm -rf $@
-	cp $< $@
+genhtml: $(HTMLDEPS)
+genpdf: $(PDFDEPS)
 
-$(GENDIR)/stylesheets/%: stylesheets/%
-	mkdir -p $$(dirname $@)
-	rm -rf $@
-	cp $< $@
+update: $(PO)
 
-$(GENDIR)/general.ent: $(ORIGDIR)/general.ent
-	#cp $< $@
-	date1=$$(sed -n $(VERSION_LINE)p $< | sed 's/.*"\([^"]\+\)".*/\1/');\
-	date2=$$(sed -n 10p $< | sed 's/.*"\([^"]\+\)".*/\1/');\
-	sed -e "s/$$date2/$$(LANG=$(LANG) date -d "$${date2}" "+%d %B %Y")/g"\
+USER:=jlepiller
+upload:
+	for lang in $(LANGUAGES); do \
+		cd html-$$lang-systemd;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/lfs-systemd-svn/ ;\
+		cd ../html-$$lang-systemd;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-svn/ ;\
+	done
+
+###############################################################################
+# These files are not translated using po files. We use sed to modify them    #
+# directly.                                                                   #
+###############################################################################
+
+##
+## French translation of non po files
+##
+
+lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
+	@mkdir -p lfsgen-fr
+	sysv_date=$$(grep " version " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
+	sysd_date=$$(grep " versiond " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
+	date=$$(grep "releasedate" $< | sed 's/.*"\([^"]\+\)".*/\1/');\
+	sed -e "s/$$date/$$(LANG=$(LANG_fr) date -d "$${date}" "+%d %B %Y")/g"\
 	    -e "s/Approximate build time/Temps de construction approximatif/g"\
 	    -e "s/Required disk space/Espace disque requis/g"\
 	    -e "s/Installation depends on/L'installation dépend de/g"\
 	    -e "s/Test suite depends on/La suite de tests dépend de/g"\
 	    -e "s/Must be installed before/Doit être installé avant/g"\
 	    -e "s/Optional dependencies/Dépendances facultatives/g"\
-	    -e "s/&lfs-root;blfs\//http:\/\/fr.linuxfromscratch.org\/view\/blfs-$(version)/g"\
-	    -e "s/&blfs-root;view\/&short-version;/\&blfs-root;\&short-version;/g"\
-	    -e "s/&lfs-root;hints\/downloads\/files\//http:\/\/fr.linuxfromscratch.org\/view\/astuces\//g"\
+	    -e "s|&lfs-root;blfs/|http://fr.linuxfromscratch.org/blfs|g"\
+	    -e "s|&blfs-root;view/&short-version;|\&blfs-root;\&short-version;|g"\
+	    -e "s|&lfs-root;hints/downloads/files/|http://fr.linuxfromscratch.org/view/astuces/|g"\
 	    $< > $@
 
-$(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent
-	cp $< $@
+lfsgen-fr/packages.ent: $(ORIGDIR)/packages.ent
+	@mkdir -p lfsgen-fr
 	sed -e "s/KB/Ko/g" -e "s/MB/Mo/g" -e "s/GB/Go/g"\
 	    -e "s/less than/moins de/g"\
 	    -e "s/typically about/en général environ/g"\
@@ -124,51 +243,16 @@ $(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent
 	    -e "s/with tests/avec les tests/g"\
 	    $< > $@
 
-$(GENDIR)/patches.ent: $(ORIGDIR)/patches.ent
-	cp $< $@
+lfsgen-fr/patches.ent: $(ORIGDIR)/patches.ent
+	@mkdir -p lfsgen-fr
 	sed -e "s/KB/Ko/g" \
 	    $< > $@
 
-$(GENDIR)/tidy.conf: $(ORIGDIR)/tidy.conf
-	cp $< $@
+lfsgen-fr/tidy.conf: $(ORIGDIR)/tidy.conf
+	@mkdir -p lfsgen-fr
 	sed -e "s/latin1/UTF8/g" \
 	    $< > $@
 
-$(GENDIR)/Makefile: $(ORIGDIR)/Makefile
+lfsgen-fr/Makefile: $(ORIGDIR)/Makefile
+	@mkdir -p lfsgen-fr
 	sed '/&copy;/d' $< > $@
-
-lfsgen-%:
-	mkdir -p $@
-
-init: $(ORIGDIR)
-
-$(ORIGDIR):
-	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/ 
-
-svnup: init
-	if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
-	$(LANG_EXPORT) svn update $(ORIGDIR);\
-	fi
-
-clean:
-	rm -rf $(DIFFDIR) $(GENDIR) $(ORIGDIR) include.mk html-sysv html-systemd pdf
-
-$(ORIGDIR)/%.xml: $(ORIGDIR)
-	
-
-$(PODIR)/%.po: $(ORIGDIR)/%.xml
-	$(LANG_EXPORT) po4a-updatepo -f docbook -m $< -p $@
-	touch $<
-	touch $@
-
-$(DIFFDIR):
-	mkdir $@
-
-gendiff: $(PO) $(DIFFDIR)
-	svn diff $(PODIR) | xz  -zec9 > $(DIFFDIR)/lfs-$(VERSION)-`date "+%d%m%y%H%M%S"`.diff.xz
-
-update: $(PO)
-
-upload:
-	(cd html-systemd; rsync --progress --recursive * jlepiller@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/lfs-systemd-svn/)
-	(cd html-sysv; rsync --progress --recursive * jlepiller@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/lfs-svn/)
