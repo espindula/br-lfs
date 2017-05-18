@@ -8,9 +8,37 @@ L = all
 
 ORIGDIR := lfs-en
 
-# What we follow from upstream.
-TAG := trunk
 
+# Note for releasing a new stable version:
+# ----------------------------------------
+#
+# When a new stable version is released upstream, this Makefile will automatically
+# track it, so translate it as usual. Once the stable version is translated,
+# create a new branch that keeps tracking this release:
+#
+#   svn cp http://svn.linuxfromscratch.org/fr-lfs/trunk/lfs \
+#          http://svn.linuxfromscratch.org/fr-lfs/branches/lfs-$(MILESTONE)
+#
+# Once this is done, you can publish the new version by running:
+#
+#   make upload
+#
+# Then, update the MILESTONE to the next (unreleased) version of LFS in the
+# development branch and commit.
+
+# What we follow from upstream.
+MILESTONE := 8.1
+
+# What this does is that it selects either the development version (if our milestone
+# is the same as upstream) or the stable version (if it does not match, meaning
+# that the stable version is released).
+ifeq ($(MILESTONE), $(shell ((grep milestone $(ORIGDIR)/general.ent || echo $(MILESTONE)) | sed 's|.*"\(.*\)".*|\1|')))
+TAG := trunk
+else
+TAG := $(MILESTONE)
+endif
+
+# Depending on what we track, we choose the correct branch from upstream.
 ifeq ($(TAG), trunk)
 EN_VER := trunk/BOOK
 else
@@ -42,10 +70,12 @@ endif
 FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
 EN_REPO:=svn://svn.linuxfromscratch.org/LFS
 
-# The complete URI we follow.
+# The complete upstream URI we follow.
 SVN_en := "$(EN_REPO)/$(EN_VER)"
 
 .PHONY: svnup
+
+# Don't delete intermediates (.po files).
 .SECONDARY:
 
 default:
@@ -66,9 +96,18 @@ init: $(ORIGDIR)
 $(ORIGDIR):
 	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/
 
+# When updating, check that we still want to follow the checked-out branch.
+# If not, remove it and check out the new branch.
 svnup: init
-	if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
-		LANG=en_US.UTF-8 svn update $(ORIGDIR);\
+	v=$$(svn info $(ORIGDIR) | grep ^URL | cut -c6-) ;\
+	if [ "$$v" != "$(SVN_en)" ]; then \
+		echo $$v ;\
+		rm -rf $(ORIGDIR);\
+		svn co $(SVN_en) $(ORIGDIR)/ >/dev/null;\
+	else \
+		if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
+			LANG=en_US.UTF-8 svn update $(ORIGDIR);\
+		fi ;\
 	fi
 
 clean: clean-gen
@@ -198,6 +237,13 @@ endif
 
 genhtml: $(HTMLDEPS)
 genpdf: $(PDFDEPS)
+gentar: genhtml
+	for lang in $(L); do \
+		tar cf LFS-$(MILESTONE)-$$lang-HTML.tar html-$$lang-sysv ;\
+		tar cf LFS-systemd-$(MILESTONE)-$$lang-HTML.tar html-$$lang-systemd ;\
+		bzip2 LFS-$(MILESTONE)-$$lang-HTML.tar ;\
+		bzip2 LFS-systemd-$(MILESTONE)-$$lang-HTML.tar ;\
+	done
 
 update: $(PO)
 
@@ -206,7 +252,7 @@ upload:
 	for lang in $(L); do \
 		cd html-$$lang-systemd;\
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-systemd-svn/ ;\
-		cd ../html-$$lang-systemd;\
+		cd ../html-$$lang-sysv;\
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-svn/ ;\
 		cd .. ;\
 	done
