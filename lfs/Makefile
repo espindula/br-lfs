@@ -99,7 +99,7 @@ $(ORIGDIR):
 # When updating, check that we still want to follow the checked-out branch.
 # If not, remove it and check out the new branch.
 svnup: init
-	v=$$(svn info $(ORIGDIR) | grep ^URL | cut -c6-) ;\
+	v=$$(svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||') ;\
 	if [ "$$v" != "$(SVN_en)" ]; then \
 		echo $$v ;\
 		rm -rf $(ORIGDIR);\
@@ -246,6 +246,13 @@ gentar: genhtml
 	done
 
 update: $(PO)
+
+pootle:
+	pootle sync_stores --project=lfs
+	$(MAKE) svnup
+	$(MAKE) update
+	python3 changelogtranslator.py $(L)
+	pootle update_stores --project=lfs
 
 USER:=jlepiller
 upload:
