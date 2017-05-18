@@ -162,13 +162,15 @@ include.mk: $(ORIGDIR) Makefile
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
-		echo 'genhtml-'"$$lang"'-sysv: $$(COPY) $$(IMAGES) $$(STYLESHEETS) $$(XML)' >> $@.tmp ;\
+		xml='$$(filter lfsgen-'"$$lang"'/%,$$(XML))' ;\
+		copy='$$(filter lfsgen-'"$$lang"'/%,$$(COPY))' ;\
+		echo 'genhtml-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
 		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../html-'"$$lang"'-sysv' >> $@.tmp ;\
-		echo 'genhtml-'"$$lang"'-systemd: $$(COPY) $$(IMAGES) $$(STYLESHEETS) $$(XML)' >> $@.tmp ;\
+		echo 'genhtml-'"$$lang"'-systemd: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
 		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd' >> $@.tmp ;\
-		echo 'genpdf-'"$$lang"'-sysv: $$(COPY) $$(IMAGES) $$(STYLESHEETS) $$(XML)' >> $@.tmp ;\
+		echo 'genpdf-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
 		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
-		echo 'genpdf-'"$$lang"'-systemd: $$(COPY) $$(IMAGES) $$(STYLESHEETS) $$(XML)' >> $@.tmp ;\
+		echo 'genpdf-'"$$lang"'-systemd: '"$$copy $$xml"'$$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
 		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
@@ -201,11 +203,12 @@ update: $(PO)
 
 USER:=jlepiller
 upload:
-	for lang in $(LANGUAGES); do \
+	for lang in $(L); do \
 		cd html-$$lang-systemd;\
-		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/lfs-systemd-svn/ ;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-systemd-svn/ ;\
 		cd ../html-$$lang-systemd;\
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-svn/ ;\
+		cd .. ;\
 	done
 
 ###############################################################################
