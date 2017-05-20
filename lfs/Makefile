@@ -45,6 +45,14 @@ else
 EN_VER := tags/$(TAG)
 endif
 
+# Some version of echo (for instance the one shipped in dash) doesn't understand -e
+# but acts as if it was passed by default.
+ifeq ($(shell echo -n -e),-e)
+ECHO:=echo
+else
+ECHO:=echo -e
+endif
+
 # Files that are needed for the build process once translations are generated.
 filestocopy := INSTALL README process-scripts.sh obfuscate.sh pdf-fixups.sh \
                bootscripts udev-lfs aux-file-data.sh make-aux-files.sh
@@ -154,40 +162,40 @@ include.mk: $(ORIGDIR) Makefile
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo "lfsgen-$$lang/images/%: images/%" >> $@.tmp ;\
-		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		echo -e '\t@rm -f $$@' >> $@.tmp ;\
-		echo -e '\tcp $$< $$@' >> $@.tmp ;\
+		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		$(ECHO) '\t@rm -f $$@' >> $@.tmp ;\
+		$(ECHO) '\tcp $$< $$@' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo "lfsgen-$$lang/stylesheets/%: stylesheets/%" >> $@.tmp ;\
-		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		echo -e '\t@rm -f $$@' >> $@.tmp ;\
-		echo -e '\tcp $$< $$@' >> $@.tmp ;\
+		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		$(ECHO) '\t@rm -f $$@' >> $@.tmp ;\
+		$(ECHO) '\tcp $$< $$@' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo "lfsgen-$$lang/%.xml: $(ORIGDIR)/%.xml $$lang/%.po sed-$$lang" \
 			>> $@.tmp ;\
-		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		echo -e '\tLANG=$$(LANG_'"$$lang"') po4a-translate -k 0 -f docbook' \
+		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') po4a-translate -k 0 -f docbook' \
 			'-m $$< -l $$@.tmp -p $$(word 2,$$^)' >> $@.tmp ;\
-		echo -e '\t./$$(word 3,$$^) $$@' >> $@.tmp ;\
-		echo -e '\trm $$@.tmp' >> $@.tmp ;\
+		$(ECHO) '\t./$$(word 3,$$^) $$@' >> $@.tmp ;\
+		$(ECHO) '\trm $$@.tmp' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo "$$lang/%.po: $(ORIGDIR)/%.xml" \
 			>> $@.tmp ;\
-		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		echo -e '\tLANG=$$(LANG_'"$$lang"') po4a-updatepo -f docbook' \
+		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') po4a-updatepo -f docbook' \
 			'-m $$< -p $$@' >> $@.tmp ;\
-		echo -e '\t@touch $$@' >> $@.tmp ;\
+		$(ECHO) '\t@touch $$@' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	echo 'clean-gen:' >> $@.tmp
 	for lang in $(LANGUAGES); do \
-		echo -e "\trm -rf lfsgen-$$lang" >> $@.tmp ;\
+		$(ECHO) "\trm -rf lfsgen-$$lang" >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	echo .SECONDEXPANSION: >> $@.tmp
@@ -196,21 +204,21 @@ include.mk: $(ORIGDIR) Makefile
 			'INPUT=$$(ORIGDIR)$$(subst lfsgen-'"$$lang"',,$$@)' >> $@.tmp ;\
 		echo '$$(addprefix lfsgen-'"$$lang"'/,$$(filestocopy)):' \
 			'$$$$(INPUT)' >> $@.tmp ;\
-		echo -e '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		echo -e '\tcp -r $$< $$@' >> $@.tmp ;\
+		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
+		$(ECHO) '\tcp -r $$< $$@' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		xml='$$(filter lfsgen-'"$$lang"'/%,$$(XML))' ;\
 		copy='$$(filter lfsgen-'"$$lang"'/%,$$(COPY))' ;\
 		echo 'genhtml-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../html-'"$$lang"'-sysv' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../html-'"$$lang"'-sysv' >> $@.tmp ;\
 		echo 'genhtml-'"$$lang"'-systemd: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd' >> $@.tmp ;\
 		echo 'genpdf-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
 		echo 'genpdf-'"$$lang"'-systemd: '"$$copy $$xml"'$$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		echo -e '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	mv $@.tmp $@
