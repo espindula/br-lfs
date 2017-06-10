@@ -182,7 +182,7 @@ genpdf: $(PDFDEPS)
 update: $(PO)
 
 pootle:
-	pootle sync_stores --project=lfs
+	pootle sync_stores --project=clfs
 	$(MAKE) svnup
 	$(MAKE) update
 	python3 changelogtranslator.py $(L)
