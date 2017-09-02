@@ -7,8 +7,8 @@ LANGUAGE := fr
 GENDIR := blfsgen-$(LANGUAGE)
 ORIGDIR := blfs-en
 PODIR := $(LANGUAGE)
-#VERSION = tags/7.10
-VERSION = trunk/BOOK
+VERSION = tags/8.1
+#VERSION = trunk/BOOK
 DIFFDIR = diff
 
 filestocopy := INSTALL obfuscate.sh README
