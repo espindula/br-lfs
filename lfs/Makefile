@@ -8,6 +8,9 @@ L = all
 
 ORIGDIR := lfs-en
 
+FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
+EN_REPO:=svn://svn.linuxfromscratch.org/LFS
+
 
 # Note for releasing a new stable version:
 # ----------------------------------------
@@ -29,11 +32,18 @@ ORIGDIR := lfs-en
 # What we follow from upstream.
 MILESTONE := 8.1
 
+# Select the current version we are tracking from master
+EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
+
 # What this does is that it selects either the development version (if our milestone
 # is the same as upstream) or the stable version (if it does not match, meaning
 # that the stable version is released).
 ifeq ($(MILESTONE), $(shell ((grep milestone $(ORIGDIR)/general.ent || echo $(MILESTONE)) | sed 's|.*"\(.*\)".*|\1|')))
+ifeq ($(EN_CURR_VER), $(EN_REPO)/tags/$(MILESTONE))
+TAG := $(MILESTONE)
+else
 TAG := trunk
+endif
 else
 TAG := $(MILESTONE)
 endif
@@ -74,9 +84,6 @@ SYSV=1
 SYSD=
 endif
 endif
-
-FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
-EN_REPO:=svn://svn.linuxfromscratch.org/LFS
 
 # The complete upstream URI we follow.
 SVN_en := "$(EN_REPO)/$(EN_VER)"
