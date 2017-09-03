@@ -30,7 +30,7 @@ EN_REPO:=svn://svn.linuxfromscratch.org/LFS
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 8.1
+MILESTONE := 8.2
 
 # Select the current version we are tracking from master
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
@@ -38,13 +38,13 @@ EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
 # What this does is that it selects either the development version (if our milestone
 # is the same as upstream) or the stable version (if it does not match, meaning
 # that the stable version is released).
-ifeq ($(MILESTONE), $(shell ((grep milestone $(ORIGDIR)/general.ent || echo $(MILESTONE)) | sed 's|.*"\(.*\)".*|\1|')))
 ifeq ($(EN_CURR_VER), $(EN_REPO)/tags/$(MILESTONE))
 TAG := $(MILESTONE)
 else
 TAG := trunk
 endif
-else
+
+ifneq ($(MILESTONE), $(shell ((grep milestone $(ORIGDIR)/general.ent || echo $(MILESTONE)) | sed 's|.*"\(.*\)".*|\1|')))
 TAG := $(MILESTONE)
 endif
 
