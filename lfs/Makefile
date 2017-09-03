@@ -6,6 +6,9 @@ LANGUAGES := fr
 LANG_fr := fr_FR.UTF-8
 L = all
 
+# Use config.mk to configure username and password for download and upload
+include config.mk
+
 ORIGDIR := lfs-en
 
 FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
@@ -106,6 +109,25 @@ all: genhtml genpdf
 
 include include.mk
 
+config.mk:
+	@echo 'Hi!'
+	@echo 'To use this Makefile, you will need a config.mk file, with your username'
+	@echo 'and password in it. That is required for uploading to the lfs website.'
+	@echo 'An example config.mk is simply:'
+	@echo ''
+	@echo 'USER:=my-user'
+	@echo 'PRIVKEY:=~/.ssh/id_rsa'
+	@echo 'USE_SSH_AGENT:=yes'
+	@false
+
+# So, if USE_SSH_AGENT = yes ...
+ifeq ($(USE_SSH_AGENT), yes)
+SSH_AGENT:=ssh-agent
+else
+SSH_AGENT:=
+	ssh-agent
+endif
+
 init: $(ORIGDIR)
 
 $(ORIGDIR):
@@ -125,7 +147,7 @@ svnup: init
 		fi ;\
 	fi
 
-clean: clean-gen
+clean: clean-gen clean-product
 	rm -rf $(ORIGDIR) include.mk
 
 # include.mk contains most of the logic of the Makefile.
@@ -205,6 +227,15 @@ include.mk: $(ORIGDIR) Makefile
 		$(ECHO) "\trm -rf lfsgen-$$lang" >> $@.tmp ;\
 	done
 	echo >> $@.tmp
+	echo 'clean-product:' >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		$(ECHO) "\trm -rf LFS-*-$$lang-HTML.tar.bz2" >> $@.tmp ;\
+		$(ECHO) "\trm -rf LFS-systemd-*-$$lang-HTML.tar.bz2" >> $@.tmp ;\
+		$(ECHO) "\trm -rf html-$$lang-systemd" >> $@.tmp ;\
+		$(ECHO) "\trm -rf html-$$lang-sysv" >> $@.tmp ;\
+		$(ECHO) "\trm -rf pdf-$$lang" >> $@.tmp ;\
+	done
+	echo >> $@.tmp
 	echo .SECONDEXPANSION: >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo '$$(addprefix lfsgen-'"$$lang"'/,$$(filestocopy)):' \
@@ -269,14 +300,29 @@ pootle:
 	python3 changelogtranslator.py $(L)
 	pootle update_stores --project=lfs
 
-USER:=jlepiller
-upload:
+ssh-agent:
+	(ssh-add -l | grep $(PRIVKEY)) || \
+	ssh-add $(PRIVKEY)
+
+upload: $(SSH_AGENT)
 	for lang in $(L); do \
 		cd html-$$lang-systemd;\
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-systemd-svn/ ;\
 		cd ../html-$$lang-sysv;\
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-svn/ ;\
 		cd .. ;\
+	done
+
+release: $(SSH_AGENT) genhtml genpdf gentar
+	for lang in $(L); do \
+		cd html-$$lang-systemd ;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/src/www/www.$$lang.linuxfromscratch.org/view/lfs-$(MILESTONE)-systemd-$$lang/ ;\
+		cd ../html-$$lang-sysv ;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/src/www/www.$$lang.linuxfromscratch.org/view/lfs-$(MILESTONE)-$$lang/ ;\
+		cd ../pdf-$$lang ;\
+		rsync --progress * $(USER)@www.linuxfromscratch.org:/src/www/www.$$lang.linuxfromscratch.org/archive/LFS-$(MILESTONE)-$$lang/ ;\
+		cd ..
+		rsync --progress LFS-$(MILESTONE)-$$lang-HTML.tar.bz2 LFS-systemd-$(MILESTONE)-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/src/www/www.$$lang.linuxfromscratch.org/archive/LFS-$(MILESTONE)-$$lang/ ;\
 	done
 
 ###############################################################################
