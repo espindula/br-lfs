@@ -118,8 +118,10 @@ if ( $package == "file"       ) $dirpath = "https://github.com/file/file/release
 if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/releases";
 if ( $package == "gcc"        ) $dirpath = max_parent( $dirpath, "gcc-" );
 if ( $package == "intltool"   ) $dirpath = "https://launchpad.net/intltool/trunk";
+if ( $package == "meson"      ) $dirpath = "https://github.com/mesonbuild/meson/releases";
 if ( $package == "mpc"        ) $dirpath = "http://www.multiprecision.org/index.php?prog=mpc&page=download";
 if ( $package == "mpfr"       ) $dirpath = "http://mpfr.loria.fr/mpfr-current";
+if ( $package == "ninja"      ) $dirpath = "https://github.com/ninja-build/ninja/releases";
 if ( $package == "procps-ng"  ) $dirpath = "http://sourceforge.net/projects/procps-ng/files";
 if ( $package == "psmisc"     ) $dirpath = "http://sourceforge.net/projects/$package/files";
 if ( $package == "shadow"     ) $dirpath = "https://github.com/shadow-maint/shadow/releases";
@@ -250,6 +252,9 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
      return $max;
   }
 
+  if ( $package == "ninja" )
+     return find_max( $lines, "/v\d/", "/^.*v(\d[\d\.]*\d).*$/" );
+
   if ( $package == "gmp" )
      return find_max( $lines, "/$package/", "/^.*$package-([\d\._]*\d[a-z]?).tar.*$/" );
 
@@ -319,10 +324,8 @@ function get_current()
         $pattern = "/\D*(\d.*[a-z]*)\.tar\D*/";
       }
 
-      else if ( preg_match( "/eudev.*manpages/", $file ) )
-      {
-        continue;
-      }
+      else if ( preg_match( "/eudev.*manpages/", $file ) ) continue; 
+      else if ( preg_match( "/python/"         , $file ) ) continue; 
 
       $version = preg_replace( $pattern, "$1", $file );   // Isolate version
       $version = preg_replace( "/^\d-/", "", $version );  // Remove leading #-
