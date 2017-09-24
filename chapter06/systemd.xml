@@ -40,88 +40,58 @@
   <sect2 role="installation">
     <title>Installation of systemd</title>
 
-    <para>Create a file to allow systemd to build when using Util-Linux
-    built in Chapter 5, to disable LTO by default, and to build without
-    xlstproc:</para>
+    <para>Create a symlink to work around missing xsltproc:</para>
 
-<screen><userinput remap="pre">cat &gt; config.cache &lt;&lt; "EOF"
-<literal>KILL=/bin/kill
-MOUNT_PATH=/bin/mount
-UMOUNT_PATH=/bin/umount
-HAVE_BLKID=1
-BLKID_LIBS="-lblkid"
-BLKID_CFLAGS="-I/tools/include/blkid"
-HAVE_LIBMOUNT=1
-MOUNT_LIBS="-lmount"
-MOUNT_CFLAGS="-I/tools/include/libmount"
-cc_cv_CFLAGS__flto=no
-SULOGIN="/sbin/sulogin"
-GPERF_LEN_TYPE=size_t
-XSLTPROC="/usr/bin/xsltproc"</literal>
-EOF</userinput></screen>
-
-    <para>LTO is disabled by default because it causes
-    <command>systemd</command> and other auxiliary programs to link to
-    <filename class="libraryfile">libgcc_s.so</filename>, slows the build down
-    and makes the compiled code larger.</para>
+<screen><userinput remap="pre">ln -s /tools/bin/true /usr/bin/xsltproc</userinput></screen>
 
     <para>Prepare systemd for compilation:</para>
 
-<screen><userinput remap="configure">./configure --prefix=/usr            \
-            --sysconfdir=/etc        \
-            --localstatedir=/var     \
-            --config-cache           \
-            --with-rootprefix=       \
-            --with-rootlibdir=/lib   \
-            --enable-split-usr       \
-            --disable-firstboot      \
-            --disable-ldconfig       \
-            --disable-sysusers       \
-            --without-python         \
-            --with-default-dnssec=no \
-            --docdir=/usr/share/doc/systemd-&systemd-version;</userinput></screen>
+<screen><userinput remap="configure">PKG_CONFIG_PATH=/usr/lib/pkgconfig:/tools/lib/pkgconfig \
+LANG=en_US.UTF-8                          \
+    meson --prefix /usr                   \
+          --sysconfdir /etc               \
+          --localstatedir /var            \
+          -Dblkid=true                    \
+          -Dbuildtype=release             \
+          -Ddefault-dnssec=no             \
+          -Dfirstboot=false               \
+          -Dkill-path=/bin/kill           \
+          -Dkmod-path=/bin/kmod           \
+          -Dldconfig=false                \
+          -Dmount-path=/bin/mount         \
+          -Drootprefix=                   \
+          -Drootlibdir=/lib               \
+          -Dsplit-usr=true                \
+          -Dsulogin-path=/sbin/sulogin    \
+          -Dsysusers=false                \
+          -Dumount-path=/bin/umount       \
+          -Db_lto=false                   \
+          -Dc_link_args="-lblkid -lmount" \
+          -Dc_args="-I/tools/include/blkid -I/tools/include/libmount" \
+          $PWD build</userinput></screen>
 
     <variablelist>
-      <title>The meaning of the configure options:</title>
+      <title>The meaning of the meson options:</title>
 
       <varlistentry>
-        <term><parameter>--config-cache</parameter></term>
+        <term><parameter>-D*-path=*</parameter></term>
         <listitem>
-          <para>This switch tells the build system to use
-          the <filename>config.cache</filename> file which
-          was created earlier.</para>
+          <para>These switches provide location of binaries needed by
+          systemd at runtime that have not yet been installed, or who's
+          pkgconfig files are currently only in
+          <filename>/tools/lib/pkgconfig</filename>.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--with-root*</parameter></term>
+        <term><parameter>-Ddefault-dnssec=no</parameter></term>
         <listitem>
-          <para>These switches ensure that core programs and
-          shared libraries are installed in the subdirectories
-          of the root partition.</para>
+          <para>This switch turns off the experimental DNSSEC support.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--enable-split-usr</parameter></term>
-        <listitem>
-          <para>This switch ensures that systemd will work on
-          systems where /bin, /lib and /sbin directories are not
-          symlinks to their /usr counterparts.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--without-python</parameter></term>
-        <listitem>
-          <para>This switch prevents <command>configure</command>
-          from trying to use Python which isn't built
-          in LFS.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--disable-firstboot</parameter></term>
+        <term><parameter>-Dfirstboot=false</parameter></term>
         <listitem>
           <para>This switch prevents installation of systemd
           services responsible for setting up the system for
@@ -131,7 +101,7 @@ EOF</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-ldconfig</parameter></term>
+        <term><parameter>-Dldconfig=no</parameter></term>
         <listitem>
           <para>This switch prevents installation of a systemd
           unit that runs <command>ldconfig</command> at
@@ -142,7 +112,25 @@ EOF</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-sysusers</parameter></term>
+        <term><parameter>-Droot*</parameter></term>
+        <listitem>
+          <para>These switches ensure that core programs and
+          shared libraries are installed in the subdirectories
+          of the root partition.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dsplit-usr=true</parameter></term>
+        <listitem>
+          <para>This switch ensures that systemd will work on
+          systems where /bin, /lib and /sbin directories are not
+          symlinks to their /usr counterparts.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dsysusers=false</parameter></term>
         <listitem>
           <para>This switch prevents installation of systemd
           services responsible for setting up the
@@ -153,9 +141,21 @@ EOF</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--with-default-dnssec=no</parameter></term>
+        <term><parameter>-Dc_link_args="-lblkid -lmount"</parameter></term>
         <listitem>
-          <para>This switch turns off the experimental DNSSEC support.</para>
+          <para>This switch manually adds libblkid and libmount to the
+          linker flags as they only exist in <filename>/tools/lib</filename>
+          until <application>Util-Linux</application> is installed later in
+          this chapter.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dc_args="-I/tools/include/blkid -I/tools/include/libmount"</parameter></term>
+        <listitem>
+          <para>This switch manually adds the include paths for libblkid and
+          libmount to the CFLAGS variable as the packages are not yet installed
+          in the final system.</para>
         </listitem>
       </varlistentry>
 
@@ -163,20 +163,17 @@ EOF</userinput></screen>
 
     <para>Compile the package:</para>
 
-<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="make">tar -xf ../systemd-man-pages-&systemd-version;.tar.xz
+cd build
+LANG=en_US.UTF-8 ninja</userinput></screen>
+<!--
+    <para>To test the package, execute the following command:</para>
 
-    <para>This package has a test suite, but it can only be run after the
-    package has been reinstalled in BLFS.</para>
-
+<screen><userinput remap="test">LANG=en_US.UTF-8 ninja test</userinput></screen>
+-->
     <para>Install the package:</para>
 
-<screen><userinput remap="install">make install</userinput></screen>
-
-<!-- These get installed into /lib now by default.
-    <para>Move the NSS libraries to <filename class="directory">/lib</filename>:</para>
-
-<screen><userinput remap="install">mv -v /usr/lib/libnss_{myhostname,mymachines,resolve}.so.2 /lib</userinput></screen>
--->
+<screen><userinput remap="install">LANG=en_US.UTF-8 ninja install</userinput></screen>
 
     <para>Remove an unnecessary directory:</para>
 
@@ -189,6 +186,10 @@ EOF</userinput></screen>
      ln -sfv ../bin/systemctl /sbin/${tool}
 done
 ln -sfv ../lib/systemd/systemd /sbin/init</userinput></screen>
+
+    <para>Remove our earlier created symlink for xsltproc:</para>
+
+<screen><userinput remap="install">rm -f /usr/bin/xsltproc</userinput></screen>
 
     <para>Create the <filename>/etc/machine-id</filename> file needed by
     <command>systemd-journald</command>:</para>
