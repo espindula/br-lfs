@@ -125,7 +125,6 @@ ifeq ($(USE_SSH_AGENT), yes)
 SSH_AGENT:=ssh-agent
 else
 SSH_AGENT:=
-	ssh-agent
 endif
 
 init: $(ORIGDIR)
