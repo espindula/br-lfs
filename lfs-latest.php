@@ -325,7 +325,8 @@ function get_current()
       }
 
       else if ( preg_match( "/eudev.*manpages/", $file ) ) continue; 
-      else if ( preg_match( "/python/"         , $file ) ) continue; 
+      //else if ( preg_match( "/python/"         , $file ) ) continue; 
+      else if ( preg_match( "/systemd-man/"    , $file ) ) continue;
 
       $version = preg_replace( $pattern, "$1", $file );   // Isolate version
       $version = preg_replace( "/^\d-/", "", $version );  // Remove leading #-
