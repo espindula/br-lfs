@@ -185,7 +185,6 @@ pootle:
 	pootle sync_stores --project=clfs
 	$(MAKE) svnup
 	$(MAKE) update
-	python3 changelogtranslator.py $(L)
 	pootle update_stores --project=clfs
 
 USER:=jlepiller
