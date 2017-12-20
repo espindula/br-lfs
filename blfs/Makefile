@@ -122,6 +122,14 @@ init: $(ORIGDIR)
 $(ORIGDIR):
 	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/ 
 
+pootle:
+	pootle sync_stores --project=blfs
+	$(MAKE) svnup
+	$(MAKE) update
+	python3 changelogtranslator.py fr/introduction/welcome/changelog.po
+	python3 templatetranslator.py `find $(LANGUAGE) -name '*.po'`
+	pootle update_stores --project=blfs
+
 svnup: init
 	if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
 	svn update $(ORIGDIR);\
