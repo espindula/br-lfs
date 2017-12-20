@@ -58,13 +58,8 @@ else
 EN_VER := tags/$(TAG)
 endif
 
-# Some version of echo (for instance the one shipped in dash) doesn't understand -e
-# but acts as if it was passed by default.
-ifeq ($(shell echo -n -e),-e)
-ECHO:=echo
-else
-ECHO:=echo -e
-endif
+# echo is not portable acroos shells. Let's use printf.
+ECHO:=printf
 
 # Files that are needed for the build process once translations are generated.
 filestocopy := INSTALL README process-scripts.sh obfuscate.sh pdf-fixups.sh \
@@ -190,49 +185,49 @@ include.mk: $(ORIGDIR) Makefile
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo "lfsgen-$$lang/images/%: images/%" >> $@.tmp ;\
-		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		$(ECHO) '\t@rm -f $$@' >> $@.tmp ;\
-		$(ECHO) '\tcp $$< $$@' >> $@.tmp ;\
+		$(ECHO) '\tmkdir -p $$$$(dirname $$@)\n' >> $@.tmp ;\
+		$(ECHO) '\t@rm -f $$@\n' >> $@.tmp ;\
+		$(ECHO) '\tcp $$< $$@\n' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo "lfsgen-$$lang/stylesheets/%: stylesheets/%" >> $@.tmp ;\
-		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		$(ECHO) '\t@rm -f $$@' >> $@.tmp ;\
-		$(ECHO) '\tcp $$< $$@' >> $@.tmp ;\
+		$(ECHO) '\tmkdir -p $$$$(dirname $$@)\n' >> $@.tmp ;\
+		$(ECHO) '\t@rm -f $$@\n' >> $@.tmp ;\
+		$(ECHO) '\tcp $$< $$@\n' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo "lfsgen-$$lang/%.xml: $(ORIGDIR)/%.xml $$lang/%.po sed-$$lang" \
 			>> $@.tmp ;\
-		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') po4a-translate -k 0 -f docbook' \
-			'-m $$< -l $$@.tmp -p $$(word 2,$$^)' >> $@.tmp ;\
-		$(ECHO) '\t./$$(word 3,$$^) $$@' >> $@.tmp ;\
-		$(ECHO) '\trm $$@.tmp' >> $@.tmp ;\
+		$(ECHO) '\tmkdir -p $$$$(dirname $$@)\n' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') po4a-translate -k 0 -f docbook ' >> $@.tmp ;\
+		$(ECHO) -- '-m $$< -l $$@.tmp -p $$(word 2,$$^)\n' >> $@.tmp ;\
+		$(ECHO) '\t./$$(word 3,$$^) $$@\n' >> $@.tmp ;\
+		$(ECHO) '\trm $$@.tmp\n' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		echo "$$lang/%.po: $(ORIGDIR)/%.xml" \
 			>> $@.tmp ;\
-		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') po4a-updatepo -f docbook' \
-			'-m $$< -p $$@' >> $@.tmp ;\
-		$(ECHO) '\t@touch $$@' >> $@.tmp ;\
+		$(ECHO) '\tmkdir -p $$$$(dirname $$@)\n' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') po4a-updatepo -f docbook ' >> $@.tmp ;\
+		$(ECHO) -- '-m $$< -p $$@\n' >> $@.tmp ;\
+		$(ECHO) '\t@touch $$@\n' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	echo 'clean-gen:' >> $@.tmp
 	for lang in $(LANGUAGES); do \
-		$(ECHO) "\trm -rf lfsgen-$$lang" >> $@.tmp ;\
+		$(ECHO) "\trm -rf lfsgen-$$lang\n" >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	echo 'clean-product:' >> $@.tmp
 	for lang in $(LANGUAGES); do \
-		$(ECHO) "\trm -rf LFS-*-$$lang-HTML.tar.bz2" >> $@.tmp ;\
-		$(ECHO) "\trm -rf LFS-systemd-*-$$lang-HTML.tar.bz2" >> $@.tmp ;\
-		$(ECHO) "\trm -rf html-$$lang-systemd" >> $@.tmp ;\
-		$(ECHO) "\trm -rf html-$$lang-sysv" >> $@.tmp ;\
-		$(ECHO) "\trm -rf pdf-$$lang" >> $@.tmp ;\
+		$(ECHO) "\trm -rf LFS-*-$$lang-HTML.tar.bz2\n" >> $@.tmp ;\
+		$(ECHO) "\trm -rf LFS-systemd-*-$$lang-HTML.tar.bz2\n" >> $@.tmp ;\
+		$(ECHO) "\trm -rf html-$$lang-systemd\n" >> $@.tmp ;\
+		$(ECHO) "\trm -rf html-$$lang-sysv\n" >> $@.tmp ;\
+		$(ECHO) "\trm -rf pdf-$$lang\n" >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	echo .SECONDEXPANSION: >> $@.tmp
@@ -241,21 +236,21 @@ include.mk: $(ORIGDIR) Makefile
 			'INPUT=$$(ORIGDIR)$$(subst lfsgen-'"$$lang"',,$$@)' >> $@.tmp ;\
 		echo '$$(addprefix lfsgen-'"$$lang"'/,$$(filestocopy)):' \
 			'$$$$(INPUT)' >> $@.tmp ;\
-		$(ECHO) '\t@mkdir -p $$$$(dirname $$@)' >> $@.tmp ;\
-		$(ECHO) '\tcp -r $$< $$@' >> $@.tmp ;\
+		$(ECHO) '\tmkdir -p $$$$(dirname $$@)\n' >> $@.tmp ;\
+		$(ECHO) '\tcp -r $$< $$@\n' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		xml='$$(filter lfsgen-'"$$lang"'/%,$$(XML))' ;\
 		copy='$$(filter lfsgen-'"$$lang"'/%,$$(COPY))' ;\
 		echo 'genhtml-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../html-'"$$lang"'-sysv' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../html-'"$$lang"'-sysv\n' >> $@.tmp ;\
 		echo 'genhtml-'"$$lang"'-systemd: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd\n' >> $@.tmp ;\
 		echo 'genpdf-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../pdf-'"$$lang"' pdf\n' >> $@.tmp ;\
 		echo 'genpdf-'"$$lang"'-systemd: '"$$copy $$xml"'$$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../pdf-'"$$lang"' pdf' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../pdf-'"$$lang"' pdf\n' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	mv $@.tmp $@
@@ -334,7 +329,7 @@ release: $(SSH_AGENT) genhtml genpdf gentar
 ##
 
 lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
-	@mkdir -p lfsgen-fr
+	mkdir -p lfsgen-fr
 	sysv_date=$$(grep " version " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
 	sysd_date=$$(grep " versiond " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
 	date=$$(grep "releasedate" $< | sed 's/.*"\([^"]\+\)".*/\1/');\
@@ -351,7 +346,7 @@ lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	    $< > $@
 
 lfsgen-fr/packages.ent: $(ORIGDIR)/packages.ent
-	@mkdir -p lfsgen-fr
+	mkdir -p lfsgen-fr
 	sed -e "s/KB/Ko/g" -e "s/MB/Mo/g" -e "s/GB/Go/g"\
 	    -e "s/less than/moins de/g"\
 	    -e "s/typically about/en général environ/g"\
@@ -360,15 +355,15 @@ lfsgen-fr/packages.ent: $(ORIGDIR)/packages.ent
 	    $< > $@
 
 lfsgen-fr/patches.ent: $(ORIGDIR)/patches.ent
-	@mkdir -p lfsgen-fr
+	mkdir -p lfsgen-fr
 	sed -e "s/KB/Ko/g" \
 	    $< > $@
 
 lfsgen-fr/tidy.conf: $(ORIGDIR)/tidy.conf
-	@mkdir -p lfsgen-fr
+	mkdir -p lfsgen-fr
 	sed -e "s/latin1/UTF8/g" \
 	    $< > $@
 
 lfsgen-fr/Makefile: $(ORIGDIR)/Makefile
-	@mkdir -p lfsgen-fr
+	mkdir -p lfsgen-fr
 	sed '/&copy;/d' $< > $@
