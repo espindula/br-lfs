@@ -43,11 +43,67 @@
     <filename>systemd-netdev(5)</filename> and
     <filename>systemd-network(5)</filename> manual pages.</para>
 
-    <note><para>Udev may assign network card interface names based
-    on system physical characteristics such as enp2s1. If you are
-    not sure what your interface name is, you can always run
-    <command>ip link</command> after you have booted your system.
-    </para></note>
+    <sect3 id="systemd-network-devices">
+      <title>Network Device Naming</title>
+
+      <para>
+        Udev normally assigns network card interface names based
+        on system physical characteristics such as enp2s1. If you are
+        not sure what your interface name is, you can always run
+        <command>ip link</command> after you have booted your system.
+      </para>
+
+      <para>
+        For most systems, there is only one network interface for
+        each type of connection.  For example, the classic interface
+        name for a wired connection is eth0.  A wireless connection
+        will usually have the name wifi0 or wlan0. 
+      </para>
+
+      <para>
+        If you prefer to use the classic or customized network interface names,
+        there are three alternative ways to do that:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            Mask udev's .link file for the default policy:
+<screen role="nodump"><userinput>ln -s /dev/null /etc/systemd/network/99-default.link</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+             Create a manual naming scheme, for example by naming the
+             interfaces something like "internet0", "dmz0", or "lan0". 
+             For that, create .link
+             files in /etc/systemd/network/, that choose an explicit name or a
+             better naming scheme for one, some, or all of your interfaces. 
+             For example:
+          </para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/systemd/network/10-ether0.link &lt;&lt; "EOF"
+<literal>[Match]
+# Change the MAC address as appropriate for your network device
+MACAddress=12:34:45:78:90:AB
+
+[Link]
+Name=ether0</literal>
+EOF</userinput></screen>
+
+          <para>
+             See the man page systemd.link(5) for more information. 
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            In /boot/grub/grub.cfg, pass the option net.ifnames=0 on the 
+            kernel command line.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
 
     <sect3 id="systemd-networkd-static">
       <title>Static IP Configuration</title>
@@ -56,9 +112,9 @@
       Static IP setup (using both systemd-networkd and
       systemd-resolved):</para>
 
-<screen><userinput>cat &gt; /etc/systemd/network/10-eth0-static.network &lt;&lt; "EOF"
+<screen><userinput>cat &gt; /etc/systemd/network/10-eth-static.network &lt;&lt; "EOF"
 <literal>[Match]
-Name=eth0
+Name=&lt;network-device-name&gt;
 
 [Network]
 Address=192.168.0.2/24
@@ -79,9 +135,9 @@ EOF</userinput></screen>
       <para>The command below creates a basic configuration file for an IPv4
       DHCP setup:</para>
 
-<screen role="nodump"><userinput>cat &gt; /etc/systemd/network/10-eth0-dhcp.network &lt;&lt; "EOF"
+<screen role="nodump"><userinput>cat &gt; /etc/systemd/network/10-eth-dhcp.network &lt;&lt; "EOF"
 <literal>[Match]
-Name=eth0
+Name=&lt;network-device-name&gt;
 
 [Network]
 DHCP=ipv4
