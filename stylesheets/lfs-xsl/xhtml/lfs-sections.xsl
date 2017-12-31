@@ -134,11 +134,12 @@ $Date$
     <!-- sect1info mode svn-keys:
            Self-made template to process SVN keywords found in sect1info. -->
   <xsl:template match="sect1info" mode="svn-keys">
-    <p class="updated">Last updated <!-- by
+  <!--  <p class="updated">Last updated --><!-- by
       <xsl:apply-templates select="othername" mode="svn-keys"/> -->
-      on
+  <!--    on
       <xsl:apply-templates select="date" mode="svn-keys"/>
     </p>
+comment out entire template for now.  We do not use this.  bdubbs 2017/12/30  -->
   </xsl:template>
 
     <!-- othername mode svn-keys:
