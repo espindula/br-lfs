@@ -45,6 +45,8 @@ regexps.append([re.compile('([0-9\\.]+) ([KMG])B \(additional ([0-9\\.]+) ([KMG]
 regexps.append([re.compile('([0-9\\.]+) ([KMG])B \(add ([0-9\\.]+) ([KMG])B for tests\)$'), '#1 #2o (plus #3 #4o pour les tests)'])
 regexps.append([re.compile('([0-9\\.]+) SBU$'), '#1 SBU'])
 regexps.append([re.compile('([0-9\\.]+) SBU \(with tests\)$'), '#1 SBU (avec les tests)'])
+regexps.append([re.compile('([0-9\\.]+) SBU \(using parallelism=([0-9]+)\)$'), '#1 SBU (avec parallélisme = #2)'])
+regexps.append([re.compile('([0-9\\.]+) SBU \(using parallelism=([0-9]+); with tests\)$'), '#1 SBU (avec parallélisme = #2&nbsp;; avec les tests)'])
 regexps.append([re.compile('([0-9\\.]+) SBU \(additional ([0-9\\.]+) SBU for the tests\)$'), '#1 SBuo (#2 SBU supplémentaires pour les tests)'])
 regexps.append([re.compile('([0-9\\.]+) SBU \(add ([0-9\\.]+) SBU for tests\)$'), '#1 SBU (plus #2 SBU pour les tests)'])
 regexps.append([re.compile('less than 0.1 SBU$'), 'moins de 0.1 SBU'])
