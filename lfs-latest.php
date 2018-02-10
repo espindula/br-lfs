@@ -13,15 +13,11 @@ $exceptions = array();
 $regex = array();
 $regex[ 'bzip2'    ] = "/^.*current version is ([\d\.]+).*$/";
 $regex[ 'check'    ] = "/^.*Check (\d[\d\.]+\d).*$/";
-$regex[ 'expect'   ] = "/^.*Download expect([\d\.]+)\.tar.*$/";
-$regex[ 'expat'    ] = "/^.*Download expat-([\d\.]+)\.tar.*$/";
 $regex[ 'intltool' ] = "/^.*Latest version is (\d[\d\.]+\d).*$/";
 $regex[ 'less'     ] = "/^.*current released version is less-(\d+).*$/";
-$regex[ 'mpc'      ] = "/^(\d\.\d\.\d).*$/";
 $regex[ 'mpfr'     ] = "/^mpfr-([\d\.]+)\.tar.*$/";
 $regex[ 'systemd'  ] = "/^.*v([\d]+).*$/";
 $regex[ 'sysvinit' ] = "/^.*sysvinit-([\d\.]+)dsf\.tar.*$/";
-$regex[ 'tcl-core' ] = "/^.*Download tcl([\d\.]+)-src.*$/";
 $regex[ 'tzdata'   ] = "/^.*tzdata([\d]+[a-z]).*$/";
 $regex[ 'xz'       ] = "/^.*xz-([\d\.]*\d).*$/";
 $regex[ 'zlib'     ] = "/^.*zlib ([\d\.]*\d).*$/";
@@ -108,25 +104,25 @@ function get_packages( $package, $dirpath )
   global $exceptions;
   global $regex;
 
-//if ( $package != "check" ) return 0; // Debug
+//if ( $package != "expat" ) return 0; // Debug
 
 if ( $package == "check"      ) $dirpath = "https://github.com/libcheck/check/releases";
 if ( $package == "e2fsprogs"  ) $dirpath = "http://sourceforge.net/projects/e2fsprogs/files/e2fsprogs";
 if ( $package == "expat"      ) $dirpath = "http://sourceforge.net/projects/expat/files";
-if ( $package == "expect"     ) $dirpath = "http://sourceforge.net/projects/$package/files";  
+if ( $package == "expect"     ) $dirpath = "http://sourceforge.net/projects/expect/files";  
 if ( $package == "file"       ) $dirpath = "https://github.com/file/file/releases";
 if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/releases";
 if ( $package == "gcc"        ) $dirpath = max_parent( $dirpath, "gcc-" );
 if ( $package == "intltool"   ) $dirpath = "https://launchpad.net/intltool/trunk";
 if ( $package == "meson"      ) $dirpath = "https://github.com/mesonbuild/meson/releases";
-if ( $package == "mpc"        ) $dirpath = "http://www.multiprecision.org/index.php?prog=mpc&page=download";
+if ( $package == "mpc"        ) $dirpath = "http://www.multiprecision.org/mpc/download.html";
 if ( $package == "mpfr"       ) $dirpath = "http://mpfr.loria.fr/mpfr-current";
 if ( $package == "ninja"      ) $dirpath = "https://github.com/ninja-build/ninja/releases";
 if ( $package == "procps-ng"  ) $dirpath = "http://sourceforge.net/projects/procps-ng/files";
 if ( $package == "psmisc"     ) $dirpath = "http://sourceforge.net/projects/$package/files";
 if ( $package == "shadow"     ) $dirpath = "https://github.com/shadow-maint/shadow/releases";
 if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/releases";
-if ( $package == "tcl-core"   ) $dirpath = "http://sourceforge.net/projects/tcl/files";
+if ( $package == "tcl"        ) $dirpath = "http://sourceforge.net/projects/tcl/files";
 if ( $package == "util-linux" ) $dirpath = max_parent( $dirpath, "v." );
 if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
 
@@ -198,13 +194,12 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
         $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
         $position = strrpos( $dirpath, "/" );
         $dirpath  = substr ( $dirpath, 0, $position );
-        //echo "$dirpath\n";
      }
 
      $lines = http_get_file( $dirpath );
      if ( ! is_array( $lines ) ) return -6;
   } // End fetch
-
+//print_r($lines);
   if ( isset( $regex[ $package ] ) )
   {
      // Custom search for latest package name
@@ -244,6 +239,12 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
   if ( $package == "e2fsprogs" )
      return find_max( $lines, "/v\d/", "/^.*v(\d[\d\.]+\d).*$/" );
 
+  if ( $package == "expect" )
+     return find_max( $lines, "/expect/", "/^.*expect(\d[\d\.]+\d).tar.*$/" );
+
+  if ( $package == "mpc" )
+     return find_max( $lines, "/Version/", "/^.*Version (\d[\d\.]+\d)\\s*$/" );
+
   if ( $package == "XML-Parser" )
   {
      $max = find_max( $lines, "/$package/", "/^.*$package-([\d\._]*\d).tar.*$/" );
@@ -251,6 +252,9 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
      if ( $max == "2.44_01" ) { return "2.44"; }
      return $max;
   }
+
+  if ( $package == "tcl" )
+     return find_max( $lines, "/tcl/", "/^.*tcl(\d[\d\.]*\d)-src.*$/" );
 
   if ( $package == "ninja" )
      return find_max( $lines, "/v\d/", "/^.*v(\d[\d\.]*\d).*$/" );
@@ -269,6 +273,9 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
 
   if ( $package == "grub" )
      return find_max( $lines, "/grub/", "/^.*grub-(\d\..*).tar.xz.*$/" );
+
+  if ( $package == "openssl" )
+     return find_max( $lines, "/openssl/", "/^.*openssl-([\d\.p]*\d.?).tar.*$/" );
 
   // Most packages are in the form $package-n.n.n
   // Occasionally there are dashes (e.g. 201-1)
@@ -319,14 +326,18 @@ function get_current()
         $pattern = "/\D*(\d.*[a-z])\.tar\D*/";
       }
 
+      else if ( preg_match( "/openssl/", $file ) )
+      {
+        $pattern = "/\D*(\d.*\d.*).tar.*$/";
+      }
+
       else if ( preg_match( "/gmp/", $file ) )
       {
         $pattern = "/\D*(\d.*[a-z]*)\.tar\D*/";
       }
 
-      else if ( preg_match( "/eudev.*manpages/", $file ) ) continue; 
-      //else if ( preg_match( "/python/"         , $file ) ) continue; 
-      else if ( preg_match( "/systemd-man/"    , $file ) ) continue;
+      else if ( preg_match( "/systemd-man-pages/", $file ) ) continue; 
+      else if ( preg_match( "/python/"         , $file ) ) continue; 
 
       $version = preg_replace( $pattern, "$1", $file );   // Isolate version
       $version = preg_replace( "/^\d-/", "", $version );  // Remove leading #-
