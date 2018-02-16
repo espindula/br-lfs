@@ -78,7 +78,7 @@ function http_get_file( $url )
   }
   else
   {
-    exec( "elinks -dump $url 2>/dev/null", $lines );
+    exec( "links -dump $url 2>/dev/null", $lines );
     return $lines;
   }
 }
