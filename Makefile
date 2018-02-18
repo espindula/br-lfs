@@ -86,6 +86,10 @@ pdf: validate
 	@echo "Generating PDF file..."
 	$(Q)mkdir -p $(BASEDIR)
 
+	@echo "Copying images to destination..."
+	$(Q)mkdir -p $(BASEDIR)/images
+	$(Q)cp images/*.png $(BASEDIR)/images
+
 	$(Q)fop -q  $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT) 2>fop.log
 	@echo "$(BASEDIR)/$(PDF_OUTPUT) created"
 	@echo "fop.log created"
