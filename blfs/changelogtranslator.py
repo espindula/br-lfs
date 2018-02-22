@@ -59,6 +59,7 @@ regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) ([0-9\.]+). +Fixe
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+). +Partially fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige partiellement #3'])
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) (\([^ ]+\)). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 #3. Corrige #4'])
 regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) \(([^ ]+) [mM]odule\). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 (module #3). Corrige #4'])
+regexps.append([re.compile('\[([^\]]+)\] - Updated? to ([^ ]+) \(security fixe?s?\). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 (correctif de sécurité). Corrige #3'])
 regexps.append([re.compile('\[([^\]]+)\] - Reintroduce ([^ ]+).?$', re.MULTILINE|re.DOTALL), '[#1] - Réintroduction de #2.'])
 regexps.append([re.compile('\[([^\]]+)\] - Reinstate ([^ ]+).?$', re.MULTILINE|re.DOTALL), '[#1] - Réintroduction de #2.'])
 regexps.append([re.compile('\[([^\]]+)\] - Add? ([^ ]+).?$', re.MULTILINE|re.DOTALL), '[#1] - Ajout de #2.'])
