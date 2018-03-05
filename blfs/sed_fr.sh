@@ -67,7 +67,7 @@ sed -e 's|xreflabel="Foreword|xreflabel="Avant-propos|g' \
     -e 's|xreflabel="About Devices|xreflabel="À propos des périphériques|g' \
     -e 's|xreflabel="Customizing your Logon with /etc/issue|xreflabel="Personnaliser votre écran de connexion avec /etc/issue|g' \
     -e 's|xreflabel="Post LFS Configuration and Extra Software|xreflabel="Configuration Post LFS et logiciels supplémentaires|g' \
-    -e 's|xreflabel="Printing, Scanning and Typesetting|xreflabel="Imprimentes, Scanners et Composition|g' \
+    -e 's|xreflabel="Printing, Scanning and Typesetting|xreflabel="Impression, Scan et Composition|g' \
     -e 's|xreflabel="Setting the PATH for TeX Live|xreflabel="Initialisation du PATH pour TeX Live|g' \
     -e 's|xreflabel="MTA|&|g' \
     -e 's|xreflabel="Servers|xreflabel="Serveurs|g' \
