@@ -14,6 +14,8 @@ ORIGDIR := lfs-en
 FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
 EN_REPO:=svn://svn.linuxfromscratch.org/LFS
 
+RENDERTMP=~/tmp
+
 
 # Note for releasing a new stable version:
 # ----------------------------------------
@@ -33,7 +35,7 @@ EN_REPO:=svn://svn.linuxfromscratch.org/LFS
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 8.2
+MILESTONE := 8.3
 
 # Select the current version we are tracking from master
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
@@ -73,13 +75,16 @@ REV=all
 ifeq ($(REV), all)
 SYSV=1
 SYSD=1
+REVS=sysv systemd
 else
 ifeq ($(REV), systemd)
 SYSV=
 SYSD=1
+REVS=systemd
 else
 SYSV=1
 SYSD=
+REVS=sysv
 endif
 endif
 
@@ -224,7 +229,7 @@ include.mk: $(ORIGDIR) Makefile
 	echo 'clean-product:' >> $@.tmp
 	for lang in $(LANGUAGES); do \
 		$(ECHO) "\trm -rf LFS-*-$$lang-HTML.tar.bz2\n" >> $@.tmp ;\
-		$(ECHO) "\trm -rf LFS-systemd-*-$$lang-HTML.tar.bz2\n" >> $@.tmp ;\
+		$(ECHO) "\trm -rf LFS-*-systemd-$$lang-HTML.tar.bz2\n" >> $@.tmp ;\
 		$(ECHO) "\trm -rf html-$$lang-systemd\n" >> $@.tmp ;\
 		$(ECHO) "\trm -rf html-$$lang-sysv\n" >> $@.tmp ;\
 		$(ECHO) "\trm -rf pdf-$$lang\n" >> $@.tmp ;\
@@ -249,8 +254,14 @@ include.mk: $(ORIGDIR) Makefile
 		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd\n' >> $@.tmp ;\
 		echo 'genpdf-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
 		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../pdf-'"$$lang"' pdf\n' >> $@.tmp ;\
-		echo 'genpdf-'"$$lang"'-systemd: '"$$copy $$xml"'$$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
+		$(ECHO) '\tmv pdf-'"$$lang"'/LFS-BOOK.pdf pdf-'"$$lang"'/LFS-$(MILESTONE)-'"$$lang"'.pdf\n' >> $@.tmp ;\
+		echo 'genpdf-'"$$lang"'-systemd: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
 		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../pdf-'"$$lang"' pdf\n' >> $@.tmp ;\
+		$(ECHO) '\tmv pdf-'"$$lang"'/LFS-SYSD-BOOK.pdf pdf-'"$$lang"'/LFS-$(MILESTONE)-'"$$lang"'-systemd.pdf\n' >> $@.tmp ;\
+		echo 'genepub-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 EPUB_OUTPUT=lfs-$(MILESTONE)-'"$$lang"'.epub REV=sysv BASEDIR=../epub-'"$$lang"'-sysv epub\n' >> $@.tmp ;\
+		echo 'genepub-'"$$lang"'-systemd: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 EPUB_OUTPUT=lfs-$(MILESTONE)-systemd-'"$$lang"'.epub REV=systemd BASEDIR=../epub-'"$$lang"'-systemd epub\n' >> $@.tmp ;\
 	done
 	echo >> $@.tmp
 	mv $@.tmp $@
@@ -275,14 +286,25 @@ ifeq ($(SYSD),1)
 PDFDEPS+=$(addsuffix -systemd,$(addprefix genpdf-,$(L)))
 endif
 
+EPUBDEPS=
+ifeq ($(SYSV),1)
+EPUBDEPS+=$(addsuffix -sysv,$(addprefix genepub-,$(L)))
+endif
+ifeq ($(SYSD),1)
+EPUBDEPS+=$(addsuffix -systemd,$(addprefix genepub-,$(L)))
+endif
+
 genhtml: $(HTMLDEPS)
 genpdf: $(PDFDEPS)
+genepub: $(EPUBDEPS)
 gentar: genhtml
 	for lang in $(L); do \
 		tar cf LFS-$(MILESTONE)-$$lang-HTML.tar html-$$lang-sysv ;\
-		tar cf LFS-systemd-$(MILESTONE)-$$lang-HTML.tar html-$$lang-systemd ;\
+		tar cf LFS-$(MILESTONE)-systemd-$$lang-HTML.tar html-$$lang-systemd ;\
+		rm -f LFS-$(MILESTONE)-$$lang-HTML.tar.bz2 ;\
+		rm -f LFS-$(MILESTONE)-systemd-$$lang-HTML.tar.bz2 ;\
 		bzip2 LFS-$(MILESTONE)-$$lang-HTML.tar ;\
-		bzip2 LFS-systemd-$(MILESTONE)-$$lang-HTML.tar ;\
+		bzip2 LFS-$(MILESTONE)-systemd-$$lang-HTML.tar ;\
 	done
 
 update: $(PO)
@@ -307,16 +329,22 @@ upload: $(SSH_AGENT)
 		cd .. ;\
 	done
 
-release: $(SSH_AGENT) genhtml genpdf gentar
+release: $(SSH_AGENT) genhtml genpdf gentar genepub
 	for lang in $(L); do \
 		cd html-$$lang-systemd ;\
-		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/src/www/www.$$lang.linuxfromscratch.org/view/lfs-$(MILESTONE)-systemd-$$lang/ ;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-$(MILESTONE)-systemd-$$lang/ ;\
 		cd ../html-$$lang-sysv ;\
-		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/src/www/www.$$lang.linuxfromscratch.org/view/lfs-$(MILESTONE)-$$lang/ ;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-$(MILESTONE)-$$lang/ ;\
 		cd ../pdf-$$lang ;\
-		rsync --progress * $(USER)@www.linuxfromscratch.org:/src/www/www.$$lang.linuxfromscratch.org/archive/LFS-$(MILESTONE)-$$lang/ ;\
-		cd ..
-		rsync --progress LFS-$(MILESTONE)-$$lang-HTML.tar.bz2 LFS-systemd-$(MILESTONE)-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/src/www/www.$$lang.linuxfromscratch.org/archive/LFS-$(MILESTONE)-$$lang/ ;\
+		rsync --progress LFS-$(MILESTONE)-$$lang.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)/ ;\
+		rsync --progress LFS-$(MILESTONE)-$$lang-systemd.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
+		cd .. ;\
+		rsync --progress LFS-$(MILESTONE)-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)/ ;\
+		rsync --progress LFS-$(MILESTONE)-systemd-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
+		cd epub-$$lang-sysv;\
+		rsync --progress lfs-$(MILESTONE)-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)/ ;\
+		cd ../epub-$$lang-systemd ;\
+		rsync --progress lfs-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
 	done
 
 ###############################################################################
@@ -364,6 +392,10 @@ lfsgen-fr/tidy.conf: $(ORIGDIR)/tidy.conf
 	sed -e "s/latin1/UTF8/g" \
 	    $< > $@
 
-lfsgen-fr/Makefile: $(ORIGDIR)/Makefile
+lfsgen-fr/Makefile: $(ORIGDIR)/Makefile lfsgen-fr/epub.mk
 	mkdir -p lfsgen-fr
-	sed '/&copy;/d' $< > $@
+	sed -e '/&copy;/d' -e 's|book:|include epub.mk\nbook:|' $< > $@
+
+lfsgen-fr/epub.mk: epub.mk
+	mkdir -p lfsgen-fr
+	cp $< $@
