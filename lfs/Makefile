@@ -249,9 +249,9 @@ include.mk: $(ORIGDIR) Makefile
 		xml='$$(filter lfsgen-'"$$lang"'/%,$$(XML))' ;\
 		copy='$$(filter lfsgen-'"$$lang"'/%,$$(COPY))' ;\
 		echo 'genhtml-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../html-'"$$lang"'-sysv\n' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../html-'"$$lang"'-sysv book\n' >> $@.tmp ;\
 		echo 'genhtml-'"$$lang"'-systemd: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
-		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd\n' >> $@.tmp ;\
+		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=systemd BASEDIR=../html-'"$$lang"'-systemd book\n' >> $@.tmp ;\
 		echo 'genpdf-'"$$lang"'-sysv: '"$$copy $$xml"' $$(IMAGES) $$(STYLESHEETS)' >> $@.tmp ;\
 		$(ECHO) '\tLANG=$$(LANG_'"$$lang"') make -C lfsgen-'"$$lang"' -j1 REV=sysv BASEDIR=../pdf-'"$$lang"' pdf\n' >> $@.tmp ;\
 		$(ECHO) '\tmv pdf-'"$$lang"'/LFS-BOOK.pdf pdf-'"$$lang"'/LFS-$(MILESTONE)-'"$$lang"'.pdf\n' >> $@.tmp ;\
