@@ -8,6 +8,6 @@ epub: validate
 	@echo "Generating EPUB file..."
 	echo "application/epub+zip" > $(RENDERTMP)/mimetype
 	cwd=$$(pwd) ;\
-	cd $(RENDERTMP)/; zip -0Xq $$cwd/$(BASEDIR)/$(EPUB_OUTPUT) ./mimetype
+	cd $(RENDERTMP)/; zip -0Xq $$cwd/../$(EPUB_OUTPUT) ./mimetype
 	cwd=$$(pwd) ;\
-	cd $(RENDERTMP)/lfs-epub/; zip -Xr9Dq $$cwd/$(BASEDIR)/$(EPUB_OUTPUT) ./*
+	cd $(RENDERTMP)/lfs-epub/; zip -Xr9Dq $$cwd/../$(EPUB_OUTPUT) ./*
