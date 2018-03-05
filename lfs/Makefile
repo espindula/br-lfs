@@ -39,6 +39,7 @@ MILESTONE := 8.3
 
 # Select the current version we are tracking from master
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
+REVISION := $(shell svn info $(ORIGDIR) | grep ^Revision | sed 's|^.* ||')
 
 # What this does is that it selects either the development version (if our milestone
 # is the same as upstream) or the stable version (if it does not match, meaning
@@ -346,6 +347,9 @@ release: $(SSH_AGENT) genhtml genpdf gentar genepub
 		cd ../epub-$$lang-systemd ;\
 		rsync --progress lfs-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
 	done
+
+commit: pootle
+	svn commit -m 'Automatic LFS commit based on r$(REVISION)'
 
 ###############################################################################
 # These files are not translated using po files. We use sed to modify them    #
