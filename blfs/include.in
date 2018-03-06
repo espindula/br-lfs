@@ -1,0 +1,104 @@
+HTMLDIRSYSV_MLANG := html-MLANG-sysv
+HTMLDIRSYSD_MLANG := html-MLANG-systemd
+HTMLTARSYSV_MLANG := BLFS-$(MILESTONE)-MLANG-HTML.tar.bz2
+HTMLTARSYSD_MLANG := BLFS-$(MILESTONE)-systemd-MLANG-HTML.tar.bz2
+PDFSYSV_MLANG := BLFS-$(MILESTONE)-MLANG.pdf
+PDFSYSD_MLANG := BLFS-$(MILESTONE)-MLANG-systemd.pdf
+EPUBSYSV_MLANG := BLFS-$(MILESTONE)-MLANG.epub
+EPUBSYSD_MLANG := BLFS-$(MILESTONE)-systemd-MLANG.epub
+
+XML_MLANG := $(shell find $(ORIGDIR) -name '*.xml' -o -name stylesheets -prune -a -type f -o -name archive -prune -a -type f | sed "s|$(ORIGDIR)/|blfsgen-MLANG/|g" | tr '\n' ' ')
+PO_MLANG := $(shell find $(ORIGDIR) -name '*.xml' -o -name stylesheets -prune -a -type f -o -name archive -prune -a -type f | sed "s|$(ORIGDIR)/|MLANG/|g" | sed 's|.xml$|.po|' | tr '\n' ' ')
+PO += $(PO_MLANG)
+IMAGES_MLANG := $(shell find images -type f | sed "s|^|blfsgen-MLANG/|g" | tr '\n' ' ')
+STYLESHEETS_MLANG := $(shell find stylesheets -type f | sed "s|^|blfsgen-MLANG/|g" | tr '\n' ' ')
+COPY_MLANG := $(addprefix blfsgen-MLANG/,$(filestoget))
+
+blfsgen-MLANG/%.xml: $(ORIGDIR)/%.xml MLANG/%.po sed_MLANG.sh
+	mkdir -p $$(dirname $@)
+	LANG=$(LANG_MLANG) po4a-translate -k 0 -f docbook -m $< -l $@.tmp -p $(word 2,$^) -M ascii
+	./$(word 3,$^) $@.tmp
+	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\1|' -i $@.tmp
+	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\2|' -i $@.tmp
+	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@.tmp
+	mv $@.tmp $@
+
+blfsgen-MLANG/images/%: images/%
+	mkdir -p $$(dirname $@)
+	@rm -f $@
+	cp $< $@
+
+blfsgen-MLANG/stylesheets/%: stylesheets/%
+	mkdir -p $$(dirname $@)
+	@rm -f $@
+	@if [ "$(DOCBOOK_LOCATION)" = "" ]; then \
+	  echo "DOCBOOK_LOCATION not set. Please set it in config.mk" ;\
+	  false ;\
+	fi
+	sed -e 's|DOCBOOK_LOCATION|$(DOCBOOK_LOCATION)|g' $< > $@
+
+MLANG/%.po: $(ORIGDIR)/%.xml
+	mkdir -p $$(dirname $@)
+	LANG=$(LANG_MLANG) po4a-updatepo -f docbook -m $< -p $@ -M ascii
+	@touch $@
+
+clean-gen-MLANG:
+	rm -rf blfsgen-MLANG
+
+clean-product-MLANG:
+	rm -rf $(HTMLTARSYSV_MLANG)
+	rm -rf $(HTMLTARSYSD_MLANG)
+	rm -rf $(HTMLDIRSYSV_MLANG)
+	rm -rf $(HTMLDIRSYSD_MLANG)
+	rm -rf $(PDFSYSV_MLANG)
+	rm -rf $(PDFSYSD_MLANG)
+	rm -rf $(EPUBSYSV_MLANG)
+	rm -rf $(EPUBSYSD_MLANG)
+
+.SECONDEXPANSION:
+$(addprefix blfsgen-MLANG/,$(filestocopy)): INPUT=$(ORIGDIR)$(subst blfsgen-MLANG,,$@)
+$(addprefix blfsgen-MLANG/,$(filestocopy)): $$(INPUT)
+	mkdir -p $$(dirname $@)
+	cp -r $< $@
+
+genhtml-MLANG-sysv: $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C blfsgen-MLANG -j1 REV=sysv BASEDIR=../$(HTMLDIRSYSV_MLANG) html
+
+genhtml-MLANG-sysd: $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C blfsgen-MLANG -j1 REV=systemd BASEDIR=../$(HTMLDIRSYSD_MLANG) html
+
+genpdf-MLANG-sysv: $(PDFSYSV_MLANG)
+
+$(PDFSYSV_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C blfsgen-MLANG -j1 REV=sysv BASEDIR=.. PDF_OUTPUT=$@ pdf
+
+genpdf-MLANG-sysd: $(PDFSYSD_MLANG)
+
+$(PDFSYSD_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C blfsgen-MLANG -j1 REV=systemd BASEDIR=.. PDF_OUTPUT=$@ pdf
+
+gentar-MLANG-sysv: $(HTMLTARSYSV_MLANG)
+$(HTMLTARSYSV_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG) genhtml-MLANG-sysv
+	rm -f $@
+	tar cjf $@ $(HTMLDIRSYSV_MLANG)
+
+gentar-MLANG-sysd: $(HTMLTARSYSD_MLANG)
+$(HTMLTARSYSD_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG) genhtml-MLANG-sysd
+	rm -f $@
+	tar cjf $@ $(HTMLDIRSYSD_MLANG)
+
+genepub-MLANG-sysv: $(EPUBSYSV_MLANG)
+$(EPUBSYSV_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C blfsgen-MLANG -j1 REV=sysv EPUB_OUTPUT=$@ epub
+
+genepub-MLANG-sysd: $(EPUBSYSD_MLANG)
+$(EPUBSYSD_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C blfsgen-MLANG -j1 REV=systemd EPUB_OUTPUT=$@ epub
+
+upload-MLANG-sysv: $(SSH_AGENT)
+	cd $(HTMLDIRSYSV_MLANG) ;\
+	rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.MLANG.linuxfromscratch.org/view/blfs-svn/
+
+upload-MLANG-sysd: $(SSH_AGENT)
+	cd $(HTMLDIRSYSD_MLANG) ;\
+	rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.MLANG.linuxfromscratch.org/view/blfs-systemd-svn/

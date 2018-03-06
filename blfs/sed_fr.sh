@@ -85,4 +85,5 @@ sed -e 's|xreflabel="Foreword|xreflabel="Avant-propos|g' \
     -e 's|xreflabel="X plus Window and Display Managers|xreflabel="X et gestionnaires de fenêtres et d'"'"'affichage|g' \
     -e 's|xreflabel="Other Window Managers|xreflabel="Autres gestionnaires de fenêtre|g' \
     -e 's|xreflabel="X Software|xreflabel="Logiciels X|g' \
-    -i $@
+    -e 's|<book>|<book lang="fr">|g' \
+    -i $1

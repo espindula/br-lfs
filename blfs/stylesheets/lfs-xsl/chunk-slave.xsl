@@ -13,7 +13,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
         Sets global params and include customized elements templates. -->
 
     <!-- Upstream XHTML presentation templates -->
-  <xsl:import href="docbook-xsl-snapshot/xhtml/docbook.xsl"/>
+  <xsl:import href="DOCBOOK_LOCATION/xhtml/docbook.xsl"/>
 
     <!-- Use ISO-8859-1 for output instead of default UTF-8 -->
   <xsl:param name="chunker.output.encoding" select="'UTF-8'"/>
@@ -31,7 +31,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
     The path from top-level HTML files (index.html, partX.html, etc) MUST be
     fixed via a sed in the Makefile-->
     <!-- Master CSS Stylesheet -->
-  <xsl:param name="html.stylesheet" select="'../stylesheets/lfs.css'"/>
+  <xsl:param name="html.stylesheet" select="'stylesheets/lfs.css'"/>
     <!-- Print CSS Stylesheet -->
     <!-- The original template is in {docbook-xsl}/xhtml/docbook.xsl -->
   <xsl:template name='user.head.content'>

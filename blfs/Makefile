@@ -1,91 +1,285 @@
 #!/usr/bin/make -f
 
-include include.mk
+# Use make L=... to build only a subset of the languages.
 
-LANGUAGE := fr
+LANGUAGES := fr
+LANG_fr := fr_FR.UTF-8
+L = all
 
-GENDIR := blfsgen-$(LANGUAGE)
+# Use config.mk to configure username and password for download and upload
+include config.mk
+
 ORIGDIR := blfs-en
-PODIR := $(LANGUAGE)
-#VERSION = tags/8.3
-VERSION = trunk/BOOK
-DIFFDIR = diff
 
-filestocopy := INSTALL obfuscate.sh README
-filestoget := $(filestocopy) general.ent gnome.ent packages.ent tidy.conf Makefile
-COPY:=$(addprefix $(GENDIR)/,$(filestoget))
-REV=sysv
-VERSION_LINE=1
-
-ifeq ($(REV), systemd)
-VERSION_LINE=4
-endif
-
+FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
 EN_REPO:=svn://svn.linuxfromscratch.org/BLFS
 
-SVN_en := "$(EN_REPO)/$(VERSION)/"
+RENDERTMP=~/tmp
+
+
+# Note for releasing a new stable version:
+# ----------------------------------------
+#
+# When a new stable version is released upstream, this Makefile will automatically
+# track it, so translate it as usual. Once the stable version is translated,
+# create a new branch that keeps tracking this release:
+#
+#   svn cp http://svn.linuxfromscratch.org/fr-lfs/trunk/blfs \
+#          http://svn.linuxfromscratch.org/fr-lfs/branches/blfs-$(MILESTONE)
+#
+# Once this is done, you can publish the new version by running:
+#
+#   make upload
+#
+# Then, update the MILESTONE to the next (unreleased) version of LFS in the
+# development branch and commit.
+
+# What we follow from upstream.
+MILESTONE := 8.3
+
+# Select the current version we are tracking from master
+EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
+REVISION := $(shell svn info $(ORIGDIR) | grep ^Revision | sed 's|^.* ||')
+
+# If the version we are tracking is released, there should be a tag named $(MILESTONE).
+# If this tag doesn't exist, it means the version is not released yet. Try to
+# list files in this tag. If it succeeds, it exists, if it fails it doesn't
+# exist. From that, choose what tag to follow: $(MILESTONE) or trunk.
+TAG := $(shell (svn ls svn://svn.linuxfromscratch.org/BLFS/tags/$(MILESTONE) --depth empty >/dev/null 2>&1 && $(MILESTONE)) || echo trunk)
+
+# Depending on what we track, we choose the correct branch from upstream.
+ifeq ($(TAG), trunk)
+EN_VER := trunk/BOOK
+else
+EN_VER := tags/$(TAG)
+endif
+
+# Files that are needed for the build process once translations are generated.
+filestocopy := INSTALL obfuscate.sh README
+# Additional files that may require some changes.
+filestoget := $(filestocopy) general.ent gnome.ent packages.ent tidy.conf Makefile
+
+# Use REV=sysv or REV=systemd to only build that version.
+REV=all
+
+ifeq ($(REV), all)
+SYSV=1
+SYSD=1
+REVS=sysv systemd
+else
+ifeq ($(REV), systemd)
+SYSV=
+SYSD=1
+REVS=systemd
+else
+SYSV=1
+SYSD=
+REVS=sysv
+endif
+endif
+
+# The complete upstream URI we follow.
+SVN_en := "$(EN_REPO)/$(EN_VER)"
+
+
+IMAGES := $(shell find images -type f)
+STYLESHEETS := $(shell find stylesheets -type f)
+CSS := $(shell ls stylesheets/lfs-xsl/*.css)
+
+CHUNK_QUIET = 1
 
 .PHONY: svnup
 
-#all: genhtml genpdf
-all: genhtml
+# Don't delete intermediates (.po files).
+.SECONDARY:
+
+default:
+	@echo 'Hi!'
+	@echo 'To build the HTML documentation, please run `make genhtml`. For'
+	@echo 'the PDF version, run `make genpdf`. For both run `make all`.'
+	@echo 'Restrict to a subset of the available language with L=... and'
+	@echo 'to a subset of the versions with REV=<sysv or systemd>.'
+	@echo 'Good luck!'
+
+all: genhtml genpdf
 	@echo DONE
 
-include.mk: $(ORIGDIR)
-	echo -n 'XML := ' > $@
-	find $(ORIGDIR) -type d -name stylesheets -prune -o -name archive -prune -o -name '*.xml' -a -type f -print | sed 's|$(ORIGDIR)/|$(GENDIR)/|g' | tr '\n' ' ' >> $@
-	echo >> $@
-	echo -n 'PO := ' >> $@
-	find $(ORIGDIR) -type d -name stylesheets -prune -o -name archive -prune -o -name '*.xml' -a -type f -print | sed 's|$(ORIGDIR)/|$(PODIR)/|g' | sed 's|.xml$$|.po|g' | tr '\n' ' ' >> $@
-	echo >> $@
-	echo -n 'IMAGES := ' >> $@
-	find images -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
-	echo >> $@
-	echo -n 'STYLESHEETS := ' >> $@
-	find stylesheets -type f | sed 's|^|$(GENDIR)/|g' | tr '\n' ' ' >> $@
+include include.mk
 
+config.mk:
+	@echo 'Hi!'
+	@echo 'To use this Makefile, you will need a config.mk file, with your username'
+	@echo 'and password in it. That is required for uploading to the lfs website.'
+	@echo 'An example config.mk is simply:'
+	@echo ''
+	@echo 'USER:=my-user'
+	@echo 'PRIVKEY:=~/.ssh/id_rsa'
+	@echo 'USE_SSH_AGENT:=yes'
+	@echo 'DOCBOOK_LOCATION:=/usr/share/xml/xsl/docbook-xsl-1.79.1'
+	@false
 
+# So, if USE_SSH_AGENT = yes ...
+ifeq ($(USE_SSH_AGENT), yes)
+SSH_AGENT:=ssh-agent
+else
+SSH_AGENT:=
+endif
 
-.SECONDEXPANSION:
-$(addprefix $(GENDIR)/,$(filestocopy)): INPUT=$(ORIGDIR)$(subst $(GENDIR),,$@)
-$(addprefix $(GENDIR)/,$(filestocopy)): $$(INPUT) $(GENDIR)
-	cp -r $< $@
-	
+init: $(ORIGDIR)
 
-genhtml: $(XML) $(STYLESHEETS) $(IMAGES) $(COPY)
-	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../html-$(REV)-$(LANGUAGE)
+$(ORIGDIR):
+	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/
 
-genpdf: $(XML) $(STYLESHEETS) $(IMAGES) $(COPY)
-	$(MAKE) -j1 -C $(GENDIR) REV=$(REV) BASEDIR=../pdf-$(REV)-$(LANGUAGE) pdf
+# When updating, check that we still want to follow the checked-out branch.
+# If not, remove it and check out the new branch.
+svnup: init
+	v=$$(svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||') ;\
+	if [ "$$v" != "$(SVN_en)" ]; then \
+		echo $$v ;\
+		rm -rf $(ORIGDIR);\
+		svn co $(SVN_en) $(ORIGDIR)/ >/dev/null;\
+	else \
+		if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
+			LANG=en_US.UTF-8 svn update $(ORIGDIR);\
+		fi ;\
+	fi
 
-TRANSLATE_CMD = po4a-translate -k 0 -f docbook -m $< -l $@ -p $(word 2,$^) -M ascii -L UTF-8
+clean: clean-gen clean-product
+	rm -rf $(ORIGDIR) include.mk
 
-$(GENDIR)/%.xml: $(ORIGDIR)/%.xml $(PODIR)/%.po
-	$(TRANSLATE_CMD)
-	./sed_$(LANGUAGE).sh $@
-	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\1|' -i $@
-	sed '0,/#-#/s|\([^>]*\) #-# \([^<]*\)|\2|' -i $@
-	sed -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
-	touch $(word 2,$^)
-	touch $@
+# include.mk contains most of the logic of the Makefile.
+# We generate lists of XML files to translated, PO files that contain translations,
+# images and stylesheet files, and the list of files to copy from the english repo.
+#
+# It also contains targets to build different html versions, to refresh the PO
+# files and to generate the translated XML files. We need to use this target
+# because the language in the name of the target and the file name are both
+# wildcards, which cannot be used.
+include.mk: include.in $(ORIGDIR) Makefile
+	echo '# This file is generated by Makefile, please do not modify it directly.' > $@.tmp
+	echo 'PO :=' >> $@.tmp
+	for lang in $(LANGUAGES); do \
+		sed -e "s|MLANG|$$lang|g" include.in >> $@.tmp;\
+	done
+	mv $@.tmp $@
 
-$(GENDIR)/index.xml: $(ORIGDIR)/index.xml $(PODIR)/index.po
-	$(TRANSLATE_CMD)
-	./sed_$(LANGUAGE).sh $@
-	sed -i -e 's|<book>|<book lang="fr">|g' \
-	       -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' -i $@
+clean-gen: $(addprefix clean-gen-,$(LANGUAGES))
+clean-product: $(addprefix clean-product-,$(LANGUAGES))
 
-$(GENDIR)/images/%: images/%
+ifeq ($(L),all)
+L=$(LANGUAGES)
+endif
+
+HTMLDEPS=
+ifeq ($(SYSV),1)
+HTMLDEPS+=$(addsuffix -sysv,$(addprefix genhtml-,$(L)))
+endif
+ifeq ($(SYSD),1)
+HTMLDEPS+=$(addsuffix -sysd,$(addprefix genhtml-,$(L)))
+endif
+
+PDFDEPS=
+ifeq ($(SYSV),1)
+PDFDEPS+=$(addsuffix -sysv,$(addprefix genpdf-,$(L)))
+endif
+ifeq ($(SYSD),1)
+PDFDEPS+=$(addsuffix -sysd,$(addprefix genpdf-,$(L)))
+endif
+
+TARDEPS=
+ifeq ($(SYSV),1)
+TARDEPS+=$(addsuffix -sysv,$(addprefix gentar-,$(L)))
+endif
+ifeq ($(SYSD),1)
+TARDEPS+=$(addsuffix -sysd,$(addprefix gentar-,$(L)))
+endif
+
+EPUBDEPS=
+ifeq ($(SYSV),1)
+EPUBDEPS+=$(addsuffix -sysv,$(addprefix genepub-,$(L)))
+endif
+ifeq ($(SYSD),1)
+EPUBDEPS+=$(addsuffix -sysd,$(addprefix genepub-,$(L)))
+endif
+
+UPDEPS=
+ifeq ($(SYSV),1)
+UPDEPS+=$(addsuffix -sysv,$(addprefix upload-,$(L)))
+endif
+ifeq ($(SYSD),1)
+UPDEPS+=$(addsuffix -sysd,$(addprefix upload-,$(L)))
+endif
+
+genhtml: $(HTMLDEPS)
+genpdf: $(PDFDEPS)
+genepub: $(EPUBDEPS)
+gentar: $(TARDEPS)
+
+update: $(PO)
+
+pootle:
+	pootle sync_stores --project=blfs
+	$(MAKE) svnup
+	$(MAKE) update
+	python3 changelogtranslator.py fr/introduction/welcome/changelog.po
+	for lang in $(LANGUAGES); do \
+		python3 templatetranslator.py `find $$lang -name '*.po'` ;\
+	done
+	pootle update_stores --project=blfs
+
+ssh-agent:
+	(ssh-add -l | grep $(PRIVKEY)) || \
+	ssh-add $(PRIVKEY)
+
+upload: $(UPDEPS)
+
+release: $(SSH_AGENT) genhtml genpdf gentar genepub
+	for lang in $(L); do \
+		cd html-$$lang-systemd ;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/blfs-$(MILESTONE)-systemd-$$lang/ ;\
+		cd ../html-$$lang-sysv ;\
+		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/blfs-$(MILESTONE)-$$lang/ ;\
+		cd ../pdf-$$lang ;\
+		rsync --progress LFS-$(MILESTONE)-$$lang.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
+		rsync --progress LFS-$(MILESTONE)-$$lang-systemd.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
+		cd .. ;\
+		rsync --progress LFS-$(MILESTONE)-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
+		rsync --progress LFS-$(MILESTONE)-systemd-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
+		cd epub-$$lang-sysv;\
+		rsync --progress lfs-$(MILESTONE)-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
+		cd ../epub-$$lang-systemd ;\
+		rsync --progress lfs-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
+	done
+
+commit: pootle
+	svn commit -m 'Automatic BLFS commit based on r$(REVISION)'
+
+blfsgen-%/pdf.mk: pdf.mk
 	mkdir -p $$(dirname $@)
-	rm -rf $@
 	cp $< $@
 
-$(GENDIR)/stylesheets/%: stylesheets/%
+blfsgen-%/epub.mk: epub.mk
 	mkdir -p $$(dirname $@)
-	rm -rf $@
-	cp $< $@
+	sed -e 's|DOCBOOK_LOCATION|$(DOCBOOK_LOCATION)|g' $< > $@
 
-$(GENDIR)/general.ent: $(ORIGDIR)/general.ent
+###############################################################################
+# These files are not translated using po files. We use sed to modify them    #
+# directly.                                                                   #
+###############################################################################
+
+##
+## French translation of non po files
+##
+
+#blfsgen-fr/index.xml: $(ORIGDIR)/index.xml fr/index.po
+#	./sed_fr.sh $@.tmp
+#	LANG=$(LANG_fr) po4a-translate -k 0 -f docbook -m $< -l $@.tmp -p $(word 2,$^)
+#	sed -i -e 's|<book>|<book lang="fr">|g' \
+#	       -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g' $@.tmp > $@
+#	rm $@.tmp
+
+blfsgen-fr/general.ent: $(ORIGDIR)/general.ent
+	mkdir -p $$(dirname $@)
 	cat $< | tr '\n' '\r' | \
 	sed -e "s|The BLFS Team|L'équipe de BLFS|g" \
 	    -e "s|The BLFS Development Team|L'équipe de développement de BLFS|g" \
@@ -103,51 +297,18 @@ $(GENDIR)/general.ent: $(ORIGDIR)/general.ent
 	    | tr '\r' '\n' > $@
 		cat general.ent.as_root >> $@
 
-$(GENDIR)/packages.ent: $(ORIGDIR)/packages.ent
+blfsgen-fr/packages.ent: $(ORIGDIR)/packages.ent
+	mkdir -p $$(dirname $@)
 	cp $< $@
 
-$(GENDIR)/gnome.ent: $(ORIGDIR)/gnome.ent
+blfsgen-fr/gnome.ent: $(ORIGDIR)/gnome.ent
+	mkdir -p $$(dirname $@)
 	cp $< $@
 
-$(GENDIR)/tidy.conf: $(ORIGDIR)/tidy.conf
-	cp $< $@
-	sed -e "s/latin1/UTF8/g" \
-	    $< > $@
+blfsgen-fr/tidy.conf: $(ORIGDIR)/tidy.conf
+	mkdir -p $$(dirname $@)
+	sed -e "s/latin1/UTF8/g" $< > $@
 
-$(GENDIR)/Makefile: $(ORIGDIR)/Makefile
-	sed '/&copy;/d' $< > $@
-
-init: $(ORIGDIR)
-
-$(ORIGDIR):
-	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/ 
-
-pootle:
-	pootle sync_stores --project=blfs
-	$(MAKE) svnup
-	$(MAKE) update
-	python3 changelogtranslator.py fr/introduction/welcome/changelog.po
-	python3 templatetranslator.py `find $(LANGUAGE) -name '*.po'`
-	pootle update_stores --project=blfs
-
-svnup: init
-	if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
-	svn update $(ORIGDIR);\
-	fi
-
-clean:
-	rm -rf $(DIFFDIR) $(GENDIR) $(ORIGDIR) include.mk html-sysv html-systemd pdf
-
-$(ORIGDIR)/%.xml: init
-	
-
-$(PODIR)/%.po: $(ORIGDIR)/%.xml $(PODIR)
-	po4a-updatepo -f docbook -m $< -p $@ -M ascii
-	touch $<
-	touch $@
-
-update: $(PO)
-
-upload:
-	(cd html-systemd-$(LANGUAGE); rsync --progress --recursive * jlepiller@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/blfs-systemd-svn/)
-	(cd html-sysv-$(LANGUAGE); rsync --progress --recursive * jlepiller@www.linuxfromscratch.org:/srv/www/www.fr.linuxfromscratch.org/view/blfs-svn/)
+blfsgen-fr/Makefile: $(ORIGDIR)/Makefile blfsgen-fr/epub.mk blfsgen-fr/pdf.mk
+	mkdir -p $$(dirname $@)
+	sed -e 's|^html:|include epub.mk\ninclude pdf.mk\nhtml:|' $< > $@
