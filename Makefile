@@ -71,7 +71,7 @@ pdf: validate
                 --stringparam profile.condition pdf \
                 --output $(RENDERTMP)/lfs-pdf.xml   \
                 stylesheets/lfs-xsl/profile.xsl     \
-                $(RENDERTMP)/lfs-html2.xml
+                $(RENDERTMP)/lfs-full.xml
 
 	@echo "Generating FO file..."
 	$(Q)xsltproc --nonet                           \
@@ -84,11 +84,10 @@ pdf: validate
 	$(Q)bash pdf-fixups.sh $(RENDERTMP)/lfs-pdf.fo
 
 	@echo "Generating PDF file..."
-	$(Q)mkdir -p $(BASEDIR)
+	$(Q)mkdir -p $(RENDERTMP)/images
+	$(Q)cp images/*.png $(RENDERTMP)/images
 
-	@echo "Copying images to destination..."
-	$(Q)mkdir -p $(BASEDIR)/images
-	$(Q)cp images/*.png $(BASEDIR)/images
+	$(Q)mkdir -p $(BASEDIR)
 
 	$(Q)fop -q  $(RENDERTMP)/lfs-pdf.fo $(BASEDIR)/$(PDF_OUTPUT) 2>fop.log
 	@echo "$(BASEDIR)/$(PDF_OUTPUT) created"
