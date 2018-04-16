@@ -64,7 +64,7 @@ regexps.append([re.compile('\[([^\]]+)\] - Reintroduce ([^ ]+).?$', re.MULTILINE
 regexps.append([re.compile('\[([^\]]+)\] - Reinstate ([^ ]+).?$', re.MULTILINE|re.DOTALL), '[#1] - Réintroduction de #2.'])
 regexps.append([re.compile('\[([^\]]+)\] - Add? ([^ ]+).?$', re.MULTILINE|re.DOTALL), '[#1] - Ajout de #2.'])
 
-datereg = re.compile('([^ ]+) ([0-9]{1,2})(th|nd|st|rd),? (20[0-9]{2})')
+datereg = re.compile('([^ ]+) ([0-9]{1,2})(th|nd|st|rd|),? (20[0-9]{2})')
 
 
 
