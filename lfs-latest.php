@@ -115,7 +115,7 @@ if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/relea
 if ( $package == "gcc"        ) $dirpath = max_parent( $dirpath, "gcc-" );
 if ( $package == "intltool"   ) $dirpath = "https://launchpad.net/intltool/trunk";
 if ( $package == "meson"      ) $dirpath = "https://github.com/mesonbuild/meson/releases";
-if ( $package == "mpc"        ) $dirpath = "http://www.multiprecision.org/mpc/download.html";
+if ( $package == "mpc"        ) $dirpath = "https://ftp.gnu.org/gnu/mpc";
 if ( $package == "mpfr"       ) $dirpath = "http://mpfr.loria.fr/mpfr-current";
 if ( $package == "ninja"      ) $dirpath = "https://github.com/ninja-build/ninja/releases";
 if ( $package == "procps-ng"  ) $dirpath = "http://sourceforge.net/projects/procps-ng/files";
@@ -241,9 +241,6 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
 
   if ( $package == "expect" )
      return find_max( $lines, "/expect/", "/^.*expect(\d[\d\.]+\d).tar.*$/" );
-
-  if ( $package == "mpc" )
-     return find_max( $lines, "/Version/", "/^.*Version (\d[\d\.]+\d)\\s*$/" );
 
   if ( $package == "XML-Parser" )
   {
