@@ -109,6 +109,7 @@ function get_packages( $package, $dirpath )
 if ( $package == "check"      ) $dirpath = "https://github.com/libcheck/check/releases";
 if ( $package == "e2fsprogs"  ) $dirpath = "http://sourceforge.net/projects/e2fsprogs/files/e2fsprogs";
 if ( $package == "expat"      ) $dirpath = "http://sourceforge.net/projects/expat/files";
+if ( $package == "elfutils"   ) $dirpath = "https://sourceware.org/ftp/elfutils";  
 if ( $package == "expect"     ) $dirpath = "http://sourceforge.net/projects/expect/files";  
 if ( $package == "file"       ) $dirpath = "https://github.com/file/file/releases";
 if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/releases";
@@ -241,6 +242,9 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
 
   if ( $package == "expect" )
      return find_max( $lines, "/expect/", "/^.*expect(\d[\d\.]+\d).tar.*$/" );
+
+  if ( $package == "elfutils" )
+     return find_max( $lines, "/^\d/", "/^(\d[\d\.]+\d)\/.*$/" );
 
   if ( $package == "XML-Parser" )
   {
