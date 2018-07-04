@@ -234,7 +234,7 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
   if ( $package == "attr" ||  
        $package == "acl"  )
   {
-     return find_max( $lines, "/$package/", "/^.*$package-([\d\.-]*\d)\.*$/" );
+     return find_max( $lines, "/$package/", "/^.*$package-([\d\.-]*\d).tar.*$/" );
   }
 
   if ( $package == "e2fsprogs" )
