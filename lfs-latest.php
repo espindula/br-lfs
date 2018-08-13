@@ -11,7 +11,7 @@ $exceptions = array();
 //$exceptions[ 'gmp' ] = "UPDIR=/.*(gmp-\d[\d\.-]*\d).*/:DOWNDIR=";
 
 $regex = array();
-$regex[ 'bzip2'    ] = "/^.*current version is ([\d\.]+).*$/";
+//$regex[ 'bzip2'    ] = "/^.*current version is ([\d\.]+).*$/";
 $regex[ 'check'    ] = "/^.*Check (\d[\d\.]+\d).*$/";
 $regex[ 'intltool' ] = "/^.*Latest version is (\d[\d\.]+\d).*$/";
 $regex[ 'less'     ] = "/^.*current released version is less-(\d+).*$/";
@@ -189,13 +189,13 @@ if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
         $dirpath  = substr ( $dirpath, 0, $position );
      }
 
-     if ( $package == "bzip2" ) 
-     {
-        // Remove one directory
-        $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
-        $position = strrpos( $dirpath, "/" );
-        $dirpath  = substr ( $dirpath, 0, $position );
-     }
+     //if ( $package == "bzip2" ) 
+     //{
+     //   // Remove one directory
+     //   $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
+     //   $position = strrpos( $dirpath, "/" );
+     //   $dirpath  = substr ( $dirpath, 0, $position );
+     //}
 
      $lines = http_get_file( $dirpath );
      if ( ! is_array( $lines ) ) return -6;
