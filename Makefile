@@ -158,11 +158,11 @@ $(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml \
 	@echo "Generating consolidated wget list at $(BASEDIR)/wget-list ..."
 	$(Q)mkdir -p $(BASEDIR)
 
-	#$(Q)xsltproc --nonet --xinclude                    \
-   #             --stringparam profile.revision $(REV) \
-   #             --output $(RENDERTMP)/sysd-wget.xml   \
-   #             stylesheets/lfs-xsl/profile.xsl       \
-   #             chapter03/chapter03.xml
+#	$(Q)xsltproc --nonet --xinclude                    \
+#                --stringparam profile.revision $(REV) \
+#                --output $(RENDERTMP)/sysd-wget.xml   \
+#                stylesheets/lfs-xsl/profile.xsl       \
+#                chapter03/chapter03.xml
 
 	$(Q)xsltproc --xinclude --nonet            \
                 --output $(BASEDIR)/wget-list \
