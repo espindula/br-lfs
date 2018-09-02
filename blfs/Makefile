@@ -45,7 +45,7 @@ REVISION := $(shell svn info $(ORIGDIR) | grep ^Revision | sed 's|^.* ||')
 # If this tag doesn't exist, it means the version is not released yet. Try to
 # list files in this tag. If it succeeds, it exists, if it fails it doesn't
 # exist. From that, choose what tag to follow: $(MILESTONE) or trunk.
-TAG := $(shell (svn ls svn://svn.linuxfromscratch.org/BLFS/tags/$(MILESTONE) --depth empty >/dev/null 2>&1 && $(MILESTONE)) || echo trunk)
+TAG := $(shell (svn ls svn://svn.linuxfromscratch.org/BLFS/tags/$(MILESTONE) --depth empty >/dev/null 2>&1 && printf $(MILESTONE)) || printf trunk)
 
 # Depending on what we track, we choose the correct branch from upstream.
 ifeq ($(TAG), trunk)
@@ -216,6 +216,7 @@ genepub: $(EPUBDEPS)
 gentar: $(TARDEPS)
 
 update: $(PO)
+	printf 'Done updating for $(TAG) \n'
 
 pootle:
 	pootle sync_stores --project=blfs
