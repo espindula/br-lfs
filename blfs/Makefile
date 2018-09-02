@@ -240,16 +240,13 @@ release: $(SSH_AGENT) genhtml genpdf gentar genepub
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/blfs-$(MILESTONE)-systemd-$$lang/ ;\
 		cd ../html-$$lang-sysv ;\
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/blfs-$(MILESTONE)-$$lang/ ;\
-		cd ../pdf-$$lang ;\
-		rsync --progress LFS-$(MILESTONE)-$$lang.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
-		rsync --progress LFS-$(MILESTONE)-$$lang-systemd.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
 		cd .. ;\
-		rsync --progress LFS-$(MILESTONE)-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
-		rsync --progress LFS-$(MILESTONE)-systemd-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
-		cd epub-$$lang-sysv;\
-		rsync --progress lfs-$(MILESTONE)-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
-		cd ../epub-$$lang-systemd ;\
-		rsync --progress lfs-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
+		rsync --progress BLFS-$(MILESTONE)-$$lang.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
+		rsync --progress BLFS-$(MILESTONE)-$$lang-systemd.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
+		rsync --progress BLFS-$(MILESTONE)-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
+		rsync --progress BLFS-$(MILESTONE)-systemd-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
+		rsync --progress BLFS-$(MILESTONE)-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)/ ;\
+		rsync --progress BLFS-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
 	done
 
 commit: pootle
