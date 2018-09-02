@@ -35,7 +35,7 @@ RENDERTMP=~/tmp
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 8.3
+MILESTONE := 8.4
 
 # Select the current version we are tracking from master
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
