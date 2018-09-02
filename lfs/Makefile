@@ -226,6 +226,7 @@ genepub: $(EPUBDEPS)
 gentar: $(TARDEPS)
 
 update: $(PO)
+	$(ECHO) 'Done updating for $(TAG) \n'
 
 pootle:
 	pootle sync_stores --project=lfs
