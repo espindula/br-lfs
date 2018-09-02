@@ -41,18 +41,11 @@ MILESTONE := 8.3
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
 REVISION := $(shell svn info $(ORIGDIR) | grep ^Revision | sed 's|^.* ||')
 
-# What this does is that it selects either the development version (if our milestone
-# is the same as upstream) or the stable version (if it does not match, meaning
-# that the stable version is released).
-ifeq ($(EN_CURR_VER), $(EN_REPO)/tags/$(MILESTONE))
-TAG := $(MILESTONE)
-else
-TAG := trunk
-endif
-
-ifneq ($(MILESTONE), $(shell ((grep milestone $(ORIGDIR)/general.ent || echo $(MILESTONE)) | sed 's|.*"\(.*\)".*|\1|')))
-TAG := $(MILESTONE)
-endif
+# If the version we are tracking is released, there should be a tag named $(MILESTONE).
+# If this tag doesn't exist, it means the version is not released yet. Try to
+# list files in this tag. If it succeeds, it exists, if it fails it doesn't
+# exist. From that, choose what tag to follow: $(MILESTONE) or trunk.
+TAG := $(shell (svn ls svn://svn.linuxfromscratch.org/LFS/tags/$(MILESTONE) --depth empty >/dev/null 2>&1 && printf $(MILESTONE)) || printf trunk)
 
 # Depending on what we track, we choose the correct branch from upstream.
 ifeq ($(TAG), trunk)
@@ -247,16 +240,13 @@ release: $(SSH_AGENT) genhtml genpdf gentar genepub
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-$(MILESTONE)-systemd-$$lang/ ;\
 		cd ../html-$$lang-sysv ;\
 		rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/view/lfs-$(MILESTONE)-$$lang/ ;\
-		cd ../pdf-$$lang ;\
+		cd .. ;\
 		rsync --progress LFS-$(MILESTONE)-$$lang.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)/ ;\
 		rsync --progress LFS-$(MILESTONE)-$$lang-systemd.pdf $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
-		cd .. ;\
 		rsync --progress LFS-$(MILESTONE)-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)/ ;\
 		rsync --progress LFS-$(MILESTONE)-systemd-$$lang-HTML.tar.bz2 $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
-		cd epub-$$lang-sysv;\
-		rsync --progress lfs-$(MILESTONE)-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)/ ;\
-		cd ../epub-$$lang-systemd ;\
-		rsync --progress lfs-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
+		rsync --progress LFS-$(MILESTONE)-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)/ ;\
+		rsync --progress LFS-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
 	done
 
 commit: pootle
