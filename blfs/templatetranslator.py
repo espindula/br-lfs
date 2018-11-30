@@ -66,9 +66,10 @@ regexps.append([re.compile('Optional Runtime Dependencies$'), 'Dépendances à l
 regexps.append([re.compile('(.*) Dependencies$'), 'Dépendances de #1'])
 regexps.append([re.compile('Required$'), 'Requises'])
 regexps.append([re.compile('Optional$'), 'Facultatives'])
-regexps.append([re.compile('Optional \(Required if building GNOME\)$'), 'Facultatives (Requises pour construire GNOME)'])
+regexps.append([re.compile('Optional \(Required if building GNOME\)$'), 'Facultatives (requises pour construire GNOME)'])
 regexps.append([re.compile('Recommended$'), 'Recommandées'])
-regexps.append([re.compile('Recommended \(Required if building GNOME\)$'), 'Recommandées (Requises pour construire GNOME)'])
+regexps.append([re.compile('Recommended \(Required if building GNOME\)$'), 'Recommandées (requises pour construire GNOME)'])
+regexps.append([re.compile('Recommended \(required for the testsuite\)$'), 'Recommandées (requises pour la suite de tests)'])
 regexps.append([re.compile('User Notes: (.*)$'), 'Notes utilisateur&nbsp;: #1'])
 # Titres
 regexps.append([re.compile('Installation of (.*)$'), 'Installation de #1'])
