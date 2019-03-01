@@ -29,13 +29,13 @@ RENDERTMP=~/tmp
 #
 # Once this is done, you can publish the new version by running:
 #
-#   make upload
+#   make release
 #
 # Then, update the MILESTONE to the next (unreleased) version of LFS in the
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 8.4
+MILESTONE := 8.5
 
 # Select the current version we are tracking from master
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
