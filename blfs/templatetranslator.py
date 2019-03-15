@@ -94,7 +94,7 @@ regexps.append([re.compile('Installed Directory$'), 'Répertoire installé'])
 regexps.append([re.compile('Installed Directories$'), 'Répertoires installés'])
 regexps.append([re.compile('Short Descriptions$'), 'Descriptions courtes'])
 # phrases récurrentes
-regexps.append([re.compile('Install (.*) by running the following commands:$'), 'Installez #1 en lançant les commandes suivantes&nbsp;:'])
+regexps.append([re.compile('Install ([^ ]*) by running the following commands:$'), 'Installez #1 en lançant les commandes suivantes&nbsp;:'])
 regexps.append([re.compile('(<userinput.*>.*</userinput>)$', re.MULTILINE|re.DOTALL), '#1'])
 regexps.append([re.compile('(<literal>.*</literal>)$', re.MULTILINE|re.DOTALL), '#1'])
 regexps.append([re.compile('(<computeroutput>.*</computeroutput>)$', re.MULTILINE|re.DOTALL), '#1'])
