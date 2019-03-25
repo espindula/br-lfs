@@ -60,31 +60,29 @@
     <para>Fix a minor security issue with glob functions:</para>
 
 <screen><userinput remap="pre">patch -Np1 -i ../&glibc-glob-patch;</userinput></screen>
--->
+--><!--
     <para>First create a compatibility symlink to avoid references to /tools in
     our final glibc:</para>
 
 <screen><userinput remap="pre">ln -sfv /tools/lib/gcc /usr/lib</userinput></screen>
-
-    <para>Determine the GCC include directory and create a symlink for LSB
+-->
+    <para>Create a symlink for LSB
     compliance. Additionally, for x86_64, create a compatibility symlink
     required for the dynamic loader to function correctly:</para>
 
 <screen><userinput remap="pre">case $(uname -m) in
-    i?86)    GCC_INCDIR=/usr/lib/gcc/$(uname -m)-pc-linux-gnu/&gcc-version;/include
-            ln -sfv ld-linux.so.2 /lib/ld-lsb.so.3
+    i?86)   ln -sfv ld-linux.so.2 /lib/ld-lsb.so.3
     ;;
-    x86_64) GCC_INCDIR=/usr/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/include
-            ln -sfv ../lib/ld-linux-x86-64.so.2 /lib64
+    x86_64) ln -sfv ../lib/ld-linux-x86-64.so.2 /lib64
             ln -sfv ../lib/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
     ;;
 esac</userinput></screen>
-
+<!--
     <para>Remove a file that may be left over from a previous build attempt:
     </para>
 
 <screen><userinput remap="pre">rm -f /usr/include/limits.h</userinput></screen>
-
+-->
     <para>The Glibc documentation recommends building Glibc 
     in a dedicated build directory:</para>
 
@@ -93,22 +91,22 @@ cd       build</userinput></screen>
 
     <para>Prepare Glibc for compilation:</para>
 
-<screen><userinput remap="configure">CC="gcc -isystem $GCC_INCDIR -isystem /usr/include" \
+<screen><userinput remap="configure">CC="gcc -ffile-prefix-map=/tools=/usr" \
 ../configure --prefix=/usr                          \
              --disable-werror                       \
              --enable-kernel=&min-kernel;                    \
              --enable-stack-protector=strong        \
-             libc_cv_slibdir=/lib
-unset GCC_INCDIR</userinput></screen>
+             libc_cv_slibdir=/lib</userinput></screen>
 
    <variablelist>
       <title>The meaning of the options and new configure parameters:</title>
 
       <varlistentry>
-        <term><parameter>CC="gcc -isystem $GCC_INCDIR -isystem /usr/include"</parameter></term>
+        <term><parameter>CC="gcc -ffile-prefix-map=/tools=/usr"</parameter></term>
         <listitem>
-          <para>Setting the location of both gcc and system include directories
-          avoids introduction of invalid paths in debugging symbols.</para>
+          <para>Make GCC record any references to files in /tools in result
+          of the compilation as if the files resided in /usr.  This avoids
+          introduction of invalid paths in debugging symbols.</para>
         </listitem>
       </varlistentry>
 
