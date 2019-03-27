@@ -274,7 +274,8 @@ lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	    -e "s/Must be installed before/Doit être installé avant/g"\
 	    -e "s/Optional dependencies/Dépendances facultatives/g"\
 	    -e "s|&lfs-root;blfs/|http://fr.linuxfromscratch.org/blfs|g"\
-	    -e "s|&blfs-root;view/&short-version;|\&blfs-root;\&short-version;|g"\
+	    -e "s|&lfs-root;faq/|http://fr.linuxfromscratch.org/faq|g"\
+	    -e "s|&blfs-root;view/|\&blfs-root;/../view/blfs-|g"\
 	    -e "s|&lfs-root;hints/downloads/files/|http://fr.linuxfromscratch.org/view/astuces/|g"\
 	    $< > $@
 
