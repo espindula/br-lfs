@@ -54,6 +54,7 @@ regexps = []
 
 regexps.append([re.compile('\[([^\]]+)\] - Up[dg]r?a[td]ed? to ([^ ]+).?$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2.'])
 regexps.append([re.compile('\[([^\]]+)\] - Up[dg]r?a[td]ed? to ([^ ]+). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige #3'])
+regexps.append([re.compile('\[([^\]]+)\] - Up[dg]r?a[td]ed? to ([^ ]+). +Part of (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige partiellement #3'])
 regexps.append([re.compile('\[([^\]]+)\] - Up[dg]r?a[td]ed? to ([^ ]+) and ([^ ]+). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 et #3. Corrige #4'])
 regexps.append([re.compile('\[([^\]]+)\] - Up[dg]r?a[td]ed? to ([^ ]+) ([0-9\.]+). +Fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2 #3. Corrige #4'])
 regexps.append([re.compile('\[([^\]]+)\] - Up[dg]r?a[td]ed? to ([^ ]+). +Partially fixes (<ulink [^>]+> *#[0-9]+ *</ulink>.?)$', re.MULTILINE|re.DOTALL), '[#1] - Mise à jour vers #2. Corrige partiellement #3'])
