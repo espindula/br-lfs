@@ -186,7 +186,7 @@ $(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml \
                 stylesheets/md5sum.xsl      \
                 $(RENDERTMP)/sysv-md5sum.xml
 	$(Q)sed -i -e \
-       "s/BOOTSCRIPTS-MD5SUM/$(shell md5sum lfs-bootscripts*.tar.bz2 | cut -d' ' -f1)/" \
+       "s/BOOTSCRIPTS-MD5SUM/$(shell md5sum lfs-bootscripts*.tar.xz | cut -d' ' -f1)/" \
        $(BASEDIR)/md5sums
 
 #dump-commands: validate
