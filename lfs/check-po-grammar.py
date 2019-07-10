@@ -39,6 +39,8 @@ exceptions = ["LFS", "BLFS", "ALFS", "HLFS", "CLFS", "From", "LFS-Bootscripts", 
         "Kadzban", "Hymers", "Leippe", "McMurchy", "Nicholson", "Patrakov", "Perreault", "Scot",
         "Mc", "Pherson", "Gateway", "Reno", "Schafer", "Tie-Ten-Quee", "Robertson", "Tushar",
         "Teredesai", "Utley", "Winkles",
+        # Pseudo
+        "bdubbs", "dj", "renodr", "ken", "xry111",
         # Abbreviations
         "NNTP", "ABI", "API", "CRC", "CVS", "EGA", "ELF", "EOF", "EQN", "FHS", "FIFO",
         "FQDN", "GCC", "GID", "IEEE", "IPC", "IRC", "ISP", "LSB", "MBR", "MD5", "NIC", "NLS",
@@ -162,6 +164,7 @@ n = 0
 for filename in files:
     po = polib.pofile(filename)
     for entry in po:
-        n = checkEntry(entry.msgstr, n)
+        if entry.obsolete == 0:
+            n = checkEntry(entry.msgstr, n)
 
 print("Resultat : {} problèmes détectés".format(n))
