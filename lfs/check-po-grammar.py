@@ -59,7 +59,7 @@ exceptions = ["LFS", "BLFS", "ALFS", "HLFS", "CLFS", "From", "LFS-Bootscripts", 
         "OpenSSL", "Pkg-config", "Procps", "Psmisc", "Readline", "Sed", "Shadow", "Sysklogd", "systemd",
         "Sysvinit", "Tar", "Tcl", "Texinfo", "Time", "Udev-lfs", "Util-linux", "Xz", "Zlib", "Elfutils",
         "Utils", "glibc", "Eudev-manpages", "meson", "Glob", "Gcc", "ASAN", "i386", "LTO", "umask", "gettext",
-        "util-linux", "Xz-Utils",
+        "util-linux", "Xz-Utils", "make", "Makefile", "sysroot", "expect",
         # Other terms
         "root", "ROOT", "null", "Core2Duo", "tools", "devpts"]
 
@@ -125,7 +125,8 @@ filters = []
 filters.append(re.compile(r"^[^ ]*$", re.IGNORECASE))
 filters.append(re.compile(r"^&buildtime;$", re.IGNORECASE))
 filters.append(re.compile(r"^&diskspace;$", re.IGNORECASE))
-filters.append(re.compile(r'^<filename class="[^"]">[^<]</filename>$', re.IGNORECASE))
+filters.append(re.compile(r'^<filename class="[^"]">[^<]*</filename>$', re.IGNORECASE))
+filters.append(re.compile(r'^<parameter>[^<]*</parameter>$', re.IGNORECASE))
 
 def filterhtml(msg):
     for regex in regexps:
