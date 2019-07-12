@@ -39,11 +39,6 @@
 
   <sect2 role="installation">
     <title>Installation of systemd</title>
-    <!--
-    <para>Apply a patch to fix two critical security vulnerabilities:</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../systemd-240-security_fixes-2.patch</userinput></screen>
-    -->
 
     <para>Create a symlink to work around missing xsltproc:</para>
 
@@ -70,13 +65,16 @@ done</userinput></screen>
 
 <screen><userinput remap="pre">sed -i 's/GROUP="render", //' rules/50-udev-default.rules.in</userinput></screen>
 
+<!-- EDITORS NOTE: At the next systemd release, see if the CFLAGS can be removed. -->
+
     <para>Prepare systemd for compilation:</para>
 
-    <screen><userinput remap="configure">mkdir -p build
+<screen><userinput remap="configure">mkdir -p build
 cd       build
 
 PKG_CONFIG_PATH="/usr/lib/pkgconfig:/tools/lib/pkgconfig" \
 LANG=en_US.UTF-8                   \
+CFLAGS+="-Wno-format-overflow"     \
 meson --prefix=/usr                \
       --sysconfdir=/etc            \
       --localstatedir=/var         \
@@ -85,7 +83,6 @@ meson --prefix=/usr                \
       -Ddefault-dnssec=no          \
       -Dfirstboot=false            \
       -Dinstall-tests=false        \
-      -Dkill-path=/bin/kill        \
       -Dkmod-path=/bin/kmod        \
       -Dldconfig=false             \
       -Dmount-path=/bin/mount      \
@@ -96,6 +93,7 @@ meson --prefix=/usr                \
       -Dsysusers=false             \
       -Dumount-path=/bin/umount    \
       -Db_lto=false                \
+      -Drpmmacrosdir=no            \
       ..</userinput></screen>
 
     <variablelist>
@@ -174,6 +172,13 @@ meson --prefix=/usr                \
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><parameter>-Drpmmacrosdir=no</parameter></term>
+        <listitem>
+          <para>This switch disables installation of RPM Macros
+          for use with systemd because LFS does not support RPM.</para>
+        </listitem>
+      </varlistentry>
     </variablelist>
 
     <para>Compile the package:</para>
@@ -188,10 +193,13 @@ meson --prefix=/usr                \
 
 <screen><userinput remap="install">LANG=en_US.UTF-8 ninja install</userinput></screen>
 
-    <para>Remove an unnecessary directory and file:</para>
+    <para>Remove an unnecessary symbolic link:</para>
 
-<screen><userinput remap="install">rm -rfv /usr/lib/rpm
-rm -f /usr/bin/xsltproc</userinput></screen>
+<screen><userinput remap="install">rm -f /usr/bin/xsltproc</userinput></screen>
+
+    <para>Remove symbolic links to Util-Linux libraries:</para>
+
+<screen><userinput remap="install">rm -fv /usr/lib/lib{blkid,uuid,mount}.so*</userinput></screen>
 
     <para>Create the <filename>/etc/machine-id</filename> file needed by
     <command>systemd-journald</command>:</para>
