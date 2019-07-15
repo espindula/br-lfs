@@ -106,6 +106,7 @@ function get_packages( $package, $dirpath )
 
 //if ( $package != "vim" ) return 0; // Debug
 
+if ( $package == "bc"         ) $dirpath = "https://github.com/gavinhoward/bc/releases";
 if ( $package == "check"      ) $dirpath = "https://github.com/libcheck/check/releases";
 if ( $package == "e2fsprogs"  ) $dirpath = "http://sourceforge.net/projects/e2fsprogs/files/e2fsprogs";
 if ( $package == "expat"      ) $dirpath = "http://sourceforge.net/projects/expat/files";
