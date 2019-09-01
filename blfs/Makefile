@@ -35,7 +35,7 @@ RENDERTMP=~/tmp
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 8.5
+MILESTONE := 9.0
 
 # Select the current version we are tracking from master
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
@@ -250,6 +250,9 @@ release: $(SSH_AGENT) genhtml genpdf gentar genepub
 	done
 
 commit: pootle
+	if [ "$$(svn status | grep '^?.*po$$' | cut -c8-)" != "" ]; then \
+		svn status | grep '^?.*po$$' | cut -c8- | xargs svn add; \
+	fi
 	svn commit -m 'Automatic BLFS commit based on r$(REVISION)'
 
 blfsgen-%/pdf.mk: pdf.mk
