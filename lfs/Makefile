@@ -2,8 +2,10 @@
 
 # Use make L=... to build only a subset of the languages.
 
-LANGUAGES := fr
+LANGUAGES := fr zh_CN
 LANG_fr := fr_FR.UTF-8
+LANG_zh_CN := zh_CN.UTF-8
+UPLOAD_LANGUAGES := fr
 L = all
 
 # Use config.mk to configure username and password for download and upload
@@ -35,7 +37,7 @@ RENDERTMP=~/tmp
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 9.0
+MILESTONE := 9.1
 
 # Select the current version we are tracking from master
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
@@ -171,6 +173,9 @@ clean-product: $(addprefix clean-product-,$(LANGUAGES))
 
 ifeq ($(L),all)
 L=$(LANGUAGES)
+UPL=$(UPLOAD_LANGUAGES)
+else
+UPL=$(L)
 endif
 
 HTMLDEPS=
