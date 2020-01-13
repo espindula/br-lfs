@@ -104,7 +104,7 @@ function get_packages( $package, $dirpath )
   global $exceptions;
   global $regex;
 
-//if ( $package != "vim" ) return 0; // Debug
+//if ( $package != "zstd" ) return 0; // Debug
 
 if ( $package == "bc"         ) $dirpath = "https://github.com/gavinhoward/bc/releases";
 if ( $package == "check"      ) $dirpath = "https://github.com/libcheck/check/releases";
@@ -127,6 +127,7 @@ if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/r
 if ( $package == "tcl"        ) $dirpath = "http://sourceforge.net/projects/tcl/files";
 if ( $package == "util-linux" ) $dirpath = max_parent( $dirpath, "v." );
 if ( $package == "vim"        ) $dirpath = "https://github.com/vim/vim/releases";
+if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/releases";
 //if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
 
   // Check for ftp
@@ -282,6 +283,9 @@ if ( $package == "vim"        ) $dirpath = "https://github.com/vim/vim/releases"
 
   if ( $package == "vim" )
      return find_max( $lines, "/v\d\./", "/^.*v([\d\.]+).*$/" );
+
+  if ( $package == "zstd" )
+     return find_max( $lines, "/Zstandard v/", "/^.*v([\d\.]+).*$/" );
 
   // Most packages are in the form $package-n.n.n
   // Occasionally there are dashes (e.g. 201-1)
