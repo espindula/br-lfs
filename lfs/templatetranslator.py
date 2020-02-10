@@ -35,6 +35,7 @@ class TemplateTranslator:
 				msgstr = msgstr.replace('#2', m.group(2))
 				msgstr = msgstr.replace('#3', m.group(3))
 				msgstr = msgstr.replace('#4', m.group(4))
+				msgstr = msgstr.replace('#5', m.group(5))
 			except:
 				x=1
 			entry.msgstr = msgstr

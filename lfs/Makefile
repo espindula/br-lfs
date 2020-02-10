@@ -212,10 +212,10 @@ endif
 
 UPDEPS=
 ifeq ($(SYSV),1)
-UPDEPS+=$(addsuffix -sysv,$(addprefix upload-,$(L)))
+UPDEPS+=$(addsuffix -sysv,$(addprefix upload-,$(UPL)))
 endif
 ifeq ($(SYSD),1)
-UPDEPS+=$(addsuffix -sysd,$(addprefix upload-,$(L)))
+UPDEPS+=$(addsuffix -sysd,$(addprefix upload-,$(UPL)))
 endif
 
 genhtml: $(HTMLDEPS)
