@@ -120,8 +120,10 @@ if ( $package == "meson"      ) $dirpath = "https://github.com/mesonbuild/meson/
 if ( $package == "mpc"        ) $dirpath = "https://ftp.gnu.org/gnu/mpc";
 if ( $package == "mpfr"       ) $dirpath = "http://mpfr.loria.fr/mpfr-current";
 if ( $package == "ninja"      ) $dirpath = "https://github.com/ninja-build/ninja/releases";
-if ( $package == "procps-ng"  ) $dirpath = "http://sourceforge.net/projects/procps-ng/files";
-if ( $package == "psmisc"     ) $dirpath = "http://sourceforge.net/projects/$package/files";
+//if ( $package == "procps-ng"  ) $dirpath = "http://sourceforge.net/projects/procps-ng/files";
+if ( $package == "procps-ng"  ) $dirpath = "https://gitlab.com/procps-ng/procps/-/tags";
+//if ( $package == "psmisc"     ) $dirpath = "http://sourceforge.net/projects/$package/files";
+if ( $package == "psmisc"     ) $dirpath = "https://gitlab.com/psmisc/psmisc/-/tags";
 if ( $package == "shadow"     ) $dirpath = "https://github.com/shadow-maint/shadow/releases";
 if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/releases";
 if ( $package == "tcl"        ) $dirpath = "http://sourceforge.net/projects/tcl/files";
@@ -274,6 +276,12 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
      $max = find_max( $lines, "/FILE5/", "/^.*FILE(5_\d+)*$/" );
      return str_replace( "_", ".", $max );
   }
+
+  if ( $package == "procps-ng" )
+     return find_max( $lines, "/release/", "/^.* ([\d\.]+).*$/" );
+
+  if ( $package == "psmisc" )
+     return find_max( $lines, "/^v/", "/^v([\d\.]+).*$/" );
 
   if ( $package == "grub" )
      return find_max( $lines, "/grub/", "/^.*grub-(\d\..*).tar.xz.*$/" );
