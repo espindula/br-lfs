@@ -14,7 +14,7 @@ ORIGDIR := blfs-en
 FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
 EN_REPO:=svn://svn.linuxfromscratch.org/BLFS
 
-RENDERTMP=~/tmp
+RENDERTMP=/data/tyreunom/tmp
 
 
 # Note for releasing a new stable version:

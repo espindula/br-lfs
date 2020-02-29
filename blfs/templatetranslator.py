@@ -129,6 +129,7 @@ regexps.append([re.compile('(<.*>): This switch is used to apply( a)? higher lev
 regexps.append([re.compile('(<ulink [^>]*/>)$', re.MULTILINE|re.DOTALL), '#1'])
 regexps.append([re.compile('(<ulink [^>]*/>, )+, and (<ulink [^>]*/>)$', re.MULTILINE|re.DOTALL), '#1 et #2'])
 regexps.append([re.compile('Fix a build issue with ([^ ]+)$', re.MULTILINE|re.DOTALL), 'Corrigez un problème de construction avec #1.'])
+regexps.append([re.compile('(<othername>.*</othername> <date>.*</date>)', re.MULTILINE|re.DOTALL), '#1'])
 
 
 #regexps.append([re.compile('$'), ''])
