@@ -16,6 +16,7 @@ $regex[ 'check'    ] = "/^.*Check (\d[\d\.]+\d).*$/";
 $regex[ 'intltool' ] = "/^.*Latest version is (\d[\d\.]+\d).*$/";
 $regex[ 'less'     ] = "/^.*current released version is less-(\d+).*$/";
 $regex[ 'mpfr'     ] = "/^mpfr-([\d\.]+)\.tar.*$/";
+$regex[ 'Python'   ] = "/^.*Latest Python 3.*Python (3[\d\.]+\d).*$/";
 $regex[ 'systemd'  ] = "/^.*v([\d]+)$/";
 //$regex[ 'sysvinit' ] = "/^.*sysvinit-([\d\.]+)dsf\.tar.*$/";
 $regex[ 'tzdata'   ] = "/^.*tzdata([\d]+[a-z]).*$/";
@@ -124,6 +125,7 @@ if ( $package == "ninja"      ) $dirpath = "https://github.com/ninja-build/ninja
 if ( $package == "procps-ng"  ) $dirpath = "https://gitlab.com/procps-ng/procps/-/tags";
 //if ( $package == "psmisc"     ) $dirpath = "http://sourceforge.net/projects/$package/files";
 if ( $package == "psmisc"     ) $dirpath = "https://gitlab.com/psmisc/psmisc/-/tags";
+if ( $package == "Python"     ) $dirpath = "https://www.python.org/downloads/source/";
 if ( $package == "shadow"     ) $dirpath = "https://github.com/shadow-maint/shadow/releases";
 if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/releases";
 if ( $package == "tcl"        ) $dirpath = "http://sourceforge.net/projects/tcl/files";
