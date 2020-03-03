@@ -71,7 +71,7 @@ pdf: validate
                 --stringparam profile.condition pdf \
                 --output $(RENDERTMP)/lfs-pdf.xml   \
                 stylesheets/lfs-xsl/profile.xsl     \
-                $(RENDERTMP)/lfs-full.xml
+                $(RENDERTMP)/lfs-html.xml
 
 	@echo "Generating FO file..."
 	$(Q)xsltproc --nonet                           \
