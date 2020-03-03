@@ -71,7 +71,7 @@ pdf: validate
                 --stringparam profile.condition pdf \
                 --output $(RENDERTMP)/lfs-pdf.xml   \
                 stylesheets/lfs-xsl/profile.xsl     \
-                $(RENDERTMP)/lfs-html.xml
+                $(RENDERTMP)/lfs-full.xml
 
 	@echo "Generating FO file..."
 	$(Q)xsltproc --nonet                           \
@@ -99,7 +99,7 @@ nochunks: validate profile-html
                 --stringparam rootid "$(ROOT_ID)"      \
                 --output $(BASEDIR)/$(NOCHUNKS_OUTPUT) \
                 stylesheets/lfs-nochunks.xsl           \
-                $(RENDERTMP)/lfs-full.xml
+                $(RENDERTMP)/lfs-html.xml
 #                $(RENDERTMP)/lfs-html2.xml
 
 	@echo "Running Tidy..."
