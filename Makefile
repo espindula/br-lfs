@@ -47,7 +47,7 @@ book: validate profile-html
 	$(Q)mkdir -p $(BASEDIR)/stylesheets
 	$(Q)cp stylesheets/lfs-xsl/*.css $(BASEDIR)/stylesheets
 	$(Q)pushd $(BASEDIR)/ > /dev/null;                     \
-       sed -i -e "s@../stylesheets@stylesheets@g" *.html; \
+#       sed -i -e "s@../stylesheets@stylesheets@g" *.html; \
        popd > /dev/null
 
 	$(Q)mkdir -p $(BASEDIR)/images
