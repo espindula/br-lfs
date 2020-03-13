@@ -35,7 +35,7 @@ RENDERTMP=/data/tyreunom/tmp
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 9.1
+MILESTONE := 9.2
 
 # Select the current version we are tracking from master
 EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
