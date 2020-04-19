@@ -43,21 +43,21 @@
 ln -sv /tools/bin/{env,install,perl,printf}         /usr/bin
 ln -sv /tools/lib/libgcc_s.so{,.1}                  /usr/lib
 ln -sv /tools/lib/libstdc++.{a,so{,.6}}             /usr/lib
+ln -sv /tools/lib/libfl.so*                         /usr/lib
 
-ln -sv bash /bin/sh</userinput></screen>
+ln -sv bash /bin/sh
 
-<!--for lib in blkid lzma mount uuid
+for lib in blkid mount uuid fdisk
 do
     ln -sv /tools/lib/lib$lib.so* /usr/lib
-done-->
-<!--ln -svf /tools/include/blkid    /usr/include
-ln -svf /tools/include/libmount /usr/include
-ln -svf /tools/include/uuid     /usr/include-->
-<!--for pc in blkid mount uuid
+    sed 's|/tools|/usr|' /tools/lib/pkgconfig/${lib}.pc \
+        &gt; /usr/lib/pkgconfig/${lib}.pc
+done
+for incdir in blkid libmount uuid libfdisk
 do
-    sed 's@tools@usr@g' /tools/lib/pkgconfig/${pc}.pc \
-        > /usr/lib/pkgconfig/${pc}.pc
-done-->
+    ln -svf /tools/include/$incdir    /usr/include
+done</userinput></screen>
+
   <variablelist>
     <title>The purpose of each link:</title>
 
@@ -164,30 +164,39 @@ done-->
         for C++ support in GMP.</para>
       </listitem>
     </varlistentry>
-<!--
-    <varlistentry>
-      <term><parameter><filename>/usr/lib/libstdc++.la</filename></parameter></term>
-      <listitem>
-        <para>This prevents a <filename class="directory">/tools</filename>
-        reference that would otherwise be in
-        <filename>/usr/lib/libstdc++.la</filename> after GCC is installed.</para>
-      </listitem>
-    </varlistentry>
--->
-    <!--<varlistentry revision="systemd">-->
-<!--    <varlistentry>
-      <term><parameter><filename>/usr/lib/lib{blkid,lzma,mount,uuid}.{a,la,so*}</filename></parameter></term>
-      <listitem>
-        <para>These links prevent utilities from acquiring an
-        unnecessary reference to the
-        <filename class="directory">/tools</filename> directory.</para>
-      </listitem>
-    </varlistentry>-->
 
     <varlistentry>
       <term><parameter><filename>/bin/sh</filename></parameter></term>
       <listitem>
         <para>Many shell scripts hard-code <filename>/bin/sh</filename>.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>
+        <parameter><filename>/usr/lib/libfl.so*</filename></parameter>
+      </term>
+      <listitem>
+        <para>This link allows binutils to find the flex library, and to
+	build enhanced versions of ar and ranlib.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>
+        <parameter>
+          <filename>/usr/lib/lib{blkid,fdisk,mount,uuid}.so*</filename>,
+          <filename>/usr/include/{blkid,libfdisk,libmount,uuid}</filename>,
+          <filename>/usr/lib/pkgconfig/{blkid,fdisk,mount,uuid}.pc</filename>
+        </parameter>
+      </term>
+      <listitem>
+        <para>These links and files allow
+        <phrase revision="sysv">eudev</phrase>
+        <phrase revision="systemd">systemd</phrase> to find the
+        util-linux libraries installed in chapter 5, without creating
+        wrong references to /tools. The uuid library is also needed for
+        building a python module.</para>
       </listitem>
     </varlistentry>
 
