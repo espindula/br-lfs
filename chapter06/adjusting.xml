@@ -24,15 +24,17 @@ mv -v /tools/$(uname -m)-pc-linux-gnu/bin/{ld,ld-old}
 mv -v /tools/bin/{ld-new,ld}
 ln -sv /tools/bin/ld /tools/$(uname -m)-pc-linux-gnu/bin/ld</userinput></screen>
 
-  <para>Next, amend the GCC specs file so that it points to the new
-  dynamic linker. Simply deleting all instances of <quote>/tools</quote> should
-  leave us with the correct path to the dynamic linker. Also adjust the specs file
-  so that GCC knows where to find the correct headers and Glibc start files.
+  <para>the next command amends the GCC specs file to achieve three goals:
+  first point GCC to the new dynamic linker. Simply deleting all instances of
+  <quote>/tools</quote> should leave us with the correct path to the dynamic
+  linker. Second, let GCC know where to find the Glibc start files. Third,
+  add the /usr/include directory at the end of the default search path, so
+  that header files added in chapter 6 are found.
   A <command>sed</command> command accomplishes this:</para>
 
 <screen><userinput>gcc -dumpspecs | sed -e 's@/tools@@g'                   \
     -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
-    -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' &gt;      \
+    -e '/\*cpp:/{n;s@$@ -idirafter /usr/include@}' &gt;      \
     `dirname $(gcc --print-libgcc-file-name)`/specs</userinput></screen>
 
   <para>It is a good idea to visually inspect the specs file to verify the
@@ -72,12 +74,17 @@ readelf -l a.out | grep ': /lib'</userinput></screen>
   <para os="g">Verify that the compiler is searching for the correct header
   files:</para>
 
-<screen><userinput>grep -B1 '^ /usr/include' dummy.log</userinput></screen>
+<screen><userinput>grep -B4 '^ /usr/include' dummy.log</userinput></screen>
 
   <para os="h">This command should return the following output:</para>
 
 <screen><computeroutput>#include &lt;...&gt; search starts here:
+ /tools/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/include
+ /tools/include
+ /tools/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/include-fixed
  /usr/include</computeroutput></screen>
+
+  <note><para>On a 32 bit system, x86_64 is replaced with i686.</para></note>
 
   <para os="i">Next, verify that the new linker is being used with the correct search paths:</para>
 
