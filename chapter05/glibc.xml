@@ -43,6 +43,19 @@
   <sect2 role="installation">
     <title>Installation of Glibc</title>
 
+    <para>First, create two symbolic links, which are needed for proper
+    operation of the dynamic library loader:</para>
+
+<screen><userinput remap="pre">ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64
+ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64/ld-lsb-x86-64.so.3</userinput></screen>
+
+    <para>Some of the Glibc programs use the non-FHS compliant
+    <filename class="directory">/var/db</filename> directory to store their
+    runtime data. Apply the following patch to make such programs store their
+    runtime data in the FHS-compliant locations:</para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../glibc-&glibc-version;-fhs-1.patch</userinput></screen>
+
     <para>The Glibc documentation recommends building Glibc 
     in a dedicated build directory:</para>
 
@@ -52,11 +65,12 @@ cd       build</userinput></screen>
     <para>Next, prepare Glibc for compilation:</para>
 
 <screen><userinput remap="configure">../configure                             \
-      --prefix=/tools                    \
+      --prefix=/usr                      \
       --host=$LFS_TGT                    \
       --build=$(../scripts/config.guess) \
       --enable-kernel=&min-kernel;                \
-      --with-headers=/tools/include</userinput></screen>
+      --with-headers=$LFS/usr/include    \
+      libc_cv_slibdir=/lib</userinput></screen>
 <!--
       libc_cv_forced_unwind=yes          \
       libc_cv_c_cleanup=yes</userinput></screen> -->
@@ -68,7 +82,7 @@ cd       build</userinput></screen>
         <term><parameter>--host=$LFS_TGT, --build=$(../scripts/config.guess)</parameter></term>
         <listitem>
           <para>The combined effect of these switches is that Glibc's build system
-          configures itself to cross-compile, using the cross-linker and
+          configures itself to be cross-compiled, using the cross-linker and
           cross-compiler in <filename class="directory">/tools</filename>.</para>
         </listitem>
       </varlistentry>
@@ -83,26 +97,22 @@ cd       build</userinput></screen>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--with-headers=/tools/include</parameter></term>
+        <term><parameter>--with-headers=$LFS/usr/include</parameter></term>
         <listitem>
           <para>This tells Glibc to compile itself against the headers recently
-          installed to the tools directory, so that it knows exactly what
+          installed to the usr/include directory, so that it knows exactly what
           features the kernel has and can optimize itself accordingly.</para>
         </listitem>
       </varlistentry>
-<!--
+
       <varlistentry>
-        <term><parameter>libc_cv_forced_unwind=yes</parameter></term>
+        <term><parameter>libc_cv_slibdir=/lib</parameter></term>
         <listitem>
-          <para>The linker installed during
-          <xref linkend="ch-tools-binutils-pass1"/> was cross-compiled and as
-          such cannot be used until Glibc has been installed.  This means that
-          the configure test for force-unwind support will fail, as it relies on
-          a working linker.  The libc_cv_forced_unwind=yes variable is passed in
-          order to inform <command>configure</command> that force-unwind
-          support is available without it having to run the test.</para>
+          <para>This ensures that the library is installed in /lib instead
+          of the default /lib64 on 64 bit machines.</para>
         </listitem>
       </varlistentry>
+<!--
       <varlistentry>
         <term><parameter>libc_cv_c_cleanup=yes</parameter></term>
         <listitem>
@@ -111,8 +121,8 @@ cd       build</userinput></screen>
           cleanup handling support is configured.</para>
         </listitem>
       </varlistentry>
--->
-<!--  <varlistentry>
+
+      <varlistentry>
         <term><parameter>libc_cv_ctors_header=yes</parameter></term>
         <listitem>
           <para>Similarly, we pass libc_cv_ctors_header=yes through to the
@@ -147,40 +157,65 @@ cd       build</userinput></screen>
 
     <para>Install the package:</para>
 
-<screen><userinput remap="install">make install</userinput></screen>
+<screen><userinput remap="install">make DESTDIR=$LFS install</userinput></screen>
 
-  <caution>
-    <para>At this point, it is imperative to stop and ensure that the basic
-    functions (compiling and linking) of the new toolchain are working as
-    expected. To perform a sanity check, run the following commands:</para>
+    <variablelist>
+      <title>The meaning of the <command>make install</command> option:</title>
+
+      <varlistentry>
+        <term><parameter>DESTDIR=$LFS</parameter></term>
+        <listitem>
+          <para>The <envar>DESTDIR</envar> make variable is used by almost all
+          packages to define the location where the package should be
+          installed. If it is not set, it defaults to the root (<filename
+          class="directory">/</filename>) directory. Here we specify that
+          the package be installed in <filename class="directory">$LFS
+          </filename>, which will become the root after <xref linkend=
+          "ch-tools-chroot"/>.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <caution>
+      <para>At this point, it is imperative to stop and ensure that the basic
+      functions (compiling and linking) of the new toolchain are working as
+      expected. To perform a sanity check, run the following commands:</para>
 
 <screen><userinput>echo 'int main(){}' &gt; dummy.c
 $LFS_TGT-gcc dummy.c
-readelf -l a.out | grep ': /tools'</userinput></screen>
+readelf -l a.out | grep '/ld-linux'</userinput></screen>
 
-    <para>If everything is working correctly, there should be no errors,
-    and the output of the last command will be of the form:</para>
+      <para>If everything is working correctly, there should be no errors,
+      and the output of the last command will be of the form:</para>
 
-<screen><computeroutput>[Requesting program interpreter: /tools/lib64/ld-linux-x86-64.so.2]</computeroutput></screen>
+<screen><computeroutput>[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</computeroutput></screen>
 
-    <para>Note that for 32-bit machines, the interpreter name will be
-    <filename>/tools/lib/ld-linux.so.2</filename>.</para>
+      <para>Note that for 32-bit machines, the interpreter name will be
+      <filename>/lib/ld-linux.so.2</filename>.</para>
 
-    <para>If the output is not shown as above or there was no output at all,
-    then something is wrong. Investigate and retrace the steps to find out
-    where the problem is and correct it. This issue must be resolved before
-    continuing on.</para>
+      <para>If the output is not shown as above or there was no output at all,
+      then something is wrong. Investigate and retrace the steps to find out
+      where the problem is and correct it. This issue must be resolved before
+      continuing on.</para>
 
-    <para>Once all is well, clean up the test files:</para>
+      <para>Once all is well, clean up the test files:</para>
 
 <screen><userinput>rm -v dummy.c a.out</userinput></screen>
 
-  </caution>
+    </caution>
 
-  <note><para>Building Binutils in the section after next will serve as an
-  additional check that the toolchain has been built properly. If Binutils
-  fails to build, it is an indication that something has gone wrong with the
-  previous Binutils, GCC, or Glibc installations.</para></note>
+    <note><para>Building packages in the next sections will serve as an
+    additional check that the toolchain has been built properly. If some
+    package, especially binutils-pass2 or gcc-pass2, fails to build, it is
+    an indication that something has gone wrong with the
+    previous Binutils, GCC, or Glibc installations.</para></note>
+
+    <para>Now that our cross-toolchain is complete, finalize the installation
+    of the limits.h header. For doing so, run an utility provided by the GCC
+    developers:</para>
+
+<screen><userinput>$LFS/tools/libexec/gcc/$LFS_TGT/&gcc-version;/install-tools/mkheaders</userinput></screen>
 
   </sect2>
 

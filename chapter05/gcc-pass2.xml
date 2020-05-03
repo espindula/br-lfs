@@ -54,23 +54,6 @@ mv -v gmp-&gmp-version; gmp
 tar -xf ../mpc-&mpc-version;.tar.gz
 mv -v mpc-&mpc-version; mpc</userinput></screen>
 
-    <para>Once again, change the location of GCC's default dynamic linker to
-    use the one installed in <filename
-    class="directory">/tools</filename>.</para>
-
-<screen><userinput remap="pre">for file in gcc/config/{linux,i386/linux{,64}}.h
-do
-  cp -uv $file{,.orig}
-  sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g' \
-      -e 's@/usr@/tools@g' $file.orig &gt; $file
-  echo '
-#undef STANDARD_STARTFILE_PREFIX_1
-#undef STANDARD_STARTFILE_PREFIX_2
-#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
-#define STANDARD_STARTFILE_PREFIX_2 ""' &gt;&gt; $file
-  touch $file.orig
-done</userinput></screen>
-
     <para>If building on x86_64, change the default directory name for 64-bit
     libraries to <quote>lib</quote>:</para>
 
@@ -81,84 +64,62 @@ done</userinput></screen>
   ;;
 esac</userinput></screen>
 
-    <para>Our first build of GCC has installed a couple of internal system
-    headers.  Normally one of them, <filename>limits.h</filename>, will in turn
-    include the corresponding system <filename>limits.h</filename> header, in
-    this case, <filename>/tools/include/limits.h</filename>. However, at the
-    time of the first build of gcc <filename>/tools/include/limits.h</filename>
-    did not exist, so the internal header that GCC installed is a partial,
-    self-contained file and does not include the extended features of the
-    system header. This was adequate for building the temporary libc, but this
-    build of GCC now requires the full internal header.  Create a full version
-    of the internal header using a command that is identical to what the GCC
-    build system does in normal circumstances:</para>
-
-<screen><userinput remap="pre">cat gcc/limitx.h gcc/glimits.h gcc/limity.h &gt; \
-  `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include-fixed/limits.h</userinput></screen>
-<!--
-    <para>For x86 machines, the limited number of registers is a bottleneck
-    for the system.  Free one up by not using a frame pointer that is not
-    needed:</para>
-
-<screen><userinput remap="pre">case `uname -m` in
-  i?86) sed -i 's/^T_CFLAGS =$/&amp; -fomit-frame-pointer/' gcc/Makefile.in ;;
-esac</userinput></screen>
--->
     <para>Create a separate build directory again:</para>
 
 <screen><userinput remap="pre">mkdir -v build
 cd       build</userinput></screen>
+
+    <para>Create a symlink that allos libgcc to be built with posix threads
+    support:</para>
+
+<screen><userinput remap="pre">mkdir -pv $LFS_TGT/libgcc
+ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></screen>
 
     <para>Before starting to build GCC, remember to unset any environment
     variables that override the default optimization flags.</para>
 
     <para>Now prepare GCC for compilation:</para>
 
-<screen><userinput remap="configure">CC=$LFS_TGT-gcc                                    \
-CXX=$LFS_TGT-g++                                   \
-AR=$LFS_TGT-ar                                     \
-RANLIB=$LFS_TGT-ranlib                             \
-../configure                                       \
-    --prefix=/tools                                \
-    --with-local-prefix=/tools                     \
-    --with-native-system-header-dir=/tools/include \
-    --enable-languages=c,c++                       \
-    --disable-libstdcxx-pch                        \
+<screen><userinput remap="configure">../configure                                       \
+    --build=$(../config.guess)                     \
+    --host=$LFS_TGT                                \
+    --prefix=/usr                                  \
+    CC_FOR_TARGET=$LFS_TGT-gcc                     \
+    --with-build-sysroot=$LFS                      \
+    --enable-initfini-array                        \
+    --disable-nls                                  \
     --disable-multilib                             \
-    --disable-bootstrap                            \
-    --disable-libgomp</userinput></screen>
+    --disable-decimal-float                        \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --disable-libstdcxx                            \
+    --enable-languages=c,c++</userinput></screen>
 
     <variablelist>
-      <title>The meaning of the new configure options:</title>
+      <title>The meaning of the new configure options:</title><!-- WIP -->
 
       <varlistentry>
-        <term><parameter>--enable-languages=c,c++</parameter></term>
+        <term><parameter>-with-build-sysroot=$LFS</parameter></term>
         <listitem>
-          <para>This option ensures that both the C and C++ compilers are
-          built.</para>
+          <para>Normally, using <parameter>--host=</parameter> ensures that
+          a cross-compiler is used for building gcc, and that compiler knows
+          that it has to look for headers and libraries in <filename
+          class="directory">$LFS</filename>. But the build system of GCC uses
+          other tools, which are not aware of this location. This switch is
+          needed to have them find the needed files in <filename
+          class="directory">$LFS</filename>, and not on the host.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-libstdcxx-pch</parameter></term>
+        <term><parameter>--enable-initfini-array</parameter></term>
         <listitem>
-          <para>Do not build the pre-compiled header (PCH) for
-          <filename class="libraryfile">libstdc++</filename>. It takes up a
-          lot of space, and we have no use for it.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--disable-bootstrap</parameter></term>
-        <listitem>
-          <para>For native builds of GCC, the default is to do a "bootstrap"
-          build. This does not just compile GCC, but compiles it several times.
-          It uses the programs compiled in a first round to compile itself a
-          second time, and then again a third time.  The second and third
-          iterations are compared to make sure it can reproduce itself
-          flawlessly. This also implies that it was compiled correctly.
-          However, the LFS build method should provide a solid compiler
-          without the need to bootstrap each time.</para>
+          <para>This option is automatically enabled when building a native
+          compiler with a native compiler on x86. But here, we build with
+          a cross compiler, so we need to explicitely set this option.</para>
         </listitem>
       </varlistentry>
 
@@ -170,7 +131,7 @@ RANLIB=$LFS_TGT-ranlib                             \
 
     <para>Install the package:</para>
 
-<screen><userinput remap="install">make install</userinput></screen>
+<screen><userinput remap="install">make DESTDIR=$LFS install</userinput></screen>
 
     <para>As a finishing touch, create a symlink. Many programs and scripts
     run <command>cc</command> instead of <command>gcc</command>, which is
@@ -179,45 +140,7 @@ RANLIB=$LFS_TGT-ranlib                             \
     <command>cc</command> leaves the system administrator free to decide
     which C compiler to install:</para>
 
-<screen><userinput remap="install">ln -sv gcc /tools/bin/cc</userinput></screen>
-
-  <caution>
-    <para>At this point, it is imperative to stop and ensure that the basic
-    functions (compiling and linking) of the new toolchain are working as
-    expected. To perform a sanity check, run the following commands:</para>
-
-<screen><userinput>echo 'int main(){}' &gt; dummy.c
-cc dummy.c
-readelf -l a.out | grep ': /tools'</userinput></screen>
-
-    <para>If everything is working correctly, there should be no errors,
-    and the output of the last command will be of the form:</para>
-
-<screen><computeroutput>[Requesting program interpreter: /tools/lib64/ld-linux-x86-64.so.2]</computeroutput></screen>
-
-    <para>Note that the dynamic linker will be /tools/lib/ld-linux.so.2 
-    for 32-bit machines.</para>
-
-    <para>If the output is not shown as above or there was no output at all,
-    then something is wrong. Investigate and retrace the steps to find out
-    where the problem is and correct it. This issue must be resolved before
-    continuing on. First, perform the sanity check again, using
-    <command>gcc</command> instead of <command>cc</command>. If this works,
-    then the <filename class="symlink">/tools/bin/cc</filename> symlink is
-    missing. Install the symlink as per above.
-    Next, ensure that the <envar>PATH</envar> is correct. This
-    can be checked by running <command>echo $PATH</command> and verifying that
-    <filename class="directory">/tools/bin</filename> is at the head of the
-    list. If the <envar>PATH</envar> is wrong it could mean that you are not
-    logged in as user <systemitem class="username">lfs</systemitem> or that
-    something went wrong back in <xref linkend="ch-preps-settingenviron"
-    role="."/></para>
-
-    <para>Once all is well, clean up the test files:</para>
-
-<screen><userinput>rm -v dummy.c a.out</userinput></screen>
-
-  </caution>
+<screen><userinput remap="install">ln -sv gcc $LFS/usr/bin/cc</userinput></screen>
 
   </sect2>
 

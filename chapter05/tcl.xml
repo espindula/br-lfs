@@ -3,6 +3,8 @@
   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
+  <!ENTITY tdbc-ver          "1.1.1">
+  <!ENTITY itcl-ver          "4.2.0">
 ]>
 
 <sect1 id="ch-tools-tcl" role="wrap">
@@ -46,8 +48,7 @@
     installed to support running the test suites for GCC and Binutils and other
     packages.  Installing three packages for testing purposes may seem
     excessive, but it is very reassuring, if not essential, to know that the
-    most important tools are working properly. Even if the test suites are not
-    run in this chapter (they are not mandatory), these packages are required
+    most important tools are working properly. These packages are required
     to run the test suites in <xref linkend="chapter-building-system"/>.</para>
 
     <para>Note that the Tcl package used here is a minimal version needed
@@ -56,27 +57,54 @@
 
     <para>Prepare Tcl for compilation:</para>
 
-<screen><userinput remap="configure">cd unix
-./configure --prefix=/tools</userinput></screen>
+<screen><userinput remap="configure">SRCDIR=$(pwd)
+cd unix
+./configure --prefix=/usr           \
+            --mandir=/usr/share/man \
+            $([ "$(uname -m)" = x86_64 ] &amp;&amp; echo --enable-64bit)</userinput></screen>
+
+    <variablelist>
+      <title>The meaning of the configure options:</title>
+
+      <varlistentry>
+        <term><parameter>$([ "$(uname -m)" = x86_64 ] &amp;&amp; echo --enable-64bit)</parameter></term>
+        <listitem>
+          <para>The construct <parameter>$(&lt;shell command&gt;)</parameter>
+          is replaced by the output of the chell command.  Here this output is
+          empty if running on a 32 bit machine, and is
+          <parameter>--enable-64bit</parameter> if running on a 64 bit machine.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
 
     <para>Build the package:</para>
 
-<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="make">make
 
-    <para>Compilation is now complete. As discussed earlier, running the test
-    suite is not mandatory for the temporary tools here in this chapter. To run
-    the Tcl test suite anyway, issue the following command:</para>
+sed -e "s|$SRCDIR/unix|/usr/lib|" \
+    -e "s|$SRCDIR|/usr/include|"  \
+    -i tclConfig.sh
 
-<screen><userinput remap="test">TZ=UTC make test</userinput></screen>
+sed -e "s|$SRCDIR/unix/pkgs/tdbc&tdbc-ver;|/usr/lib/tdbc&tdbc-ver;|" \
+    -e "s|$SRCDIR/pkgs/tdbc&tdbc-ver;/generic|/usr/include|"    \
+    -e "s|$SRCDIR/pkgs/tdbc&tdbc-ver;/library|/usr/lib/tcl8.6|" \
+    -e "s|$SRCDIR/pkgs/tdbc&tdbc-ver;|/usr/include|"            \
+    -i pkgs/tdbc&tdbc-ver;/tdbcConfig.sh
 
-    <para>The Tcl test suite may experience failures under certain host
-    conditions that are not fully understood. Therefore, test suite failures
-    here are not surprising, and are not considered critical. The
-    <parameter>TZ=UTC</parameter> parameter sets the time zone to Coordinated
-    Universal Time (UTC), but only
-    for the duration of the test suite run. This ensures that the clock tests
-    are exercised correctly. Details on the <envar>TZ</envar> environment
-    variable are provided in <xref linkend="chapter-config"/>.</para>
+sed -e "s|$SRCDIR/unix/pkgs/itcl&itcl-ver;|/usr/lib/itcl&itcl-ver;|" \
+    -e "s|$SRCDIR/pkgs/itcl&itcl-ver;/generic|/usr/include|"    \
+    -e "s|$SRCDIR/pkgs/itcl&itcl-ver;|/usr/include|"            \
+    -i pkgs/itcl&itcl-ver;/itclConfig.sh
+
+unset SRCDIR</userinput></screen>
+
+    <para>The various <quote>sed</quote> after the <quote>make</quote> command
+    remove references to the build directory from various configuration files,
+    and replaces them with the install directory. This is not mandatory
+    for the remaining of LFS, but may be needed in case a package built later
+    uses Tcl.</para>
 
     <para>Install the package:</para>
 
@@ -85,7 +113,7 @@
     <para>Make the installed library writable so debugging symbols can
     be removed later:</para>
 
-<screen><userinput remap="install">chmod -v u+w /tools/lib/libtcl&tcl-major-version;.so</userinput></screen>
+<screen><userinput remap="install">chmod -v u+w /usr/lib/libtcl&tcl-major-version;.so</userinput></screen>
 
     <para>Install Tcl's headers. The next package, Expect, requires them
     to build.</para>
@@ -94,7 +122,7 @@
 
     <para>Now make a necessary symbolic link:</para>
 
-<screen><userinput remap="install">ln -sv tclsh&tcl-major-version; /tools/bin/tclsh</userinput></screen>
+<screen><userinput remap="install">ln -sfv tclsh&tcl-major-version; /usr/bin/tclsh</userinput></screen>
 
   </sect2>
 

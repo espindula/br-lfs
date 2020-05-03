@@ -50,52 +50,24 @@ cd       build</userinput></screen>
 
     <para>Prepare Binutils for compilation:</para>
 
-<screen><userinput remap="configure">CC=$LFS_TGT-gcc                \
-AR=$LFS_TGT-ar                 \
-RANLIB=$LFS_TGT-ranlib         \
-../configure                   \
-    --prefix=/tools            \
+<screen><userinput remap="configure">../configure                   \
+    --prefix=/usr              \
+    --build=$(../config.guess) \
+    --host=$LFS_TGT            \
     --disable-nls              \
-    --disable-werror           \
-    --with-lib-path=/tools/lib \
-    --with-sysroot</userinput></screen>
+    --enable-shared            \
+    --disable-werror</userinput></screen>
 
     <variablelist>
       <title>The meaning of the new configure options:</title>
 
       <varlistentry>
-        <term><parameter>CC=$LFS_TGT-gcc AR=$LFS_TGT-ar RANLIB=$LFS_TGT-ranlib</parameter></term>
+        <term><parameter>--host=$LFS_TGT</parameter></term>
         <listitem>
-          <para>Because this is really a native build of Binutils, setting these
-          variables ensures that the build system uses the cross-compiler and
-          associated tools instead of the ones on the host system.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--with-lib-path=/tools/lib</parameter></term>
-        <listitem>
-          <para>This tells the configure script to specify the library
-          search path during the compilation of Binutils, resulting in
-          <filename class="directory">/tools/lib</filename> being passed
-          to the linker. This prevents the linker from searching through
-          library directories on the host.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--with-sysroot</parameter></term>
-        <listitem>
-          <para>This defines a default (non-existent) sysroot directory
-          <filename class="directory">/tools/$LFS_TGT/sys-root</filename>.
-          It is useful when looking for shared objects which are required by
-          other shared objects explicitly included on the linker's command
-          line. Those objects are searched into the directories listed in
-          <filename>&lt;sysroot&gt;/etc/ld.so.conf</filename>, and failing
-          that, into the linker search path, which is right. If this switch
-          is not given, <filename>/etc/ld.so.conf</filename> on the host
-          is used, that is, programs may be linked to libraries on
-          the host, which we want to avoid.</para>
+          <para>This tells the configure script that we want to build
+          this pass of binutils for the $LFS_TGT machine, using our just
+          built cross-compiler.  This prevents the linker from searching
+          through library directories on the host.</para>
         </listitem>
       </varlistentry>
 
@@ -107,41 +79,7 @@ RANLIB=$LFS_TGT-ranlib         \
 
     <para>Install the package:</para>
 
-<screen><userinput remap="install">make install</userinput></screen>
-
-    <para>Now prepare the linker for the <quote>Re-adjusting</quote> phase in
-    the next chapter:</para>
-
-<screen><userinput remap="adjust">make -C ld clean
-make -C ld LIB_PATH=/usr/lib:/lib
-cp -v ld/ld-new /tools/bin</userinput></screen>
-
-    <variablelist>
-      <title>The meaning of the make parameters:</title>
-
-      <varlistentry>
-        <term><parameter>-C ld clean</parameter></term>
-        <listitem>
-          <para>This tells the make program to remove all compiled
-          files in the <filename class="directory">ld</filename>
-          subdirectory.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>-C ld LIB_PATH=/usr/lib:/lib</parameter></term>
-        <listitem>
-          <para>This option rebuilds everything in the <filename
-          class="directory">ld</filename> subdirectory. Specifying the
-          <envar>LIB_PATH</envar> Makefile variable on the command line
-          allows us to override the default value of the temporary tools
-          and point it to the proper final path. The value of this variable
-          specifies the linker's default library search path. This
-          preparation is used in the next chapter.</para>
-        </listitem>
-      </varlistentry>
-
-    </variablelist>
+<screen><userinput remap="install">make DESTDIR=$LFS install</userinput></screen>
 
   </sect2>
 
