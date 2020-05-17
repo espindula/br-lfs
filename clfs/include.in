@@ -1,0 +1,70 @@
+HTMLDIR_MLANG := html-MLANG
+PDFDIR_MLANG := pdf-MLANG
+HTMLTAR_MLANG := LFS-$(MILESTONE)-MLANG-HTML.tar.bz2
+PDF_MLANG := LFS-$(MILESTONE)-MLANG.pdf
+EPUB_MLANG := LFS-$(MILESTONE)-MLANG.epub
+
+XML_MLANG := $(shell find $(ORIGDIR) -name '*.xml' -o -name '*stylesheets*' -prune -a -type f | sed "s|$(ORIGDIR)/|clfsgen-MLANG/|g" | tr '\n' ' ')
+PO_MLANG := $(shell find $(ORIGDIR) -name '*.xml' -o -name '*stylesheets*' -prune -a -type f | sed "s|$(ORIGDIR)/|MLANG/|g" | sed 's|.xml$$|.po|' | tr '\n' ' ')
+PO += $(PO_MLANG)
+IMAGES_MLANG := $(shell find images -type f | sed "s|^|clfsgen-MLANG/|g" | tr '\n' ' ')
+STYLESHEETS_MLANG := $(shell find stylesheets -type f | sed "s|^|clfsgen-MLANG/|g" | tr '\n' ' ')
+COPY_MLANG := $(addprefix clfsgen-MLANG/,$(filestoget))
+
+clfsgen-MLANG/images/%: images/%
+	mkdir -p $$(dirname $@)
+	@rm -f $@
+	cp $< $@
+
+clfsgen-MLANG/stylesheets/%: stylesheets/%
+	mkdir -p $$(dirname $@)
+	@rm -f $@
+	cp $< $@
+
+clfsgen-MLANG/%.xml: $(ORIGDIR)/%.xml MLANG/%.po sed-MLANG
+	mkdir -p $$(dirname $@)
+	LANG=$(LANG_MLANG) po4a-translate -k 0 -f docbook -m $< -l $@.tmp -p $(word 2,$^)
+	./$(word 3,$^) $@
+	rm $@.tmp
+
+MLANG/%.po: $(ORIGDIR)/%.xml
+	mkdir -p $$(dirname $@)
+	LANG=$(LANG_MLANG) po4a-updatepo -f docbook -m $< -p $@
+	@touch $@
+
+clean-gen-MLANG:
+	rm -rf clfsgen-MLANG
+
+clean-product-MLANG:
+	rm -rf $(HTMLTAR_MLANG)
+	rm -rf $(HTMLDIR_MLANG)
+	rm -rf $(PDFDIR_MLANG)
+	rm -rf $(PDF_MLANG)
+	rm -rf $(EPUB_MLANG)
+
+.SECONDEXPANSION:
+$(addprefix clfsgen-MLANG/,$(filestocopy)): INPUT=$(ORIGDIR)$(subst clfsgen-MLANG,,$@)
+$(addprefix clfsgen-MLANG/,$(filestocopy)): $$(INPUT)
+	mkdir -p $$(dirname $@)
+	cp -r $< $@
+
+genhtml-MLANG: $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLESHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C clfsgen-MLANG -j1 BASEDIR=../$(HTMLDIR_MLANG)
+
+genpdf-MLANG: $(PDF_MLANG)
+
+$(PDF_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLSHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C clfsgen-MLANG -j1 BASEDIR=../$(PDFDIR_MLANG) pdf
+
+gentar-MLANG: $(HTMLTAR_MLANG)
+$(HTMLTAR_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLSHEETS_MLANG) genhtml-MLANG
+	rm -f $@
+	tar cjf $@ $(HTMLDIR_MLANG)
+
+genepub-MLANG: $(EPUB_MLANG)
+$(EPUB_MLANG): $(XML_MLANG) $(COPY_MLANG) $(IMAGES_MLANG) $(STYLSHEETS_MLANG)
+	LANG=$(LANG_MLANG) make -C clfsgen-MLANG -j1 EPUB_OUTPUT=$@ epub
+
+upload-MLANG: $(SSH_AGENT)
+	cd $(HTMLDIR_MLANG) ;\
+	rsync --progress --recursive * $(USER)@www.linuxfromscratch.org:/srv/www/www.MLANG.linuxfromscratch.org/view/lfs-svn/
