@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2020-05-14 12:07+0000\n"
+"POT-Creation-Date: 2020-05-24 04:06+0000\n"
 "PO-Revision-Date: 2020-02-06 18:13+0000\n"
 "Last-Translator: roptat <roptat@lepiller.eu>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,14 +21,14 @@ msgstr ""
 #. type: Content of: <sect1><sect1info>
 #: blfs-en/postlfs/filesystems/initramfs.xml:12
 #| msgid ""
-#| "<othername>$LastChangedBy: pierre $</othername> <date>$Date: 2020-03-25 "
-#| "21:46:27 +0000 (Wed, 25 Mar 2020) $</date>"
+#| "<othername>$LastChangedBy: pierre $</othername> <date>$Date: 2020-05-14 "
+#| "08:54:12 +0000 (Thu, 14 May 2020) $</date>"
 msgid ""
-"<othername>$LastChangedBy: pierre $</othername> <date>$Date: 2020-05-14 "
-"08:54:12 +0000 (Thu, 14 May 2020) $</date>"
+"<othername>$LastChangedBy: pierre $</othername> <date>$Date: 2020-05-23 "
+"20:54:29 +0000 (Sat, 23 May 2020) $</date>"
 msgstr ""
-"<othername>$LastChangedBy: pierre $</othername> <date>$Date: 2020-05-14 "
-"08:54:12 +0000 (Thu, 14 May 2020) $</date>"
+"<othername>$LastChangedBy: pierre $</othername> <date>$Date: 2020-05-23 "
+"20:54:29 +0000 (Sat, 23 May 2020) $</date>"
 
 #. type: Content of: <sect1><title>
 #: blfs-en/postlfs/filesystems/initramfs.xml:16
@@ -155,10 +155,10 @@ msgstr ""
 #| "{\n"
 #| "  local file\n"
 #| "\n"
-#| "  if [ \"$2\" == \"lib\" ]; then\n"
-#| "    file=$(PATH=/lib:/usr/lib type -p $1)\n"
+#| "  if [ \"$2\" = \"lib\" ]; then\n"
+#| "    file=$(find /lib /usr/lib -maxdepth 1 -name $1 | head -n 1)\n"
 #| "  else\n"
-#| "    file=$(type -p $1)\n"
+#| "    file=$(find /bin /usr/bin /sbin /usr/sbin -maxdepth 1 -name $1 | head -n 1)\n"
 #| "  fi\n"
 #| "\n"
 #| "  if [ -n \"$file\" ] ; then\n"
@@ -256,6 +256,13 @@ msgstr ""
 #| "# Add lvm if present\n"
 #| "if [ -x /sbin/lvm ] ; then sbinfiles=\"$sbinfiles lvm dmsetup\"; fi\n"
 #| "\n"
+#| "# Add mdadm if present\n"
+#| "if [ -x /sbin/mdadm ] ; then sbinfiles=\"$sbinfiles mdadm\"; fi\n"
+#| "\n"
+#| "# Add udevd if present in /sbin (newer versions of udev have it in\n"
+#| "# /lib/udev)\n"
+#| "if [ -x /sbin/udevd ] ; then sbinfiles=\"$sbinfiles udevd\"; fi\n"
+#| "\n"
 #| "for f in $sbinfiles ; do\n"
 #| "  ldd /sbin/$f | sed \"s/\\t//\" | cut -d \" \" -f1 &gt;&gt; $unsorted\n"
 #| "  copy $f sbin\n"
@@ -273,6 +280,8 @@ msgstr ""
 #| "  ln -s kmod $WDIR/bin/lsmod\n"
 #| "  ln -s kmod $WDIR/bin/insmod\n"
 #| "fi\n"
+#| "\n"
+#| "ln -s bash $WDIR/bin/sh\n"
 #| "\n"
 #| "# Add lvm symlinks if appropriate\n"
 #| "# Also copy the lvm.conf file\n"
@@ -382,9 +391,9 @@ msgid ""
 "  local file\n"
 "\n"
 "  if [ \"$2\" = \"lib\" ]; then\n"
-"    file=$(find /lib /usr/lib -maxdepth 1 -name $1 | head -n 1)\n"
+"    file=$(PATH=/lib:/usr/lib type -p $1)\n"
 "  else\n"
-"    file=$(find /bin /usr/bin /sbin /usr/sbin -maxdepth 1 -name $1 | head -n 1)\n"
+"    file=$(type -p $1)\n"
 "  fi\n"
 "\n"
 "  if [ -n \"$file\" ] ; then\n"
@@ -617,9 +626,9 @@ msgstr ""
 "  local file\n"
 "\n"
 "  if [ \"$2\" = \"lib\" ]; then\n"
-"    file=$(find /lib /usr/lib -maxdepth 1 -name $1 | head -n 1)\n"
+"    file=$(PATH=/lib:/usr/lib type -p $1)\n"
 "  else\n"
-"    file=$(find /bin /usr/bin /sbin /usr/sbin -maxdepth 1 -name $1 | head -n 1)\n"
+"    file=$(type -p $1)\n"
 "  fi\n"
 "\n"
 "  if [ -n \"$file\" ] ; then\n"
@@ -845,6 +854,136 @@ msgstr ""
 #. type: Content of: <sect1><sect2><screen>
 #: blfs-en/postlfs/filesystems/initramfs.xml:304
 #, no-wrap
+#| msgid ""
+#| "<userinput>mkdir -p /usr/share/mkinitramfs &amp;&amp;\n"
+#| "cat &gt; /usr/share/mkinitramfs/init.in &lt;&lt; \"EOF\"\n"
+#| "<literal>#!/bin/sh\n"
+#| "\n"
+#| "PATH=/bin:/usr/bin:/sbin:/usr/sbin\n"
+#| "export PATH\n"
+#| "\n"
+#| "problem()\n"
+#| "{\n"
+#| "   printf \"Encountered a problem!\\n\\nDropping you to a shell.\\n\\n\"\n"
+#| "   sh\n"
+#| "}\n"
+#| "\n"
+#| "no_device()\n"
+#| "{\n"
+#| "   printf \"The device %s, which is supposed to contain the\\n\" $1\n"
+#| "   printf \"root file system, does not exist.\\n\"\n"
+#| "   printf \"Please fix this problem and exit this shell.\\n\\n\"\n"
+#| "}\n"
+#| "\n"
+#| "no_mount()\n"
+#| "{\n"
+#| "   printf \"Could not mount device %s\\n\" $1\n"
+#| "   printf \"Sleeping forever. Please reboot and fix the kernel command line.\\n\\n\"\n"
+#| "   printf \"Maybe the device is formatted with an unsupported file system?\\n\\n\"\n"
+#| "   printf \"Or maybe filesystem type autodetection went wrong, in which case\\n\"\n"
+#| "   printf \"you should add the rootfstype=... parameter to the kernel command line.\\n\\n\"\n"
+#| "   printf \"Available partitions:\\n\"\n"
+#| "}\n"
+#| "\n"
+#| "do_mount_root()\n"
+#| "{\n"
+#| "   mkdir /.root\n"
+#| "   [ -n \"$rootflags\" ] &amp;&amp; rootflags=\"$rootflags,\"\n"
+#| "   rootflags=\"$rootflags$ro\"\n"
+#| "\n"
+#| "   case \"$root\" in\n"
+#| "      /dev/* ) device=$root ;;\n"
+#| "      UUID=* ) eval $root; device=\"/dev/disk/by-uuid/$UUID\"  ;;\n"
+#| "      LABEL=*) eval $root; device=\"/dev/disk/by-label/$LABEL\" ;;\n"
+#| "      \"\"     ) echo \"No root device specified.\" ; problem    ;;\n"
+#| "   esac\n"
+#| "\n"
+#| "   while [ ! -b \"$device\" ] ; do\n"
+#| "       no_device $device\n"
+#| "       problem\n"
+#| "   done\n"
+#| "\n"
+#| "   if ! mount -n -t \"$rootfstype\" -o \"$rootflags\" \"$device\" /.root ; then\n"
+#| "       no_mount $device\n"
+#| "       cat /proc/partitions\n"
+#| "       while true ; do sleep 10000 ; done\n"
+#| "   else\n"
+#| "       echo \"Successfully mounted device $root\"\n"
+#| "   fi\n"
+#| "}\n"
+#| "\n"
+#| "do_try_resume()\n"
+#| "{\n"
+#| "   case \"$resume\" in\n"
+#| "      UUID=* ) eval $resume; resume=\"/dev/disk/by-uuid/$UUID\"  ;;\n"
+#| "      LABEL=*) eval $resume; resume=\"/dev/disk/by-label/$LABEL\" ;;\n"
+#| "   esac\n"
+#| "\n"
+#| "   if $noresume || ! [ -b \"$resume\" ]; then return; fi\n"
+#| "\n"
+#| "   ls -lH \"$resume\" | ( read x x x x maj min x\n"
+#| "       echo -n ${maj%,}:$min &gt; /sys/power/resume )\n"
+#| "}\n"
+#| "\n"
+#| "init=/sbin/init\n"
+#| "root=\n"
+#| "rootdelay=\n"
+#| "rootfstype=auto\n"
+#| "ro=\"ro\"\n"
+#| "rootflags=\n"
+#| "device=\n"
+#| "resume=\n"
+#| "noresume=false\n"
+#| "\n"
+#| "mount -n -t devtmpfs devtmpfs /dev\n"
+#| "mount -n -t proc     proc     /proc\n"
+#| "mount -n -t sysfs    sysfs    /sys\n"
+#| "mount -n -t tmpfs    tmpfs    /run\n"
+#| "\n"
+#| "read -r cmdline &lt; /proc/cmdline\n"
+#| "\n"
+#| "for param in $cmdline ; do\n"
+#| "  case $param in\n"
+#| "    init=*      ) init=${param#init=}             ;;\n"
+#| "    root=*      ) root=${param#root=}             ;;\n"
+#| "    rootdelay=* ) rootdelay=${param#rootdelay=}   ;;\n"
+#| "    rootfstype=*) rootfstype=${param#rootfstype=} ;;\n"
+#| "    rootflags=* ) rootflags=${param#rootflags=}   ;;\n"
+#| "    resume=*    ) resume=${param#resume=}         ;;\n"
+#| "    noresume    ) noresume=true                   ;;\n"
+#| "    ro          ) ro=\"ro\"                         ;;\n"
+#| "    rw          ) ro=\"rw\"                         ;;\n"
+#| "  esac\n"
+#| "done\n"
+#| "\n"
+#| "# udevd location depends on version\n"
+#| "if [ -x /sbin/udevd ]; then\n"
+#| "  UDEVD=/sbin/udevd\n"
+#| "elif [ -x /lib/udev/udevd ]; then\n"
+#| "  UDEVD=/lib/udev/udevd\n"
+#| "elif [ -x /lib/systemd/systemd-udevd ]; then\n"
+#| "  UDEVD=/lib/systemd/systemd-udevd\n"
+#| "else\n"
+#| "  echo \"Cannot find udevd nor systemd-udevd\"\n"
+#| "  problem\n"
+#| "fi\n"
+#| "\n"
+#| "${UDEVD} --daemon --resolve-names=never\n"
+#| "udevadm trigger\n"
+#| "udevadm settle\n"
+#| "\n"
+#| "if [ -f /etc/mdadm.conf ] ; then mdadm -As                       ; fi\n"
+#| "if [ -x /sbin/vgchange  ] ; then /sbin/vgchange -a y &gt; /dev/null ; fi\n"
+#| "if [ -n \"$rootdelay\"    ] ; then sleep \"$rootdelay\"              ; fi\n"
+#| "\n"
+#| "do_try_resume # This function will not return if resuming from disk\n"
+#| "do_mount_root\n"
+#| "\n"
+#| "killall -w ${UDEVD##*/}\n"
+#| "\n"
+#| "exec switch_root /.root \"$init\" \"$@\"\n"
+#| "</literal>\n"
+#| "EOF</userinput>"
 msgid ""
 "<userinput>mkdir -p /usr/share/mkinitramfs &amp;&amp;\n"
 "cat &gt; /usr/share/mkinitramfs/init.in &lt;&lt; \"EOF\"\n"
@@ -883,10 +1022,11 @@ msgid ""
 "   rootflags=\"$rootflags$ro\"\n"
 "\n"
 "   case \"$root\" in\n"
-"      /dev/* ) device=$root ;;\n"
-"      UUID=* ) eval $root; device=\"/dev/disk/by-uuid/$UUID\"  ;;\n"
-"      LABEL=*) eval $root; device=\"/dev/disk/by-label/$LABEL\" ;;\n"
-"      \"\"     ) echo \"No root device specified.\" ; problem    ;;\n"
+"      /dev/*    ) device=$root ;;\n"
+"      UUID=*    ) eval $root; device=\"/dev/disk/by-uuid/$UUID\" ;;\n"
+"      PARTUUID=*) eval $root; device=\"/dev/disk/by-partuuid/$PARTUUID\" ;;\n"
+"      LABEL=*   ) eval $root; device=\"/dev/disk/by-label/$LABEL\" ;;\n"
+"      \"\"        ) echo \"No root device specified.\" ; problem ;;\n"
 "   esac\n"
 "\n"
 "   while [ ! -b \"$device\" ] ; do\n"
@@ -1013,10 +1153,11 @@ msgstr ""
 "   rootflags=\"$rootflags$ro\"\n"
 "\n"
 "   case \"$root\" in\n"
-"      /dev/* ) device=$root ;;\n"
-"      UUID=* ) eval $root; device=\"/dev/disk/by-uuid/$UUID\"  ;;\n"
-"      LABEL=*) eval $root; device=\"/dev/disk/by-label/$LABEL\" ;;\n"
-"      \"\"     ) echo \"No root device specified.\" ; problem    ;;\n"
+"      /dev/*    ) device=$root ;;\n"
+"      UUID=*    ) eval $root; device=\"/dev/disk/by-uuid/$UUID\" ;;\n"
+"      PARTUUID=*) eval $root; device=\"/dev/disk/by-partuuid/$PARTUUID\" ;;\n"
+"      LABEL=*   ) eval $root; device=\"/dev/disk/by-label/$LABEL\" ;;\n"
+"      \"\"        ) echo \"No root device specified.\" ; problem ;;\n"
 "   esac\n"
 "\n"
 "   while [ ! -b \"$device\" ] ; do\n"
@@ -1107,27 +1248,27 @@ msgstr ""
 "EOF</userinput>"
 
 #. type: Content of: <sect1><sect2><title>
-#: blfs-en/postlfs/filesystems/initramfs.xml:437
+#: blfs-en/postlfs/filesystems/initramfs.xml:438
 msgid "Using an initramfs"
 msgstr "Utilisation d'un initramfs"
 
 #. type: Content of: <sect1><sect2><bridgehead>
-#: blfs-en/postlfs/filesystems/initramfs.xml:439
+#: blfs-en/postlfs/filesystems/initramfs.xml:440
 msgid "Required Runtime Dependency"
 msgstr "Dépendance d'exécution requise"
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:442
+#: blfs-en/postlfs/filesystems/initramfs.xml:443
 msgid "<xref role=\"runtime\" linkend=\"cpio\"/>"
 msgstr "<xref role=\"runtime\" linkend=\"cpio\"/>"
 
 #. type: Content of: <sect1><sect2><bridgehead>
-#: blfs-en/postlfs/filesystems/initramfs.xml:445
+#: blfs-en/postlfs/filesystems/initramfs.xml:446
 msgid "Other Runtime Dependencies"
 msgstr "Dépendances de Other Runtime"
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:448
+#: blfs-en/postlfs/filesystems/initramfs.xml:449
 msgid ""
 "<xref role=\"runtime\" linkend=\"lvm2\"/> and/or <xref role=\"runtime\" "
 "linkend=\"mdadm\"/> must be installed before generating the initramfs, if "
@@ -1138,12 +1279,12 @@ msgstr ""
 "les partitions du système les utilise."
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:453
+#: blfs-en/postlfs/filesystems/initramfs.xml:454
 msgid "User Notes: <ulink url=\"&blfs-wiki;/initramfs\"/>"
 msgstr "Notes utilisateur&nbsp;: <ulink url=\"&blfs-wiki;/initramfs\"/>"
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:459
+#: blfs-en/postlfs/filesystems/initramfs.xml:460
 msgid ""
 "To build an initramfs, run the following as the <systemitem "
 "class=\"username\">root</systemitem> user:"
@@ -1152,13 +1293,13 @@ msgstr ""
 "<systemitem class=\"username\">root</systemitem>&nbsp;:"
 
 #. type: Content of: <sect1><sect2><screen>
-#: blfs-en/postlfs/filesystems/initramfs.xml:463
+#: blfs-en/postlfs/filesystems/initramfs.xml:464
 #, no-wrap
 msgid "<userinput>mkinitramfs [KERNEL VERSION]</userinput>"
 msgstr "<userinput>mkinitramfs [KERNEL VERSION]</userinput>"
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:466
+#: blfs-en/postlfs/filesystems/initramfs.xml:467
 msgid ""
 "The optional argument is the directory where the appropriate kernel modules "
 "are located. This must be a subdirectory of <filename class='directory'> "
@@ -1179,7 +1320,7 @@ msgstr ""
 "enregistrés dans le répertoire courant."
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:477
+#: blfs-en/postlfs/filesystems/initramfs.xml:478
 msgid ""
 "If early loading of microcode is needed (see <xref linkend=\"cpu-"
 "microcode\"/>), you can install the appropriate blob or container in "
@@ -1194,7 +1335,7 @@ msgstr ""
 "<command>mkinitfs</command>."
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:485
+#: blfs-en/postlfs/filesystems/initramfs.xml:486
 msgid ""
 "After generating the initrd, copy it to the <filename "
 "class='directory'>/boot</filename> directory."
@@ -1203,7 +1344,7 @@ msgstr ""
 " class='directory'>/boot</filename>."
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:490
+#: blfs-en/postlfs/filesystems/initramfs.xml:491
 msgid ""
 "Now edit <filename>/boot/grub/grub.cfg</filename> and add a new menuentry.  "
 "Below are several examples."
@@ -1212,7 +1353,7 @@ msgstr ""
 "nouvelle entrée dans le menu. En dessous, plusieurs exemples sont présentés."
 
 #. type: Content of: <sect1><sect2><screen>
-#: blfs-en/postlfs/filesystems/initramfs.xml:494
+#: blfs-en/postlfs/filesystems/initramfs.xml:495
 #, no-wrap
 msgid ""
 "<userinput># Generic initramfs and root fs identified by UUID\n"
@@ -1230,7 +1371,7 @@ msgstr ""
 "}</userinput>"
 
 #. type: Content of: <sect1><sect2><screen>
-#: blfs-en/postlfs/filesystems/initramfs.xml:501
+#: blfs-en/postlfs/filesystems/initramfs.xml:502
 #, no-wrap
 msgid ""
 "<userinput># Generic initramfs and root fs on LVM partition\n"
@@ -1248,7 +1389,7 @@ msgstr ""
 "}</userinput>"
 
 #. type: Content of: <sect1><sect2><screen>
-#: blfs-en/postlfs/filesystems/initramfs.xml:508
+#: blfs-en/postlfs/filesystems/initramfs.xml:509
 #, no-wrap
 msgid ""
 "<userinput># Specific initramfs and root fs identified by LABEL\n"
@@ -1266,6 +1407,6 @@ msgstr ""
 "}</userinput>"
 
 #. type: Content of: <sect1><sect2><para>
-#: blfs-en/postlfs/filesystems/initramfs.xml:516
+#: blfs-en/postlfs/filesystems/initramfs.xml:517
 msgid "Finally, reboot the system and select the desired system."
 msgstr "Finalement, redémarrez le système et sélectionnez le système désiré."
