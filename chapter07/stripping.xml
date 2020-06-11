@@ -16,22 +16,70 @@
     a backup of the temporary tools.
   </para>
 
+  <para>
+    The following steps are performed from outside the chroot
+    environment. That means, you have to leave the chroot environment
+    first before continuing. The reason for that is to
+    <itemizedlist>
+      <listitem>
+        <para>
+          make sure that objects are not in use while they gets 
+	  manipulated.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          get access to file system locations outside of the chroot
+          environment to store/read the backup archive which should
+          not be placed within the
+          <filename class="directory">$LFS</filename> hierarchy for
+          safety reasons.
+        </para>
+      </listitem>
+    </itemizedlist>
+  </para>
+
+  <para>
+    Leave the chroot environment and unmount the kernel virtual file
+    systems:
+  </para>
+
+<screen role="nodump"><userinput>exit
+umount $LFS/dev{/pts,}
+umount $LFS/{sys,proc,run}</userinput></screen>
+
+  <note>
+    <para>All of the following instructions are executed by
+      <systemitem class="username">root</systemitem>. Take extra
+      care about the commands you're going to run as mistakes
+      here can modify your host system. Be aware that the
+      environment variable <envar>LFS</envar> is set for user 
+      <systemitem class="username">lfs</systemitem> by default 
+      but it might <emphasis>not</emphasis> be set for 
+      <systemitem class="username">root</systemitem>. Whenever 
+      commands are to be executed by <systemitem class="username">root</systemitem>, 
+      make sure you have set <envar>LFS</envar> accordingly.
+      This has been discussed in <xref linkend='ch-partitioning-aboutlfs'/>.
+    </para>
+  </note>
+
   <sect2>
     <title>Stripping</title>
 
     <para>If the LFS partition is rather small, it is beneficial to
-    learn that unnecessary items can be removed.
-    The executables and libraries built so far contain about 70 MB of unneeded
-    debugging symbols.</para>
+    learn that unnecessary items can be removed. The executables and
+    libraries built so far contain about 94 MB of unneeded debugging
+    symbols.</para>
 
-<screen><userinput>strip --strip-debug /usr/lib/*
-strip --strip-unneeded /usr/{,s}bin/*
-strip --strip-unneeded /tools/bin/*</userinput></screen>
+    <para>Strip off debugging symbols from binaries:</para>
+<screen role="nodump"><userinput>strip --strip-debug $LFS/usr/lib/*
+strip --strip-unneeded $LFS/usr/{,s}bin/*
+strip --strip-unneeded $LFS/tools/bin/*</userinput></screen>
 
     <para>These commands will skip a number of files reporting that it does not
     recognize their file format. Most of these are scripts instead of binaries.
     <!--Note that we use the <command>strip</command> program built in
-    <quote>Binutils pass 1</quote>, since it is the one that knows how to strip
+    <quote>Binutils pass 2</quote>, since it is the one that knows how to strip
     our cross-compiled programs.--></para>
 
     <para>Take care <emphasis>NOT</emphasis> to use
@@ -39,22 +87,22 @@ strip --strip-unneeded /tools/bin/*</userinput></screen>
     ones would be destroyed and the toolchain packages would need to be
     built all over again.</para>
 
-    <para>To save more space, remove the documentation:</para>
+    <para>To save more space (about 37 MB), remove the documentation:</para>
 
-<screen><userinput>rm -rf /usr/{,share}/{info,man,doc}</userinput></screen>
+<screen role="nodump"><userinput>rm -rf $LFS/usr/share/{info,man,doc}</userinput></screen>
 
     <para>The libtool .la files are only useful when linking with static
     libraries. They are unneeded, and potentially harmful, when using dynamic
     shared libraries, specially when using non-autotools build systems.
     Remove those files now:</para>
 
-<screen><userinput>find /usr/{lib,libexec} -name \*.la -delete</userinput></screen>
+<screen role="nodump"><userinput>find $LFS/usr/{lib,libexec} -name \*.la -delete</userinput></screen>
 
     <para>At this point, you should have at least 5 GB of free space on the
     chroot partition that can be used to build and install Glibc and Gcc in
     the next phase. If you can build and install Glibc, you can build and install
     the rest too. You can check the free disk space with the command 
-    <command>df -h /</command>.</para>
+    <command>df -h $LFS/</command>.</para>
 
   </sect2>
 
@@ -68,29 +116,27 @@ strip --strip-unneeded /tools/bin/*</userinput></screen>
       backed up for later reuse. In case of fatal failures in the subsequent
       chapters, it often turns out that removing everything and starting over
       (more carefully) is the best option to recover. Unfortunatly, all the
-      temporary tools will be removed, too. To avoid the extra time needed to redo
-      something which has been built successfully, prepare a backup.
+      temporary tools will be removed, too. To avoid spending extra time to
+      redo something which has been built successfully, prepare a backup.
     </para>
 
     <para>
-      Leave the chroot environment and make sure you have at least 
-      600 MB free disk space (the source tarballs will be included in
-      the backup archive) in the home directory of user 
-      <systemitem class="username">lfs</systemitem>. Leaving the 
-      chroot environment is required as the backup should be stored
-      outside of the <filename class="directory">$LFS</filename> directory
-      but those cannot be accessed when in chroot. Leave the chroot environment
-      and unmount the virtual kernel filesystems:
+      Make sure you have at least 600 MB free disk space (the source tarballs
+      will be included in the backup archive) in the home directory of user 
+      <systemitem class="username">root</systemitem>.
     </para>
 
-<screen role="nodump"><userinput>exit
-umount $LFS/dev{/pts,}
-umount $LFS/{sys,proc,run}</userinput></screen>
-
-    <para>Create the backup archive:</para>
+    <para>
+      Create the backup archive by running the following command:
+    </para>
 <screen role="nodump"><userinput>cd $LFS &amp;&amp;
 tar -cJpf $HOME/temp-tools.tar.xz .
 </userinput></screen>
+    <para>
+      Replace <envar>$HOME</envar> by a directory of your choice if you
+      do not want to have the backup stored in <systemitem class="username">root</systemitem>'s
+      home directory.
+    </para>
 
     <para>
       In case some mistakes have been made and you need to start over, you can
@@ -114,12 +160,13 @@ tar -xpf $HOME/temp-tools.tar.xz
 
     <important>
       <para>
-      If you left the chroot environment either to create a backup
-      or restart building using a restore, remember to mount the
-      kernel virtual filesystems as described in <xref
-      linkend='ch-tools-kernfs'/> and re-enter the
-      chroot environment (see <xref
-      linkend='ch-tools-chroot'/>) again before continuing.</para>
+        If you left the chroot environment either to strip off debug
+        symbols, create a backup or restart building using a restore, 
+        remember to mount the kernel virtual filesystems now again as 
+        described in <xref linkend='ch-tools-kernfs'/> and re-enter
+        the chroot environment (see <xref linkend='ch-tools-chroot'/>)
+        again before continuing.
+      </para>
     </important>
     
   </sect2>
