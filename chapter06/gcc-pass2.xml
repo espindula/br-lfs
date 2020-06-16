@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-gcc-pass2" role="wrap">
+  <?dbhtml filename="gcc-pass2.html"?>
+
+  <sect1info condition="script">
+    <productname>gcc-pass2</productname>
+    <productnumber>&gcc-version;</productnumber>
+    <address>&gcc-url;</address>
+  </sect1info>
+
+  <title>GCC-&gcc-version; - Pass 2</title>
+
+  <indexterm zone="ch-tools-gcc-pass2">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>tools, pass 2</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter08/gcc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&gcc-tmpp2-sbu;</seg>
+        <seg>&gcc-tmpp2-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation of GCC</title>
+
+    <para>As in the first build of GCC, the GMP, MPFR, and MPC packages are
+    required. Unpack the tarballs and move them into the required directory
+    names:</para>
+
+<screen><userinput remap="pre">tar -xf ../mpfr-&mpfr-version;.tar.xz
+mv -v mpfr-&mpfr-version; mpfr
+tar -xf ../gmp-&gmp-version;.tar.xz
+mv -v gmp-&gmp-version; gmp
+tar -xf ../mpc-&mpc-version;.tar.gz
+mv -v mpc-&mpc-version; mpc</userinput></screen>
+
+    <para>If building on x86_64, change the default directory name for 64-bit
+    libraries to <quote>lib</quote>:</para>
+
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
+  ;;
+esac</userinput></screen>
+
+    <para>Fix an issue with GCC-10.1 when building with a cross
+    compiler:</para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../&gcc-cross-patch;</userinput></screen>
+
+    <para>Create a separate build directory again:</para>
+
+<screen><userinput remap="pre">mkdir -v build
+cd       build</userinput></screen>
+
+    <para>Create a symlink that allows libgcc to be built with posix threads
+    support:</para>
+
+<screen><userinput remap="pre">mkdir -pv $LFS_TGT/libgcc
+ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></screen>
+
+    <para>Before starting to build GCC, remember to unset any environment
+    variables that override the default optimization flags.</para>
+
+    <para>Now prepare GCC for compilation:</para>
+
+<screen><userinput remap="configure">../configure                                       \
+    --build=$(../config.guess)                     \
+    --host=$LFS_TGT                                \
+    --prefix=/usr                                  \
+    CC_FOR_TARGET=$LFS_TGT-gcc                     \
+    --with-build-sysroot=$LFS                      \
+    --enable-initfini-array                        \
+    --disable-nls                                  \
+    --disable-multilib                             \
+    --disable-decimal-float                        \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --disable-libstdcxx                            \
+    --enable-languages=c,c++</userinput></screen>
+
+    <variablelist>
+      <title>The meaning of the new configure options:</title><!-- WIP -->
+
+      <varlistentry>
+        <term><parameter>-with-build-sysroot=$LFS</parameter></term>
+        <listitem>
+          <para>Normally, using <parameter>--host</parameter> ensures that
+          a cross-compiler is used for building GCC, and that compiler knows
+          that it has to look for headers and libraries in <filename
+          class="directory">$LFS</filename>. But the build system of GCC uses
+          other tools, which are not aware of this location. This switch is
+          needed to have them find the needed files in <filename
+          class="directory">$LFS</filename>, and not on the host.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-initfini-array</parameter></term>
+        <listitem>
+          <para>This option is automatically enabled when building a native
+          compiler with a native compiler on x86. But here, we build with
+          a cross compiler, so we need to explicitely set this option.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile the package:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Install the package:</para>
+
+<screen><userinput remap="install">make DESTDIR=$LFS install</userinput></screen>
+
+    <para>As a finishing touch, create a utility symlink. Many programs and scripts
+    run <command>cc</command> instead of <command>gcc</command>, which is
+    used to keep programs generic and therefore usable on all kinds of UNIX
+    systems where the GNU C compiler is not always installed. Running
+    <command>cc</command> leaves the system administrator free to decide
+    which C compiler to install:</para>
+
+<screen><userinput remap="install">ln -sv gcc $LFS/usr/bin/cc</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Details on this package are located in
+    <xref linkend="contents-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>

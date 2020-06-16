@@ -26,7 +26,7 @@ ifeq ($(REV), sysv)
   BASEDIR         ?= ~/lfs-book
   PDF_OUTPUT      ?= LFS-BOOK.pdf
   NOCHUNKS_OUTPUT ?= LFS-BOOK.html
-  DUMPDIR         ?= ~/lfs-commands
+  DUMPDIR         ?= ~/cross-lfs-commands
 else
   BASEDIR         ?= ~/lfs-systemd
   PDF_OUTPUT      ?= LFS-SYSD-BOOK.pdf
@@ -46,9 +46,6 @@ book: validate profile-html
 	@echo "Copying CSS code and images..."
 	$(Q)mkdir -p $(BASEDIR)/stylesheets
 	$(Q)cp stylesheets/lfs-xsl/*.css $(BASEDIR)/stylesheets
-	$(Q)pushd $(BASEDIR)/ > /dev/null;                     \
-#       sed -i -e "s@../stylesheets@stylesheets@g" *.html; \
-       popd > /dev/null
 
 	$(Q)mkdir -p $(BASEDIR)/images
 	$(Q)cp images/*.png $(BASEDIR)/images
