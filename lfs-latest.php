@@ -116,6 +116,7 @@ if ( $package == "expect"     ) $dirpath = "http://sourceforge.net/projects/expe
 if ( $package == "file"       ) $dirpath = "https://github.com/file/file/releases";
 if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/releases";
 if ( $package == "gcc"        ) $dirpath = max_parent( $dirpath, "gcc-" );
+if ( $package == "iana-etc"   ) $dirpath = "https://github.com/Mic92/iana-etc/releases";
 if ( $package == "intltool"   ) $dirpath = "https://launchpad.net/intltool/trunk";
 if ( $package == "meson"      ) $dirpath = "https://github.com/mesonbuild/meson/releases";
 if ( $package == "mpc"        ) $dirpath = "https://ftp.gnu.org/gnu/mpc";
