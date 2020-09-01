@@ -271,7 +271,8 @@ lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	sysv_date=$$(grep " version " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
 	sysd_date=$$(grep " versiond " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
 	date=$$(grep "releasedate" $< | sed 's/.*"\([^"]\+\)".*/\1/');\
-	sed -e "s/$$date/$$(LANG=$(LANG_fr) date -d "$${date}" "+%d %B %Y")/g"\
+	frdate=$$(LANG=$(LANG_fr) date -d "$$(echo $${date} | sed 's|1st|1|')" "+%d %B %Y");\
+	sed -e "s/$$date/$$frdate/g"\
 	    -e "s/Approximate build time/Temps de construction approximatif/g"\
 	    -e "s/Required disk space/Espace disque requis/g"\
 	    -e "s/Installation depends on/L'installation dépend de/g"\
