@@ -69,7 +69,8 @@ function find_even_max( $lines, $regex_match, $regex_replace )
 
 function http_get_file( $url )
 {
-  if ( ! preg_match( "/sourceforge/", $url ) )
+  if ( ! preg_match( "/sourceforge/", $url ) &&
+       ! preg_match( "/psmisc/",      $url ) )
   {
     exec( "curl --location --silent --max-time 30 $url", $dir );
 
@@ -105,7 +106,7 @@ function get_packages( $package, $dirpath )
   global $exceptions;
   global $regex;
 
-//if ( $package != "zstd" ) return 0; // Debug
+if ( $package != "psmisc" ) return 0; // Debug
 
 if ( $package == "bc"         ) $dirpath = "https://github.com/gavinhoward/bc/releases";
 if ( $package == "check"      ) $dirpath = "https://github.com/libcheck/check/releases";
@@ -122,9 +123,7 @@ if ( $package == "meson"      ) $dirpath = "https://github.com/mesonbuild/meson/
 if ( $package == "mpc"        ) $dirpath = "https://ftp.gnu.org/gnu/mpc";
 if ( $package == "mpfr"       ) $dirpath = "http://mpfr.loria.fr/mpfr-current";
 if ( $package == "ninja"      ) $dirpath = "https://github.com/ninja-build/ninja/releases";
-//if ( $package == "procps-ng"  ) $dirpath = "http://sourceforge.net/projects/procps-ng/files";
 if ( $package == "procps-ng"  ) $dirpath = "https://gitlab.com/procps-ng/procps/-/tags";
-//if ( $package == "psmisc"     ) $dirpath = "http://sourceforge.net/projects/$package/files";
 if ( $package == "psmisc"     ) $dirpath = "https://gitlab.com/psmisc/psmisc/-/tags";
 if ( $package == "Python"     ) $dirpath = "https://www.python.org/downloads/source/";
 if ( $package == "shadow"     ) $dirpath = "https://github.com/shadow-maint/shadow/releases";
@@ -281,10 +280,10 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
   }
 
   if ( $package == "procps-ng" )
-     return find_max( $lines, "/v\d/", "/^.*v([\d\.]+).*$/" );
+     return find_max( $lines, "/v\d/", "/^.*v([\d\.]+) .*$/" );
 
   if ( $package == "psmisc" )
-     return find_max( $lines, "/^v/", "/^v([\d\.]+).*$/" );
+     return find_max( $lines, "/v\d/", "/^.*v([\d\.]+) .*$/" );
 
   if ( $package == "grub" )
      return find_max( $lines, "/grub/", "/^.*grub-(\d\..*).tar.xz.*$/" );
