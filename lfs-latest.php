@@ -106,7 +106,7 @@ function get_packages( $package, $dirpath )
   global $exceptions;
   global $regex;
 
-if ( $package != "psmisc" ) return 0; // Debug
+//if ( $package != "psmisc" ) return 0; // Debug
 
 if ( $package == "bc"         ) $dirpath = "https://github.com/gavinhoward/bc/releases";
 if ( $package == "check"      ) $dirpath = "https://github.com/libcheck/check/releases";
