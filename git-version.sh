@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if ! git status; then
+if ! git status > /dev/null; then
 	# Either it's not a git repository, or git is unavaliable.
 	# Just workaround.
 	echo "<!ENTITY version           \"unknown\">"         >  version.ent
@@ -19,7 +19,7 @@ short_date=$(date --date "$commit_date" "+%Y%m%d")
 year=$(date --date "$commit_date" "+%Y")
 month=$(date --date "$commit_date" "+%B")
 month_digit=$(date --date "$commit_date" "+%m")
-day=$(date --date "$commit_date" "+%d" | sed 's@^0@@')
+day=$(date --date "$commit_date" "+%d" | sed 's/^0//')
 
 case $day in
 	"1" | "21" | "31" ) suffix="st";;
