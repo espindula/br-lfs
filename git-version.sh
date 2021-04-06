@@ -19,7 +19,7 @@ short_date=$(date --date "$commit_date" "+%Y%m%d")
 year=$(date --date "$commit_date" "+%Y")
 month=$(date --date "$commit_date" "+%B")
 month_digit=$(date --date "$commit_date" "+%m")
-day=$(date --date "$commit_date" "+%d")
+day=$(date --date "$commit_date" "+%d" | sed 's@^0@@')
 
 case $day in
 	"1" | "21" | "31" ) suffix="st";;
