@@ -319,8 +319,8 @@ function get_current()
    exec ( "git clone $lfsgit LFS" );
    chdir( $cdir );
 
-   $PAGE       = "$tmpdir/LFS/BOOK/chapter03/chapter03.xml";
-   $STYLESHEET = "$tmpdir/LFS/BOOK/stylesheets/wget-list.xsl";
+   $PAGE       = "$tmpdir/LFS/chapter03/chapter03.xml";
+   $STYLESHEET = "$tmpdir/LFS/stylesheets/wget-list.xsl";
 
    exec( "xsltproc --xinclude --nonet $STYLESHEET $PAGE", $current );
    exec( "rm -rf $tmpdir" );
