@@ -80,7 +80,7 @@ function http_get_file( $url )
   }
   else
   {
-    exec( "links -dump $url 2>/dev/null", $lines );
+    exec( "lynx -dump $url 2>/dev/null", $lines );
     return $lines;
   }
 }
@@ -106,11 +106,11 @@ function get_packages( $package, $dirpath )
   global $exceptions;
   global $regex;
 
-//if ( $package != "psmisc" ) return 0; // Debug
+//if ( $package != "psmisc" ) return 0; // debug
 
 if ( $package == "bc"         ) $dirpath = "https://github.com/gavinhoward/bc/releases";
 if ( $package == "check"      ) $dirpath = "https://github.com/libcheck/check/releases";
-if ( $package == "e2fsprogs"  ) $dirpath = "http://sourceforge.net/projects/e2fsprogs/files/e2fsprogs";
+if ( $package == "e2fsprogs"  ) $dirpath = "https://sourceforge.net/projects/e2fsprogs/files/e2fsprogs/";
 if ( $package == "expat"      ) $dirpath = "http://sourceforge.net/projects/expat/files";
 if ( $package == "elfutils"   ) $dirpath = "https://sourceware.org/ftp/elfutils";  
 if ( $package == "expect"     ) $dirpath = "http://sourceforge.net/projects/expect/files";  
@@ -183,7 +183,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
     $lines = ftp_rawlist ($conn, $path);
     ftp_close( $conn );
   }
-  else // http
+  else // http(s)
   {
      // Customize http directories as needed
      if ( $package == "tzdata" )
@@ -196,18 +196,10 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
         $dirpath  = substr ( $dirpath, 0, $position );
      }
 
-     //if ( $package == "bzip2" ) 
-     //{
-     //   // Remove one directory
-     //   $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
-     //   $position = strrpos( $dirpath, "/" );
-     //   $dirpath  = substr ( $dirpath, 0, $position );
-     //}
-
      $lines = http_get_file( $dirpath );
      if ( ! is_array( $lines ) ) return -6;
   } // End fetch
-//print_r($lines);
+
   if ( isset( $regex[ $package ] ) )
   {
      // Custom search for latest package name
@@ -317,6 +309,11 @@ function get_current()
    chdir( $tmpdir );
    #exec ( "svn --quiet export $lfssvn LFS" );
    exec ( "git clone $lfsgit LFS" );
+
+   # Make version.ent
+   chdir( "$tmpdir/LFS" );
+   exec ( "./git-version.sh" );
+
    chdir( $cdir );
 
    $PAGE       = "$tmpdir/LFS/chapter03/chapter03.xml";
@@ -383,10 +380,8 @@ function mail_to_lfs()
    global $vers;
    global $dirs;
 
-   //$to      = "bruce.dubbs@gmail.com";
-   //$to      = "lfs-book@lists.linuxfromscratch.org";
-   $to      = "bdubbs";  // Just local for now
-   $from    = "bdubbs@linuxfromscratch.org";
+   $to      = "lfs-book@lists4.linuxfromscratch.org";
+   $from    = "bdubbs@rivendell.linuxfromscratch.org";
    $subject = "LFS Package Currency Check - $date GMT";
    $headers = "From: bdubbs@rivendell.linuxfromscratch.org";
 
@@ -478,7 +473,37 @@ table td {
 
 }
 
+function write_to_stdout()
+{
+
+   global $date;
+   global $vers;
+   global $dirs;
+
+   echo "
+LFS Package Currency Check
+As of $date GMT
+
+LFS Package     LFS Version Latest Flag\n";
+
+   // Get the latest version of each package
+   foreach ( $dirs as $pkg => $dir )
+   {
+      $p_name    = sprintf( "%-15s", $pkg );       // package name formatted
+
+      $b_version = $vers[ $pkg ];                 // book version
+      $b_string  = sprintf( "%-11s", $b_version ); // book version formatted
+
+      $latest    = get_packages( $pkg, $dir );    // latest version
+      $l_string  = sprintf( "%-6s", $latest );     // latest version formatted
+
+      $flag = ( $b_version != $latest ) ? "*" : "";
+      echo "$p_name $b_string $l_string  $flag\n";
+   }
+}
+
 get_current();  // Get what is in the book
 mail_to_lfs();
 //html();  // Write html output
+//write_to_stdout();  // For debugging
 ?>
