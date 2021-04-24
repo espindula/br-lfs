@@ -380,10 +380,10 @@ function mail_to_lfs()
    global $vers;
    global $dirs;
 
-   $to      = "lfs-book@lists4.linuxfromscratch.org";
-   $from    = "bdubbs@rivendell.linuxfromscratch.org";
+   $to      = "lfs-book@lists.linuxfromscratch.org";
+   $from    = "bdubbs@linuxfromscratch.org";
    $subject = "LFS Package Currency Check - $date GMT";
-   $headers = "From: bdubbs@rivendell.linuxfromscratch.org";
+   $headers = "From: bdubbs@linuxfromscratch.org";
 
    $message = "Package         LFS      Upstream  Flag\n\n";
 
