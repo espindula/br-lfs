@@ -283,7 +283,13 @@ killproc()
         1)
             # Program is not running, but an invalid pid file exists
             # Remove the pid file.
-            rm -f "${pidfile}"
+
+            progname=${program##*/}
+
+            if [[ -e "/run/${progname}.pid" ]]; then
+                pidfile="/run/${progname}.pid"
+                rm -f "${pidfile}"
+            fi
 
             # This is only a success if no signal was passed.
             if [ -n "${nosig}" ]; then
@@ -713,13 +719,13 @@ evaluate_retval()
 
 ################################################################################
 # check_signal()                                                               #
-# Usage: check_signal [ -{signal} | {signal} ]                                 #
+# Usage: check_signal [ -{signal} ]                                            #
 #                                                                              #
 # Purpose: Check for a valid signal.  This is not defined by any LSB draft,    #
 #          however, it is required to check the signals to determine if the    #
 #          signals chosen are invalid arguments to the other functions.        #
 #                                                                              #
-# Inputs: Accepts a single string value in the form or -{signal} or {signal}   #
+# Inputs: Accepts a single string value in the form of -{signal}               #
 #                                                                              #
 # Return values:                                                               #
 #       0 - Success (signal is valid                                           #
@@ -730,11 +736,11 @@ check_signal()
     local valsig
 
     # Add error handling for invalid signals
-    valsig="-ALRM -HUP -INT -KILL -PIPE -POLL -PROF -TERM -USR1 -USR2"
+    valsig=" -ALRM -HUP -INT -KILL -PIPE -POLL -PROF -TERM -USR1 -USR2"
     valsig="${valsig} -VTALRM -STKFLT -PWR -WINCH -CHLD -URG -TSTP -TTIN"
     valsig="${valsig} -TTOU -STOP -CONT -ABRT -FPE -ILL -QUIT -SEGV -TRAP"
     valsig="${valsig} -SYS -EMT -BUS -XCPU -XFSZ -0 -1 -2 -3 -4 -5 -6 -8 -9"
-    valsig="${valsig} -11 -13 -14 -15"
+    valsig="${valsig} -11 -13 -14 -15 "
 
     echo "${valsig}" | grep -- " ${1} " > /dev/null
 
@@ -765,7 +771,7 @@ check_sig_type()
     local valsig
 
     # The list of termination signals (limited to generally used items)
-    valsig="-ALRM -INT -KILL -TERM -PWR -STOP -ABRT -QUIT -2 -3 -6 -9 -14 -15"
+    valsig=" -ALRM -INT -KILL -TERM -PWR -STOP -ABRT -QUIT -2 -3 -6 -9 -14 -15 "
 
     echo "${valsig}" | grep -- " ${1} " > /dev/null
 
