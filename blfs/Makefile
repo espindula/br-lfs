@@ -11,8 +11,8 @@ include config.mk
 
 ORIGDIR := blfs-en
 
-FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
-EN_REPO:=svn://svn.linuxfromscratch.org/BLFS
+FR_REPO:=git@git.linuxfromscratch.org:fr-lfs.git
+EN_REPO:=git://git.linuxfromscratch.org/blfs.git
 
 RENDERTMP=/data/tyreunom/tmp
 
@@ -24,8 +24,8 @@ RENDERTMP=/data/tyreunom/tmp
 # track it, so translate it as usual. Once the stable version is translated,
 # create a new branch that keeps tracking this release:
 #
-#   svn cp http://svn.linuxfromscratch.org/fr-lfs/trunk/blfs \
-#          http://svn.linuxfromscratch.org/fr-lfs/branches/blfs-$(MILESTONE)
+#   git branch blfs-$(MILESTONE)
+#   git p -u origin blfs-$(MILESTONE)
 #
 # Once this is done, you can publish the new version by running:
 #
@@ -35,24 +35,16 @@ RENDERTMP=/data/tyreunom/tmp
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 10.1
+MILESTONE := 10.2
 
 # Select the current version we are tracking from master
-EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
-REVISION := $(shell svn info $(ORIGDIR) | grep ^Revision | sed 's|^.* ||')
+REVISION := $(shell (cd $(ORIGDIR); git rev-parse HEAD))
 
 # If the version we are tracking is released, there should be a tag named $(MILESTONE).
 # If this tag doesn't exist, it means the version is not released yet. Try to
 # list files in this tag. If it succeeds, it exists, if it fails it doesn't
 # exist. From that, choose what tag to follow: $(MILESTONE) or trunk.
-TAG := $(shell (svn ls svn://svn.linuxfromscratch.org/BLFS/tags/$(MILESTONE) --depth empty >/dev/null 2>&1 && printf $(MILESTONE)) || printf trunk)
-
-# Depending on what we track, we choose the correct branch from upstream.
-ifeq ($(TAG), trunk)
-EN_VER := trunk/BOOK
-else
-EN_VER := tags/$(TAG)
-endif
+BRANCH := $(shell (cd $(ORIGDIR); git ls-remote --exit-code . $(MILESTONE) >/dev/null 2>&1 || printf trunk))
 
 # Files that are needed for the build process once translations are generated.
 filestocopy := INSTALL obfuscate.sh README
@@ -88,7 +80,7 @@ CSS := $(shell ls stylesheets/lfs-xsl/*.css)
 
 CHUNK_QUIET = 1
 
-.PHONY: svnup
+.PHONY: gitup
 
 # Don't delete intermediates (.po files).
 .SECONDARY:
@@ -128,20 +120,16 @@ endif
 init: $(ORIGDIR)
 
 $(ORIGDIR):
-	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/
+	[ -d $@ ] || git clone $(EN_REPO) $(ORIGDIR)
 
 # When updating, check that we still want to follow the checked-out branch.
 # If not, remove it and check out the new branch.
-svnup: init
-	v=$$(svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||') ;\
+gitup: init
+	(cd $(ORIGDIR); git fetch)
+	v=$$(cd $(ORIGDIR); git branch | grep '^\*' | cut -c3-); \
 	if [ "$$v" != "$(SVN_en)" ]; then \
-		echo $$v ;\
-		rm -rf $(ORIGDIR);\
-		svn co $(SVN_en) $(ORIGDIR)/ >/dev/null;\
-	else \
-		if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
-			LANG=en_US.UTF-8 svn update $(ORIGDIR);\
-		fi ;\
+		echo $$v; \
+		(cd $(ORIGDIR); git checkout $(BRANCH)); \
 	fi
 
 clean: clean-gen clean-product
@@ -216,11 +204,11 @@ genepub: $(EPUBDEPS)
 gentar: $(TARDEPS)
 
 update: $(PO)
-	printf 'Done updating for $(TAG) \n'
+	printf 'Done updating for $(BRANCH) \n'
 
 pootle:
 	pootle sync_stores --project=blfs
-	$(MAKE) svnup
+	$(MAKE) gitup
 	$(MAKE) update
 	python3 changelogtranslator.py fr/introduction/welcome/changelog.po
 	for lang in $(LANGUAGES); do \
@@ -250,10 +238,9 @@ release: $(SSH_AGENT) genhtml genpdf gentar genepub
 	done
 
 commit: pootle
-	if [ "$$(svn status | grep '^?.*po$$' | cut -c8-)" != "" ]; then \
-		svn status | grep '^?.*po$$' | cut -c8- | xargs svn add; \
-	fi
-	svn commit -m 'Automatic BLFS commit based on r$(REVISION)'
+	git add .
+	git commit -m 'Automatic BLFS commit based on $(REVISION)'
+	git push
 
 blfsgen-%/pdf.mk: pdf.mk
 	mkdir -p $$(dirname $@)
