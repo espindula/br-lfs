@@ -13,8 +13,8 @@ include config.mk
 
 ORIGDIR := lfs-en
 
-FR_REPO:=svn://svn.linuxfromscratch.org/fr-lfs
-EN_REPO:=svn://svn.linuxfromscratch.org/LFS
+FR_REPO:=git@git.linuxfromscratch.org:fr-lfs.git
+EN_REPO:=git://git.linuxfromscratch.org/lfs.git
 
 RENDERTMP=~/tmp
 
@@ -26,8 +26,8 @@ RENDERTMP=~/tmp
 # track it, so translate it as usual. Once the stable version is translated,
 # create a new branch that keeps tracking this release:
 #
-#   svn cp http://svn.linuxfromscratch.org/fr-lfs/trunk/lfs \
-#          http://svn.linuxfromscratch.org/fr-lfs/branches/lfs-$(MILESTONE)
+#   git branch lfs-$(MILESTONE)
+#   git p -u origin lfs-$(MILESTONE)
 #
 # Once this is done, you can publish the new version by running:
 #
@@ -37,26 +37,18 @@ RENDERTMP=~/tmp
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 10.1
+MILESTONE := 10.2
 
 # Select the current version we are tracking from master
-EN_CURR_VER := $(shell svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||')
-REVISION := $(shell svn info $(ORIGDIR) | grep ^Revision | sed 's|^.* ||')
+REVISION := $(shell (cd $(ORIGDIR); git rev-parse HEAD))
 
 # If the version we are tracking is released, there should be a tag named $(MILESTONE).
 # If this tag doesn't exist, it means the version is not released yet. Try to
 # list files in this tag. If it succeeds, it exists, if it fails it doesn't
 # exist. From that, choose what tag to follow: $(MILESTONE) or trunk.
-TAG := $(shell (svn ls svn://svn.linuxfromscratch.org/LFS/tags/$(MILESTONE) --depth empty >/dev/null 2>&1 && printf $(MILESTONE)) || printf trunk)
+BRANCH := $(shell (cd $(ORIGDIR); git ls-remote --exit-code . $(MILESTONE) >/dev/null 2>&1 || printf trunk))
 
-# Depending on what we track, we choose the correct branch from upstream.
-ifeq ($(TAG), trunk)
-EN_VER := trunk/BOOK
-else
-EN_VER := tags/$(TAG)
-endif
-
-# echo is not portable acroos shells. Let's use printf.
+# echo is not portable across shells. Let's use printf.
 ECHO:=printf
 
 # Files that are needed for the build process once translations are generated.
@@ -84,17 +76,13 @@ REVS=sysv
 endif
 endif
 
-# The complete upstream URI we follow.
-SVN_en := "$(EN_REPO)/$(EN_VER)"
-
-
 IMAGES := $(shell find images -type f)
 STYLESHEETS := $(shell find stylesheets -type f)
 CSS := $(shell ls stylesheets/lfs-xsl/*.css)
 
 CHUNK_QUIET = 1
 
-.PHONY: svnup
+.PHONY: gitup
 
 # Don't delete intermediates (.po files).
 .SECONDARY:
@@ -133,20 +121,16 @@ endif
 init: $(ORIGDIR)
 
 $(ORIGDIR):
-	[ -d $@ ] || svn co $(SVN_en) $(ORIGDIR)/
+	[ -d $@ ] || git clone $(EN_REPO) $(ORIGDIR)
 
 # When updating, check that we still want to follow the checked-out branch.
 # If not, remove it and check out the new branch.
-svnup: init
-	v=$$(svn info $(ORIGDIR) | grep ^URL | sed 's|^[^s]*||') ;\
-	if [ "$$v" != "$(SVN_en)" ]; then \
-		echo $$v ;\
-		rm -rf $(ORIGDIR);\
-		svn co $(SVN_en) $(ORIGDIR)/ >/dev/null;\
-	else \
-		if [ "$$(svn status -u $(ORIGDIR) | wc -l)" != "1" ]; then \
-			LANG=en_US.UTF-8 svn update $(ORIGDIR);\
-		fi ;\
+gitup: init
+	(cd $(ORIGDIR); git fetch)
+	v=$$(cd $(ORIGDIR); git branch | grep '^\*' | cut -c3-); \
+	if [ "$$v" != "$(BRANCH)" ]; then \
+		echo $$v; \
+		(cd $(ORIGDIR); git checkout $(BRANCH)); \
 	fi
 
 clean: clean-gen clean-product
@@ -224,11 +208,11 @@ genepub: $(EPUBDEPS)
 gentar: $(TARDEPS)
 
 update: $(PO)
-	$(ECHO) 'Done updating for $(TAG) \n'
+	$(ECHO) 'Done updating for $(BRANCH) \n'
 
 pootle:
 	pootle sync_stores --project=lfs
-	$(MAKE) svnup
+	$(MAKE) gitup
 	$(MAKE) update
 	python3 changelogtranslator.py $(L)
 	pootle update_stores --project=lfs
@@ -255,7 +239,9 @@ release: $(SSH_AGENT) genhtml genpdf gentar genepub
 	done
 
 commit: pootle
-	svn commit -m 'Automatic LFS commit based on r$(REVISION)'
+	git add .
+	git commit -m 'Automatic LFS commit based on $(REVISION)'
+	git push
 
 ###############################################################################
 # These files are not translated using po files. We use sed to modify them    #
