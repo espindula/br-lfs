@@ -1,0 +1,264 @@
+# SOME DESCRIPTIVE TITLE
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2019-09-02 09:14+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:4
+msgid ""
+"TITLE:\t\tMake xconsole work (v.02)  LFS VERSION:\tall AUTHOR:\t\tMatthias "
+"S. Benkmann <m.s.b@gmx.net>"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:10
+#, no-wrap
+msgid ""
+"SYNOPSIS:\n"
+"\txconsole gave me a lot of trouble. It wouldn't work when started\n"
+"\tas a normal user, even when made setuid root. And when reading \n"
+"\tfrom /dev/console (default) it intercepted keystrokes intended for \n"
+"\txterm windows. If you have the same problems, read this hint. \n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:12
+msgid "HINT:"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:18
+msgid ""
+"I checked out a SuSE system and saw that they did not have xconsole read "
+"from /dev/console. Instead is was set up to read from a FIFO /dev/xconsole "
+"that was fed by syslogd. This has the advantage that you can use syslog.conf "
+"to control exactly which messages you want to be displayed by xconsole."
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:20
+msgid "To set it up like this do the following:"
+msgstr ""
+
+#. type: Bullet: '1. '
+#: origin/xconsole_setup.txt:22
+msgid "Create the /dev/xconsole FIFO"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:26
+#, no-wrap
+msgid ""
+"     mkfifo /dev/xconsole\n"
+"     chmod 640 /dev/xconsole\n"
+"     chown root.tty /dev/xconsole\n"
+msgstr ""
+
+#. type: Bullet: '2. '
+#: origin/xconsole_setup.txt:29
+msgid ""
+"Tell syslogd to write messages to /dev/xconsole by adding a line like the "
+"following to /etc/syslog.conf"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:31
+#, no-wrap
+msgid "      *.err;auth,authpriv.none\t\t|/dev/xconsole\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:35
+#, no-wrap
+msgid ""
+"   This will write all messages with priority err or higher to "
+"/dev/xconsole,\n"
+"   with the exception of auth and authpriv messages (because these may "
+"contain\n"
+"   secret data).\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:38
+msgid "Now you can start xconsole like this"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:40
+#, no-wrap
+msgid "     xconsole -file /dev/xconsole\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:42
+msgid "and it will use the FIFO."
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:52
+msgid ""
+"The above fixes the strange keystroke-grabbing problems. There still remains "
+"the problem that xconsole only works when started by root. Neither making it "
+"setuid root nor setgid tty will help. A look at the source code reveals the "
+"reason for this. xconsole uses the access() function to test if it can "
+"access the file it's told to read from. Unfortunately access() only checks "
+"the real uid and not the effective uid of the process, and setuid root only "
+"changes the effective uid. The reason for this is probably that otherwise a "
+"setuid root xconsole could be used to spy on other users.  To work around "
+"this issue I wrote the following program:"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:69
+#, no-wrap
+msgid ""
+"------------------- begin startxconsole.c "
+"-----------------------------------\n"
+"#include <sys/types.h>\n"
+"#include <sys/stat.h>\n"
+"#include <pwd.h>\n"
+"#include <stdlib.h>\n"
+"#include <string.h>\n"
+"#include <fcntl.h>\n"
+"#include <unistd.h>\n"
+"#include <stdio.h>\n"
+"#include <signal.h>\n"
+"int main()\n"
+"{\n"
+"  int i, fd;\n"
+"  struct passwd* pw;\n"
+"  char* xauth;\n"
+"  char* env[32];\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:79
+#, no-wrap
+msgid ""
+"  /* set XAUTHORITY to real home directory of user instead of allowing\n"
+"  user to specify something */\n"
+"  pw=getpwuid(getuid());\n"
+"  if (pw==NULL) {perror(\"getpwuid\"); return 1;};\n"
+"  xauth=malloc(strlen(pw->pw_dir)+128);\n"
+"  if (xauth==NULL) {perror(\"malloc\"); return 1;};\n"
+"  strcpy(xauth,\"XAUTHORITY=\");\n"
+"  strcat(xauth,pw->pw_dir);\n"
+"  strcat(xauth,\"/.Xauthority\");\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:85
+#, no-wrap
+msgid ""
+"  /* empty environment (except for std path, DISPLAY and XAUTHORITY) */\n"
+"  env[0]=\"PATH=/bin:/usr/bin\";\n"
+"  env[1]=\"DISPLAY=:0.0\";\n"
+"  env[2]=xauth;\n"
+"  env[3]=NULL;\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:88
+#, no-wrap
+msgid ""
+"  /* reset signal handlers to default */\n"
+"  for (i = 1; i < NSIG; i++) signal (i, SIG_DFL); \n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:96
+#, no-wrap
+msgid ""
+"  /* stdin=\"/dev/null\" (to prevent users from passing insecure data) */\n"
+"  close(0);\n"
+"  if ( open(\"/dev/null\",O_RDONLY) != 0 )\n"
+"  {\n"
+"    fprintf(stderr,\"Unable to redirect /dev/null -> stdin\\n\");\n"
+"    return 1;\n"
+"  };\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:100
+#, no-wrap
+msgid ""
+"  /* close all fds except stdin,stdout,stderr (just for paranoia) */\n"
+"  i = getdtablesize ();\n"
+"  for (fd = 3; fd < i; ++fd) close (fd);\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:110
+#, no-wrap
+msgid ""
+"  /* set real ids to effective ids */\n"
+"  setreuid(geteuid(),geteuid());\n"
+"  setregid(getegid(),getegid()); \n"
+"  "
+"execle(\"/usr/X11R6/bin/xconsole\",\"xconsole\",\"-file\",\"/dev/xconsole\",\n"
+"  \"-notify\",\"-verbose\",\"-geometry\",\"-0-0\",NULL,env);\n"
+"  perror(\"/usr/X11R6/bin/xconsole\");\n"
+"  return 1;\n"
+"};\n"
+"------------------- end startxconsole.c "
+"-----------------------------------\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:112
+msgid "Compile it with"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:114
+#, no-wrap
+msgid "   gcc -W -Wall -O2 -o startxconsole startxconsole.c\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:118
+msgid ""
+"startxconsole makes setuid and setgid behave as expected. So you can do the "
+"following:"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:121
+#, no-wrap
+msgid ""
+"   chgrp tty startxconsole\n"
+"   chmod g+s startxconsole\n"
+msgstr ""
+
+#. type: Plain text
+#: origin/xconsole_setup.txt:136
+msgid ""
+"and you can call startxconsole as a normal user (you should probably put it "
+"into xinitrc) and it will start up xconsole.  Note that for security "
+"reasons, startxconsole has the command line for xconsole hardwired. That way "
+"users can't pass their own arguments to xconsole.  If they were allowed to "
+"pass their own arguments they could specify some other user's tty device as "
+"-file to spy on this user.  In addition to this startxconsole always sets "
+"the location of the .Xauthority file (via the XAUTHORITY environment "
+"variable) to <home>/.Xauthority where <home> is the home directory of the "
+"calling user. This makes sure that a user can't use XAUTHORITY to cause a "
+"read access to a file not belonging to him. DISPLAY is always set to :0.0.  "
+"All other environment variables are removed (or rather, not passed to "
+"xconsole), signal handlers are reset to the default, stdin is set to "
+"/dev/null and all other file descriptors except for stdout and stderr are "
+"closed. This should eliminate every possibility for the user to pass "
+"insecure data to xconsole."
+msgstr ""
