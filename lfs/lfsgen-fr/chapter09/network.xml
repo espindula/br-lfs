@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-network" revision="sysv">
+  <?dbhtml filename="network.html"?>
+
+  <title>Configuration générale du réseau</title>
+
+  <indexterm zone="ch-config-network">
+    <primary sortas="d-network">network</primary>
+  <secondary>configuration</secondary></indexterm>
+
+  <sect2>
+    <title>Création des fichiers de configuration d'interface réseau</title>
+
+    <para>Les interfaces activées et désactivées par le script réseau dépendent en
+général des fichiers du répertoire <filename
+class="directory">/etc/sysconfig/</filename>.  Ce répertoire devrait
+contenir un fichier par interface à configurer, tel que
+<filename>ifconfig.xyz</filename>, où <quote>xyz</quote> doit décrit la
+carte réseau. En général le nom d'interface (comme eth0) est suffisant. Dans
+ce fichier, se trouvent les attributs de cette interface, tels que son//ses
+adresse(s) IP, les masques de sous-réseau, etc.  Il faut que le fichier ait
+pour nom <emphasis>ifconfig</emphasis>.</para>
+
+    <note><para>Si vous n'avez pas suivi la procédure de la section précédente, udev
+affectera un nom à l'interface de carte réseau en se basant sur les
+caractéristiques physiques du système comme enp2s1. Si vous n'êtes pas sûr
+du nom de votre interface, vous pouvez toujours lancer <command>ip
+link</command> ou <command>ls /sys/class/net</command> après avoir démarré
+votre système.  
+    </para></note>
+
+    <para>La commande suivante crée un fichier modèle pour le périphérique
+<emphasis>eth0</emphasis> avec une adresse IP statique&nbsp;:</para>
+
+<screen><!-- jhalfs relies on the values for IFACE, IP, etc. If you want to change
+     them, please inform the jhalfs maintainer(s). -->
+<userinput>cd /etc/sysconfig/
+cat &gt; ifconfig.<replaceable>eth0</replaceable> &lt;&lt; "EOF"
+<literal>ONBOOT=<replaceable>yes</replaceable>
+IFACE=<replaceable>eth0</replaceable>
+SERVICE=<replaceable>ipv4-static</replaceable>
+IP=<replaceable>192.168.1.2</replaceable>
+GATEWAY=<replaceable>192.168.1.1</replaceable>
+PREFIX=<replaceable>24</replaceable>
+BROADCAST=<replaceable>192.168.1.255</replaceable></literal>
+EOF</userinput></screen>
+
+    <para>Les valeurs en italiques doivent être modifiées dans chaque fichier pour
+correspondre à la bonne configuration.</para>
+
+    <para>Si la variable <envar>ONBOOT</envar> est configurée à <quote>yes</quote>, le
+script réseau de System V configurera la carte d'interface réseau (NIC)
+pendant le démarrage du système. S'il est configuré avec toute autre valeur
+que <quote>yes</quote>, le NIC sera ignoré par le script réseau et ne sera
+pas configuré automatiquement. On peut démarrer et arrêter l'interface à la
+main avec les commandes <command>ifup</command> et
+<command>ifdown</command>.</para>
+
+    <para>La variable <envar>IFACE</envar> définit le nom de l'interface, par exemple,
+eth0. Elle est nécessaire dans tous les fichiers de configuration des
+périphériques réseaux. L'extension des fichiers doit correspondre à cette
+valeur.</para>
+
+    <para>La variable <envar>SERVICE</envar> définit la méthode utilisée pour obtenir
+l'adresse IP. Les scripts de démarrage LFS ont un format d'affectation d'IP
+modulaire. Créer les fichiers supplémentaires dans le répertoire <filename
+class="directory">/lib/services/</filename> autorise d'autres méthodes
+d'affectation d'IP. Ceci est habituellement utilisé pour le DHCP, qui est
+adressé dans le livre BLFS.</para>
+
+    <para>La variable <envar>GATEWAY</envar> devrait contenir l'adresse IP par défaut
+de la passerelle, si elle existe. Sinon, mettez entièrement en commentaire
+la variable.</para>
+
+    <para>La variable <envar>PREFIX</envar> contient le nombre de bits utilisés dans
+le sous-réseau. Chaque octet dans une adresse IP est exprimé sur huit
+bits. Si le masque du sous-réseau est 255.255.255.0, alors il est en train
+d'utiliser les trois premiers octets (24 bits) pour spécifier le numéro du
+réseau. Si le masque réseau est 255.255.255.240, il utiliserait les 28
+premiers bits. Les préfixes plus longs que 24 bits sont habituellement
+utilisés par les fournisseurs d'accès Internet ADSL et câble.  Dans cet
+exemple (PREFIX=24), le masque réseau est 255.255.255.0. Ajustez la variable
+<envar>PREFIX</envar> en concordance avec votre sous-réseau spécifique. Si
+vous ne le mettez pas, PREFIX vaut 24 par défaut.</para>
+
+    <para>Pour plus d'informations, voir la page de manuel de <command>ifup</command>.</para>
+
+  </sect2>
+  <sect2 id="resolv.conf">
+    <title>Créer le fichier /etc/resolv.conf</title>
+
+    <indexterm zone="resolv.conf">
+      <primary sortas="e-/etc/resolv.conf">/etc/resolv.conf</primary>
+    </indexterm>
+
+    <para>Le système aura besoin d'un moyen pour obtenir un résolveur DNS pour
+résoudre les noms de domaines Internet en adresse IP, et vice-versa. Ceci se
+fait en plaçant les adresses IP des serveurs DNS, disponibles auprès du FAI
+ou de l'administrateur système, dans
+<filename>/etc/resolv.conf</filename>. Créez ce fichier en lançant&nbsp;:</para>
+
+<screen><userinput>cat &gt; /etc/resolv.conf &lt;&lt; "EOF"
+<literal># Début de /etc/resolv.conf
+
+domain <replaceable>&lt;Votre nom de domaine&gt;</replaceable>
+nameserver <replaceable>&lt;Adresse IP du DNS primaire&gt;</replaceable>
+nameserver <replaceable>&lt;Adresse IP du DNS secondaire&gt;</replaceable>
+
+# Fin de /etc/resolv.conf</literal>
+EOF</userinput></screen>
+
+    <para>Le paramètre <varname>domain</varname> peut être omis ou remplacé par un
+paramètre <varname>search</varname>. Voir la page de manuel de resolv.conf
+pour plus de détails.</para>
+
+    <para>Remplacez <replaceable>&lt;Adresse IP du DNS&gt;</replaceable> par l'adresse
+IP du DNS le plus approprié pour la configuration. Il y aura souvent plus
+d'une entrée (les serveurs secondaires sont utiles en cas d'indisponibilité
+du premier). Si vous avez seulement besoin ou si vous voulez seulement un
+serveur DNS, supprimez la seconde ligne <emphasis>nameserver</emphasis> du
+fichier.  L'adresse IP pourrait aussi être un routeur sur le réseau local.</para>
+
+    <note>
+      <para>Les adresses des DNS publiques IPV4 de Google sont 8.8.8.8 et 8.8.4.4.</para>
+    </note>
+
+  </sect2>
+
+  <sect2 id="ch-config-hostname">
+    <title>Configurer le nom d'hôte du système</title>
+
+    <indexterm zone="ch-config-hostname">
+      <primary sortas="d-hostname">hostname</primary>
+      <secondary>configuration</secondary>
+    </indexterm>
+
+     <para>Pendant le processus de démarrage, le fichier
+<filename>/etc/hostname</filename> est utilisé pour donner un nom d'hôte au
+système.</para>
+
+     <para>Créez le fichier <filename>/etc/network</filename> et saisissez le nom du
+système en lançant&nbsp;:</para>
+
+<screen><userinput>echo "<replaceable>&lt;lfs&gt;</replaceable>" &gt; /etc/hostname</userinput></screen>
+
+     <para><replaceable>&lt;lfs&gt;</replaceable> doit être remplacé par le nom de
+l'ordinateur. Ne saisissez pas le FQDN ici. Cette information sera saisie
+dans le fichier <filename>/etc/hosts</filename>.</para>
+
+  </sect2>
+
+  <sect2 id="ch-config-hosts">
+     <title>Personnaliser le fichier /etc/hosts</title>
+
+     <indexterm zone="ch-config-hosts">
+       <primary sortas="e-/etc/hosts">/etc/hosts</primary>
+     </indexterm>
+   
+     <indexterm zone="ch-config-hosts">
+       <primary sortas="d-localnet">localnet</primary>
+       <secondary>/etc/hosts</secondary>
+     </indexterm>
+   
+     <indexterm zone="ch-config-hosts">
+       <primary sortas="d-network">network</primary>
+       <secondary>/etc/hosts</secondary>
+     </indexterm>
+   
+     <para>Choisissez l'adresse IP, son nom de domaine pleinement qualifié
+(<foreignphrase>fully-qualified domain name</foreignphrase>, ou FQDN) et les
+alias possibles à déclarer dans le fichier
+<filename>/etc/hosts</filename>. La syntaxe est&nbsp;:</para>
+   
+<screen><literal>IP_address myhost.example.org aliases</literal></screen>
+
+     <para>Sauf si votre ordinateur doit être visible à partir d'Internet (c-à-d que
+c'est un domaine enregistré et un bloc d'adresses IP valide&mdash;la plupart
+des utilisateurs n'ont pas ceci), assurez-vous que l'adresse IP se trouve
+dans la plage d'adresses réservée aux réseaux privés. Les plages valides
+sont&nbsp;:</para>
+
+<screen><literal>Plage d'adresses réseau privés      Préfixe normal
+     10.0.0.1 - 10.255.255.254                    8
+    172.x.0.1 - 172.x.255.254                    16
+  192.168.y.1 - 192.168.y.254                    24</literal></screen>
+
+     <para>x peut être un nombre compris entre 16 et 31.  y peut être un nombre compris
+entre 0 et 255.</para>
+   
+     <para>Une adresse IP privée valide pourrait être 192.168.1.1.  Un FQDN valide pour
+cette IP pourrait être lfs.example.org.</para>
+   
+     <para>Même si vous ne possédez pas de carte réseau, un FQDN valide est toujours
+requis.  Certains programmes en ont besoin pour fonctionner correctement.</para>
+   
+     <para>Créez le fichier <filename>/etc/hosts</filename> en lançant&nbsp;:</para>
+
+<screen><userinput>cat &gt; /etc/hosts &lt;&lt; "EOF"
+<literal># Begin /etc/hosts
+
+127.0.0.1 localhost.localdomain localhost
+127.0.1.1 <replaceable>&lt;FQDN&gt;</replaceable> <replaceable>&lt;HOSTNAME&gt;</replaceable>
+<replaceable>&lt;192.168.1.1&gt;</replaceable> <replaceable>&lt;FQDN&gt;</replaceable> <replaceable>&lt;HOSTNAME&gt;</replaceable> <replaceable>[alias1] [alias2 ...]</replaceable>
+::1       localhost ip6-localhost ip6-loopback
+ff02::1   ip6-allnodes
+ff02::2   ip6-allrouters
+
+# End /etc/hosts</literal>
+EOF</userinput></screen>
+
+     <para>Les valeurs <replaceable>&lt;192.168.1.1&gt;</replaceable>,
+<replaceable>&lt;FQDN&gt;</replaceable> et
+<replaceable>&lt;HOSTNAME&gt;</replaceable> doivent être remplacées suivant
+les contraintes et les besoins spécifiques (si la machine se voit affecter
+une adresse IP par un administrateur réseau/système et que cette machine est
+connectée à un réseau existant). Vous pouvez omettre le ou les noms d'alias
+facultatifs.</para>
+
+
+
+   <!--  This is not very useful
+
+     <para>
+If a network card is not going to be configured, create the
+     <filename>/etc/hosts</filename> file by running:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/hosts &lt;&lt; "EOF"
+<literal># Begin /etc/hosts (no network card version)
+
+127.0.0.1 localhost
+127.0.1.1 <replaceable>&lt;FQDN&gt;</replaceable> <replaceable>&lt;HOSTNAME&gt;</replaceable>
+::1       localhost ip6-localhost ip6-loopback
+ff02::1   ip6-allnodes
+ff02::2   ip6-allrouters
+
+# End /etc/hosts (no network card version)</literal>
+EOF</userinput></screen> -->
+</sect2>
+
+</sect1>

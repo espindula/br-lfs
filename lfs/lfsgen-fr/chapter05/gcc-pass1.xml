@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-gcc-pass1" role="wrap" xreflabel="gcc-pass1">
+  <?dbhtml filename="gcc-pass1.html"?>
+
+  <sect1info condition="script">
+<productname>gcc-pass1</productname>
+<productnumber>&gcc-version;</productnumber> <address>&gcc-url;</address></sect1info>
+
+  <title>GCC-&gcc-version; — Passe 1</title>
+
+  <indexterm zone="ch-tools-gcc-pass1">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>outils, passe 1</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter08/gcc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&gcc-tmpp1-sbu;</seg>
+        <seg>&gcc-tmpp1-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de GCC croisé</title>
+
+    <para>GCC requiert les paquets GMP, MPFR et MPC. Comme il se peut que ces paquets
+ne soient pas inclus dans votre distribution hôte, ils vont être compilés en
+même temps que GCC. Déballez chaque paquet dans le répertoire des sources de
+GCC et renommez les répertoires ainsi créés pour que les procédures de
+construction de GCC les utilisent automatiquement&nbsp;:</para>
+
+    <note><para>Beaucoup d'incompréhensions existent concernant ce chapitre. Les procédures
+sont les mêmes que celles des autres chapitres, comme expliqué plus haut
+(<xref linkend='buildinstr'/>). Extrayez d'abord l'archive tar de gcc du
+répertoire des sources puis rendez-vous dans le répertoire créé.  C'est
+seulement là que vous devriez suivre les instructions ci-dessous.</para></note>
+
+<screen><userinput remap="pre">tar -xf ../mpfr-&mpfr-version;.tar.xz
+mv -v mpfr-&mpfr-version; mpfr
+tar -xf ../gmp-&gmp-version;.tar.xz
+mv -v gmp-&gmp-version; gmp
+tar -xf ../mpc-&mpc-version;.tar.gz
+mv -v mpc-&mpc-version; mpc</userinput></screen>
+
+    <para>Sur les systèmes x86_64, définissez <quote>lib</quote> comme nom de
+répertoire par défaut pour les bibliothèques 64 bits&nbsp;:</para>
+
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' \
+        -i.orig gcc/config/i386/t-linux64
+ ;;
+esac</userinput></screen>
+
+    <para>La documentation de GCC recommande de construire GCC dans un répertoire de
+construction dédié&nbsp;:</para>
+
+<screen><userinput remap="pre">mkdir -v build
+cd       build</userinput></screen>
+
+    <para>Préparez la compilation de GCC&nbsp;:</para>
+
+<screen><userinput remap="configure">../configure                                       \
+    --target=$LFS_TGT                              \
+    --prefix=$LFS/tools                            \
+    --with-glibc-version=2.11                      \
+    --with-sysroot=$LFS                            \
+    --with-newlib                                  \
+    --without-headers                              \
+    --enable-initfini-array                        \
+    --disable-nls                                  \
+    --disable-shared                               \
+    --disable-multilib                             \
+    --disable-decimal-float                        \
+    --disable-threads                              \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --disable-libstdcxx                            \
+    --enable-languages=c,c++</userinput></screen>
+    <variablelist>
+      <title>Voici la signification des options de configure&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--with-glibc-version=2.11</parameter></term>
+        <listitem>
+          <para>Cette option s'assure que le paquet sera compatible avec la version de glibc
+de l'hôte. Il est configuré à la version de glibc requise la plus basse
+spécifiée dans les <xref linkend="ch-partitioning-hostreqs"/>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-newlib</parameter></term>
+        <listitem>
+          <para>Vu qu'aucune bibliothèque C fonctionnelle n'est encore disponible, ceci
+garantit que la constante inhibit_libc soit définie lors de la construction
+de libgcc. Cela empêche la compilation d'un code exigeant la prise en charge
+de la libc.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-headers</parameter></term>
+        <listitem>
+          <para>Lors de la compilation d'un compilateur croisé complet, GCC exige des
+en-têtes standards compatibles avec le système cible. Pour nos objectifs,
+ces en-têtes ne seront pas nécessaires. Ce paramètre empêche GCC de les
+chercher.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-initfini-array</parameter></term>
+        <listitem>
+          <para>Ce paramètre force l'utilisation de certaines structures de données internes
+qui sont requises mais ne peuvent pas être détectées lors de la construction
+d'un compilateur croisé.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-shared</parameter></term>
+        <listitem>
+          <para>Ce paramètre oblige GCC à lier ses bibliothèques internes de manière
+statique. On procède ainsi parce que les bibliothèques partagées requièrent
+glibc, qui n'est pas encore installé sur le système cible.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-multilib</parameter></term>
+        <listitem>
+          <para>Sur du x86_64, LFS ne prend pas en charge une configuration multilib. Ce
+paramètre n'a pas d'importance pour x86.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-decimal-float, --disable-threads, --disable-libatomic,
+--disable-libgomp, --disable-libquadmath, --disable-libssp,
+--disable-libvtv, --disable-libstdcxx</parameter></term>
+        <listitem>
+          <para>Ces paramètres désactivent la prise en charge de l'extension pour les
+nombres décimaux en virgules flottantes, de threading, libatomic, libgomp,
+libquadmath, libssp, libvtv et de la bibliothèque standard C++. La
+compilation de ces fonctions va échouer lors de la construction d'un
+compilateur croisé et celles-ci sont inutiles pour la compilation croisée de
+la libc temporaire.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-languages=c,c++</parameter></term>
+        <listitem>
+          <para>Cette option nous assure que seuls les compilateurs C et C++ seront
+construits. Ce sont les seuls langages actuellement nécessaires.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compilez GCC en lançant&nbsp;:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Installez le paquet&nbsp;:</para>
+
+    <screen><userinput remap="install">make install</userinput></screen>
+
+    <para>Cette construction de GCC a installé quelques en-têtes internes au
+système. Normalement l'un d'entre eux, <filename>limits.h</filename>,
+incluerait à son tour l'en-tête <filename>limits.h</filename> du système,
+dans ce cas, <filename>$LFS/usr/include/limits.h</filename>. Cependant, au
+moment de la construction de GCC
+<filename>$LFS/usr/include/limits.h</filename> n'existe pas, donc l'en-tête
+interne qui vient d'être construit est un fichier partiel, auto-contenu et
+n'inclus pas les fonctionnalités étendues de l'en-tête système. Cela est
+suffisant pour construire glibc, mais l'en-tête interne complet sera requis
+plus tard. Créez une version complète de l'en-tête interne avec une commande
+identique à ce que le système de construction de GCC fait dans des
+circonstances normales&nbsp;:</para>
+
+<screen><userinput remap="install">cd ..
+cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
+  `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/install-tools/include/limits.h</userinput></screen>
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont disponibles dans <xref linkend="contents-gcc"
+role="."/></para>
+
+  </sect2>
+
+</sect1>

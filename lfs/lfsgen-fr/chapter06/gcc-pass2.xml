@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-gcc-pass2" role="wrap" xreflabel="gcc-pass2">
+  <?dbhtml filename="gcc-pass2.html"?>
+
+  <sect1info condition="script">
+<productname>gcc-pass2</productname>
+<productnumber>&gcc-version;</productnumber> <address>&gcc-url;</address></sect1info>
+
+  <title>GCC-&gcc-version; — Passe 2</title>
+
+  <indexterm zone="ch-tools-gcc-pass2">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>tools, passe 2</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter08/gcc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&gcc-tmpp2-sbu;</seg>
+        <seg>&gcc-tmpp2-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de GCC</title>
+
+    <para>Comme pour la première construction de GCC, les paquets GMP, MPFR et MPC
+sont requis. Déballez les archives et déplacez-les dans les répertoires avec
+le nom requis&nbsp;:</para>
+
+<screen><userinput remap="pre">tar -xf ../mpfr-&mpfr-version;.tar.xz
+mv -v mpfr-&mpfr-version; mpfr
+tar -xf ../gmp-&gmp-version;.tar.xz
+mv -v gmp-&gmp-version; gmp
+tar -xf ../mpc-&mpc-version;.tar.gz
+mv -v mpc-&mpc-version; mpc</userinput></screen>
+
+    <para>Si vous construisez sur x86_64, changez le nom de répertoire par défaut pour
+les bibliothèques 64&nbsp;bits en <quote>lib</quote>&nbsp;:</para>
+
+<!--
+    <para>
+Fix an issue with GCC-10.1 when building with a cross
+    compiler:</para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../&gcc-cross-patch;</userinput></screen>
+-->
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
+  ;;
+esac</userinput></screen>
+
+    <para>Créez à nouveau un répertoire de construction séparé&nbsp;:</para>
+
+<screen><userinput remap="pre">mkdir -v build
+cd       build</userinput></screen>
+
+    <para>Créez un lien symbolique qui permet à libgcc de se construire avec la prise
+en charge des thread posix&nbsp;:</para>
+
+<screen><userinput remap="pre">mkdir -pv $LFS_TGT/libgcc
+ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></screen>
+
+    <para>Avant de démarrer la construction de GCC, rappelez-vous d'effacer les
+variables d'environnement qui modifient les drapeaux d'optimisation par
+défaut.</para>
+
+    <para>Maintenant préparez GCC à la compilation&nbsp;:</para>
+
+<screen><userinput remap="configure">../configure                                       \
+    --build=$(../config.guess)                     \
+    --host=$LFS_TGT                                \
+    --prefix=/usr                                  \
+    CC_FOR_TARGET=$LFS_TGT-gcc                     \
+    --with-build-sysroot=$LFS                      \
+    --enable-initfini-array                        \
+    --disable-nls                                  \
+    --disable-multilib                             \
+    --disable-decimal-float                        \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --disable-libstdcxx                            \
+    --enable-languages=c,c++</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification des nouvelles options de configure&nbsp;:</title>
+
+      <!-- WIP -->
+<varlistentry>
+        <term><parameter>-with-build-sysroot=$LFS</parameter></term>
+        <listitem>
+          <para>Normalement, utiliser <parameter>--host</parameter> s'assure que le
+compilateur croisé est utilisé pour construire GCC, et que le compilateur
+sait qu'il doit chercher les en-têtes et les bibliothèques dans <filename
+class="directory">$LFS</filename>. Mais le système de construction de GCC
+utilise d'autres outils qui ne connaissent pas cet emplacement. Ce paramètre
+est requis pour qu'ils trouvent les fichiers requis dans <filename
+class="directory">$LFS</filename> et non sur l'hôte.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-initfini-array</parameter></term>
+        <listitem>
+          <para>Cette option est automatiquement activée lors de la construction d'un
+compilateur natif avec un compilateur natif sur x86. Mais ici, nous
+construisons avec un compilateur croisé, donc nous devons explicitement
+utiliser cette option.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compilez le paquet&nbsp;:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Installez le paquet&nbsp;:</para>
+
+<screen><userinput remap="install">make DESTDIR=$LFS install</userinput></screen>
+
+    <para>Comme touche finale, créez un lien symbolique utilitaire. De nombreux
+programmes et scripts lancent <command>cc</command> au lieu de
+<command>gcc</command>, pour que les programmes restent génériques et donc
+utilisables sur n'importe quel type de système UNIX où le compilateur C de
+GNU n'est pas toujours installé. Lancer <command>cc</command> laisse
+l'administrateur système libre de décider quel compilateur C
+installer&nbsp;:</para>
+
+<screen><userinput remap="install">ln -sv gcc $LFS/usr/bin/cc</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails de ce paquet se trouvent sur <xref linkend="contents-gcc"
+role="."/></para>
+
+  </sect2>
+
+</sect1>

@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-network" revision="systemd">
+  <?dbhtml filename="network.html"?>
+
+  <title>Configuration générale du réseau</title>
+
+  <indexterm zone="ch-config-network">
+    <primary sortas="d-network">network</primary>
+  <secondary>configuration</secondary></indexterm>
+
+  <para>Cette section s'applique seulement si une carte réseau doit être configurée.</para>
+
+  <sect2>
+    <title>Fichier de configuration d'interface réseau</title>
+
+    <para>À partir de la version 209, systemd contient un démon de configuration
+réseau nommé <command>systemd-networkd</command> qui peut être utilisé pour
+la configuration basique du réseau. De plus, depuis la version 213, la
+résolution de nom DNS peut être prise en charge par
+<command>systemd-resolved</command> au lieu d'un fichier
+<filename>/etc/resolv.conf</filename> statique. Ces deux services sont
+activés par défaut.</para>
+
+    <para>Les fichiers de configuration pour <command>systemd-networkd</command> (et
+<command>systemd-resolved</command>) peuvent être placés dans <filename
+class="directory">/usr/lib/systemd/network</filename> ou <filename
+class="directory">/etc/systemd/network</filename>. Les fichiers dans
+<filename class="directory">/etc/systemd/network</filename> ont une priorité
+supérieure à ceux dans <filename
+class="directory">/usr/lib/systemd/network</filename>. Il existe trois types
+de fichiers de configuration&nbsp;: <filename
+class="extension">.link</filename>, <filename
+class="extension">.netdev</filename> et <filename
+class="extension">.network</filename>. Pour une description détaillée et des
+exemples de contenu de ces fichiers de configuration, consultez des pages de
+manuel <filename>systemd-link(5)</filename>,
+<filename>systemd-netdev(5)</filename> et
+<filename>systemd-network(5)</filename>.</para>
+
+    <sect3 id="systemd-network-devices">
+      <title>Nommage des périphériques réseau</title>
+
+      <para>
+        Udev assigne normalement des noms d'interface basés sur les caractéristiques
+physiques comme enp2s1. Si vous n'êtes pas sûr de votre nom d'interface,
+vous pouvez toujours lancer <command>ip link</command> après avoir lancé
+votre système.
+      </para>
+
+      <para>
+        Pour la plupart des systèmes, il n'y a qu'une interface réseau pour chaque
+type de connexion. Par exemple, le nom classique pour une connexion filaire
+est eth0. Une connexion sans fil aura souvant pour nom wifi0 ou wlan0. 
+      </para>
+
+      <para>
+        Si vous préférez utiliser les noms d'interfaces réseau classiques ou
+personnalisés, il y a trois manières de procéder&nbsp;:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            Masquez le fichier .link d'udev pour la politique par défaut&nbsp;:
+<screen role="nodump"><userinput>ln -s /dev/null /etc/systemd/network/99-default.link</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+             Créez une convention de nommage manuelle, par exemple en nommant les
+interface comme «&nbsp;internet0&nbsp;», «&nbsp;dmz0&nbsp;» ou
+«&nbsp;lan0&nbsp;». Pour cela, créez des fichiers .link dans
+/etc/systemd/network/, qui choisissent un nom explicite ou une meilleure
+convention de nommage pour vos interfaces. Par exemple&nbsp;:
+          </para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/systemd/network/10-ether0.link &lt;&lt; "EOF"
+<literal>[Match]
+# Changez l'adresse MAC comme il faut pour votre périphérique réseau
+MACAddress=12:34:45:78:90:AB
+
+[Link]
+Name=ether0</literal>
+EOF</userinput></screen>
+
+          <para>
+             Voir la page de manuel de systemd.link(5) pour plus d'informations. 
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Dans /boot/grub/grub.cfg, passez l'option net.ifnames=0 sur la ligne de
+commande du noyau.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+
+    <sect3 id="systemd-networkd-static">
+      <title>Configuration en IP statique</title>
+
+      <para>La commande suivante crée un fichier de configuration basique pour la
+configuration d'une adresse ip statique (en utilisant systemd-networkd et
+systemd-resolved)&nbsp;:</para>
+
+<screen><!-- jhalfs relies on the values for Name, Address, etc. If you want to change
+     them, please inform the jhalfs maintainer(s). -->
+<userinput>cat &gt; /etc/systemd/network/10-eth-static.network &lt;&lt; "EOF"
+<literal>[Match]
+Name=<replaceable>&lt;network-device-name&gt;</replaceable>
+
+[Network]
+Address=192.168.0.2/24
+Gateway=192.168.0.1
+DNS=192.168.0.1
+Domains=<replaceable>&lt;Your Domain Name&gt;</replaceable></literal>
+EOF</userinput></screen>
+
+      <para>Vous pouvez ajouter plusieurs entrées DNS si vous avez plus d’un serveur
+DNS. Ne rajoutez pas d’entrée DNS ou Domains si vous voulez utiliser un
+fichier <filename>/etc/resolv.conf</filename> statique.</para>
+
+    </sect3>
+
+    <sect3 id="systemd-networkd-dhcp">
+      <title>Configuration du DHCP</title>
+
+      <para>La commande suivante crée un fichier de configuration basique pour la
+configuration de DHCP en IPv4&nbsp;:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/systemd/network/10-eth-dhcp.network &lt;&lt; "EOF"
+<literal>[Match]
+Name=&lt;network-device-name&gt;
+
+[Network]
+DHCP=ipv4
+
+[DHCP]
+UseDomains=true</literal>
+EOF</userinput></screen>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2 id="resolv.conf">
+    <title>Créer le fichier /etc/resolv.conf</title>
+
+    <indexterm zone="resolv.conf">
+      <primary sortas="e-/etc/resolv.conf">/etc/resolv.conf</primary>
+    </indexterm>
+
+    <para>Si le système a besoin d'être connecté à Internet, il aura besoin d'un DNS
+pour résoudre les noms de domaines Internet en adresse IP, et vice-versa.
+Ceci se fait en plaçant les adresses IP des serveurs DNS, disponibles auprès
+du FAI ou de l'administrateur système, dans
+<filename>/etc/resolv.conf</filename>.</para>
+
+    <sect3 id="resolv-conf-systemd-resolved">
+      <title>Configuration  de systemd-resolved</title>
+
+      <note><para>Si vous utilisez un moyen incompatible pour configurer vos interfaces
+réseaux (par exemple ppp, etc), ou si vous utilisez un résolveur local (par
+exemple bind, dnsmasq, unbound, etc), ou tout autre logiciel générant un
+fichier <filename>/etc/resolv.conf</filename> (par exemple
+<command>resolvconf</command>), le service
+<command>systemd-resolved</command> ne devrait pas être utilisé.</para></note>
+
+      <para>Lorsque vous utilisez <command>systemd-resolved</command> pour configurer le
+DNS, il crée le fichier
+<filename>/run/systemd/resolve/resolv.conf</filename>. Créez un lien
+symbolique dans <filename>/etc</filename> pour utiliser le fichier
+généré&nbsp;:</para>
+
+<screen><userinput>ln -sfv /run/systemd/resolve/resolv.conf /etc/resolv.conf</userinput></screen>
+
+    </sect3>
+
+    <sect3 id="resolv-conf-static">
+      <title>Configuration de resolv.conf statique</title>
+
+      <para>Si un fichier statique <filename>/etc/resolv.conf</filename> est désiré,
+créez-le en lançant la commande suivante&nbsp;:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/resolv.conf &lt;&lt; "EOF"
+<literal># Début de /etc/resolv.conf
+
+domain <replaceable>&lt;Votre nom de domaine&gt;</replaceable>
+nameserver <replaceable>&lt;Adresse IP du DNS primaire&gt;</replaceable>
+nameserver <replaceable>&lt;Adresse IP du DNS secondaire&gt;</replaceable>
+
+# Fin de /etc/resolv.conf</literal>
+EOF</userinput></screen>
+
+      <para>Le paramètre <varname>domain</varname> peut être omis ou remplacé par un
+paramètre <varname>search</varname>. Voir la page de manuel de resolv.conf
+pour plus de détails.</para>
+
+      <para>Remplacez <replaceable>&lt;Adresse IP du DNS&gt;</replaceable> par l'adresse
+IP du DNS le plus approprié pour votre configuration. Il y aura souvent plus
+d'une entrée (les serveurs secondaires sont utiles en cas d'indisponibilité
+du premier). Si vous avez seulement besoin ou si vous voulez seulement un
+serveur DNS, supprimez la seconde ligne <emphasis>nameserver</emphasis> du
+fichier. L'adresse IP pourrait aussi être un routeur sur le réseau
+local. Une autre possibilité est d'utiliser le service DNS public de Google
+avec les adresse IP suivantes comme serveurs de noms.</para>
+
+      <note><para>Les adresses des DNS publiques de Google sont <parameter>8.8.8.8</parameter>
+et <parameter>8.8.4.4</parameter> en IPv4 et
+<parameter>2001:4860:4860::8888</parameter> et
+<parameter>2001:4860:4860::8844</parameter> en IPv6. Autrement, vous pouvez
+aussi utiliser les résolveurs de FDN: <parameter>80.67.169.12</parameter> et
+<parameter>80.67.169.40</parameter> en IPv4 et
+<parameter>2001:910:800::12</parameter> et
+<parameter>2001:910:800::40</parameter> en IPv6.</para></note>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2 id="ch-config-hostname">
+    <title>Configurer le nom d'hôte du système</title>
+
+    <indexterm zone="ch-config-hostname">
+      <primary sortas="d-hostname">hostname</primary>
+      <secondary>configuration</secondary>
+    </indexterm>
+
+     <para>Pendant le processus de démarrage, le fichier
+<filename>/etc/hostname</filename> est utilisé pour donner un nom d'hôte au
+système.</para>
+
+     <para>Créez le fichier <filename>/etc/network</filename> et saisissez le nom du
+système en lançant&nbsp;:</para>
+
+<screen><userinput>echo "<replaceable>&lt;lfs&gt;</replaceable>" &gt; /etc/hostname</userinput></screen>
+
+     <para><replaceable>&lt;lfs&gt;</replaceable> doit être remplacé par le nom de
+l'ordinateur. Ne saisissez pas le FQDN ici. Cette information sera saisie
+dans le fichier <filename>/etc/hosts</filename>.</para>
+
+  </sect2>
+
+  <sect2 id="ch-config-hosts">
+     <title>Personnaliser le fichier /etc/hosts</title>
+
+     <indexterm zone="ch-config-hosts">
+       <primary sortas="e-/etc/hosts">/etc/hosts</primary>
+     </indexterm>
+   
+     <indexterm zone="ch-config-hosts">
+       <primary sortas="d-localnet">localnet</primary>
+       <secondary>/etc/hosts</secondary>
+     </indexterm>
+   
+     <indexterm zone="ch-config-hosts">
+       <primary sortas="d-network">network</primary>
+       <secondary>/etc/hosts</secondary>
+     </indexterm>
+
+     <para>Choisissez un nom de domaine pleinement qualifié
+(<foreignphrase>fully-qualified domain name</foreignphrase>, ou FQDN) et les
+alias possibles à déclarer dans le fichier
+<filename>/etc/hosts</filename>. Si vous utilisez des adresses statiques,
+vous devrez aussi choisir une adresse IP. La syntaxe d’une entrée du fichier
+hosts est&nbsp;:</para>
+
+<screen><literal>IP_address myhost.example.org aliases</literal></screen>
+
+     <para>Sauf si votre ordinateur doit être visible à partir d'Internet (c-à-d que
+c'est un domaine enregistré et un bloc d'adresses IP valide&mdash;la plupart
+des utilisateurs n'ont pas ceci), assurez-vous que l'adresse IP se trouve
+dans la plage d'adresses réservée aux réseaux privés. Les plages valides
+sont&nbsp;:</para>
+
+<screen><literal>Plage d'adresses réseau privés      Préfixe normal
+     10.0.0.1 - 10.255.255.254                    8
+    172.x.0.1 - 172.x.255.254                    16
+  192.168.y.1 - 192.168.y.254                    24</literal></screen>
+
+     <para>x peut être un nombre compris entre 16 et 31.  y peut être un nombre compris
+entre 0 et 255.</para>
+
+     <para>Une adresse IP privée valide pourrait être 192.168.1.1.  Un FQDN valide pour
+cette IP pourrait être lfs.example.org.</para>
+
+     <para>Même si vous ne possédez pas de carte réseau, un FQDN valide est toujours
+requis.  Certains programmes, comme les MTA, en ont besoin pour fonctionner
+correctement.</para>
+
+
+
+     <!--
+     <para>
+Create the /etc/hosts file using the following command:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/hosts &lt;&lt; "EOF"
+<literal># Begin /etc/hosts
+
+127.0.0.1 localhost.localdomain localhost
+127.0.1.1 <replaceable>&lt;FQDN&gt;</replaceable> <replaceable>&lt;HOSTNAME&gt;</replaceable>
+::1       localhost ip6-localhost ip6-loopback
+ff02::1   ip6-allnodes
+ff02::2   ip6-allrouters
+
+# End /etc/hosts</literal>
+EOF</userinput></screen>
+-->
+<para>Créez le fichier <filename>/etc/hosts</filename> avec la commande
+suivante&nbsp;:</para>
+
+<screen><userinput>cat &gt; /etc/hosts &lt;&lt; "EOF"
+<literal># Begin /etc/hosts
+
+127.0.0.1 localhost.localdomain localhost
+127.0.1.1 <replaceable>&lt;FQDN&gt;</replaceable> <replaceable>&lt;HOSTNAME&gt;</replaceable>
+<replaceable>&lt;192.168.0.2&gt;</replaceable> <replaceable>&lt;FQDN&gt;</replaceable> <replaceable>&lt;HOSTNAME&gt;</replaceable> <replaceable>[alias1] [alias2] ...</replaceable>
+::1       localhost ip6-localhost ip6-loopback
+ff02::1   ip6-allnodes
+ff02::2   ip6-allrouters
+
+# End /etc/hosts</literal>
+EOF</userinput></screen>
+
+     <para>Les valeurs <replaceable>&lt;192.168.0.2&gt;</replaceable>,
+<replaceable>&lt;FQDN&gt;</replaceable> et
+<replaceable>&lt;HOSTNAME&gt;</replaceable> doivent être remplacées suivant
+les contraintes et les besoins spécifiques (si la machine se voit affecter
+une adresse IP par un administrateur réseau/système et que cette machine est
+connectée à un réseau existant). Vous pouvez omettre le ou les noms d'alias
+facultatifs, et la ligne <replaceable>&lt;192.168.0.2</replaceable> si vous
+utilisez une connexion configurée avec DHCP ou l'autoconfiguration IPv6.</para>
+
+     <para>L'adresse ::1 est l'équivalent en IPv6 à 127.0.0.1 et représente l'interface
+de rebouclage IPv6. 127.0.1.1 est une entrée de rebouclage réservée
+spécifiquement pour le FQDN.</para>
+
+   </sect2>
+
+</sect1>

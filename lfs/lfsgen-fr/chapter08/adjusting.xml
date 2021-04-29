@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-adjusting">
+  <?dbhtml filename="adjusting.html"?>
+
+  <title>Ajustement de la chaîne d'outils</title>
+
+  <para>Maintenant que les bibliothèques C finales ont été installées, il est temps
+d'ajuster la chaîne d'outils pour qu'elle lie tout programme nouvellement
+compilé à ces nouvelles bibliothèques.</para>
+
+  <para>D'abord, sauvegardez l'éditeur de liens de <filename
+class="directory">/tools</filename>, et remplacez-le par l'éditeur de lien
+ajusté que nous avons fait au chapitre 5. Nous créerons aussi un lien vers
+son équivalent dans <filename class="directory">/tools/$(uname
+-m)-pc-linux-gnu/bin</filename>&nbsp;:</para>
+
+<screen><userinput>mv -v /tools/bin/{ld,ld-old}
+mv -v /tools/$(uname -m)-pc-linux-gnu/bin/{ld,ld-old}
+mv -v /tools/bin/{ld-new,ld}
+ln -sv /tools/bin/ld /tools/$(uname -m)-pc-linux-gnu/bin/ld</userinput></screen>
+
+  <para>la commande suivante modifie le fichier des specs GCC dans trois buts&nbsp;:
+déjà faire pointer GCC vers le nouveau chargeur dynamique. La suppression
+simple de toutes les occurences de <quote>/tools</quote> devrait nous
+laisser uniquement le bon chemin vers l'éditeur de liens
+dynamique. Deuxièmement, pour que GCC sache où trouver les en-têtes corrects
+et les fichiers de démarrage de Glibc. Troisièmement, pour ajouter le
+répertoire /usr/include à la fin du chemin de recherche par défaut, pour
+qu'il trouve les fichiers d'en-têtes ajoutés au chapitre 6. Une commande
+<command>sed</command> fait cela&nbsp;:</para>
+
+<screen><userinput>gcc -dumpspecs | sed -e 's@/tools@@g'                   \
+    -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
+    -e '/\*cpp:/{n;s@$@ -idirafter /usr/include@}' &gt;      \
+    `dirname $(gcc --print-libgcc-file-name)`/specs</userinput></screen>
+
+  <para>C'est une bonne idée d'examiner visuellement le fichier de specs pour
+vérifier que le changement voulu a bien été effectué.</para>
+
+  <para>Il est impératif à ce moment d'arrêter et de vous assurer que les fonctions
+basiques (compilation et édition des liens) de l'ensemble des outils ajusté
+fonctionnent comme attendu. Pour cela, réalisez une petite
+vérification&nbsp;:</para>
+
+<screen os="a"><userinput>echo 'int main(){}' &gt; dummy.c
+cc dummy.c -v -Wl,--verbose &amp;&gt; dummy.log
+readelf -l a.out | grep ': /lib'</userinput></screen>
+
+  <para os="b">Il ne devrait pas y avoir d'erreur et la sortie de la commande sera (avec
+des différences spécifiques aux plateformes dans le nom de l'éditeur de
+liens)&nbsp;:</para>
+
+<screen os="c"><computeroutput>[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</computeroutput></screen>
+
+  <para>Remarquez que sur un système 64 bits<filename
+class="directory">/lib</filename> est l'emplacement de notre éditeur de
+liens, mais il est accessible via un lien symbolique dans /lib64.</para>
+
+  <note><para>Sur les systèmes 32-bit, l’interpréteur devrait être /lib/ld-linux.so.2.</para></note>
+
+  <para os="d">Maintenant, assurez-vous que nous utilisons les bons fichiers de
+démarrage&nbsp;:</para>
+
+<screen os="e"><userinput>grep -o '/usr/lib.*/crt[1in].*succeeded' dummy.log</userinput></screen>
+
+  <para os="f">La sortie de la dernière commande sera&nbsp;:</para>
+
+<screen><computeroutput>/usr/lib/../lib/crt1.o succeeded
+/usr/lib/../lib/crti.o succeeded
+/usr/lib/../lib/crtn.o succeeded</computeroutput></screen>
+
+  <para os="g">Vérifiez que le compilateur cherche les bons fichiers d'en-têtes&nbsp;:</para>
+
+<screen><userinput>grep -B4 '^ /usr/include' dummy.log</userinput></screen>
+
+  <para os="h">Cette commande devrait afficher la sortie suivante&nbsp;:</para>
+
+<screen><computeroutput>#include &lt;...&gt; search starts here:
+ /tools/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/include
+ /tools/include
+ /tools/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/include-fixed
+ /usr/include</computeroutput></screen>
+
+  <note><para>Sur un système 32&nbsp;bits, x86_64 est remplacé par i686.</para></note>
+
+  <para os="i">Puis, vérifiez que le nouvel éditeur de liens est utilisé avec les bons
+chemins de recherche&nbsp;:</para>
+
+<screen os="j"><userinput>grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'</userinput></screen>
+
+  <para os="k">Les références vers des emplacements qui contiennent
+«&nbsp;-linux-gnu&nbsp;» doivent être ignorées, sinon la sortie de la
+dernière commande doit être&nbsp;:</para>
+
+<screen><computeroutput>SEARCH_DIR("/usr/lib")
+SEARCH_DIR("/lib")</computeroutput></screen>
+
+  <para os="l">Ensuite, assurez-vous que nous utilisons la bonne libc&nbsp;:</para>
+
+<screen os="m"><userinput>grep "/lib.*/libc.so.6 " dummy.log</userinput></screen>
+
+  <para os="n">La sortie de la dernière commande sera&nbsp;:</para>
+
+<screen os="o"><computeroutput>attempt to open /lib/libc.so.6 succeeded</computeroutput></screen>
+
+  <para os="p">Assurez-vous que GCC utilise le bon éditeur de liens dynamiques&nbsp;:</para>
+
+<screen os="q"><userinput>grep found dummy.log</userinput></screen>
+
+  <para os="r">La sortie de la dernière commande devrait être (avec des différences
+spécifiques aux plateformes dans le nom de l'éditeur de liens)&nbsp;:</para>
+
+<screen os="s"><computeroutput>found ld-linux-x86-64.so.2 at /lib/ld-linux-x86-64.so.2</computeroutput></screen>
+
+  <para os="t"><!--The most likely
+  reason is that something went wrong with the specs file adjustment.-->
+Si la sortie ne ressemble pas à celle montrée ci-dessus ou qu'elle
+n'apparaît pas du tout, alors quelque chose ne va vraiment pas.  Enquêtez et
+retracez les étapes pour savoir d'où vient le problème et comment le
+corriger. Tout problème devra être résolu avant de continuer le processus.</para>
+
+  <para os="u">Une fois que tout fonctionne correctement, nettoyez les fichiers
+tests&nbsp;:</para>
+
+<screen os="v"><userinput>rm -v dummy.c a.out dummy.log</userinput></screen>
+
+</sect1>

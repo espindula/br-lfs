@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-glibc" role="wrap">
+  <?dbhtml filename="glibc.html"?>
+
+  <sect1info condition="script">
+<productname>glibc</productname>
+<productnumber>&glibc-version;</productnumber> <address>&glibc-url;</address></sect1info>
+
+  <title>Glibc-&glibc-version;</title>
+
+  <indexterm zone="ch-tools-glibc">
+    <primary sortas="a-Glibc">Glibc</primary>
+    <secondary>outils</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter08/glibc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&glibc-tmp-sbu;</seg>
+        <seg>&glibc-tmp-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de Glibc</title>
+
+    <para>Tout d'abord, créez un lien symbolique pour respecter le LSB. En plus, pour
+x86_64, créez un lien symbolique de compatibilité requis pour le bon
+fonctionnement du chargeur de bibliothèques dynamiques&nbsp;:</para>
+
+<screen><userinput remap="pre">case $(uname -m) in
+    i?86)   ln -sfv ld-linux.so.2 $LFS/lib/ld-lsb.so.3
+    ;;
+    x86_64) ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64
+            ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64/ld-lsb-x86-64.so.3
+    ;;
+esac</userinput></screen>
+
+    <note>
+      <para>
+        La commande ci-dessus est correcte. La commande <command>ln</command> a
+plusieurs versions syntaxiques, donc assurez-vous de vérifier <command>info
+coreutils ln</command> et <filename>ln(1)</filename> avant de rapporter ce
+que vous pensez être une erreur.
+	  </para>
+    </note>
+
+    <para>Certains programmes de Glibc utilisent le répertoire <filename
+class="directory">/var/db</filename> qui ne respecte pas le FHS pour stocker
+leurs données d'exécution. Appliquez le correctif suivant pour que ces
+programmes stockent leurs données d'exécution à l'emplacement indiqué par le
+FHS&nbsp;:</para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../glibc-&glibc-version;-fhs-1.patch</userinput></screen>
+
+    <para>La documentation de Glibc recommande de construire Glibc dans un répertoire
+dédié&nbsp;:</para>
+
+<screen><userinput remap="pre">mkdir -v build
+cd       build</userinput></screen>
+
+    <para>Ensuite, préparez la compilation de Glibc&nbsp;:</para>
+
+<screen><userinput remap="configure">../configure                             \
+      --prefix=/usr                      \
+      --host=$LFS_TGT                    \
+      --build=$(../scripts/config.guess) \
+      --enable-kernel=&min-kernel;                \
+      --with-headers=$LFS/usr/include    \
+      libc_cv_slibdir=/lib</userinput></screen>
+
+
+    <variablelist>
+      <!--
+      libc_cv_forced_unwind=yes          \
+      libc_cv_c_cleanup=yes</userinput>
+</screen> -->
+<title>Voici la signification des options de configure&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>--host=$LFS_TGT, --build=$(../scripts/config.guess)</parameter></term>
+        <listitem>
+          <para>L'effet combiné de ces commutateurs est que le système de construction de
+Glibc se configure pour se compiler de manière croisée en utilisant
+l'éditeur de liens croisé et le compilateur croisé dans <filename
+class="directory">$LFS/tools</filename>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-kernel=&min-kernel;</parameter></term>
+        <listitem>
+          <para>Ceci indique à Glibc de compiler la bibliothèque avec la prise en charge des
+noyaux Linux &min-kernel; et supérieurs. Les contournements pour les noyaux
+plus anciens ne sont pas activés.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-headers=$LFS/usr/include</parameter></term>
+        <listitem>
+          <para>Ceci dit à Glibc de se compiler contre les en-têtes récemment installés dans
+le répertoire $LFS/usr/include, afin qu'il connaisse exactement les
+fonctionnalités du noyau et puisse s'optimiser en conséquence.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>libc_cv_slibdir=/lib</parameter></term>
+        <listitem>
+          <para>Cela s'assure que la bibliothèque est installée dans /lib au lieu du
+répertoire /lib64 par défaut sur les machines 64&nbsp;bits.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>libc_cv_include_x86_isa_level=no</option></term>
+        <listitem>
+          <para>Cette option désactive la propriété <quote>x86 ISA needed</quote> dans les
+bibliothèques Glibc. Utilisez-la <emphasis role="bold">si</emphasis> vous
+construisez Glibc avec l'option <option>-march</option> dans les
+<envar>CFLAGS</envar>, pour contourner un problème dans Glibc-2.33 qui la
+casse.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Lors de cette étape, le message d'avertissement suivant peut
+apparaître&nbsp;:</para>
+
+    <blockquote>
+<screen><computeroutput>configure: WARNING:
+*** These auxiliary programs are missing or
+*** incompatible versions: msgfmt
+*** some features will be disabled.
+*** Check the INSTALL file for required versions.</computeroutput></screen>
+    </blockquote>
+
+    <para>Le programme <command>msgfmt</command>, manquant ou incompatible, ne pose
+généralement pas de problème. Ce programme <command>msgfmt</command> fait
+partie du paquet Gettext que la distribution hôte devrait fournir.</para>
+
+    <note><para>Il a été reporté que ce paquet pouvait échouer avec un «&nbsp;make
+parallèles&nbsp;». Si cela arrive, relancez la commande avec l'option
+«&nbsp;-j1&nbsp;».</para></note>
+
+    <para>Compilez le paquet&nbsp;:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Installez le paquet&nbsp;:</para>
+
+    <warning><para>Si <envar>LFS</envar> n'est pas correctement initialisée, et malgré les
+recommandations, que vous construisez en <systemitem
+class="username">root</systemitem>, la commande suivante installera la glibc
+nouvellement construite sur votre système hôte, ce qui le rendra
+inutilisable. Alors assurez-vous que l'environnement est correctement
+initialisé avant de lancer la commande suivante.</para></warning>
+
+<screen><userinput remap="install">make DESTDIR=$LFS install</userinput></screen>
+
+    <variablelist>
+      <title>Voici la signification de l'option de <command>make
+install</command>&nbsp;::</title>
+
+      <varlistentry>
+        <term><parameter>DESTDIR=$LFS</parameter></term>
+        <listitem>
+          <para>La variable make <envar>DESTDIR</envar> est utilisée par presque tous les
+paquets pour définir l'emplacement où le paquet devrait être installé. Si
+elle n'est pas indiquée, elle correspond par défaut à la racine (<filename
+class="directory">/</filename>). Ici, nous spécifions que le paquet doit
+être installé dans <filename class="directory">$LFS</filename>, qui
+deviendra la racine après <xref linkend= "ch-tools-chroot"/>.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <caution>
+      <para>À ce moment, il est impératif de vous arrêter et de vous assurer que les
+fonctions de base (compilation et édition des liens) du nouvel ensemble
+d'outils fonctionnent comme prévu. Pour effectuer un test de propreté,
+lancez les commandes suivantes&nbsp;:</para>
+
+<screen><userinput>echo 'int main(){}' &gt; dummy.c
+$LFS_TGT-gcc dummy.c
+readelf -l a.out | grep '/ld-linux'</userinput></screen>
+
+      <para>Si tout fonctionne correctement, il ne devrait pas y avoir d'erreurs et la
+sortie de la dernière commande sera de la forme&nbsp;:</para>
+
+<screen><computeroutput>[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</computeroutput></screen>
+
+      <para>Notez que pour les machines 32&nbsp;bits, le nom de l'interpréteur sera
+<filename>/lib/ld-linux.so.2</filename>.</para>
+
+      <para>Si l'affichage diffère ou s'il n'y a aucun affichage, alors quelque chose ne
+se passe pas bien. Enquêtez et tracez vos étapes pour trouver où se cache le
+problème et comment le corriger. Ce problème doit être corrigé avant de
+continuer.</para>
+
+      <para>Une fois que tout va bien, nettoyez les fichiers de test&nbsp;:</para>
+
+<screen><userinput>rm -v dummy.c a.out</userinput></screen>
+
+    </caution>
+
+    <note><para>La construction des paquets dans le prochain chapitre servira de test
+supplémentaire pour vérifier que l'ensemble d'outils a été construit
+correctement. Si certains paquets, en particulier binutils-pass2 ou
+gcc-pass2, échouent à se construire, c'est une indication que quelque chose
+ne va pas dans les installations précédentes de Binutils, GCC, ou Glibc.</para></note>
+
+    <para>Maintenant que notre chaîne d'outils croisée est complète, finalisez
+l'installation de l'en-tête limits.h. Pour cela, lancez un utilitaire
+fournit par les développeurs de GCC&nbsp;:</para>
+
+<screen><userinput>$LFS/tools/libexec/gcc/$LFS_TGT/&gcc-version;/install-tools/mkheaders</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Les détails sur ce paquet sont situés dans <xref linkend="contents-glibc"
+role="."/></para>
+
+  </sect2>
+
+</sect1>

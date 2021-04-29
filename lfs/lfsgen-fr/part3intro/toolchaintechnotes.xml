@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-toolchaintechnotes" xreflabel="Notes techniques sur la chaîne d'outils">
+  <?dbhtml filename="toolchaintechnotes.html"?>
+
+  <title>Notes techniques sur la chaîne d'outils</title>
+
+  <para>Cette section explique certains détails rationnels et techniques derrière la
+méthode de construction. Il n'est pas essentiel de comprendre immédiatement
+tout ce qui se trouve dans cette section. La plupart des informations seront
+plus claires après avoir réalisé réellement une construction complète. Cette
+section peut servir de référence à tout moment lors du processus de
+construction.</para>
+
+  <para>Le but global des chapitres <xref linkend="chapter-cross-tools"/> et <xref
+linkend="chapter-temporary-tools"/> est de fournir une zone temporaire qui
+contient un ensemble d'outils connus qui peuvent être isolés du système
+hôte. En utilisant <command>chroot</command>, les commandes dans le reste
+des chapitres se cantonneront à cet environnement, en assurant une
+construction du système LFS cible propre, sans soucis. Le processus de
+construction a été conçu pour minimiser les risques pour les nouveaux
+lecteurs et pour fournir une valeur éducative maximale en même temps.</para>
+
+  <para>Le processus de construction se base sur de la <emphasis>compilation
+croisée</emphasis>. La compilation croisée s'utilise normalement pour
+construire un compilateur et sa chaîne de construction pour une machine
+différente de celle utilisée pour la construction. Cela n'est pas
+strictement requis pour LFS, comme la machine où le nouveau système est
+construit est la même que celle utilisée pour la construction. Mais la
+compilation croisée a le grand avantage que tout ce qui est compilé ne peut
+pas dépendre de l'environnement hôte.</para>
+
+  <sect2 id="cross-compile" xreflabel="À propos de la compilation croisée">
+
+    <title>À propos de la compilation croisée</title>
+
+    <para>La compilation croisée utilise certains concepts qui méritent une section à
+part. Bien que vous puissiez passer cette section lors de votre première
+lecture, nous vous recommandons fortement d'y revenir plus tard pour bien
+comprendre le processus de construction.</para>
+
+    <para>Définissons d'abord certains termes utilisés dans ce contexte&nbsp;:</para>
+
+    <variablelist>
+      <varlistentry><term>build (construction)</term><listitem>
+        <para>est la machine où nous construisons les programmes. Remarquez que cette
+machine sera appelée <quote>hôte</quote> dans les autres sections.</para></listitem>
+      </varlistentry>
+
+      <varlistentry><term>host (hôte)</term><listitem>
+        <para>est la machine ou le système où les programmes seront lancés. Remarquez que
+nous n'utilisons pas le terme <quote>hôte</quote> de la même manière ici que
+dans les autres sections.</para></listitem>
+      </varlistentry>
+
+      <varlistentry><term>target (cible)</term><listitem>
+        <para>est seulement utilisé pour les compilateurs. C'est la machine pour laquelle
+le compilateur produit du code. Elle peut être différente de la machine hôte
+ou de construction.</para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Par exemple, imaginons le scénario suivant (parfois appelé <quote>Canadian
+Cross</quote>)&nbsp;: on peut avoir un compilateur sur une machine lente,
+appelons-la A, et le compilateur ccA. On peut aussi avoir une machine rapide
+(B) sans compilateur, et on veut produire du code pour une autre machine
+lente (C). Pour construire un compilateur pour une machine C, on
+effectuerait trois étapes&nbsp;:</para>
+
+    <informaltable align="center">
+      <tgroup cols="5">
+        <colspec colnum="1" align="center"/>
+        <colspec colnum="2" align="center"/>
+        <colspec colnum="3" align="center"/>
+        <colspec colnum="4" align="center"/>
+        <colspec colnum="5" align="left"/>
+        <thead>
+          <row><entry>Étape</entry><entry>Construction</entry><entry>Hôte</entry>
+               <entry>Cible</entry><entry>Action</entry></row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>1</entry><entry>A</entry><entry>A</entry><entry>B</entry>
+            <entry>construire un compilateur croisé cc1 avec ccA sur la machine A</entry>
+          </row>
+          <row>
+            <entry>2</entry><entry>A</entry><entry>B</entry><entry>C</entry>
+            <entry>construire un compilateur croisé cc2 avec cc1 sur la machine A</entry>
+          </row>
+          <row>
+            <entry>3</entry><entry>B</entry><entry>C</entry><entry>C</entry>
+            <entry>construire le compilateur ccC avec cc2 sur la machine B</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>Ensuite, tous les autres programmes requis par la machine C peuvent être
+compilés avec cc2 sur la machine rapide B. Remarquez qu'à moins que B ne
+puisse lancer les programmes produits pour C, il n'y a aucun moyen de tester
+les programmes construits avant de les lancer sur la machine C. Par exemple,
+pour tester ccC, on peut ajouter une quatrième étape&nbsp;:</para>
+
+    <informaltable align="center">
+      <tgroup cols="5">
+        <colspec colnum="1" align="center"/>
+        <colspec colnum="2" align="center"/>
+        <colspec colnum="3" align="center"/>
+        <colspec colnum="4" align="center"/>
+        <colspec colnum="5" align="left"/>
+        <thead>
+          <row><entry>Étape</entry><entry>Construction</entry><entry>Hôte</entry>
+               <entry>Cible</entry><entry>Action</entry></row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>4</entry><entry>C</entry><entry>C</entry><entry>C</entry>
+            <entry>reconstruire et tester ccC avec lui-même sur la machine C</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>Dans l'exemple au dessus, seuls cc1 et cc2 sont des compilateurs croisés,
+c'est à dire qu'ils produisent du code pour une machine différente de celle
+sur laquelle ils tournent. Les autres compilateurs ccA et ccC produisent du
+code pour la machine sur laquelle ils tournent. Ces compilateurs sont
+appelés des compilateurs <emphasis>natifs</emphasis>.</para>
+
+  </sect2>
+
+  <sect2 id="lfs-cross">
+    <title>Implémentation de la compilation croisée dans LFS</title>
+
+    <note>
+      <para>Presque tous les systèmes de construction utilisent des noms de la forme
+cpu-fabriquant-noyau-os, souvent appelé le triplet machine. Le lecteur
+attentif se demandera pourquoi on appelle un <quote>triplet</quote> un nom à
+quatre composants. La raison est historique&nbsp;: initialement, on
+utilisait trois composants pour désigner une machine sans ambiguïté, mais
+avec les nouvelles machines et les nouveaux systèmes, cela s'avère
+insuffisant. Le mot <quote>triplet</quote> est resté. Une façon simple de
+déterminer le nom du triplet machine est de lancer le script
+<command>config.guess</command> venant avec les sources d'un grand nombre de
+paquets. Déballez les sources de binutils, lancez le script
+<userinput>./config.guess</userinput> et notez la sortie. Par exemple, pour
+un processeur Intel 32 bits moderne, la sortie sera du type
+<emphasis>i686-pc-linux-gnu</emphasis>. Sur un système 64 bits cela sera
+<emphasis>x86_64-pc-linux-gnu</emphasis>.</para>
+
+      <para>De même, faites attention au nom de l'éditeur de liens de la plateforme,
+souvent appelé le chargeur dynamique (à ne pas confondre avec l'éditeur de
+liens standard <command>ld</command> faisant partie de Binutils). Le
+chargeur dynamique fourni par Glibc trouve et charge les bibliothèques
+partagées nécessaires à un programme pour s'exécuter, puis l'exécute. Le nom
+de l'éditeur dynamique pour une machine Intel 32 bits sera <filename
+class="libraryfile">ld-linux.so.2</filename> (<filename
+class="libraryfile">ld-linux-x86-64.so.2</filename> pour les systèmes 64
+bits). Une façon sûre de déterminer le nom de l'éditeur de liens dynamiques
+est d'inspecter un binaire au hasard du système hôte en exécutant&nbsp;:
+<userinput>readelf -l &lt;nom du binaire&gt; | grep interpreter</userinput>
+et de noter le résultat. La référence faisant autorité couvrant toutes les
+plateformes est dans le fichier <filename>shlib-versions</filename> à la
+racine du répertoire des sources de Glibc.</para>
+    </note>
+
+    <para>Pour simuler une compilation croisée, le nom du triplet hôte est légèrement
+ajusté en changeant la partie «&nbsp;fabriquant&nbsp;» dans la variable
+<envar>LFS_TGT</envar>. Nous utilisons aussi l'option
+<parameter>--with-sysroot</parameter> lors de la construction de l'éditeur
+des liens et du compilateur croisés pour leur dire où trouver les fichiers
+hôtes requis. Cela s'assure qu'aucun autre programme construit dans le <xref
+linkend="chapter-temporary-tools"/> ne peut se lier aux bibliothèques sur la
+machine de construction. Seules deux étapes sont requises, et une autre pour
+les tests&nbsp;:</para>
+
+    <informaltable align="center">
+      <tgroup cols="5">
+        <colspec colnum="1" align="center"/>
+        <colspec colnum="2" align="center"/>
+        <colspec colnum="3" align="center"/>
+        <colspec colnum="4" align="center"/>
+        <colspec colnum="5" align="left"/>
+        <thead>
+          <row><entry>Étape</entry><entry>Construction</entry><entry>Hôte</entry>
+               <entry>Cible</entry><entry>Action</entry></row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>1</entry><entry>pc</entry><entry>pc</entry><entry>lfs</entry>
+            <entry>construire un compilateur croisé cc1 avec cc-pc sur pc</entry>
+          </row>
+          <row>
+            <entry>2</entry><entry>pc</entry><entry>lfs</entry><entry>lfs</entry>
+            <entry>construire un compilateur cc-lfs avec cc1 sur pc</entry>
+          </row>
+          <row>
+            <entry>3</entry><entry>lfs</entry><entry>lfs</entry><entry>lfs</entry>
+            <entry>reconstruire et tester cc-lfs avec lui-même sur lfs</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>Dans le tableau plus haut, <quote>sur pc</quote> signifie que les commandes
+sont lancées sur une machine qui utilise la distribution déjà
+installée. <quote>Sur lfs</quote> signifie que les commandes sont lancées
+dans un environnement chroot.</para>
+
+    <para>n fait, il y a plus à savoir sur la compilation croisée&nbsp;: le langage C
+n'est pas seulement un compilateur, mais définie aussi une bibliothèque
+standard. Dans ce livre, on utilise la bibliothèque C de GNU, glibc. Cette
+bibliothèque doit être compilée pour la machine lfs, c'est-à-dire, avec le
+compilateur croisé cc1. Mais le compilateur lui-même utilise une
+bibliothèque interne implémentant des instructions complexes qui ne sont pas
+disponibles dans l'ensemble d'instructions de l'assembleur. Cette
+bibliothèque interne, libgcc, doit être liée à la bibliothèque glibc pour
+fonctionner correctement&nbsp;! En plus, la bibliothèque standard du C++
+(libstdc++) a aussi besoin d'être liée à la glibc. La solution pour ce
+problème de poule et d'œuf est de d'abord construire une libgcc dégradée
+basée sur cc1, qui n'a pas de fonctionnalité avancée comme les threads et le
+traitement des exceptions, puis de construire glibc avec ce compilateur
+dégradé (glibc elle-même n'est pas dégradée), puis de construire
+libstdc++. Mais cette dernière n'aura pas les fonctionnalités que libgcc n'a
+pas non plus.</para>
+
+    <para>Ce n'est pas la fin de l'histoire&nbsp;: la conclusion du paragraphe
+précédent est que cc1 est incapable de trouver une libstdc++ complètement
+fonctionnelle, mais c'est le seul compilateur disponible pour construire les
+bibliothèques C/C++ lors de la deuxième étape&nbsp;! Évidemment, le
+compilateur construit à l'étape 2, cc-lfs, serait capable de construire ces
+bibliothèques, mais (1) le système de construction de GCC ne sait pas qu'il
+est utilisable sur pc, et (2) l'utiliser sur pc risquerait de le lier à des
+bibliothèques de pc, comme cc-lfs est un compilateur natif. Donc nous devons
+compiler libstdc++ plus tard, dans le chroot.</para>
+
+  </sect2>
+
+  <sect2 id="other-details">
+
+    <title>Autres détails sur la procédure</title>
+
+    <para>Le compilateur croisé sera installé dans un répertoire <filename
+class="directory">$LFS/tools</filename> séparé, comme il ne fera pas partie
+du système final.</para>
+
+    <para>Binutils est tout d'abord installé parce que les exécutions de Glibc et GCC
+par <command>configure</command> réalisent quelques tests de fonctionnalités
+sur l'assembleur et l'éditeur de liens pour déterminer quelle fonctionnalité
+logicielle activer ou désactiver. Ceci est plus important que ce que vous
+pouvez imaginer. Un GCC ou une Glibc mal configuré peut aboutir à une chaîne
+d'outils subtilement cassée, et l'impact d'une telle cassure ne se verrait
+pas avant la fin de la construction de la distribution complète. Un échec
+dans la suite de tests surlignera habituellement cette erreur avant que trop
+de travail supplémentaire n'ait été réalisé.</para>
+
+    <para>Binutils installe son assembleur et son éditeur de liens à deux endroits,
+<filename class="directory">$LFS/tools/bin</filename> et <filename
+class="directory">$LFS/tools/$LFS_TGT/bin</filename>. Les outils dans un
+emplacement sont liés en dur à l'autre. Un aspect important de l'éditeur de
+liens est son ordre de recherche des bibliothèques. Vous pouvez obtenir des
+informations détaillées à partir de <command>ld</command> en lui passant le
+paramètre <parameter>--verbose</parameter>. Par exemple, un <command>ld
+--verbose | grep SEARCH</command> illustrera les chemins de recherche réels
+et leur ordre. Il montre quels fichiers sont liés par <command>ld</command>
+en compilant un programme de test et en passant le paramètre
+<parameter>--verbose</parameter> à l'éditeur de liens. Par exemple,
+<command>$LFS_TGT-gcc dummy.c -Wl,--verbose 2&gt;&amp;1 | grep
+succeeded</command> affichera tous les fichiers ouverts avec succès lors de
+l'édition des liens.</para>
+
+    <para>Le prochain paquet installé est GCC. Voici un exemple de ce qui peut être vu
+pendant l'exécution de son script <command>configure</command>&nbsp;:</para>
+
+<screen><computeroutput>checking what assembler to use... /mnt/lfs/tools/i686-lfs-linux-gnu/bin/as
+checking what linker to use... /mnt/lfs/tools/i686-lfs-linux-gnu/bin/ld</computeroutput></screen>
+
+    <para>C'est important pour les raisons mentionnées plus haut. Cela démontre aussi
+que le script configure de GCC ne cherche pas les répertoires du PATH pour
+trouver les outils à utiliser. Néanmoins, lors d'une opération normale de
+<command>gcc</command>, les mêmes chemins de recherche ne sont pas forcément
+utilisés. Pour trouver quel éditeur de liens standard <command>gcc</command>
+utilisera, lancez&nbsp;: <command>$LFS_TGT-gcc
+-print-prog-name=ld</command>.</para>
+
+    <para>Vous pouvez obtenir des informations détaillées à partir de
+<command>gcc</command> en lui fournissant l'option en ligne de commande
+<parameter>-v</parameter> lors de la compilation d'un programme de test. Par
+exemple, <command>gcc -v dummy.c</command> affichera des informations
+détaillées sur les étapes du préprocesseur, de la compilation et de
+l'assemblage, avec les chemins de recherche inclus par
+<command>gcc</command> et leur ordre.</para>
+
+    <para>Nous installons ensuite les en-têtes de l'API de Linux nettoyées. Elles
+permettent à la bibliothèque standard (Glibc) d'interagir avec les
+fonctionnalités que le noyau Linux fournira.</para>
+
+    <para>Le paquet installé ensuite est Glibc. Les choses les plus importantes à
+prendre en considération pour construire Glibc sont le compilateur, les
+outils binaires et les en-têtes du noyau. Le compilateur ne pose
+généralement pas de problème car Glibc utilise toujours le compilateur lié
+au paramètre <parameter>--host</parameter> passé à son script configure, par
+exemple, dans notre cas, le compilateur sera
+<command>$LFS_TGT-gcc</command>. Les outils binaires et les en-têtes du
+noyau peuvent être un peu plus compliqués. Ne prenez donc pas de risque et
+utilisez les options de configure disponibles pour assurer les bonnes
+sélections. Après l'exécution de <command>configure</command>, vérifiez le
+contenu du fichier <filename>config.make</filename> dans le répertoire
+<filename class="directory">glibc-build</filename> pour tous les détails
+importants. Notez l'utilisation de <parameter>CC="$LFS_TGT-gcc"</parameter>
+(où <envar>$LFS_TGT</envar> est étendue) pour contrôler les outils binaires
+utilisés, et l'utilisation des paramètres <parameter>-nostdinc</parameter>
+et <parameter>-isystem</parameter> pour contrôler le chemin de recherche des
+en-têtes du compilateur. Ces éléments soulignent un aspect important du
+paquet glibc &mdash;&nbsp;il est auto-suffisant en termes de machinerie de
+construction et ne repose généralement pas sur la chaîne d'outils par
+défaut.</para>
+
+    <para>Comme nous venons de le dire, la bibliothèque standard C++ est ensuite
+compilée, suivi dans le <xref linkend="chapter-temporary-tools"/> par tous
+les programmes qui ont besoin d'eux-mêmes pour être construits. L'étape
+initiale de tous ces paquets utilise la variable <envar>DESTDIR</envar> pour
+que les programmes soient installés dans le système de fichiers LFS.</para>
+
+    <para>À la fin du <xref linkend="chapter-temporary-tools"/> le compilateur lfs
+natif est installé. binutils-pass2 est d'abord construit, avec la même
+installation <envar>DESTDIR</envar> que les autres programmes, puis la
+seconde passe de GCC est construite, sans libstdc++ et les autres
+bibliothèques non importantes. À cause d'une logique bizarre dans le script
+de construction de GCC, <envar>CC_FOR_TARGET</envar> devient
+<command>cc</command> quand l'hôte est le même que la cible, mais est
+différent du système de construction. C'est pourquoi nous mettons
+explicitement <parameter>CC_FOR_TARGET=$LFS_TGT-gcc</parameter> dans les
+options de configure.</para>
+
+    <para>En entrant dans l'environnement chroot dans le <xref
+linkend="chapter-chroot-temporary-tools"/>, la première tache consiste à
+installer libstdc++. Ensuite, on effectue des installations temporaires de
+programmes requis pour le bon fonctionnement de la chaîne d'outils. À partir
+de là, la chaîne de construction de base est auto-suffisante et
+auto-hébergée. Dans le <xref linkend="chapter-building-system"/>, on
+construit, teste et installe les versions finales de tous les paquets requis
+pour un système complètement fonctionnel.</para>
+
+  </sect2>
+
+</sect1>
