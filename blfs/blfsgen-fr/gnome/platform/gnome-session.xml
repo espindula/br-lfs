@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+
+  <!ENTITY gnome-session-download-http
+           "&gnome-download-http;/gnome-session/&gnome-minor-38;/gnome-session-&gnome-session-version;.tar.xz">
+  <!ENTITY gnome-session-download-ftp
+           "&gnome-download-ftp;/gnome-session/&gnome-minor-38;/gnome-session-&gnome-session-version;.tar.xz">
+  <!ENTITY gnome-session-md5sum        "736024b46e2542b9b68adaa43f754f49">
+  <!ENTITY gnome-session-size          "472 Ko">
+  <!ENTITY gnome-session-buildsize     "15 Mo">
+  <!ENTITY gnome-session-time          "0.1&nbsp;SBU">
+]>
+
+<sect1 id="gnome-session" xreflabel="gnome-session-&gnome-session-version;">
+  <?dbhtml filename="gnome-session.html"?>
+
+  <sect1info>
+<date>$Date$</date></sect1info>
+
+  <title>gnome-session-&gnome-session-version;</title>
+
+  <indexterm zone="gnome-session">
+    <primary sortas="a-gnome-session">gnome-session</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title>Introduction à GNOME Session</title>
+
+    <para>
+      Le paquet <application>GNOME Session</application> contient le gestionnaire
+de session <application>GNOME</application>.
+    </para>
+
+    &lfs101_checked;
+
+    <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          Téléchargement (HTTP)&nbsp;: <ulink url="&gnome-session-download-http;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Téléchargement (FTP)&nbsp;: <ulink url="&gnome-session-download-ftp;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Somme de contrôle MD5 du téléchargement&nbsp;: &gnome-session-md5sum;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Taille du téléchargement&nbsp;: &gnome-session-size;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation de l'espace disque requis&nbsp;: &gnome-session-buildsize;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation du temps de construction&nbsp;: &gnome-session-time;
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3">Dépendances de GNOME Session</bridgehead>
+
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required">
+      <xref linkend="dbus-glib"/>, <phrase revision="sysv"><xref role="runtime"
+linkend="elogind"/>,</phrase> <xref linkend="gnome-desktop"/>, <xref
+linkend="json-glib"/>, <xref linkend="mesa"/>, <phrase
+revision="systemd"><xref role="runtime" linkend="systemd"/>,</phrase> et
+<xref linkend="upower"/>
+    </para>
+
+    <bridgehead renderas="sect4">Facultatives</bridgehead>
+    <para role="optional">
+      <xref linkend="GConf"/>, <xref linkend="xmlto"/> et <xref
+linkend="libxslt"/> avec <xref linkend="DocBook"/> et <xref
+linkend="docbook-xsl"/> (pour construire la documentation)
+    </para>
+   
+    <para condition="html" role="usernotes">Notes utilisateur&nbsp;: <ulink url="&blfs-wiki;/gnome-session"/>
+    </para>
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de GNOME Session</title>
+
+    <para>
+      Lorsque vous lancez Gnome sous <xref linkend="wayland"/>, les paramètres
+d'environnement ne sont pas importés pour l'utilisateur à partir du profil
+du système. Les développeurs de Wayland n'ont pas encore choisi une méthode
+standard pour fournir des paramètres d'environnement du système aux sessions
+utilisateur. Pour contourner cette limitation, exécutez la commande suivante
+pour que <command>gnome-session</command> utilise un shell de
+connexion&nbsp;:
+    </para>
+
+<screen><userinput>sed 's@/bin/sh@/bin/sh -l@' -i gnome-session/gnome-session.in</userinput></screen>
+
+    <para revision="systemd">
+      Adaptez gnome-session à des changements das systemd-247&nbsp;:
+    </para>
+
+<screen revision="systemd"><userinput remap="pre">echo 'Slice=-.slice' >> data/gnome-session-restart-dbus.service.in</userinput></screen>
+
+    <para revision="sysv">
+      Adaptez meson.build pour que gnome-session puisse construire sans
+systemd&nbsp;:
+    </para>
+
+<screen revision="sysv"><userinput remap="pre">sed -i "/  systemd_dep/,+3d;/if enable_systemd/a \    systemd_userunitdir = '/tmp\'" meson.build</userinput></screen>
+
+    <para>
+      Installez <application>GNOME Session</application> en lançant les commandes
+suivantes&nbsp;:
+    </para>
+
+<screen revision="sysv"><userinput>mkdir build &amp;&amp;
+cd    build &amp;&amp;
+
+meson --prefix=/usr           \
+      -Dsystemd_journal=false \
+      .. &amp;&amp;
+ninja</userinput></screen>
+
+<screen revision="systemd"><userinput>mkdir build &amp;&amp;
+cd    build &amp;&amp;
+
+meson --prefix=/usr .. &amp;&amp;
+ninja</userinput></screen>
+
+    <para>
+      Ce paquet n'est pas fourni avec une suite de tests.
+    </para>
+
+    <para>
+      Maintenant, en tant qu'utilisateur <systemitem
+class="username">root</systemitem>&nbsp;:
+    </para>
+
+<!-- For some reason, there are I/O errors with the DTD @ freedesktop
+     that causes error messages to flood stdin. -->
+<screen role="root"><userinput>ninja install</userinput></screen>
+
+
+    <para revision="sysv">
+      Maintenant, en tant qu'utilisateur <systemitem
+class="username">root</systemitem>, supprimez les unités systemd qui sont
+inutels sur un système SysV&nbsp;:
+    </para>
+
+<screen role="root" revision="sysv"><userinput>rm -rv /tmp/{*.d,*.target,*.service}</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title>Contents</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèques installées</segtitle>
+      <segtitle>Répertoires installés</segtitle>
+
+      <seglistitem>
+        <seg>
+          gnome-session, gnome-session-custom-session, gnome-session-inhibit et
+gnome-session-quit
+        </seg>
+       <seg>
+          Aucune
+        </seg>
+        <seg>
+          /usr/share/doc/gnome-session-&gnome-session-version; et
+/usr/share/gnome-session
+        </seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="gnome-session-prog">
+        <term><command>gnome-session</command></term>
+        <listitem>
+          <para>
+            est utilisé pour démarrer l'environnement de bureau
+<application>GNOME</application>
+          </para>
+          <indexterm zone="gnome-session gnome-session-prog">
+            <primary sortas="b-gnome-session">gnome-session</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gnome-session-inhibit">
+        <term><command>gnome-session-inhibit</command></term>
+        <listitem>
+          <para>
+            est utilisé pour désactiver certaines fonctionnalités de la session
+<application>GNOME</application> lorsque certaines commandes sont exécutées
+          </para>
+          <indexterm zone="gnome-session gnome-session-inhibit">
+            <primary sortas="b-gnome-session-inhibit">gnome-session-inhibit</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gnome-session-quit">
+        <term><command>gnome-session-quit</command></term>
+        <listitem>
+          <para>
+            est utilisé pour stopper la session <application>GNOME</application>
+          </para>
+          <indexterm zone="gnome-session gnome-session-quit">
+            <primary sortas="b-gnome-session-quit">gnome-session-quit</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

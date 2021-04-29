@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+
+  <!ENTITY elogind-download-http "https://github.com/elogind/elogind/archive/v&elogind-version;/elogind-&elogind-version;.tar.gz">
+  <!ENTITY elogind-download-ftp  "">
+  <!ENTITY elogind-md5sum        "32ab2201281f14738d9c045f3669c14d">
+  <!ENTITY elogind-size          "1.5&nbsp;Mo">
+  <!ENTITY elogind-buildsize     "66&nbsp;Mo (avec les tests)">
+  <!ENTITY elogind-time          "0.2 SBU (with parallelism=4)">
+]>
+
+<sect1 id="elogind" revision="sysv" xreflabel="elogind-&elogind-version;">
+  <?dbhtml filename="elogind.html"?>
+
+  <sect1info>
+<date>$Date$</date></sect1info>
+
+  <title>elogind-&elogind-version;</title>
+
+  <indexterm zone="elogind">
+    <primary sortas="a-elogind">elogind</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title>Introduction  elogind</title>
+
+    <para>
+      <application>elogind</application> est le «&nbsp;logind&nbsp;» du projet
+<application>systemd</application> extrait pour en faire un démon
+autonome. Il s'intègre avec <xref linkend="linux-pam"/> pour connaître
+l'ensemble des utilisateurs qui sont connectés sur un système et s'ils sont
+connectés graphiquement, sur la console ou à
+distance. <application>Elogind</application> expose ces informations via
+l'interface <application>D-Bus</application> org.freedesktop.login1
+standard, ainsi qu'à travers le système de fichier dans la hiérarchie
+standard de systemd dans <filename
+class="directory">/run/systemd</filename>.
+    </para>
+
+    &lfs101_checked;
+
+    <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          Tlchargement (HTTP)&nbsp;: <ulink url="&elogind-download-http;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Tlchargement (FTP)&nbsp;: <ulink url="&elogind-download-ftp;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Somme de contrle MD5 du tlchargement&nbsp;: &elogind-md5sum;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Taille du tlchargement&nbsp;: &elogind-size;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation de l'espace disque requis&nbsp;: &elogind-buildsize;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation du temps de construction&nbsp;: &elogind-time;
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3">Dépendances de elogind</bridgehead>
+
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required">
+      <xref role="first" linkend="dbus"/>
+    </para>
+
+    <bridgehead renderas="sect4">Recommandes</bridgehead>
+    <para role="recommended">
+      <xref linkend="DocBook"/>, <xref linkend="docbook-xsl"/>, and <xref
+linkend="libxslt"/> (all three to build the man pages), <xref
+linkend="linux-pam"/>, and <xref linkend="polkit"/>
+    </para>
+
+    <bridgehead renderas="sect4">Facultatives</bridgehead>
+    <para role="optional">
+      Pour les tests&nbsp;: <xref linkend="lxml"/>, <xref
+linkend="gobject-introspection"/>, <xref linkend="zsh"/>, <xref
+linkend="valgrind"/>, <ulink
+url="https://github.com/linux-audit/audit-userspace">audit-userspace</ulink>,
+<ulink
+url="https://github.com/scop/bash-completion">bash-completion</ulink>,
+<ulink
+url="https://mirrors.edge.kernel.org/pub/linux/utils/kernel/kexec/">kexec</ulink>
+et <ulink url="http://www.selinuxproject.org/page/Main_Page">SELinux</ulink>
+    </para>
+
+    <para condition="html" role="usernotes">Notes utilisateur&nbsp;: <ulink url="&blfs-wiki;/elogind"/>
+    </para>
+  </sect2>
+
+  <sect2 role="kernel" id="elogind-kernel">
+    <title>Configuration du noyau</title>
+
+    <para>
+      Activez les options suivantes dans la configuration du noyau et recompilez
+le noyau si nécessaire&nbsp;:
+    </para>
+
+
+<screen><!-- Spaces are significant in <screen>
+ sections -->
+<literal>General setup ---&gt;
+    [*]     Control Group support                        [CONFIG_CGROUPS]
+File systems ---&gt;
+    [*]     Inotify support for userspace                [CONFIG_INOTIFY_USER]
+            Pseudo filesystems ---&gt;
+                [*]    Tmpfs POSIX Access Control Lists  [CONFIG_TMPFS_POSIX_ACL]</literal></screen>
+
+    <para>
+      En plus, certains tests ont besoin de l'API noyau de cryptographie en espace
+utilisateur qui s'active avec&nbsp;:
+    </para>
+
+<screen><literal>-*- Cryptographic API ---&gt;                               [CONFIG_CRYPTO]
+   &lt;M/*&gt; Userspace cryptographic algorithm configuration [CONFIG_CRYPTO_USER]
+   &lt;M/*&gt; User-space interface for hash algorithms        [CONFIG_CRYPTO_USER_API_HASH]</literal></screen>
+
+    <indexterm zone="elogind elogind-kernel">
+      <primary sortas="d-elogind">elogind</primary>
+    </indexterm>
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de elogind</title>
+
+    <para>
+      Installez <application>elogind</application> en lanant les commandes
+suivantes&nbsp;:
+    </para>
+
+<screen><userinput>mkdir build &amp;&amp;
+cd    build &amp;&amp;
+
+meson --prefix=/usr                        \
+      -Dcgroup-controller=elogind          \
+      -Ddbuspolicydir=/etc/dbus-1/system.d \
+      -Dman=auto                           \
+      ..  &amp;&amp;
+ninja</userinput></screen>
+
+    <para>
+      Pour tester les résultats, lancez&nbsp;: <command>ninja
+test</command>. Quelques tests sont passés si vous n'utilisez pas les
+privilèges <systemitem class="username">root</systemitem>.
+    </para>
+
+    <para>
+      Maintenant, en tant qu'utilisateur <systemitem
+class="username">root</systemitem>&nbsp;:
+    </para>
+
+<screen role="root"><userinput>ninja install                                           &amp;&amp;
+ln -sfv  libelogind.pc /usr/lib/pkgconfig/libsystemd.pc &amp;&amp;
+ln -sfvn elogind /usr/include/systemd</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="commands">
+    <title>Explication des commandes</title>
+
+    <para>
+      <parameter>-Dcgroup-controller=elogind</parameter>&nbsp;: ce paramètre
+s'assure qu'<application>elogind</application> est choisi comme contrôleur
+cgroup, même s'il est démarré avec un autre contrôleur cgroup.
+    </para>
+
+    <para>
+      <parameter>-Ddbuspolicydir=/etc/dbus-1/system.d</parameter>&nbsp;: ce
+paramètre choisi l'emplacement du répertoire de politique
+<application>D-Bus</application>.
+    </para>
+
+    <para>
+      <parameter>-Dman=auto</parameter>&nbsp;: la valeur par défaut de ce
+paramètre est <emphasis>false</emphasis>. Le mettre à
+<emphasis>auto</emphasis> permet de construire et d'installer les pages de
+manuel si les dépendances recommandées sont installées.
+    </para>
+
+    <para>
+      <option>-Ddefault-kill-user-processes=false</option>&nbsp;: indique si les
+processus d'un utilisateurs devraient être tués lorsqu'il se déconnecte. La
+valeur par défaut est <emphasis>true</emphasis>, mais cela contredit
+l'utilisation traditionnelle de <command>screen</command> ou
+<command>tmux</command>. Cela peut aussi se changer dans le fichier de
+configuration (voir plus bas).
+    </para>
+
+    <para>
+      <command>ln -s …</command>&nbsp;: ces commandes installent les liens
+symboliques pour que les paquets logiciels trouvent des bibliothèques et des
+en-têtes compatibles avec systemd.
+    </para>
+
+  </sect2>
+
+  <sect2 role="configuration">
+  <title>Configuration de elogind</title>
+
+    <sect3 id="elogind-config">
+      <title>Fichier de configuration</title>
+      <para>
+        <filename>/etc/elogind/logind.conf</filename>
+      </para>
+
+      <indexterm zone="elogind elogind-config">
+        <primary
+        sortas="e-etc-elogind-logind.conf">/etc/elogind/logind.conf</primary>
+      </indexterm>
+    </sect3>
+
+    <sect3><title>Informations sur la configuration</title>
+
+      <para>
+        Le fichier <filename>/etc/elogind/logind.conf</filename> installé contient
+toutes les options possibles avec leurs valeurs par défaut, commentées. Vous
+pourriez vouloir désactiver le fait de tuer les processus utilisateurs à la
+déconnexion, en lançant, en tant qu'utilisateur <systemitem
+class="username">root</systemitem>&nbsp;:
+      </para>
+
+<screen role="root"><userinput>sed -e '/\[Login\]/a KillUserProcesses=no' \
+    -i /etc/elogind/logind.conf</userinput></screen>
+
+      <para>
+        Chaque utilisateur devra enregistrer une session utilisateur avec
+<application>Linux-PAM</application> à la connexion. Le fichier
+<filename>/etc/pam.d/system-session</filename> doit être modifié et un
+nouveau fichier doit être créé pour qu'<command>elogind</command> fonctionne
+correctement. Lancez les commandes suivante en tant qu'utilisateur
+<systemitem class="username">root</systemitem>&nbsp;:
+      </para>
+
+<screen role="root"><userinput>cat &gt;&gt; /etc/pam.d/system-session &lt;&lt; "EOF" &amp;&amp;
+<literal># Begin elogind addition
+    
+session  required    pam_loginuid.so
+session  optional    pam_elogind.so
+
+# End elogind addition</literal>
+EOF
+cat &gt; /etc/pam.d/elogind-user &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/elogind-user
+
+account  required    pam_access.so
+account  include     system-account
+
+session  required    pam_env.so
+session  required    pam_limits.so
+session  required    pam_unix.so
+session  required    pam_loginuid.so
+session  optional    pam_keyinit.so force revoke
+session  optional    pam_elogind.so
+
+auth     required    pam_deny.so
+password required    pam_deny.so
+
+# End /etc/pam.d/elogind-user</literal>
+EOF</userinput></screen>
+
+    </sect3>
+  </sect2>
+
+  <sect2 role="content" revision="sysv">
+    <title>Contents</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installs</segtitle>
+      <segtitle>Bibliothque installe</segtitle>
+      <segtitle>Rpertoires installs</segtitle>
+
+      <seglistitem>
+        <seg>
+          busctl, elogind-inhibit et loginctl
+        </seg>
+        <seg>
+           libelogind.so
+        </seg>
+        <seg>
+          /lib/elogind, /etc/elogind, /usr/include/elogind et
+/usr/share/doc/elogind-&elogind-version;
+        </seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="busctl">
+        <term><command>busctl</command></term>
+        <listitem>
+          <para>
+            est utilisé pour inspecter et surveiller le bus D-Bus
+          </para>
+          <indexterm zone="elogind busctl">
+            <primary sortas="b-busctl">busctl</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="elogind-inhibit">
+        <term><command>elogind-inhibit</command></term>
+        <listitem>
+          <para>
+            est utilisé pour exécuter un programme avec un verrou contre l'extinction,
+la veille ou l'hibernation
+          </para>
+          <indexterm zone="elogind elogind-inhibit">
+            <primary sortas="b-elogind-inhibit">elogind-inhibit</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="loginctl">
+        <term><command>loginctl</command></term>
+        <listitem>
+          <para>
+            est utilisé pour inspecter et contrôler l'état du gestionnaire de connexion
+elogind
+          </para>
+          <indexterm zone="elogind loginctl">
+            <primary sortas="b-loginctl">loginctl</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libelogind">
+        <term><filename class="libraryfile">libelogind.so</filename></term>
+        <listitem>
+          <para>
+            est la bibliothèque d'utilitaires principale d'elogind
+          </para>
+          <indexterm zone="elogind libelogind">
+            <primary sortas="c-libelogind">libelogind.so</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../../general.ent">
+  %general-entities;
+
+  <!ENTITY falkon-download-http "https://download.kde.org/stable/falkon/&falkon-major-version;/falkon-&falkon-version;.tar.xz">
+  <!ENTITY falkon-download-ftp  "">
+  <!ENTITY falkon-md5sum        "9255fb335d3ba361dea44b7b297ddf7d">
+  <!ENTITY falkon-size          "2.2 Mo">
+  <!ENTITY falkon-buildsize     "60 Mo (sans les dépendances facultatives)">
+  <!ENTITY falkon-time          "2.2 SBU (avec parallélisme = 4)">
+]>
+
+<sect1 id="falkon" xreflabel="falkon-&falkon-version;">
+  <?dbhtml filename="falkon.html"?>
+
+  <sect1info>
+<date>$Date$</date></sect1info>
+
+  <title>Falkon-&falkon-version;</title>
+
+  <indexterm zone="falkon">
+    <primary sortas="a-falkon">falkon</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title>Introduction à falkon</title>
+
+    <para>
+      <application>Falkon</application> est un navigateur web pour KDE qui utilise
+le moteur de rendu QtWebEngine. Il était connu sous le nom de
+<application>QupZilla</application>. Il se veut un navigateur web léger
+disponible sur toutes les plateformes majeures.
+    </para>
+
+    <para>
+      Bien que <application>falkon</application> fasse maintenant partie de KDE,
+il peut être installé sans KDE (au prix de la fonctionnalité
+<application>kwallet</application>).
+    </para>
+
+    <warning>
+      <para>
+        Falkon relies on QtWebEngine. That uses a forked copy of chromium, and is
+therefore vulnerable to many issues found there. The Qt developers have
+always preferred to make releases at the same time as the rest of Qt (rather
+than adding emergency fixes). Now that they are keen to move to Qt6, the
+5.15.3 and later Qt-5.15 releases are initially only available to paying
+customers. QtWebEngine is something of an exception because of its LGPL
+licence, but getting the git sources (with the forked chromium submodule) to
+a point where they will successfully build on a current BLFS system can take
+a lot of effort. Be aware that future fixes for vulnerabilities might be
+very delayed, to the extent that you might wish to consider using a
+different browser.
+      </para>
+    </warning>
+
+    &lfs101_checked;
+
+    <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          Téléchargement (HTTP)&nbsp;: <ulink url="&falkon-download-http;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Téléchargement (FTP)&nbsp;: <ulink url="&falkon-download-ftp;"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Somme de contrôle MD5 du téléchargement&nbsp;: &falkon-md5sum;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Taille du téléchargement&nbsp;: &falkon-size;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation de l'espace disque requis&nbsp;: &falkon-buildsize;
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Estimation du temps de construction&nbsp;: &falkon-time;
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3">Dépendances de falkon</bridgehead>
+
+    <bridgehead renderas="sect4">Requises</bridgehead>
+    <para role="required">
+      <xref linkend="extra-cmake-modules"/> et <xref linkend="qtwebengine"/>
+    </para>
+
+    <bridgehead renderas="sect4">Facultatives</bridgehead>
+    <para role="optional">
+      <xref linkend="gnome-keyring"/>, <xref linkend="kf5-frameworks"/> et <ulink
+url="http://download.qt.io/official_releases/QtForPython/pyside2/">PySide2</ulink>
+pour le greffon <application>Python</application> expérimental (le compiler
+depuis les sources est très long).
+    </para>
+
+    <para condition="html" role="usernotes">
+      Notes utilisateur&nbsp;: <ulink url="&blfs-wiki;/falkon"/>
+    </para>
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de falkon</title>
+
+    <!--
+    <para>
+
+      To set the prefix to match KDE (if that has been installed), or
+      else to install in <filename class="directory">/usr</filename>
+      run:
+    </para>
+
+<screen><userinput>test -n "${KF5_PREFIX}" &amp;&amp; export FALKON_PREFIX=${KF5_PREFIX} ||
+  export FALKON_PREFIX=/usr</userinput></screen>
+-->
+<para>
+      Installez <application>falkon</application> en lançant les commandes
+suivantes&nbsp;:
+    </para>
+
+    <para>
+      À moins d'avoir installé à la fois PySide2 et ki18n, supprimez les
+traductions du script d'exemple <command>hellopython.py</command>&nbsp;:
+    </para>
+
+<screen><userinput>rm -rf po/</userinput></screen>
+
+    <para>
+      Corrigez une inclusion manquante dans Qt-5.14&nbsp;:
+    </para>
+
+<screen><userinput>sed -i '/#include &lt;QSettings&gt;/a#include &lt;QFile&gt;' \
+   src/plugins/VerticalTabs/verticaltabsplugin.cpp</userinput></screen>
+   
+    <para>
+      Corrigez une inclusion manquante dans Qt-5.15&nbsp;:
+    </para>
+<screen><userinput remap="pre">sed -i '/#include &lt;QPainter&gt;/a #include &lt;QPainterPath&gt;' \
+   src/lib/tools/qztools.cpp</userinput></screen>
+
+    <para>
+      Maintenant construisez le programme&nbsp;:
+    </para>
+
+<screen><userinput>mkdir build &amp;&amp;
+cd    build &amp;&amp;
+
+cmake -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_BUILD_TYPE=Release  \
+      .. &amp;&amp;
+
+make</userinput></screen>
+
+    <para>
+      Pour tester les résultats, lancez&nbsp;: <command>make test</command>. Tous
+les tests devraient passer. Si l'un d'entre eux échoue, les résultats
+complets seront dans <filename>Testing/Temporary/LastTest.log</filename>.
+    </para>
+
+    <para>
+      Maintenant, en tant qu'utilisateur <systemitem
+class="username">root</systemitem>&nbsp;:
+    </para>
+
+<screen role="root"><userinput>make install</userinput></screen>
+
+    <para>
+      Si vous avez installé <application>Pyside2</application> vous voudrez
+examiner <command>hellopython.py</command> qui se trouve dans le répertoire
+<filename class="directory">scripts/</filename> et peut-être le copier dans
+votre répertoire personnel.
+    </para>
+
+  </sect2>
+
+  <sect2 role="commands">
+    <title>Explication des commandes</title>
+
+    <para>
+      <option>-DBUILD_TESTING=OFF</option>&nbsp;: Cela économisera un peu de temps
+et d'espace disque en ne construisant pas les programmes de tests. Utilisez
+cela si vous ne souhaitez pas lancer les tests.
+    </para>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title>Contents</title>
+
+    <segmentedlist>
+      <segtitle>Programmes installés</segtitle>
+      <segtitle>Bibliothèque installée</segtitle>
+      <segtitle>Répertoire installé</segtitle>
+
+      <seglistitem>
+        <seg>
+          falkon
+        </seg>
+        <seg>
+          libFalkonPrivate.so.3
+        </seg>
+        <seg>
+          ${FALKON_PREFIX}/lib/plugins, ${FALKON_PREFIX}/share/falkon.
+        </seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
+      <?dbfo list-presentation="list"?>
+      <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="falkon-prog">
+        <term><command>falkon</command></term>
+        <listitem>
+          <para>
+            est un navigateur web qui utilise qtwebengine
+          </para>
+          <indexterm zone="falkon falkon-prog">
+            <primary sortas="b-falkon">falkon</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libFalkonPrivate.so.3">
+        <term><filename class="libraryfile">libFalkonPrivate.so.3</filename></term>
+        <listitem>
+          <para>
+            contient les fonctions utilisées par falkon
+          </para>
+          <indexterm zone="falkon libFalkonPrivate.so.3">
+            <primary sortas="c-libFalkonPrivate.so.3">libFalkonPrivate.so.3</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect2>
+
+</sect1>
