@@ -14,7 +14,6 @@ export LC_ALL=en_US.utf8
 export TZ=US/Pacific
 
 commit_date=$(git show -s --format=format:"%cd" --date=local)
-short_date=$(date --date "$commit_date" "+%Y%m%d")
 
 year=$(date --date "$commit_date" "+%Y")
 month=$(date --date "$commit_date" "+%B")
@@ -30,13 +29,16 @@ esac
 
 full_date="$month $day$suffix, $year"
 
-sha="g$(git describe --always)"
-version="GIT-$short_date-$sha"
-versiond="GIT-$short_date-$sha-systemd"
+sha="$(git describe --abbrev=1)"
+if git describe --all --match trunk > /dev/null 2> /dev/null; then
+	sha=$(echo "$sha" | sed 's/-g[^-]*$//')
+fi
+version="$sha"
+versiond="$sha-systemd"
 
 if [ "$(git diff HEAD | wc -l)" != "0" ]; then
-	version="$version-MODIFIED"
-	versiond="$versiond-MODIFIED"
+	version="$version+"
+	versiond="$versiond+"
 fi
 
 echo "<!ENTITY version           \"$version\">"            >  version.ent
