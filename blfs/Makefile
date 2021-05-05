@@ -131,6 +131,7 @@ gitup: init
 		echo $$v; \
 		(cd $(ORIGDIR); git checkout $(BRANCH)); \
 	fi
+	(cd $(ORIGDIR); git pull --ff-only)
 
 clean: clean-gen clean-product
 	rm -rf $(ORIGDIR) include.mk
