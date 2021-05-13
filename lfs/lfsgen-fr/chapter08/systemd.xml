@@ -48,14 +48,13 @@ First, apply a patch to fix the build with GCC-10 and fix a segfault:</para>
 <screen><userinput remap="pre">patch -Np1 -i ../systemd-&systemd-version;-gcc_10-fixes-2.patch</userinput></screen>
 -->
 <!-- For linux-5.11's API headers changing the rfkill_event structure -->
-<para>Tout d'abord, appliquez un correctif pour corriger des régressions et
-corriger une fonctionnalité pour les futures versions du noyau&nbsp;:</para>
+<para>First, apply a patch to fix some build issues:</para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../systemd-&systemd-version;-upstream_fixes-3.patch</userinput></screen>
+<screen><userinput remap="pre">patch -Np1 -i ../systemd-&systemd-version;-upstream_fixes-1.patch</userinput></screen>
 
     <para>Supprimez des tests qui ne peuvent pas être construits en chroot&nbsp;:</para>
 
-<screen><userinput remap="pre">sed '181,$ d' -i src/resolve/meson.build</userinput></screen>
+<screen><userinput remap="pre">sed '177,$ d' -i src/resolve/meson.build</userinput></screen>
 
     <para>Supprimez un groupe inutile, <systemitem
 class="groupname">render</systemitem> des règles udev par défaut&nbsp;:</para>
@@ -76,15 +75,8 @@ meson --prefix=/usr                 \
       -Ddefault-dnssec=no           \
       -Dfirstboot=false             \
       -Dinstall-tests=false         \
-      -Dkmod-path=/bin/kmod         \
       -Dldconfig=false              \
-      -Dmount-path=/bin/mount       \
-      -Drootprefix=                 \
-      -Drootlibdir=/lib             \
-      -Dsplit-usr=true              \
-      -Dsulogin-path=/sbin/sulogin  \
       -Dsysusers=false              \
-      -Dumount-path=/bin/umount     \
       -Db_lto=false                 \
       -Drpmmacrosdir=no             \
       -Dhomed=false                 \
@@ -96,14 +88,6 @@ meson --prefix=/usr                 \
 
     <variablelist>
       <title>Voici la signification des options de meson&nbsp;:</title>
-
-      <varlistentry>
-        <term><parameter>-D*-path=*</parameter></term>
-        <listitem>
-          <para>Ces paramètres fournissent l'emplacement des binaires requis par systemd à
-l'exécution qui n'ont pas encore été installés.</para>
-        </listitem>
-      </varlistentry>
 
       <varlistentry>
         <term><parameter>-Ddefault-dnssec=no</parameter></term>
@@ -135,24 +119,6 @@ sont pas utiles pour LFS car tout est fait manuellement.</para>
 <command>ldconfig</command> au démarrage, inutile pour les distributions
 source comme LFS et qui rend celui-ci plus long. Retirez ceci si la fonction
 est désirée.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>-Droot*</parameter></term>
-        <listitem>
-          <para>Ces paramètres garantissent que les programmes et les bibliothèques
-partagées centrales s'installent dans les sous-répertoires de la partition
-racine.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>-Dsplit-usr=true</parameter></term>
-        <listitem>
-          <para>Ce paramètre garantit que systemd fonctionnera sur des systèmes où les
-répertoires /bin, /lib et /sbin ne sont pas des liens symboliques vers leurs
-répertoires /usr correspondant.</para>
         </listitem>
       </varlistentry>
 
@@ -258,31 +224,30 @@ Prevent systemd from resetting the maximum PID value which causes
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>bootctl, busctl, coredumpctl, halt (lien symbolique vers systemctl),
-hostnamectl, init, journalctl, kernel-install, localectl, loginctl,
-machinectl, networkctl, portablectl, poweroff (lien symbolique vers
-systemctl), reboot (lien symbolique vers systemctl), resolvconf (lien
-symbolique vers resolvectl), resolvectl, runlevel (lien symbolique vers
-systemctl), shutdown (lien symbolique vers systemctl), systemctl,
+        <seg>bootctl, busctl, coredumpctl, halt (symlink to systemctl), hostnamectl,
+init, journalctl, kernel-install, localectl, loginctl, machinectl,
+networkctl, oomctl, portablectl, poweroff (symlink to systemctl), reboot
+(symlink to systemctl), resolvconf (symlink to resolvectl), resolvectl,
+runlevel (symlink to systemctl), shutdown (symlink to systemctl), systemctl,
 systemd-analyze, systemd-ask-password, systemd-cat, systemd-cgls,
-systemd-cgtop, systemd-delta, systemd-detect-virt, systemd-dissect,
-systemd-escape, systemd-hwdb, systemd-id128, systemd-inhibit,
-systemd-machine-id-setup, systemd-mount, systemd-notify, systemd-nspawn,
-systemd-path, systemd-repart, systemd-resolve (lien symbolique vers
+systemd-cgtop, systemd-cryptenroll, systemd-delta, systemd-detect-virt,
+systemd-dissect, systemd-escape, systemd-hwdb, systemd-id128,
+systemd-inhibit, systemd-machine-id-setup, systemd-mount, systemd-notify,
+systemd-nspawn, systemd-path, systemd-repart, systemd-resolve (symlink to
 resolvectl), systemd-run, systemd-socket-activate, systemd-stdio-bridge,
-systemd-tmpfiles, systemd-tty-ask-password-agent, systemd-umount (lien
-symbolique vers systemd-mount), telinit (lien symbolique vers systemctl),
+systemd-sysext, systemd-tmpfiles, systemd-tty-ask-password-agent,
+systemd-umount (symlink to systemd-mount), telinit (symlink to systemctl),
 timedatectl, and udevadm</seg>
         <seg>libnss_myhostname.so.2, libnss_mymachines.so.2, libnss_resolve.so.2,
 libnss_systemd.so.2, libsystemd.so, libsystemd-shared-&systemd-version;.so
-(dans /lib/systemd) et libudev.so</seg>
+(in /usr/lib/systemd), and libudev.so</seg>
         <seg>/etc/binfmt.d, /etc/init.d, /etc/kernel, /etc/modules-load.d, /etc/sysctl.d,
-/etc/systemd, /etc/tmpfiles.d, /etc/udev, /etc/xdg/systemd, /lib/systemd,
-/lib/udev, /usr/include/systemd, /usr/lib/binfmt.d, /usr/lib/environment.d,
-/usr/lib/kernel, /usr/lib/modules-load.d, /usr/lib/sysctl.d,
-/usr/lib/systemd, /usr/lib/tmpfiles.d,
+/etc/systemd, /etc/tmpfiles.d, /etc/udev, /etc/xdg/systemd,
+/usr/lib/systemd, /usr/lib/udev, /usr/include/systemd, /usr/lib/binfmt.d,
+/usr/lib/environment.d, /usr/lib/kernel, /usr/lib/modules-load.d,
+/usr/lib/sysctl.d, /usr/lib/systemd, /usr/lib/tmpfiles.d,
 /usr/share/doc/systemd-&systemd-version;, /usr/share/factory,
-/usr/share/systemd, /var/lib/systemd et /var/log/journal</seg>
+/usr/share/systemd, /var/lib/systemd, and /var/log/journal</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -419,6 +384,16 @@ enregistrements de machines virtuelles et de conteneurs de systemd</para>
 par systemd-networkd</para>
           <indexterm zone="ch-system-systemd networkctl">
             <primary sortas="b-networkctl">networkctl</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="oomctl">
+        <term><command>oomctl</command></term>
+        <listitem>
+          <para>Controls the systemd Out Of Memory daemon</para>
+          <indexterm zone="ch-system-systemd oomctl">
+            <primary sortas="b-oomctl">oomctl</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -563,6 +538,17 @@ Linux sélectionnée dans une arborescence</para>
 local, triés par processus, charge mémoire et d'E/S disque</para>
           <indexterm zone="ch-system-systemd systemd-cgtop">
             <primary sortas="b-systemd-cgtop">systemd-cgtop</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="systemd-cryptenroll">
+        <term><command>systemd-cryptenroll</command></term>
+        <listitem>
+          <para>Is used to enroll or remove a system from full disk encryption, as well as
+set and query private keys and recovery keys</para>
+          <indexterm zone="ch-system-systemd systemd-cryptenroll">
+            <primary sortas="b-systemd-cryptenroll">systemd-cryptenroll</primary>
           </indexterm>
         </listitem>
       </varlistentry>
@@ -739,6 +725,16 @@ systemd</para>
 processus lors d'une connexion</para>
           <indexterm zone="ch-system-systemd systemd-socket-activate">
             <primary sortas="b-systemd-socket-activate">systemd-socket-activate</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="systemd-sysext">
+        <term><command>systemd-sysext</command></term>
+        <listitem>
+          <para>Activates system extension images</para>
+          <indexterm zone="ch-system-systemd systemd-sysext">
+            <primary sortas="b-systemd-sysext">systemd-sysext</primary>
           </indexterm>
         </listitem>
       </varlistentry>
