@@ -38,7 +38,7 @@ umask 002 &#x0a;&#x0a;</xsl:text>
     <xsl:text>&#x0a;chgrp lfswww *.patch &amp;&amp;&#x0a;</xsl:text>
     <xsl:text>
 if [ `wc -l copyerrs | sed 's/ *//' | cut -f1 -d' '` -gt 0 ]; then
-  mail -s "Missing LFS patches" lfs-book@linuxfromscratch.org &lt; copyerrs
+  mail -s "Missing LFS patches" lfs-book@lists.linuxfromscratch.org &lt; copyerrs
 fi&#x0a;&#x0a;</xsl:text>
 
     <xsl:text>exit&#x0a;</xsl:text>
