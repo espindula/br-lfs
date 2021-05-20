@@ -4,10 +4,10 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY cups-download-http "https://github.com/apple/cups/releases/download/v&cups-version;/cups-&cups-version;-source.tar.gz">
+  <!ENTITY cups-download-http "https://github.com/OpenPrinting/cups/releases/download/v&cups-version;op2/cups-&cups-version;op2-source.tar.gz">
   <!ENTITY cups-download-ftp  "">
-  <!ENTITY cups-md5sum        "412434ceefbdf3ec71bc9188a035f589">
-  <!ENTITY cups-size          "7.8&nbsp;Mo">
+  <!ENTITY cups-md5sum        "524266752cf243c968921547b18ee594">
+  <!ENTITY cups-size          "7.6&nbsp;Mo">
   <!ENTITY cups-buildsize     "80 Mo (plus 89 Mo pour les tests)">
   <!ENTITY cups-time          "0.5 SBU (plus 0.9 SBU pour les tests)">
 ]>
@@ -196,25 +196,44 @@ défaut pour accéder à l'interface Web de
     </para>
 
     <para>
+      Remove an invalid warning option:
+    </para>
+
+<screen><userinput>sed -e "s/-Wno-format-truncation//" \
+    -i configure \
+    -i config-scripts/cups-compiler.m4</userinput></screen>
+
+    <para>
       Construisez <application>Cups</application> en lançant les commandes
 suivantes&nbsp;:
     </para>
 
 
-<screen revision="sysv"><userinput>sed -i '/stat.h/a #include &lt;asm-generic/ioctls.h&gt;' tools/ipptool.c  &amp;&amp;
+
+<screen revision="sysv"><!-- This seems to be no longer required with OpenPrinting-cups.
+     Remove this comment when switch to OP is settled.
+
+<screen revision="sysv">
+<userinput>sed -i '/stat.h/a #include &lt;asm-generic/ioctls.h&gt;' tools/ipptool.c  &amp;&amp;
 
 CC=gcc CXX=g++ \
-./configure --libdir=/usr/lib            \
+-->
+<userinput>./configure --libdir=/usr/lib            \
             --disable-systemd            \
             --with-rcdir=/tmp/cupsinit   \
             --with-system-groups=lpadmin \
             --with-docdir=/usr/share/cups/doc-&cups-version; &amp;&amp;
 make</userinput></screen>
 
-<screen revision="systemd"><userinput>sed -i '/stat.h/a #include &lt;asm-generic/ioctls.h&gt;' tools/ipptool.c   &amp;&amp;
+
+<screen revision="sysv"><!-- same apply here:
+
+<screen revision="systemd">
+<userinput>sed -i '/stat.h/a #include &lt;asm-generic/ioctls.h&gt;' tools/ipptool.c   &amp;&amp;
 
 CC=gcc CXX=g++ \
-./configure --libdir=/usr/lib            \
+-->
+<userinput>./configure --libdir=/usr/lib            \
             --with-rcdir=/tmp/cupsinit   \
             --with-system-groups=lpadmin \
             --with-docdir=/usr/share/cups/doc-&cups-version; &amp;&amp;
@@ -225,7 +244,9 @@ make</userinput></screen>
 httpAddrGetList</filename>, is known to fail.-->
 Pour tester les résultats, lancez <command>LC_ALL=C make -k
 check</command>. Une session graphique active avec une adresse de bus est
-nécessaire pour lancer les tests.
+nécessaire pour lancer les tests. Assurez-vous qu'il n'y a pas d'autre
+instance de <application>Cups</application> actuellement lancée, sinon au
+moins 4 tests échoueront avec «&nbsp;adresse déjà utilisée&nbsp;».
       
     </para>
 
@@ -259,21 +280,27 @@ qu'utilisateur <systemitem class="username">root</systemitem>&nbsp;:
     <title>Explication des commandes</title>
 
     <para>
-      <command>sed ... tools/ipptool.c</command>&nbsp;: ce sed corrige un bogue
-causé par le changement des API en espace utilisateur pour les sockets
-effectué par glibc-2.30 .
+      <command>sed ... configure</command>: This sed removes a compiler option
+which is no longer supported. Leaving this change out, the compilation will
+run thru but a warning about an invalid warning option will be emitted on
+every compiler invocation.
+    </para>
+
+    <!--
+    <para>
+
+      <command>sed ... tools/ipptool.c</command>: This sed fixes a bug caused
+      by glibc-2.30 changing the user-space API for sockets.
     </para>
 
     <para>
-      <envar>CC=gcc CXX=g++</envar>&nbsp;: Cette variable d'environnement assure
-que gcc est utilisé, si clang est installé. Supprimez-le, si vous préférez
-utiliser clang. L'utilisation de clang double presque le temps de
-compilation et réduit légèrement l'espace disque de la
-construction. L'espace disque des fichiers installé n'est pas réduit de
-manière significative.
+      <envar>CC=gcc CXX=g++</envar>: This environment variable ensures that gcc is used,
+      if clang is installed. Remove it, if you prefer to use clang. Using clang
+      almost doubles build time and slightly decreases build disk space.
+      Installed disk space is not appreciably modified.
     </para>
-
-    <para revision="sysv">
+-->
+<para revision="sysv">
       <parameter>--disable-systemd</parameter>&nbsp;: Systemd n'est pas supporté
 par cette version de BLFS.
     </para>
@@ -427,11 +454,12 @@ class="username">root</systemitem> &nbsp;:
             <!--accept,-->
 <!--cupsaddsmb,-->
 <!--cupstestdsc,-->
+<!-- ippfind-->
 <!--and reject-->
 cancel, cupsaccept, cups-config, cupsctl, cupsd, cupsdisable, cupsenable,
-cupsfilter, cupsreject, cupstestppd, ippeveprinter, ippfind, ipptool, lp,
-lpadmin, lpc, lpinfo, lpmove, lpoptions, lpq, lpr, lprm, lpstat, ppdc,
-ppdhtml, ppdi, ppdmerge et ppdpo 
+cupsfilter, cupsreject, cupstestppd, ippeveprinter, ipptool, lp, lpadmin,
+lpc, lpinfo, lpmove, lpoptions, lpq, lpr, lprm, lpstat, ppdc, ppdhtml, ppdi,
+ppdmerge, and ppdpo 
         </seg>
         <seg>
            <!--libcupscgi.so,-->
@@ -635,19 +663,21 @@ un format spécifique
         </listitem>
       </varlistentry>
 
+      <!--
       <varlistentry id="ippfind">
+
         <term><command>ippfind</command></term>
         <listitem>
           <para>
-            trouve les imprimantes suivant le protocole d'impression internet
+            finds internet printing protocol printers
           </para>
           <indexterm zone="cups ippfind">
             <primary sortas="b-ippfind">ippfind</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-
-      <varlistentry id="ipptool">
+-->
+<varlistentry id="ipptool">
         <term><command>ipptool</command></term>
         <listitem>
           <para>
