@@ -4,7 +4,7 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY cups-download-http "https://github.com/OpenPrinting/cups/releases/download/v&cups-version;op2/cups-&cups-version;op2-source.tar.gz">
+  <!ENTITY cups-download-http "https://github.com/OpenPrinting/cups/releases/download/v&cups-version;/cups-&cups-version;-source.tar.gz">
   <!ENTITY cups-download-ftp  "">
   <!ENTITY cups-md5sum        "524266752cf243c968921547b18ee594">
   <!ENTITY cups-size          "7.6&nbsp;Mo">
@@ -86,9 +86,9 @@ pour la plupart des imprimantes PostScript and raster.
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      <xref linkend="avahi"/>, <xref linkend="libpaper"/>, <xref
-linkend="mitkrb"/>, <xref linkend="openjdk"/>, <xref linkend="php"/> et
-<xref linkend="python2"/>
+      <xref linkend="avahi"/>, <xref linkend="libpaper"/>, <xref linkend="llvm"/>
+(with <command>clang</command>), <xref linkend="mitkrb"/>, <xref
+linkend="openjdk"/>, <xref linkend="php"/>, and <xref linkend="python2"/>
     </para>
 
     <bridgehead renderas="sect4">Requises (Après installation)</bridgehead>
@@ -196,7 +196,10 @@ défaut pour accéder à l'interface Web de
     </para>
 
     <para>
-      Remove an invalid warning option:
+      Upstream perfers <command>clang</command> than <command>gcc</command>, but
+the building system will try to use a compiler warning option unsupported by
+<command>clang</command>.  If <command>clang</command> is installed, remove
+this warning option:
     </para>
 
 <screen><userinput>sed -e "s/-Wno-format-truncation//" \
@@ -226,7 +229,7 @@ CC=gcc CXX=g++ \
 make</userinput></screen>
 
 
-<screen revision="sysv"><!-- same apply here:
+<screen revision="systemd"><!-- same apply here:
 
 <screen revision="systemd">
 <userinput>sed -i '/stat.h/a #include &lt;asm-generic/ioctls.h&gt;' tools/ipptool.c   &amp;&amp;
@@ -234,7 +237,6 @@ make</userinput></screen>
 CC=gcc CXX=g++ \
 -->
 <userinput>./configure --libdir=/usr/lib            \
-            --with-rcdir=/tmp/cupsinit   \
             --with-system-groups=lpadmin \
             --with-docdir=/usr/share/cups/doc-&cups-version; &amp;&amp;
 make</userinput></screen>
@@ -260,8 +262,13 @@ class="username">root</systemitem>&nbsp;:
 <screen role="root"><!-- dev note: make BUILDROOT=<DESTDIR>
  install -->
 <userinput>make install &amp;&amp;
-rm -rf /tmp/cupsinit &amp;&amp;
 ln -svnf ../cups/doc-&cups-version; /usr/share/doc/cups-&cups-version;</userinput></screen>
+
+    <para revision="sysv">
+      Remove the shipped bootscript, which is incompatible with LFS:
+    </para>
+
+<screen role="root" revision="sysv"><userinput>rm -rf /tmp/cupsinit &amp;&amp;</userinput></screen>
 
     <para>
       Créez le fichier de configuration de base du client
@@ -292,20 +299,19 @@ every compiler invocation.
       <command>sed ... tools/ipptool.c</command>: This sed fixes a bug caused
       by glibc-2.30 changing the user-space API for sockets.
     </para>
-
-    <para>
-      <envar>CC=gcc CXX=g++</envar>: This environment variable ensures that gcc is used,
-      if clang is installed. Remove it, if you prefer to use clang. Using clang
-      almost doubles build time and slightly decreases build disk space.
-      Installed disk space is not appreciably modified.
-    </para>
 -->
-<para revision="sysv">
+<para>
+      <envar>CC=gcc CXX=g++</envar>: Setting them if you prefer to use
+<command>gcc</command> instead of <command>clang</command>, which is now
+preferred by the upstream.
+    </para>
+
+    <para revision="sysv">
       <parameter>--disable-systemd</parameter>&nbsp;: Systemd n'est pas supporté
 par cette version de BLFS.
     </para>
 
-    <para>
+    <para revision="sysv">
       <parameter>--with-rcdir=/tmp/cupsinit</parameter>&nbsp;: Ce paramètre dit au
 processus de construction d'installer les scripts de démarrage inclus dans
 <filename class="directory">/tmp</filename> au lieu de <filename
