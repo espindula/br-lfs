@@ -152,7 +152,7 @@ profile-html:
 
 wget-list: $(BASEDIR)/wget-list
 $(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml \
-                      packages.ent patches.ent
+                      packages.ent patches.ent general.ent
 	@echo "Generating consolidated wget list at $(BASEDIR)/wget-list ..."
 	$(Q)mkdir -p $(BASEDIR)
 
