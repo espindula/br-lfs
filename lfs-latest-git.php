@@ -278,7 +278,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
      return find_max( $lines, "/v\d/", "/^.*v([\d\.]+) .*$/" );
 
   if ( $package == "grub" )
-     return find_max( $lines, "/grub/", "/^.*grub-(\d\.).tar.xz.*$/" );
+     return find_max( $lines, "/grub/", "/^.*grub-([\d\.]+).tar.xz.*$/" );
 
   if ( $package == "openssl" )
      return find_max( $lines, "/openssl/", "/^.*openssl-([\d\.p]*\d.?).tar.*$/" );
