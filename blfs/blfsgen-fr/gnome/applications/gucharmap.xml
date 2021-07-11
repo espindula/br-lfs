@@ -4,14 +4,15 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY gucharmap-download-http
-       "&gnome-download-http;/gucharmap/12.0/gucharmap-&gucharmap-version;.tar.xz">
-  <!ENTITY gucharmap-download-ftp
-       "&gnome-download-ftp;/gucharmap/12.0/gucharmap-&gucharmap-version;.tar.xz">
-  <!ENTITY gucharmap-md5sum        "0c34aa29657a41712d011d939c5bc85e">
-  <!ENTITY gucharmap-size          "1.6 Mo">
-  <!ENTITY gucharmap-buildsize     "56 Mo">
-  <!ENTITY gucharmap-time          "0.4 SBU (avec une connexion internet rapide)">
+  <!-- found by looking at souce of https://gitlab.gnome.org/GNOME/gucharmap/-/tags
+   in seamonkey, finding the .tar.bz2 and putting the gitlab.gnome.org prefix
+   onto it -->
+  <!ENTITY gucharmap-download-http "https://gitlab.gnome.org/GNOME/gucharmap/-/archive/&gucharmap-version;/gucharmap-&gucharmap-version;.tar.bz2">
+  <!ENTITY gucharmap-download-ftp  "">
+  <!ENTITY gucharmap-md5sum        "5dbe3a3f6d063f819f82f15d6613a7a4">
+  <!ENTITY gucharmap-size          "1.3&nbsp;Mo">
+  <!ENTITY gucharmap-buildsize     "77&nbsp;Mo">
+  <!ENTITY gucharmap-time          "0.1&nbsp;SBU">
 ]>
 
 <sect1 id="gucharmap" xreflabel="Gucharmap-&gucharmap-version;">
@@ -74,13 +75,35 @@ point de code.
       </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+
+      <bridgehead renderas="sect4">Unicode Character Database files</bridgehead>
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>
+            Download: <ulink
+url="https://www.unicode.org/Public/zipped/&gucharmap-major-version;.0/UCD.zip">
+https://www.unicode.org/Public/zipped/&gucharmap-major-version;.0/UCD.zip</ulink>
+(Unicode Character Database)
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Download: <ulink
+url="https://www.unicode.org/Public/zipped/&gucharmap-major-version;.0/Unihan.zip">
+https://www.unicode.org/Public/zipped/&gucharmap-major-version;.0/Unihan.zip</ulink>
+(CJK Unified Ideographs)
+          </para>
+        </listitem>
+      </itemizedlist>
+
     <bridgehead renderas="sect3">Dépendances de Gucharmap</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required">
-      <xref linkend="desktop-file-utils"/>, <xref linkend="gtk3"/>, <xref
-linkend="itstool"/>, <xref linkend="unzip"/> et <xref linkend="wget"/>
-(utilisé pour télécharger des données depuis unicode.org)
+      <xref linkend="desktop-file-utils"/>, <xref
+linkend="gsettings-desktop-schemas"/>, <xref linkend="gtk3"/>, <xref
+linkend="itstool"/>, and <xref linkend="unzip"/>
     </para>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
@@ -109,15 +132,21 @@ linkend="gtk-doc"/>
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>LIBS="-ldl"               \
-./configure --prefix=/usr \
-            --enable-vala \
-            --with-unicode-data=download &amp;&amp;
-make</userinput></screen>
+<screen><userinput>mkdir build              &amp;&amp;
+cd build                 &amp;&amp;
+mkdir ucd                &amp;&amp;
+pushdir ucd              &amp;&amp;
+unzip ../../UCD.zip      &amp;&amp;
+cp -v ../../Unihan.zip . &amp;&amp;
+popd                     &amp;&amp;
+meson --prefix=/usr      \
+      --strip            \
+      -Ducd_path=./ucd   \
+      -Ddocs=false ..    &amp;&amp;
+ninja</userinput></screen>
 
     <para>
-      La suite de tests de ce paquet est destinée uniquement au mainteneur pour
-vérifier les fichiers d'aide internationalisés.
+      This package does not have a testsuite.
     </para>
 
     <para>
@@ -125,35 +154,51 @@ vérifier les fichiers d'aide internationalisés.
 class="username">root</systemitem>&nbsp;:
     </para>
 
-<screen role="root"><userinput>make install</userinput></screen>
+<screen role="root"><userinput>rm  -fv /usr/share/glib-2.0/schemas/org.gnome.Charmap.enums.xml &amp;&amp;
+ninja install</userinput></screen>
 
   </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-
-    <!-- Needed in Gucharmap 10.0.4: should be fixed in subsequent versions -->
+    
+    <!-- 13.0.8, meson 58 series - file reports 'with debug_info, not stripped'.
+     The build still used -O3 and claimed to not be a debug version -->
 <para>
-      <command>LIBS="-ldl" ...</command>&nbsp;: Permet de se lier à certaines
-bibliothèques systèmes. Cela est actuellement cassé dans la version 10.0.4.
+      <parameter>--strip</parameter>: Although the package defaults to a release
+build without debug information, without this switch there will be some
+debug information in the binaries.
     </para>
 
     <para>
-      <parameter>--with-unicode-data=download</parameter>&nbsp;: Ce paramètr force
-le processus de construction à télécharger les données
-<application>Unicode</application> plutôt que de les chercher localement.
+      <parameter>-Ducd_path=./ucd</parameter>: This points to where the extracted
+main Unicode data files, and the zipped Unihan archive can be found.
     </para>
 
     <para>
-      <parameter>--enable-vala</parameter>&nbsp;: Ce paramètre active la
-construction des liaisons <application>Vala</application> (la détection
-automatique de <command>vapigen</command> est actuellement
-cassée). Effacez-le si vous n'avez pas installé <xref linkend="vala"/>.
+      <command>rm -fv
+/usr/share/glib-2.0/schemas/org.gnome.Charmap.enums.xml</command>: Old
+versions of this package installed an obsolete file that prevents the
+program from running, as if the main schema has not been installed.
+Forcibly removing works even if the old file is not present.
     </para>
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-      href="../../xincludes/gtk-doc-rebuild.xml"/>
+    <para>
+      <parameter>-Ddocs=false</parameter>: This allows the package to build even
+if <application>gtk-doc</application> has not been installed. Remove this if
+you have installed that and wish to build the documentation.
+    </para>
+
+    <para>
+      <option>-Dgir=false</option>: Use this if you have not installed <xref
+linkend="gobject-introspection"/>.
+    </para>
+
+    <para>
+      <option>-Dvapi=false</option>: Use this if you have not installed <xref
+linkend="vala"/>.
+    </para>
 
   </sect2>
 
@@ -167,7 +212,8 @@ cassée). Effacez-le si vous n'avez pas installé <xref linkend="vala"/>.
 
       <seglistitem>
         <seg>
-          charmap, gnome-character-map (tous les deux des liens symboliques) et
+           <!-- these appear to no-longer get created
+          charmap, gnome-character-map (both symlinks), and-->
 gucharmap
         </seg>
         <seg>
