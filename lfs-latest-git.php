@@ -127,6 +127,8 @@ if ( $package == "procps-ng"  ) $dirpath = "https://gitlab.com/procps-ng/procps/
 if ( $package == "psmisc"     ) $dirpath = "https://gitlab.com/psmisc/psmisc/-/tags";
 if ( $package == "Python"     ) $dirpath = "https://www.python.org/downloads/source/";
 if ( $package == "shadow"     ) $dirpath = "https://github.com/shadow-maint/shadow/releases";
+if ( $package == "MarkupSafe" ) $dirpath = "https://pypi.python.org/pypi/MarkupSafe/";
+if ( $package == "Jinja"      ) $dirpath = "https://pypi.python.org/pypi/Jinja2/";
 if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/releases";
 if ( $package == "tcl"        ) $dirpath = "http://sourceforge.net/projects/tcl/files";
 if ( $package == "util-linux" ) $dirpath = max_parent( $dirpath, "v." );
@@ -279,6 +281,9 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
 
   if ( $package == "grub" )
      return find_max( $lines, "/grub/", "/^.*grub-([\d\.]+).tar.xz.*$/" );
+
+  if ( $package == "Jinja" )
+     return find_max( $lines, "/Jinja/", "/^.*Jinja2 ([\d\.]+).*$/" );
 
   if ( $package == "openssl" )
      return find_max( $lines, "/openssl/", "/^.*openssl-([\d\.p]*\d.?).tar.*$/" );
