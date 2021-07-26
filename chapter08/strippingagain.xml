@@ -34,15 +34,18 @@
 
 <!--<screen><userinput>save_lib="ld-2.25.so libc-2.25.so libpthread-2.25.so libthread_db-1.0.so"-->
 <screen><userinput>save_usrlib="ld-&glibc-version;.so libc-&glibc-version;.so libpthread-&glibc-version;.so libthread_db-&libthread_db-version;.so
-             libquadmath.so.&libquadmath-version; libstdc++.so.&libstdcpp-version;
+             libquadmath.so.&libquadmath-version; libstdc++.so.&libstdcpp-version; libz.so.&zlib-version;
              libitm.so.&libitm-version; libatomic.so.&libatomic-version;" <!-- libcilkrts.so.&libcilkrts-version;-->
 
 cd /usr/lib
 
 for LIB in $save_usrlib; do
     objcopy --only-keep-debug $LIB $LIB.dbg
-    strip --strip-unneeded $LIB
-    objcopy --add-gnu-debuglink=$LIB.dbg $LIB
+    cp $LIB /tmp/$LIB
+    strip --strip-unneeded /tmp/$LIB
+    objcopy --add-gnu-debuglink=$LIB.dbg /tmp/$LIB
+    install -vm755 /tmp/$LIB /usr/lib
+    rm /tmp/$LIB
 done
 
 unset LIB save_usrlib</userinput></screen>
@@ -58,7 +61,7 @@ unset LIB save_usrlib</userinput></screen>
 <screen><userinput>find /usr/lib -type f -name \*.a \
    -exec strip --strip-debug {} ';'
 
-find /usr/lib -type f -name \*.so* ! -name \*dbg \
+find /usr/lib -type f -name \*.so* ! -name \*dbg ! -name libz.so* \
    -exec strip --strip-unneeded {} ';'
 
 find /usr/{bin,sbin,libexec} -type f \
