@@ -23,18 +23,28 @@
   <command>strip</command> commands, it is a good idea to make a
   backup of the LFS system in its current state.</para>
 
-  <para>First place the debugging symbols for selected libraries 
-  in separate files.  This debugging information is needed if running 
+  <para>The debugging symbols for selected libraries are placed
+  in separate files.  These debugging information is needed if running 
   regression tests that use <ulink 
   url='&blfs-book;/general/valgrind.html'>valgrind</ulink> or <ulink 
   url='&blfs-book;/general/gdb.html'>gdb</ulink> later in BLFS.
   </para>
 
+  <para>And, <command>strip</command> will overwrite the binary or library
+  file.  This may crash the processes using code or data from the file.  If
+  the process running <command>strip</command> itself is affected, the
+  binary or library being stripped may be destroyed.  This may make the
+  system completely unusable.  To avoid it, we'll copy some libraries and
+  binaries into <filename class="directory">/tmp</filename>, strip them
+  there, and install them back with the <command>install</command> command.
+  Read the related entry in <xref linkend="pkgmgmt-upgrade-issues"/> for the
+  rationale to use the <command>install</command> command here.</para>
+
 <!-- also of interest are libgfortan, libgo, libgomp, and libobjc from GCC -->
 
 <!--<screen><userinput>save_lib="ld-2.25.so libc-2.25.so libpthread-2.25.so libthread_db-1.0.so"-->
 <screen><userinput>save_usrlib="ld-&glibc-version;.so libc-&glibc-version;.so libpthread-&glibc-version;.so libthread_db-&libthread_db-version;.so
-             libquadmath.so.&libquadmath-version; libstdc++.so.&libstdcpp-version; libz.so.&zlib-version;
+             libquadmath.so.&libquadmath-version; libstdc++.so.&libstdcpp-version;
              libitm.so.&libitm-version; libatomic.so.&libatomic-version;" <!-- libcilkrts.so.&libcilkrts-version;-->
 
 cd /usr/lib
@@ -48,24 +58,48 @@ for LIB in $save_usrlib; do
     rm /tmp/$LIB
 done
 
-unset LIB save_usrlib</userinput></screen>
+online_usrbin="bash find strip"
+online_usrlib="libbfd-&binutils-version;.so libdl-&glibc-version;.so
+               libhistory.so.&readline-version; libncursesw.so.&ncurses-version;
+               libm-&glibc-version;.so libreadline.so.&readline-version;
+               libz.so.&zlib-version;"
 
-<!--  <para>Before performing the stripping, take special care to ensure that
-  none of the binaries that are about to be stripped are running:</para>
+for BIN in $online_usrbin; do
+    cp /usr/bin/$BIN /tmp/$BIN
+    strip --strip-all /tmp/$BIN
+    install -vm755 /tmp/$BIN /usr/bin
+    rm /tmp/$BIN
+done
 
-<screen role="nodump"><userinput>exec /tools/bin/bash</userinput></screen>
-  
-  <para>Now the binaries and libraries can be safely stripped:</para>
--->
-  <para>Now the binaries and libraries can be stripped:</para>
-<screen><userinput>find /usr/lib -type f -name \*.a \
+for LIB in $online_usrlib; do
+    cp /usr/lib/$LIB /tmp/$LIB
+    strip --strip-unneeded /tmp/$LIB
+    install -vm755 /tmp/$LIB /usr/lib
+    rm /tmp/$LIB
+done
+
+find /usr/lib -type f -name \*.a \
    -exec strip --strip-debug {} ';'
 
-find /usr/lib -type f -name \*.so* ! -name \*dbg ! -name libz.so* \
-   -exec strip --strip-unneeded {} ';'
+for i in $(find /usr/lib -type f -name \*.so* ! -name \*dbg); do
+    case "$online_usrlib $save_usrlib" in
+        *$(basename $i)* ) ;;
+        * ) strip --strip-unneeded $i ;;
+    esac
+done
 
-find /usr/{bin,sbin,libexec} -type f \
-    -exec strip --strip-all {} ';'</userinput></screen>
+for i in $(find /usr/bin -type f); do
+    case "$online_usrbin" in
+        *$(basename $i)* ) ;;
+        * ) strip --strip-all $i ;;
+    esac
+done
+
+find /usr/{sbin,libexec} -type f \
+    -exec strip --strip-all {} ';'
+
+unset BIN LIB save_usrlib online_usrbin online_usrlib
+</userinput></screen>
 
   <para>A large number of files will be reported as having their file
   format not recognized. These warnings can be safely ignored. These
