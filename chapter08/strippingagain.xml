@@ -67,7 +67,7 @@ online_usrlib="libbfd-&binutils-version;.so libdl-&glibc-version;.so
 
 for BIN in $online_usrbin; do
     cp /usr/bin/$BIN /tmp/$BIN
-    strip --strip-all /tmp/$BIN
+    strip --strip-unneeded /tmp/$BIN
     install -vm755 /tmp/$BIN /usr/bin
     rm /tmp/$BIN
 done
@@ -79,29 +79,16 @@ for LIB in $online_usrlib; do
     rm /tmp/$LIB
 done
 
-find /usr/lib -type f -name \*.a \
-   -exec strip --strip-debug {} ';'
-
-for i in $(find /usr/lib -type f -name \*.so* ! -name \*dbg); do
-    case "$online_usrlib $save_usrlib" in
+for i in $(find /usr/lib -type f -name \*.so* ! -name \*dbg) \
+         $(find /usr/lib -type f -name \*.a)                 \
+         $(find /usr/{bin,sbin,libexec} -type f); do
+    case "$online_usrbin $online_usrlib $save_usrlib" in
         *$(basename $i)* ) 
             ;;
         * ) strip --strip-unneeded $i 
             ;;
     esac
 done
-
-for i in $(find /usr/bin -type f); do
-    case "$online_usrbin" in
-        *$(basename $i)* ) 
-            ;;
-        * ) strip --strip-all $i 
-            ;;
-    esac
-done
-
-find /usr/{sbin,libexec} -type f \
-    -exec strip --strip-all {} ';'
 
 unset BIN LIB save_usrlib online_usrbin online_usrlib
 </userinput></screen>
