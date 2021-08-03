@@ -50,15 +50,6 @@
 
 <screen><userinput remap="pre">patch -Np1 -i ../&glibc-fhs-patch;</userinput></screen>
 
-    <para>Fix a bug that causes issues with chrooted applications:</para>
-
-    <screen><userinput remap="pre">sed -e '402a\      *result = local->data.services[database_index];' \
-    -i nss/nss_database.c</userinput></screen>
-
-    <para>Fix a build issue with gcc-11.1:</para>
-
-<screen><userinput remap="pre">sed 's/amx_/amx-/' -i sysdeps/x86/tst-cpu-features-supports.c</userinput></screen>
-
     <para>The Glibc documentation recommends building Glibc 
     in a dedicated build directory:</para>
 
@@ -126,17 +117,6 @@ cd       build</userinput></screen>
         </listitem>
       </varlistentry>
 
-      <varlistentry>
-        <term><option>libc_cv_include_x86_isa_level=no</option></term>
-        <listitem>
-          <para>This disables <quote>x86 ISA needed</quote> property in
-          Glibc libraries.  Use it <emphasis role="bold">if</emphasis>
-          you are building Glibc with <option>-march</option> option in
-          <envar>CFLAGS</envar>, to workaround an issue in Glibc-2.33
-          breaking it.</para>
-        </listitem>
-      </varlistentry>
-
     </variablelist>
 
     <para>Compile the package:</para>
@@ -177,14 +157,6 @@ esac</userinput></screen>
       <listitem>
         <para><emphasis>misc/tst-ttyname</emphasis> 
         is known to fail in the LFS chroot environment.</para>
-      </listitem>
-
-      <listitem>
-        <!-- FIXME This currently tests SSBD and STIBP which do not exist
-         on non-intel, should be fixed in glibc-2.34
-         https://sourceware.org/pipermail/libc-alpha/2021-January/122171.html -->
-        <para><emphasis>elf/tst-cpu-features-cpuinfo</emphasis>
-        will fail on non-intel CPUs with this version of glibc.</para>
       </listitem>
 
       <listitem>
@@ -504,14 +476,15 @@ mkdir -pv /etc/ld.so.conf.d</userinput></screen>
         ldd, lddlibc4, locale, localedef, makedb, mtrace, nscd, 
         pcprofiledump, pldd, sln, sotruss, sprof, tzselect, xtrace,
         zdump, and zic</seg>
-        <seg>ld-&glibc-version;.so, libBrokenLocale.{a,so}, libSegFault.so, libanl.{a,so},
+        <seg>ld-linux-x86-64.so.2, ld-linux.so.2,
+        libBrokenLocale.{a,so}, libSegFault.so, libanl.{a,so},
         libc.{a,so}, libc_nonshared.a,
-        libcrypt.{a,so}, libdl.{a,so}, libg.a, libm.{a,so},
-        libmcheck.a, libmemusage.so, libmvec.{a,so}, libnsl.{a,so},
+        libcrypt.{a,so}, libdl.{a,so.2}, libg.a, libm.{a,so},
+        libmcheck.a, libmemusage.so, libmvec.{a,so}, libnsl.so.1,
         libnss_compat.so, libnss_dns.so, libnss_files.so, libnss_hesiod.so,
-        libpcprofile.so, libpthread.{a,so},
-        libpthread_nonshared.a, libresolv.{a,so}, librt.{a,so},
-        libthread_db.so, and libutil.{a,so}</seg>
+        libpcprofile.so, libpthread.{a,so.0},
+        libresolv.{a,so}, librt.{a,so.1},
+        libthread_db.so, and libutil.{a,so.1}</seg>
         <seg>/usr/include/arpa, /usr/include/bits, /usr/include/gnu,
         /usr/include/net, /usr/include/netash, /usr/include/netatalk,
         /usr/include/netax25, /usr/include/neteconet, /usr/include/netinet,
@@ -768,7 +741,7 @@ mkdir -pv /etc/ld.so.conf.d</userinput></screen>
       </varlistentry>
 
       <varlistentry id="ld.so">
-        <term><filename class="libraryfile">ld-&glibc-version;.so</filename></term>
+        <term><filename class="libraryfile">ld-*.so</filename></term>
         <listitem>
           <para>The helper program for shared library executables</para>
           <indexterm zone="ch-system-glibc ld.so">
@@ -834,7 +807,9 @@ mkdir -pv /etc/ld.so.conf.d</userinput></screen>
       <varlistentry id="libdl">
         <term><filename class="libraryfile">libdl</filename></term>
         <listitem>
-          <para>The dynamic linking interface library</para>
+          <para>Dummy library containing no functions. Previously was the
+          dynamic linking interface library, whose functions are now in
+          <filename class="libraryfile">libc</filename></para>
           <indexterm zone="ch-system-glibc libdl">
             <primary sortas="c-libdl">libdl</primary>
           </indexterm>
@@ -886,7 +861,7 @@ mkdir -pv /etc/ld.so.conf.d</userinput></screen>
       <varlistentry id="libnsl">
         <term><filename class="libraryfile">libnsl</filename></term>
         <listitem>
-          <para>The network services library</para>
+          <para>The network services library, now deprecated</para>
           <indexterm zone="ch-system-glibc libnsl">
             <primary sortas="c-libnsl">libnsl</primary>
           </indexterm>
@@ -918,7 +893,10 @@ mkdir -pv /etc/ld.so.conf.d</userinput></screen>
       <varlistentry id="libpthread">
         <term><filename class="libraryfile">libpthread</filename></term>
         <listitem>
-          <para>The POSIX threads library</para>
+          <para>Dummy library containing no functions. Previously contained
+          functions providing most of the interfaces specified
+          by the POSIX.1b Realtime Extension, now the functions are in
+          <filename class="libraryfile">libc</filename></para>
           <indexterm zone="ch-system-glibc libpthread">
             <primary sortas="c-libpthread">libpthread</primary>
           </indexterm>
@@ -961,8 +939,11 @@ mkdir -pv /etc/ld.so.conf.d</userinput></screen>
       <varlistentry id="libutil">
         <term><filename class="libraryfile">libutil</filename></term>
         <listitem>
-          <para>Contains code for <quote>standard</quote> functions used in
-          many different Unix utilities</para>
+          <para>>Dummy library containing no functions. Previously contained
+          code for <quote>standard</quote> functions used in
+          many different Unix utilities. These functions are now in
+          <filename class="libraryfile">libc</filename></para>
+          
           <indexterm zone="ch-system-glibc libutil">
             <primary sortas="c-libutil">libutil</primary>
           </indexterm>
