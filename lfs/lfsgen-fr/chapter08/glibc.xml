@@ -49,16 +49,6 @@ leurs données à des endroits respectant le FHS&nbsp;:</para>
 
 <screen><userinput remap="pre">patch -Np1 -i ../&glibc-fhs-patch;</userinput></screen>
 
-    <para>Corrigez un bogue qui pose problème avec les applications dans le
-chroot&nbsp;:</para>
-
-    <screen><userinput remap="pre">sed -e '402a\      *result = local->data.services[database_index];' \
-    -i nss/nss_database.c</userinput></screen>
-
-    <para>Corrigez un problème de construction avec gcc-11.1&nbsp;:</para>
-
-<screen><userinput remap="pre">sed 's/amx_/amx-/' -i sysdeps/x86/tst-cpu-features-supports.c</userinput></screen>
-
     <para>La documentation de Glibc recommande de construire Glibc dans un répertoire
 de construction dédié&nbsp;:</para>
 
@@ -127,17 +117,6 @@ voulons pas utiliser lib64.</para>
         </listitem>
       </varlistentry>
 
-      <varlistentry>
-        <term><option>libc_cv_include_x86_isa_level=no</option></term>
-        <listitem>
-          <para>Cette option désactive la propriété <quote>x86 ISA needed</quote> dans les
-bibliothèques de Glibc. Utilisez-la <emphasis role="bold">si</emphasis> vous
-construisez Glibc avec l'option <option>-march</option> dans les
-<envar>CFLAGS</envar>, pour contourner un problème avec Glibc-2.33 qui la
-casse.</para>
-        </listitem>
-      </varlistentry>
-
     </variablelist>
 
     <para>Compilez le paquet&nbsp;:</para>
@@ -181,15 +160,6 @@ l'environnement chroot de LFS.</para>
       <listitem>
         <para><emphasis>misc/tst-ttyname</emphasis> est connu pour échouer dans
 l'environnement chroot de LFS.</para>
-      </listitem>
-
-      <listitem>
-        
-        <!-- FIXME This currently tests SSBD and STIBP which do not exist
-         on non-intel, should be fixed in glibc-2.34
-         https://sourceware.org/pipermail/libc-alpha/2021-January/122171.html -->
-<para><emphasis>elf/tst-cpu-features-cpuinfo</emphasis> échouera sur certaines
-architectures non-intel avec cette version de glibc.</para>
       </listitem>
 
       <listitem>
@@ -507,13 +477,12 @@ mkdir -pv /etc/ld.so.conf.d</userinput></screen>
         <seg>catchsegv, gencat, getconf, getent, iconv, iconvconfig, ldconfig, ldd,
 lddlibc4, locale, localedef, makedb, mtrace, nscd, pcprofiledump, pldd, sln,
 sotruss, sprof, tzselect, xtrace, zdump et zic</seg>
-        <seg>ld-&glibc-version;.so, libBrokenLocale.{a,so}, libSegFault.so,
-libanl.{a,so}, libc.{a,so}, libc_nonshared.a, libcrypt.{a,so}, libdl.{a,so},
-libg.a, libm.{a,so}, libmcheck.a, libmemusage.so, libmvec.{a,so},
-libnsl.{a,so}, libnss_compat.so, libnss_dns.so, libnss_files.so,
-libnss_hesiod.so, libpcprofile.so, libpthread.{a,so},
-libpthread_nonshared.a, libresolv.{a,so}, librt.{a,so}, libthread_db.so et
-libutil.{a,so}</seg>
+        <seg>ld-linux-x86-64.so.2, ld-linux.so.2, libBrokenLocale.{a,so}, libSegFault.so,
+libanl.{a,so}, libc.{a,so}, libc_nonshared.a, libcrypt.{a,so},
+libdl.{a,so.2}, libg.a, libm.{a,so}, libmcheck.a, libmemusage.so,
+libmvec.{a,so}, libnsl.so.1, libnss_compat.so, libnss_dns.so,
+libnss_files.so, libnss_hesiod.so, libpcprofile.so, libpthread.{a,so.0},
+libresolv.{a,so}, librt.{a,so.1}, libthread_db.so, and libutil.{a,so.1}</seg>
         <seg>/usr/include/arpa, /usr/include/bits, /usr/include/gnu, /usr/include/net,
 /usr/include/netash, /usr/include/netatalk, /usr/include/netax25,
 /usr/include/neteconet, /usr/include/netinet, /usr/include/netipx,
@@ -769,7 +738,7 @@ d'exécution</para>
       </varlistentry>
 
       <varlistentry id="ld.so">
-        <term><filename class="libraryfile">ld-&glibc-version;.so</filename></term>
+        <term><filename class="libraryfile">ld-*.so</filename></term>
         <listitem>
           <para>Le programme d'aide des bibliothèques partagées exécutables</para>
           <indexterm zone="ch-system-glibc ld.so">
@@ -835,7 +804,9 @@ plus d'informations</para>
       <varlistentry id="libdl">
         <term><filename class="libraryfile">libdl</filename></term>
         <listitem>
-          <para>La bibliothèque de l'interface du chargeur dynamique</para>
+          <para>Dummy library containing no functions. Previously was the dynamic linking
+interface library, whose functions are now in <filename
+class="libraryfile">libc</filename></para>
           <indexterm zone="ch-system-glibc libdl">
             <primary sortas="c-libdl">libdl</primary>
           </indexterm>
@@ -887,7 +858,7 @@ d'informations sur l'utilisation de la mémoire par un programme</para>
       <varlistentry id="libnsl">
         <term><filename class="libraryfile">libnsl</filename></term>
         <listitem>
-          <para>La bibliothèque de services réseau</para>
+          <para>The network services library, now deprecated</para>
           <indexterm zone="ch-system-glibc libnsl">
             <primary sortas="c-libnsl">libnsl</primary>
           </indexterm>
@@ -919,7 +890,10 @@ groupes, d'alias, de services, de protocoles et ainsi de suite.</para>
       <varlistentry id="libpthread">
         <term><filename class="libraryfile">libpthread</filename></term>
         <listitem>
-          <para>La bibliothèque threads POSIX</para>
+          <para>Dummy library containing no functions. Previously contained functions
+providing most of the interfaces specified by the POSIX.1b Realtime
+Extension, now the functions are in <filename
+class="libraryfile">libc</filename></para>
           <indexterm zone="ch-system-glibc libpthread">
             <primary sortas="c-libpthread">libpthread</primary>
           </indexterm>
@@ -962,8 +936,11 @@ multi-threads</para>
       <varlistentry id="libutil">
         <term><filename class="libraryfile">libutil</filename></term>
         <listitem>
-          <para>Contient du code pour les fonctions <quote>standard</quote> utilisées par de
-nombreux outils Unix</para>
+          <para>Dummy library containing no functions. Previously contained code for
+<quote>standard</quote> functions used in many different Unix
+utilities. These functions are now in <filename
+class="libraryfile">libc</filename></para>
+          
           <indexterm zone="ch-system-glibc libutil">
             <primary sortas="c-libutil">libutil</primary>
           </indexterm>
