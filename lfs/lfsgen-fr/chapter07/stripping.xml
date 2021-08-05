@@ -54,28 +54,26 @@ class="directory">$LFS</filename> pour des raisons de sécurité.
   </para>
 
   <para>
-    Quittez l'environnement chroot et démontez les systèmes de fichiers virtuels
-du noyau&nbsp;:
+     Now, if you are stripping installed files or making a backup, leave the
+chroot environment:
   </para>
 
-  <note>
-    <para>Toutes les instructions suivantes sont effectuées en <systemitem
-class="username">root</systemitem>. Faites particulièrement attention aux
-commandes que vous utilisez car une erreur peut ici modifier votre système
-hôte. Soyez conscient que la variable d'environnement <envar>LFS</envar> est
-initialisée par défaut pour l'utilisateur <systemitem
-class="username">lfs</systemitem>, mais ce n'est <emphasis>pas</emphasis> le
-cas pour <systemitem class="username">root</systemitem>. Lorsque les
-commandes doivent être exécutées par <systemitem
-class="username">root</systemitem>, assurez-vous que vous avez correctement
-initialisé <envar>LFS</envar>. On en a parlé dans <xref
-linkend='ch-partitioning-aboutlfs'/>.
-    </para>
-  </note>
+<screen role="nodump"><userinput>exit</userinput></screen>
 
-<screen role="nodump"><userinput>exit
-umount $LFS/dev{/pts,}
-umount $LFS/{sys,proc,run}</userinput></screen>
+  <important>
+    <para>All of the following instructions are executed by <systemitem
+class="username">root</systemitem>. Take extra care about the commands
+you're going to run as mistakes here can modify your host system. Be aware
+that the environment variables <envar>LFS</envar> and <envar>LFS_TGT</envar>
+are set for user <systemitem class="username">lfs</systemitem> by default
+but may <emphasis>not</emphasis> be set for <systemitem
+class="username">root</systemitem>. Whenever commands are to be executed by
+<systemitem class="username">root</systemitem>, make sure you have set
+<envar>LFS</envar> and <envar>LFS_TGT</envar> accordingly.  This has been
+discussed in <xref linkend='ch-partitioning-aboutlfs'/>.
+    </para>
+  </important>
+
 
   <sect2>
     <title>Stripping</title>
@@ -86,15 +84,13 @@ construites jusqu'ici contiennent un peu plus de 90 Mo de symbole de
 débogages inutiles.</para>
 
     <para>Débarrassez les binaires de leurs symboles de débogage&nbsp;:</para>
-<screen role="nodump"><userinput>$LFS_TGT-strip --strip-unneeded $LFS/usr/lib/*
-$LFS_TGT-strip --strip-unneeded $LFS/usr/{,s}bin/*
-$LFS_TGT-strip --strip-unneeded $LFS/tools/bin/*</userinput></screen>
 
-    <para><!--Note that we use the <command>
-strip</command> program built in
-    <quote>Binutils pass 2</quote>, since it is the one that knows how to strip
-    our cross-compiled programs.-->
-Ces commandes passeront un certain nombre de fichiers en rapportant qu'elles
+    <screen role="nodump"><userinput>cd $LFS/tools/$LFS_TGT
+bin/strip --strip-unneeded $LFS/usr/lib/*
+bin/strip --strip-unneeded $LFS/usr/{,s}bin/*
+bin/strip --strip-unneeded $LFS/tools/bin/*</userinput></screen>
+
+    <para>Ces commandes passeront un certain nombre de fichiers en rapportant qu'elles
 n'ont pas pu reconnaître leur format de fichier. La plupart sont des scripts
 au lieu de binaires.
     </para>
@@ -128,14 +124,19 @@ seront incluses dans l'archive de sauvegarde) dans le répertoire personnel
 de l'utilisateur <systemitem class="username">root</systemitem>.
     </para>
 
+    <para>Before we make a backup, unmount the virtual file systems:</para>
+
+<screen role="nodump"><userinput>umount $LFS/dev{/pts,}
+umount $LFS/{sys,proc,run}</userinput></screen>
+
     <para>
       Créez l'archive de sauvegarde en lançant la commande suivante&nbsp;:
     </para>
 
-<screen role="nodump" revision="sysv"><userinput>cd $LFS &amp;&amp;
+<screen role="nodump" revision="sysv"><userinput>cd $LFS 
 tar -cJpf $HOME/lfs-temp-tools-&version;.tar.xz .</userinput></screen>
 
-<screen role="nodump" revision="systemd"><userinput>cd $LFS &amp;&amp;
+<screen role="nodump" revision="systemd"><userinput>cd $LFS 
 tar -cJpf $HOME/lfs-temp-tools-&versiond;.tar.xz .</userinput></screen>
 
     <para>
@@ -160,14 +161,19 @@ restaurez la sauvegarde en exécutant les commandes suivantes:&nbsp;:
 
 
 
-<screen role="nodump" revision="sysv"><!-- Make the following look different so users don't blindly run the
+    <!-- Make the following look different so users don't blindly run the
      restore when they don't need to. -->
-<computeroutput>cd $LFS &amp;&amp;
-rm -rf ./* &amp;&amp;
+<warning><para>The following commands are extremly dangerous.  If you run <command>rm -rf
+./*</command> as the root user and you do not change to the $LFS directory
+or the <envar>LFS</envar> environment variable is not set for the root user,
+it will destroy your entire host system.  YOU ARE WARNED.</para></warning>
+
+<screen role="nodump" revision="sysv"><computeroutput>cd $LFS 
+rm -rf ./* 
 tar -xpf $HOME/lfs-temp-tools-&version;.tar.xz</computeroutput></screen>
 
-<screen role="nodump" revision="systemd"><computeroutput>cd $LFS &amp;&amp;
-rm -rf ./* &amp;&amp;
+<screen role="nodump" revision="systemd"><computeroutput>cd $LFS 
+rm -rf ./* 
 tar -xpf $HOME/lfs-temp-tools-&versiond;.tar.xz</computeroutput></screen>
 
     <para>
@@ -177,12 +183,12 @@ continuez à construire le reste du système.
 
     <important>
       <para>
-        If you left the chroot environment either to strip off debug symbols, create
-a backup, or restart building using a restore, remember to check that the
-virtual filesystems are still mounted (<command>findmnt | grep
-$LFS</command>).  If they are not mounted, remount them now as described in
-<xref linkend='ch-tools-kernfs'/> and re-enter the chroot environment (see
-<xref linkend='ch-tools-chroot'/>)  before continuing.
+        If you left the chroot environment to create a backup or restart building
+using a restore, remember to check that the virtual filesystems are still
+mounted (<command>findmnt | grep $LFS</command>).  If they are not mounted,
+remount them now as described in <xref linkend='ch-tools-kernfs'/> and
+re-enter the chroot environment (see <xref linkend='ch-tools-chroot'/>)
+before continuing.
       </para>
     </important>
     
