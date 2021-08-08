@@ -119,6 +119,7 @@ if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/relea
 if ( $package == "gcc"        ) $dirpath = max_parent( $dirpath, "gcc-" );
 if ( $package == "iana-etc"   ) $dirpath = "https://github.com/Mic92/iana-etc/releases";
 if ( $package == "intltool"   ) $dirpath = "https://launchpad.net/intltool/trunk";
+if ( $package == "libffi"     ) $dirpath = "https://github.com/libffi/libffi/releases";
 if ( $package == "meson"      ) $dirpath = "https://github.com/mesonbuild/meson/releases";
 if ( $package == "mpc"        ) $dirpath = "https://ftp.gnu.org/gnu/mpc";
 if ( $package == "mpfr"       ) $dirpath = "http://mpfr.loria.fr/mpfr-current";
