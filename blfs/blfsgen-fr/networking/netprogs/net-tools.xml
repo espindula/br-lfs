@@ -4,11 +4,11 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY net-tools-download-http "&sources-anduin-http;/net-tools/net-tools-&net-tools-version;.tar.gz">
-  <!ENTITY net-tools-download-ftp  "&sources-anduin-ftp;/net-tools/net-tools-&net-tools-version;.tar.gz">
-  <!ENTITY net-tools-md5sum        "6be14ed473cacdd68edeaa9605adc469">
-  <!ENTITY net-tools-size          "288 Ko">
-  <!ENTITY net-tools-buildsize     "7.0 Mo">
+  <!ENTITY net-tools-download-http "https://downloads.sourceforge.net/project/net-tools//net-tools-&net-tools-version;.tar.xz">
+  <!ENTITY net-tools-download-ftp  "">
+  <!ENTITY net-tools-md5sum        "78aae762c95e2d731faf88d482e4cde5">
+  <!ENTITY net-tools-size          "228&nbsp;Ko">
+  <!ENTITY net-tools-buildsize     "7.5&nbsp;Mo">
   <!ENTITY net-tools-time          "moins de 0.1 SBU">
 ]>
 
@@ -68,18 +68,20 @@ programmes de contrôle du sous-système réseau du noyau Linux.
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+
+    <!--
+    <bridgehead renderas="sect3">
+Additional Downloads</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>
-          Correctif requis&nbsp;: <ulink
-url="&patch-root;/net-tools-&net-tools-version;-remove_dups-1.patch"/>
+          Required patch:
+          <ulink url="&patch-root;/net-tools-&net-tools-version;-remove_dups-1.patch"/>
         </para>
       </listitem>
     </itemizedlist>
-
-
-    <para condition="html" role="usernotes">Notes utilisateur&nbsp;: <ulink url="&blfs-wiki;/net-tools"/></para>
+-->
+<para condition="html" role="usernotes">Notes utilisateur&nbsp;: <ulink url="&blfs-wiki;/net-tools"/></para>
 
   </sect2>
 
@@ -87,20 +89,18 @@ url="&patch-root;/net-tools-&net-tools-version;-remove_dups-1.patch"/>
     <title>Installation de Net-tools</title>
 
     <para id="net-tools-automate-example" xreflabel="Net-tools">
-      Les instructions ci-dessous automatisent le processus de configuration en
-mettant <command>yes</command> dans un tube vers la commande <command>make
-config</command>. Si vous souhaitez lancer le processus de configuration
-interactif (en modifiant les instructions en <command>make
-config</command>), mais si vous n'êtes pas sûr de savoir comment répondre à
-toutes les questions, acceptez simplement les réponses par défaut.  Ceci ira
-très bien dans la majorité des cas. Vous sont ici posées une série de
-questions sur les protocoles réseau que vous avez activés dans votre
-noyau. Les réponses par défaut activeront les outils de ce paquet pour
-fonctionner avec les protocoles les plus courants&nbsp;: TCP, PPP et
-plusieurs autres.  Vous avez enfin besoin d'activer ces protocoles dans le
-noyau &mdash; ce que vous faites ici n'est que de dire au paquet d'inclure
-le support de ces protocoles dans ses programmes, mais c'est au noyau de
-rendre les protocoles disponibles.
+      The instructions below automate the configuration process by piping
+<command>yes</command> to the <command>make</command> command.  If you wish
+to run the interactive configuration process (by changing the instruction to
+just <command>make</command>), but you are not sure how to answer all the
+questions, then just accept the defaults.  This will be just fine in the
+majority of cases. What you're asked here is a bunch of questions about
+which network protocols you've enabled in your kernel. The default answers
+will enable the tools from this package to work with the most common
+protocols: TCP, PPP, and several others. You still need to actually enable
+these protocols in the kernel&mdash;what you do here is merely tell the
+package to include support for those protocols in its programs, but it's up
+to the kernel to make the protocols available.
     </para>
 
     <note>
@@ -115,9 +115,9 @@ Les options minimales nécessaires sont «&nbsp;UNIX protocol family&nbsp;» et
     </note>
 
     <para>
-      Le correctif nettoie l'installation pour qu'elle n'écrase pas les programmes
-<application>ifconfig</application> et <application>hostname</application>
-qui sont installés par LFS.
+      For this package, we use the DESTDIR method of installation in order to
+easily remove files from the build that overwrite those that we want to keep
+or are not appropriate for our system.
     </para>
 
     <para>
@@ -125,12 +125,13 @@ qui sont installés par LFS.
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>patch -Np1 -i ../net-tools-&net-tools-version;-remove_dups-1.patch &amp;&amp;
-sed -e "s;/\(s\|\)bin;/usr&amp;;g" -i Makefile &amp;&amp;
-sed -i '/#include &lt;netinet\/ip.h&gt;/d'  iptunnel.c &amp;&amp;
-
-yes "" | make config &amp;&amp;
-make</userinput></screen>
+<screen><userinput>export BINDIR='/usr/bin' SBINDIR='/usr/bin' &amp;&amp;
+yes "" | make                               &amp;&amp;
+make DESTDIR=$PWD/install install           &amp;&amp;
+rm    install/usr/bin/{nis,yp}domainname    &amp;&amp;
+rm    install/usr/bin/{hostname,dnsdomainname,domainname} &amp;&amp;
+rm -r install/usr/share/man/man1            &amp;&amp;
+unset BINDIR SBINDIR</userinput></screen>
 
     <para>
       Ce paquet n'est pas fourni avec une suite de tests.
@@ -141,7 +142,8 @@ make</userinput></screen>
 class="username">root</systemitem>&nbsp;:
     </para>
 
-<screen role='root'><userinput>make update</userinput></screen>
+<screen role='root'><userinput>chown -R root:root install &amp;&amp;
+cp -a install/* /</userinput></screen>
 
   </sect2>
 
@@ -149,35 +151,18 @@ class="username">root</systemitem>&nbsp;:
     <title>Explication des commandes</title>
 
     <para>
-      <command>sed -i "s;/\(s\|\)bin;/usr&amp;;g" -i Makefile</command>&nbsp;:
-modifie le <filename>Makefile</filename> pour installer les binaires dans la
-hiérarchie <filename class="directory">/usr</filename>.
+      <command>export BINDIR='/usr/bin' SBINDIR='/usr/bin'</command>: Ensure the
+executables are installed in the correct location.
     </para>
 
     <para>
-      <command>sed -i '/#include &lt;netinet\/ip.h&gt;/d'
-iptunnel.c</command>&nbsp;: Ceci corrige une erreur de construction avec les
-en-têtes de linux-4.8.
-    </para>
-
-    <!--
-    <para>
-
-      <command>sed -i -e '/Token/s/y$/n/' config.in</command>: Change the
-      default for building obsolete token ring support to no.  This is a
-      simpler change than changing the location for the token ring headers.
+      <command>yes "" | make </command>: Piping <command>yes</command> to
+<command>make config</command> skips the interactive configuration and
+accepts the defaults.
     </para>
 
     <para>
-      <command>sed -i -e '/HAVE_HWSTRIP/s/y$/n/' config.in</command>:
-      Removes obsolete Metricom radio support that requires a header no longer
-      included in the kernel.
-    </para>
--->
-<para>
-      <command>yes "" | make config</command>&nbsp;: En mettant
-<command>yes</command> dans un tuyau vers <command>make config</command>, on
-saute la configuration interactive et on accepte les réponses par défaut.
+      <command>rm ...</command>: Remove unneeded programs and man pages.
     </para>
 
   </sect2>
@@ -191,8 +176,8 @@ saute la configuration interactive et on accepte les réponses par défaut.
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>arp, ipmaddr, iptunnel, mii-tool, nameif, netstat, plipconfig, rarp, route
-et slattach
+        <seg>arp, ipconfig ipmaddr, iptunnel, mii-tool, nameif, netstat, plipconfig,
+rarp, route, and slattach
         </seg>
         <seg>Aucune</seg>
         <seg>Aucune</seg>
@@ -217,57 +202,19 @@ supprimer une entrée ou pour vider le cache entier
         </listitem>
       </varlistentry>
 
-      <!--
-      <varlistentry id="dnsdomainname">
-
-        <term><command>dnsdomainname</command></term>
-        <listitem>
-          <para>
-            reports the system's DNS domain name.
-          </para>
-          <indexterm zone="net-tools dnsdomainname">
-            <primary sortas="b-dnsdomainname">dnsdomainname</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="domainname">
-        <term><command>domainname</command></term>
-        <listitem>
-          <para>
-            reports or sets the system's NIS/YP domain name.
-          </para>
-          <indexterm zone="net-tools domainname">
-            <primary sortas="b-domainname">domainname</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="hostname">
-        <term><command>hostname</command></term>
-        <listitem>
-          <para>
-            reports or sets the name of the current host system.
-          </para>
-          <indexterm zone="net-tools hostname">
-            <primary sortas="b-hostname">hostname</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="ifconfig">
         <term><command>ifconfig</command></term>
         <listitem>
           <para>
-            is the main utility for configuring network interfaces.
+            is a tool for configuring network interfaces.
           </para>
           <indexterm zone="net-tools ifconfig">
             <primary sortas="b-ifconfig">ifconfig</primary>
           </indexterm>
         </listitem>
       </varlistentry>
--->
-<varlistentry id="ipmaddr">
+
+      <varlistentry id="ipmaddr">
         <term><command>ipmaddr</command></term>
         <listitem>
           <para>
@@ -329,21 +276,7 @@ les statistiques d'une interface
         </listitem>
       </varlistentry>
 
-      <!--
-      <varlistentry id="nisdomainname">
-
-        <term><command>nisdomainname</command></term>
-        <listitem>
-          <para>
-            does the same as <command>domainname</command>.
-          </para>
-          <indexterm zone="net-tools nisdomainname">
-            <primary sortas="b-nisdomainname">nisdomainname</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
--->
-<varlistentry id="plipconfig">
+      <varlistentry id="plipconfig">
         <term><command>plipconfig</command></term>
         <listitem>
           <para>
@@ -393,21 +326,6 @@ ordinateurs
           </indexterm>
         </listitem>
       </varlistentry>
-<!--
-      <varlistentry id="ypdomainname">
-
-        <term><command>ypdomainname</command></term>
-        <listitem>
-          <para>
-            does the same as <command>domainname</command>.
-          </para>
-          <indexterm zone="net-tools ypdomainname">
-            <primary sortas="b-ypdomainname">ypdomainname</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
--->
-
     </variablelist>
 
   </sect2>
