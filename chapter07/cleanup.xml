@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-stripping">
+  <?dbhtml filename="stripping.html"?>
+
+  <title>Cleaning up and Saving the Temporary System</title>
+  
+  <sect2>
+    <title>Cleaning</title>
+
+    <para>First, remove the currently installed documentation to prevent them
+    from ending up in the final system, and to save about 35 MB:</para>
+
+<screen><userinput>rm -rf /usr/share/{info,man,doc}/*</userinput></screen>
+
+    <para>Second, the libtool .la files are only useful when linking with static
+    libraries. They are unneeded and potentially harmful when using dynamic
+    shared libraries, specially when using non-autotools build systems.
+    While still in chroot, remove those files now:</para>
+
+<screen><userinput>find /usr/{lib,libexec} -name \*.la -delete</userinput></screen>
+
+    <para>
+      The current system size is now about 3 GB, however 
+      the /tools directory is no longer needed. It uses about
+      1 GB of disk space.  Delete it now:
+    </para>
+
+<screen><userinput>rm -rf /tools</userinput></screen>
+  </sect2>
+
+  <sect2>
+    <title>Backup</title>
+
+    <note><para>
+      All the remaining steps in this section are optional. Nevertheless,
+      as soon as you begin installing packages in <xref
+      linkend="chapter-building-system"/>, the temporary files will be
+      overwritten. So it may be a good idea to do a backup of the current
+      system as described below. 
+    </para></note>
+  
+    <para>
+      The following steps are performed from outside the chroot
+      environment. That means, you have to leave the chroot environment
+      first before continuing. The reason for that is to
+      get access to file system locations outside of the chroot
+      environment to store/read the backup archive which should
+      not be placed within the
+      <filename class="directory">$LFS</filename> hierarchy for
+      safety reasons.
+    </para>
+
+    <important>
+      <para>All of the following instructions are executed by
+        <systemitem class="username">root</systemitem>. Take extra
+        care about the commands you're going to run as mistakes
+        here can modify your host system. Be aware that the
+        environment variable <envar>LFS</envar> 
+        is set for user <systemitem class="username">lfs</systemitem> by default 
+        but may <emphasis>not</emphasis> be set for 
+        <systemitem class="username">root</systemitem>. Whenever 
+        commands are to be executed by <systemitem class="username">root</systemitem>, 
+        make sure you have set <envar>LFS</envar>.
+        This has been discussed in <xref linkend='ch-partitioning-aboutlfs'/>.
+      </para>
+    </important>
+
+    <para>
+       Now, if you are making a backup, leave the chroot environment:
+    </para>
+
+<screen role="nodump"><userinput>exit</userinput></screen>
+
+    <para>
+      At this point the essential programs and libraries have been created
+      and your current system is in a good state. Your system can now be
+      backed up for later reuse. In case of fatal failures in the subsequent
+      chapters, it often turns out that removing everything and starting over
+      (more carefully) is the best option to recover. Unfortunately, all the
+      the temporary files will be removed, too. To avoid spending extra time to
+      redo something which has been built successfully, prepare a backup.
+    </para>
+
+    <para>
+      Make sure you have at least 1 GB free disk space (the source tarballs
+      will be included in the backup archive) in the home directory of user 
+      <systemitem class="username">root</systemitem>.
+    </para>
+
+    <para>Before we make a backup, unmount the virtual file systems:</para>
+
+<screen role="nodump"><userinput>umount $LFS/dev{/pts,}
+umount $LFS/{sys,proc,run}</userinput></screen>
+
+    <para>
+      Create the backup archive by running the following command:
+    </para>
+
+    <note>
+       <para>
+          Because the backup archive is compressed, it takes a relatively
+          long time (over 10 minutes) even on a resonably fast system.
+       </para>
+       
+       <para>
+          Also, ensure the <envar>LFS</envar> environment variable is set 
+          for the root user.
+       </para>
+    </note>
+
+<screen role="nodump" revision="sysv"><userinput>cd $LFS 
+tar -cJpf $HOME/lfs-temp-tools-&version;.tar.xz .</userinput></screen>
+
+<screen role="nodump" revision="systemd"><userinput>cd $LFS 
+tar -cJpf $HOME/lfs-temp-tools-&versiond;.tar.xz .</userinput></screen>
+
+    <para>
+      Replace <envar>$HOME</envar> by a directory of your choice if you
+      do not want to have the backup stored in <systemitem 
+      class="username">root</systemitem>'s home directory.
+    </para>
+  </sect2>
+
+  <sect2>
+    <title>Restore</title>
+
+    <para>
+      In case some mistakes have been made and you need to start over, you can
+      use this backup to restore the system and save some recovery time.
+      Since the sources are located under 
+      <filename class="directory">$LFS</filename>, they are included in the
+      backup archive as well, so they do not need to be downloaded again. After
+      checking that <envar>$LFS</envar> is set properly,
+      restore the backup by executing the following commands:
+    </para>
+
+<!-- Make the following look different so users don't blindly run the
+     restore when they don't need to. -->
+
+    <warning><para>The following commands are extremly dangerous.  If
+    you run <command>rm -rf ./*</command> as the root user and you 
+    do not change to the $LFS directory or the <envar>LFS</envar> 
+    environment variable is not set for the root user, it will destroy 
+    your entire host system.  YOU ARE WARNED.</para></warning>
+
+<screen role="nodump" revision="sysv"><computeroutput>cd $LFS 
+rm -rf ./* 
+tar -xpf $HOME/lfs-temp-tools-&version;.tar.xz</computeroutput></screen>
+
+<screen role="nodump" revision="systemd"><computeroutput>cd $LFS 
+rm -rf ./* 
+tar -xpf $HOME/lfs-temp-tools-&versiond;.tar.xz</computeroutput></screen>
+
+    <para>
+       Again, double check that the environment has been setup properly
+       and continue building the rest of the system.
+    </para>
+
+    <important>
+      <para>
+         If you left the chroot environment to create a backup or restart
+         building using a restore, remember to check that the virtual
+         filesystems are still mounted (<command>findmnt | grep
+         $LFS</command>).  If they are not mounted, remount them now as
+         described in <xref linkend='ch-tools-kernfs'/> and re-enter the chroot
+         environment (see <xref linkend='ch-tools-chroot'/>) before continuing.
+       </para>
+    </important>
+    
+  </sect2>
+
+</sect1>
