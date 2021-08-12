@@ -6,15 +6,15 @@
 
   <!ENTITY firefox-download-http "&mozilla-http;/firefox/releases/&firefox-version;esr/source/firefox-&firefox-version;esr.source.tar.xz">
   <!ENTITY firefox-download-ftp  "">
-  <!ENTITY firefox-md5sum        "9bcaaa0482703530c5d6429ad8862148">
-  <!ENTITY firefox-size          "319&nbsp;Mo">
+  <!ENTITY firefox-md5sum        "18045807c2f3969b41867f08fb645210">
+  <!ENTITY firefox-size          "365&nbsp;Mo">
   <!-- NB with stylo, much of the build uses rust, and therefore cargo files.
     But the extra cached cargo files, if any, seem to be minimal -->
-  <!ENTITY firefox-buildsize     "5,2 Go (186 Mo installés) sans les tests">
+  <!ENTITY firefox-buildsize     "6.7 GB (196 MB installed) without tests">
   <!-- editors: with ff63 and rust-1.29, ./mach build -j4 is probably the
    most practical way to get a timing on a machine with more cores, if taking
    cores offline is not practical. If in doubt, round up -->
-  <!ENTITY firefox-time          "28 SBU (sur une machine à 4 cœurs) sans les tests">
+  <!ENTITY firefox-time          "28 SBU (on a typical 4-core machine) without tests">
 ]>
 
 <sect1 id="firefox" xreflabel="Firefox-&firefox-version;">
@@ -73,20 +73,32 @@ base de code de <application>Mozilla</application>.
       </listitem>
     </itemizedlist>
 
-
-
-    <!--<bridgehead renderas="sect3">
-Additional Downloads</bridgehead>
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>
-          Required patch:
-          <ulink url="&patch-root;/firefox-&firefox-version;esr-rust1520-1.patch"/>
+          Correctif requis&nbsp;: <ulink
+url="&patch-root;/firefox-&firefox-version;esr-glibc234-1.patch"/>
         </para>
       </listitem>
-    </itemizedlist>-->
-<note>
-      <para>
+    </itemizedlist>
+
+    <note>
+
+      
+      <!-- temporary note -->
+<para>
+        With the 91 ESR series, firefox no-longer works on ftp: links. Also, on a
+few machines which have been adequately updated for the necessary
+dependencies 91.0 fails to build with a message that a python check on
+libgkrust.a identified 1 networking function (getsockname) in the rust
+static library. The reason for this is not understood, but systems with
+binutils-2.37, gcc-11.2.0 and glibc-2.34 appear to be unaffected.
+      </para>
+      
+
+      <!-- end of temporary note -->
+<para>
         Le nom du répertoire est firefox-&firefox-version;
       </para>
 
@@ -273,7 +285,6 @@ ac_add_options --enable-optimize
 ac_add_options --enable-system-ffi
 ac_add_options --enable-system-pixman
 
-# --with-system-bz2 was removed in firefox-78
 ac_add_options --with-system-jpeg
 ac_add_options --with-system-png
 ac_add_options --with-system-zlib
@@ -294,25 +305,11 @@ EOF</userinput></screen>
 suivantes&nbsp;:
     </para>
 
-
-
-    <!--<para>
-
-      Apply a patch that prevent a crash when opening HTML videos if
-      compiling against rust-1.52.0 or higher:
+    <para>
+      Apply a patch which allows compilation on systems running glibc-2.34:
     </para>
 
-<screen><userinput>patch -Np1 -i ../firefox-&firefox-version;esr-rust1520-1.patch</userinput></screen>-->
-<para>
-      Dans la version esr de firefox-78, le code pour s'assurer que les modules
-sont signés par une racine de confiance a été désactivé, probablement pour
-les organisations qui ont besoin de leur propres modules. Pour activer cette
-mesure de sécurité supplémentaire lancez la commande suivante&nbsp;:
-    </para>
-
-<screen><userinput>sed -e 's/Disable/Enable/'            \
-    -e '/^MOZ_REQUIRE_SIGNING/s/0/1/' \
-    -i build/mozconfig.common</userinput></screen>
+<screen><userinput>patch -Np1 -i ../firefox-&firefox-version;esr-glibc234-1.patch</userinput></screen>
 
     <para>
       Si les API de géolocalisation sont nécessaires&nbsp;
@@ -375,6 +372,7 @@ esac</userinput></screen>
 
 <screen><userinput>export CC=gcc CXX=g++ &amp;&amp;
 export MOZBUILD_STATE_PATH=${PWD}/mozbuild &amp;&amp;
+./mach create-mach-environment             &amp;&amp;
 ./mach configure                           &amp;&amp;
 ./mach build</userinput></screen>
 
@@ -439,11 +437,21 @@ répertoire. En pratique, le message peut ne pas apparaître après avoir tapé
     </para>
 
     <para>
-      Ce répertoire est utilisé pour un identifiant (probablement aléatoire) de
-télémétrie. Créez-le dans le répertoire de construction et supprimez-le
-après l'installation pour éviter qu'il ne soit utilisé. Si vous souhaitez
-participer à la télémétrie, exportez MOZBUILD_STATE_PATH et faites-le
-pointer vers le répertoire par défaut.
+      That directory is used for a (probably random) telemetry identifier.
+Creating this in the build directory, and deleting that after the
+installation, prevents it being used. If you wish to participate in
+telemetry, export MOZBUILD_STATE_PATH to point to its default directory and
+remove the entry from the <filename>mozconfig</filename>.
+    </para>
+
+    <para>
+      <command>./mach create-mach-environment</command>: This uses the system
+python to create a virtual environment for <command>mach</command>.
+    </para>
+
+    <para>
+      <command>./mach configure</command>: This validates the supplied
+dependencies and the <filename>mozconfig</filename>.
     </para>
 
     <para>
