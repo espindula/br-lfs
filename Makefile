@@ -46,6 +46,7 @@ book: validate profile-html
 	@echo "Copying CSS code and images..."
 	$(Q)mkdir -p $(BASEDIR)/stylesheets
 	$(Q)cp stylesheets/lfs-xsl/*.css $(BASEDIR)/stylesheets
+	$(Q)sed -i 's|../stylesheet|stylesheet|' $(BASEDIR)/index.html
 
 	$(Q)mkdir -p $(BASEDIR)/images
 	$(Q)cp images/*.png $(BASEDIR)/images
