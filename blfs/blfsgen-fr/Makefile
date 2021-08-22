@@ -116,6 +116,7 @@ $(BASEDIR)/index.html: $(RENDERTMP)/$(BLFSHTML) version
    fi;
 
 	$(Q)cp stylesheets/lfs-xsl/*.css $(BASEDIR)/stylesheets
+	$(Q)sed -i 's|../stylesheet|stylesheet|' $(BASEDIR)/index.html
 
 	$(Q)if [ ! -e $(BASEDIR)/images ]; then \
       mkdir -p $(BASEDIR)/images;          \
