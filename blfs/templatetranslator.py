@@ -12,6 +12,9 @@
 import sys
 import re
 import polib
+import os
+import shutil
+import filecmp
 
 files = sys.argv
 files.pop(0)
@@ -142,10 +145,19 @@ for filename in files:
 	print('Traitement du fichier ', current, '/', number, '     \r',
 			end="", flush=True),
 	current = current + 1
-	po = polib.pofile(filename)
+	# copy the file and operate on the copy
+	copy_filename = filename + ".cp"
+	shutil.copyfile(filename, copy_filename)
+	po = polib.pofile(copy_filename)
 	for entry in po:
 		for reg in regexps:
 			convert(entry, reg[0], reg[1])
 	po.save()
+	# If the copy changed, we reflect it in the original file
+	if(not filecmp.cmp(filename, copy_filename)):
+		shutil.copyfile(copy_filename, filename)
+	# Removing the copy in all cases. That way, unchanged files do not
+	# affect pootle or make, which makes them run faster
+	os.remove(copy_filename)
 print('')
 

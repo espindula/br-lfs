@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      À propos des fichiers d'archive libtool (.la)
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.79.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+  </head>
+  <body class="blfs" id="blfs-r10.1-914+">
+    <div class="navheader">
+      <h4>
+        Au-delà de Linux<sup>®</sup> From Scratch (édition <span class=
+        "phrase">systemd)</span> - Version r10.1-914+
+      </h4>
+      <h3>
+        Chapitre&nbsp;2.&nbsp;Informations importantes
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="systemd-units.html" title=
+          "Unités Systemd de BLFS">Précédent</a>
+          <p>
+            Unités Systemd de BLFS
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="libraries.html" title=
+          "Bibliothèques&nbsp;: statiques ou partagées&nbsp;?">Suivant</a>
+          <p>
+            Bibliothèques&nbsp;: statiques ou partagées&nbsp;?
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="important.html" title=
+          "Chapitre&nbsp;2.&nbsp;Informations importantes">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Au-delà de Linux® From Scratch (édition systemd) - Version r10.1-914+">
+          Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="la-files" name="la-files"></a>À propos des fichiers d'archive
+        libtool (.la)
+      </h1>
+      <div class="package" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          Fichiers avec une extension .la
+        </h2>
+        <p>
+          Dans LFS nous avons installé un paquet, libtool qui est utilisé par
+          de nombreux paquets pour pouvoir se construire sur une variété de
+          plateformes Unix. Cela comprend des plateformes comm AIX, Solaris,
+          IRIX, HP-UX et Cygwin ainsi que Linux. Les origines de cet outil
+          sont assez anciennes. Il devait gérer les bibliothèques sur les
+          systèmes avec des capacités moins avancées qu'un système Linux
+          moderne.
+        </p>
+        <p>
+          Sur un système Linux, les fichiers spécifiques à libtool sont
+          généralement inutiles. Normalement les bibliothèques sont
+          spécifiées dans le processus de construction pendant l'édition de
+          lien. Comme un système Linux utilise le <a class="ulink" href=
+          "https://fr.wikipedia.org/wiki/Executable_and_Linkable_Format">format
+          exécutable et liable (ELF)</a> pour les exécutables et les
+          bibliothèques, les informations nécessaires à cette tâche sont
+          incluses dans les fichiers. À l'exécution le chargeur de programme
+          peut demander les fichiers appropriés, charger et exécuter
+          correctement le programme.
+        </p>
+        <p>
+          Le problème est que libtool crée typiquement un ou plusieurs
+          fichiers texte pour les paquets de bibliothèques appelés archives
+          libtool. Ces petits fichiers ont l'extension «&nbsp;.la&nbsp;» et
+          contient des informations identiques à celles incluses dans les
+          bibliothèques. Lors de la construction d'un paquet qui utilise
+          libtool, le processus cherche automatiquement ces fichiers. Si un
+          paquet est mis à jour et n'utilise plus de fichier .la, le
+          processus de construction peut échouer.
+        </p>
+        <p>
+          La solution est de supprimer les fichiers .la. Cependant il y a un
+          hic. Certains paquets, comme <a class="xref" href=
+          "../general/imagemagick.html" title=
+          "ImageMagick-7.1.0-4">ImageMagick-7.1.0-4</a> utilisent une
+          fonction de libtool, lt_dlopen, pour charger les bibliothèques
+          requises pendant l'exécution et résoudre les dépendances à
+          l'exécution. Dans ce cas, les fichiers .la devraient rester
+          présents.
+        </p>
+        <p>
+          Le script ci-dessous supprime tous les fichiers .la inutiles et les
+          sauvegarde dans un répertoire, /var/local/la-files par défaut, qui
+          ne se trouve pas dans le chemin des bibliothèques normal. Il
+          recherche aussi les références à des fichiers .la incluses dans les
+          fichiers pkg-config (.pc) et les corrige en références de
+          bibliothèques conventionnelles, ce qui est nécessaire lors de la
+          construction d'une application ou d'une bibliothèque. Il peut être
+          lancé au besoin pour nettoyer les répertoires qui peuvent causer
+          des problèmes.
+        </p>
+        <pre class="root"><kbd class=
+        "command">cat &gt; /usr/sbin/remove-la-files.sh &lt;&lt; "EOF"
+<code class="literal">#!/bin/bash
+
+# /usr/sbin/remove-la-files.sh
+# Written for Beyond Linux From Scratch
+# by Bruce Dubbs &lt;bdubbs@linuxfromscratch.org&gt;
+
+# Make sure we are running with root privs
+if test "${EUID}" -ne 0; then
+    echo "Error: $(basename ${0}) must be run as the root user! Exiting..."
+    exit 1
+fi
+
+# Make sure PKG_CONFIG_PATH is set if discarded by sudo
+source /etc/profile
+
+OLD_LA_DIR=/var/local/la-files
+
+mkdir -p $OLD_LA_DIR
+
+# Only search directories in /opt, but not symlinks to directories
+OPTDIRS=$(find /opt -mindepth 1 -maxdepth 1 -type d)
+
+# Move any found .la files to a directory out of the way
+find /usr/lib $OPTDIRS -name "*.la" ! -path "/usr/lib/ImageMagick*" \
+  -exec mv -fv {} $OLD_LA_DIR \;
+###############
+
+# Fix any .pc files that may have .la references
+
+STD_PC_PATH='/usr/lib/pkgconfig 
+             /usr/share/pkgconfig 
+             /usr/local/lib/pkgconfig 
+             /usr/local/share/pkgconfig'
+
+# For each directory that can have .pc files
+for d in $(echo $PKG_CONFIG_PATH | tr : ' ') $STD_PC_PATH; do
+
+  # For each pc file
+  for pc in $d/*.pc ; do
+    if [ $pc == "$d/*.pc" ]; then continue; fi
+
+    # Check each word in a line with a .la reference
+    for word in $(grep '\.la' $pc); do
+      if $(echo $word | grep -q '.la$' ); then
+        mkdir -p $d/la-backup
+        cp -fv  $pc $d/la-backup
+
+        basename=$(basename $word )
+        libref=$(echo $basename|sed -e 's/^lib/-l/' -e 's/\.la$//')
+           
+        # Fix the .pc file
+        sed -i "s:$word:$libref:" $pc
+      fi
+    done
+  done
+done
+
+EOF
+
+chmod +x /usr/sbin/remove-la-files.sh</code></kbd></pre>
+        <p class="usernotes">
+          Notes utilisateur&nbsp;: <a class="ulink" href=
+          "https://wiki.linuxfromscratch.org/blfs/wiki/la-files">https://wiki.linuxfromscratch.org/blfs/wiki/la-files</a>
+        </p>
+      </div>
+      <p class="updated">
+        Last updated on
+      </p>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="systemd-units.html" title=
+          "Unités Systemd de BLFS">Précédent</a>
+          <p>
+            Unités Systemd de BLFS
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="libraries.html" title=
+          "Bibliothèques&nbsp;: statiques ou partagées&nbsp;?">Suivant</a>
+          <p>
+            Bibliothèques&nbsp;: statiques ou partagées&nbsp;?
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="important.html" title=
+          "Chapitre&nbsp;2.&nbsp;Informations importantes">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Au-delà de Linux® From Scratch (édition systemd) - Version r10.1-914+">
+          Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,896 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      Réglages de Fontconfig
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.79.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+  </head>
+  <body class="blfs" id="blfs-r10.1-914+">
+    <div class="navheader">
+      <h4>
+        Au-delà de Linux<sup>®</sup> From Scratch (édition <span class=
+        "phrase">System V)</span> - Version r10.1-914+
+      </h4>
+      <h3>
+        Chapitre&nbsp;24.&nbsp;Environnement X Window System
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="xorg-config.html" title=
+          "Xorg-7 Test et configuration">Précédent</a>
+          <p>
+            Xorg-7 Test et configuration
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="TTF-and-OTF-fonts.html" title=
+          "Les polices TTF et OTF">Suivant</a>
+          <p>
+            Les polices TTF et OTF
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="installing.html" title=
+          "Chapitre&nbsp;24.&nbsp;Environnement X Window System">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Au-delà de Linux® From Scratch (édition System V) - Version r10.1-914+">
+          Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="tuning-fontconfig" name="tuning-fontconfig"></a>Réglages de
+        Fontconfig
+      </h1>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="fontconfig-overview" name="fontconfig-overview"></a>Aperçu
+          de Fontconfig
+        </h2>
+        <p>
+          Si vous lisez des textes seulement en anglais et êtes contents avec
+          les polices libres génériques listés dans la page suivante, vous
+          pourriez n'avoir jamais besoin de vous occuper des détails de
+          fonctionnement de <span class="application">fontconfig</span>. Mais
+          il y a plein de choses qui peuvent être modifiées si elles ne vous
+          conviennent pas.
+        </p>
+        <p>
+          Bien que cette page soit longue, elle ne fait qu'effleurer la
+          surface et vous pourrez trouver plein d'alternatives sur le web
+          (mais rappelez-vous que certaines choses changent au fil des ans,
+          par exemple l'autohinter n'est plus utilisé par défaut). Le but est
+          ici de vous donner assez d'information pour comprendre les
+          changements que vous faîtes.
+        </p>
+        <p class="usernotes">
+          Notes utilisateur&nbsp;: <a class="ulink" href=
+          "https://wiki.linuxfromscratch.org/blfs/wiki/Fontconfig">https://wiki.linuxfromscratch.org/blfs/wiki/Fontconfig</a>
+        </p>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="xft-font-protocol" name="xft-font-protocol"></a>Le Protocole
+          de Police Xft
+        </h2>
+        <p>
+          Le protocole de police Xft fournit un rendu de polices anti-crénelé
+          à travers <span class="application">freetype</span> et les polices
+          sont contrôlées depuis le côté client avec <span class=
+          "application">fontconfig</span> (sauf pour <a class="xref" href=
+          "../xsoft/rxvt-unicode.html" title=
+          "rxvt-unicode-9.26">rxvt-unicode-9.26</a> qui peut utiliser les
+          polices listées dans <code class="filename">~/.Xresources</code> et
+          <a class="xref" href="../xsoft/AbiWord.html" title=
+          "AbiWord-3.0.5">AbiWord-3.0.5</a> qui n'utilise que les polices
+          spécifiées). Le chemin de recherche par défaut est <code class=
+          "filename">/usr/share/fonts</code> et <code class=
+          "filename">~/.local/share/fonts</code> bien que pour le moment le
+          vieil emplacement obsolète <code class="filename">~/.fonts</code>
+          fonctionne toujours. <span class="application">Fontconfig</span>
+          recherche récursivement dans ces répertoires et maintient un cache
+          des caractéristiques des polices dans chaque répertoire. Si le
+          cache a l'air périmé, il est ignoré et les informations sont
+          retrouvées depuis les polices elles-mêmes (ce qui peut prendre
+          quelques secondes si vous installez beaucoup de polices).
+        </p>
+        <p>
+          Si vous avez installé <span class="application">Xorg</span> dans un
+          autre préfixe que <code class="filename">/usr</code>, les polices
+          <span class="application">X</span> n'ont pas été installées dans un
+          répertoire connu de <span class="application">Fontconfig</span>.
+          Des liens symboliques ont été créés entre les répertoires de
+          polices <code class="filename">OTF</code> et <code class=
+          "filename">TTF</code> de <span class="application">X</span> et
+          <code class="filename">/usr/share/fonts/X11-{OTF,TTF}</code>. Cela
+          permet à <span class="application">Fontconfig</span> d'utiliser les
+          polices OpenType et TrueType fournies par <span class=
+          "application">X</span>, même si beaucoup de monde préférera
+          utiliser des polices plus modernes.
+        </p>
+        <p>
+          <span class="application">Fontconfig</span> utilise les noms pour
+          définir les polices. Les applications utilisent en général des noms
+          de polices génériques comme «&nbsp;Monospace&nbsp;»,
+          «&nbsp;Sans&nbsp;» et «&nbsp;Serif&nbsp;». <span class=
+          "application">Fontconfig</span> résout ces noms en une police dont
+          les caractères couvrent toutes les possibilités de la langue
+          indiquée par les paramètres régionaux.
+        </p>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="useful-commands" name="useful-commands"></a>Commandes utiles
+        </h2>
+        <p>
+          Les commandes suivantes peuvent être utiles lorsque vous travaillez
+          avec fontconfig&nbsp;:
+        </p>
+        <p>
+          <span class="command"><strong>fc-list | less</strong></span>&nbsp;:
+          montre la liste des polices disponible (/chemin/vers/fichier&nbsp;:
+          Nom de la police:style). Si vous avez installé une police il y a
+          plus de 30 secondes mais qu'elle n'apparaît pas, alors elle ou l'un
+          de ses répertoires n'est pas lisible par votre utilisateur.
+        </p>
+        <p>
+          <span class="command"><strong>fc-match 'Font
+          Name'</strong></span>&nbsp;: vous indiquera quelle police sera
+          utilisée si la police de ce nom est demandée. Généralement vous
+          l'utiliserez pour voir ce qui arrive si une police non-installée
+          est demandée, mais vous pouvez aussi l'utiliser si le système
+          utilise une police différente de ce à quoi vous vous attendiez
+          (peut-être parce que <span class="application">fontconfig</span> ne
+          pense pas que la police supporte votre langue).
+        </p>
+        <p>
+          <span class="command"><strong>fc-match -a 'Type' |
+          less</strong></span>&nbsp;: fournira une liste de toutes les
+          polices qui peuvent être utilisée pour ce type (Monospace, Sans,
+          Serif). Remarquez que parfois <span class=
+          "application">fontconfig</span> prendra un glyphe d'une autre
+          police disponible, même si elle n'est pas du type spécifiée, et à
+          moins qu'il ne connaisse le type de la police, il supposera que
+          c'est Sans.
+        </p>
+        <p>
+          Si vous souhaitez connaître quelle police sera utilisée pour une
+          chaîne de caractères (c'est-à-dire un ou plusieurs glyphes, séparés
+          par un espace), copiez la commande suivante et remplacez
+          <code class="literal">xyz</code> par le texte qui vous préoccupe.
+        </p>
+        <p>
+          <span class="command"><strong>FC_DEBUG=4 pango-view
+          --font=monospace -t xyz | grep family</strong></span> : ceci
+          requiert <a class="xref" href="pango.html" title=
+          "Pango-1.48.9">Pango-1.48.9</a> et <a class="xref" href=
+          "../general/imagemagick.html" title=
+          "ImageMagick-7.1.0-4">ImageMagick-7.1.0-4</a> - qui va invoquer
+          <a class="xref" href=
+          "../general/imagemagick.html#display"><span class=
+          "command"><strong>display</strong></span></a> pour afficher le
+          texte dans une petite fenêtre, et à la fermeture, la dernière ligne
+          de la sortie montrera quelle police d'écriture a été utilisée.
+          C'est particulièrement pratique pour les langues CJK, et vous
+          pouvez également passer un langage, ex: PANGO_LANGUAGE=en;ja
+          (Anglais, puis présume Japonais) ou simplement zh-cn (ou d'autres
+          variantes - 'zh' seul n'est pas valide).
+        </p>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="the-various-files" name="the-various-files"></a>Les divers
+          fichiers
+        </h2>
+        <p>
+          Les fichiers principaux sont dans <code class=
+          "filename">/etc/fonts/conf.d/</code>. C'est un répertoire prévu
+          pour être rempli de liens symboliques vers des fichiers dans
+          <code class="filename">/usr/share/fontconfig/conf.avail/</code>,
+          mais de nombreuses personnes, et quelques paquets, créent les
+          fichiers directement. Chaque fichier doit être nommé comme
+          suit&nbsp;: deux chiffres, un tiret, nom.conf et ils sont lus
+          séquentiellement.
+        </p>
+        <p>
+          Par convention, les nombres sont assignés comme suit&nbsp;:
+        </p>
+        <div class="itemizedlist">
+          <ul>
+            <li class="listitem">
+              <p>
+                00-09 répertoires de polices supplémentaires
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                10-19 rendus systèmes par défaut (anti-crénelage etc )
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                20-29 options de rendu des polices
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                30-39 substitution par famille
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                40-49 correspondance entre famille et type générique
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                50-59 chargement des fichiers de configuration alternatifs
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                60-69 alias génériques, fait correspondre les noms générique
+                à la famille
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                70-79 adapte quelles polices sont disponibles
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                80-89 correspond aux numérisations (modification des modèles
+                numérisés)
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                90-99 synthèse de police
+              </p>
+            </li>
+          </ul>
+        </div>
+        <p>
+          Vous pouvez avoir aussi un fichier <code class=
+          "filename">fonts.conf</code> personnel dans $XDG_CONFIG_HOME,
+          <code class="filename">~/.config/fontconfig/</code>.
+        </p>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="rules-to-choose-a-font" name=
+          "rules-to-choose-a-font"></a>Les règles de choix d'une police
+        </h2>
+        <p>
+          Si la police demandée est installée, et à condition qu'elle
+          contienne le point de code <span class=
+          "emphasis"><em>requis</em></span> pour la langue actuelle (dans les
+          sources, voir les fichiers .orth dans le répertoire <code class=
+          "filename">fc-lang/</code>), elle sera utilisée.
+        </p>
+        <p>
+          Mais si le document ou la page demande une police qui n'est pas
+          installée (ou, parfois, ne contient pas tous les points de codes
+          requis) les règles suivantes sont appliquées&nbsp;: en premier,
+          <code class="filename">30-metric-aliases.conf</code> est utilisé
+          pour assigner des alias à certaines polices avec la même métrique
+          (même taille, etc). Après cela, une police inconnue sera recherchée
+          dans <code class="filename">45-latin.conf</code> – si elle est
+          trouvée elle sera assignée en tant que Serif ou Monospace ou Sans,
+          sinon elle sera considérée comme étant Sans. Ensuite <code class=
+          "filename">50-latin.conf</code> fournit les listes ordonnées des
+          solutions de repli – <a class="xref" href=
+          "TTF-and-OTF-fonts.html#dejavu-fonts" title="Polices DejaVu">Dejavu
+          fonts</a> seront utilisées si vous les avez installées. Le
+          cyrillique et le grec semblent être traités de la même manière. Il
+          y a des fichiers similaires avec un préfixe 65- pour le persan et
+          d'autres systèmes d'écriture non latines. Tous ces fichiers
+          préfèrent les polices commerciales si elles sont présentes, bien
+          que les polices libres modernes soient souvent au moins égales.
+        </p>
+        <p>
+          Depuis fontconfig-2.12.5 il y a aussi des règles de familles
+          génériques pour certaines polices d'emoji et de maths, voyez
+          {45,60}-generic.conf.
+        </p>
+        <p>
+          Dans les rares cas ou une police ne contient pas tous les points de
+          codes attendus, voir 'Essayez en premier&nbsp;:' dans <a class=
+          "xref" href="tuning-fontconfig.html#I-stared-into-the-fontconfig"
+          title="I stared into the fontconfig ...">I stared into the
+          fontconfig</a> pour plus de détails.
+        </p>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="hinting-and-antialising" name=
+          "hinting-and-antialising"></a>Hinting et Anticrénelage
+        </h2>
+        <p>
+          Il est possible de changer la façon dont, ou si, les polices sont
+          hintées. L'exemple de fichier suivant contient les paramètres par
+          défaut, mais avec des commentaires. Les paramètres sont laissées
+          aux préférences de l'utilisateur et au choix de police, de sorte
+          qu'un changement qui améliore certaines pages peut en aggraver
+          d'autres. L'endroit préférable pour ce fichier est&nbsp;:
+          <code class="filename">~/.config/fontconfig/fonts.conf</code>
+        </p>
+        <p>
+          Pour tester différents paramétrages, vous aurez peut être besoin de
+          sortir de Xorg et ensuite relancer <span class=
+          "command"><strong>startx</strong></span> pour que toutes les
+          applications utilisent le nouveau paramétrage. Et si vous utilisez
+          Gnome ou KDE, leurs bureaux peuvent écraser ces modifications. Pour
+          explorer les possibilités, créez un fichier pour votre
+          utilisateur&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">mkdir -pv ~/.config/fontconfig &amp;&amp;
+cat &gt; ~/.config/fontconfig/fonts.conf &lt;&lt; "EOF"
+<code class="literal">&lt;?xml version='1.0'?&gt;
+&lt;!DOCTYPE fontconfig SYSTEM 'fonts.dtd'&gt;
+&lt;fontconfig&gt;
+
+  &lt;match target="font" &gt;
+    &lt;!-- autohint was the old automatic hinter when hinting was patent
+    protected, so turn it off to ensure any hinting information in the font
+    itself is used, this is the default --&gt;
+    &lt;edit mode="assign" name="autohint"&gt;  &lt;bool&gt;false&lt;/bool&gt;&lt;/edit&gt;
+
+    &lt;!-- hinting is enabled by default --&gt;
+    &lt;edit mode="assign" name="hinting"&gt;   &lt;bool&gt;true&lt;/bool&gt;&lt;/edit&gt;
+    
+    &lt;!-- for the lcdfilter see http://www.spasche.net/files/lcdfiltering/ --&gt;
+    &lt;edit mode="assign" name="lcdfilter"&gt; &lt;const&gt;lcddefault&lt;/const&gt;&lt;/edit&gt;
+    
+    &lt;!-- options for hintstyle:
+    hintfull: is supposed to give a crisp font that aligns well to the
+    character-cell grid but at the cost of its proper shape.
+
+    hintmedium: poorly documented, maybe a synonym for hintfull.
+    hintslight is the default: - supposed to be more fuzzy but retains shape.
+    
+    hintnone: seems to turn hinting off.
+    The variations are marginal and results vary with different fonts --&gt;
+    &lt;edit mode="assign" name="hintstyle"&gt; &lt;const&gt;hintslight&lt;/const&gt;&lt;/edit&gt;
+    
+    &lt;!-- antialiasing is on by default and really helps for faint characters
+    and also for 'xft:' fonts used in rxvt-unicode --&gt;
+    &lt;edit mode="assign" name="antialias"&gt; &lt;bool&gt;true&lt;/bool&gt;&lt;/edit&gt;
+    
+    &lt;!-- subpixels are usually rgb, see
+    http://www.lagom.nl/lcd-test/subpixel.php --&gt;
+    &lt;edit mode="assign" name="rgba"&gt;      &lt;const&gt;rgb&lt;/const&gt;&lt;/edit&gt;
+    
+    &lt;!-- thanks to the Arch wiki for the lcd and subpixel links --&gt;
+  &lt;/match&gt;
+
+&lt;/fontconfig&gt;</code>
+EOF</kbd></pre>
+        <p>
+          Vous devrez maintenant éditer le fichier avec votre éditeur
+          préféré.
+        </p>
+        <p>
+          Pour plus d'exemples, voir les fils de discussion de blfs-support
+          qui ont débuté le <a class="ulink" href=
+          "https://lists.linuxfromscratch.org/sympa/arc/blfs-support/2016-09/msg00128.html">
+          2016-09/00128</a>, en particulier <a class="ulink" href=
+          "https://lists.linuxfromscratch.org/sympa/arc/blfs-support/2016-09/msg00137.html">
+          2016-09/00137</a>, et la solution préférée de l'auteur du message
+          initial <a class="ulink" href=
+          "https://lists.linuxfromscratch.org/sympa/arc/blfs-support/2016-09/msg00147.html">
+          2016-09/00147</a>. Il y a d'autres exemples dans <a class="xref"
+          href="tuning-fontconfig.html#arch-fontconfig" title=
+          "Fontconfig dans le wiki Arch">Fontconfig in the Arch wiki</a> et
+          <a class="xref" href="tuning-fontconfig.html#gentoo-fontconfig"
+          title="Fontconfig dans le wiki Gentoo">Fontconfig in the Gentoo
+          wiki</a>.
+        </p>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="disabling-bitmap-fonts" name=
+          "disabling-bitmap-fonts"></a>Désactivation des polices Bitmaps
+        </h2>
+        <p>
+          Dans les versions précédentes de BLFS, les vieilles polices laides
+          de Xorg étaient installées. Maintenant, beaucoup de personnes n'ont
+          plus besoin d'installer aucune d'entre elles. Mais si pour une
+          raison ou une autre vous avez installé une ou plusieurs polices
+          bitmap, vous pouvez empêcher leur utilisation par <span class=
+          "application">fontconfig</span> en créant le fichier suivant en
+          tant qu'utilisateur <code class="systemitem">root</code>&nbsp;:
+        </p>
+        <pre class="root"><kbd class=
+        "command">cat &gt; /etc/fonts/conf.d/70-no-bitmaps.conf &lt;&lt; "EOF"
+<code class="literal">&lt;?xml version='1.0'?&gt;
+&lt;!DOCTYPE fontconfig SYSTEM 'fonts.dtd'&gt;
+&lt;fontconfig&gt;
+&lt;!-- Reject bitmap fonts --&gt;
+ &lt;selectfont&gt;
+  &lt;rejectfont&gt;
+   &lt;pattern&gt;
+     &lt;patelt name="scalable"&gt;&lt;bool&gt;false&lt;/bool&gt;&lt;/patelt&gt;
+   &lt;/pattern&gt;
+  &lt;/rejectfont&gt;
+ &lt;/selectfont&gt;
+&lt;/fontconfig&gt;</code>
+EOF</kbd></pre>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="adding-extra-directories" name=
+          "adding-extra-directories"></a>Ajout des répertoires de polices
+          supplémentaires
+        </h2>
+        <p>
+          Normalement, les polices du système et les polices de l'utilisateur
+          sont installées dans les répertoires spécifiés dans <a class="xref"
+          href="tuning-fontconfig.html#xft-font-protocol" title=
+          "Le Protocole de Police Xft">The Xft Font Protocol</a> et il n'y a
+          pas de raison de les mettre ailleurs. Cependant, une installation
+          BLFS complète de <a class="xref" href="../pst/texlive.html" title=
+          "texlive-20210325-source">texlive-20210325</a> place beaucoup de
+          polices dans <code class=
+          "filename">/opt/texlive/2021/texmf-dist/fonts/</code> dans les
+          sous-répertoires <code class="filename">opentype/</code> et
+          <code class="filename">truetype/</code>. Bien que l'extraction de
+          tous ces fichiers puisse sembler utile (cela permet de les utiliser
+          dans des programmes non <span class="application">TeX</span>), il y
+          a plusieurs problèmes avec une telle approche&nbsp;:
+        </p>
+        <div class="orderedlist">
+          <ol>
+            <li class="listitem">
+              <p>
+                Il y a des centaines de fichiers, ce qui complexifie la
+                sélection d'une police.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                Certains des fichiers font des choses bizarres, comme
+                l'affichage de drapeaux sémaphore au lieu de lettres ASCII,
+                ou le mappage de codes cyrilliques vers des formes de
+                caractères appropriés à la vieille église slave au lieu des
+                formes actuelles attendues&nbsp;: bien si c'est ce dont vous
+                avez besoin, mais pénible pour une utilisation normale .
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                De nombreuses polices ont des tailles multiples et des noms
+                courts obscurs, qui rendent la sélection de la bonne police
+                encore plus difficile.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                Quand une police est ajoutée à CTAN, elle est accompagnée par
+                un paquet TeX à utiliser dans les anciens moteurs
+                (<span class="application">xelatex</span> n'a normalement pas
+                besoin de cela), et ensuite la version est souvent gelée
+                tandis que la police est maintenue séparément. Certaines de
+                ces polices comme <a class="xref" href=
+                "TTF-and-OTF-fonts.html#dejavu-fonts" title=
+                "Polices DejaVu">Dejavu fonts</a> sont déjà probablement
+                installées dans votre système BLFS dans une version plus
+                récente, et si vous avez plusieurs versions d'une police on
+                ne sait pas laquelle sera utilisée par <span class=
+                "application">fontconfig</span>.
+              </p>
+            </li>
+          </ol>
+        </div>
+        <p>
+          Cependant, il est parfois utile de regarder ces polices dans des
+          applications non-TeX, seulement pour voir si vous voulez installer
+          une version récente. Si vous avez tout installé de <span class=
+          "application">texlive</span>, l'exemple suivant rendra une des
+          polices OpenType Arkandis disponible pour d'autres applications,
+          ainsi que les trois polices TrueType de ParaType. Modifiez ou
+          répétez les lignes comme vous le souhaitez, pour soit rendre toutes
+          les polices <code class="filename">opentype/</code> ou <code class=
+          "filename">truetype</code> disponibles, ou pour sélectionner
+          différents répertoires de polices. En tant qu'utilisateur
+          <code class="systemitem">root</code>&nbsp;:
+        </p>
+        <pre class="root"><kbd class=
+        "command">cat &gt; /etc/fonts/conf.d/09-texlive.conf &lt;&lt; "EOF"
+<code class="literal">&lt;?xml version='1.0'?&gt;
+&lt;!DOCTYPE fontconfig SYSTEM 'fonts.dtd'&gt;
+&lt;fontconfig&gt;
+  &lt;dir&gt;/opt/texlive/2021/texmf-dist/fonts/opentype/arkandis/berenisadf&lt;/dir&gt;
+  &lt;dir&gt;/opt/texlive/2021/texmf-dist/fonts/truetype/paratype&lt;/dir&gt;
+&lt;/fontconfig&gt;</code>
+EOF</kbd></pre>
+        <p>
+          SI vous faites cela, pensez à changer toutes les instances de
+          l'année dans ce fichier quand vous mettez à jour <span class=
+          "application">texlive</span> à la dernière version.
+        </p>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="preferring-certain-fonts" name=
+          "preferring-certain-fonts"></a>Choix de certaines polices
+        </h2>
+        <p>
+          Il y a beaucoup de raisons pour qu'une personne veuille avoir des
+          pages qui spécifient une police particulière et qui utilisent une
+          police différente, ou préfèrent des polices spécifiques dans
+          Monospace ou Sans ou Serif. Comme vous pouvez vous y attendre, il y
+          a de nombreuses façons de faire cela.
+        </p>
+        <h3>
+          <a id="fontconfig-user-docs" name=
+          "fontconfig-user-docs"></a>Documentation utilisateur de Fontconfig
+        </h3>
+        <p>
+          <span class="application">Fontconfig</span> installe une
+          documentation utilisateur contenant un exemple de 'fichier de
+          configuration utilisateur' qui, entre autres, préfère <a class=
+          "xref" href="TTF-and-OTF-fonts.html#wenquanyi-zenhei" title=
+          "WenQuanYi Zen Hei">WenQuanYi ZenHei</a> (une police Sans) si une
+          police <span class="emphasis"><em>Serif</em></span> est demandée
+          pour le chinois (cette partie pourrait être anachronique à moins
+          que vous ayez des polices chinoises non-libres, car dans
+          <code class="filename">65-nonlatin.conf</code> cette police est
+          déjà parmi les polices préférées lorsque Serif est spécifiée pour
+          le chinois) et préfère la police moderne <a class="xref" href=
+          "TTF-and-OTF-fonts.html#VLGothic" title="VL Gothic">VL Gothic</a>
+          si une police Sans est spécifiée dans une page japonaise (cependant
+          des paires d'autres polices pourront être préférées si elles ont
+          été installées).
+        </p>
+        <p>
+          Si vous avez installé la dernière version, la documentation
+          utilisateur est disponible en HTML, PDF et texte dans <code class=
+          "filename">/usr/share/doc/fontconfig-2.13.1/</code>&nbsp;: changez
+          la version si vous en avez installée une autre.
+        </p>
+        <h3>
+          <a id="prefer-a-specific-font" name=
+          "prefer-a-specific-font"></a>Choisissez une police spécifique
+        </h3>
+        <p>
+          Par exemple, si pour une raison ou une autre vous souhaitiez
+          utiliser la police <a class="ulink" href=
+          "https://www.fontsquirrel.com/fonts/nimbus-roman-no9-l">Nimbus
+          Roman No9 L</a> alors que Times New Roman est référencée (elles ont
+          des métriques identiques, et préférable pour Times Roman, mais la
+          police Serif de <a class="xref" href=
+          "TTF-and-OTF-fonts.html#liberation-fonts" title=
+          "Polices Liberation">Liberation fonts</a> sera préférable pour la
+          police Times <span class="emphasis"><em>New</em></span> Roman si
+          elle est installée), en tant qu'utilisateur individuel vous pouvez
+          installer la police et ensuite créer le fichier suivant&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">mkdir -pv ~/.config/fontconfig/conf.d &amp;&amp;
+cat &gt;  ~/.config/fontconfig/conf.d/35-prefer-nimbus-for-timesnew.conf &lt;&lt; "EOF"
+<code class="literal">&lt;?xml version='1.0'?&gt;
+&lt;!DOCTYPE fontconfig SYSTEM 'fonts.dtd'&gt;
+&lt;fontconfig&gt;
+&lt;!-- prefer Nimbus Roman No9 L for Times New Roman as well as for Times,
+ without this Tinos and Liberation Serif take precedence for Times New Roman
+ before fontconfig falls back to whatever matches Times --&gt;
+    &lt;alias binding="same"&gt;
+        &lt;family&gt;Times New Roman&lt;/family&gt;
+        &lt;accept&gt;
+            &lt;family&gt;Nimbus Roman No9 L&lt;/family&gt;
+        &lt;/accept&gt;
+    &lt;/alias&gt;
+&lt;/fontconfig&gt;</code>
+EOF</kbd></pre>
+        <p>
+          C'est quelque chose que vous feriez normalement pour les paramètres
+          d'un utilisateur individuel, mais le dossier dans ce cas aura été
+          préfixé '35 - ' alors qu'il peut, si vous le souhaitez, être
+          utilisé à l'échelle du système dans <code class=
+          "filename">/etc/fonts/conf.d/</code>.
+        </p>
+        <h3>
+          <a id="prefer-chosen-CJK-fonts" name=
+          "prefer-chosen-CJK-fonts"></a>Choisissez les polices CJK préférées
+        </h3>
+        <p>
+          L'exemple suivant d'une configuration locale (c'est-à-dire
+          applicable à tous les utilisateurs de la machine) fait plusieurs
+          choses&nbsp;:
+        </p>
+        <div class="orderedlist">
+          <ol>
+            <li class="listitem">
+              <p>
+                Si une police Serif est spécifiée, elle préférera les
+                variantes <a class="xref" href="TTF-and-OTF-fonts.html#UMing"
+                title="UMing">UMing</a>, pour que dans les langues zh-cn,
+                zh-hk et zh-tw les choses semblent correctes (aussi pour
+                zh-sq qui utilise en fait le même paramétrage que zh-cn)
+                <span class="emphasis"><em>sans</em></span> affecter le
+                japonais.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                Il préfère le japonais <a class="xref" href=
+                "TTF-and-OTF-fonts.html#IPAex" title="Polices IPAex">IPAex
+                fonts</a> s'il a été installé (bien que <a class="xref" href=
+                "TTF-and-OTF-fonts.html#VLGothic" title="VL Gothic">VL
+                Gothic</a> aura la priorité sur Sans (japonais) s'il a été
+                aussi installé).
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                Comme <a class="xref" href=
+                "TTF-and-OTF-fonts.html#wenquanyi-zenhei" title=
+                "WenQuanYi Zen Hei">WenQuanYi ZenHei</a> couvre les glyphes
+                coréens Hangul et est également préféré pour Serif dans
+                <code class="filename">65-nonlatin.conf</code>, s'il est
+                installé, il sera utilisé par défaut pour le Serif coréen.
+                Pour obtenir une police Serif appropriée, la police UnBatang
+                est spécifiée ici – changez cette ligne si vous avez installé
+                une police Serif différente dans le choix de <a class="xref"
+                href="TTF-and-OTF-fonts.html#Korean-fonts" title=
+                "Polices Coréennes&nbsp;:">Korean fonts</a>.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                Les polices Monospace sont forcées par rapport aux polices
+                Sans préférées. Si le texte est en Coréen alors <a class=
+                "xref" href="TTF-and-OTF-fonts.html#wenquanyi-zenhei" title=
+                "WenQuanYi Zen Hei">WenQuanYi ZenHei</a> sera utilisée.
+              </p>
+            </li>
+          </ol>
+        </div>
+        <p>
+          Dans une locale non-CJK, le résultat est que les polices
+          appropriées seront utilisées pour toutes les variantes de chinois,
+          japonais et coréen Hangul. Toutes les autres langues doivent déjà
+          fonctionner si une police est présente. En tant qu'utilisateur
+          <code class="systemitem">root</code>&nbsp;:
+        </p>
+        <pre class="root"><kbd class=
+        "command">cat &gt; /etc/fonts/local.conf &lt;&lt; "EOF"
+<code class="literal">&lt;?xml version='1.0'?&gt;
+&lt;!DOCTYPE fontconfig SYSTEM 'fonts.dtd'&gt;
+&lt;fontconfig&gt;
+    &lt;alias&gt;
+        &lt;family&gt;serif&lt;/family&gt;
+        &lt;prefer&gt;
+            &lt;family&gt;AR PL UMing&lt;/family&gt;
+            &lt;family&gt;IPAexMincho&lt;/family&gt;
+            &lt;!-- WenQuanYi is preferred as Serif in 65-nonlatin.conf,
+            override that so a real Korean font can be used for Serif --&gt;
+            &lt;family&gt;UnBatang&lt;/family&gt;
+        &lt;/prefer&gt;
+    &lt;/alias&gt;
+    &lt;alias&gt;
+         &lt;family&gt;sans-serif&lt;/family&gt;
+         &lt;prefer&gt;
+             &lt;family&gt;WenQuanYi Zen Hei&lt;/family&gt;
+             &lt;family&gt;VL Gothic&lt;/family&gt;
+             &lt;family&gt;IPAexGothic&lt;/family&gt;
+         &lt;/prefer&gt;
+    &lt;/alias&gt;
+    &lt;alias&gt;
+         &lt;family&gt;monospace&lt;/family&gt;
+         &lt;prefer&gt;
+             &lt;family&gt;VL Gothic&lt;/family&gt;
+             &lt;family&gt;IPAexGothic&lt;/family&gt;
+             &lt;family&gt;WenQuanYi Zen Hei&lt;/family&gt;
+         &lt;/prefer&gt;
+    &lt;/alias&gt;
+&lt;/fontconfig&gt;</code>
+EOF</kbd></pre>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="editing-old-style-conf-files" name=
+          "editing-old-style-conf-files"></a>Édition des fichiers de
+          configuration de style ancien
+        </h2>
+        <p>
+          Certaines polices, particulièrement les polices chinoises, viennent
+          avec des fichiers de configuration qui peuvent être installés dans
+          <code class="filename">/etc/fonts/conf.d</code>. Cependant, si vous
+          faites cela et ensuite utilisez un terminal pour lancer n'importe
+          quelle commande qui utilise <span class=
+          "application">fontconfig</span>, vous devrez voir des messages
+          d'erreurs comme&nbsp;:
+        </p>
+        <p>
+          <code class="literal">Fontconfig warning:
+          "/etc/fonts/conf.d/69-odofonts.conf", line 14: Having multiple
+          &lt;family&gt; in &lt;alias&gt; isn't supported and may not work as
+          expected</code>.
+        </p>
+        <p>
+          En pratique, ces anciennes règles ne fonctionnent pas. Pour les
+          utilisateurs non-CJK, <span class="application">fontconfig</span>
+          fonctionnera bien <span class="emphasis"><em>sans</em></span> ces
+          règles. Leur origine remonte à l'époque où les utilisateurs de CJK
+          avaient besoin de bitmaps fabriqués à la main pour être lisibles
+          dans les petites tailles, et ils semblaient laids à côté des
+          glyphes latins anti-crénelés - ils ont préféré utiliser la même
+          police CJK pour les glyphes latins. Il y a un effet secondaire à
+          faire cela&nbsp;: la police (Serif) est souvent aussi utilisée pour
+          Sans, et dans une telle situation le texte (anglais) dans les menus
+          de <span class="application">Gtk</span> utilisera cette police -
+          par rapport aux polices du système, en plus d'être serif, elle est
+          à la fois pâle et plutôt petite. Cela peut rendre la lecture
+          inconfortable.
+        </p>
+        <p>
+          Néanmoins, ces anciens fichiers de configuration peuvent être
+          corrigés si vous souhaitez les utiliser. L'exemple suivant est la
+          première partie de <code class=
+          "filename">64-arphic-uming.conf</code> de <a class="xref" href=
+          "TTF-and-OTF-fonts.html#UMing" title="UMing">UMing</a> – il y a
+          beaucoup plus d'éléments similaires qui ont aussi besoin d'être
+          changés&nbsp;:
+        </p>
+        <div class="literallayout">
+          <p>
+            <br />
+            &nbsp;&nbsp;&nbsp;&lt;match&nbsp;target="pattern"&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;test&nbsp;qual="any"&nbsp;name="lang"&nbsp;compare="contains"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;zh-cn&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;zh-sg&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/test&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;test&nbsp;qual="any"&nbsp;name="family"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;serif&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/test&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;edit&nbsp;name="family"&nbsp;mode="prepend"&nbsp;binding="strong"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;AR&nbsp;PL&nbsp;UMing&nbsp;CN&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/edit&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/match&gt;
+          </p>
+        </div>
+        <p>
+          Le processus pour corriger cela est simple mais fastidieux – pour
+          chaque élément qui produit un message d'erreur, à l'aide de votre
+          éditeur (en tant qu'utilisateur <code class=
+          "systemitem">root</code>) éditez le fichier installé pour répéter
+          le bloc entier autant de fois qu'il y a de variables, puis réduire
+          chaque exemple pour n'en avoir qu'un seul. Vous pouvez travailler
+          sur une erreur à la fois, enregistrer le fichier après chaque
+          correction et, à partir d'un terminal séparé, exécuter une commande
+          telle que <span class="command"><strong>fc-list 2&gt;&amp;1 |
+          less</strong></span> pour voir si le correctif a fonctionné. Pour
+          le bloc ci-dessus, la version corrigée sera&nbsp;:
+        </p>
+        <div class="literallayout">
+          <p>
+            <br />
+            &nbsp;&nbsp;&nbsp;&lt;match&nbsp;target="pattern"&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;test&nbsp;qual="any"&nbsp;name="lang"&nbsp;compare="contains"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;zh-cn&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/test&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;test&nbsp;qual="any"&nbsp;name="family"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;serif&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/test&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;edit&nbsp;name="family"&nbsp;mode="prepend"&nbsp;binding="strong"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;AR&nbsp;PL&nbsp;UMing&nbsp;CN&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/edit&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/match&gt;<br />
+            &nbsp;&nbsp;&nbsp;&lt;match&nbsp;target="pattern"&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;test&nbsp;qual="any"&nbsp;name="lang"&nbsp;compare="contains"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;zh-sg&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/test&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;test&nbsp;qual="any"&nbsp;name="family"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;serif&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/test&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;edit&nbsp;name="family"&nbsp;mode="prepend"&nbsp;binding="strong"&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;AR&nbsp;PL&nbsp;UMing&nbsp;CN&lt;/string&gt;<br />
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/edit&gt;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/match&gt;
+          </p>
+        </div>
+      </div>
+      <div class="configuration" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="see-also" name="see-also"></a>Voir également
+        </h2>
+        <h3>
+          <a id="I-stared-into-the-fontconfig" name=
+          "I-stared-into-the-fontconfig"></a>I stared into the fontconfig ...
+        </h3>
+        <p>
+          Les entrées du blog d'<a class="ulink" href=
+          "https://eev.ee/blog/2015/05/20/i-stared-into-the-fontconfig-and-the-fontconfig-stared-back-at-me/">Eevee</a>
+          sont particulièrement utiles si <span class=
+          "application">fontconfig</span> ne pense pas que votre police
+          choisie prenne en charge votre langue, et pour préférer certaines
+          polices japonaises non-MS quand une police laide MS est déjà
+          installée.
+        </p>
+        <h3>
+          <a id="arch-fontconfig" name="arch-fontconfig"></a>Fontconfig dans
+          le wiki Arch
+        </h3>
+        <p>
+          Arch a beaucoup d'informations sur leur wiki dans <a class="ulink"
+          href=
+          "https://wiki.archlinux.org/index.php/font_configuration">font_configuration</a>.
+        </p>
+        <h3>
+          <a id="gentoo-fontconfig" name="gentoo-fontconfig"></a>Fontconfig
+          dans le wiki Gentoo
+        </h3>
+        <p>
+          Gentoo a quelques informations dans son wiki à <a class="ulink"
+          href="https://wiki.gentoo.org/wiki/Fontconfig">Fontconfig</a> bien
+          que beaucoup des détails (quoi activer et Infinality) sont
+          spécifiques à Gentoo.
+        </p>
+      </div>
+      <p class="updated">
+        Last updated on
+      </p>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="xorg-config.html" title=
+          "Xorg-7 Test et configuration">Précédent</a>
+          <p>
+            Xorg-7 Test et configuration
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="TTF-and-OTF-fonts.html" title=
+          "Les polices TTF et OTF">Suivant</a>
+          <p>
+            Les polices TTF et OTF
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="installing.html" title=
+          "Chapitre&nbsp;24.&nbsp;Environnement X Window System">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Au-delà de Linux® From Scratch (édition System V) - Version r10.1-914+">
+          Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

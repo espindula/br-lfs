@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      À propos de la gestion des volumes logiques (LVM)
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.79.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+  </head>
+  <body class="blfs" id="blfs-r10.1-914+">
+    <div class="navheader">
+      <h4>
+        Au-delà de Linux<sup>®</sup> From Scratch (édition <span class=
+        "phrase">System V)</span> - Version r10.1-914+
+      </h4>
+      <h3>
+        Chapitre&nbsp;5.&nbsp;Systèmes de fichiers et gestion de disque
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="lvm2.html" title=
+          "LVM2-2.03.13">Précédent</a>
+          <p>
+            LVM2-2.03.13
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="raid.html" title=
+          "À propos du RAID">Suivant</a>
+          <p>
+            À propos du RAID
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="filesystems.html" title=
+          "Chapitre&nbsp;5.&nbsp;Systèmes de fichiers et gestion de disque">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Au-delà de Linux® From Scratch (édition System V) - Version r10.1-914+">
+          Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="aboutlvm" name="aboutlvm"></a>À propos de la gestion des
+        volumes logiques (LVM)
+      </h1>
+      <p>
+        LVM gère les disques durs. Il permet que de multiples disques et
+        partitions soient combinés dans de gros <span class=
+        "emphasis"><em>groupes de volumes</em></span>, assiste la création de
+        sauvegardes au travers de <span class=
+        "emphasis"><em>snapshot</em></span>, et permet le redimensionnement
+        dynamique des volumes. Il peut également fournir une fonction de
+        miroir similaire à une grappe de RAID 1.
+      </p>
+      <p>
+        Une présentation complète de LVM est au-delà de la portée de cette
+        introduction, mais les concepts de base sont présentés ci-dessous.
+      </p>
+      <p>
+        Pour exécuter chacune des commandes présentées ici, le paquet
+        <a class="xref" href="lvm2.html" title=
+        "LVM2-2.03.13">LVM2-2.03.13</a> doit être installé. Toutes les
+        commandes doivent être lancées en tant qu'utilisateur <code class=
+        "systemitem">root</code>.
+      </p>
+      <p>
+        La gestion des disques avec LVM est accomplie en utilisant les
+        concepts suivants&nbsp;:
+      </p>
+      <div class="variablelist">
+        <dl class="variablelist">
+          <dt>
+            <span class="term">volumes physiques</span>
+          </dt>
+          <dd>
+            <p>
+              Il y a des disques ou des partitions physiques comme /dev/sda3
+              ou /dev/sdb.
+            </p>
+          </dd>
+          <dt>
+            <span class="term">groupes de volumes</span>
+          </dt>
+          <dd>
+            <p>
+              On appelle groupes de volumes physiques ce qui peut être
+              manipulé par l'administrateur. Le nombre de volumes physiques
+              qui constituent un groupe de volumes est arbitraire. Les
+              volumes physiques peuvent être dynamiquement ajoutés ou
+              supprimés à partir d'un groupe de volumes.
+            </p>
+          </dd>
+          <dt>
+            <span class="term">volumes logique</span>
+          </dt>
+          <dd>
+            <p>
+              Les groupes de volume peuvent être divisés en volumes logiques.
+              Chaque volume logique peut être ainsi formaté individuellement
+              comme s'il s'agissait d'une partition Linux normal. Les volumes
+              logiques peuvent être redimensionné dynamiquement par
+              l'administrateur en fonction des besoins.
+            </p>
+          </dd>
+        </dl>
+      </div>
+      <p>
+        Pour donner un exemple concret, supposez que vous ayez deux disques
+        de 2&nbsp;To. Supposons également qu'une grande quantité d'espace est
+        nécessaire pour une très grosse base de données, montée sur
+        <code class="filename">/srv/mysql</code>. Voilà à quoi rassemblerait
+        l'ensemble des initialisations des partitions&nbsp;:
+      </p>
+      <pre class="screen"><code class=
+      "literal">Partition  Use    Size      Partition Type
+/dev/sda1  /boot  100MB     83 (Linux)
+/dev/sda2  /       10GB     83 (Linux)
+/dev/sda3  swap     2GB     82 (Swap)
+/dev/sda4  LVM    remainder 8e (LVM)
+/dev/sdb1  swap     2GB     82 (Swap)
+/dev/sdb2  LVM    remainder 8e (LVM)</code></pre>
+      <p>
+        En premier initialisez les volumes physiques&nbsp;:
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">pvcreate /dev/sda4 /dev/sdb2</kbd></pre>
+      <div class="admon note">
+        <img alt="[Note]" src="../images/note.png" />
+        <h3>
+          Note
+        </h3>
+        <p>
+          On peut utiliser un disque complet comme partie d'un volume
+          physique, mais soyez conscient que la commande <span class=
+          "command"><strong>pvcreate</strong></span> va détruire les
+          informations sur les partitions de ce disque.
+        </p>
+      </div>
+      <p>
+        Ensuite créez un groupe de volume appelé lfs-lvm:
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">vgcreate lfs-lvm /dev/sda4  /dev/sdb2</kbd></pre>
+      <p>
+        L'état du groupe de volumes peut être vérifié en lançant la commande
+        <span class="command"><strong>vgscan</strong></span>. Maintenant
+        créez les volumes logiques. Comme il y a environ 3900 Go d'espace
+        disponible, laissez environ 900 Go d'espace libre pour l'expansion.
+        Notez que le volume logique appelé <span class=
+        "emphasis"><em>mysql</em></span> est plus grand que chacun des
+        disques physiques.
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">lvcreate --name mysql --size 2500G lfs-lvm
+lvcreate --name home  --size  500G lfs-lvm</kbd></pre>
+      <p>
+        Finalement les volumes logiques peuvent être formatés et montés. Dans
+        cet exemple, Le système de fichier jfs (<a class="xref" href=
+        "jfsutils.html" title="jfsutils-1.1.15">jfsutils-1.1.15</a>) est
+        utilisé pour la démonstration.
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">mkfs -t ext4 /dev/lfs-lvm/home
+mkfs -t jfs  /dev/lfs-lvm/mysql
+mount /dev/lfs-lvm/home /home
+mkdir -p /srv/mysql
+mount /dev/lfs-lvm/mysql /srv/mysql</kbd></pre>
+      <p>
+        Il peut être nécessaire d'activer ces volumes logique pour qu'ils
+        apparaissent dans <code class="filename">/dev</code>. Vous pouvez
+        tous les activer en même temps en lançant, en tant qu'utilisateur
+        <code class="systemitem">root</code>&nbsp;:
+      </p>
+      <pre class="root"><kbd class="command">vgchange -a y</kbd></pre>
+      <p>
+        Les scripts de démarrage de LFS rendront automatiquement ces volumes
+        logiques disponibles dans le script <span class=
+        "command"><strong>udev</strong></span>. Modifiez le fichier
+        <code class="filename">/etc/fstab</code> comme vous le souhaitez pour
+        les monter automatiquement.
+      </p>
+      <p>
+        Un volume logique LVM peut accueillir un système de fichier racine,
+        mais nécessite l'utilisation d'un initramfs (initial RAM file
+        system). L'initramfs proposé dans <a class="xref" href=
+        "initramfs.html" title="À propos de initramfs">la section intitulée
+        «&nbsp;À propos de initramfs&nbsp;»</a> permet de passer le volume
+        lvm dans le paramètre <em class="parameter"><code>root=</code></em>
+        de la ligne de commande du noyau.
+      </p>
+      <p>
+        Pour plus d'information sur LVM, voir le <a class="ulink" href=
+        "http://www.tldp.org/HOWTO/LVM-HOWTO/">LVM HOWTO</a> et les pages de
+        manuel de lvm. Un bon <a class="ulink" href=
+        "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/logical_volume_manager_administration/index">
+        guide</a> en profondeur se trouve chez RedHat<sup>®</sup>, même s'il
+        fait parfois référence à des outils non libres.
+      </p>
+      <p class="updated">
+        Last updated on
+      </p>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="lvm2.html" title=
+          "LVM2-2.03.13">Précédent</a>
+          <p>
+            LVM2-2.03.13
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="raid.html" title=
+          "À propos du RAID">Suivant</a>
+          <p>
+            À propos du RAID
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="filesystems.html" title=
+          "Chapitre&nbsp;5.&nbsp;Systèmes de fichiers et gestion de disque">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Au-delà de Linux® From Scratch (édition System V) - Version r10.1-914+">
+          Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

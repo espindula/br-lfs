@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      Utiliser GRUB pour paramétrer le processus de démarrage avec UEFI
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.79.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+  </head>
+  <body class="blfs" id="blfs-r10.1-914+">
+    <div class="navheader">
+      <h4>
+        Au-delà de Linux<sup>®</sup> From Scratch (édition <span class=
+        "phrase">System V)</span> - Version r10.1-914+
+      </h4>
+      <h3>
+        Chapitre&nbsp;5.&nbsp;Systèmes de fichiers et gestion de disque
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="grub-efi.html" title=
+          "GRUB-2.06 pour EFI">Précédent</a>
+          <p>
+            GRUB-2.06 pour EFI
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="editors.html" title="Éditeurs">Suivant</a>
+          <p>
+            Éditeurs
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="filesystems.html" title=
+          "Chapitre&nbsp;5.&nbsp;Systèmes de fichiers et gestion de disque">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Au-delà de Linux® From Scratch (édition System V) - Version r10.1-914+">
+          Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="grub-setup" name="grub-setup"></a>Utiliser GRUB pour
+        paramétrer le processus de démarrage avec UEFI
+      </h1>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          Désactiver le Secure Boot
+        </h2>
+        <p>
+          BLFS ne propose pas les paquets essentiels pour prendre en charge
+          Secure Boot. Pour paramétrer le processus de démarrage avec GRUB
+          pour UEFI installé dans BLFS, Secure Boot doit être désactivé dans
+          l'interface de configuration du micrologiciel. Lisez la
+          documentation fournie par le fabriquant de votre système pour
+          trouver comment faire.
+        </p>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          Créer un disque de démarrage d'urgence
+        </h2>
+        <p>
+          Assurez-vous qu'un disque de démarrage d'urgence est prêt pour
+          <span class="quote">«&nbsp;<span class=
+          "quote">secourir</span>&nbsp;»</span> le système au cas où le
+          système ne puisse démarrer. Pour créer un disque de démarrage
+          d'urgence avec GRUB pour un système EFI, trouvez un clé USB libre
+          et créez un système de fichiers <code class=
+          "systemitem">vfat</code> dessus. Installez d'abord <a class="xref"
+          href="dosfstools.html" title="dosfstools-4.2">dosfstools-4.2</a>,
+          puis en tant qu'utilisateur <code class=
+          "systemitem">root</code>&nbsp;:
+        </p>
+        <div class="admon warning">
+          <img alt="[Avertissement]" src="../images/warning.png" />
+          <h3>
+            Avertissement
+          </h3>
+          <p>
+            La commande suivante supprimera tous les répertoires et fichiers
+            de la partition. Assurez-vous que votre clé USB ne contient
+            aucune donnée requise, et remplacez <strong class=
+            "userinput"><code>sdx1</code></strong> par le nœud de
+            périphérique correspondant à la première partition de la clé USB.
+            Faites attention à ne pas écraser votre disque dur à cause d'une
+            coquille&nbsp;!
+          </p>
+        </div>
+        <pre class="userinput"><kbd class=
+        "command">mkfs.vfat /dev/sdx1</kbd></pre>
+        <p>
+          Toujours en tant qu'utilisateur <code class=
+          "systemitem">root</code>, utilisez l'utilitaire <span class=
+          "command"><strong>fdisk</strong></span> pour faire de la première
+          partition de la clé USB une partition <span class=
+          "quote">«&nbsp;<span class="quote">EFI system</span>&nbsp;»</span>
+          (remplacez <strong class="userinput"><code>sdx</code></strong> par
+          le nœud de périphérique correspondant à votre clé USB)&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class="command">fdisk /dev/sdx</kbd>
+<code class="literal">
+Welcome to fdisk (util-linux 2.36.2).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+
+Command (m for help): </code><kbd class="command">t</kbd>
+<code class="literal">Selected partition 1
+Hex code or alias (type L to list all): </code><kbd class="command">ef</kbd>
+<code class=
+"literal">Changed type of partition 'Linux' to 'EFI (FAT-12/16/32)'.
+
+Command (m for help): </code><kbd class="command">w</kbd>
+<code class="literal">The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.</code></pre>
+        <p>
+          Toujours en tant qu'utilisateur <code class=
+          "systemitem">root</code>, créez un point de montage pour la
+          partition EFI sur la clé USB et montez-la&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">mkdir -pv /mnt/rescue &amp;&amp;
+mount -v -t vfat /dev/sdx1 /mnt/rescue</kbd></pre>
+        <p>
+          Installez GRUB pour EFI sur la partition&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">grub-install --removable --efi-directory=/mnt/rescue --boot-directory=/mnt/rescue/grub</kbd></pre>
+        <p>
+          Démontez la partition&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">umount /mnt/rescue</kbd></pre>
+        <p>
+          Maintenant vous pouvez utiliser la clé USB comme un disque de
+          démarrage d'urgence sur la plateforme UEFI x86-64. Elle démarrera
+          le système et affichera le shell de GRUB. Ensuite vous pourrez
+          taper des commandes pour démarrer votre système d'exploitation sur
+          votre disque dur. Pour apprendre à choisir le périphérique de
+          démarrage, lisez le manuel de votre carte mère ou de votre
+          ordinateur portable.
+        </p>
+      </div>
+      <div class="kernel" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="uefi-kernel" name="uefi-kernel"></a>Configuration du noyau
+          pour la prise en charge de l'UEFI
+        </h2>
+        <p>
+          Activez les options suivantes dans la configuration du noyau et
+          recompilez le noyau si nécessaire&nbsp;:
+        </p>
+        <pre class="screen"><code class=
+        "literal">Processor type and features ---&gt;
+  [*] EFI runtime service support                              [CONFIG_EFI]
+  [*]   EFI stub support                                       [CONFIG_EFI_STUB]
+Firmware Drivers ---&gt;
+  EFI (Extensible Firmware Interface) Support ---&gt;
+    &lt; &gt; EFI Variable Support via sysfs                         [CONFIG_EFI_VARS]
+    [*] Export efi runtime maps to sysfs                       [CONFIG_EFI_RUNTIME_MAP]
+Enable the block layer ---&gt;
+  Partition Types ---&gt;
+    [*] Advanced partition selection                           [CONFIG_PARTITION_ADVANCED]
+    [*] EFI GUID Partition support                             [CONFIG_EFI_PARTITION]
+Device Drivers ---&gt;
+  Graphics support ---&gt;
+    Frame buffer Devices ---&gt;
+      Support for frame buffer devices ---&gt;                    [CONFIG_FB]
+        [*] EFI-based Framebuffer support                      [CONFIG_FB_EFI]
+    Console display driver support ---&gt;
+      [*] Framebuffer Console support                          [CONFIG_FRAMEBUFFER_CONSOLE]
+File systems ---&gt;
+  Pseudo filesystems ---&gt;
+    &lt;*/M&gt; EFI Variable filesystem                              [CONFIG_EFIVAR_FS]</code></pre>
+        <div class="variablelist">
+          <p class="title">
+            <strong>Voici la signification des options de
+            configure&nbsp;:</strong>
+          </p>
+          <dl class="variablelist">
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>CONFIG_EFI_STUB</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Bien que le bout EFI soit conçu pour démarrer un noyau
+                directement à partir du micrologiciel UEFI (sans un chargeur
+                d'amorçage comme GRUB), GRUB a besoin que le noyau soit
+                chargé pour prendre en charge le protocole de passage de
+                relai autorisé par cette option.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>CONFIG_EFI_VARS</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                N'utilisez pas cette option obsolète à cause d'une limite de
+                taille à 1024 octets. Elle est remplacée par <em class=
+                "parameter"><code>CONFIG_EFIVAR_FS</code></em>
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>CONFIG_FB_EFI</code></em> et <em class=
+              "parameter"><code>CONFIG_FRAMEBUFFER_CONSOLE</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                La combinaison de ces deux options permet au noyau d'afficher
+                des messages de débogage (avec les logos de Tux) pendant les
+                premières étapes du processus de démarrage avec UEFI.
+              </p>
+            </dd>
+          </dl>
+        </div>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          Trouver ou créer la partition EFI système
+        </h2>
+        <p>
+          Sur les systèmes EFI, les chargeurs d'amorçage sont installés dans
+          une partition FAT32 spéciale appelée <span class=
+          "emphasis"><em>partition EFI système</em></span> (ESP). Si votre
+          système prend EFI en charge, et qu'une version récente de Linux ou
+          Windows est pré-installée, il est probable que l'ESP soit déjà
+          créée. En tant qu'utilisateur <code class="systemitem">root</code>,
+          listez toutes les partitions de votre disque dur (remplacez
+          <strong class="userinput"><code>sda</code></strong> par le
+          périphérique correspondant au disque dur approprié)&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">fdisk -l /dev/sda</kbd></pre>
+        <p>
+          La colonne <span class="quote">«&nbsp;<span class=
+          "quote">Type</span>&nbsp;»</span> de l'ESP devrait être
+          <code class="literal">EFI System</code>.
+        </p>
+        <p>
+          Si le système ou le disque dur est neuf, ou si c'est la première
+          installation d'un système UEFI sur le système, l'ESP n'existe
+          peut-être pas. Dans ce cas, créez une nouvelle partition, mettez un
+          système de fichier <code class="systemitem">vfat</code> dessus et
+          indiquez <span class="quote">«&nbsp;<span class="quote">EFI
+          system</span>&nbsp;»</span> comme type de partition. Voir les
+          instructions sur le périphérique de démarrage d'urgence plus haut
+          pour référence.
+        </p>
+        <div class="admon warning">
+          <img alt="[Avertissement]" src="../images/warning.png" />
+          <h3>
+            Avertissement
+          </h3>
+          <p>
+            Certaines (vieilles) implémentations UEFI peuvent demander que
+            l'ESP soit la première partition du disque.
+          </p>
+        </div>
+        <p>
+          Maintenant, en tant qu'utilisateur <code class=
+          "systemitem">root</code>, créez le point de montage pour l'ESP et
+          montez-la (remplacez <strong class=
+          "userinput"><code>sda1</code></strong> par le nœud de périphérique
+          correspondant à l'ESP)&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">mkdir -pv /boot/efi &amp;&amp;
+mount -v -t vfat /dev/sda1 /boot/efi</kbd></pre>
+        <p>
+          Ajoutez une entrée pour l'ESP dans <code class=
+          "filename">/etc/fstab</code> pour qu'elle soient montée
+          automatiquement au démarrage du système&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">cat &gt;&gt; /etc/fstab &lt;&lt; EOF</kbd>
+<code class="literal">/dev/sda1 /boot/efi vfat defaults 0 1</code>
+<kbd class="command">EOF</kbd></pre>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          Monter le système de fichiers des variables EFI
+        </h2>
+        <p>
+          L'installation de GRUB sur une plateforme UEFI demande que le
+          système de fichiers des variables EFI, <code class=
+          "systemitem">efivarfs</code> soit monté. En tant qu'utilisateur
+          <code class="systemitem">root</code>, montez-le s'il n'est pas
+          encore monté&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">mountpoint /sys/firmware/efi/efivars || mount -v -t efivarfs efivarfs /sys/firmware/efi/efivars</kbd></pre>
+        <p>
+          Maintenant ajoutez une entrée pour <code class=
+          "systemitem">efivarfs</code> dans <code class=
+          "filename">/etc/fstab</code> pour qu'il soit monté automatiquement
+          au démarrage du système&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">cat &gt;&gt; /etc/fstab &lt;&lt; EOF</kbd>
+<code class=
+"literal">efivarfs /sys/firmware/efi/efivars efivarfs defaults 0 0</code>
+<kbd class="command">EOF</kbd></pre>
+        <div class="admon warning">
+          <img alt="[Avertissement]" src="../images/warning.png" />
+          <h3>
+            Avertissement
+          </h3>
+          <p>
+            Si le système n'est pas démarré avec UEFI, le répertoire
+            <code class="filename">/sys/firmware/efi</code> n'existera pas.
+            Dans ce cas vous devriez démarrer le système en mode UEFI avec le
+            disque de démarrage d'urgence créé plus haut.
+          </p>
+        </div>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          Mettre en place la configuration
+        </h2>
+        <p>
+          Sur les systèmes UEFI, GRUB fonctionne en installant une
+          application EFI (un type d'exécutable spécial) dans <code class=
+          "filename">/boot/efi/EFI/[id]/grubx64.efi</code>, où <code class=
+          "filename">/boot/efi</code> est le point de montage de l'ESP et
+          <code class="literal">[id]</code> est remplacé par un identifiant
+          spécifié à la ligne de commande <span class=
+          "command"><strong>grub-install</strong></span>. GRUB créera une
+          entrée dans les variables EFI contenant le chemin <code class=
+          "literal">EFI/[id]/grubx64.efi</code> pour que le micrologiciel
+          puisse trouver <code class="filename">grubx64.efi</code> et le
+          charger.
+        </p>
+        <p>
+          <code class="filename">grubx64.efi</code> est très léger (136 Ko
+          pour GRUB-2.06~rc1) donc il n'utilisera pas de place dans l'ESP.
+          Une taille typique d'ESP est 100 Mo (pour le chargeur d'amorçage de
+          Windows, qui prend environ 50 Mo dans l'ESP). Une fois <code class=
+          "filename">grubx64.efi</code> chargé par le micrologiciel, il
+          chargera les modules GRUB dans la partition de démarrage.
+          L'emplacement par défaut est <code class=
+          "filename">/boot/grub</code>.
+        </p>
+        <p>
+          En tant qu'utilisateur <code class="systemitem">root</code>,
+          installez les fichiers de GRUB dans <code class=
+          "filename">/boot/efi/EFI/LFS/grubx64.efi</code> et <code class=
+          "filename">/boot/grub</code>. Ensuite paramétrez l'entrée de
+          démarrage dans les variables EFI&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">grub-install --bootloader-id=LFS --recheck</kbd></pre>
+        <p>
+          Si l'installation se passe correctement, la sortie devrait
+          être&nbsp;:
+        </p>
+        <pre class="screen"><code class=
+        "literal">Installing for x86_64-efi platform.
+Installation finished. No error reported.</code></pre>
+        <p>
+          Tapez <span class="command"><strong>efibootmgr</strong></span> pour
+          revérifier la configuration de démarrage EFI. Voici un exemple de
+          sortie&nbsp;:
+        </p>
+        <pre class="screen"><code class="literal">BootCurrent: 0000
+Timeout: 1 seconds
+BootOrder: 0005,0000,0002,0001,0003,0004
+Boot0000* ARCH
+Boot0001* UEFI:CD/DVD Drive
+Boot0002* Windows Boot Manager
+Boot0003* UEFI:Removable Device
+Boot0004* UEFI:Network Device
+Boot0005* LFS</code></pre>
+        <p>
+          Remarquez que <code class="literal">0005</code> est en premier dans
+          <code class="literal">BootOrder</code> et que <code class=
+          "literal">Boot0005</code> est <code class="literal">LFS</code>.
+          Cela signifie qu'au prochain démarrage, la version de GRUB
+          installée par LFS sera utilisée pour démarrer le système.
+        </p>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          Création du fichier de configuration de GRUB
+        </h2>
+        <p>
+          Générez <code class="filename">/boot/grub/grub.cfg</code> pour
+          configurer le menu de démarrage de GRUB&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">cat &gt; /boot/grub/grub.cfg &lt;&lt; EOF</kbd>
+<code class="literal"># Begin /boot/grub/grub.cfg
+set default=0
+set timeout=5
+
+insmod part_gpt
+insmod ext2
+set root=(hd0,2)
+
+if loadfont /boot/grub/fonts/unicode.pf2; then
+  set gfxmode=auto
+  insmod all_video
+  terminal_output gfxterm
+fi
+
+menuentry "GNU/Linux, Linux 5.10.17-lfs-10.1"  {
+  linux   /boot/vmlinuz-5.10.17-lfs-10.1 root=/dev/sda2 ro
+}
+
+menuentry "Firmware Setup" {
+  fwsetup
+}</code>
+<kbd class="command">EOF</kbd></pre>
+        <p>
+          Vous devez remplacer <code class="literal">(hd0,2)</code>,
+          <code class="literal">sda2</code> et <code class=
+          "literal">5.10.17-lfs-10.1</code> pour correspondre à votre
+          configuration.
+        </p>
+        <div class="admon note">
+          <img alt="[Note]" src="../images/note.png" />
+          <h3>
+            Note
+          </h3>
+          <p>
+            Du point de vu de GRUB, les fichiers sont relatifs à la partition
+            utilisée. Si vous utilisez une partition /boot séparée, supprimez
+            /boot dans les chemins précédents (vers le noyau et vers
+            <code class="filename">unicode.pf2</code>). Vous devrez aussi
+            changer la ligne set root pour pointer vers la partition de
+            démarrage.
+          </p>
+        </div>
+        <p>
+          L'entrée <code class="literal">Firmware Setup</code> peut être
+          utilisée pour entrer dans l'interface de configuration fournie par
+          le micrologiciel (parfois nommée <span class=
+          "quote">«&nbsp;<span class="quote">configuration
+          BIOS</span>&nbsp;»</span>).
+        </p>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          Démarrage double avec Windows
+        </h2>
+        <p>
+          Ajoutew une entrée de menu pour Windows dans <code class=
+          "filename">grub.cfg</code>&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">cat &gt;&gt; /boot/grub/grub.cfg &lt;&lt; EOF</kbd>
+<code class="literal"># Begin Windows addition
+
+menuentry "Windows 10" {
+  insmod fat
+  insmod chain
+  set root=(hd0,1)
+  chainloader /EFI/Microsoft/Boot/bootmgfw.efi
+}</code>
+<kbd class="command">EOF</kbd></pre>
+        <p>
+          Vous devriez remplacer <code class="literal">(hd0,1)</code> par le
+          nom désigné par GRUB pour l'ESP. Vous pouvez utiliser la directive
+          <code class="literal">chainloader</code> pour dire à GRUB de lancer
+          un autre exécutable EFI, dans ce cas le gestionnaire de démarrage
+          de Windows. Vous pouvez ajouter des outils supplémentaires au
+          format exécutable EFI (par exemple un shell EFI) dasn l'ESP et leur
+          créer des entrées GRUB.
+        </p>
+      </div>
+      <p class="updated">
+        Last updated on
+      </p>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="grub-efi.html" title=
+          "GRUB-2.06 pour EFI">Précédent</a>
+          <p>
+            GRUB-2.06 pour EFI
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="editors.html" title="Éditeurs">Suivant</a>
+          <p>
+            Éditeurs
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="filesystems.html" title=
+          "Chapitre&nbsp;5.&nbsp;Systèmes de fichiers et gestion de disque">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Au-delà de Linux® From Scratch (édition System V) - Version r10.1-914+">
+          Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

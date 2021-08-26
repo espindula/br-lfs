@@ -47,7 +47,7 @@ REVISION := $(shell (cd $(ORIGDIR); git rev-parse HEAD))
 BRANCH := $(shell (cd $(ORIGDIR); git ls-remote --exit-code . $(MILESTONE) >/dev/null 2>&1 || printf trunk))
 
 # Files that are needed for the build process once translations are generated.
-filestocopy := INSTALL obfuscate.sh README
+filestocopy := INSTALL obfuscate.sh README git-version.sh .git
 # Additional files that may require some changes.
 filestoget := $(filestocopy) general.ent gnome.ent packages.ent tidy.conf Makefile
 
