@@ -1,0 +1,347 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      4.4.&nbsp;Configurer l'environnement
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="lfs" id="lfs-r10.1-205-g49170-systemd+">
+    <div class="navheader">
+      <h4>
+        Linux From Scratch - Version r10.1-205-g49170-systemd+
+      </h4>
+      <h3>
+        Chapitre&nbsp;4.&nbsp;Dernières préparations
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="addinguser.html" title=
+          "Ajouter l'utilisateur LFS">Précédent</a>
+          <p>
+            Ajouter l'utilisateur LFS
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="aboutsbus.html" title=
+          "À propos des SBU">Suivant</a>
+          <p>
+            À propos des SBU
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter04.html" title=
+          "Chapitre&nbsp;4.&nbsp;Dernières préparations">Niveau supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="ch-preps-settingenviron" name=
+        "ch-preps-settingenviron"></a>4.4. Configurer l'environnement
+      </h1>
+      <p>
+        Configurez un bon environnement de travail en créant deux nouveaux
+        fichiers de démarrage pour le shell <span class=
+        "command"><strong>bash</strong></span>. En étant connecté en tant
+        qu'utilisateur <code class="systemitem">lfs</code>, lancez la
+        commande suivante pour créer un nouveau <code class=
+        "filename">.bash_profile</code>&nbsp;:
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">cat &gt; ~/.bash_profile &lt;&lt; "EOF"
+<code class=
+"literal">exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash</code>
+EOF</kbd></pre>
+      <p>
+        Lorsque vous êtes connecté en tant que <code class=
+        "systemitem">lfs</code>, le shell initial est habituellement un shell
+        de <span class="emphasis"><em>login</em></span> qui lit le fichier
+        <code class="filename">/etc/profile</code> de l'hôte (contenant
+        probablement quelques configurations et variables d'environnement) et
+        puis <code class="filename">.bash_profile</code>. La commande
+        <span class="command"><strong>exec env -i.../bin/bash</strong></span>
+        dans le fichier <code class="filename">.bash_profile</code> remplace
+        le shell en cours avec un nouveau ayant un environnement complètement
+        vide sauf pour les variables <code class="envar">HOME</code>,
+        <code class="envar">TERM</code>, et <code class="envar">PS1</code>.
+        Ceci nous assure qu'aucune variable d'environnement non souhaitée et
+        potentiellement dangereuse, provenant du système hôte, ne parvienne
+        dans l'environnement de construction. La technique utilisée ici
+        s'assure de créer un environnement propre.
+      </p>
+      <p>
+        La nouvelle instance du shell est un shell <span class=
+        "emphasis"><em>non-login</em></span>, qui ne lit donc pas, et
+        n'exécute pas, les fichiers <code class=
+        "filename">/etc/profile</code> ou <code class=
+        "filename">.bash_profile</code>, mais plutôt le fichier <code class=
+        "filename">.bashrc</code>. Créez maintenant le fichier <code class=
+        "filename">.bashrc</code>&nbsp;:
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">cat &gt; ~/.bashrc &lt;&lt; "EOF"
+<code class="literal">set +h
+umask 022
+LFS=/mnt/lfs
+LC_ALL=POSIX
+LFS_TGT=$(uname -m)-lfs-linux-gnu
+PATH=/usr/bin
+if [ ! -L /bin ]; then PATH=/bin:$PATH; fi
+PATH=$LFS/tools/bin:$PATH
+CONFIG_SITE=$LFS/usr/share/config.site
+export LFS LC_ALL LFS_TGT PATH CONFIG_SITE</code>
+EOF</kbd></pre>
+      <div class="variablelist">
+        <p class="title">
+          <strong>Voici la signification des paramètres dans <code class=
+          "filename">.bashrc</code></strong>
+        </p>
+        <dl class="variablelist">
+          <dt>
+            <span class="term"><em class="parameter"><code>set
+            +h</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              La commande <span class="command"><strong>set
+              +h</strong></span> désactive la fonction de hachage de
+              <span class="command"><strong>bash</strong></span>. D'habitude,
+              le hachage est une fonctionnalité utile—<span class=
+              "command"><strong>bash</strong></span> utilise une table de
+              hachage pour se rappeler le chemin complet des fichiers
+              exécutables pour éviter d'avoir à chercher dans <code class=
+              "envar">PATH</code> à chaque fois qu'il doit trouver le même
+              exécutable. Néanmoins, les nouveaux outils devraient être
+              utilisés dès leur installation. En désactivant la fonction de
+              hachage, le shell cherchera en permanence dans <code class=
+              "envar">PATH</code> lorsqu'un programme doit être exécuté.
+              Ainsi, le shell trouvera les nouveaux outils compilés dans
+              <code class="filename">$LFS/tools</code> dès qu'ils sont
+              disponibles et sans se rappeler la version précédente du même
+              programme mais dans un autre emplacement.
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class="parameter"><code>umask
+            022</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              Configurer le masque de création de fichier (umask) à 022 nous
+              assure que les nouveaux fichiers et répertoires créés sont
+              modifiables uniquement par leurs propriétaires mais lisibles et
+              exécutables par tout le monde (en supposant que l'appel système
+              <code class="function">open(2)</code> utilise les modes par
+              défaut, les nouveaux fichiers auront les droits 644 et les
+              répertoires 755).
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class=
+            "parameter"><code>LFS=/mnt/lfs</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              La variable <code class="envar">LFS</code> devrait être
+              configurée avec le point de montage choisi.
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class=
+            "parameter"><code>LC_ALL=POSIX</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              La variable <code class="envar">LC_ALL</code> contrôle les
+              paramètres linguistiques de certains programmes, faisant que
+              leurs messages suivent les conventions d'un pays spécifié.
+              Définir <code class="envar">LC_ALL</code> à <span class=
+              "quote">«&nbsp;<span class="quote">POSIX</span>&nbsp;»</span>
+              ou <span class="quote">«&nbsp;<span class=
+              "quote">C</span>&nbsp;»</span> (les deux étant équivalents)
+              garantit que tout fonctionnera comme prévu dans l'environnement
+              chroot.
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class="parameter"><code>LFS_TGT=(uname
+            -m)-lfs-linux-gnu</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              La variable <code class="envar">LFS_TGT</code> initialise une
+              description de la machine personnalisée mais compatible lors de
+              la construction de notre compilateur, de notre éditeur de liens
+              croisés et lors de la compilation de notre chaîne d'outils
+              temporaires. Vous trouverez plus d'informations dans les
+              <a class="xref" href="../partintro/toolchaintechnotes.html"
+              title="Notes techniques sur la chaîne d'outils">Notes
+              techniques sur la chaîne d'outils</a>.
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class=
+            "parameter"><code>PATH=/usr/bin</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              De nombreuses distributions modernes ont fusionné <code class=
+              "filename">/bin</code> et <code class=
+              "filename">/usr/bin</code>. Lorsque c'est le cas, la variable
+              <code class="envar">PATH</code> standard n'a besoin que
+              d'indiquer <code class="filename">/usr/bin</code> pour
+              l'environnement ue <a class="xref" href=
+              "../chapter06/chapter06.html" title=
+              "Chapitre&nbsp;6.&nbsp;Compilation croisée des outils temporaires">
+              Chapitre&nbsp;6</a>. Lorsque ce n'est pas le cas, la ligne
+              suivante ajoute <code class="filename">/bin</code> au chemin de
+              recherche.
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class="parameter"><code>if [ ! -L /bin ];
+            then PATH=/bin:$PATH; fi</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              Si <code class="filename">/bin</code> n'est pas un lien
+              symbolique, il doit être ajouté à la variable <code class=
+              "envar">PATH</code>.
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class=
+            "parameter"><code>PATH=$LFS/tools/bin:$PATH</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              En plaçant <code class="filename">$LFS/tools/bin</code> au
+              début du <code class="envar">PATH</code> standard, le
+              compilateur croisé installé au début du <a class="xref" href=
+              "../chapter05/chapter05.html" title=
+              "Chapitre&nbsp;5.&nbsp;Compilation d'une chaîne d'outils croisée">
+              Chapitre&nbsp;5</a> est repéré par le shell immédiatement après
+              son installation. Ceci, combiné à la désactivation du hachage,
+              limite le risque que le compilateur de l'hôte ne soit utilisé à
+              la place du compilateur croisé.
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class=
+            "parameter"><code>CONFIG_SITE=$LFS/usr/share/config.site</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              Dans le <a class="xref" href="../chapter05/chapter05.html"
+              title=
+              "Chapitre&nbsp;5.&nbsp;Compilation d'une chaîne d'outils croisée">
+              Chapitre&nbsp;5</a> et le <a class="xref" href=
+              "../chapter06/chapter06.html" title=
+              "Chapitre&nbsp;6.&nbsp;Compilation croisée des outils temporaires">
+              Chapitre&nbsp;6</a>, si cette variable n'est pas initialisée,
+              les scripts <span class=
+              "command"><strong>configure</strong></span> peuvent essayer de
+              charger des bouts de configuration de certaines distributions
+              dans <code class="filename">/usr/share/config.site</code> sur
+              le système hôte. Changer ce chemin permet d'éviter une
+              contamination potentielle par l'hôte.
+            </p>
+          </dd>
+          <dt>
+            <span class="term"><em class="parameter"><code>export
+            ...</code></em></span>
+          </dt>
+          <dd>
+            <p>
+              Bien que les commandes précédentes aient configurées certaines
+              variables, pour les rendre visibles à des sous-shell, nous les
+              exportons.
+            </p>
+          </dd>
+        </dl>
+      </div>
+      <div class="admon important">
+        <img alt="[Important]" src="../images/important.png" />
+        <h3>
+          Important
+        </h3>
+        <p>
+          Plusieurs distributions commerciales ajoutent une instance non
+          documentée de <code class="filename">/etc/bash.bashrc</code> à
+          l'initialisation de <span class=
+          "command"><strong>bash</strong></span>. Ce fichier peut modifier
+          l'environnement de l'utilisateur <code class=
+          "systemitem">lfs</code> d'une manière qui peut affecter la
+          construction des paquets critiques de LFS. Pour vous assurer que
+          l'environnement de l'utilisateur <code class=
+          "systemitem">lfs</code> est propre, vérifiez la présence de
+          <code class="filename">/etc/bash.bashrc</code> et, s'il est
+          présent, déplacez-le ailleurs. En tant qu'utilisateur <code class=
+          "systemitem">root</code>, lancez&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">[ ! -e /etc/bash.bashrc ] || mv -v /etc/bash.bashrc /etc/bash.bashrc.NOUSE</kbd></pre>
+        <p>
+          Après avoir fini d'utiliser l'utilisateur <code class=
+          "systemitem">lfs</code> à la fin du <a class="xref" href=
+          "../chapter07/chapter07.html" title=
+          "Chapitre&nbsp;7.&nbsp;Entrée dans le chroot et construction des outils temporaires supplémentaires">
+          Chapitre&nbsp;7</a>, vous pouvez restaurer <code class=
+          "filename">/etc/bash.bashrc</code> (si vous le souhaitez).
+        </p>
+        <p>
+          Remarquez que le paquet Bash de LFS que nous construisons dans la
+          <a class="xref" href="../chapter08/bash.html" title=
+          "8.34.&nbsp;Bash-5.1.8">Section&nbsp;8.34,
+          «&nbsp;Bash-5.1.8&nbsp;»</a> n'est pas configuré pour charger ou
+          exécuter <code class="filename">/etc/bash.bashrc</code>, donc ce
+          fichier est inutile sur un système LFS.
+        </p>
+      </div>
+      <p>
+        Enfin, pour avoir un environnement complètement préparé pour la
+        construction des outils temporaires, chargez le profil de
+        l'utilisateur tout juste créé&nbsp;:
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">source ~/.bash_profile</kbd></pre>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="addinguser.html" title=
+          "Ajouter l'utilisateur LFS">Précédent</a>
+          <p>
+            Ajouter l'utilisateur LFS
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="aboutsbus.html" title=
+          "À propos des SBU">Suivant</a>
+          <p>
+            À propos des SBU
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter04.html" title=
+          "Chapitre&nbsp;4.&nbsp;Dernières préparations">Niveau supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

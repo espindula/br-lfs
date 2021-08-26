@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      10.2.&nbsp;Créer le fichier /etc/fstab
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="lfs" id="lfs-r10.1-205-g49170-systemd+">
+    <div class="navheader">
+      <h4>
+        Linux From Scratch - Version r10.1-205-g49170-systemd+
+      </h4>
+      <h3>
+        Chapitre&nbsp;10.&nbsp;Rendre le système LFS amorçable
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="introduction.html" title=
+          "Introduction">Précédent</a>
+          <p>
+            Introduction
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="kernel.html" title=
+          "Linux-5.13.12">Suivant</a>
+          <p>
+            Linux-5.13.12
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter10.html" title=
+          "Chapitre&nbsp;10.&nbsp;Rendre le système LFS amorçable">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="ch-bootable-fstab" name="ch-bootable-fstab"></a>10.2. Créer le
+        fichier /etc/fstab
+      </h1>
+      <p>
+        Le fichier <code class="filename">/etc/fstab</code> est utilisé par
+        quelques programmes pour déterminer les systèmes de fichiers à monter
+        par défaut, dans quel ordre, et lesquels doivent être vérifiés
+        (recherche d'erreurs d'intégrité) avant le montage. Créez une
+        nouvelle table des systèmes de fichiers comme ceci&nbsp;:
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">cat &gt; /etc/fstab &lt;&lt; "EOF"
+<code class="literal"># Begin /etc/fstab
+
+# file system  mount-point  type     options             dump  fsck
+#                                                              order
+
+/dev/<em class=
+"replaceable"><code>&lt;xxx&gt;</code></em>     /            <em class=
+"replaceable"><code>&lt;fff&gt;</code></em>    defaults            1     1
+/dev/<em class=
+"replaceable"><code>&lt;yyy&gt;</code></em>     swap         swap     pri=1               0     0
+
+# End /etc/fstab</code>
+EOF</kbd></pre>
+      <p>
+        Remplacez <em class="replaceable"><code>&lt;xxx&gt;</code></em>,
+        <em class="replaceable"><code>&lt;yyy&gt;</code></em> et <em class=
+        "replaceable"><code>&lt;fff&gt;</code></em> par les valeurs
+        appropriées pour votre système, par exemple <code class=
+        "filename">sda2</code>, <code class="filename">sda5</code> et
+        <code class="systemitem">ext4</code>. Pour tous les détails sur les
+        six champs de cette table, voyez <span class="command"><strong>man 5
+        fstab</strong></span>.
+      </p>
+      <p>
+        Les systèmes de fichiers ayant pour origine MS-DOS ou Windows (c-à-d.
+        vfat, ntfs, smbfs, cifs, iso9660, udf) ont besoin d'une option
+        spéciale, utf8, pour que les caractères non-ascii dans les noms de
+        fichiers soient interprétés correctement. Pour les paramètres
+        linguistiques non-utf-8, la valeur de <code class=
+        "option">iocharset</code> devrait être la même que le jeu de
+        caractères de votre locale, ajustée de telle sorte que le noyau la
+        comprenne. Cela fonctionne si la définition du codage adéquat (que
+        vous trouverez sous File systems -&gt; Native Language Support lors
+        de la configuration du noyau) a été compilée en dur dans le noyau ou
+        en module. Cependant, si le jeu de caractères des paramètres
+        linguistiques est UTF-8, l'option correspondante <code class=
+        "option">iocharset=utf8</code> rendrait le système de fichier
+        sensible à la casse. Pour corriger cela, utilisez l'option spéciale
+        <code class="option">utf8</code> au lieu de <code class=
+        "option">iocharset=utf8</code> pour les paramètres linguistiques
+        UTF-8. L'option <span class="quote">«&nbsp;<span class=
+        "quote">codepage</span>&nbsp;»</span> est aussi nécessaire aux
+        systèmes de fichiers vfat et smbfs. Elle devrait être paramétrée pour
+        correspondre à la page de code utilisée sous MS-DOS dans votre pays.
+        Par exemple, pour monter des lecteurs flash USB, un utilisateur
+        ru_RU.KOI8-R aurait besoin de ce qui suit dans la partie des options
+        de sa ligne de montage dans <code class=
+        "filename">/etc/fstab</code>&nbsp;:
+      </p>
+      <pre class="screen"><code class=
+      "literal">noauto,user,quiet,showexec,codepage=866,iocharset=koi8r</code></pre>
+      <p>
+        Le fragment d'options correspondantes pour les utilisateurs
+        ru_RU.UTF-8 est&nbsp;:
+      </p>
+      <pre class="screen"><code class=
+      "literal">noauto,user,quiet,showexec,codepage=866,utf8</code></pre>
+      <p>
+        Remarquez que l'utilisation de <code class="option">iocharset</code>
+        se fait par défaut pour <code class="literal">iso8859-1</code> (ce
+        qui laisse le système de fichiers insensible à la casse) et l'option
+        <code class="option">utf8</code> dit au noyau de convertir les noms
+        de fichiers en UTF-8 pour qu'ils puissent être interprétés dans les
+        paramètres linguistiques UTF-8.
+      </p>
+      <p>
+        Il est aussi possible de spécifier les valeurs de page de code et de
+        codage entrée/sortie (iocharset) par défaut pour certains systèmes de
+        fichiers pendant la configuration du noyau. Les paramètres pertinents
+        sont nommés <span class="quote">«&nbsp;<span class="quote">Default
+        NLS Option</span>&nbsp;»</span> (<code class=
+        "option">CONFIG_NLS_DEFAULT)</code>, <span class=
+        "quote">«&nbsp;<span class="quote">Default Remote NLS
+        Option</span>&nbsp;»</span> (<code class=
+        "option">CONFIG_SMB_NLS_DEFAULT</code>), <span class=
+        "quote">«&nbsp;<span class="quote">Default codepage for
+        FAT</span>&nbsp;»</span> (<code class=
+        "option">CONFIG_FAT_DEFAULT_CODEPAGE</code>) et <span class=
+        "quote">«&nbsp;<span class="quote">Default iocharset for
+        FAT</span>&nbsp;»</span> (<code class=
+        "option">CONFIG_FAT_DEFAULT_IOCHARSET</code>). Il n'y a aucun moyen
+        de spécifier ces paramètres pour les systèmes de fichiers ntfs au
+        moment de la compilation du noyau.
+      </p>
+      <p>
+        Il est possible de rendre le système de fichiers ext3 résistant aux
+        coupures de courant pour certains types de disques durs. Pour cela,
+        ajoutez l'option de montage <code class="option">barrier=1</code> à
+        l'entrée appropriée dans <code class="filename">/etc/fstab</code>.
+        Pour vérifier si le périphérique prend en charge cette option, lancez
+        <a class="ulink" href=
+        "http://fr.linuxfromscratch.org/blfs/../view/blfs-svn/general/hdparm.html">
+        hdparm</a> sur le périphérique où elle s'appliquera. Par exemple,
+        si&nbsp;:
+      </p>
+      <pre class="userinput"><kbd class=
+      "command">hdparm -I /dev/sda | grep NCQ</kbd></pre>
+      <p>
+        ne retourne pas une sortie non vide, l'option est prise en charge.
+      </p>
+      <p>
+        Remarque&nbsp;: Les partitions basées sur <span class=
+        "foreignphrase"><em class="foreignphrase">Logical Volume
+        Management</em></span> (LVM) ne peuvent pas utiliser l'option
+        <code class="option">barrier</code>.
+      </p>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="introduction.html" title=
+          "Introduction">Précédent</a>
+          <p>
+            Introduction
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="kernel.html" title=
+          "Linux-5.13.12">Suivant</a>
+          <p>
+            Linux-5.13.12
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter10.html" title=
+          "Chapitre&nbsp;10.&nbsp;Rendre le système LFS amorçable">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

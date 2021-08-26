@@ -1,0 +1,496 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      9.3.&nbsp;Manipulation des périphériques et modules
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="lfs" id="lfs-r10.1-205-g49170-systemd+">
+    <div class="navheader">
+      <h4>
+        Linux From Scratch - Version r10.1-205-g49170-systemd+
+      </h4>
+      <h3>
+        Chapitre&nbsp;9.&nbsp;Configuration du système
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="network.html" title=
+          "Configuration générale du réseau">Précédent</a>
+          <p>
+            Configuration générale du réseau
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="symlinks.html" title=
+          "Gérer les périphériques">Suivant</a>
+          <p>
+            Gérer les périphériques
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter09.html" title=
+          "Chapitre&nbsp;9.&nbsp;Configuration du système">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="ch-config-udev" name="ch-config-udev"></a>9.3. Manipulation
+        des périphériques et modules
+      </h1>
+      <p>
+        Au <a class="xref" href="../chapter08/chapter08.html" title=
+        "Chapitre&nbsp;8.&nbsp;Installer les logiciels du système de base">Chapitre&nbsp;8</a>,
+        nous avons installé le paquet udev en construisant <span class=
+        "phrase">systemd</span>. Avant d'entrer dans les détails concernant
+        son fonctionnement, un bref historique des méthodes précédentes de
+        gestion des périphériques est nécessaire.
+      </p>
+      <p>
+        Traditionnellement, les systèmes Linux utilisaient une méthode de
+        création de périphériques statiques avec laquelle un grand nombre de
+        nœuds de périphériques étaient créés sous <code class=
+        "filename">/dev</code> (quelques fois littéralement des milliers de
+        nœuds), que le matériel correspondant existait ou non. Ceci était
+        fait le plus souvent avec un script <span class=
+        "command"><strong>MAKEDEV</strong></span>, qui contient des appels au
+        programme <span class="command"><strong>mknod</strong></span> avec
+        les numéros de périphériques majeurs et mineurs pour chaque
+        périphérique possible qui pourrait exister dans le monde.
+      </p>
+      <p>
+        En utilisant la méthode udev, seuls les nœuds des périphériques
+        détectés par le noyau sont créés. Comme ces nœuds de périphériques
+        seront créés à chaque lancement du système, ils seront stockés dans
+        un système de fichiers <code class="systemitem">devtmpfs</code> (un
+        système de fichiers virtuel qui réside entièrement dans la mémoire du
+        système). Les nœuds de périphériques ne requièrent pas beaucoup
+        d'espace, donc la mémoire utilisée est négligeable.
+      </p>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.3.1. Historique
+        </h2>
+        <p>
+          En février 2000, un nouveau système de fichiers appelé <code class=
+          "systemitem">devfs</code> a été intégré au noyau 2.3.46 et rendu
+          disponible pour la série 2.4 des noyaux stables. Bien qu'il soit
+          présent dans les sources du noyau, cette méthode de création
+          dynamique des périphériques n'a jamais reçu un support
+          inconditionnel des développeurs du noyau.
+        </p>
+        <p>
+          Le principal problème de l'approche adopté par <code class=
+          "systemitem">devfs</code> était la façon dont il gérait la
+          détection, la création et le nommage des périphériques. Ce dernier
+          problème, le nommage des périphériques, était peut-être le plus
+          critique. Il est généralement accepté que s'il est possible de
+          configurer les noms des périphériques, alors la politique de
+          nommage des périphériques revient à l'administrateur du système, et
+          non imposée par quelque développeur. Le système de fichiers
+          <code class="systemitem">devfs</code> souffrait aussi de
+          restrictions particulières inhérentes à sa conception et qui ne
+          pouvaient être corrigées sans une revue importante du noyau. Il a
+          aussi été marqué comme obsolète pendant une longue période —&nbsp;à
+          cause d'un manque de maintenance&nbsp;— et a finalement été
+          supprimé du noyau en juin 2006.
+        </p>
+        <p>
+          Avec le développement de la branche instable 2.5 du noyau, sortie
+          ensuite avec la série 2.6 des noyaux stables, un nouveau système de
+          fichiers virtuel appelé <code class="systemitem">sysfs</code> est
+          arrivé. Le rôle de <code class="systemitem">sysfs</code> est
+          d'exporter une vue de la configuration matérielle du système pour
+          les processus en espace utilisateur. Avec cette représentation
+          visible en espace utilisateur, la possibilité de développer un
+          remplacement en espace utilisateur de <code class=
+          "systemitem">devfs</code> est devenu beaucoup plus réaliste.
+        </p>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.3.2. Implémentation d'Udev
+        </h2>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.2.1. Sysfs
+          </h3>
+          <p>
+            Le système de fichier <code class="systemitem">sysfs</code> a été
+            brièvement mentionné ci-dessus. On pourrait se demander comment
+            <code class="systemitem">sysfs</code> connaît les périphériques
+            présents sur un système et quels numéros de périphériques
+            devraient être utilisés. Les pilotes qui ont été compilés
+            directement dans le noyau enregistrent leurs objets avec le
+            <code class="systemitem">sysfs</code> (en interne, devtmpfs)
+            quand ils sont détectés par le noyau. Pour les pilotes compilés
+            en tant que modules, cet enregistrement surviendra quand le
+            module sera chargé. Une fois que le système de fichier
+            <code class="systemitem">sysfs</code> est monté (sur /sys), les
+            données enregistrées par les pilotes avec <code class=
+            "systemitem">sysfs</code> sont disponibles pour les processus en
+            espace utilisateur ainsi que pour udevd pour traitement (y
+            compris des modifications aux nœuds de périphériques).
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.2.2. Création de nœuds de périphérique
+          </h3>
+          <p>
+            Les fichiers de périphérique sont créés par le noyau avec le
+            système de fichiers <code class="systemitem">devtmpfs</code>.
+            Tout pilote souhaitant enregistrer un nœud de périphérique ira
+            dans le <code class="systemitem">devtmpfs</code> (par le cœur du
+            pilote) pour le faire. Quand une instance <code class=
+            "systemitem">devtmpfs</code> est montée sur <code class=
+            "filename">/dev</code>, le nœud de périphérique sera créé dès le
+            départ avec un nom, des droits et un propriétaire figés.
+          </p>
+          <p>
+            Peu de temps après, le noyau enverra un uevent à <span class=
+            "command"><strong>udevd</strong></span>. À partir des règles
+            indiquées dans les fichiers contenus dans les répertoires
+            <code class="filename">/etc/udev/rules.d</code>, <code class=
+            "filename">/usr/lib/udev/rules.d</code> et <code class=
+            "filename">/run/udev/rules.d</code>, <span class=
+            "command"><strong>udevd</strong></span> créera les liens
+            symboliques supplémentaires vers le nœud de périphérique, ou bien
+            il modifiera ses droits, son propriétaire ou son groupe, ou
+            l'entrée dans la base de données interne d'<span class=
+            "command"><strong>udevd</strong></span> concernant cet objet.
+          </p>
+          <p>
+            Les règles de ces trois répertoires sont numérotées et les trois
+            répertoires sont fusionnés. Si <span class=
+            "command"><strong>udevd</strong></span> ne peut pas trouver de
+            règles pour le périphérique qu'il crée, il en donnera la
+            propriété et les droits à n'importe quel <code class=
+            "systemitem">devtmpfs</code> utilisé au départ.
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            <a id="module-loading" name="module-loading"></a>9.3.2.3.
+            Chargement d'un module
+          </h3>
+          <p>
+            Il se peut que les pilotes des périphériques compilés en module
+            aient aussi des alias compilés. Les alias sont visibles dans la
+            sortie du programme <span class=
+            "command"><strong>modinfo</strong></span> et sont souvent liés
+            aux identifiants de bus spécifiques des périphériques pris en
+            charge par un module. Par exemple, le pilote <span class=
+            "emphasis"><em>snd-fm801</em></span> prend en charge les
+            périphériques PCI ayant l'ID fabricant 0x1319 et l'ID de
+            périphérique 0x0801 a aussi un alias <span class=
+            "quote">«&nbsp;<span class=
+            "quote">pci:v00001319d00000801sv*sd*bc04sc01i*</span>&nbsp;»</span>.
+            Pour la plupart des périphériques, le pilote du bus définit
+            l'alias du pilote qui gérerait le périphérique via <code class=
+            "systemitem">sysfs</code>. Par exemple, le fichier <code class=
+            "filename">/sys/bus/pci/devices/0000:00:0d.0/modalias</code>
+            pourrait contenir la chaîne <span class=
+            "quote">«&nbsp;<span class=
+            "quote">pci:v00001319d00000801sv00001319sd00001319bc04sc01i00</span>&nbsp;»</span>.
+            Les règles par défaut fournies par Udev feront que <span class=
+            "command"><strong>udevd</strong></span> appellera <span class=
+            "command"><strong>/sbin/modprobe</strong></span> avec le contenu
+            de la variable d'environnement de l'uevent <code class=
+            "envar">MODALIAS</code> (qui devrait être la même que le contenu
+            du fichier <code class="filename">modalias</code> dans sysfs),
+            donc chargera tous les modules dont les alias correspondent à
+            cette chaîne après les expansions génériques.
+          </p>
+          <p>
+            Dans cet exemple, cela signifie que, outre <span class=
+            "emphasis"><em>snd-fm801</em></span>, le pilote obsolète (et non
+            désiré) <span class="emphasis"><em>forte</em></span> sera chargé
+            s'il est disponible. Voir ci-dessous les moyens d'empêcher le
+            chargement des modules indésirables.
+          </p>
+          <p>
+            Le noyau lui-même est aussi capable de charger des modules de
+            protocole réseau, de prise en charge pour des systèmes de
+            fichiers et de prise en charge native des langues sur demande.
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.2.4. Gestion des périphériques dynamiques ou montables à
+            chaud
+          </h3>
+          <p>
+            Quand vous connectez un périphérique, comme un lecteur MP3 USB,
+            le noyau reconnaît que le périphérique est maintenant connecté et
+            génère un uevent. Cet uevent est alors géré par <span class=
+            "command"><strong>udevd</strong></span> comme décrit ci-dessus.
+          </p>
+        </div>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.3.3. Problèmes avec le chargement des modules et la création des
+          périphériques
+        </h2>
+        <p>
+          Il existe quelques problèmes connus pour la création automatique
+          des nœuds de périphériques.
+        </p>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.3.1. Un module noyau n'est pas chargé automatiquement
+          </h3>
+          <p>
+            Udev ne chargera un module que s'il a un alias spécifique au bus
+            et que le pilote du bus envoie correctement les alias nécessaires
+            vers <code class="systemitem">sysfs</code>. Sinon, il faut
+            organiser le chargement des modules par d'autres moyens. Avec
+            Linux-5.13.12, udev est connu pour charger les pilotes
+            correctement écrits pour les périphériques INPUT, IDE, PCI, USB,
+            SCSI, SERIO et FireWire.
+          </p>
+          <p>
+            Pour déterminer si le pilote du périphérique dont vous avez
+            besoin prend en charge udev, lancez <span class=
+            "command"><strong>modinfo</strong></span> avec le nom du module
+            en argument. Puis, essayez de localiser le répertoire du
+            périphérique sous <code class="filename">/sys/bus</code> et
+            vérifiez s'il y a un fichier <code class=
+            "filename">modalias</code>.
+          </p>
+          <p>
+            Si le fichier <code class="filename">modalias</code> existe dans
+            <code class="systemitem">sysfs</code>, alors le pilote prend en
+            charge le périphérique et peut lui parler directement, mais s'il
+            n'a pas d'alias, c'est un bogue dans le pilote. Chargez le pilote
+            sans l'aide d'udev et attendez que le problème soit corrigé plus
+            tard.
+          </p>
+          <p>
+            S'il n'y a pas de fichier <code class="filename">modalias</code>
+            dans le bon répertoire sous <code class=
+            "filename">/sys/bus</code>, cela signifie que les développeurs du
+            noyau n'ont pas encore ajouté de prise en charge de modalias à ce
+            type de bus. Avec Linux-5.13.12, c'est le cas pour les bus ISA.
+            Attendez que ce problème soit réparé dans les versions
+            ultérieures du noyau.
+          </p>
+          <p>
+            Udev n'a pas du tout pour but de charger des pilotes <span class=
+            "quote">«&nbsp;<span class="quote">wrapper</span>&nbsp;»</span>
+            (qui emballent un autre pilote) comme <span class=
+            "emphasis"><em>snd-pcm-oss</em></span> et des pilotes non
+            matériels comme <span class="emphasis"><em>loop</em></span>.
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.3.2. Un module du noyau n'est pas chargé automatiquement et
+            udev n'est pas prévu pour le charger
+          </h3>
+          <p>
+            Si le module <span class="quote">«&nbsp;<span class=
+            "quote">enveloppe</span>&nbsp;»</span> n'améliore que la
+            fonctionnalité fournie par un autre module (comme <span class=
+            "emphasis"><em>snd-pcm-oss</em></span> améliore la fonctionnalité
+            de <span class="emphasis"><em>snd-pcm</em></span> en rendant les
+            cartes son disponibles pour les applications OSS), configurez
+            <span class="command"><strong>modprobe</strong></span> pour
+            charger l'enveloppe après qu'udev a chargé le module enveloppé.
+            Pour cela, ajoutez une ligne <span class=
+            "quote">«&nbsp;<span class="quote">softdep</span>&nbsp;»</span>
+            dans tous les fichiers <code class=
+            "filename">/etc/modprobe.d/<em class=
+            "replaceable"><code>&lt;filename&gt;</code></em>.conf</code>. Par
+            exemple&nbsp;:
+          </p>
+          <pre class="screen"><code class=
+          "literal">softdep snd-pcm post: snd-pcm-oss</code></pre>
+          <p>
+            Remarquez que la commande <span class="quote">«&nbsp;<span class=
+            "quote">softdep</span>&nbsp;»</span> autorise aussi les
+            dépendances <code class="literal">pre:</code>, ou un mélange de
+            <code class="literal">pre:</code> et de <code class=
+            "literal">post:</code>. Voir la page de manuel de <code class=
+            "filename">modprobe.d(5)</code> pour plus d'informations sur la
+            syntaxe et les possibilités de <span class=
+            "quote">«&nbsp;<span class="quote">softdep</span>&nbsp;»</span>.
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.3.3. Udev charge un module indésirable
+          </h3>
+          <p>
+            Ne compilez pas le module, ou mettez-le en liste noire dans un
+            fichier <code class=
+            "filename">/etc/modprobe.d/blacklist.conf</code> comme nous
+            l'avons fait avec le module <span class=
+            "emphasis"><em>forte</em></span> dans l'exemple ci-dessous&nbsp;:
+          </p>
+          <pre class="screen"><code class=
+          "literal">blacklist forte</code></pre>
+          <p>
+            Les modules en liste noire peuvent toujours être chargés
+            manuellement avec la commande explicite <span class=
+            "command"><strong>modprobe</strong></span>.
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.3.4. Udev crée mal un périphérique, ou crée un mauvais lien
+            symbolique
+          </h3>
+          <p>
+            Cela se produit habituellement si une règle correspond à un
+            périphérique de façon imprévue. Par exemple, une règle lacunaire
+            peut correspondre à un disque SCSI (comme désiré) et au
+            périphérique SCSI générique du même fabricant (de façon
+            incorrecte). Trouvez la règle défectueuse et affinez-la, à l'aide
+            de la commande <span class="command"><strong>udevadm
+            info</strong></span>.
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.3.5. Une règle Udev fonctionne de manière non fiable
+          </h3>
+          <p>
+            Cela peut être une autre manifestation du problème précédent.
+            Sinon, et si votre règle utilise les attributs de <code class=
+            "systemitem">sysfs</code>, il se peut que ce soit un problème de
+            timing du noyau, sur le point d'être corrigé dans les noyaux
+            ultérieurs. Pour le moment, vous pouvez contourner en créant une
+            règle qui attend l'attribut <code class="systemitem">sysfs</code>
+            utilisé et en le mettant dans le fichier <code class=
+            "filename">/etc/udev/rules.d/10-wait_for_sysfs.rules</code>
+            (créez ce fichier s'il n'existe pas). Merci d'informer la liste
+            de développement de LFS si vous faites ainsi et que cela vous
+            aide.
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.3.6. Udev ne crée pas un périphérique
+          </h3>
+          <p>
+            Les textes suivants supposent que le pilote est compilé
+            statiquement dans le noyau ou bien sont déjà chargés comme
+            modules et que vous avez déjà vérifié que udev ne crée pas un
+            périphérique mal nommé.
+          </p>
+          <p>
+            Udev n'a pas les informations pour créer un nœud si un pilote
+            noyau n'exporte pas ses informations vers <code class=
+            "systemitem">sysfs</code>. C'est le plus souvent le cas des
+            pilotes tiers ne provenant pas du noyau. Créez un nœud de
+            périphérique statique dans <code class=
+            "filename">/usr/lib/udev/devices</code> avec les numéros
+            majeurs/mineurs appropriés (regardez le fichier <code class=
+            "filename">devices.txt</code> dans la documentation du noyau du
+            vendeur du pilote tiers). Le nœud statique sera copié dans
+            <code class="filename">/dev</code> par <span class=
+            "command"><strong>udev</strong></span>.
+          </p>
+        </div>
+        <div class="sect3">
+          <h3 class="sect3">
+            9.3.3.7. L'ordre de nommage des périphériques change de manière
+            aléatoire après le redémarrage
+          </h3>
+          <p>
+            Cela est dû au fait qu'udev, par nature, gère les uevents et
+            charge les modules en parallèle, donc dans un ordre imprévisible.
+            Cela ne sera jamais <span class="quote">«&nbsp;<span class=
+            "quote">corrigé</span>&nbsp;»</span>. Vous ne devriez pas
+            supposer que les noms des périphériques du noyau sont stables.
+            Créez plutôt vos propres règles qui rendent les liens symboliques
+            stables basés sur des attributs stables du périphérique, comme
+            une série de nombres ou la sortie de divers utilitaires *_id
+            installés par udev. Voir la <a class="xref" href="symlinks.html"
+            title="9.4.&nbsp;Gérer les périphériques">Section&nbsp;9.4,
+            «&nbsp;Gérer les périphériques&nbsp;»</a> et la <a class="xref"
+            href="network.html" title=
+            "9.2.&nbsp;Configuration générale du réseau">Section&nbsp;9.2,
+            «&nbsp;Configuration générale du réseau&nbsp;»</a> pour des
+            exemples.
+          </p>
+        </div>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.3.4. Lecture utile
+        </h2>
+        <p>
+          Des documentations supplémentaires sont disponibles sur les sites
+          suivants&nbsp;:
+        </p>
+        <div class="itemizedlist">
+          <ul>
+            <li class="listitem">
+              <p>
+                A Userspace Implementation of <code class=
+                "systemitem">devfs</code> <a class="ulink" href=
+                "http://www.kroah.com/linux/talks/ols_2003_udev_paper/Reprint-Kroah-Hartman-OLS2003.pdf">
+                http://www.kroah.com/linux/talks/ols_2003_udev_paper/Reprint-Kroah-Hartman-OLS2003.pdf</a>
+                (NdT&nbsp;: Une implémentation en espace utilisateur de
+                devfs)
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                The <code class="systemitem">sysfs</code> Filesystem
+                <a class="ulink" href=
+                "http://www.kernel.org/pub/linux/kernel/people/mochel/doc/papers/ols-2005/mochel.pdf">
+                http://www.kernel.org/pub/linux/kernel/people/mochel/doc/papers/ols-2005/mochel.pdf</a>
+                (NdT&nbsp;: Le système de fichiers <code class=
+                "systemitem">sysfs</code>)
+              </p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="network.html" title=
+          "Configuration générale du réseau">Précédent</a>
+          <p>
+            Configuration générale du réseau
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="symlinks.html" title=
+          "Gérer les périphériques">Suivant</a>
+          <p>
+            Gérer les périphériques
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter09.html" title=
+          "Chapitre&nbsp;9.&nbsp;Configuration du système">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

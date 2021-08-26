@@ -1,0 +1,485 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      9.10.&nbsp;Utilisation et configuration de Systemd
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="lfs" id="lfs-r10.1-205-g49170-systemd+">
+    <div class="navheader">
+      <h4>
+        Linux From Scratch - Version r10.1-205-g49170-systemd+
+      </h4>
+      <h3>
+        Chapitre&nbsp;9.&nbsp;Configuration du système
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="etcshells.html" title=
+          "Créaction du fichier /etc/shells">Précédent</a>
+          <p>
+            Créaction du fichier /etc/shells
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="../chapter10/chapter10.html" title=
+          "Rendre le système LFS amorçable">Suivant</a>
+          <p>
+            Rendre le système LFS amorçable
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter09.html" title=
+          "Chapitre&nbsp;9.&nbsp;Configuration du système">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="ch-config-systemd-custom" name=
+        "ch-config-systemd-custom"></a>9.10. Utilisation et configuration de
+        Systemd
+      </h1>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.1. Configuration basique
+        </h2>
+        <p>
+          Le fichier <code class="filename">/etc/systemd/system.conf</code>
+          contient un ensemble d'options pour contrôler les opérations de
+          base de systemd. Le fichier par défaut a toutes ses entrées
+          commentées indiquant les paramètres par défaut. Ce fichier est
+          l'endroit où le niveau de journalisation (log) peut être modifié
+          ainsi que les paramètres de base de journalisation. Voir la page de
+          manuel de <code class="filename">systemd-system.conf(5)</code> pour
+          plus de détails à propos de chaque option de configuration.
+        </p>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.2. Désactiver l'effacement de l'écran durant le démarrage
+        </h2>
+        <p>
+          Le comportement normal de systemd est d'effacer l'écran à la fin de
+          la séquence de démarrage. Si désiré, ce comportement peut être
+          changé en exécutant la commande suivante&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">mkdir -pv /etc/systemd/system/getty@tty1.service.d
+
+cat &gt; /etc/systemd/system/getty@tty1.service.d/noclear.conf &lt;&lt; EOF
+<code class="literal">[Service]
+TTYVTDisallocate=no</code>
+EOF</kbd></pre>
+        <p>
+          Les messages de démarrage peuvent toujours être examinés en
+          utilisant la commande <strong class="userinput"><code>journalctl
+          -b</code></strong> en tant qu'utilisateur <code class=
+          "systemitem">root</code>.
+        </p>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.3. Désactiver tmpfs pour /tmp
+        </h2>
+        <p>
+          Par défaut, <code class="filename">/tmp</code> est créé comme un
+          tmpfs. Si vous ne le voulez pas, il est possible de l'en empêcher
+          de la manière suivante&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">ln -sfv /dev/null /etc/systemd/system/tmp.mount</kbd></pre>
+        <p>
+          Autrement, si vous souhaitez avoir une partition séparée pour
+          <code class="filename">/tmp</code>, spécifiez-la dans une entrée de
+          <code class="filename">/etc/fstab</code>.
+        </p>
+        <div class="admon warning">
+          <img alt="[Avertissement]" src="../images/warning.png" />
+          <h3>
+            Avertissement
+          </h3>
+          <p>
+            Ne créez pas le lien symbolique ci-dessus si vous utilisez une
+            partition séparée pour <code class="filename">/tmp</code>. Cela
+            empêche la partition racine (/) d'être remontée en
+            lecture-écriture et rend le système inutilisable au démarrage.
+          </p>
+        </div>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.4. Configurer la création et la suppression automatique de
+          fichiers
+        </h2>
+        <p>
+          Il existe de nombreux services pour créer ou supprimer des fichiers
+          ou des dossiers&nbsp;:
+        </p>
+        <div class="itemizedlist">
+          <ul>
+            <li class="listitem">
+              <p>
+                systemd-tmpfiles-clean.service
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                systemd-tmpfiles-setup-dev.service
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                systemd-tmpfiles-setup.service
+              </p>
+            </li>
+          </ul>
+        </div>
+        <p>
+          L'emplacement système des fichiers de configuration est
+          <code class="filename">/usr/lib/tmpfiles.d/*.conf</code>. Les
+          fichiers locaux de configuration sont dans <code class=
+          "filename">/etc/tmpfiles.d</code>. Les fichiers dans <code class=
+          "filename">/etc/tmpfiles.d</code> prévallent sur les fichiers du
+          même nom dans <code class="filename">/usr/lib/tmpfiles.d</code>.
+          Voir la page de manuel <code class="filename">tmpfiles.d(5)</code>
+          pour plus de détails sur le format de fichier.
+        </p>
+        <p>
+          Remarquez que la syntaxe pour les fichiers <code class=
+          "filename">/usr/lib/tmpfiles.d/*.conf</code> peut être déroutante.
+          Par exemple, la suppression de fichiers par défaut dans le
+          répertoire /tmp se trouve dans <code class=
+          "filename">/usr/lib/tmpfiles.d/tmp.conf</code> à cette ligne&nbsp;:
+        </p>
+        <pre class="screen">q /tmp 1777 root root 10d</pre>
+        <p>
+          . Le champ type, q, parle de créer un sous-volume avec des quotas,
+          ce qui n'est vraiment possible que pour les système de fichiers
+          btrfs. Il référence le type v qui lui-même référence le type d
+          (répertoire). Cela crée ensuite le répertoire spécifié s'il n'est
+          pas présent et ajuste ensuite les permissions et la propriété comme
+          indiqué. Le contenu du répertoire sera sujet au nettoyage basé sur
+          l'âge si l'argument d'âge est spécifié.
+        </p>
+        <p>
+          Si les paramètres par défaut ne sont pas désirés, alors vous devrez
+          copier le fichier vers <code class=
+          "filename">/etc/tmpfiles.d</code> et le modifier comme vous le
+          voulez. Par exemple&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class="command">mkdir -p /etc/tmpfiles.d
+cp /usr/lib/tmpfiles.d/tmp.conf /etc/tmpfiles.d</kbd></pre>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.5. Redéfinition des comportements par défaut des services
+        </h2>
+        <p>
+          Les paramètres d’une unité peuvent être redéfinis en créant un
+          dossier et un fichier de configuration dans <code class=
+          "filename">/etc/systemd/system</code>. Par exemple&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">mkdir -pv /etc/systemd/system/foobar.service.d
+
+cat &gt; /etc/systemd/system/foobar.service.d/foobar.conf &lt;&lt; EOF
+<code class="literal">[Service]
+Restart=always
+RestartSec=30</code>
+EOF</kbd></pre>
+        <p>
+          Voir la page de manuel <code class=
+          "filename">systemd.unit(5)</code> pour plus d'informations. Après
+          la création du fichier de configuration, exécutez <strong class=
+          "userinput"><code>systemctl daemon-reload</code></strong> et
+          <strong class="userinput"><code>systemctl restart
+          foobar</code></strong> pour activer les changements à un service.
+        </p>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.6. Débogage de la séquence de démarrage
+        </h2>
+        <p>
+          Plutôt que des scripts shell utilisés par les systèmes d’init du
+          style de SysVinit ou BSD, systemd utilise un format unifié pour
+          différents types de fichiers de démarrage (ou unités). La commande
+          <span class="command"><strong>systemctl</strong></span> est
+          utilisée pour activer, désactiver, contrôler l’état et obtenir le
+          statut d’un fichier d’unité. Voici quelques exemples de commandes
+          fréquentes&nbsp;:
+        </p>
+        <div class="itemizedlist">
+          <ul>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>systemctl list-units -t
+                <em class="replaceable"><code>&lt;service&gt;</code></em>
+                [--all]</strong></span>: liste les fichiers d’unité chargés
+                de type service.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>systemctl list-units -t
+                <em class="replaceable"><code>&lt;target&gt;</code></em>
+                [--all]</strong></span>: liste les fichiers d’unité chargés
+                de type target.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>systemctl show -p Wants
+                <em class=
+                "replaceable"><code>&lt;multi-user.target&gt;</code></em></strong></span>&nbsp;:
+                montre toutes les unités qui dépendent de la cible
+                multi-user. Les cibles sont des fichiers d’unité spéciaux qui
+                sont analogues aux niveaux d’exécution de SysVinit.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>systemctl status <em class=
+                "replaceable"><code>&lt;servicename.service&gt;</code></em></strong></span>:
+                montre le statut du service servicename. L’extension .service
+                peut être omise s’il n’y a pas d’autres fichiers d’unité
+                portant le même nom, comme des fichiers .socket (qui créent
+                un socket en écoute qui fourni les même fonctionnalités
+                qu'inetd/xinetd).
+              </p>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.7. Utiliser le journal Systemd
+        </h2>
+        <p>
+          La journalisation d’un système démarré avec systemd est géré par
+          systemd-journald (par défaut), plutôt qu’un démon syslog unix
+          typique. Vous pouvez aussi ajouter un démon syslog normal et faire
+          travailler les deux côte à côte si vous le souhaitez. Le programme
+          systemd-journald stocke les entrées du journal dans un format
+          binaire plutôt que dans un fichier en texte brut. La commande
+          <span class="command"><strong>journalctl</strong></span> est
+          fournie pour aider à analyser le fichier. Voici quelques exemples
+          de commandes usuelles&nbsp;:
+        </p>
+        <div class="itemizedlist">
+          <ul>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>journalctl
+                -r</strong></span>&nbsp;: montre tout le contenu du journal
+                en sens chronologique inverse.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>journalctl -u <em class=
+                "replaceable"><code>UNIT</code></em></strong></span>&nbsp;:
+                montre les entrées du journal associées avec le fichier UNIT
+                spécifié.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>journalctl -b[=ID]
+                -r</strong></span>&nbsp;: montre les entrées du journal
+                depuis le dernier démarrage réussi (ou pour le démarrage
+                d’identifiant ID) en sens chronologique inverse.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>journalctl
+                -f</strong></span>&nbsp;: fournit une fonctionnalité
+                similaire à tail -f (suivre).
+              </p>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.8. Travailler avec les core dumps
+        </h2>
+        <p>
+          Les «&nbsp;core dumps&nbsp;» sont utiles pour déboguer des
+          programmes crashés, surtout quand un processus démon plante. Sur un
+          système démarré avec systemd, les core dumps sont gérés par
+          <span class="command"><strong>systemd-coredump</strong></span>. Il
+          enregistrera le core dump das le journal et stockera le fichier
+          core dans <code class="filename">/var/lib/systemd/coredump</code>.
+          Pour récupérer et utiliser le fichier core, système fourni l'outil
+          <span class="command"><strong>coredumpctl</strong></span>. Voici
+          quelques exemples de commandes fréquentes&nbsp;:
+        </p>
+        <div class="itemizedlist">
+          <ul>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>coredumpctl
+                -r</strong></span>&nbsp;: montre tous les core dumps en ordre
+                chronologique inverse.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>coredumpctl -1
+                info</strong></span>&nbsp;: montre les informations du
+                dernier core dump.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="command"><strong>coredumpctl -1
+                debug</strong></span>&nbsp;: charge le dernier core dump dans
+                <a class="ulink" href=
+                "http://fr.linuxfromscratch.org/blfs/../view/blfs-svn/general/gdb.html">
+                GDB</a>.
+              </p>
+            </li>
+          </ul>
+        </div>
+        <p>
+          Les core dumps peuvent utiliser beaucoup d'espace disque. L'espace
+          disque maximal utilisé par les core dumps se limite en créant un
+          fichier de configuration dans <code class=
+          "filename">/etc/systemd/coredump.conf.d</code>. Par exemple&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">mkdir -pv /etc/systemd/coredump.conf.d
+
+cat &gt; /etc/systemd/coredump.conf.d/maxuse.conf &lt;&lt; EOF
+<code class="literal">[Coredump]
+MaxUse=5G</code>
+EOF</kbd></pre>
+        <p>
+          Voir les pages de manuel <code class=
+          "filename">systemd-coredump(8)</code>, <code class=
+          "filename">coredumpctl(1)</code>, and <code class=
+          "filename">coredump.conf.d(5)</code> pour plus d'information.
+        </p>
+      </div>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.10.9. Processus lancés durablement
+        </h2>
+        <p>
+          Depuis la version systemd-230, tous les processus utilisateurs sont
+          tués lorsque la session utilisateur se termine, même en utilisant
+          nohup, ou que le processus utilise les fonctions <code class=
+          "function">daemon()</code> ou <code class=
+          "function">setsid()</code>. Ceci est un changement délibéré par
+          rapport à un environnement historiquement plus permissif vers un
+          environnement plus restrictif. Le nouveau comportement peut causer
+          des problèmes si vous dépendez de programmes lancés durablement
+          (par exemple, <span class="command"><strong>screen</strong></span>
+          ou <span class="command"><strong>tmux</strong></span>) qui restent
+          actifs après la fin de votre session utilisateur. Il y a trois
+          moyens de permettre la persistance des processus après la fin d'une
+          session utilisateur.
+        </p>
+        <div class="itemizedlist">
+          <ul>
+            <li class="listitem">
+              <p>
+                <span class="emphasis"><em>N'activez les processus
+                persistants que pour les utilisateurs qui en ont
+                besoin</em></span>&nbsp;: les utilisateurs ont la possibilité
+                d'activer les processus persistants avec la commande
+                <span class="command"><strong>loginctl
+                enable-linger</strong></span> pour eux-mêmes. Les
+                administrateurs systèmes peuvent utiliser la même commande
+                avec un argument <em class=
+                "parameter"><code>utilisateur</code></em> pour les activer
+                pour un utilisateur. Cet utilisateur peut alors utiliser la
+                commande <span class=
+                "command"><strong>systemd-run</strong></span> pour débuter
+                une tâche durable. Par exemple&nbsp;: <span class=
+                "command"><strong>systemd-run --scope --user
+                /usr/bin/screen</strong></span>. Si vous souhaitez activer
+                les tâches durables pour votre utilisateur, le service
+                user@.service sera toujours présent même après la fermeture
+                de toutes les sessions, et démarrera automatiquement au
+                démarrage du système. Ceci a l'avantage d'autoriser et
+                d'interdire explicitement aux programmes de s'exécuter après
+                que la session utilisateur est fermée, mais cela casse la
+                rétro-compatibilité avec des outils comme <span class=
+                "command"><strong>nohup</strong></span> et les utilitaires
+                qui utilisent <code class="function">daemon()</code>.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="emphasis"><em>Activer les processus persistant
+                sur tout le système</em></span>&nbsp;: vous pouvez définir
+                <em class="parameter"><code>KillUserProcesses=no</code></em>
+                dans <code class="filename">/etc/systemd/logind.conf</code>
+                pour autoriser globalement la persistance pour tous les
+                utilisateurs. Ceci a l'avantage de laisser disponibles les
+                vieilles méthodes à tous les utilisateurs au prix de la perte
+                de contrôle explicite.
+              </p>
+            </li>
+            <li class="listitem">
+              <p>
+                <span class="emphasis"><em>Désactiver à la
+                construction</em></span>&nbsp;: vous pouvez autoriser les
+                processus persistants par défaut pendant la construction de
+                systemd en ajoutant le paramètre <em class=
+                "parameter"><code>-Ddefault-kill-user-processes=false</code></em>
+                à la commande <span class=
+                "command"><strong>meson</strong></span> de systemd. Ceci
+                désactive complètement la capacité que systemd a de tuer les
+                processus utilisateurs à la fin de la session.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="etcshells.html" title=
+          "Créaction du fichier /etc/shells">Précédent</a>
+          <p>
+            Créaction du fichier /etc/shells
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="../chapter10/chapter10.html" title=
+          "Rendre le système LFS amorçable">Suivant</a>
+          <p>
+            Rendre le système LFS amorçable
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter09.html" title=
+          "Chapitre&nbsp;9.&nbsp;Configuration du système">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      8.71.&nbsp;Systemd-249
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="lfs" id="lfs-r10.1-205-g49170-systemd+">
+    <div class="navheader">
+      <h4>
+        Linux From Scratch - Version r10.1-205-g49170-systemd+
+      </h4>
+      <h3>
+        Chapitre&nbsp;8.&nbsp;Installer les logiciels du système de base
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="jinja2.html" title=
+          "Jinja2-3.0.1">Précédent</a>
+          <p>
+            Jinja2-3.0.1
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="dbus.html" title="D-Bus-1.12.20">Suivant</a>
+          <p>
+            D-Bus-1.12.20
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter08.html" title=
+          "Chapitre&nbsp;8.&nbsp;Installer les logiciels du système de base">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="wrap" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="ch-system-systemd" name="ch-system-systemd"></a>8.71.
+        Systemd-249
+      </h1>
+      <div class="package" lang="fr" xml:lang="fr">
+        <p>
+          Le paquet Systemd contient des programmes pour contrôler le
+          démarrage, l'exécution et l'arrêt du système.
+        </p>
+        <div class="segmentedlist">
+          <div class="seglistitem">
+            <div class="seg">
+              <strong class="segtitle">Temps de construction
+              approximatif:</strong> <span class="segbody">2.3 SBU</span>
+            </div>
+            <div class="seg">
+              <strong class="segtitle">Espace disque requis:</strong>
+              <span class="segbody">277 Mo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="installation" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          8.71.1. Installation de Systemd
+        </h2>
+        <p>
+          Tout d'abord, appliquez un correctif pour corriger une
+          vulnérabilité&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">patch -Np1 -i ../systemd-249-upstream_fixes-1.patch</kbd></pre>
+        <p>
+          Supprimez deux groupes inutiles, <code class=
+          "systemitem">render</code> et <code class="systemitem">sgx</code>,
+          des règles udev par défaut&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command"> sed -i -e 's/GROUP="render"/GROUP="video"/' \
+        -e 's/GROUP="sgx", //' rules.d/50-udev-default.rules.in</kbd></pre>
+        <p>
+          Préparez la compilation de Systemd&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class="command">mkdir -p build
+cd       build
+
+LANG=en_US.UTF-8                    \
+meson --prefix=/usr                 \
+      --sysconfdir=/etc             \
+      --localstatedir=/var          \
+      --buildtype=release           \
+      -Dblkid=true                  \
+      -Ddefault-dnssec=no           \
+      -Dfirstboot=false             \
+      -Dinstall-tests=false         \
+      -Dldconfig=false              \
+      -Dsysusers=false              \
+      -Db_lto=false                 \
+      -Drpmmacrosdir=no             \
+      -Dhomed=false                 \
+      -Duserdb=false                \
+      -Dman=false                   \
+      -Dmode=release                \
+      -Ddocdir=/usr/share/doc/systemd-249 \
+      ..</kbd></pre>
+        <div class="variablelist">
+          <p class="title">
+            <strong>Voici la signification des options de
+            meson&nbsp;:</strong>
+          </p>
+          <dl class="variablelist">
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>--buildtype=release</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Ce paramètre remplace le type de construction par défaut
+                (<span class="quote">«&nbsp;<span class=
+                "quote">debug</span>&nbsp;»</span>), ce qui produirait des
+                binaires non optimisés.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-Ddefault-dnssec=no</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Cet argument désactive la prise en charge expérimentale de
+                DNSSEC.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-Dfirstboot=false</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Ce paramètre empêche l'installation d'un service de systemd
+                qui est responsable de la mise en place du système pour la
+                première fois. Ceux-ci ne sont pas utiles pour LFS car tout
+                est fait manuellement.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-Dinstall-tests=false</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Ce paramètre évite l'installation des tests compilés.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-Dldconfig=false</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Ce paramètre empêche l'installation d'une unité de systemd
+                qui lance <span class=
+                "command"><strong>ldconfig</strong></span> au démarrage,
+                inutile pour les distributions source comme LFS et qui rend
+                celui-ci plus long. Retirez ceci si la fonction est désirée.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-Dsysusers=false</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Ce paramètre empêche l’installation de services de systemd
+                responsables de la mise en place des fichiers <code class=
+                "filename">/etc/group</code> et <code class=
+                "filename">/etc/passwd</code>. Ces deux fichiers sont créés
+                plus tôt dans ce chapitre.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-Drpmmacrosdir=no</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Ce paramètre désactive l'installation des macros RPM pour
+                systemd parce que LFS ne prend pas en charge RPM.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-D{userdb,homed}=false</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Supprimez deux démons qui ont des dépendances qui ne rentrent
+                pas dans le cadre de LFS.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-Dman=false</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Évitez la génération de pages de manuel pour éviter des
+                dépendances supplémentaires. Nous installerons les pages de
+                manuels pré-générées pour systemd à partir d'une archive plus
+                tard.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-Dmode=release</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Désactivez certaines fonctionnalités considérées comme
+                expérimentales en amont.
+              </p>
+            </dd>
+          </dl>
+        </div>
+        <p>
+          Compilez le paquet&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">LANG=en_US.UTF-8 ninja</kbd></pre>
+        <p>
+          Installez le paquet&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">LANG=en_US.UTF-8 ninja install</kbd></pre>
+        <p>
+          Installez les pages de manuel&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">tar -xf ../../systemd-man-pages-249.tar.xz --strip-components=1 -C /usr/share/man</kbd></pre>
+        <p>
+          Supprimez un répertoire inutile&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">rm -rf /usr/lib/pam.d</kbd></pre>
+        <p>
+          Créez le fichier <code class="filename">/etc/machine-id</code> dont
+          a besoin <span class=
+          "command"><strong>systemd-journald</strong></span>&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">systemd-machine-id-setup</kbd></pre>
+        <p>
+          Mettez en place la structure cible de base&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">systemctl preset-all</kbd></pre>
+        <p>
+          Désactivez un service connu pour causer des problèmes avec les
+          systèmes qui utilisent une configuration réseau autre que celle
+          fournie par systemd-networkd&nbsp;:
+        </p>
+        <pre class="userinput">
+<kbd class=
+"command">systemctl disable systemd-time-wait-sync.service</kbd></pre>
+      </div>
+      <div class="content" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          <a id="contents-systemd" name="contents-systemd"></a>8.71.2.
+          Contenu de systemd
+        </h2>
+        <div class="segmentedlist">
+          <div class="seglistitem">
+            <div class="seg">
+              <strong class="segtitle">Programmes installés:</strong>
+              <span class="segbody">bootctl, busctl, coredumpctl, halt (lien
+              symbolique vers systemctl), hostnamectl, init, journalctl,
+              kernel-install, localectl, loginctl, machinectl, networkctl,
+              oomctl, portablectl, poweroff (lien symbolique vers systemctl),
+              reboot (lien symbolique vers systemctl), resolvconf (lien
+              symbolique vers resolvectl), resolvectl, runlevel (lien
+              symbolique vers systemctl), shutdown (lien symbolique vers
+              systemctl), systemctl, systemd-analyze, systemd-ask-password,
+              systemd-cat, systemd-cgls, systemd-cgtop, systemd-cryptenroll,
+              systemd-delta, systemd-detect-virt, systemd-dissect,
+              systemd-escape, systemd-hwdb, systemd-id128, systemd-inhibit,
+              systemd-machine-id-setup, systemd-mount, systemd-notify,
+              systemd-nspawn, systemd-path, systemd-repart, systemd-resolve
+              (lien symbolique vers resolvectl), systemd-run,
+              systemd-socket-activate, systemd-stdio-bridge, systemd-sysext,
+              systemd-tmpfiles, systemd-tty-ask-password-agent,
+              systemd-umount (lien symbolique vers systemd-mount), telinit
+              (lien symbolique vers systemctl), timedatectl et udevadm</span>
+            </div>
+            <div class="seg">
+              <strong class="segtitle">Bibliothèques installées:</strong>
+              <span class="segbody">libnss_myhostname.so.2,
+              libnss_mymachines.so.2, libnss_resolve.so.2,
+              libnss_systemd.so.2, libsystemd.so, libsystemd-shared-249.so
+              (dans /usr/lib/systemd) et libudev.so</span>
+            </div>
+            <div class="seg">
+              <strong class="segtitle">Répertoires installés:</strong>
+              <span class="segbody">/etc/binfmt.d, /etc/init.d, /etc/kernel,
+              /etc/modules-load.d, /etc/sysctl.d, /etc/systemd,
+              /etc/tmpfiles.d, /etc/udev, /etc/xdg/systemd, /usr/lib/systemd,
+              /usr/lib/udev, /usr/include/systemd, /usr/lib/binfmt.d,
+              /usr/lib/environment.d, /usr/lib/kernel,
+              /usr/lib/modules-load.d, /usr/lib/sysctl.d, /usr/lib/systemd,
+              /usr/lib/tmpfiles.d, /usr/share/doc/systemd-249,
+              /usr/share/factory, /usr/share/systemd, /var/lib/systemd et
+              /var/log/journal</span>
+            </div>
+          </div>
+        </div>
+        <div class="variablelist">
+          <h3>
+            Descriptions courtes
+          </h3>
+          <table border="0" class="variablelist">
+            <colgroup>
+              <col align="left" valign="top" />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>
+                  <p>
+                    <a id="bootctl" name="bootctl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>bootctl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour voir les paramètres du microprogramme et
+                    du gestionnaire de démarrage
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="busctl" name="busctl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>busctl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour examiner et surveiller le bus D-Bus
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="coredumpctl" name="coredumpctl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>coredumpctl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour récupérer les fichiers coredumps du
+                    journal de Systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="halt" name="halt"></a><span class=
+                    "term"><span class=
+                    "command"><strong>halt</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Appelle en principe <span class=
+                    "command"><strong>shutdown</strong></span> avec le
+                    paramètre <em class="parameter"><code>-h</code></em>,
+                    sauf si on est déjà au niveau d'exécution 0, où il dit au
+                    noyau d'arrêter le système&nbsp;; il inscrit dans le
+                    fichier <code class="filename">/var/log/wtmp</code> que
+                    le système va s'éteindre
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="hostnamectl" name="hostnamectl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>hostnamectl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour voir et changer le nom d'hôte du système
+                    et les paramètres afférents
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="init" name="init"></a><span class=
+                    "term"><span class=
+                    "command"><strong>init</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est le premier processus qui démarre lorsque le noyau a
+                    initialisé le matériel, qui poursuit le processus de
+                    démarrage et lance les processus qu'on lui a demandés.
+                    Dans ce cas, il démarre systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="journalctl" name="journalctl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>journalctl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour voir le contenu du journal de systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="kernel-install" name=
+                    "kernel-install"></a><span class="term"><span class=
+                    "command"><strong>kernel-install</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour ajouter et supprimer des images de noyau
+                    et des initramfs dans /boot. Dans LFS, on le fait
+                    manuellement
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="localectl" name="localectl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>localectl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour voir et modifier les paramètres
+                    linguistiques et de la disposition clavier du système
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="loginctl" name="loginctl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>loginctl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour examiner et contrôler l'état du
+                    gestionnaire d'identification de systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="machinectl" name="machinectl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>machinectl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour examiner et contrôler l'état du
+                    gestionnaire des enregistrements de machines virtuelles
+                    et de conteneurs de systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="networkctl" name="networkctl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>networkctl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour examiner et configurer l'état des liens
+                    réseaux configurés par systemd-networkd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="oomctl" name="oomctl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>oomctl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Contrôle le démon Out Of Memory de systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="portablectl" name="portablectl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>portablectl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour attacher ou détacher des services
+                    portables d'un système local
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="poweroff" name="poweroff"></a><span class=
+                    "term"><span class=
+                    "command"><strong>poweroff</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Dit au noyau d'arrêter le système et d'éteindre
+                    l'ordinateur (voir <span class=
+                    "command"><strong>halt</strong></span>)
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="reboot" name="reboot"></a><span class=
+                    "term"><span class=
+                    "command"><strong>reboot</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Dit au noyau de redémarrer le système (voir <span class=
+                    "command"><strong>halt</strong></span>)
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="resolvconf" name="resolvconf"></a><span class=
+                    "term"><span class=
+                    "command"><strong>resolvconf</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Enregistre la configuration des serveurs DNS et des
+                    domaines avec <span class=
+                    "command"><strong>systemd-resolved</strong></span>
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="resolvectl" name="resolvectl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>resolvectl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Envoie des commandes de contrôle au gestionnaire de
+                    résolution de noms réseaux ou résout des noms de
+                    domaines, des adresses IPv4 ou IPv6, des enregistrements
+                    DNS et des services
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="runlevel" name="runlevel"></a><span class=
+                    "term"><span class=
+                    "command"><strong>runlevel</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Renvoie le niveau d'exécution actuel et précédent indiqué
+                    dans le journal du dernier niveau d'exécution situé dans
+                    <code class="filename">/run/utmp</code>
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="shutdown" name="shutdown"></a><span class=
+                    "term"><span class=
+                    "command"><strong>shutdown</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Éteint le système de manière sécurisée en envoyant à tous
+                    les processus un signal et en notifiant tous les
+                    utilisateurs connectés
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemctl" name="systemctl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemctl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour examiner et contrôler l'état du
+                    gestionnaire des services du système de systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-analyze" name=
+                    "systemd-analyze"></a><span class="term"><span class=
+                    "command"><strong>systemd-analyze</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour déterminer les performances de démarrage
+                    du système lors du dernier démarrage et pour identifier
+                    les unités problématiques
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-ask-password" name=
+                    "systemd-ask-password"></a><span class=
+                    "term"><span class="command"><strong>systemd-ask-password</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour afficher le mot ou la phrase de passe
+                    d'un utilisateur en utilisant une question définie en
+                    ligne de commande
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-cat" name="systemd-cat"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemd-cat</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour relier les STDOUT et STDERR d'un
+                    processus au journal de systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-cgls" name="systemd-cgls"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemd-cgls</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Affiche de manière récursive le contenu de la hiérarchie
+                    des groupes de Linux sélectionnée dans une arborescence
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-cgtop" name=
+                    "systemd-cgtop"></a><span class="term"><span class=
+                    "command"><strong>systemd-cgtop</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Affiche les groupes de contrôle dans la hiérarchie des
+                    groupes du Linux local, triés par processus, charge
+                    mémoire et d'E/S disque
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-cryptenroll" name=
+                    "systemd-cryptenroll"></a><span class="term"><span class=
+                    "command"><strong>systemd-cryptenroll</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour convertir un système au chiffrement du
+                    disque complet, ainsi que pour créer et demander les clés
+                    et les clés de récupération
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-delta" name=
+                    "systemd-delta"></a><span class="term"><span class=
+                    "command"><strong>systemd-delta</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour identifier et comparer des fichiers de
+                    configuration de <code class="filename">/etc</code>, qui
+                    ont leur correspondance par défaut dans <code class=
+                    "filename">/usr</code>
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-detect-virt" name=
+                    "systemd-detect-virt"></a><span class="term"><span class=
+                    "command"><strong>systemd-detect-virt</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Détecte si le système est lancé dans un environnement
+                    virtuel, et ajuste udev en fonction
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-dissect" name=
+                    "systemd-dissect"></a><span class="term"><span class=
+                    "command"><strong>systemd-dissect</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    est utilisé pour inspecter les images disques de systèmes
+                    d'exploitations
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-escape" name=
+                    "systemd-escape"></a><span class="term"><span class=
+                    "command"><strong>systemd-escape</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour échapper les chaînes de caractères pour
+                    les utiliser dans les noms d'unités de systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-hwdb" name="systemd-hwdb"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemd-hwdb</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour gérer la base de données matérielle
+                    (hwdb)
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-id128" name=
+                    "systemd-id128"></a><span class="term"><span class=
+                    "command"><strong>systemd-id128</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Génère et afficher des chaînes id128
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-inhibit" name=
+                    "systemd-inhibit"></a><span class="term"><span class=
+                    "command"><strong>systemd-inhibit</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour exécuter un programme avec un marqueur
+                    d'extinction, de veille ou d'inactivité qui le
+                    verrouille, pour éviter une action comme l'arrêt du
+                    système jusqu'à ce que le processus termine
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-machine-id-setup" name=
+                    "systemd-machine-id-setup"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemd-machine-id-setup</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé par les outils d'installation de systemd pour
+                    initialiser l'ID de la machine contenu dans <code class=
+                    "filename">/etc/machine-id</code> lors de l'installation,
+                    avec un ID généré de façon aléatoire
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-mount" name=
+                    "systemd-mount"></a><span class="term"><span class=
+                    "command"><strong>systemd-mount</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour monter ou monter automatiquement un
+                    périphérique temporairement
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-notify" name=
+                    "systemd-notify"></a><span class="term"><span class=
+                    "command"><strong>systemd-notify</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé par les démons pour indiquer au système de
+                    démarrage les changements d'état
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-nspawn" name=
+                    "systemd-nspawn"></a><span class="term"><span class=
+                    "command"><strong>systemd-nspawn</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour lancer une commande ou un OS dans un
+                    conteneur léger (espace de nom séparé)
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-path" name="systemd-path"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemd-path</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour voir les path système et utilisateur
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-repart" name=
+                    "systemd-repart"></a><span class="term"><span class=
+                    "command"><strong>systemd-repart</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour agrandir et ajouter des partitions à une
+                    table de partition quand systemd est utilisé dans un
+                    image d'OS (p. ex. dans un conteneur)
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-resolve" name=
+                    "systemd-resolve"></a><span class="term"><span class=
+                    "command"><strong>systemd-resolve</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour résoudre les noms de domaines, les
+                    adresses IPV4 et IPV6, les enregistrements DNS et les
+                    services
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-run" name="systemd-run"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemd-run</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour créer et démarrer une unité transitoire
+                    .service ou .scope et pour y lancer la commande
+                    spécifiée. C'est utile pour valider des unités systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-socket-activate" name=
+                    "systemd-socket-activate"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemd-socket-activate</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour écouter sur des périphériques de socket
+                    et lancer un processus lors d'une connexion
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-sysext" name=
+                    "systemd-sysext"></a><span class="term"><span class=
+                    "command"><strong>systemd-sysext</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Active les images d'extension du système
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-tmpfiles" name=
+                    "systemd-tmpfiles"></a><span class="term"><span class=
+                    "command"><strong>systemd-tmpfiles</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Crée, efface et nettoie les fichiers et les répertoires
+                    volatiles et temporaires sur la base d'un format et d'un
+                    emplacement du fichier de configuration indiqué dans les
+                    répertoires <code class="filename">tmpfiles.d</code>
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-umount" name=
+                    "systemd-umount"></a><span class="term"><span class=
+                    "command"><strong>systemd-umount</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Démonte des points de montage
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="systemd-tty-ask-password-agent" name=
+                    "systemd-tty-ask-password-agent"></a><span class=
+                    "term"><span class=
+                    "command"><strong>systemd-tty-ask-password-agent</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour lister ou traiter les requêtes de mots
+                    de passe en attente
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="telinit" name="telinit"></a><span class=
+                    "term"><span class=
+                    "command"><strong>telinit</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Dit à <span class="command"><strong>init</strong></span>
+                    quel niveau d'exécution adopter
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="timedatectl" name="timedatectl"></a><span class=
+                    "term"><span class=
+                    "command"><strong>timedatectl</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est utilisé pour voir et modifier l'horloge du système et
+                    ses paramètres
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="udevadm" name="udevadm"></a><span class=
+                    "term"><span class=
+                    "command"><strong>udevadm</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est un outil générique d'administration d'Udev qui
+                    contrôle le démon udevd, donne des infos à partir de la
+                    base de données matérielle d'Udev, surveille les uevents,
+                    attend la fin des uevents, teste la configuration d'Udev
+                    et déclenche des événements pour un périphérique donné
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="libsystemd" name="libsystemd"></a><span class=
+                    "term"><code class="filename">libsystemd</code></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est la bibliothèque d'outils principale de systemd
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="libudev" name="libudev"></a><span class=
+                    "term"><code class="filename">libudev</code></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    Est une bibliothèque pour accéder aux informations d'Udev
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="jinja2.html" title=
+          "Jinja2-3.0.1">Précédent</a>
+          <p>
+            Jinja2-3.0.1
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="dbus.html" title="D-Bus-1.12.20">Suivant</a>
+          <p>
+            D-Bus-1.12.20
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter08.html" title=
+          "Chapitre&nbsp;8.&nbsp;Installer les logiciels du système de base">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

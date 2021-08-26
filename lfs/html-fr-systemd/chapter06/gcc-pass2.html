@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      6.18.&nbsp;GCC-11.2.0 — Passe 2
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="lfs" id="lfs-r10.1-205-g49170-systemd+">
+    <div class="navheader">
+      <h4>
+        Linux From Scratch - Version r10.1-205-g49170-systemd+
+      </h4>
+      <h3>
+        Chapitre&nbsp;6.&nbsp;Compilation croisée des outils temporaires
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="binutils-pass2.html" title=
+          "Binutils-2.37 — Passe 2">Précédent</a>
+          <p>
+            Binutils-2.37 — Passe 2
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="../chapter07/chapter07.html" title=
+          "Entrée dans le chroot et construction des outils temporaires supplémentaires">
+          Suivant</a>
+          <p>
+            Entrée dans le chroot et construction des outils temporaires
+            supplémentaires
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter06.html" title=
+          "Chapitre&nbsp;6.&nbsp;Compilation croisée des outils temporaires">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="wrap" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="ch-tools-gcc-pass2" name="ch-tools-gcc-pass2"></a>6.18.
+        GCC-11.2.0 — Passe 2
+      </h1>
+      <div class="package" lang="fr" xml:lang="fr">
+        <p>
+          Le paquet GCC contient la collection de compilateurs GNU, qui
+          inclut les compilateurs C et C++.
+        </p>
+        <div class="segmentedlist">
+          <div class="seglistitem">
+            <div class="seg">
+              <strong class="segtitle">Temps de construction
+              approximatif:</strong> <span class="segbody">12 SBU</span>
+            </div>
+            <div class="seg">
+              <strong class="segtitle">Espace disque requis:</strong>
+              <span class="segbody">3.3 Go</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="installation" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          6.18.1. Installation de GCC
+        </h2>
+        <p>
+          Comme pour la première construction de GCC, les paquets GMP, MPFR
+          et MPC sont requis. Déballez les archives et déplacez-les dans les
+          répertoires avec le nom requis&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">tar -xf ../mpfr-4.1.0.tar.xz
+mv -v mpfr-4.1.0 mpfr
+tar -xf ../gmp-6.2.1.tar.xz
+mv -v gmp-6.2.1 gmp
+tar -xf ../mpc-1.2.1.tar.gz
+mv -v mpc-1.2.1 mpc</kbd></pre>
+        <p>
+          Si vous construisez sur x86_64, changez le nom de répertoire par
+          défaut pour les bibliothèques 64&nbsp;bits en <span class=
+          "quote">«&nbsp;<span class="quote">lib</span>&nbsp;»</span>&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class="command">case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
+  ;;
+esac</kbd></pre>
+        <p>
+          Créez à nouveau un répertoire de construction séparé&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class="command">mkdir -v build
+cd       build</kbd></pre>
+        <p>
+          Créez un lien symbolique qui permet à libgcc de se construire avec
+          la prise en charge des thread posix&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class="command">mkdir -pv $LFS_TGT/libgcc
+ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</kbd></pre>
+        <p>
+          Avant de démarrer la construction de GCC, rappelez-vous d'effacer
+          les variables d'environnement qui modifient les drapeaux
+          d'optimisation par défaut.
+        </p>
+        <p>
+          Maintenant préparez GCC à la compilation&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">../configure                                       \
+    --build=$(../config.guess)                     \
+    --host=$LFS_TGT                                \
+    --prefix=/usr                                  \
+    CC_FOR_TARGET=$LFS_TGT-gcc                     \
+    --with-build-sysroot=$LFS                      \
+    --enable-initfini-array                        \
+    --disable-nls                                  \
+    --disable-multilib                             \
+    --disable-decimal-float                        \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --disable-libstdcxx                            \
+    --enable-languages=c,c++</kbd></pre>
+        <div class="variablelist">
+          <p class="title">
+            <strong>Voici la signification des nouvelles options de
+            configure&nbsp;:</strong>
+          </p>
+          <dl class="variablelist">
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>-with-build-sysroot=$LFS</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Normalement, utiliser <em class=
+                "parameter"><code>--host</code></em> s'assure que le
+                compilateur croisé est utilisé pour construire GCC, et que le
+                compilateur sait qu'il doit chercher les en-têtes et les
+                bibliothèques dans <code class="filename">$LFS</code>. Mais
+                le système de construction de GCC utilise d'autres outils qui
+                ne connaissent pas cet emplacement. Ce paramètre est requis
+                pour qu'ils trouvent les fichiers requis dans <code class=
+                "filename">$LFS</code> et non sur l'hôte.
+              </p>
+            </dd>
+            <dt>
+              <span class="term"><em class=
+              "parameter"><code>--enable-initfini-array</code></em></span>
+            </dt>
+            <dd>
+              <p>
+                Cette option est automatiquement activée lors de la
+                construction d'un compilateur natif avec un compilateur natif
+                sur x86. Mais ici, nous construisons avec un compilateur
+                croisé, donc nous devons explicitement utiliser cette option.
+              </p>
+            </dd>
+          </dl>
+        </div>
+        <p>
+          Compilez le paquet&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class="command">make</kbd></pre>
+        <p>
+          Installez le paquet&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">make DESTDIR=$LFS install</kbd></pre>
+        <p>
+          Comme touche finale, créez un lien symbolique utilitaire. De
+          nombreux programmes et scripts lancent <span class=
+          "command"><strong>cc</strong></span> au lieu de <span class=
+          "command"><strong>gcc</strong></span>, pour que les programmes
+          restent génériques et donc utilisables sur n'importe quel type de
+          système UNIX où le compilateur C de GNU n'est pas toujours
+          installé. Lancer <span class="command"><strong>cc</strong></span>
+          laisse l'administrateur système libre de décider quel compilateur C
+          installer&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">ln -sv gcc $LFS/usr/bin/cc</kbd></pre>
+      </div>
+      <div class="content" lang="fr" xml:lang="fr">
+        <p>
+          Les détails de ce paquet se trouvent sur <a class="xref" href=
+          "../chapter08/gcc.html#contents-gcc" title=
+          "8.26.2.&nbsp;Contenu de GCC">Section&nbsp;8.26.2, «&nbsp;Contenu
+          de GCC.&nbsp;»</a>
+        </p>
+      </div>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="binutils-pass2.html" title=
+          "Binutils-2.37 — Passe 2">Précédent</a>
+          <p>
+            Binutils-2.37 — Passe 2
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="../chapter07/chapter07.html" title=
+          "Entrée dans le chroot et construction des outils temporaires supplémentaires">
+          Suivant</a>
+          <p>
+            Entrée dans le chroot et construction des outils temporaires
+            supplémentaires
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter06.html" title=
+          "Chapitre&nbsp;6.&nbsp;Compilation croisée des outils temporaires">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

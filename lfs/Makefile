@@ -53,7 +53,7 @@ ECHO:=printf
 
 # Files that are needed for the build process once translations are generated.
 filestocopy := INSTALL README process-scripts.sh obfuscate.sh pdf-fixups.sh \
-               bootscripts udev-lfs aux-file-data.sh make-aux-files.sh
+               bootscripts udev-lfs aux-file-data.sh make-aux-files.sh git-version.sh .git
 # Additional files that may require some changes.
 filestoget := $(filestocopy) packages.ent tidy.conf patches.ent general.ent Makefile
 

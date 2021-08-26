@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      9.4.&nbsp;Gérer les périphériques
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="lfs" id="lfs-r10.1-205-g49170-systemd+">
+    <div class="navheader">
+      <h4>
+        Linux From Scratch - Version r10.1-205-g49170-systemd+
+      </h4>
+      <h3>
+        Chapitre&nbsp;9.&nbsp;Configuration du système
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="udev.html" title=
+          "Manipulation des périphériques et modules">Précédent</a>
+          <p>
+            Manipulation des périphériques et modules
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="clock.html" title=
+          "Configuration de l'horloge système">Suivant</a>
+          <p>
+            Configuration de l'horloge système
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter09.html" title=
+          "Chapitre&nbsp;9.&nbsp;Configuration du système">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="fr" xml:lang="fr">
+      <h1 class="sect1">
+        <a id="ch-config-symlinks" name="ch-config-symlinks"></a>9.4. Gérer
+        les périphériques
+      </h1>
+      <div class="sect2" lang="fr" xml:lang="fr">
+        <h2 class="sect2">
+          9.4.1. Gestion des périphériques dupliqués
+        </h2>
+        <p>
+          Comme expliqué à la <a class="xref" href="udev.html" title=
+          "9.3.&nbsp;Manipulation des périphériques et modules">Section&nbsp;9.3,
+          «&nbsp;Manipulation des périphériques et modules&nbsp;»</a>,
+          l'ordre dans lequel les périphériques ayant la même fonction
+          apparaissent dans <code class="filename">/dev</code> est
+          essentiellement aléatoire. Par exemple si vous avez une webcam USB
+          et un tunner TV, parfois <code class="filename">/dev/video0</code>
+          renvoie à la webcam, et <code class="filename">/dev/video1</code>
+          renvoie au tuner, et parfois après un redémarrage l'ordre
+          s'inverse. Pour toutes les classes de matériel sauf les cartes son
+          et les cartes réseau, ceci peut se corriger en créant des règles
+          udev pour des liens symboliques constants personnalisés. Le cas des
+          cartes réseau est couvert de façon séparée dans <a class="xref"
+          href="network.html" title=
+          "9.2.&nbsp;Configuration générale du réseau">Section&nbsp;9.2,
+          «&nbsp;Configuration générale du réseau&nbsp;»</a>, et vous pouvez
+          trouver la configuration des cartes son dans <a class="ulink" href=
+          "http://fr.linuxfromscratch.org/blfs/../view/blfs-svn/postlfs/devices.html">
+          BLFS</a>.
+        </p>
+        <p>
+          Pour chacun des périphériques susceptibles d'avoir ce problème
+          (même si le problème n'apparaît pas dans votre distribution Linux
+          actuelle), trouvez le répertoire correspondant sous <code class=
+          "filename">/sys/class</code> ou <code class=
+          "filename">/sys/block</code>. Pour les périphériques vidéo, cela
+          peut être <code class=
+          "filename">/sys/class/video4linux/video<em class=
+          "replaceable"><code>X</code></em></code>. Calculez les attributs
+          qui identifient de façon unique un périphérique (normalement basé
+          sur l'ID du fabricant et du produit ou les numéros de série)&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">udevadm info -a -p /sys/class/video4linux/video0</kbd></pre>
+        <p>
+          Puis, écrivez des règles qui créent les liens symboliques,
+          comme&nbsp;:
+        </p>
+        <pre class="userinput"><kbd class=
+        "command">cat &gt; /etc/udev/rules.d/83-duplicate_devs.rules &lt;&lt; "EOF"
+<code class="literal">
+# Persistent symlinks for webcam and tuner
+KERNEL=="video*", ATTRS{idProduct}=="1910", ATTRS{idVendor}=="0d81", SYMLINK+="webcam"
+KERNEL=="video*", ATTRS{device}=="0x036f",  ATTRS{vendor}=="0x109e", SYMLINK+="tvtuner"
+</code>
+EOF</kbd></pre>
+        <p>
+          Il en résulte que les périphériques <code class=
+          "filename">/dev/video0</code> et <code class=
+          "filename">/dev/video1</code> renvoient encore de manière aléatoire
+          au tuner et à la webcam (et donc ne devrait jamais être utilisé
+          directement), mais il y a des liens symboliques <code class=
+          "filename">/dev/tvtuner</code> et <code class=
+          "filename">/dev/webcam</code> qui pointent toujours vers le bon
+          périphérique.
+        </p>
+      </div>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="udev.html" title=
+          "Manipulation des périphériques et modules">Précédent</a>
+          <p>
+            Manipulation des périphériques et modules
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="clock.html" title=
+          "Configuration de l'horloge système">Suivant</a>
+          <p>
+            Configuration de l'horloge système
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter09.html" title=
+          "Chapitre&nbsp;9.&nbsp;Configuration du système">Niveau
+          supérieur</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch - Version r10.1-205-g49170-systemd+">Sommaire</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>
