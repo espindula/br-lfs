@@ -1,10 +1,17 @@
+ifeq ($(REV), systemd)
+ISSYSD=true
+else
+ISSYSD=
+endif
+
 epub: validate
 	@echo "Generating HTML/XML for EPUB..."
 	$(Q)if [ ! -e $(BASEDIR) ]; then \
 	        mkdir -p $(BASEDIR); \
 	fi;
 	$(Q)mkdir -p $(RENDERTMP)/blfs-epub/
-	$(Q)xsltproc --nonet --output $(RENDERTMP)/blfs-epub/ DOCBOOK_LOCATION/epub/docbook.xsl $(RENDERTMP)/lfs-full.xml
+	$(Q)xsltproc --nonet --output $(RENDERTMP)/blfs-epub/ DOCBOOK_LOCATION/epub/docbook.xsl \
+		$(if $(ISSYSD), $(RENDERTMP)/blfs-systemd-full.xml,$(RENDERTMP)/blfs-systemd-full.xml)
 	@echo "Generating EPUB file..."
 	echo "application/epub+zip" > $(RENDERTMP)/mimetype
 	cwd=$$(pwd) ;\

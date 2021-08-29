@@ -1,10 +1,16 @@
+ifeq ($(REV), systemd)
+ISSYSD=true
+else
+ISSYSD=
+endif
+
 pdf: validate
 	@echo "Generating profiled XML for PDF..."
 	$(Q)xsltproc --nonet \
                 --stringparam profile.condition pdf \
                 --output $(RENDERTMP)/blfs-pdf.xml   \
                 stylesheets/lfs-xsl/profile.xsl     \
-                $(RENDERTMP)/blfs-html2.xml
+		$(if $(ISSYSD), $(RENDERTMP)/blfs-systemd-full.xml,$(RENDERTMP)/blfs-systemd-full.xml)
 	@echo "Generating FO file..."
 	$(Q)xsltproc --nonet                           \
                  --stringparam rootid "$(ROOT_ID)" \
