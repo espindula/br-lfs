@@ -53,9 +53,9 @@ ECHO:=printf
 
 # Files that are needed for the build process once translations are generated.
 filestocopy := INSTALL README process-scripts.sh obfuscate.sh pdf-fixups.sh \
-               bootscripts udev-lfs aux-file-data.sh make-aux-files.sh git-version.sh .git
+               bootscripts udev-lfs aux-file-data.sh make-aux-files.sh git-version.sh
 # Additional files that may require some changes.
-filestoget := $(filestocopy) packages.ent tidy.conf patches.ent general.ent Makefile
+filestoget := $(filestocopy) packages.ent tidy.conf patches.ent general.ent Makefile .git
 
 # Use REV=sysv or REV=systemd to only build that version.
 REV=all
@@ -298,3 +298,8 @@ lfsgen-fr/Makefile: $(ORIGDIR)/Makefile lfsgen-fr/epub.mk
 lfsgen-fr/epub.mk: epub.mk
 	mkdir -p lfsgen-fr
 	cp $< $@
+
+lfsgen-fr/.git: $(ORIGDIR)/.git
+	mkdir -p lfsgen-fr
+	cp -r $< lfsgen-fr
+	chmod +w -R $@
