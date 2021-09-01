@@ -1,10 +1,28 @@
 #!/bin/sh
 
+if [ "$1" = sysv ]; then
+	SYSV="INCLUDE"
+	SYSTEMD="IGNORE "
+elif [ "$1" = systemd ]; then
+	SYSV="IGNORE "
+	SYSTEMD="INCLUDE"
+else
+	echo You must provide either \"sysv\" or \"systemd\" as argument
+	exit 1
+fi
+
+echo "<!ENTITY % sysv    \"$SYSV\">"     >  conditional.ent
+echo "<!ENTITY % systemd \"$SYSTEMD\">"  >> conditional.ent
+
 if ! git status > /dev/null; then
 	# Either it's not a git repository, or git is unavaliable.
 	# Just workaround.
-	echo "<!ENTITY version           \"unknown\">"         >  version.ent
-	echo "<!ENTITY versiond          \"unknown-systemd\">" >> version.ent
+	echo "<![ %sysv; ["                                    >  version.ent
+	echo "<!ENTITY version           \"unknown\">"         >> version.ent
+	echo "]]>"                                             >> version.ent
+	echo "<![ %systemd; ["                                 >> version.ent
+	echo "<!ENTITY version           \"unknown-systemd\">" >> version.ent
+	echo "]]>"                                             >> version.ent
 	echo "<!ENTITY releasedate       \"unknown\">"         >> version.ent
 	echo "<!ENTITY copyrightdate     \"1999-2021\">"       >> version.ent
 	exit 0
@@ -41,7 +59,11 @@ if [ "$(git diff HEAD | wc -l)" != "0" ]; then
 	versiond="$versiond+"
 fi
 
-echo "<!ENTITY version           \"$version\">"            >  version.ent
-echo "<!ENTITY versiond          \"$versiond\">"           >> version.ent
+echo "<![ %sysv; ["                                        >  version.ent
+echo "<!ENTITY version           \"$version\">"            >> version.ent
+echo "]]>"                                                 >> version.ent
+echo "<![ %systemd; ["                                     >> version.ent
+echo "<!ENTITY version          \"$versiond\">"            >> version.ent
+echo "]]>"                                                 >> version.ent
 echo "<!ENTITY releasedate       \"$full_date\">"          >> version.ent
 echo "<!ENTITY copyrightdate     \"1999-$year\">"          >> version.ent

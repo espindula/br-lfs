@@ -189,7 +189,7 @@ $(BASEDIR)/md5sums: stylesheets/wget-list.xsl chapter03/chapter03.xml \
        $(BASEDIR)/md5sums
 
 version:
-	$(Q)./git-version.sh
+	$(Q)./git-version.sh $(REV)
 
 #dump-commands: validate
 #	@echo "Dumping book commands..."
