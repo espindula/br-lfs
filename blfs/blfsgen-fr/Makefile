@@ -131,7 +131,7 @@ $(BASEDIR)/index.html: $(RENDERTMP)/$(BLFSHTML) version
       tidy -config tidy.conf $$filename;                          \
       true;                                                       \
       bash obfuscate.sh $$filename;                               \
-      sed -i -e "s@text/html@application/xhtml+xml@g" $$filename; \
+      sed -i -e "1,20s@text/html@application/xhtml+xml@g" $$filename; \
    done;
 
 nochunks: $(BASEDIR)/$(NOCHUNKS_OUTPUT)
@@ -146,7 +146,7 @@ $(BASEDIR)/$(NOCHUNKS_OUTPUT): $(RENDERTMP)/$(BLFSHTML) version
 	@echo "Running Tidy and obfuscate.sh on non-chunked XHTML..."
 	$(Q)tidy -config tidy.conf $(BASEDIR)/$(NOCHUNKS_OUTPUT) || true
 	$(Q)bash obfuscate.sh $(BASEDIR)/$(NOCHUNKS_OUTPUT)
-	$(Q)sed -i -e "s@text/html@application/xhtml+xml@g" $(BASEDIR)/$(NOCHUNKS_OUTPUT)
+	$(Q)sed -i -e "1,20s@text/html@application/xhtml+xml@g" $(BASEDIR)/$(NOCHUNKS_OUTPUT)
 
 tmpdir: $(RENDERTMP)
 $(RENDERTMP):

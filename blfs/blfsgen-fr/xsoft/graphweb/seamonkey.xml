@@ -6,10 +6,10 @@
 
   <!ENTITY seamonkey-download-http "&mozilla-http;/seamonkey/releases/&seamonkey-version;/source/seamonkey-&seamonkey-version;.source.tar.xz">
   <!ENTITY seamonkey-download-ftp "">
-  <!ENTITY seamonkey-md5sum        "3cba72ec6a37f7c68fac48876a3a5f8f">
-  <!ENTITY seamonkey-size          "271&nbsp;Mo">
+  <!ENTITY seamonkey-md5sum        "f36c532bbd9c6903036aa02e9a40246b">
+  <!ENTITY seamonkey-size          "272&nbsp;Mo">
   <!ENTITY seamonkey-buildsize     "6,1 Go (159 Mo installés)">
-  <!ENTITY seamonkey-time          "20 SBU (sur une machine à 4 cœurs)">
+  <!ENTITY seamonkey-time          "21&nbsp;SBU (avec parallélisme = 4)">
 ]>
 
 <sect1 id="seamonkey" xreflabel="SeaMonkey-&seamonkey-version;">
@@ -43,7 +43,7 @@ et <xref linkend="thunderbird"/>. Les deux sont basés sur le code source de
 <application>Mozilla</application>.
     </para>
 
-    &lfs110_checked;
+    &lfs110a_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -137,24 +137,7 @@ sécurité.
       </para>
     </note>
 
-    <!--
-    <note>
-
-      <para>
-        You must have installed <application>Openssl</application> before
-        <application>Python 2</application> or the build system will quickly
-        fail with output including "ImportError: cannot import name
-        HTTPSHandler". If you are in any doubt about this (e.g. upgrading from
-        an older version of Seamonkey), check if
-        <filename>/usr/lib/python&python2-majorver;/lib-dynload/_ssl.so</filename>
-        exists.  If it does not, reinstall <xref linkend="python2"/> (after
-        installing <xref linkend="openssl"/>.  The latest version of any
-        <emphasis>currently maintained</emphasis> version of Openssl should be
-        satisfactory if already installed.
-      </para>
-    </note>
--->
-<bridgehead renderas="sect4">Facultatives</bridgehead>
+    <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
       <xref linkend="alsa-lib"/>, <xref linkend="curl"/>, <xref
 linkend="dbus-glib"/>, <xref linkend="doxygen"/>, <xref linkend="GConf"/>,
@@ -191,10 +174,8 @@ fichier en lançant la commande suivante&nbsp;:
      line below was with comment and explanation
 # Use the internal version of icu due to execution problems-->
 <userinput>cat &gt; mozconfig &lt;&lt; "EOF"
-<literal># If you have a multicore machine, all cores will be used by default.
-# If desired, you can reduce the number of cores used, e.g. to 1, by
-# uncommenting the next line and setting a valid number of CPU cores.
-#mk_add_options MOZ_MAKE_FLAGS="-j1"
+<literal># If you have a multicore machine, all cores will be used
+# unless you pass -jN to ./mach build
 
 # If you have installed DBus-Glib comment out this line:
 ac_add_options --disable-dbus
@@ -221,8 +202,6 @@ ac_add_options --disable-gconf
 ac_add_options --with-system-icu
 ac_add_options --with-system-libevent
 ac_add_options --with-system-nspr
-# nss-3.65 broke the build of seamonkey, use the shipped version
-# Fixed with 2.53.8
 ac_add_options --with-system-nss
 ac_add_options --with-system-webp
 
@@ -252,11 +231,7 @@ ac_add_options --enable-strip
 ac_add_options --enable-install-strip
 ac_add_options --enable-official-branding
 
-# From firefox-40 (and the corresponding version of seamonkey),
-# using system cairo caused seamonkey to crash
-# frequently when it was doing background rendering in a tab.
-# This appears to again work in seamonkey-2.49.2
-ac_add_options --enable-system-cairo
+# The option to use system cairo was removed in 2.53.9.
 ac_add_options --enable-system-ffi
 ac_add_options --enable-system-pixman
 
@@ -302,14 +277,20 @@ première commande <command>make</command>.
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>CC=gcc CXX=g++ ./mach build</userinput></screen>
-
+<!-- comment this since llvm must have been installed for rust
     <note>
+
       <para>
-        Les variables CC et CXX ci-dessus ne sont requises que si <xref
-linkend="llvm"/> est installé et que vous voulez utiliser clang.
+        The CC and CXX variables above are only needed if 
+        <xref linkend="llvm"/> is installed and you do not want to use clang.
       </para>
-    </note>
+    </note>-->
+<screen><userinput>export CC=gcc CXX=g++ &amp;&amp;
+./mach configure      &amp;&amp;
+./mach build</userinput></screen>
+
+
+    
 
     <para>
       Ce paquet n'est pas fourni avec une suite de tests.
@@ -322,8 +303,8 @@ class="username">root</systemitem>&nbsp;:
     </para>
 
 
-<screen role="root"><userinput>./mach install &amp;&amp;
-chown -R 0:0 /usr/lib/seamonkey         &amp;&amp;
+<screen role="root"><userinput>./mach install                  &amp;&amp;
+chown -R 0:0 /usr/lib/seamonkey &amp;&amp;
 
 cp -v $(find -name seamonkey.1 | head -n1) /usr/share/man/man1</userinput></screen>
 
@@ -333,9 +314,30 @@ cp -v $(find -name seamonkey.1 | head -n1) /usr/share/man/man1</userinput></scre
     <title>Explication des commandes</title>
 
     <para>
-      <command>./mach build</command>&nbsp;: <application>Seamonkey</application>
-utilise maintenant ce script <application>python</application> pour lancer
-la construction et l'installation.
+      <command>export CC=gcc CXX=g++ ...</command>&nbsp;: les développeurs en
+amont préfèrent maintenant <application>clang</application> pour qu'ils
+puissent utiliser le même compilateur partout. Sur les architectures X86,
+<application>clang</application> prend un peu plus de temps à compiler les
+applications de mozilla.
+    </para>
+
+    <para>
+      <command>./mach configure</command>&nbsp;: ceci valide les dépendances
+fournies et le <filename>mozconfig</filename>.
+    </para>
+
+    <para>
+      <option>./mach build --verbose</option>&nbsp;: utilisez cette alternative si
+vous avez besoin de détails sur les fichiers qui sont compilés, avec les
+drapeaux C ou C++ utilisé. Mais n'ajoutez pas «&nbsp;--verbose&nbsp;» à la
+commande d'installation, l'option n'y est pas acceptée.
+    </para>
+
+    <para>
+      <option>./mach build -jN</option>&nbsp;: la construction devrait, par
+défaut, utiliser tous les cœurs de CPU en ligne. Si utiliser tous les cœurs
+fait swaper la construction à cause d'une mémoire insuffisante, utiliser
+moins de cœurs peut être plus rapide.
     </para>
 
   </sect2>

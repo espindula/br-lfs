@@ -47,9 +47,9 @@ REVISION := $(shell (cd $(ORIGDIR); git rev-parse HEAD))
 BRANCH := $(shell (cd $(ORIGDIR); git ls-remote --exit-code . $(MILESTONE) >/dev/null 2>&1 || printf trunk))
 
 # Files that are needed for the build process once translations are generated.
-filestocopy := INSTALL obfuscate.sh README git-version.sh .git
+filestocopy := INSTALL obfuscate.sh README git-version.sh
 # Additional files that may require some changes.
-filestoget := $(filestocopy) general.ent gnome.ent packages.ent tidy.conf Makefile
+filestoget := $(filestocopy) general.ent gnome.ent packages.ent tidy.conf Makefile .git
 
 # Use REV=sysv or REV=systemd to only build that version.
 REV=all
@@ -301,3 +301,8 @@ blfsgen-fr/tidy.conf: $(ORIGDIR)/tidy.conf
 blfsgen-fr/Makefile: $(ORIGDIR)/Makefile blfsgen-fr/epub.mk blfsgen-fr/pdf.mk
 	mkdir -p $$(dirname $@)
 	sed -e 's|^html:|include epub.mk\ninclude pdf.mk\nhtml:|' $< > $@
+
+blfsgen-fr/.git: $(ORIGDIR)/.git
+	mkdir -p blfsgen-fr
+	cp -r $< blfsgen-fr
+	chmod +w -R $@
