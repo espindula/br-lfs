@@ -37,7 +37,7 @@ RENDERTMP=~/tmp
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 10.2
+MILESTONE := 11.0
 
 # Select the current version we are tracking from master
 REVISION := $(shell (cd $(ORIGDIR); git rev-parse HEAD))
@@ -46,7 +46,7 @@ REVISION := $(shell (cd $(ORIGDIR); git rev-parse HEAD))
 # If this tag doesn't exist, it means the version is not released yet. Try to
 # list files in this tag. If it succeeds, it exists, if it fails it doesn't
 # exist. From that, choose what tag to follow: $(MILESTONE) or trunk.
-BRANCH := $(shell (cd $(ORIGDIR); git ls-remote --exit-code . $(MILESTONE) >/dev/null 2>&1 || printf trunk))
+BRANCH := $(shell (cd $(ORIGDIR); git ls-remote --exit-code . $(MILESTONE) >/dev/null 2>&1 && printf $(MILESTONE) || printf trunk))
 
 # echo is not portable across shells. Let's use printf.
 ECHO:=printf
