@@ -103,7 +103,7 @@
           <xsl:otherwise>
             <xsl:choose>
               <xsl:when test="ancestor::appendix">auto</xsl:when>
-              <!-- Modified by Bruce Dubbs.  Allow user to specify 
+              <!-- Modified by Bruce Dubbs.  Allow user to specify
               automatic screen formatting to split across pages. -->
               <xsl:when test="@role='auto'">auto</xsl:when>
               <xsl:otherwise>always</xsl:otherwise>
@@ -114,8 +114,8 @@
         </xsl:choose>
       </xsl:attribute>
 
-<!-- The following lines were inserted by Martin Miehe. Scripts and rules 
-     in the appendices should have a smaller font-size so that at least 
+<!-- The following lines were inserted by Martin Miehe. Scripts and rules
+     in the appendices should have a smaller font-size so that at least
      80 characters fit to one line. -->
 
       <xsl:if test="ancestor::appendix">    <!-- name(/) != appendix" -->
