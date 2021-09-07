@@ -8,7 +8,7 @@ mv bootscripts lfs-bootscripts-$version
 
 # Create the tarball and clean up
 tar -cJf lfs-bootscripts-$version.tar.xz --exclude .svn lfs-bootscripts-$version
-mv lfs-bootscripts-$version bootscripts 
+mv lfs-bootscripts-$version bootscripts
 
 #rm -f udev-config*.bz2
 

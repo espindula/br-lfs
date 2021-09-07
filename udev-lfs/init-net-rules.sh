@@ -4,7 +4,7 @@
 # Data from udev-182 75-persistent-net-generator.rules
 # Updated fof udev-197 (DEVICES=en*)
 
-RULES=/etc/udev/rules.d/70-persistent-net.rules 
+RULES=/etc/udev/rules.d/70-persistent-net.rules
 DEVICES=$(eval echo /sys/class/net/{en*,eth*,ath*,wlan*[0-9],msh*,ra*,sta*,ctc*,lcs*,hsi*})
 
 function usage
@@ -68,9 +68,9 @@ function comment
   # export COMMENT="ibmveth ($id)"
 
   # S/390 uses id matches only, do not use MAC address match
-  # SUBSYSTEMS=="ccwgroup", 
-  # export COMMENT="S/390 $driver device at $id", 
-  # export MATCHID="$id" 
+  # SUBSYSTEMS=="ccwgroup",
+  # export COMMENT="S/390 $driver device at $id",
+  # export MATCHID="$id"
   # export MATCHDRV="$driver"
   # export MATCHADDR=""
 
@@ -98,10 +98,10 @@ fi
 if [ -e /proc/xen ]; then
   msg="The rules file should not be created in the Xen environment"
   usage
-fi 
+fi
 
 # Variables used to communicate with write_net_rules:
-#   INTERFACE             simple interface name         
+#   INTERFACE             simple interface name
 #   MATCHADDR             MAC address used for the match
 #   MATCHID               bus_id used for the match
 #   MATCHDRV              driver name used for the match
@@ -124,6 +124,6 @@ for NIC in $DEVICES; do
      export MATCHIFTYPE="$(cat $NIC/type)"  # Read interface type
      comment
 
-     /lib/udev/write_net_rules 
+     /lib/udev/write_net_rules
 done
 

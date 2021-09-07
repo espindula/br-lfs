@@ -30,13 +30,13 @@ function find_max( $lines, $regex_match, $regex_replace )
 
   foreach ( $lines as $line )
   {
-     if ( ! preg_match( $regex_match, $line ) ) continue; 
+     if ( ! preg_match( $regex_match, $line ) ) continue;
 
      // Isolate the version and put in an array
      $slice = preg_replace( $regex_replace, "$1", $line );
-     if ( $slice == $line ) continue; 
+     if ( $slice == $line ) continue;
 
-     array_push( $a, $slice );     
+     array_push( $a, $slice );
   }
 
   // SORT_NATURAL requires php-5.4.0 or later
@@ -98,7 +98,7 @@ function max_parent( $dirpath, $prefix )
   $regex_replace = "#^.*(${prefix}[\d\.]+)/.*$#";
   $max           = find_max( $lines, $regex_match, $regex_replace );
 
-  return "$dirpath/$max"; 
+  return "$dirpath/$max";
 }
 
 function get_packages( $package, $dirpath )
@@ -112,8 +112,8 @@ if ( $package == "bc"         ) $dirpath = "https://github.com/gavinhoward/bc/re
 if ( $package == "check"      ) $dirpath = "https://github.com/libcheck/check/releases";
 if ( $package == "e2fsprogs"  ) $dirpath = "http://sourceforge.net/projects/e2fsprogs/files/e2fsprogs";
 if ( $package == "expat"      ) $dirpath = "http://sourceforge.net/projects/expat/files";
-if ( $package == "elfutils"   ) $dirpath = "https://sourceware.org/ftp/elfutils";  
-if ( $package == "expect"     ) $dirpath = "http://sourceforge.net/projects/expect/files";  
+if ( $package == "elfutils"   ) $dirpath = "https://sourceware.org/ftp/elfutils";
+if ( $package == "expect"     ) $dirpath = "http://sourceforge.net/projects/expect/files";
 if ( $package == "file"       ) $dirpath = "https://github.com/file/file/releases";
 if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/releases";
 if ( $package == "gcc"        ) $dirpath = max_parent( $dirpath, "gcc-" );
@@ -135,8 +135,8 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
 //if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
 
   // Check for ftp
-  if ( preg_match( "/^ftp/", $dirpath ) ) 
-  { 
+  if ( preg_match( "/^ftp/", $dirpath ) )
+  {
     $dirpath  = substr( $dirpath, 6 );           // Remove ftp://
     $dirpath  = rtrim ( $dirpath, "/" );         // Trim any trailing slash
     $position = strpos( $dirpath, "/" );         // Divide at first slash
@@ -144,7 +144,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
     $path     = substr( $dirpath, $position );
 
     $conn = ftp_connect( $server );
-    ftp_login( $conn, "anonymous", "" ); 
+    ftp_login( $conn, "anonymous", "" );
 
     // See if we need special handling
     if ( isset( $exceptions[ $package ] ) )
@@ -163,7 +163,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
               $path = substr( $path, 0, $position );
 
               // Get dir listing
-              $lines = ftp_rawlist ($conn, $path);              
+              $lines = ftp_rawlist ($conn, $path);
               $max   = find_max( $lines, $regexp, $regexp );
               break;
 
@@ -196,7 +196,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
         $dirpath  = substr ( $dirpath, 0, $position );
      }
 
-     //if ( $package == "bzip2" ) 
+     //if ( $package == "bzip2" )
      //{
      //   // Remove one directory
      //   $dirpath  = rtrim  ( $dirpath, "/" );    // Trim any trailing slash
@@ -238,7 +238,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
      $lines = $tmp;
   }
 
-  if ( $package == "attr" ||  
+  if ( $package == "attr" ||
        $package == "acl"  )
   {
      return find_max( $lines, "/$package/", "/^.*$package-([\d\.-]*\d).tar.*$/" );
@@ -356,8 +356,8 @@ function get_current()
         $pattern = "/\D*(\d.*[a-z]*)\.tar\D*/";
       }
 
-      else if ( preg_match( "/systemd-man-pages/", $file ) ) continue; 
-      else if ( preg_match( "/python/"         , $file ) ) continue; 
+      else if ( preg_match( "/systemd-man-pages/", $file ) ) continue;
+      else if ( preg_match( "/python/"         , $file ) ) continue;
 
       $version = preg_replace( $pattern, "$1", $file );   // Isolate version
       $version = preg_replace( "/^\d-/", "", $version );  // Remove leading #-
