@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -lt 1 ] ; then 
+if [ $# -lt 1 ] ; then
   echo "This script needs the location of the fo file to update"
   exit 1
 fi

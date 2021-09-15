@@ -29,7 +29,7 @@ create-dirs:
 	ln -sfn       services    ${LIBDIR}/lsb
 	ln -sfn       rc.d/init.d ${ETCDIR}/init.d
 
-files: create-dirs 
+files: create-dirs
 	install -m ${MODE} lfs/init.d/checkfs       ${ETCDIR}/rc.d/init.d/
 	install -m ${MODE} lfs/init.d/cleanfs       ${ETCDIR}/rc.d/init.d/
 	install -m ${MODE} lfs/init.d/halt          ${ETCDIR}/rc.d/init.d/
@@ -126,7 +126,7 @@ rc6: files
 uninstall:
 	rm -rf ${DESTDIR}/lib/services ${DESTDIR}/lib/lsb ${ETCDIR}/rc.d ${ETCDIR}/init.d \
           ${SBIN}/ifup ${SBIN}/ifdown ${MAN8}/ifup.8 ${MAN8}/ifdown.8 \
-          ${ETCDIR}/sysconfig/rc 
+          ${ETCDIR}/sysconfig/rc
 
 .PHONY: all create-dirs install files links rcS rc0 rc1 rc2 rc3 rc4 rc5 rc6 uninstall
 
