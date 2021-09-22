@@ -11,7 +11,7 @@ epub: validate
 	fi;
 	$(Q)mkdir -p $(RENDERTMP)/blfs-epub-$(REV)/
 	$(Q)xsltproc --nonet --output $(RENDERTMP)/blfs-epub-$(REV)/ DOCBOOK_LOCATION/epub/docbook.xsl \
-		$(if $(ISSYSD), $(RENDERTMP)/blfs-systemd-full.xml,$(RENDERTMP)/blfs-systemd-full.xml)
+		$(if $(ISSYSD), $(RENDERTMP)/blfs-systemd-full.xml,$(RENDERTMP)/blfs-full.xml)
 	@echo "Generating EPUB file..."
 	echo "application/epub+zip" > $(RENDERTMP)/mimetype
 	cwd=$$(pwd) ;\

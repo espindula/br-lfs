@@ -10,7 +10,7 @@ pdf: validate
                 --stringparam profile.condition pdf \
                 --output $(RENDERTMP)/blfs-pdf.xml   \
                 stylesheets/lfs-xsl/profile.xsl     \
-		$(if $(ISSYSD), $(RENDERTMP)/blfs-systemd-full.xml,$(RENDERTMP)/blfs-systemd-full.xml)
+		$(if $(ISSYSD), $(RENDERTMP)/blfs-systemd-full.xml,$(RENDERTMP)/blfs-full.xml)
 	@echo "Generating FO file..."
 	$(Q)xsltproc --nonet                           \
                  --stringparam rootid "$(ROOT_ID)" \
