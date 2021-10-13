@@ -318,7 +318,7 @@ function get_current()
 
    # Make version.ent
    chdir( "$tmpdir/LFS" );
-   exec ( "./git-version.sh" );
+   exec ( "./git-version.sh systemd" );
 
    chdir( $cdir );
 
