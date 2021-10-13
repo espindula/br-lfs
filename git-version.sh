@@ -48,11 +48,9 @@ esac
 full_date="$month $day$suffix, $year"
 
 sha="$(git describe --abbrev=1)"
-if [ "$(git branch --show-current)" = "trunk" ]; then
-	sha=$(echo "$sha" | sed 's/-g[^-]*$//')
-fi
-version="$sha"
-versiond="$sha-systemd"
+rev=$(echo "$sha" | sed 's/-g[^-]*$//')
+version="$rev"
+versiond="$rev-systemd"
 
 if [ "$(git diff HEAD | wc -l)" != "0" ]; then
 	version="$version+"
