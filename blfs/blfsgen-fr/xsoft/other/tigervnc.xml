@@ -152,7 +152,40 @@ compatible avec votre système LFS&nbsp;:
 suivantes&nbsp;:
     </para>
 
-<screen><userinput># Put code in place
+<screen revision="sysv"><userinput># Put code in place
+mkdir -p unix/xserver &amp;&amp;
+tar -xf ../xorg-server-&tigervnc-xorg-version;.tar.bz2 \
+    --strip-components=1              \
+    -C unix/xserver                   &amp;&amp;
+( cd unix/xserver &amp;&amp;
+  patch -Np1 -i ../xserver120.patch ) &amp;&amp;
+
+# Build viewer
+cmake -G "Unix Makefiles"         \
+      -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_BUILD_TYPE=Release  \
+      -DINSTALL_SYSTEMD_UNITS=OFF \
+      -Wno-dev . &amp;&amp;
+make &amp;&amp;
+
+# Build server
+pushd unix/xserver &amp;&amp;
+  autoreconf -fiv  &amp;&amp;
+
+  CPPFLAGS="-I/usr/include/drm"       \
+  ./configure $XORG_CONFIG            \
+      --disable-xwayland    --disable-dri        --disable-dmx         \
+      --disable-xorg        --disable-xnest      --disable-xvfb        \
+      --disable-xwin        --disable-xephyr     --disable-kdrive      \
+      --disable-devel-docs  --disable-config-hal --disable-config-udev \
+      --disable-unit-tests  --disable-selective-werror                 \
+      --disable-static      --enable-dri3                              \
+      --without-dtrace      --enable-dri2        --enable-glx          \
+      --with-pic &amp;&amp;
+  make  &amp;&amp;
+popd</userinput></screen>
+
+<screen revision="systemd"><userinput># Put code in place
 mkdir -p unix/xserver &amp;&amp;
 tar -xf ../xorg-server-&tigervnc-xorg-version;.tar.bz2 \
     --strip-components=1              \
