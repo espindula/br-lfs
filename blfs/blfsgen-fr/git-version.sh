@@ -1,12 +1,26 @@
 #!/bin/sh
 
+if [ "$1" = sysv ]; then
+	SYSV="INCLUDE"
+	SYSTEMD="IGNORE "
+elif [ "$1" = systemd ]; then
+	SYSV="IGNORE "
+	SYSTEMD="INCLUDE"
+else
+	echo You must provide either \"sysv\" or \"systemd\" as argument
+	exit 1
+fi
+
+echo "<!ENTITY % sysv    \"$SYSV\">"     >  conditional.ent
+echo "<!ENTITY % systemd \"$SYSTEMD\">"  >> conditional.ent
+
 if ! git status > /dev/null; then
 	# Either it's not a git repository, or git is unavaliable.
 	# Just workaround.
-	echo "<!ENTITY version           \"unknown\">"         >  version.ent
-	echo "<!ENTITY versiond          \"unknown-systemd\">" >> version.ent
+	echo "<!ENTITY year              \"????\">"            >  version.ent
+	echo "<!ENTITY version           \"unknown\">"         >> version.ent
 	echo "<!ENTITY releasedate       \"unknown\">"         >> version.ent
-	echo "<!ENTITY copyrightdate     \"1999-2021\">"       >> version.ent
+	echo "<!ENTITY pubdate           \"unknown\">"         >> version.ent
 	exit 0
 fi
 
@@ -18,7 +32,6 @@ short_date=$(date --date "$commit_date" "+%Y-%m-%d")
 
 year=$(date --date "$commit_date" "+%Y")
 month=$(date --date "$commit_date" "+%B")
-month_digit=$(date --date "$commit_date" "+%m")
 day_digit=$(date --date "$commit_date" "+%d")
 day=$(echo $day_digit | sed 's/^0//')
 
@@ -32,19 +45,13 @@ esac
 full_date="$month $day$suffix, $year"
 
 sha="$(git describe --abbrev=1)"
-if git describe --all --match trunk > /dev/null 2> /dev/null; then
-	sha=$(echo "$sha" | sed 's/-g[^-]*$//')
-fi
-version="$sha"
+version=$(echo "$sha" | sed 's/-g[^-]*$//')
 
 if [ "$(git diff HEAD | wc -l)" != "0" ]; then
 	version="$version+"
 fi
 
-echo "<!ENTITY day               \"$day_digit\">"          >  version.ent
-echo "<!ENTITY month             \"$month_digit\">"        >> version.ent
-echo "<!ENTITY year              \"$year\">"               >> version.ent
-echo "<!ENTITY copyrightdate     \"2001-$year\">"          >> version.ent
+echo "<!ENTITY year              \"$year\">"               >  version.ent
 echo "<!ENTITY version           \"$version\">"            >> version.ent
 echo "<!ENTITY releasedate       \"$full_date\">"          >> version.ent
 echo "<!ENTITY pubdate           \"$short_date\">"         >> version.ent

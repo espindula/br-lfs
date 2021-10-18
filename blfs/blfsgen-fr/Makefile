@@ -271,4 +271,4 @@ $(DUMPDIR): $(RENDERTMP)/$(BLFSFULL) version
    dump-commands  bootscripts systemd-units version
 
 version:
-	$(Q)./git-version.sh
+	$(Q)./git-version.sh $(REV)
