@@ -114,7 +114,7 @@ if ( $package == "e2fsprogs"  ) $dirpath = "https://sourceforge.net/projects/e2f
 if ( $package == "expat"      ) $dirpath = "http://sourceforge.net/projects/expat/files";
 if ( $package == "elfutils"   ) $dirpath = "https://sourceware.org/ftp/elfutils";
 if ( $package == "expect"     ) $dirpath = "http://sourceforge.net/projects/expect/files";
-if ( $package == "file"       ) $dirpath = "https://github.com/file/file/releases";
+if ( $package == "file"       ) $dirpath = "https://github.com/file/file/tags";
 if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/releases";
 if ( $package == "gcc"        ) $dirpath = max_parent( $dirpath, "gcc-" );
 if ( $package == "iana-etc"   ) $dirpath = "https://github.com/Mic92/iana-etc/releases";
