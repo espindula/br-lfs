@@ -133,7 +133,7 @@ if ( $package == "Jinja"      ) $dirpath = "https://pypi.python.org/pypi/Jinja2/
 if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/releases";
 if ( $package == "tcl"        ) $dirpath = "http://sourceforge.net/projects/tcl/files";
 if ( $package == "util-linux" ) $dirpath = max_parent( $dirpath, "v." );
-if ( $package == "vim"        ) $dirpath = "https://github.com/vim/vim/releases";
+if ( $package == "vim"        ) $dirpath = "https://github.com/vim/vim/tags";
 if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/releases";
 //if ( $package == "vim"        ) $dirpath = "ftp://ftp.vim.org/pub/vim/unix";
 
