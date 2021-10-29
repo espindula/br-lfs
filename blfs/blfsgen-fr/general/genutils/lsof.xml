@@ -4,17 +4,13 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-<!-- <!ENTITY lsof-download-http "https://www.mirrorservice.org/sites/lsof.itap.purdue.edu/pub/tools/unix/lsof/lsof_&lsof-version;.tar.bz2">
-<!ENTITY lsof-download-ftp ""> -->
 
-<!-- URL is for a mirror.  Change back to below if/when main site comes back. -->
-
-<!ENTITY lsof-download-http  "https://www.mirrorservice.org/sites/lsof.itap.purdue.edu/pub/tools/unix/lsof/lsof_&lsof-version;.tar.gz">
+<!ENTITY lsof-download-http  "https://github.com/lsof-org/lsof/releases/download/&lsof-version;/lsof_&lsof-version;.linux.tar.bz2">
 <!ENTITY lsof-download-ftp  "">
-<!ENTITY lsof-md5sum        "10e1353aa4bf2fd5bbed65db9ef6fd47">
-<!ENTITY lsof-size          "1.1 Mo">
-<!ENTITY lsof-buildsize     "9.6 Mo">
-<!ENTITY lsof-time          "moins de 0.1 SBU">
+<!ENTITY lsof-md5sum        "2a007f86fb0207fbce3e9d7542e1041c">
+<!ENTITY lsof-size          "493&nbsp;Ko">
+<!ENTITY lsof-buildsize     "3.7&nbsp;Mo (plus 600&nbsp;Ko pour les tests)">
+<!ENTITY lsof-time          "less than 0.1 SBU (add 0.4 SBU for tests)">
 ]>
 
 <sect1 id="lsof" xreflabel="lsof-&lsof-version;">
@@ -81,7 +77,27 @@ processus.
       <xref linkend="libtirpc"/>
     </para>
 
+    <bridgehead renderas="sect4">Facultatives</bridgehead>
+    <para role="optional">
+      <xref linkend="nmap"/> (with a symbolic link <command>nc</command> pointing
+to <command>ncat</command> in <filename class="directory">
+/usr/bin</filename>; used in tests)
+    </para>
+
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;: <ulink url="&blfs-wiki;/lsof"/></para>
+
+  </sect2>
+
+  <sect2 role="kernel" id="lsof-kernel">
+    <title>Configuration du noyau</title>
+
+    <para>
+      To run the tests, the following option should be enabled in the kernel
+configuration:
+    </para>
+
+<screen><literal>General setup  ---&gt;
+  [*] POSIX Message Queues    [CONFIG_POSIX_MQUEUE]</literal></screen>
 
   </sect2>
 
@@ -89,19 +105,27 @@ processus.
     <title>Installation de lsof</title>
 
     <para>
-      Le contenu de l'archive de <application>lsof</application> contient
-plusieurs fichiers, au milieu desquels, une autre archive avec le code
-source, qui nécessite d'être déballée. Installez
-<application>lsof</application> en lançant les commandes suivantes&nbsp;:
+      Installez <application>lsof</application> en lançant les commandes
+suivantes&nbsp;:
     </para>
 
-<screen><userinput>tar -xf lsof_&lsof-version;_src.tar  &amp;&amp;
-cd lsof_&lsof-version;_src           &amp;&amp;
-./Configure -n linux       &amp;&amp;
-make CFGL="-L./lib -ltirpc"</userinput></screen>
+<screen><userinput>./Configure -n linux &amp;&amp;
+make</userinput></screen>
 
     <para>
-      Ce paquet n'a pas de suite de tests fonctionnelle.
+      The tests should be run as the <systemitem
+class="username">root</systemitem> user. They require that the POSIX message
+queues are enabled in the kernel, and that <xref linkend="nmap"/> be
+installed with a symbolic link <filename>/usr/bin/nc</filename> pointing to
+<command>ncat</command>.
+    </para>
+
+<screen role="root"
+        remap="test"><userinput>make check</userinput></screen>
+
+    <para>
+      Two tests fail if the tests are run from a script instead of an interactive
+session.
     </para>
 
     <para>
@@ -109,7 +133,7 @@ make CFGL="-L./lib -ltirpc"</userinput></screen>
 class="username">root</systemitem>&nbsp;:
     </para>
 
-<screen role="root"><userinput>install -v -m0755 -o root -g root lsof /usr/bin &amp;&amp;
+<screen role="root"><userinput>install -v -m4755 -o root -g root lsof /usr/bin &amp;&amp;
 install -v lsof.8 /usr/share/man/man8</userinput></screen>
 
   </sect2>
@@ -124,8 +148,10 @@ Linux.
     </para>
 
     <para>
-      <command>make CFGL="-L./lib -ltirpc"</command>&nbsp;: Ajoute l'emplacement
-des bibliothèques libtirpc pour la commande <command>make</command>.
+      <command>install -m4755 ...</command>: <command>lsof</command> should be
+suid root to allwo users to list all files. This may be a security threat on
+some systems. In that case change to <option>-m755</option> and use
+<command>sudo</command> to run the program.
     </para>
 
   </sect2>
