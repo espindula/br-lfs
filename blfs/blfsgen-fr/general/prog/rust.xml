@@ -6,7 +6,7 @@
 
   <!ENTITY rust-download-http "https://static.rust-lang.org/dist/rustc-&rust-version;-src.tar.gz">
   <!ENTITY rust-download-ftp  "">
-  <!ENTITY rust-md5sum        "2a5f12b375b9b8fffe2340f6c2d27eab">
+  <!ENTITY rust-md5sum        "6d1728cf0a86b0c5f33d3870379997ed">
   <!ENTITY rust-size          "172&nbsp;Mo">
   <!-- Gentle Reminder: buildsize is how much the user requires for the real
        install, i.e. the source with its DESTDIR *plus* the DESTDIR.  You
@@ -14,10 +14,10 @@
        to measure it, or du -sm to look at the size of the build tree before and
        after the tests. -->
 
-  <!ENTITY rust-buildsize     "8.8 GB (424 MB installed) including 285 MB of ~/.cargo files for the user
-building this. Add 5.9 GB including extra 273 MB of ~/.cargo files if
+  <!ENTITY rust-buildsize     "8.8 GB (370 MB installed) including 309 MB of ~/.cargo files for the user
+building this. Add 6.2 GB including extra 273 MB of ~/.cargo files if
 running the tests">
-  <!ENTITY rust-time          "22 SBU (including download time; add 13 SBU for tests, both on a 4-core
+  <!ENTITY rust-time          "27 SBU (including download time; add 13 SBU for tests, both on a 4-core
 machine)">
 ]>
 
@@ -77,20 +77,19 @@ deux sur un réseau rapide.
 
     <note>
       <para>
-        Bien que BLFS installe généralement ses logiciels dans <filename
-class="directory">/usr</filename>, lorsque vous mettez à jour vers une
-nouvelle version de <application>rust</application> les anciennes
-bibliothèques de <filename class="directory">/usr/lib/rustlib</filename>
-resteront présentes, avec divers hashs dans leur nom, mais seront inutiles
-et gaspilleront de l'espace disque. Les éditeurs recommandent de placer ces
-fichiers dans le répertoire <filename class="directory">/opt</filename>. En
-particulier, si vous avez une raison pour reconstruire avec une
-configuration différente (p. ex. pour utiliser le LLVM interne après avoir
-construit avec un LLVM partagé, ou dans la situation contraire) il est
-possible que l'installation laisse un programme <command>cargo</command>
-cassé. Dans une telle situation, vous pouvez soit supprimer l'installation
-existante avant, soit utiliser un préfixe différent, comme
-/opt/rust-&rust-version;-build2.
+        Although BLFS usually installs in <filename
+class="directory">/usr</filename>, when you later upgrade to a newer version
+of <application>rust</application> the old libraries in <filename
+class="directory">/usr/lib/rustlib</filename> will remain, with various
+hashes in their names, but will not be usable and will waste space. The
+editors recommend placing the files in the <filename
+class="directory">/opt</filename> directory.  In particular, if you have
+reason to rebuild with a modified configuration (e.g. using the shipped LLVM
+after building with shared LLVM, perhaps to compile crates for architectres
+which the BLFS LLVM build does not support)  it is possible for the install
+to leave a broken <command>cargo</command> program. In such a situation,
+either remove the existing installation first, or use a different prefix
+such as /opt/rustc-&rust-version;-build2.
       </para>
 
       <para>
@@ -209,11 +208,15 @@ Additional Downloads</bridgehead>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
-      <package>clang</package> de <xref linkend="llvm"/> (construit avec
--DLLVM_LINK_LLVM_DYLIB=ON pour que rust puisse se lier au LLVM du système au
-lieu de compiler la version intégrée). Si vous utilisez une ancienne
-version, regardez le fichier config.toml ci-dessous et réutilisez le llvm
-inclus, à cause du problème 69225 de rust.
+      <!-- the versions of LLVM in LFS-10.0, 10.1 and 11.0 are good enough
+           to use for this version of rustc, so do not mention builds
+           using shipped LLVM here, those are a lot bigger.
+      If using an older version, see the config.toml file below re
+      using the shipped llvm, because of rust issue 69225.-->
+<package>clang</package> from <xref linkend="llvm"/> (built with
+-DLLVM_LINK_LLVM_DYLIB=ON so that rust can link to system LLVM instead of
+building its shipped version)
+      
     </para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
@@ -310,7 +313,11 @@ EOF</userinput></screen>
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>export RUSTFLAGS="$RUSTFLAGS -C link-args=-lffi" &amp;&amp;
+<screen><userinput>sed -i -e '/^curl /s/0.4.38/0.4.40/' \
+       -e '/^curl-sys /s/0.4.48/0.4.50/' \
+       src/tools/cargo/Cargo.toml &amp;&amp;
+
+export RUSTFLAGS="$RUSTFLAGS -C link-args=-lffi" &amp;&amp;
 python3 ./x.py build --exclude src/tools/miri</userinput></screen>
 
     <note>
@@ -330,11 +337,11 @@ construction, cela utilisera tous les CPU disponibles.
     </para>
 
     <para>
-      At a minimum, fourteen tests will fail: all the tests (eleven) in the
-<quote>assembly</quote> suite, run-make-fulldeps/long-linker-command-lines,
-run-make-fulldeps/print-cfg, run-make-fulldeps/sysroot-crates-are-unstable.
-If <command>gdb</command> is installed, another failure
-(debuginfo/function-names.rs) can be expected.
+      At a minimum, fifteen tests will fail: all the tests (twelve) in the
+<quote>assembly</quote> suite, apparently because warnings are tuened on,
+run-make-fulldeps/long-linker-command-lines, run-make-fulldeps/print-cfg,
+run-make-fulldeps/sysroot-crates-are-unstable.  If <command>gdb</command> is
+installed, another failure (debuginfo/function-names.rs) can be expected.
     </para>
 
     <para>
@@ -452,6 +459,14 @@ x86 32&nbsp;bits. La section complète peut être omise si vous souhaitez
 construire avec la version de llvm incluse ou que vous n'avez pas clang,
 mais la construction qui en résultera sera plus grande et prendra plus de
 temps.
+    </para>
+
+    <para>
+      <command>sed -i -e '/^curl /s/0.4.38/0.4.40/' ... </command>: two crates
+normally downloaded for this release do not correctly initialise
+<application>curl</application> if using
+<application>openssl-3.0.0</application>. Upstream has fixed that for a
+future release, this sed causes the fixed versions to be used.
     </para>
 
     <para>

@@ -6,10 +6,10 @@
 
   <!ENTITY xorg-server-download-http "&xorg-download-http;/xserver/xorg-server-&xorg-server-version;.tar.xz">
   <!ENTITY xorg-server-download-ftp  "&xorg-download-ftp;/xserver/xorg-server-&xorg-server-version;.tar.xz">
-  <!ENTITY xorg-server-md5sum        "9acb2a51507e6056b09e3d3f19565419">
-  <!ENTITY xorg-server-size          "4.9&nbsp;Mo">
-  <!ENTITY xorg-server-buildsize     "193&nbsp;Mo (avec les tests)">
-  <!ENTITY xorg-server-time          "0.7&nbsp;SBU (avec parallélisme = 4&nbsp;; avec les tests)">
+  <!ENTITY xorg-server-md5sum        "6d8e557a6dbd5a9923c3564b64af7d94">
+  <!ENTITY xorg-server-size          "4.7&nbsp;Mo">
+  <!ENTITY xorg-server-buildsize     "217&nbsp;Mo (avec les tests)">
+  <!ENTITY xorg-server-time          "0.4&nbsp;SBU (avec parallélisme = 4&nbsp;; avec les tests)">
 ]>
 
 <sect1 id="xorg-server" xreflabel="Xorg-Server-&xorg-server-version;">
@@ -85,35 +85,33 @@ Additional Downloads</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required">
-      <xref linkend="pixman"/>, et <xref linkend="xorg7-font"/> (seulement
-font-util) et à l'exécution&nbsp;: <xref role="runtime"
-linkend="xkeyboard-config"/>
+      <xref linkend="libxcvt"/>, <xref linkend="pixman"/>, <xref
+linkend="xorg7-font"/> (only font-util), and at runtime: <xref
+role="runtime" linkend="xkeyboard-config"/>
     </para>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
-      <phrase revision="sysv"><xref linkend="elogind"/></phrase> <xref
-linkend="libepoxy"/> (requis pour glamor et Xwayland), <phrase
-revision="sysv"><xref role="runtime" linkend="polkit"/> (exécution),
-</phrase><xref linkend="wayland"/> (requis pour Xwayland), <phrase
-revision="sysv"> et</phrase> <xref linkend="wayland-protocols"/> <phrase
-revision="systemd"> et <xref linkend="systemd"/></phrase>
+      <phrase revision="sysv"><xref linkend="elogind"/>,</phrase> <xref
+linkend="libepoxy"/> (needed for glamor), and <phrase revision="sysv"><xref
+role="runtime" linkend="polkit"/> (runtime)</phrase> <phrase
+revision="systemd"><xref linkend="systemd"/></phrase>
     </para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      <xref role="runtime" linkend="acpid"/> (exécution), <xref
-linkend="doxygen"/> (pour construire la documentation de l'API), <xref
-linkend="fop"/>, (pour construire la documentation), <xref
-linkend="nettle"/>, <xref linkend="libgcrypt"/>, <xref
+      <xref role="runtime" linkend="acpid"/> (runtime), <xref linkend="doxygen"/>
+(to build API documentation), <xref linkend="fop"/> (to build
+documentation), <xref linkend="nettle"/>, <xref linkend="libgcrypt"/>, <xref
 linkend="xcb-util-keysyms"/>, <xref linkend="xcb-util-image"/>, <xref
-linkend="xcb-util-renderutil"/>, <xref linkend="xcb-util-wm"/> (tous trois
-pour construire Xephyr), <xref linkend="xmlto"/> (pour construire la
-documentation), <ulink
-url="http://download.savannah.gnu.org/releases/libunwind">libunwind</ulink>
-et <ulink
+linkend="xcb-util-renderutil"/>, <xref linkend="xcb-util-wm"/> (all four to
+build Xephyr), <xref linkend="xmlto"/> (to build documentation), <ulink
+url="http://download.savannah.gnu.org/releases/libunwind">libunwind</ulink>,
+and <ulink
+url="https://gitlab.freedesktop.org/xorg/test/rendercheck">rendercheck</ulink>
+(for tests), <ulink
 url="https://www.x.org/archive/individual/doc/">xorg-sgml-doctools</ulink>
-(pour construire la documentation)
+(to build documentation)
     </para>
 
     <para condition="html" role="usernotes">Notes utilisateur&nbsp;: <ulink url='&blfs-wiki;/Xorg7Server'/>
@@ -136,17 +134,18 @@ url="https://www.x.org/archive/individual/doc/">xorg-sgml-doctools</ulink>
       Installez the server en lançant les commandes suivantes&nbsp;:
     </para>
 
-<screen><userinput>./configure $XORG_CONFIG            \
-            --enable-glamor         \
-            --enable-suid-wrapper   \
-            --with-xkb-output=/var/lib/xkb &amp;&amp;
-make</userinput></screen>
+<screen><userinput>mkdir build &amp;&amp;
+cd build    &amp;&amp;
+
+meson --prefix=$XORG_PREFIX \
+      -Dsuid_wrapper=true   \
+      -Dxkb_output_dir=/var/lib/xkb &amp;&amp;
+ninja</userinput></screen>
 
     <para>
-      Pour tester les résultats, lancez&nbsp;: <command>make check</command> Vous
-devrez lancer <command>ldconfig</command> en tant qu'utilisateur <systemitem
-class="username">root</systemitem> avant ou certains tests pourraient
-échouer.
+      To test the results, issue: <command>ninja test</command>. You will need to
+run <command>ldconfig</command> as the <systemitem
+class="username">root</systemitem> user first or some tests may fail.
     </para>
 
     <para>
@@ -154,14 +153,14 @@ class="username">root</systemitem> avant ou certains tests pourraient
 class="username">root</systemitem>&nbsp;:
     </para>
 
-<screen role="root" revision="sysv"><userinput>make install &amp;&amp;
+<screen role="root" revision="sysv"><userinput>ninja install &amp;&amp;
 mkdir -pv /etc/X11/xorg.conf.d &amp;&amp;
 cat &gt;&gt; /etc/sysconfig/createfiles &lt;&lt; "EOF"
 <literal>/tmp/.ICE-unix dir 1777 root root
 /tmp/.X11-unix dir 1777 root root</literal>
 EOF</userinput></screen>
 
-<screen role="root" revision="systemd"><userinput>make install &amp;&amp;
+<screen role="root" revision="systemd"><userinput>ninja install &amp;&amp;
 mkdir -pv /etc/X11/xorg.conf.d</userinput></screen>
 
   </sect2>
@@ -169,37 +168,39 @@ mkdir -pv /etc/X11/xorg.conf.d</userinput></screen>
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
+    <!-- built by default now
     <para>
-      <parameter>--enable-glamor</parameter>&nbsp;: construit le module Glamor DIX
-(Device Independent X) qui est actuellement requis par&nbsp;: puce vidéo
-radeon R600 ou ultérieure, le pilote modesetting (qui est un élément de ce
-paquet) pour le matériel utilisant KMS pour offrir l'accélération, et
-(facultatif) le pilote Intel.
+
+      <parameter>- -enable-glamor</parameter>: Build the Glamor DIX (Device
+      Independent X) module which is currently used by: R600 or later radeon
+      video chipsets, the modesetting driver (which is part of this package)
+      for hardware using KMS which offers acceleration, and (optionally) the
+      intel driver.
+    </para>
+-->
+<para>
+      <parameter>-Dsuid_wrapper=true</parameter>: Builds the suid-root wrapper for
+legacy driver support on rootless xserver systems.
     </para>
 
     <para>
-      <parameter>--enable-suid-wrapper</parameter>&nbsp;: construit l'enveloppe
-suid-root pour la prise en charge des anciens pilotes sur les systèmes
-xserver sans utilisateur root.
+      <option>-Dsystemd_logind=false</option>: This switch disables <phrase
+revision="systemd">systemd-logind</phrase> <phrase
+revision="sysv">elogind</phrase> integration allowing Xorg Server to work
+without having the <phrase revision="systemd">systemd</phrase> <phrase
+revision="elogind">elogind</phrase> PAM module configured.
     </para>
 
+    <!-- seems to be completely removed with meson build:
     <para>
-      <option>--disable-systemd-logind</option>&nbsp;: Ce paramètre désactive
-l'intégration à <phrase revision="systemd">systemd-logind</phrase><phrase
-revision="sysv">elogind</phrase>, permettant au serveur Xorg de fonctionner
-sans avoir à configurer le module PAM <phrase
-revision="systemd">systemd</phrase><phrase
-revision="elogind">elogind</phrase> et à le configurer.
-    </para>
 
-    <para>
-      <option>--neable-install-setuid</option>&nbsp;: ce paramètre restaure le bit
-setuid de l'exécutable Xorg, permettant au serveur Xorgde fonctionner avec
-un terminal virtuel désigné sur la ligne de commande de
-<command>startx</command>.
+      <option>- -enable-install-setuid</option>:
+      This switch restores the setuid bit to the Xorg executable allowing Xorg
+      Server to work with a virtual terminal designated on the
+      <command>startx</command> command line.
     </para>
-
-    <para revision="sysv">
+-->
+<para revision="sysv">
       <command>cat &gt;&gt; /etc/sysconfig/createfiles...</command>&nbsp;: Cette
 commande crée les répertoires <filename
 class="directory">/tmp/.ICE-unix</filename> et <filename
@@ -208,14 +209,8 @@ droits et l'appartenance soient conformes aux exigences du serveur
     </para>
 
     <para>
-      <option>--enable-dmx</option>&nbsp;: construit le serveur DMX (Distributed
-Multihead X).
-    </para>
-
-    <para>
-      <option>--enable-kdrive</option>&nbsp;: cette option permet au script
-<command>configure</command> d'activer Xephyr si ses dépendances sont
-présentes.
+      <option>-Dxephyr=true</option>: This option allows the build Xephyr if its
+dependencies are met.
     </para>
 
   </sect2>
@@ -230,18 +225,17 @@ présentes.
 
       <seglistitem>
         <seg>
-          <!--Xfbdev-->
-cvt, gtf, X, Xnest, Xorg, and Xvfb; optional: dmxaddinput, dmxaddscreen,
-dmxinfo, dmxreconfig, dmxresize, dmxrminput, dmxrmscreen, dmxtodmx,
-dmxwininfo, vdltodmx, Xdmx, xdmxconfig, Xephyr et Xwayland
+          gtf, X, Xnest, Xorg, Xvfb, and optionally Xephyr
         </seg>
         <seg>
-          plusieurs dans $XORG_PREFIX/lib/xorg/modules/{,drivers,extensions} dont
-modesetting_drv.so
+          several under $XORG_PREFIX/lib/xorg/modules/ including the <filename
+class="libraryfile">modesetting_drv.so</filename> driver
         </seg>
         <seg>
-          $XORG_PREFIX/{include/xorg,lib/xorg,share/X11/xorg.conf.d} et /var/lib/xkb
+          /etc/X11/xorg.conf.d, $XORG_PREFIX/include/xorg, $XORG_PREFIX/lib/xorg, and
+$XORG_PREFIX/share/X11/xorg.conf.d
         </seg>
+
       </seglistitem>
     </segmentedlist>
 
@@ -250,31 +244,33 @@ modesetting_drv.so
       <?dbfo list-presentation="list"?>
       <?dbhtml list-presentation="table"?>
 
+      <!-- Now in libxcvt:
       <varlistentry id="cvt-x7">
+
         <term><command>cvt</command></term>
         <listitem>
           <para>
-            calcule les lignes du mode VESA CVT
+            calculates VESA CVT mode lines
           </para>
           <indexterm zone="xorg-server cvt-x7">
             <primary sortas="b-cvt">cvt</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-
+Removed in this release:
       <varlistentry id="dmx-x7">
         <term><command>dmx*</command></term>
         <listitem>
           <para>
-            sont divers outils pour manipuler le serveur dmx
+            are various tools used for manipulating the dmx server
           </para>
           <indexterm zone="xorg-server dmx-x7">
             <primary sortas="b-dmx">dmx*</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-
-      <varlistentry id="gtf-x7">
+-->
+<varlistentry id="gtf-x7">
         <term><command>gtf</command></term>
         <listitem>
           <para>
@@ -286,20 +282,22 @@ modesetting_drv.so
         </listitem>
       </varlistentry>
 
+      <!-- No dmx in this release
       <varlistentry id="vdltodmx-x7">
+
         <term><command>vdltodmx</command></term>
         <listitem>
           <para>
-            est un outil pour convertir des fichiers de configuration VDL en fichiers de
-configuration DMX
+            is a tool used to convert VDL config files to DMX config
+            files
           </para>
           <indexterm zone="xorg-server vdltodmx-x7">
             <primary sortas="b-vdltodmx">vdltodmx</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-
-      <varlistentry id="X-x7">
+-->
+<varlistentry id="X-x7">
         <term><command>X</command></term>
         <listitem>
           <para>
@@ -311,20 +309,22 @@ configuration DMX
         </listitem>
       </varlistentry>
 
+      <!-- No dmx in this release
      <varlistentry id="Xdmx">
+
         <term><command>Xdmx</command></term>
         <listitem>
           <para>
-            est un serveur mandataire X qui utilise un ou plusieurs serveurs X comme
-périphériques d'affichage
+            is a proxy X server that uses one or more other X servers as
+            its display devices
           </para>
           <indexterm zone="xorg-server Xdmx">
             <primary sortas="b-Xdmx">Xdmx</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-
-      <varlistentry id="Xephyr-x7">
+-->
+<varlistentry id="Xephyr-x7">
         <term><command>Xephyr</command></term>
         <listitem>
           <para>
@@ -372,33 +372,35 @@ périphériques d'affichage
         </listitem>
       </varlistentry>
 
+      <!-- No dmx in this release
       <varlistentry id="xdmxconfig-x7">
+
         <term><command>xdmxconfig</command></term>
         <listitem>
           <para>
-            est un outil de configuration graphique pour le serveur dmx
+            is a graphical configuration utility for the dmx server
           </para>
           <indexterm zone="xorg-server xdmxconfig-x7">
             <primary sortas="b-xdmxconfig">xdmxconfig</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-
+Xwayland has been separated to xwayland package
       <varlistentry id="Xwayland-x7">
         <term><command>Xwayland</command></term>
         <listitem>
           <para>
-            permet au serveur X de lancer des clients X sous wayland (c'est-à-dir que
-wayland fournit les périphériques d'entrées et gère l'affichage des
-fenêtres)
+            allows the X server to run X clients under wayland (i.e. wayland
+            provides the input devices and handles the presentation of the
+            windows)
           </para>
           <indexterm zone="xorg-server Xwayland-x7">
             <primary sortas="b-Xwayland">Xwayland</primary>
           </indexterm>
         </listitem>
       </varlistentry>
-
-      <varlistentry id="modesetting_drv-x7">
+-->
+<varlistentry id="modesetting_drv-x7">
         <term><filename class="libraryfile">modesetting_drv.so</filename></term>
         <listitem>
           <para>
