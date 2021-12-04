@@ -97,9 +97,23 @@
     <filename>README</filename> file in that directory for further details.
     </para>
 
-    <para>Install the package:</para>
+    <!-- To editors: crash of shell process was very rare but really
+         observed.  We can't simply remove /usr/lib/libncursesw.so.6.x like 
+         how we handle libmozjs-xx.so in BLFS because bash needs it, and
+         make will spawn new shell processes during "make install".  -->
 
-<screen><userinput remap="install">make install</userinput></screen>
+    <para>The installation of this package will overwrite
+    <filename class="libraryfile">libncursesw.so.&ncurses-version;</filename>
+    in-place.  It may crash the shell process which is using code and data
+    from the library file.  Install the package with
+    <literal>DESTDIR</literal>, and replace the library file correctly using
+    <command>install</command> command.  A useless static archive which is
+    not handled by <command>configure</command> is also removed:</para>
+
+<screen><userinput remap="install">make DESTDIR=$PWD/dest install
+install -vm755 dest/usr/lib/libncursesw.so.&ncurses-version; /usr/lib
+rm -v  dest/usr/lib/{libncursesw.so.&ncurses-version;,libncurses++w.a}
+cp -av dest/* /</userinput></screen>
 
     <para>Many applications still expect the linker to be able to find
     non-wide-character Ncurses libraries. Trick such applications into linking with
@@ -118,10 +132,6 @@ done</userinput></screen>
 <screen><userinput remap="install">rm -vf                     /usr/lib/libcursesw.so
 echo "INPUT(-lncursesw)" &gt; /usr/lib/libcursesw.so
 ln -sfv libncurses.so      /usr/lib/libcurses.so</userinput></screen>
-
-    <para>Remove a static library that is not handled by configure:</para>
-
-<screen><userinput remap="install">rm -fv /usr/lib/libncurses++w.a</userinput></screen>
 
     <para>If desired, install the Ncurses documentation:</para>
 
