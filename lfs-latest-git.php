@@ -281,7 +281,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
      return find_max( $lines, "/v\d/", "/^.*v([\d\.]+)$/" );
 
   if ( $package == "psmisc" )
-     return find_max( $lines, "/v\d/", "/^.*v([\d\.]+) .*$/" );
+     return find_max( $lines, "/v\d/", "/^.*v([\d\.]+).tar.*$/" );
 
   if ( $package == "grub" )
      return find_max( $lines, "/grub/", "/^.*grub-([\d\.]+).tar.xz.*$/" );
