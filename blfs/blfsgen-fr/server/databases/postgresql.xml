@@ -149,24 +149,27 @@ check</command>.
     </para>
 
     <note>
-      <para>Hold off from continuing in case you are building
-<application>PostgreSQL</application> to upgrade an existing
-installation. In case the major version of the new build is different to the
-existing one, its quite likely that the new software cannot act on the
-existing data files. In this case, the server will not start and the old
-binaries has been overwritten so you got stuck with an unusable database.</para>
+      <para>If you are installing <application>PostgreSQL</application> to upgrade an
+existing installation, there are important steps that you need to follow. If
+the major version of the new build is greater than the previous version,
+there is a chance that the data file format has changed.  new software
+cannot act on the existing data files. In this case, the server will not
+start because the old programs have been overwritten, so the data is
+unavailable until it's file format has been converted.</para>
 
       <para>
-        Before upgrading an existing installation of PostgreSQL check the
-documentation about various ways to upgrade. Note that new major versions
-might use a different binary format in the data objects in which case
-incompatibilities may be introduced.  Find the documentation about upgrading
-at <ulink url="https://www.postgresql.org/docs/current/upgrading.html"/>.
+        Before upgrading an existing installation of PostgreSQL, check the
+documentation for any considerations that you must keep in mind during the
+upgrade. Note that new major versions might use a different binary format in
+the data objects, causing potential incompatibilities.  For more
+information, check out upstream's documentation about upgrading PostgreSQL
+here.  <ulink
+url="https://www.postgresql.org/docs/current/upgrading.html"/>.
       </para>
 
-      <para>At this moment, you have both, the old and the new binaries on disk. They
-can be used to perform an upgrade of your existing database right now. For
-the folloging instructions it is assumed that
+      <para>At this point, you may have both the old and the new binaries installed on
+your filesystem. These binaries can be used to perform an upgrade of your
+existing database files. For the following instructions it is assumed that
       <itemizedlist>
         <listitem><para>The actual data files are stored in <filename
 class="directory">/srv/pgsql/data</filename></para>
@@ -180,36 +183,46 @@ is not an inline upgrade but it will copy the data to new database files.</para>
       </itemizedlist>
       </para>
 
-      <para>Do a temporary install which makes access to the new binaries a bit easier:</para>
-      <screen><userinput>make DESTDIR=$(pwd)/DESTDIR install</userinput></screen>
+      <para>Fist, do a temporary install which makes access to the new binaries much
+easier:</para>
+<screen role="nodump"><userinput>make DESTDIR=$(pwd)/DESTDIR install</userinput></screen>
 
-      <para>Create a directory which is writable by the <systemitem
-class="username">postgres</systemitem> as the <systemitem
+      <para>Next, create a directory which is writable by the <systemitem
+class="username">postgres</systemitem> user, as the <systemitem
 class="username">root</systemitem> user:</para>
       
-      <screen><userinput role="root">install -D -o postgres $(pwd)/DESTDIR/tmp</userinput></screen>
+<screen role="nodump"><userinput>install -D -o postgres $(pwd)/DESTDIR/tmp</userinput></screen>
       
       <para>Now, stop the existing instance of <application>PostgreSQL</application> and
 start the upgrade process as the <systemitem
 class="username">root</systemitem> user:</para>
       
-      <screen><userinput role="root">pushd $(pwd)/DESTDIR/tmp
+<screen revision="sysv" role="nodump"><userinput>pushd $(pwd)/DESTDIR/tmp
 /etc/rc.d/init.d/postgresql stop
 su postgres -c "../usr/bin/initdb -D /srv/pgsql/newdata"
 su postgres -c "../usr/bin/pg_upgrade \
                     -d /srv/pgsql/data    -b /usr/bin \
                     -D /srv/pgsql/newdata -B ../usr/bin"
 popd</userinput></screen>
+
+<screen revision="systemd" role="nodump"><userinput>pushd $(pwd)/DESTDIR/tmp
+systemctl stop postgresql
+su postgres -c "../usr/bin/initdb -D /srv/pgsql/newdata"
+su postgres -c "../usr/bin/pg_upgrade \
+                    -d /srv/pgsql/data    -b /usr/bin \
+                    -D /srv/pgsql/newdata -B ../usr/bin"
+popd</userinput></screen>
+
+      <para>At this point, your database files available in two locations on disk. The
+old data is located in <filename
+class="directory">/srv/pgsql/data</filename>, and the new data is in
+<filename class="directory">/srv/pgsql/newdata</filename>.  Backing up the
+old database files is suggested before continuing.</para>
       
-      <para>At this stage, you have your database files two times on disk, one is the
-old data in <filename class="directory">/srv/pgsql/data</filename> and the
-new ones in <filename class="directory">/srv/pgsql/newdata</filename>.  May
-this is the time you do a last backup of the old database files.</para>
+      <para>Next, remove the old database files, and rename the new data directory as
+the <systemitem class="username">root</systemitem> user:</para>
       
-      <para>Remove the old database files, and rename the new data directory as the
-<systemitem class="username">root</systemitem> user:</para>
-      
-      <screen><userinput role="root">rm -rf /srv/pgsql/data
+<screen role="nodump"><userinput>rm -rf /srv/pgsql/data
 mv /srv/pgsql/newdata /srv/pgsql/data</userinput></screen>
 
     </note>
