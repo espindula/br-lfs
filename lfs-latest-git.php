@@ -114,6 +114,7 @@ if ( $package == "e2fsprogs"  ) $dirpath = "https://sourceforge.net/projects/e2f
 if ( $package == "expat"      ) $dirpath = "https://sourceforge.net/projects/expat/files";
 if ( $package == "elfutils"   ) $dirpath = "https://sourceware.org/ftp/elfutils";
 if ( $package == "expect"     ) $dirpath = "https://sourceforge.net/projects/expect/files";
+if ( $package == "eudev"      ) $dirpath = "https://github.com/eudev-project/eudev/releases";
 if ( $package == "file"       ) $dirpath = "https://github.com/file/file/tags";
 if ( $package == "flex"       ) $dirpath = "https://github.com/westes/flex/releases";
 if ( $package == "gcc"        ) $dirpath = max_parent( $dirpath, "gcc-" );
@@ -244,6 +245,9 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
 
   if ( $package == "e2fsprogs" )
      return find_max( $lines, "/v\d/", "/^.*v(\d[\d\.]+\d).*$/" );
+
+  if ( $package == "eudev" )
+     return find_max( $lines, "/Release/", "/^.*Release (\d[\d\.]+\d).*$/" );
 
   if ( $package == "expect" )
      return find_max( $lines, "/expect/", "/^.*expect(\d[\d\.]+\d).tar.*$/" );
