@@ -6,10 +6,10 @@
 
   <!ENTITY shadow-download-http "https://github.com/shadow-maint/shadow/releases/download/v&shadow-version;/shadow-&shadow-version;.tar.xz">
   <!ENTITY shadow-download-ftp  "">
-  <!ENTITY shadow-md5sum        "126924090caf72f3de7e9261fd4e10ac">
+  <!ENTITY shadow-md5sum        "3a7936a9d0834243816fe0977c3b956e">
   <!ENTITY shadow-size          "1.6&nbsp;Mo">
-  <!ENTITY shadow-buildsize     "40&nbsp;Mo">
-  <!ENTITY shadow-time          "0.3&nbsp;SBU">
+  <!ENTITY shadow-buildsize     "38&nbsp;Mo">
+  <!ENTITY shadow-time          "0.2&nbsp;SBU">
 ]>
 
 <sect1 id="shadow" xreflabel="Shadow-&shadow-version;">
@@ -76,6 +76,16 @@ d'utiliser PAM.
       </listitem>
     </itemizedlist>
 
+    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>
+          Correctif requis&nbsp;: <ulink
+url="&patch-root;/shadow-&shadow-version;-useradd_segfault-1.patch"/>
+        </para>
+      </listitem>
+    </itemizedlist>
+
     <bridgehead renderas="sect3">Dépendances de Shadow</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
@@ -117,12 +127,10 @@ suivante&nbsp;:
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>sed -i.orig '/$(LIBTCB)/i $(LIBPAM) \\' libsubid/Makefile.am &amp;&amp;
-sed -i "224s/rounds/min_rounds/"        libmisc/salt.c       &amp;&amp;
+<screen><userinput>patch -Np1 -i ../shadow-4.10--useradd_segfault-1.patch &amp;&amp;
 
-autoreconf -fiv &amp;&amp;
-
-sed -i 's/groups$(EXEEXT) //' src/Makefile.in &amp;&amp;
+sed -i "224s/rounds/min_rounds/" libmisc/salt.c        &amp;&amp;
+sed -i 's/groups$(EXEEXT) //' src/Makefile.in          &amp;&amp;
 
 find man -name Makefile.in -exec sed -i 's/groups\.1 / /'   {} \; &amp;&amp;
 find man -name Makefile.in -exec sed -i 's/getspnam\.3 / /' {} \; &amp;&amp;
@@ -134,8 +142,7 @@ sed -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD SHA512@' \
     -i etc/login.defs                                 &amp;&amp;
 
 ./configure --sysconfdir=/etc               \
-            --with-group-name-max-length=32 \
-            --without-su                    &amp;&amp;
+            --with-group-name-max-length=32 &amp;&amp;
 make</userinput></screen>
 
     <para>
@@ -202,18 +209,7 @@ because upstream recommends using the <command>su</command> command from
 available.
     </para>
 
-    
-
-  <!-- No longer needed as of 4.8
-    <para>
-
-      <command>mv -v /usr/bin/passwd /bin</command>: The
-      <command>passwd</command> program may be needed during times when the
-      <filename class='directory'>/usr</filename> filesystem is not mounted so
-      it is moved into the root partition.
-    </para>
-    -->
-</sect2>
+  </sect2>
 
   <sect2 role="configuration">
     <title>Configuration de Shadow</title>
@@ -426,6 +422,38 @@ EOF</userinput></screen>
 password  include     system-password
 
 # End /etc/pam.d/passwd</literal>
+EOF</userinput></screen>
+      </sect4>
+
+      <sect4>
+        <title>'su'</title>
+
+<screen role="root"><userinput>cat &gt; /etc/pam.d/chage &lt;&lt; "EOF"
+<literal># Begin /etc/pam.d/su
+
+# always allow root
+auth      sufficient  pam_rootok.so
+
+# Allow users in the wheel group to execute su without a password
+# disabled by default
+#auth      sufficient  pam_wheel.so trust use_uid
+
+# include system auth settings
+auth      include     system-auth
+
+# limit su to users in the wheel group
+auth      required    pam_wheel.so use_uid
+
+# include system account settings
+account   include     system-account
+
+# Set default environment variables for the service user
+session   required    pam_env.so
+
+# include system session settings
+session   include     system-session
+
+# End /etc/pam.d/su</literal>
 EOF</userinput></screen>
       </sect4>
 
