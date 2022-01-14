@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY mutter-download-http "&gnome-download-http;/mutter/&gnome-40;/mutter-&mutter-version;.tar.xz">
-  <!ENTITY mutter-download-ftp  "&gnome-download-ftp;/mutter/&gnome-40;/mutter-&mutter-version;.tar.xz">
-  <!ENTITY mutter-md5sum        "bbfb54fba942b4f388e5b89759f2e9a6">
+  <!ENTITY mutter-download-http "&gnome-download-http;/mutter/&gnome-41;/mutter-&mutter-version;.tar.xz">
+  <!ENTITY mutter-download-ftp  "&gnome-download-ftp;/mutter/&gnome-41;/mutter-&mutter-version;.tar.xz">
+  <!ENTITY mutter-md5sum        "14325de1366970d28d140feff4f79101">
   <!ENTITY mutter-size          "2.6&nbsp;Mo">
-  <!ENTITY mutter-buildsize     "296&nbsp;Mo">
-  <!ENTITY mutter-time          "2,1 SBU (avec parallélisme = 4)">
+  <!ENTITY mutter-buildsize     "176&nbsp;Mo">
+  <!ENTITY mutter-time          "2.2 SBU (Using parallelism=4)">
 ]>
 
 <sect1 id="mutter" xreflabel="Mutter-&mutter-version;">
@@ -70,14 +70,16 @@ pilote d'accélération vidéo).
       </listitem>
     </itemizedlist>
 
+
+
     <!--
     <bridgehead renderas="sect3">
 Additional Downloads</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>
-          Required patch:
-          <ulink url="&patch-root;/mutter-&mutter-version;-upstream_fixes-1.patch"/>
+          Required download:
+          <ulink url="&sources-anduin-http;/mutter/xvfb-run"/>
         </para>
       </listitem>
     </itemizedlist>
@@ -140,36 +142,45 @@ Additionally, <xref linkend="gtk3"/> needs to be built with
     <!--
     <para>
 
-      First, fix a problem with the build system and bugs with wayland sessions:
+      First, install an additional tool that is required by meson as the
+      <systemitem class="username">root</systemitem> user:
     </para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../mutter-&mutter-version;-upstream_fixes-1.patch</userinput></screen>
--->
+ <screen role="root"><userinput remap="pre">install -v -m755 ../xvfb-run /usr/bin</userinput></screen>
+ -->
 <para>
-      Tout d'abord, corrigez une situation de compétition qui apparaît parfois à
-cause de l’ordonnancement des dépendances par meson&nbsp;:
-    </para>
-
-<screen><userinput remap="pre">sed -i '/libmutter_dep = declare_dependency(/a sources: mutter_built_sources,' src/meson.build</userinput></screen>
-
-    <para>
       Installez <application>Mutter</application> en lançant les commandes
 suivantes&nbsp;:
     </para>
 
+<!--
+    <para>
+
+      To test the results, issue:
+      <command>dbus-run-session ninja test</command>. The tests
+      require an active X session to run correctly. It is not necessary to
+      run a  separate D-bus session if not in a GNOME session, but it
+      provides a clean environment in any case. One test,
+      <filename>native-headless</filename>, is known to fail.
+    </para>
+    -->
 <screen><userinput>mkdir build &amp;&amp;
 cd    build &amp;&amp;
 
-meson --prefix=/usr --buildtype=debugoptimized .. &amp;&amp;
+meson --prefix=/usr --buildtype=debugoptimized -Dtests=false .. &amp;&amp;
 ninja</userinput></screen>
 
+
+
     <para>
-      Pour tester les résultats, lancez&nbsp;: <command>dbus-run-session ninja
-test</command>. Les tests requièrent une session X active pour se lancer
-correctement. Il n'est pas nécessaire de lancer un session D-bus séparée si
-vous n'êtes pas dans une session GNOME, mais cela fournit un environnement
-propre dans tous les cas. Un test, <filename>native-headless</filename>, est
-connu pour échouer.
+      The test suite requires an external program called xvfb-run.  If you wish to
+run the tests, install xvfb-run from <ulink
+url="&sources-anduin-http;/mutter/xvfb-run">xvfb-run</ulink> and remove
+-Dtests=false. The script must be placed in /usr/bin to work properly. To
+run the tests if all of these conditions are met, issue:
+<command>dbus-run-session ninja test</command>. Note that the tests require
+an active X session to run correctly, and that
+<filename>native-headless</filename> is known to fail.
     </para>
 
     <para>
@@ -197,6 +208,16 @@ binaires non optimisés. La suite de tests de ce paquet a besoin de
 pas que meson ne télécharge les sources de
 <application>Sysprof</application>.
     </para>
+
+    <para>
+      <option>-Dtests=true</option>: Mutter-41.0 implemented xvfb-run as a
+requirement to run the tests. -Dtests=false bypasses this requirement.  If
+you wish to run the tests, read the test suite instructions above.  Note
+that you will need <ulink
+url="&sources-anduin-http;/mutter/xvfb-run">xvfb-run</ulink> installed in
+/usr/bin.
+    </para>
+
   </sect2>
 
   <sect2 role="content">
@@ -212,10 +233,10 @@ pas que meson ne télécharge les sources de
           mutter
         </seg>
         <seg>
-          libmutter-8.so
+          libmutter-9.so and libmutter-test-9.so
         </seg>
         <seg>
-          /usr/{lib,include,libexec/installed-tests,share/{installed-tests}}/mutter-8
+          /usr/{lib,include,libexec/installed-tests,share/{installed-tests}}/mutter-9
         </seg>
       </seglistitem>
     </segmentedlist>
@@ -239,13 +260,13 @@ basé sur <application>Clutter</application>
       </varlistentry>
 
       <varlistentry id="libmutter">
-        <term><filename class="libraryfile">libmutter-8.so</filename></term>
+        <term><filename class="libraryfile">libmutter-9.so</filename></term>
         <listitem>
           <para>
             contient les fonctions de l'API de <application>Mutter</application>
           </para>
           <indexterm zone="mutter libmutter">
-            <primary sortas="c-libmutter">libmutter-8.so</primary>
+            <primary sortas="c-libmutter">libmutter-9.so</primary>
           </indexterm>
         </listitem>
       </varlistentry>
