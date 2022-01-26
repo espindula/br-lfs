@@ -6,18 +6,18 @@
 
   <!ENTITY rust-download-http "https://static.rust-lang.org/dist/rustc-&rust-version;-src.tar.gz">
   <!ENTITY rust-download-ftp  "">
-  <!ENTITY rust-md5sum        "6d1728cf0a86b0c5f33d3870379997ed">
-  <!ENTITY rust-size          "172&nbsp;Mo">
+  <!ENTITY rust-md5sum        "275744c77bf07fd07abe0fd829e6dafb">
+  <!ENTITY rust-size          "176&nbsp;Mo">
   <!-- Gentle Reminder: buildsize is how much the user requires for the real
        install, i.e. the source with its DESTDIR *plus* the DESTDIR.  You
        can 'mkdir /tmp/RUST ; cp -a install/* /tmp/RUST' and then run 'du -sch'
        to measure it, or du -sm to look at the size of the build tree before and
        after the tests. -->
-
-  <!ENTITY rust-buildsize     "8.8 GB (370 MB installed) including 309 MB of ~/.cargo files for the user
-building this. Add 6.2 GB including extra 273 MB of ~/.cargo files if
+	
+  <!ENTITY rust-buildsize     "8.7 GB (417 MB installed) including 296 MB of ~/.cargo files for the user
+building this. Add 6.5 GB including extra 281 MB of ~/.cargo files if
 running the tests">
-  <!ENTITY rust-time          "27 SBU (including download time; add 13 SBU for tests, both on a 4-core
+  <!ENTITY rust-time          "25 SBU (including download time; add 13 SBU for tests, both on a 4-core
 machine)">
 ]>
 
@@ -85,7 +85,7 @@ hashes in their names, but will not be usable and will waste space. The
 editors recommend placing the files in the <filename
 class="directory">/opt</filename> directory.  In particular, if you have
 reason to rebuild with a modified configuration (e.g. using the shipped LLVM
-after building with shared LLVM, perhaps to compile crates for architectres
+after building with shared LLVM, perhaps to compile crates for architectures
 which the BLFS LLVM build does not support)  it is possible for the install
 to leave a broken <command>cargo</command> program. In such a situation,
 either remove the existing installation first, or use a different prefix
@@ -313,11 +313,14 @@ EOF</userinput></screen>
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>sed -i -e '/^curl /s/0.4.38/0.4.40/' \
-       -e '/^curl-sys /s/0.4.48/0.4.50/' \
-       src/tools/cargo/Cargo.toml &amp;&amp;
 
-export RUSTFLAGS="$RUSTFLAGS -C link-args=-lffi" &amp;&amp;
+
+<screen><!-- fixed in 1.58.0, retain as a reminder that fixed crates can be used
+<screen>
+<userinput>sed -i -e '/^curl /s/0.4.38/0.4.40/' \
+       -e '/^curl-sys /s/0.4.48/0.4.50/' \
+       src/tools/cargo/Cargo.toml &amp;&amp; -->
+<userinput>export RUSTFLAGS="$RUSTFLAGS -C link-args=-lffi" &amp;&amp;
 python3 ./x.py build --exclude src/tools/miri</userinput></screen>
 
     <note>
@@ -337,20 +340,23 @@ construction, cela utilisera tous les CPU disponibles.
     </para>
 
     <para>
-      At a minimum, fifteen tests will fail: all the tests (twelve) in the
-<quote>assembly</quote> suite, apparently because warnings are tuened on,
-run-make-fulldeps/long-linker-command-lines, run-make-fulldeps/print-cfg,
-run-make-fulldeps/sysroot-crates-are-unstable.  If <command>gdb</command> is
-installed, another failure (debuginfo/function-names.rs) can be expected.
+      <!--  If <command>
+gdb</command> is installed,  another failure
+      (debuginfo/function-names.rs) can be expected.
+      # seems ok with 11.2 ken -->
+At a minimum, 49 tests will fail: all 48 of the tests in the
+<quote>assembly</quote> suite which are not skipped (various lints cause the
+warnings in these tests to be treated as errors), and
+run-make-fulldeps/long-linker-command-lines.
+
     </para>
 
     <para>
-      Comme avec toutes les grosses suites de tests, les autres tests peuvent
-échouer sur certaines machines - si le nombre d'échecs supplémentaires n'a
-qu'un seul nombre, trouvez les «&nbsp;FAILED&nbsp;» dans le journal et
-regardez les lignes au-dessus, surtout les lignes
-«&nbsp;stderr:&nbsp;». Toute mention de SIGSEGV ou signal 11 dans un test
-échoué peut s'avérer problématique.
+      As with all large testsuites, other tests might fail on some machines - if
+the number of additional failures is in the single digits, check the log for
+'failures:' and review lines above that, particularly the 'stderr:'
+lines. Any mention of SIGSEGV or signal 11 in a failing test is a cause for
+concern.
     </para>
 
     <para>
@@ -461,15 +467,17 @@ mais la construction qui en résultera sera plus grande et prendra plus de
 temps.
     </para>
 
-    <para>
-      <command>sed -i -e '/^curl /s/0.4.38/0.4.40/' ... </command>: two crates
-normally downloaded for this release do not correctly initialise
-<application>curl</application> if using
-<application>openssl-3.0.0</application>. Upstream has fixed that for a
-future release, this sed causes the fixed versions to be used.
-    </para>
 
-    <para>
+
+    <!--<para>
+
+      <command>sed -i -e '/^curl /s/0.4.38/0.4.40/' ... </command>: two crates
+      normally downloaded for this release do not correctly initialise
+      <application>curl</application> if using
+      <application>openssl-3.0.0</application>. Upstream has fixed that for a
+      future release, this sed causes the fixed versions to be used.
+    </para>-->
+<para>
       <command>export RUSTFLAGS="$RUSTFLAGS -C link-args=-lffi"</command>&nbsp;:
 Cela ajoute un lien vers libffi dans les RUSTFLAGS que vous pourriez déjà
 passer à la construction. Sur certains systèmes, l'édition de lien échoue à
