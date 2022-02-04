@@ -133,7 +133,8 @@ if ( $package == "shadow"     ) $dirpath = "https://github.com/shadow-maint/shad
 if ( $package == "MarkupSafe" ) $dirpath = "https://pypi.python.org/pypi/MarkupSafe/";
 if ( $package == "Jinja"      ) $dirpath = "https://pypi.python.org/pypi/Jinja2/";
 if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/releases";
-if ( $package == "tcl"        ) $dirpath = "https://sourceforge.net/projects/tcl/files";
+//if ( $package == "tcl"        ) $dirpath = "https://sourceforge.net/projects/tcl/files";
+if ( $package == "tcl"        ) $dirpath = "https://www.tcl.tk/software/tcltk/download.html";
 if ( $package == "util-linux" ) $dirpath = max_parent( $dirpath, "v." );
 if ( $package == "vim"        ) $dirpath = "https://github.com/vim/vim/tags";
 if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/releases";
@@ -264,7 +265,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
   }
 
   if ( $package == "tcl" )
-     return find_max( $lines, "/tcl/", "/^.*tcl(\d[\d\.]*\d)-src.*$/" );
+     return find_max( $lines, "/tcl\d/", "/^.*tcl(\d\.[\d\.]*\d)-src.*$/" );
 
   if ( $package == "ninja" )
      return find_max( $lines, "/v\d/", "/^.*v(\d[\d\.]*\d).*$/" );
