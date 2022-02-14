@@ -214,24 +214,42 @@ simultanés avec&nbsp;: </para>
 
     <screen><userinput>make -j2</userinput></screen>
 
+    <para>
+      If you have applied the optional <command>sed</command> when building
+<application>ninja</application> in LFS, you can use:
+    </para>
+
+    <screen><userinput>export NINJAJOBS=2</userinput></screen>
+
+    <para>
+      when a package uses <command>ninja</command>, or just:
+    </para>
+
+    <screen><userinput>ninja -j2</userinput></screen>
+
+    <para>
+      but for ninja, the default number of jobs is &lt;N&gt;+2, where &lt;N&gt; is
+the number of processors available, so that using the above commands is
+rather for limiting the number of jobs (see below for why this could be
+necessary).
+    </para>
+
     <para>Généralement le nombre de processus ne doit pas dépasser le nombre de cœurs
 supportés par le CPU. Pour lister les processeurs de votre système, tapez :
 <userinput>grep processor /proc/cpuinfo</userinput>.
     </para>
 
-    <para>Dans certains cas, l'utilisation de processeurs multiples peut amener dans
-une sorte de «&nbsp;course&nbsp;» où le succès de la construction dépend de
-l'ordre des commandes lancées par le programme <command>make</command>. Par
-exemple, si un exécutable demande un fichier A et un fichier B, essayer de
-lier le programme avant qu'un des composants dépendants ne soit disponible
-aboutira à un échec.  Cela arrive en général quand les développeurs n'ont
-pas correctement désigné tous les prérequis utiles pour accomplir une étape
-du Makefile.</para>
+    <para>In some cases, using multiple processes may result in a 'race' condition
+where the success of the build depends on the order of the commands run by
+the <command>make</command> program.  For instance, if an executable needs
+File A and File B, attempting to link the program before one of the
+dependent components is available will result in a failure.  This condition
+usually arises because the upstream developer has not properly designated
+all the prerequisites needed to accomplish a step in the Makefile.</para>
 
-    <para>Si cela arrive, la meilleure chose à faire est de recommencer la
-construction avec un seul processeur. En ajoutant «&nbsp;-j1&nbsp;» à une
-commande make, cela écrasera l'initialisation similaire dans une variable
-d'environnement MAKEFLAGS.</para>
+    <para>If this occurs, the best way to proceed is to drop back to a single
+processor build.  Adding '-j1' to a make command will override the similar
+setting in the <envar>MAKEFLAGS</envar> environment variable.</para>
 
     <note><para>Lorsque vous lancez les tests du paquet ou l'installation du paquet, nous ne
 recommandons pas d'utiliser une option plus grande que «&nbsp;-j1&nbsp;» à
@@ -239,6 +257,22 @@ moins que cela ne soit indiqué. La procédure d'installation et les tests
 n'ont pas été validés avec des processus en parallèle et peuvent échouer
 avec des problème difficiles à déboguer.</para></note>
 
+    <important>
+      <para>
+        Another problem may occur with modern CPU's, which have a lot of cores.
+Each job started consumes memory, and if the sum of the needed memory for
+each job exceeds the available memory, you may encounter either an OOM (Out
+of Memory) kernel interrupt or intense swapping that will slow the build
+beyond reasonable limits.
+      </para>
+
+      <para>
+        Some compilations with <command>g++</command> may consume up to 2.5 GB of
+memory, so to be safe, you should restrict the number of jobs to (Total
+Memory in GB)/2.5, at least for big packages such as LLVM, WebKitGtk,
+QtWebEngine, or libreoffice.
+      </para>
+    </important>
   </sect2>
 
   <sect2 id="automating-builds" xreflabel="Procédures de construction automatique">
