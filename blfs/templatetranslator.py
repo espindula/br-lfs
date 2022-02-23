@@ -139,7 +139,7 @@ regexps.append([re.compile('contains the (<application>.*</application>) API fun
 regexps.append([re.compile('Now as the <systemitem class="username">root</systemitem> user:'), 'Maintenant en tant qu\'utilisateur <systemitem class="username">root</systemitem>&nbsp;:'])
 regexps.append([re.compile('Project Home Page: (<ulink .*/>)$', re.MULTILINE|re.DOTALL), 'Page d\'accueil du projet&nbsp;: #1'])
 regexps.append([re.compile('Download Location: (<ulink .*/>)$', re.MULTILINE|re.DOTALL), 'Emplacement du téléchargement&nbsp;: #1'])
-regexps.append([re.compile('(<.*>): This switch is used to apply( a)? higher level of( the)? compiler( the)? optimizations?.?$', re.MULTILINE|re.DOTALL), '#1&nbsp;: Ce paramètre est utilisé pour appliquer un plus haut niveau d\'optimisation du compilateur.'])
+regexps.append([re.compile('(<.*>): This switch is used to apply( a)? higher level of( the)? compiler( the)? optimizations?.?$', re.MULTILINE|re.DOTALL), '#1&nbsp;: Ce paramètre est utilisé pour appliquer un plus haut niveau d\'optimisation à la compilation.'])
 regexps.append([re.compile('(<ulink [^>]*/>)$', re.MULTILINE|re.DOTALL), '#1'])
 regexps.append([re.compile('(<ulink [^>]*/>, )+, and (<ulink [^>]*/>)$', re.MULTILINE|re.DOTALL), '#1 et #2'])
 regexps.append([re.compile('Fix a build issue with ([^ ]+)$', re.MULTILINE|re.DOTALL), 'Corrigez un problème de construction avec #1.'])
