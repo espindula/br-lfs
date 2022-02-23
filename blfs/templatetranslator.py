@@ -115,7 +115,7 @@ regexps.append([re.compile('(<computeroutput>.*</computeroutput>)$', re.MULTILIN
 regexps.append([re.compile('Now, as the (.*) user:$'), 'Maintenant, en tant qu\'utilisateur #1&nbsp;:'])
 regexps.append([re.compile('To test the results, issue:? (<command>.*</command>).$'), 'Pour tester les résultats lancez&nbsp;: #1.'])
 regexps.append([re.compile('To run the test suite, issue:? (<command>.*</command>).$'), 'Pour lancer la suite de tests, tapez&nbsp;: #1.'])
-regexps.append([re.compile('This package does not come with a test suite.$'), 'Ce paquet n\'est pas fourni avec une suite de tests.'])
+regexps.append([re.compile('This package does not come with a test suite.$'), 'Ce paquet n\'a pas de suite de tests.'])
 regexps.append([re.compile('Additional Downloads$'), 'Téléchargements supplémentaires'])
 regexps.append([re.compile('Required [pP]atch: (.*)$'), 'Correctif requis&nbsp;: #1'])
 regexps.append([re.compile('(<othername>.*)$'), '#1'])
