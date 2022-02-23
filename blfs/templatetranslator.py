@@ -19,16 +19,27 @@ import filecmp
 files = sys.argv
 files.pop(0)
 
+def translate_group(g):
+	regexp = re.compile('^([0-9]+)\\.([0-9]+)$')
+	m = regexp.match(g)
+	if m:
+		return m.group(1) + ',' + m.group(2)
+	return g
+
 def convert(entry, regexp, template):
 	m = regexp.match(entry.msgid)
 	# do not modify anything if the translation is already correct
 	if m and ("fuzzy" in entry.flags or not entry.msgstr):
 		msgstr = template
 		try:
-			msgstr = msgstr.replace("#1", m.group(1))
-			msgstr = msgstr.replace('#2', m.group(2))
-			msgstr = msgstr.replace('#3', m.group(3))
-			msgstr = msgstr.replace('#4', m.group(4))
+			m1 = translate_group(m.group(1))
+			msgstr = msgstr.replace("#1", m1)
+			m2 = translate_group(m.group(2))
+			msgstr = msgstr.replace('#2', m2)
+			m3 = translate_group(m.group(3))
+			msgstr = msgstr.replace('#3', m3)
+			m4 = translate_group(m.group(4))
+			msgstr = msgstr.replace('#4', m4)
 		except:
 			x=1
 		entry.msgstr = msgstr
