@@ -62,22 +62,23 @@ mv -v mpc-&mpc-version; mpc</userinput></screen>
     sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
   ;;
 esac</userinput></screen>
-<!--
-    <para>Fix an issue with GCC-10.1 when building with a cross
-    compiler:</para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../&gcc-cross-patch;</userinput></screen>
--->
+    <!-- https://gcc.gnu.org/PR100017 -->
+    <para>Fix an issue causing failure cross-compiling libstdc++:</para>
+
+<screen><userinput remap="pre">sed 's/gnu++17/&amp; -nostdinc++/' \
+    -i libstdc++-v3/src/c++17/Makefile.in</userinput></screen>
+
+    <para>Override the building rule of libgcc and libstdc++ headers, to
+    allow building these libraries with POSIX threads support:</para>
+
+<screen><userinput remap="pre">sed '/thread_header =/s/@.*@/gthr-posix.h/' \
+    -i libgcc/Makefile.in libstdc++-v3/include/Makefile.in</userinput></screen>
+
     <para>Create a separate build directory again:</para>
 
 <screen><userinput remap="pre">mkdir -v build
 cd       build</userinput></screen>
-
-    <para>Create a symlink that allows libgcc to be built with posix threads
-    support:</para>
-
-<screen><userinput remap="pre">mkdir -pv $LFS_TGT/libgcc
-ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></screen>
 
     <para>Before starting to build GCC, remember to unset any environment
     variables that override the default optimization flags.</para>
@@ -89,6 +90,8 @@ ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></s
     --host=$LFS_TGT                                \
     --prefix=/usr                                  \
     CC_FOR_TARGET=$LFS_TGT-gcc                     \
+    CXX_FOR_TARGET=$LFS_TGT-g++                    \
+    LDFLAGS_FOR_TARGET=-L$PWD/$LFS_TGT/libgcc      \
     --with-build-sysroot=$LFS                      \
     --enable-initfini-array                        \
     --disable-nls                                  \
@@ -99,7 +102,6 @@ ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></s
     --disable-libquadmath                          \
     --disable-libssp                               \
     --disable-libvtv                               \
-    --disable-libstdcxx                            \
     --enable-languages=c,c++</userinput></screen>
 
     <variablelist>
