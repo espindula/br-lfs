@@ -257,7 +257,7 @@ lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	mkdir -p lfsgen-fr
 	sysv_date=$$(grep " version " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
 	sysd_date=$$(grep " versiond " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
-	date=$$(grep "releasedate" $< | sed 's/.*"\([^"]\+\)".*/\1/');\
+	date=$$(grep "% reldate" $< | sed 's/.*"\([^"]\+\)".*/\1/');\
 	frdate=$$(LANG=$(LANG_fr) date -d "$$(echo $${date} | sed 's|1st|1|')" "+%d %B %Y");\
 	sed -e "s/$$date/$$frdate/g"\
 	    -e "s/Approximate build time/Temps de construction approximatif/g"\
