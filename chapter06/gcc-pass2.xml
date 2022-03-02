@@ -62,22 +62,23 @@ mv -v mpc-&mpc-version; mpc</userinput></screen>
     sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
   ;;
 esac</userinput></screen>
-<!--
-    <para>Fix an issue with GCC-10.1 when building with a cross
-    compiler:</para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../&gcc-cross-patch;</userinput></screen>
--->
+    <!-- https://gcc.gnu.org/PR100017 -->
+    <para>Fix an issue causing failure cross-compiling libstdc++:</para>
+
+<screen><userinput remap="pre">sed 's/gnu++17/&amp; -nostdinc++/' \
+    -i libstdc++-v3/src/c++17/Makefile.in</userinput></screen>
+
+    <para>Override the building rule of libgcc and libstdc++ headers, to
+    allow building these libraries with POSIX threads support:</para>
+
+<screen><userinput remap="pre">sed '/thread_header =/s/@.*@/gthr-posix.h/' \
+    -i libgcc/Makefile.in libstdc++-v3/include/Makefile.in</userinput></screen>
+
     <para>Create a separate build directory again:</para>
 
 <screen><userinput remap="pre">mkdir -v build
 cd       build</userinput></screen>
-
-    <para>Create a symlink that allows libgcc to be built with posix threads
-    support:</para>
-
-<screen><userinput remap="pre">mkdir -pv $LFS_TGT/libgcc
-ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></screen>
 
     <para>Before starting to build GCC, remember to unset any environment
     variables that override the default optimization flags.</para>
@@ -87,8 +88,9 @@ ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></s
 <screen><userinput remap="configure">../configure                                       \
     --build=$(../config.guess)                     \
     --host=$LFS_TGT                                \
+    --target=$LFS_TGT                              \
+    LDFLAGS_FOR_TARGET=-L$PWD/$LFS_TGT/libgcc      \
     --prefix=/usr                                  \
-    CC_FOR_TARGET=$LFS_TGT-gcc                     \
     --with-build-sysroot=$LFS                      \
     --enable-initfini-array                        \
     --disable-nls                                  \
@@ -99,14 +101,13 @@ ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></s
     --disable-libquadmath                          \
     --disable-libssp                               \
     --disable-libvtv                               \
-    --disable-libstdcxx                            \
     --enable-languages=c,c++</userinput></screen>
 
     <variablelist>
       <title>The meaning of the new configure options:</title><!-- WIP -->
 
       <varlistentry>
-        <term><parameter>-with-build-sysroot=$LFS</parameter></term>
+        <term><parameter>--with-build-sysroot=$LFS</parameter></term>
         <listitem>
           <para>Normally, using <parameter>--host</parameter> ensures that
           a cross-compiler is used for building GCC, and that compiler knows
@@ -115,6 +116,33 @@ ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h</userinput></s
           other tools, which are not aware of this location. This switch is
           needed to have them find the needed files in <filename
           class="directory">$LFS</filename>, and not on the host.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--target=$LFS_TGT</parameter></term>
+        <listitem>
+          <para>As we are cross-compiling GCC, it's impossible to build
+          target libraries (<filename class="libraryfile">libgcc</filename>
+          and <filename class="libraryfile">libstdc++</filename>) with the
+          compiled GCC binaries because these binaries won't run on the
+          host distro.  GCC building system will attempt to use the
+          C and C++ compilers on the host distro as a workaround by default.
+          It's not supported to build GCC target libraries with a different
+          version of GCC, so using host compilers may cause building
+          failure.  This parameter ensures to build the libraries with GCC
+          pass 1 and prevent the issue.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>LDFLAGS_FOR_TARGET=...</parameter></term>
+        <listitem>
+          <para>Allow <filename class="libraryfile">libstdc++</filename> to
+          use shared <filename class="libraryfile">libgcc</filename> being
+          built in this pass, instead of the static version built in GCC
+          pass 1. This is needed for supporting C++ exception
+          handling.</para>
         </listitem>
       </varlistentry>
 
