@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY polkit-download-http "https://www.freedesktop.org/software/polkit/releases/polkit-&polkit-version;.tar.gz">
+  <!ENTITY polkit-download-http "https://gitlab.freedesktop.org/polkit/polkit/-/archive/&polkit-version;/polkit-&polkit-version;.tar.gz">
   <!ENTITY polkit-download-ftp  "">
-  <!ENTITY polkit-md5sum        "a6efe21d021fafe4191ee30331ef801c">
-  <!ENTITY polkit-size          "1.6&nbsp;Mo">
-  <!ENTITY polkit-buildsize     "12&nbsp;Mo">
-  <!ENTITY polkit-time          "0,1 SBU (avec parallélisme = 4)">
+  <!ENTITY polkit-md5sum        "5687b19e9ca9a0225957b8967d8f4458">
+  <!ENTITY polkit-size          "740&nbsp;Ko">
+  <!ENTITY polkit-buildsize     "8,9&nbsp;Mo (avec les tests)">
+  <!ENTITY polkit-time          "0.2 SBU (with tests, using parallelism=4)">
 ]>
 
 <sect1 id="polkit" xreflabel="Polkit-&polkit-version;">
@@ -74,7 +74,13 @@ privilégiés de communiquer avec des processus privilégiés.
       <listitem>
         <para>
           Correctif requis&nbsp;: <ulink
-url="&patch-root;/polkit-&polkit-version;-security_fix-1.patch"/>
+url="&patch-root;/polkit-&polkit-version;-security_fixes-1.patch"/>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Correctif requis&nbsp;: <ulink
+url="&patch-root;/polkit-&polkit-version;-js91-1.patch"/>
         </para>
       </listitem>
     </itemizedlist>
@@ -83,7 +89,7 @@ url="&patch-root;/polkit-&polkit-version;-security_fix-1.patch"/>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required">
-      <xref linkend="glib2"/> et <xref linkend="js78"/>
+      <xref linkend="glib2"/> and <xref linkend="js91"/>
     </para>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
@@ -120,16 +126,12 @@ les sessions <application>Polkit</application>.
     -->
 <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      
-      
-      <!--<xref linkend="dbus-python"/>
- and
-      <xref linkend="python-dbusmock"/> (for tests), and - no more tests -->
-<!--<xref linkend="DocBook"/>
+      <!--<xref linkend="DocBook"/>
 , (Part of libxslt's chain)
       <xref linkend="docbook-xsl"/>
 ,-->
-<xref linkend="gtk-doc"/>
+<xref linkend="dbus-python"/> and <xref linkend="python-dbusmock"/> (both
+needed for tests), and <xref linkend="gtk-doc"/>
     </para>
 
     <bridgehead renderas="sect4" revision="systemd">Dépendances de Required Runtime</bridgehead>
@@ -174,36 +176,9 @@ suivantes en tant qu'utilisateur <systemitem
 class="username">root</systemitem>&nbsp;:
     </para>
 
-<!-- All of this is irrelevant with meson
-    <note revision="systemd">
-
-      <para>
-        When building <application>Polkit</application> with
-        <application>systemd</application> logind support, the
-        <command>configure</command> script explicitly checks if
-        system is booted using <application>systemd</application>.
-        This can cause problems if building the package in chroot,
-        where the <command>configure</command> would fail to
-        detect <application>systemd</application>. To workaround
-        the problem, simply run the following command:
-      </para>
-
-<screen><userinput>sed -i "s:/sys/fs/cgroup/systemd/:/sys:g" configure</userinput></screen>
-    </note>
-
-    <para revision="sysv">
-      Fix an issue introduced in recent <application>Polkit</application>
-      releases with elogind:
-    </para>
-
-<screen revision="sysv"><userinput>patch -Np1 -i ../polkit-&polkit-version;-fix_elogind_detection-1.patch &amp;&amp;
-autoreconf -fv</userinput></screen>
--->
 <screen role="root"><userinput>groupadd -fg 27 polkitd &amp;&amp;
 useradd -c "PolicyKit Daemon Owner" -d /etc/polkit-1 -u 27 \
         -g polkitd -s /bin/false polkitd</userinput></screen>
-
-
 
     <para>
       Tout d'abord, corrigez des problèmes avec l'initialisation des permissions à
@@ -215,10 +190,16 @@ sed '/policy,/d' -i actions/meson.build \
                  -i src/examples/meson.build</userinput></screen>
 
     <para>
-      Appliquez un correctif pour corriger un problème de sécurité&nbsp;:
+      Apply a patch to fix two security issues:
     </para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../polkit-&polkit-version;-security_fix-1.patch</userinput></screen>
+<screen><userinput remap="pre">patch -Np1 -i ../polkit-&polkit-version;-security_fixes-1.patch</userinput></screen>
+
+    <para>
+      Port this package to use JS-91:
+    </para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../polkit-&polkit-version;-js91-1.patch</userinput></screen>
 
     <para>
       Installez <application>Polkit</application> en exécutant les commandes
@@ -226,23 +207,17 @@ suivantes&nbsp;:
     </para>
 
 <!--
-    <para>
-
-      To test the results, first ensure that the system
-      <application>D-Bus</application> daemon is running.
-      Then run <command>make check</command>.
-    </para>
--->
-<!-- The subprojects directory which contains a wrapper for 'mocklibc'
-     is not shipped in the tarball like it should be. Whenever that is
-     fixed, -Dtests=true and ninja test is the ticket. -->
+      "-t3" for raising the timeout to 90s, i. e. 3x the default:
+      https://gitlab.freedesktop.org/polkit/polkit/-/merge_requests/107
+    -->
 <screen revision="systemd"><userinput>mkdir build &amp;&amp;
 cd    build &amp;&amp;
 
 meson --prefix=/usr                       \
+      --buildtype=release                 \
       -Dman=true                          \
       -Dsession_tracking=libsystemd-login \
-      --buildtype=release                 \
+      -Dtests=true                        \
       ..                                  &amp;&amp;
 ninja</userinput></screen>
 
@@ -250,19 +225,20 @@ ninja</userinput></screen>
 cd    build &amp;&amp;
 
 meson --prefix=/usr                 \
+      --buildtype=release           \
       -Dman=true                    \
       -Dsession_tracking=libelogind \
       -Dsystemdsystemunitdir=/tmp   \
-      --buildtype=release           \
+      -Dtests=true   \
       ..                            &amp;&amp;
 ninja</userinput></screen>
 
-
-
-
-
+    
     <para>
-      Ce paquet n'a pas de suite de tests fonctionnelle.
+      To test the results, first ensure that the system
+<application>D-Bus</application> daemon is running, and both <xref
+linkend='dbus-python'/> and <xref linkend='python-dbusmock'/> are
+installed.  Then run <command>meson test -t3</command>.
     </para>
 
     <para>
@@ -282,6 +258,13 @@ rm -v /tmp/*.service</userinput></screen>
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
       href="../../xincludes/meson-buildtype-release.xml"/>
+
+    <para>
+      <parameter>-Dtests=true</parameter>: This switch allows to run the test
+suite of this package.  As <application>Polkit</application> is used for
+authorizations, its integrity can affect system security.  So it's
+recommended to run the test suite building this package.
+    </para>
 
     
     

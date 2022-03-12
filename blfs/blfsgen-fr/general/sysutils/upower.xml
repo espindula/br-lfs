@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY upower-download-http "https://gitlab.freedesktop.org/upower/upower/uploads/177df5b9f9b76f25a2ad9da41aa0c1fa/upower-&upower-version;.tar.xz">
+  <!ENTITY upower-download-http "https://gitlab.freedesktop.org/upower/upower/-/archive/v&upower-version;/upower-v&upower-version;.tar.bz2">
   <!ENTITY upower-download-ftp  "">
-  <!ENTITY upower-md5sum        "0c945817c12a7967d2c5edf7138fcf80">
-  <!ENTITY upower-size          "438&nbsp;Ko">
-  <!ENTITY upower-buildsize     "15&nbsp;Mo (avec les tests)">
-  <!ENTITY upower-time          "0,1 SBU (avec parallélisme = 4, plus 0,8 SBU pour les tests)">
+  <!ENTITY upower-md5sum        "74b0e4ace3f3f72321d3651e12815c41">
+  <!ENTITY upower-size          "136&nbsp;Ko">
+  <!ENTITY upower-buildsize     "5,0&nbsp;Mo (plus 0,4&nbsp;Mo pour les tests)">
+  <!ENTITY upower-time          "less than 0.1 SBU (using parallelism=4, add 0.4 SBU for tests)">
 ]>
 
 <sect1 id="upower" xreflabel="UPower-&upower-version;">
@@ -99,8 +99,8 @@ url="https://libimobiledevice.org/">libimobiledevice</ulink>.
   <sect2 role="kernel" id="upower-kernel" revision="systemd">
     
     <!-- With UPower-0.9.11's hardening of the systemd unit file,
-         User Namespace Support is now required. Without this, you get
-         "ERROR 213/USER" out of a 'systemctl start upower'. -->
+         User Namespace Support (CONFIG_USER_NS) is now required. Without this,
+         you will get "ERROR 213/USER" out of a 'systemctl start upower'. -->
 <title>Configuration du noyau</title>
 
     <para>
@@ -125,18 +125,32 @@ le noyau si nécessaire&nbsp;:
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>./configure --prefix=/usr         \
-             --sysconfdir=/etc    \
-             --localstatedir=/var \
-             --enable-deprecated  \
-             --disable-static     &amp;&amp;
-make</userinput></screen>
+<screen revision="sysv"><userinput>sed '/subdir.*doc/d' -i meson.build &amp;&amp;
+mkdir build                         &amp;&amp;
+cd    build                         &amp;&amp;
+meson --prefix=/usr                        \
+      --buildtype=release                  \
+      -Dgtk-doc=false                      \
+      -Dman=false                          \
+      -Dsystemdsystemunitdir=no            \
+      -Dudevrulesdir=/usr/lib/udev/rules.d \
+      ..                            &amp;&amp;
+ninja</userinput></screen>
+
+<screen revision="systemd"><userinput>sed '/subdir.*doc/d' -i meson.build &amp;&amp;
+mkdir build                         &amp;&amp;
+cd    build                         &amp;&amp;
+meson --prefix=/usr       \
+      --buildtype=release \
+      -Dgtk-doc=false     \
+      -Dman=false         \
+      ..                            &amp;&amp;
+ninja</userinput></screen>
 
     <para>
-      Pour tester les résultats, lancez&nbsp;: <command>make
-check</command>. Certains tests peuvent ne pas réussir à cause de fichiers
-manquants. La suite de tests devrait être lancée depuis une session
-graphique locale démarrée avec dbus-launch.
+      To test the results, issue: <command>ninja test</command>. Some checks may
+not pass due to missing files. Test suite should be run from a local GUI
+session started with dbus-launch.
     </para>
 
     <para>
@@ -144,7 +158,7 @@ graphique locale démarrée avec dbus-launch.
 class="username">root</systemitem>&nbsp;:
     </para>
 
-<screen role="root"><userinput>make install</userinput></screen>
+<screen role="root"><userinput>ninja install</userinput></screen>
 
   </sect2>
 
@@ -152,15 +166,37 @@ class="username">root</systemitem>&nbsp;:
     <title>Explication des commandes</title>
 
     <para>
-      <parameter>--enable-deprecated</parameter>&nbsp;: Ce paramètre active les
-fonctionnalités obsolètes qui restent nécessaire pour quelques applications.
+      <command>sed 'subdir.*doc/d' ...</command>: Even when passing
+<parameter>-Dgtk-doc=false</parameter> and
+<parameter>-Dman=false</parameter>, the build still requires
+<application>GTK-Doc</application>. This command allows building without it
+installed. Remove this switch if you have <application>GTK-Doc</application>
+installed and you wish to build the documentation (you will also need to
+remove the next two parameters).
     </para>
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-      href="../../xincludes/static-libraries.xml"/>
+    <para>
+      <parameter>-Dgtk-doc=false</parameter>: Prevents building the
+documentation. Remove this if you have <application>GTK-Doc</application>
+installed and wish to build the documentation.
+    </para>
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-      href="../../xincludes/gtk-doc-rebuild.xml"/>
+    <para>
+      <parameter>-Dman=false</parameter>: Prevents building the manual
+pages. Remove this if you have <application>GTK-Doc</application> installed
+and wish to build the manual pages.
+    </para>
+
+    <para revision="sysv">
+      <parameter>-Dsystemdsystemunitdir=no</parameter>: Removes the dependency on
+<application>systemd</application>.
+    </para>
+
+    <para revision="sysv">
+      <parameter>-Dudevrulesdir=/usr/lib/udev/rules.d</parameter>: Tells the build
+system where to install <application>udev</application> rules because the
+information is missing in <filename>/usr/lib/pkgconfig/libudev.pc</filename>
+    </para>
 
   </sect2>
 
@@ -183,7 +219,7 @@ fonctionnalités obsolètes qui restent nécessaire pour quelques applications.
       menu and selecting &apos;Collect kernel timers statistics&apos;.
     </para>
 -->
-<sect3  id="upower-init" revision="systemd">
+<sect3  id="upower-init">
       <title>Unité systemd</title>
 
       <para>
