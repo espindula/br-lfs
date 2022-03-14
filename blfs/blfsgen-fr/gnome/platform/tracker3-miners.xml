@@ -6,10 +6,10 @@
 
   <!ENTITY tracker3-miners-download-http "&gnome-download-http;/tracker-miners/3.2/tracker-miners-&tracker3-miners-version;.tar.xz">
   <!ENTITY tracker3-miners-download-ftp  "&gnome-download-ftp;/tracker-miners/3.2/tracker-miners-&tracker3-miners-version;.tar.xz">
-  <!ENTITY tracker3-miners-md5sum        "822d829e924657fc3434d69fb5a32630">
+  <!ENTITY tracker3-miners-md5sum        "9f43d202a22d119caeb0972dac6aa351">
   <!ENTITY tracker3-miners-size          "3.9&nbsp;Mo">
-  <!ENTITY tracker3-miners-buildsize     "39&nbsp;Mo (avec les tests)">
-  <!ENTITY tracker3-miners-time          "1.2&nbsp;SBU (avec les tests)">
+  <!ENTITY tracker3-miners-buildsize     "31&nbsp;Mo (avec les tests)">
+  <!ENTITY tracker3-miners-time          "0.1 SBU (with parallelism=4; add 1.4 SBU for tests, dependent on disk speed)">
 ]>
 
 <sect1 id="tracker3-miners" xreflabel="tracker-miners-&tracker3-miners-version;">
@@ -78,9 +78,12 @@ linkend="exempi"/> et <xref linkend="gexiv2"/>
 
     <bridgehead renderas="sect4">Recommandes</bridgehead>
     <para role="recommended">
-      <xref linkend="ffmpeg"/>, <xref linkend="giflib"/>, <xref linkend="icu"/>,
-<xref linkend="libexif"/>, <xref linkend="libgrss"/>, <xref
-linkend="libgxps"/> et <xref linkend="poppler"/>
+      <xref linkend="ffmpeg"/>, <xref linkend="giflib"/>, <xref
+linkend="gst10-plugins-good"/>, <xref linkend="gst10-plugins-bad"/>, <xref
+linkend="gst10-plugins-ugly"/>, <xref linkend="gst10-libav"/>, <xref
+linkend="icu"/>, <xref linkend="libexif"/>, <xref linkend="libgrss"/>, <xref
+linkend="libgxps"/>, <xref linkend="libseccomp"/>, and <xref
+linkend="poppler"/>
     </para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
@@ -89,12 +92,11 @@ linkend="libgxps"/> et <xref linkend="poppler"/>
 tap.py</ulink>
       (for tests)-->
 <xref linkend="asciidoc"/>, <xref linkend="cmake"/>, <xref
-linkend="dconf"/>, <xref linkend="libgsf"/>, <xref linkend="libseccomp"/>,
-<xref linkend="taglib"/>, <xref linkend="totem-pl-parser"/>, <xref
-linkend="upower"/>, <ulink
+linkend="dconf"/>, <xref linkend="libgsf"/>, <xref linkend="taglib"/>, <xref
+linkend="totem-pl-parser"/>, <xref linkend="upower"/>, <ulink
 url="https://github.com/lipnitsk/libcue">libcue</ulink>, <ulink
 url="http://libiptcdata.sourceforge.net/">libitpcdata</ulink>, <ulink
-url="https://libosinfo.org">libosinfo</ulink> et <ulink
+url="https://libosinfo.org">libosinfo</ulink>, and <ulink
 url="https://gitlab.gnome.org/GNOME/gupnp">gupnp</ulink>
       
     </para>
@@ -119,7 +121,24 @@ url="https://gitlab.gnome.org/GNOME/gupnp">gupnp</ulink>
 
 <screen role="root"><userinput remap="pre">rm -fv /etc/xdg/autostart/tracker-miner-*</userinput></screen>
 -->
-<para>
+<note>
+      <para>
+        If you plan to run the tests, some timeouts are too short when using
+spinning disks. There are two places where timeouts are used: first,
+individual tests inside a group of tests have a default timeout of 10s. This
+can be changed by setting the environment variable
+<envar>TRACKER_TESTS_AWAIT_TIMEOUT</envar> to the desired value when running
+the tests (see below). Second, a global timeout for a group of tests is
+fixed at configuration time. The default value in the <filename
+class="directory">functional-tests</filename> directory (other directories
+have only short lived tests) may be increased with the following command
+(replace 200 with a value suitable for your machine):
+      </para>
+
+<screen remap="test"><userinput>sed -i s/120/<replaceable>200</replaceable>/ tests/functional-tests/meson.build</userinput></screen>
+    </note>
+
+    <para>
       Installez <application>Tracker-miners</application> en lanant les commandes
 suivantes&nbsp;:
     </para>
@@ -141,12 +160,19 @@ meson --prefix=/usr                 \
 ninja</userinput></screen>
 
     <para>
-      <!-- 38 tests will fail if the
-      Python 3 module tap.py is not installed. -->
-Pour tester les résultats, en tant qu'utilisateur <systemitem
-class="username">root</systemitem>, lancez&nbsp;: <command>ninja
-test</command>. 
+      To test the results, issue (adjust the individual test timeout to a value
+suitable for your machine, see the note above):
     </para>
+
+<screen remap="test"><userinput>TRACKER_TESTS_AWAIT_TIMEOUT=<replaceable>20</replaceable> ninja test &amp;&amp;
+rm -rf ~/tracker-tests</userinput></screen>
+
+    <note>
+      <para>
+        The tests create files in the user directory (up to 24 MB), so they have to
+be removed afterwards.
+      </para>
+    </note>
 
     <para>
       Maintenant, en tant qu'utilisateur <systemitem
