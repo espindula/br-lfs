@@ -99,8 +99,8 @@ rc1: files
 	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc1.d/K90sysklogd
 
 rc2: files
-	ln -sf ../init.d/network     ${ETCDIR}/rc.d/rc2.d/K80network
-	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc2.d/K90sysklogd
+	ln -sf ../init.d/network     ${ETCDIR}/rc.d/rc2.d/S10network
+	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc2.d/S20sysklogd
 
 rc3: files
 	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc3.d/S10sysklogd
