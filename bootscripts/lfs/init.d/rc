@@ -6,10 +6,18 @@
 #
 # Authors     : Gerard Beekmans  - gerard@linuxfromscratch.org
 #             : DJ Lucas - dj@linuxfromscratch.org
-# Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
+# Updates     : Bruce Dubbs - bdubbs@linuxfromscratch.org
+#             : Pierre Labastie - pierre@linuxfromscratch.org
 #
 # Version     : LFS 7.0
 #
+# Notes       : Updates March 24th, 2022: new semantics of S/K files
+#               - Instead of testing that S scripts were K scripts in the
+#                 previous runlevel, test that they were not S scripts
+#               - Instead of testing that K scripts were S scripts in the
+#                 previous runlevel, test that they were not K scripts
+#               - S scripts in runlevel 0 or 6 are now run with
+#                "script start" (was "script stop" previously).
 ########################################################################
 
 . /lib/lsb/init-functions
@@ -144,8 +152,9 @@ fi
 # Read the state file if it exists from runlevel S
 [ -r /run/interactive ] && source /run/interactive
 
-# Attempt to stop all services started by the previous runlevel,
-# and killed in this runlevel
+# Stop all services marked as K, except if marked as K in the previous
+# runlevel: it is the responsibility of the script to not try to kill
+# a non running service
 if [ "${previous}" != "N" ]; then
    for i in $(ls -v /etc/rc.d/rc${runlevel}.d/K* 2> /dev/null)
    do
@@ -155,20 +164,8 @@ if [ "${previous}" != "N" ]; then
          continue
       fi
 
-      suffix=${i#/etc/rc.d/rc$runlevel.d/K[0-9][0-9]}
-      prev_start=/etc/rc.d/rc$previous.d/S[0-9][0-9]$suffix
-      sysinit_start=/etc/rc.d/rcS.d/S[0-9][0-9]$suffix
-
-      if [ "${runlevel}" != "0" -a "${runlevel}" != "6" ]; then
-         if [ ! -f ${prev_start} -a  ! -f ${sysinit_start} ]; then
-            MSG="WARNING:\n\n${i} can't be "
-            MSG="${MSG}executed because it was not "
-            MSG="${MSG}not started in the previous "
-            MSG="${MSG}runlevel (${previous})."
-            log_warning_msg "$MSG"
-            continue
-         fi
-      fi
+      suffix=${i#/etc/rc.d/rc${runlevel}.d/K[0-9][0-9]}
+      [ -e /etc/rc.d/rc${previous}.d/K[0-9][0-9]$suffix ] && continue
 
       run ${i} stop
       error_value=${?}
@@ -184,31 +181,25 @@ if [ "$runlevel" == "6" -a -n "${FASTBOOT}" ]; then
 fi
 
 
-# Start all functions in this runlevel
+# Start all services marked as S in this runlevel, except if marked as
+# S in the previous runlevel
+# it is the responsabily of the script to not try to start an already running
+# service
 for i in $( ls -v /etc/rc.d/rc${runlevel}.d/S* 2> /dev/null)
 do
-   if [ "${previous}" != "N" ]; then
-      suffix=${i#/etc/rc.d/rc$runlevel.d/S[0-9][0-9]}
-      stop=/etc/rc.d/rc$runlevel.d/K[0-9][0-9]$suffix
-      prev_start=/etc/rc.d/rc$previous.d/S[0-9][0-9]$suffix
 
-      [ -f ${prev_start} -a ! -f ${stop} ] && continue
+   if [ "${previous}" != "N" ]; then
+      suffix=${i#/etc/rc.d/rc${runlevel}.d/S[0-9][0-9]}
+      [ -e /etc/rc.d/rc${previous}.d/S[0-9][0-9]$suffix ] && continue
    fi
 
    check_script_status
-      if [ "${SCRIPT_STAT}" == "1" ]; then
-         SCRIPT_STAT="0"
-         continue
-      fi
+   if [ "${SCRIPT_STAT}" == "1" ]; then
+      SCRIPT_STAT="0"
+      continue
+   fi
 
-   case ${runlevel} in
-      0|6)
-         run ${i} stop
-         ;;
-      *)
-         run ${i} start
-         ;;
-   esac
+   run ${i} start
 
    error_value=${?}
 
