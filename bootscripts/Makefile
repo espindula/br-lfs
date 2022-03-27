@@ -117,10 +117,10 @@ rc5: files
 rc6: files
 	ln -sf ../init.d/network     ${ETCDIR}/rc.d/rc6.d/K80network
 	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc6.d/K90sysklogd
-	ln -sf ../init.d/sendsignals ${ETCDIR}/rc.d/rc0.d/K92sendsignals
-	ln -sf ../init.d/swap        ${ETCDIR}/rc.d/rc0.d/K94swap
-	ln -sf ../init.d/mountfs     ${ETCDIR}/rc.d/rc0.d/K96mountfs
-	ln -sf ../init.d/localnet    ${ETCDIR}/rc.d/rc0.d/K98localnet
+	ln -sf ../init.d/sendsignals ${ETCDIR}/rc.d/rc6.d/K92sendsignals
+	ln -sf ../init.d/swap        ${ETCDIR}/rc.d/rc6.d/K94swap
+	ln -sf ../init.d/mountfs     ${ETCDIR}/rc.d/rc6.d/K96mountfs
+	ln -sf ../init.d/localnet    ${ETCDIR}/rc.d/rc6.d/K98localnet
 	ln -sf ../init.d/reboot      ${ETCDIR}/rc.d/rc6.d/S99reboot
 
 uninstall:
