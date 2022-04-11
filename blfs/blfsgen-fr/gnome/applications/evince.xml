@@ -5,12 +5,12 @@
   %general-entities;
 
   <!ENTITY evince-download-http
-     "&gnome-download-http;/evince/&gnome-41;/evince-&evince-version;.tar.xz">
+     "&gnome-download-http;/evince/&gnome-42;/evince-&evince-version;.tar.xz">
   <!ENTITY evince-download-ftp
-     "&gnome-download-ftp;/evince/&gnome-41;/evince-&evince-version;.tar.xz">
-  <!ENTITY evince-md5sum        "920d88772c8e1a91027aec643258db4e">
-  <!ENTITY evince-size          "2.8&nbsp;Mo">
-  <!ENTITY evince-buildsize     "47&nbsp;Mo">
+     "&gnome-download-ftp;/evince/&gnome-42;/evince-&evince-version;.tar.xz">
+  <!ENTITY evince-md5sum        "6d5410e00aa9219c97eb3fc6f40a2630">
+  <!ENTITY evince-size          "2,7&nbsp;Mo">
+  <!ENTITY evince-buildsize     "64&nbsp;Mo">
   <!ENTITY evince-time          "0.2 SBU (Using parallelism=4)">
 ]>
 
@@ -94,17 +94,15 @@ linkend="poppler"/>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      <!--<ulink url="https://wiki.gnome.org/action/show/Projects/libgxps">
-libgxps</ulink>,-->
-<xref linkend="cups"/> (pour permettre l'impression si sa prise en charge
-est activée dans <application>GTK+ 3</application>), <xref
-linkend="gnome-desktop"/>, <xref linkend="gspell"/>, <xref
-linkend="gst10-plugins-base"/>, <xref linkend="gtk-doc"/>, <xref
-linkend="libgxps"/>, <xref linkend="libtiff"/>, <xref linkend="texlive"/>
-(ou <xref linkend="tl-installer"/>) <ulink
+      <xref linkend="cups"/> (to enable printing if support is built into
+<application>GTK+ 3</application>), <xref linkend="gnome-desktop"/>, <xref
+linkend="gspell"/>, <xref linkend="gst10-plugins-base"/>, <xref
+linkend="gtk-doc"/>, <xref linkend="libgxps"/>, <xref linkend="libtiff"/>,
+<xref linkend="texlive"/> (or <xref linkend="tl-installer"/>), <ulink
 url="http://djvu.sourceforge.net/">DjVuLibre</ulink>, <ulink
+url="https://gitlab.gnome.org/GNOME/gi-docgen">gi-docgen</ulink>, <ulink
 url="http://www.freedesktop.org/wiki/Software/libspectre/">libspectre</ulink>,
-<ulink url="https://github.com/jlaurens/synctex">Synctex</ulink> et <ulink
+<ulink url="https://github.com/jlaurens/synctex">Synctex</ulink>, and <ulink
 url="https://www.t1lib.org/">t1lib</ulink>
     </para>
 
@@ -123,12 +121,6 @@ installé. Cela n'a aucun effet sur les systèmes qui n'ont pas TeXLive.
 <screen><userinput remap="pre">export CPPFLAGS="-I/opt/texlive/&texlive-year;/include" &amp;&amp;
 export LDFLAGS="$LDFLAGS -L/opt/texlive/&texlive-year;/lib"</userinput></screen>
 
-    <para>
-      Ensuite, corrigez la construction avec les nouvelles version de
-<application>meson</application>&nbsp;:
-    </para>
-
-<screen><userinput>find . -name meson.build | xargs sed -i '/merge_file/{n;d}'</userinput></screen>
 
     <para>
       Installez <application>Evince</application> en exécutant les commandes
@@ -138,16 +130,21 @@ suivantes&nbsp;:
 <screen revision="sysv"><userinput>mkdir build &amp;&amp;
 cd    build &amp;&amp;
 
-meson --prefix=/usr       \
-      --buildtype=release \
-      -Dgtk_doc=false     \
+meson --prefix=/usr          \
+      --buildtype=release    \
+      -Dgtk_doc=false        \
+      --wrap-mode=nodownload \
       -Dsystemduserunitdir=no .. &amp;&amp;
 ninja</userinput></screen>
 
 <screen revision="systemd"><userinput>mkdir build &amp;&amp;
 cd    build &amp;&amp;
 
-meson --prefix=/usr --buildtype=release -Dgtk_doc=false .. &amp;&amp;
+meson --prefix=/usr          \
+      --buildtype=release    \
+      -Dgtk_doc=false        \
+      --wrap-mode=nodownload \
+      ..                     &amp;&amp;
 ninja</userinput></screen>
 
     <para>
@@ -172,17 +169,7 @@ class="username">root</systemitem>&nbsp;:
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
       href="../../xincludes/meson-buildtype-release.xml"/>
 
-    
-
-    <!--
     <para>
-
-      <parameter>- -enable-compile-warnings=minimum</parameter>: This
-      switch prevents a warning about a date format being treated as an error by
-      <application>gcc-6.1</application>.
-    </para>
-    -->
-<para>
       <parameter>CPPFLAGS="..." LDFLAGS="$LDFLAGS ..."</parameter>&nbsp;: si
 <application>TeXLive</application> est installé dans <filename
 class="directory">/opt/texlive/&texlive-year;</filename> le script configure
@@ -194,10 +181,16 @@ construction.
     </para>
 
     <para>
-      <parameter>-Dgtk_doc=false</parameter>&nbsp;: ce paramètre désactive la
-génération de la documentation de référence de l'API avec gtk-doc. Si vous
-avez installé <xref role="nodep" linkend="gtk-doc"/> et souhaitez générer la
-documentation de référence de l'API, supprimez ce paramètre.
+      <parameter>-Dgtk_doc=false</parameter>: This switch disables generating the
+gtk-doc API reference documentation. If you have <xref role="nodep"
+linkend="gtk-doc"/> installed and wish to generate the API reference
+documentation, remove this switch and the following one.
+    </para>
+
+    <para>
+      <parameter>--wrap-mode=nodownload</parameter>: This switch disables fetching
+any dependency: the build system tries to fetch gi-docgen even if
+<parameter>-Dgtk_doc=false</parameter> is passed.
     </para>
 
     <para>
@@ -211,17 +204,7 @@ n'avez pas installé <xref role="nodep" linkend="gobject-introspection"/> et
 ne souhaitez pas avoir la prise en charge de l'introspection dans Evince.
     </para>
 
-
-
-    <!--
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-      href="../../xincludes/static-libraries.xml"/>
-
-
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-      href="../../xincludes/gtk-doc-rebuild.xml"/>
--->
-<para>
+    <para>
       <option>-Dnautilus=false</option>&nbsp;: Ce paramètre désactive la
 construction du greffon <application>Nautilus</application>. Utilisez ce
 paramètre si <application>Nautilus</application> n'est pas installé.
@@ -254,13 +237,12 @@ ouvrir les fichiers PostScript avec <application>Evince</application>.
           evince, evince-previewer et evince-thumbnailer
         </seg>
         <seg>
-          libevdocument3.so, libevview3.so et
-/usr/lib/nautilus/extensions-3.0/libevince-properties-page.so
+          libevdocument3.so and libevview3.so
         </seg>
         <seg>
           /usr/{include,lib,share}/evince,
-/usr/share/gtk-doc/html/{evince,libevdocument-3.0,libevview-3.0} et
-/usr/share/help/*/evince
+/usr/share/gtk-doc/html/{evince,libevdocument-3.0,libevview-3.0} (optional),
+and /usr/share/help/*/evince
         </seg>
       </seglistitem>
     </segmentedlist>
