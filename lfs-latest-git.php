@@ -137,6 +137,7 @@ if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/r
 if ( $package == "tcl"        ) $dirpath = "https://www.tcl.tk/software/tcltk/download.html";
 if ( $package == "util-linux" ) $dirpath = max_parent( $dirpath, "v." );
 if ( $package == "vim"        ) $dirpath = "https://github.com/vim/vim/tags";
+if ( $package == "wheel"      ) $dirpath = "https://pypi.org/project/wheel/#files";
 if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/releases";
 
   // Check for ftp
