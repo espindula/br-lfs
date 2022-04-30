@@ -70,10 +70,19 @@ function find_even_max( $lines, $regex_match, $regex_replace )
 function http_get_file( $url )
 {
   if ( ! preg_match( "/sourceforge/", $url ) &&
+       ! preg_match( "/mpfr/",        $url ) &&
        ! preg_match( "/psmisc/",      $url ) )
   {
     exec( "curl --location --silent --max-time 30 $url", $dir );
 
+    $s   = implode( "\n", $dir );
+    $dir = strip_tags( $s );
+    return explode( "\n", $dir );
+  }
+  else if ( preg_match( "/mpfr/", $url ) )
+  {
+    # There seems to be a problem with the mpfs certificate
+    exec( "curl --location --silent --insecure --max-time 30 $url", $dir );
     $s   = implode( "\n", $dir );
     $dir = strip_tags( $s );
     return explode( "\n", $dir );
@@ -137,6 +146,7 @@ if ( $package == "systemd"    ) $dirpath = "https://github.com/systemd/systemd/r
 if ( $package == "tcl"        ) $dirpath = "https://www.tcl.tk/software/tcltk/download.html";
 if ( $package == "util-linux" ) $dirpath = max_parent( $dirpath, "v." );
 if ( $package == "vim"        ) $dirpath = "https://github.com/vim/vim/tags";
+if ( $package == "wheel"      ) $dirpath = "https://pypi.org/project/wheel/#files";
 if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/releases";
 
   // Check for ftp
