@@ -96,14 +96,11 @@ linux</ulink>.
       </para>
 
       <para>
-        Les GPU Nvidia à partir de Kepler ont besoin d'un microprogramme signé,
-sinon le pilote nouveau est incapable de fournir l'accélération
-matérielle. Nvidia a maintenant fourni des microprogrammes jusqu'à Turing
-(la plupart des GPU, sinon tous, GTX16xx et RTX20xx) dans linux-firmware, et
-les noyaux à partir de linux-5.6 les prennent en charge, bien que la prise
-en charge de Mesa puisse nécessiter une version de développement jusqu'à la
-publication de Mesa-20.2. Remarquez que les horloges plus rapides que par
-défaut ne sont pas activées dans le microprogramme publié.
+        Nvidia GPUs from Kepler onwards require signed firmware, otherwise the
+nouveau driver is unable to provide hardware acceleration. Nvidia has now
+released firmware up to Ampere (GeForce30 series) to linux-firmware.  Note
+that faster clocks than the default are not enabled by the released
+firmware.
       </para>
     </listitem>
     <listitem>
@@ -152,15 +149,13 @@ appliquer à chaque démarrage.
     </para>
 
     <para>
-      Intel fournit des mises à jour de leur microcode pour les versions Skylake
-et ultérieures de leurs processeurs quand de nouvelles vulnérabilités sont
-découvertes, et l'ont fait pour les processeurs SandyBridge et ultérieurs
-par le passé, bien qu'ils ne soient plus pris en charge pour les nouvelles
-corrections. Les nouvelles versions de microprogramme d'AMD sont rares et ne
-s'appliquent qu'à quelques modèles, bien que les fabricants de carte mères
-obtiennent des mises à jour supplémentaires et peuvent mettre à jour des
-microcodes avec des changements pour supporter de nouveau CPU ou une mémoire
-plus rapide.
+      Intel provide updates of their microcode for Skylake and later processors as
+new vulnerabilities come to light, and have in the past provided updates for
+processors from SandyBridge onwards, although those are no-longer supported
+for new fixes. New versions of AMD firmware are rare and usually only apply
+to a few models, although motherboard manufacturers get AGESA (AMD Generic
+Encapsulated Software Architecture) updates to change BIOS values, e.g. to
+support more memory variants or newer CPUs.
     </para>
 
     <para>
@@ -181,29 +176,45 @@ dans des situations particulières.
     </para>
 
     <para>
-      Il reste possible de manuellement forcer le chargement «&nbsp;au plus
-tard&nbsp;» du microcode, soit pour tester soit pour éviter de devoir
-redémarrer. Vous devrez reconfigurer votre noyau pour l'une ou l'autre
-méthode. Les instructions ici créeront un fichier
-<filename>.config</filename> du noyau pour satisfaire un chargement
-«&nbsp;au plus tôt&nbsp;», avant de forcer le chargement «&nbsp;au plus
-tard&nbsp;» pour voir s'il reste des microcodes. Si tel est le cas, les
-instructions vous montrent comment créer un initrd pour un chargement
-«&nbsp;au plus tôt&nbsp;».
+      In previous versions of this book, late loading of microcode to see if it
+gets applied was recommended, followed by using an initrd to force early
+loading. But now that the contents of the Intel microcode tarball is
+documented, and AMD microcode can be read by a Python script to determine
+which machines it covers, there is no real reason to use late loading.
     </para>
 
     <para>
-      Pour confirmer quel(s) processeur(s) vous avez (si plus d'un, ils seront
-identiques) regardez dans /proc/cpuinfo.
+      It is still possible to manually force late loading of microcode, either for
+testing or to prevent having to reboot. You will need to reconfigure your
+kernel for either method. The instructions here will create a kernel
+<filename>.config</filename> to suite early loading, before forcing late
+loading to see if there is any microcode. If there is, the instructions then
+show you how to create an initrd for early loading.  It is also possible to
+build the same microcode bin file into the kernel, which allows early
+loading but requires the kernel to be recompiled to update the microcode
     </para>
 
     <para>
-      Si vous créez un initrd pour mettre à jour le microcode de différentes
-machines, comme le ferait une distro, regardez «&nbsp;Chargement du
-microcode au plus tôt&nbsp;» et regardez tous les blobs Intel de
-GenuineIntel.bin ou tous ceux de AUthenticAMD.bin. cela créer un gros initrd
-— pour toutes les machines Intel dans la mise à jour 20200609 la taille est
-de 3,0 Mo par rapport à 24 Ko pour une seule machine.
+      To confirm what processor(s) you have (if more than one, they will be
+identical) look in /proc/cpuinfo. Determine the decimal values of the cpu
+family, model and stepping by running the following command (it will also
+report the current microcode version):
+    </para>
+
+<screen><userinput>head -n7 /proc/cpuinfo</userinput></screen>
+
+    <para>
+      Convert the cpu family, model and stepping to pairs of hexadecimal digits.
+You can now check if there is any microcode available.
+    </para>
+
+    <para>
+      If you are creating an initrd to update firmware for different machines, as
+a distro would do, go down to 'Early loading of microcode' and cat all the
+Intel blobs to GenuineIntel.bin or cat all the AMD blobs to
+AuthenticAMD.bin. This creates a larger initrd - for all Intel machines in
+the 20200609 update the size was 3.0 MB compared to typically 24 KB for one
+machine.
     </para>
 
     <sect3 id="intel-microcode">
@@ -214,21 +225,19 @@ de 3,0 Mo par rapport à 24 Ko pour une seule machine.
         secure version of the microcode, for those machines which can boot it, -->
 <!-- If you have a Skylake machine, please read the
         Caution in the 'Early loading of microcode' section below.-->
-La première étape est d'obtenir la version la plus récente du microcode
-d'Intel. Vous devez pour cela aller sur <ulink url=
+The first step is to get the most recent version of the Intel microcode.
+This must be done by navigating to <ulink url=
 'https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/releases/'/>
-et télécharger le fichier le plus récent. Au moment de l'écriture de ces
-lignes la version la plus sure du micro-code est
-microcode-20220207. Extrayez ce fichier normalement, le microcode se trouve
-dans le répertoire <filename>intel-ucode</filename> qui contient les divers
-blobs avec des noms de la forme XX-YY-ZZ. Il y a aussi d'autres fichiers
-divers et un fichier releasenote.
+and downloading the latest file there.  As of this writing the most secure
+version of the microcode is microcode-20220419.  Extract this file in the
+normal way, the microcode is in the <filename>intel-ucode </filename>
+directory, containing various blobs with names in the form XX-YY-ZZ. There
+are also various other files, and a releasenote.
       </para>
 
       <para>
-        Par le passé, intel ne fournissait aucun détail sur les blobs qui
-changeaient de version, mais maintenant les notes de versions contiennent
-ces détails.
+        In the past, intel did not provide any details of which blobs had changed
+versions, but now the releasenote details this.
       </para>
 
       <para>
@@ -242,35 +251,14 @@ bien la documentation en ligne sur <ulink url=
 'https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/index.html'/>.
       </para>
 
-      
-
-      <!-- commented, I don't think there is a new listed item for 2011-11 vulns
-          (platypus etc : intel-sa-00381 and 0389)
-          and anyway the very latest stable releases have backports : ken
       <para>
-        The documentation on the latest SRBDS (Special Register Buffer Data
-        Sampling) vulnerabilities/fixes will be documented in kernels 5.4.46,
-        5.6.18, 5.7.2, 5.8.0 and later.
-      </para>-->
-<para>
-        Maintenant vous devez déterminer l'identité de votre processeur, pour voir
-s'il y a un micro-code pour lui. Déterminez les valeurs décimales de la
-famille du processeur, le modèle, et le pas en exécutant la commande
-suivante (elle rapportera aussi la vesrion actuelle du micro-code)&nbsp;:
-      </para>
-
-<screen><userinput>head -n7 /proc/cpuinfo</userinput></screen>
-
-      <para>
-        Convertissez la famille du CPU, le modèle et le pas en paire de chiffres
-hexadécimaux. Pour un Skylake i3 6100 (décrit comme un Intel(R) Core(TM)
-i3-6100 CPU) les bonnes valeurs sont famille de processeur 6, modèle 94, pas
-3 donc dans ce cas l'identification requise est 06-5e-03. Un coup d’œil sur
-les blobs montrera qu'il y en a un pour ce processeur (mais les versions
-plus anciennes peuvent déjà être appliquées par le BIOS). S'il y a un blob
-pour votre système alors testez s'il peut être appliqué en le copiant
-(remplacez &lt;XX-YY-ZZ&gt; par l'identifiant de votre machine) là où le
-noyau pourra le trouver&nbsp;:
+        For a Skylake i3 6100 (described as Intel(R) Core(TM) i3-6100 CPU) the
+relevant values are cpu family 6, model 94, stepping 3 so in this case the
+required identification is 06-5e-03. A look at the blobs will show that
+there is one for this CPU (although for older issues it might have already
+been applied by the BIOS).  If there is a blob for your system then test if
+it will be applied by copying it (replace &lt;XX-YY-ZZ&gt; by the identifier
+for your CPU) to where the kernel can find it:
       </para>
 
 <screen><userinput>mkdir -pv /lib/firmware/intel-ucode
@@ -296,9 +284,9 @@ Processor type and features  ---&gt;
 <screen><userinput>echo 1 > /sys/devices/system/cpu/microcode/reload</userinput></screen>
 
       <para>
-        Ensuite utilisez la commande suivante pour vérifier que tout est bien chargé
-(N.B. les dates de création du microcode peuvent être des mois plus tôt par
-rapport à leur diffusion).
+        Then use the following command to check if anything was loaded: (N.B. the
+dates when microcode was created may be months ahead of when it was
+released.)
       </para>
 
 <screen><userinput>dmesg | grep -e 'microcode' -e 'Linux version' -e 'Command line'</userinput></screen>
@@ -338,13 +326,27 @@ section intitulée <xref linkend='early-microcode'/>.
       <title>Micro-code AMD pour le processeur</title>
 
       <para>
-        Commencez par télécharger un paquet de firmware pour votre famille de CPU
-sur <ulink url= '&sources-anduin-http;/linux-firmware/amd-ucode/'/>. La
-famille est toujours spécifiée en hexadécimal. Les familles 10h à 14h (16 à
-20) sont dans microcode_amd.bin. Les familles 15h, 16h et 17h ont leur
-propre paquet. Créez le répertoire requis et placez le firmware télécharger
-dedans en tant qu'utilisateur <systemitem
-class="username">root</systemitem>&nbsp;:
+        Begin by downloading a container of firmware for your CPU family from <ulink
+url= '&sources-anduin-http;/linux-firmware/amd-ucode/'/>.  The family is
+always specified in hex. Families 10h to 14h (16 to 20)  are in
+microcode_amd.bin.  Families 15h, 16h, 17h (Zen, Zen+, Zen2) and 19h (Zen3)
+have their own containers.  Very few machines are likely to get updated
+microcode. There is a Python3 script at <ulink url=
+'https://github.com/AMDESE/amd_ucode_info/blob/master/amd_ucode_info.py'/>.
+Download that script and run it against the bin file to check which
+processors have updates.
+      </para>
+
+      <para>
+        For the very old Athlon(tm) II X2 in these examples the values were cpu
+family 16, model 5, stepping 3 giving an identification of Family=0x10
+Model=0x05 Stepping=0x03
+      </para>
+
+      <para>
+        If you wish to try late loading, create the required directory and put the
+firmware you downloaded into it as the <systemitem
+class="username">root</systemitem> user:
       </para>
 
 <screen><userinput>mkdir -pv /lib/firmware/amd-ucode
@@ -369,8 +371,7 @@ Processor type and features  ---&gt;
 <screen><userinput>echo 1 > /sys/devices/system/cpu/microcode/reload</userinput></screen>
 
       <para>
-        Ensuite utilisez la commande suivante pour voir si quelque chose a été
-chargé&nbsp;:
+        Then use the following command to check if anything was loaded:
       </para>
 
 <screen><userinput>dmesg | grep -e 'microcode' -e 'Linux version' -e 'Command line'</userinput></screen>
@@ -617,14 +618,83 @@ si vous faite cela.
 
     </sect3>
 
+    <sect3 id="amdgpu-video-firmware">
+      <title>Firmware for AMD/ATI amdgpu video chips</title>
+
+      <para>
+        All video controllers using the amdgpu kernel driver require firmware,
+whether you will be using the xorg amdgpu driver, the xserver's modesetting
+driver, or just kernel modesetting to get a console framebuffer larger than
+80x25.
+      </para>
+
+      <para>
+        Install <xref linkend="pciutils"/> and use that to check the model name
+(look for 'VGA compatible controller:'). If you have an APU (Accelerated
+Processing Unit, i.e. CPU and video on the same chip) that will probably
+tell you the name. If you have a separate amdgpu video card you will need to
+search to determine which name it uses (e.g. a card described as Advanced
+Micro Devices, Inc. [AMD/ATI] Baffin [Radeon RX 550 640SP / RX 560/560X]
+needs Polaris11 firmware.  There is a table of "Family, Chipset name,
+Product name and Firmware" at the end of the Kernel sections in <ulink
+url="https://wiki.gentoo.org/wiki/AMDGPU#Known_firmware_blobs">
+AMDGPU</ulink> page of the Gentoo wiki.
+    </para>
+
+    <para>
+      Once you have identified the firmware name, install all the relevant files
+for it. For example, the Baffin card mentioned above has 21 different
+polaris11* files, APUs such as renoir and picasso have at least 12 files and
+might gain more in future updates (e.g. the raven APU now has a 13th file,
+raven_ta.bin).
+    </para>
+
+<screen><userinput>mkdir -pv /lib/firmware/amdgpu
+cp -v &lt;YOUR_BLOBS&gt; /lib/firmware/amdgpu</userinput></screen>
+
+    <para>
+      If disk space is not a problem, you could install all the current amdgpu
+firmware files and not worry about exactly which chipset is installed.
+    </para>
+
+    <para>
+      You are recommended to build the kernel amdgpu driver as a module.  In your
+kernel .config set at least the following options and review the other
+AMDGPU options according to what hardware you are building for, e.g ACP
+(Audio Co-Processor) support for some APUs,
+    </para>
+
+<screen><literal>Device Drivers ---&gt;
+  Graphics support ---&gt;
+      Direct Rendering Manager ---&gt;
+        [*] Direct Rendering Manager (XFree86 ... support)  [CONFIG_DRM]
+        [M] AMD GPU                                         [CONFIG_DRM_AMDGPU]
+        Display Engine Configuration ---&gt;
+          [*] AMD DC - Enable new display engine (NEW)      [CONFIG_DRM_AMD_DC]</literal></screen>
+
+      <para>
+        As written above at the end of the section on 'Firmware for ATI video
+chips', loading large blobs from /lib/firmware can take a noticeable time
+during which the screen will be blank. On a slow machine you might wish to
+refer to the 'Kernel Configuration for additional firmware' part of <xref
+linkend="xorg-amdgpu-driver"/> and compile all the required modules into the
+kernel to reduce this time, at the cost of using more kernel memory.
+      </para>
+
+    </sect3>
+
     <sect3 id="nvidia-video-firmware">
       <title>Firmware pour les puces vidéo Nvidia</title>
 
       <para>
-        Certaines puces graphiques Nvidia requièrent une mise à jour de leur
-firmware pour tirer parti de toutes les capacités de la carte. Ce sont
-généralement les puces des séries GeForce 8, 9, 9300 et 200-900. Pour de
-plus amples informations, visitez <ulink url=
+        Nvidia has released basic signed firmware for recent graphics chips, but
+significantly after the chips and its own binary drivers were first
+available. For other chips it has been necessary to extract the firmware
+from the binary driver.
+      </para>
+      <para>
+        For more exact information about which chips need extracted firmware, see
+<ulink url=
 "https://nouveau.freedesktop.org/wiki/VideoAcceleration/#firmware"/>.
       </para>
 
@@ -639,13 +709,20 @@ plus amples informations, visitez <ulink url=
       &lt;*/M&gt; Nouveau (NVIDIA) cards                          [CONFIG_DRM_NOUVEAU]</literal></screen>
 
       <para>
-        Les étapes pour installer le firmware Nvidia sont&nbsp;:
+        If the necessary firmware is available in the <filename
+class="directory">nvidia/</filename> directory of linux-firmware, copy it to
+<filename class="directory">/lib/firmware/nouveau</filename>.
+      </para>
+      <para>
+        If the firmware has not been made available in linux-firmware, for the old
+chips mentioned in the nouveau wiki link above ensure you have installed
+<xref linkend="python2"/> and run the following commands:
       </para>
 
 <screen><userinput>wget https://raw.github.com/imirkin/re-vp2/master/extract_firmware.py
 wget http://us.download.nvidia.com/XFree86/Linux-x86/325.15/NVIDIA-Linux-x86-325.15.run
 sh NVIDIA-Linux-x86-325.15.run --extract-only
-python extract_firmware.py
+python2 extract_firmware.py
 mkdir -p /lib/firmware/nouveau
 cp -d nv* vuc-* /lib/firmware/nouveau/</userinput></screen>
 
