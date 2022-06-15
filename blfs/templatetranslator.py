@@ -50,6 +50,8 @@ def convert(entry, regexp, template):
 # regexps
 regexps = []
 
+# no translation
+regexps.append([re.compile('(<\\?dbfo list-presentation="list"\\?> <\\?dbhtml list-presentation="table"\\?>)$'), '#1'])
 # find an MD5 sum
 regexps.append([re.compile('([a-f0-9]{32})$'), '#1'])
 # convert KB to Ko, MB to Mo and GB to Go, and keep SBU

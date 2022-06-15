@@ -95,8 +95,7 @@ possible. Pour plus de détails voir <xref linkend="xconfig"/> en dessous.
 
   </sect2>
 
-  <sect2 role="configuration" id="checking-dri" xreflabel="Checking the DRI
-  installation">
+  <sect2 role="configuration" id="checking-dri" xreflabel="Vérifier l'installation de la Direct Rendering Infrastructure">
     <title>Vérifier l'installation de la Direct Rendering Infrastructure (DRI)</title>
 
     <para>
@@ -210,6 +209,81 @@ affichera le nombre de cadres dessinés toutes les cinq secondes, donc c'est
 un test fiable. La fenêtre est redimensionnable et les cadres dessinés par
 secondes dépendent beaucoup de la taille de la fenêtre.
     </para>
+
+  </sect2>
+
+  <sect2 role="configuration" id="xorg-debug" xreflabel="Debugging Xorg">
+    <title>Debugging Xorg</title>
+
+    <para>
+      When starting xorg, there are a couple of ways to check what any issues you
+may have.  If the system comes up, you can see what driver is being used by
+running <command>xdriinfo</command>. If there are issues or you just want to
+check, look at <filename>Xorg.0.log</filename>.
+    </para>
+
+    <para>
+      The location of <filename>Xorg.0.log</filename> depends on how Xorg is
+installed.  If the instructions in the book are followed closely and Xorg is
+started from the comand line, it wil be located in the <filename
+class="directory">$HOME/.local/share/xorg/</filename> directory.  If Xorg is
+started by a display manager (e.g. <xref linkend='lightdm'/>, <xref
+linkend='lxdm'/>, or <xref linkend='gdm'/>) or if
+<filename>$$XORG/PREFIX/libexec/Xorg</filename> has the suid bit set, it
+will be located in the <filename class="directory">/var/log/</filename>
+directory.
+    </para>
+
+    <bridgehead renderas="sect3">Xorg.0.log Issues</bridgehead>
+
+    <para>
+      When you look at Xorg.0.log, check for entries like (EE) or (WW).  Below are
+some common entries:
+    </para>
+
+    <bridgehead renderas="sect5">(WW) Open ACPI failed (/var/run/acpid.socket)</bridgehead>
+
+    <para>
+      This warning is becasue <xref linkend='acpid'/> is not installed. If you are
+not on a laptop, it can be safely ignored. On a laptop, install <xref
+linkend='acpid'/> to enable actions like recognizing when the lid is closed.
+    </para>
+
+    <bridgehead renderas="sect5">(WW) VGA arbiter: cannot open kernel arbiter, no multi-card support</bridgehead>
+
+    <para>
+      This warning is displayed when a regular user starts Xorg.  The library
+<filename>libpciaccess.so</filename> issues this warning when it tries to
+open <filename>/dev/vga_arbiter</filename>.  If there is only one video card
+in the system, it can safely be ignored. If desired, the permissions of this
+device can be changed by adding a udev rule and adding the local user to the
+video group. As the &root; user:
+    </para>
+
+<screen role="root"><userinput>cat > /etc/udev/rules.d/99-vga-arbiter.rules &lt;&lt; EOF
+# /etc/udev/rules.d/99-vga-arbiter.rules: Set vga_arbiter group/mode
+
+ACTION=="add", KERNEL=="vga_arbiter", GROUP="video" MODE="0660"
+EOF
+
+usermod -a -G video &lt;user running xorg&gt;</userinput></screen>
+
+    <bridgehead renderas="sect5">(EE) AIGLX error: dlopen of /opt/xorg/lib/dri/i965_dri.so failed</bridgehead>
+
+  <para>
+    This error, accompanied by (EE) AIGLX error: unable to load driver i965,
+occurs in some systems with Intel based graphics devices.  It is caused by a
+mismatch between the current <xref linkend='xorg-server'/> and <xref
+linkend='mesa'/>. Xorg no longer uses the i965 driver and uses the crocus or
+iris mesa drivers as indicated by the <command>xdriinfo</command> command.
+It can safely be ignored.
+  </para>
+
+  <para>
+    If desired, this warning can be removed by commenting out lines 330-331 and
+337-338 (LogMessage) of <filename>glx/glxdricommon.c</filename> in the <xref
+linkend='xorg-server'/> package.
+  </para>
 
   </sect2>
 
