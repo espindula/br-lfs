@@ -10,10 +10,10 @@
      URL for a prepared git version -->
   <!ENTITY qtwebengine-download-http "&sources-anduin-http;/qtwebengine/qtwebengine-&qtwebengine-version;.tar.xz">
   <!ENTITY qtwebengine-download-ftp  "">
-  <!ENTITY qtwebengine-md5sum        "a3d64826a73996e5c1ba6ea8c5ef0490">
-  <!ENTITY qtwebengine-size          "306&nbsp;Mo">
-  <!ENTITY qtwebengine-buildsize     "5,1 Go (154 Mo installés)">
-  <!ENTITY qtwebengine-time          "94 SBU (typical, Using parallelism=4)">
+  <!ENTITY qtwebengine-md5sum        "d963e40e47449d7a11f83d0249e7643a">
+  <!ENTITY qtwebengine-size          "307&nbsp;Mo">
+  <!ENTITY qtwebengine-buildsize     "5.1 GB (152 MB installed)">
+  <!ENTITY qtwebengine-time          "93 SBU (typical, Using parallelism=4)">
 ]>
 
 <sect1 id="qtwebengine" xreflabel="qtwebengine-&qtwebengine-version;">
@@ -256,8 +256,10 @@ url="&patch-root;/qtwebengine-&qtwebengine-version;-build_fixes-1.patch"/>
       
     <!-- the qmake output tends to be misleading. 'khr' is from Mesa -->
 <para role="required">
-      <xref linkend="nodejs"/>, <xref linkend="nss"/>, <xref linkend="pciutils"/>,
-<xref linkend="python2"/> et <xref linkend='qt5'/>
+      <!--  <xref linkend="python2"/>
+, and -->
+<xref linkend="nodejs"/>, <xref linkend="nss"/>, <xref linkend="pciutils"/>,
+and <xref linkend='qt5'/>
     </para>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
@@ -296,25 +298,34 @@ url="https://github.com/open-source-parsers/jsoncpp/releases">jsoncpp</ulink>,
   <sect2 role="installation">
     <title>Installation de qtwebengine</title>
 
-    <note>
+
+
+
+
+
+
+    <!-- following merely commented instead of deleted, in case we need to
+      drop back when a future version of python3 is released -->
+<!--<note>
+
       <para>
-        Contrairement à la version 5.15.2, le système de construction dérivé de
-chromium a maintenant besoin de <command>python</command> et ce doit être
-python2. Dans BLFS-10.1 la création du lien symbolique de python a été
-supprimée avant de pouvoir enfin se débarrasser de python2 (d'autres anciens
-paquets qui ont besoin de python2 fonctionnent en général en invoquant
-python2). Si vous utilisez toujours une ancienne version de BLFS où
-<filename>/usr/bin/python</filename> existe, vous pouvez passer les
-commandes pour créer le lien symbolique, et plus tard pour le supprimer.
+        Unlike version 5.15.2, the chromium-derived build system now needs
+        <command>python</command> to be available and to be python2. In
+        BLFS-10.1 the creation of the python symlink was removed as a step
+        towards eventually getting rid of python2 (other old packages which
+        need python2 usually work by invoking python2). If you are still
+        using an earlier version of BLFS where
+        <filename>/usr/bin/python</filename> exists, you can skip the
+        commands to create the symlink, and to later remove it.
       </para>
     </note>
 
     <para>
-      Tout d'abord, en tant qu'utilisateur <systemitem
-class="username">root</systemitem>, créez le lien symbolique pour
-python&nbsp;:
+      First, as the <systemitem class="username">root</systemitem>
+      user, create the python symlink:
     </para>
 
+<screen role="root"><userinput>ln -svf /usr/bin/python{2,}</userinput></screen>-->
 <!--<para>
 
       Now apply a patch to update from 5.15.6 to the security and other fixes
@@ -322,13 +333,9 @@ python&nbsp;:
     </para>
 
 <screen><userinput remap="pre">patch -Np1 -i ../qtwebengine-&qtwebengine-version;-5.15.7-1.patch</userinput></screen>-->
-<screen role="root"><userinput>ln -svf /usr/bin/python{2,}</userinput></screen>
-
-
-
-
-    <para>
-      Apply a patch to fix several issues that can prevent the build from working:
+<para>
+      Apply a patch to fix several issues that can prevent the build from
+completing, and to force it to use python3:
     </para>
 
 <!-- start of commands for git versions only -->
@@ -396,6 +403,13 @@ variable d'environnement NINJAJOBS&nbsp;:
 <screen role="root"><userinput>if [ -e ${QT5DIR}/lib/libQt5WebEngineCore.so ]; then
   mv -v ${QT5DIR}/lib/libQt5WebEngineCore.so{,.old}
 fi</userinput></screen>-->
+<!--<para>
+
+      The last fix is needed to build with gcc-12:
+    </para>
+
+<screen><userinput>sed -e '/#include/i#include &lt;vector&gt;' \
+    -i src/3rdparty/chromium/third_party/skia/src/utils/SkParseColor.cpp</userinput></screen>-->
 <screen><!-- editors: See thread at
 http://lists.linuxfromscratch.org/pipermail/blfs-dev/2019-December/036996.html
 et.seq, particularly 037002.html which shows the commit near the end. -->
@@ -403,12 +417,7 @@ et.seq, particularly 037002.html which shows the commit near the end. -->
 
 
 
-    <para>
-      The last fix is needed to build with gcc-12:
-    </para>
 
-<screen><userinput>sed -e '/#include/i#include &lt;vector&gt;' \
-    -i src/3rdparty/chromium/third_party/skia/src/utils/SkParseColor.cpp</userinput></screen>
 
     <para>
       Installez <application>qtwebengine</application> en exécutant les commandes
@@ -459,16 +468,17 @@ suivantes en tant qu'utilisateur <systemitem
 class="username">root</systemitem>&nbsp;:
     </para>
 
+<!--<para>
+
+      Finally, as the <systemitem class="username">root</systemitem>
+      user, remove the python symlink:
+    </para>
+
+<screen role="root"><userinput>rm -v /usr/bin/python</userinput></screen>-->
 <screen role="root"><userinput>find $QT5DIR/ -name \*.prl \
    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;</userinput></screen>
 
-    <para>
-      Enfin, en tant qu'utilisateur <systemitem
-class="username">root</systemitem>, supprimez le lien symbolique
-python&nbsp;:
-    </para>
 
-<screen role="root"><userinput>rm -v /usr/bin/python</userinput></screen>
   </sect2>
 
   <sect2 role="commands">
@@ -527,13 +537,12 @@ vous pourriez vouloir faire cela&nbsp;:
       <itemizedlist>
         <listitem>
           <para>
-            Construire sur un sous-ensemble des CPU permet de mesurer le temps de
-construction pour un plus petit nombre de processeurs, et de lancer d'autres
-tache gourmandes en CPU en même temps. Pour les rédacteurs sur une machine
-avec de nombreux CPU, qui essaye de mesure le temps pour une machine à 4
-cœurs, <option>NINJAJOBS=4 make</option> donnera une approximation
-raisonnable (il y a une petite période où N+2 travaux python2 et node
-tournent en même temps).
+            Building on a subset of CPUs allows measuring the build time for a smaller
+number of processors, and/or running other CPU-intensive tasks at the same
+time. For an editor on a machine with a lot of CPUs, trying to measure the
+build time for a 4-CPU machine, <option>NINJAJOBS=4 make</option> will give
+a reasonable approximation (there is a short period where N+2 python and
+node jobs run).
           </para>
         </listitem>
         <listitem>
