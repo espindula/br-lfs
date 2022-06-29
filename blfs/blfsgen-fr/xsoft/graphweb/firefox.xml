@@ -6,24 +6,29 @@
 
   <!ENTITY firefox-download-http "&mozilla-http;/firefox/releases/&firefox-version;esr/source/firefox-&firefox-version;esr.source.tar.xz">
   <!ENTITY firefox-download-ftp  "">
-  <!ENTITY firefox-md5sum        "c22765dc34c94035ebd83b998c90de33">
-  <!ENTITY firefox-size          "363&nbsp;Mo">
+  <!ENTITY firefox-md5sum        "72d8bf3644c4db2cced72fa3f712a4a1">
+  <!ENTITY firefox-size          "464&nbsp;Mo">
   <!-- NB with stylo, much of the build uses rust, and therefore cargo files.
     But the extra cached cargo files, if any, seem to be minimal -->
-  <!ENTITY firefox-buildsize     "6.6 GB (193 MB installed) without tests">
+  <!ENTITY firefox-buildsize     "7.1 GB (199 MB installed) without tests">
   <!-- editors: with ff63 and rust-1.29, ./mach build -j4 is probably the
    most practical way to get a timing on a machine with more cores, if taking
    cores offline is not practical. If in doubt, round up -->
-  <!ENTITY firefox-time          "25 SBU (on a typical 4-core machine) without tests">
+  <!ENTITY firefox-time          "24 SBU (on a typical 4-core machine) without tests">
 ]>
 
 <sect1 id="firefox" xreflabel="Firefox-&firefox-version;">
-  <?dbhtml filename="firefox.html" ?>
+  <!-- for 102.0 indicate this is the ESR variant,
+  can revert to plain number when 102.1 appears
+  <title>
+Firefox-&firefox-version;</title>-->
+<?dbhtml filename="firefox.html" ?>
 
   <sect1info>
 <date>$Date$</date></sect1info>
 
-  <title>Firefox-&firefox-version;</title>
+
+  <title>Firefox-&firefox-version;esr</title>
 
   <indexterm zone="firefox">
     <primary sortas="a-Firefox">Firefox</primary>
@@ -73,23 +78,25 @@ base de code de <application>Mozilla</application>.
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+
+
+    <!--<bridgehead renderas="sect3">
+Additional Downloads</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>
-          Correctif requis&nbsp;: <ulink
-url="&patch-root;/firefox-&firefox-version;esr-gcc12_fix-1.patch"/>
+          Required patch:
+          <ulink url="&patch-root;/firefox-&firefox-version;esr-gcc12_fix-1.patch"/>
         </para>
       </listitem>
       <listitem>
         <para>
-          Correctif recommandé&nbsp;: <ulink
-url="&patch-root;/firefox-&firefox-version;esr-disable_rust_test-1.patch"/>
+          Recommended patch:
+          <ulink url="&patch-root;/firefox-&firefox-version;esr-disable_rust_test-1.patch"/>
         </para>
       </listitem>
-    </itemizedlist>
-
-    <note>
+    </itemizedlist>-->
+<note>
       <para>
         Le nom du répertoire est firefox-&firefox-version;
       </para>
@@ -282,6 +289,11 @@ ac_add_options --with-system-jpeg
 ac_add_options --with-system-png
 ac_add_options --with-system-zlib
 
+# Using sandboxed wasm libraries has been moved to all builds instead
+# of only mozilla automation builds. It requires extra llvm packages
+# and was reported to seriously slow the build. Disable it.
+ac_add_options --without-wasm-sandboxed-libraries
+
 # The following option unsets Telemetry Reporting. With the Addons Fiasco,
 # Mozilla was found to be collecting user's data, including saved passwords and
 # web form data, without users consent. Mozilla was also found shipping updates
@@ -298,31 +310,33 @@ EOF</userinput></screen>
 suivantes&nbsp;:
     </para>
 
-    <para>
-      Appliquez d'abord un correctif qui contourne des échecs incompréhensibles
-sur certaines machine (un message qu'un test python sur libgkrust.a a
-identifié 1 fonction de réseau, getsockname) dans la bibliothèque statique
-rust.
+
+
+    <!--<para>
+
+      First apply a patch which works around unexplained failures on some machines
+      (a message that a python check on libgkrust.a identified 1 networking
+      function, getsockname) in the rust static library.
     </para>
 
 <screen><userinput>patch -Np1 -i ../firefox-&firefox-version;esr-disable_rust_test-1.patch</userinput></screen>
 
     <para>
-      Now apply a patch which allows the build to complete when using gcc-12 or
-later.
+      Now apply a patch which allows the build to complete when using gcc-12 or later.
     </para>
 
-<screen><userinput>patch -Np1 -i ../firefox-&firefox-version;esr-gcc12_fix-1.patch</userinput></screen>
-
-    <para>
+<screen><userinput>patch -Np1 -i ../firefox-&firefox-version;esr-gcc12_fix-1.patch</userinput></screen>-->
+<para>
       A change in cbindgen-0.24.2 causes a symbol to now be output by cbindgen,
 but it has already been defined in a header. This sed prevents the build
 eventually failing:
     </para>
 
-<!-- applying this for 11.1: upstream haven't make their mind yet
-     https://bugzilla.mozilla.org/show_bug.cgi?id=1729459 -->
+<!-- applying this for 11.1: upstream haven't made their mind yet
+     https://bugzilla.mozilla.org/show_bug.cgi?id=1729459
+     Still applies in 102.0, 32-bit build NOT tested for that. -->
 <screen><userinput>sed -i '/ROOT_CLIP_CHAIN/d' gfx/webrender_bindings/webrender_ffi.h</userinput></screen>
+
 
 
     <para>
@@ -396,10 +410,9 @@ esac</userinput></screen>
 le paquet.
     </para>
 
-<screen><userinput>export CC=gcc CXX=g++ &amp;&amp;
-export MACH_USE_SYSTEM_PYTHON=1            &amp;&amp;
-export MOZBUILD_STATE_PATH=${PWD}/mozbuild &amp;&amp;
-./mach configure                           &amp;&amp;
+<screen><userinput>export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system &amp;&amp;
+export MOZBUILD_STATE_PATH=${PWD}/mozbuild            &amp;&amp;
+./mach configure                                      &amp;&amp;
 ./mach build</userinput></screen>
 
     <para>
@@ -418,13 +431,13 @@ devrez enregistrer la sortie de la commande pour pouvoir la revoir.
 class="username">root</systemitem>&nbsp;:
     </para>
 
-<screen role="root"><userinput>MACH_USE_SYSTEM_PYTHON=1 ./mach install</userinput></screen>
+<screen role="root"><userinput>MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system ./mach install</userinput></screen>
 
     <para>
       Videz les variables d'environnement qui ont été définies plus haut&nbsp;:
     </para>
 
-<screen><userinput>unset CC CXX MACH_USE_SYSTEM_PYTHON MOZBUILD_STATE_PATH</userinput></screen>
+<screen><userinput>unset MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE MOZBUILD_STATE_PATH</userinput></screen>
 
   </sect2>
 
@@ -437,22 +450,6 @@ class="username">root</systemitem>&nbsp;:
       href="../../xincludes/SIOCGSTAMP.xml"/>
 -->
 <para>
-      <!-- supported in llvm-11
-      but the newer
-      <literal>
--fstack-clash-protection</literal> is still not supported.-->
-<command>export CC=gcc CXX=g++ …</command>&nbsp;:
-<application>clang</application> est maintenant préféré en amont pour
-pouvoir utiliser le même compilateur partout. Sur les architectures X86
-<application>clang</application> a maintenant l'air de prendre en charge la
-plupart des options de durcissement que <application>GCC</application>. Avec
-les versions actuelles des drapeaux par défaut,
-<application>GCC</application> crée une construction légèrement plus grosse
-mais prend typiquement 2 SBU de moins sur une machine à 4 cœurs avec le
-mozconfig ci-dessus.
-    </para>
-
-    <para>
       <command>export MOZBUILD_STATE_PATH=${PWD}/mowbuild</command>&nbsp;: La
 construction est maintenant supposée vous dire qu'elle souhaite créer
 <filename class="directory">~/.mozbuld</filename> et vous offre l'option
@@ -472,9 +469,9 @@ pointer vers le répertoire par défaut et supprimez l'entrée de
     </para>
 
     <para>
-      <command>MACH_USE_SYSTEM_PYTHON=1</command>&nbsp;: utilise le python du
-système pour créer un environnement virtuel pour <command>mach</command>
-sans télécharger de wheel python.
+      <command>MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system</command>: Use the
+system python to create a virtual environment for <command>mach</command>
+without downloading any python wheels.
     </para>
 
     <para>
@@ -496,26 +493,16 @@ la construction utilise la mémoire d'échange parce que vous n'avez pas assez
 de RAM, utiliser moins de cœurs peut être plus rapide.
     </para>
 
-
-
-  <!--
     <para>
-
-      <command>mkdir -pv /usr/lib/mozilla/plugins</command>: This ensures
-      that <filename class="directory">/usr/lib/mozilla/plugins/</filename>
-      exists.
+      <parameter><envar>CC=gcc CXX=g++</envar></parameter>: BLFS used to prefer to
+use gcc and g++ instead of upstream's defaults of the
+<application>clang</application> programs. With the release of gcc-12 the
+build takes longer with gcc and g++, primarily because of extra warnings,
+and is bigger. Set these environment variables <emphasis>before you run the
+configure script</emphasis> if you wish to continue to use gcc, g++.
     </para>
 
-    <para>
-      <command>ln -sv ... /usr/lib/firefox/browser</command>:
-      This command creates a symbolic link to <filename
-      class="directory">/usr/lib/mozilla/plugins</filename>. It's not really
-      needed, as <application>Firefox</application> checks <filename
-      class="directory">/usr/lib/mozilla/plugins</filename> by default, but the
-      symbolic link is made to keep all the plugins installed in one folder.
-    </para>
--->
-</sect2>
+  </sect2>
 
   <sect2 role="configuration">
     <title>Configuration de Firefox</title>
