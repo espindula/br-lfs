@@ -6,10 +6,10 @@
 
   <!ENTITY thunderbird-download-http "&mozilla-http;/thunderbird/releases/&thunderbird-version;/source/thunderbird-&thunderbird-version;.source.tar.xz">
   <!ENTITY thunderbird-download-ftp  "">
-  <!ENTITY thunderbird-md5sum        "3595b4a1e6422dc70f48a2a19411784b">
-  <!ENTITY thunderbird-size          "395&nbsp;Mo">
-  <!ENTITY thunderbird-buildsize     "7.0 GB (200 MB installed)">
-  <!ENTITY thunderbird-time          "26 SBU (on a 4-core machine)">
+  <!ENTITY thunderbird-md5sum        "fc033aefff22c745284c12d648affa1d">
+  <!ENTITY thunderbird-size          "480&nbsp;Mo">
+  <!ENTITY thunderbird-buildsize     "7.4 GB (202 MB installed)">
+  <!ENTITY thunderbird-time          "25 SBU (on a 4-core machine)">
   <!-- Removed the -j1 time because python and rust do not obey it, although
        the C/C++ code appears to obey it -->
 ]>
@@ -71,17 +71,19 @@ moteur de rendement Gecko afin d'afficher et d'écrire des courriels HTML
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
+
+
+    <!--<bridgehead renderas="sect3">
+Additional Downloads</bridgehead>
     <itemizedlist spacing="compact">
       <listitem>
         <para>
-          Correctif requis&nbsp;: <ulink
-url="&patch-root;/thunderbird-&thunderbird-version;-gcc12_fix-1.patch"/>
+          Required patch:
+          <ulink url="&patch-root;/thunderbird-&thunderbird-version;-gcc12_fix-1.patch"/>
         </para>
       </listitem>
-    </itemizedlist>
-
-    <bridgehead renderas="sect3">Dépendances de Thunderbird</bridgehead>
+    </itemizedlist>-->
+<bridgehead renderas="sect3">Dépendances de Thunderbird</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required">
@@ -101,11 +103,8 @@ linkend="zip"/>, <xref linkend="unzip"/> et <xref linkend="yasm"/>
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
-      <!-- Fails to build with version 1.8.0
-      <xref linkend="libvpx"/>
-,-->
-<xref linkend="icu"/>, <xref linkend="libevent"/>, <xref linkend="nasm"/>,
-<xref linkend="nspr"/> et <xref linkend="nss"/>
+      <xref linkend="icu"/>, <xref linkend="libevent"/>, <xref linkend="libvpx"/>,
+<xref linkend="nasm"/>, <xref linkend="nspr"/>, and <xref linkend="nss"/>
     </para>
 
     <note>
@@ -161,6 +160,12 @@ disponibles (et une brève description de chacune), lancez
 commande suivante&nbsp;:
     </para>
 
+<!--<para>
+
+      Apply a patch which allows compilation on systems with gcc-12:
+    </para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../thunderbird-&thunderbird-version;-gcc12_fix-1.patch</userinput></screen>-->
 <screen><!-- always built in versions 78+. The option is a noop
 # If you want to compile the Mozilla Calendar, uncomment this line:
 #ac_add_options - -enable-calendar
@@ -179,6 +184,7 @@ ac_add_options --disable-necko-wifi
 # Comment out following options if you have not installed
 # recommended dependencies:
 ac_add_options --with-system-libevent
+ac_add_options --with-system-libvpx
 ac_add_options --with-system-nspr
 ac_add_options --with-system-nss
 ac_add_options --with-system-icu
@@ -214,11 +220,7 @@ ac_add_options --with-system-zlib</literal>
 EOF</userinput></screen>
 
 
-    <para>
-      Apply a patch which allows compilation on systems with gcc-12:
-    </para>
 
-<screen><userinput remap="pre">patch -Np1 -i ../thunderbird-&thunderbird-version;-gcc12_fix-1.patch</userinput></screen>
 
     <para>
       A change in cbindgen-0.24.2 causes a symbol to now be output by cbindgen,
@@ -228,7 +230,7 @@ eventually failing:
 
 <!-- applying this for 11.1: upstream haven't make their mind yet
      https://bugzilla.mozilla.org/show_bug.cgi?id=1729459 
-     Still not fixed in 91.9.0. -->
+     Still not fixed in 102.0. -->
 <screen><userinput>sed -i '/ROOT_CLIP_CHAIN/d' gfx/webrender_bindings/webrender_ffi.h</userinput></screen>
 
 
@@ -257,9 +259,8 @@ esac</userinput></screen>
 
     </note>
 
-<screen><userinput>export CC=gcc CXX=g++ &amp;&amp;
-export MACH_USE_SYSTEM_PYTHON=1 &amp;&amp;
-./mach configure      &amp;&amp;
+<screen><userinput>export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system &amp;&amp;
+./mach configure                                      &amp;&amp;
 ./mach build</userinput></screen>
 
     <para>
@@ -274,13 +275,13 @@ class="username">root</systemitem>&nbsp;:
 
 <!-- devs: For DESTDIR install, prepend DESTDIR=<dest>
  to the above -->
-<screen role="root"><userinput>MACH_USE_SYSTEM_PYTHON=1 ./mach install</userinput></screen>
+<screen role="root"><userinput>MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system ./mach install</userinput></screen>
 
     <para>
       Videz les variables d'environnement qui ont été définies plus haut&nbsp;:
     </para>
 
-<screen><userinput>unset CC CXX MACH_USE_SYSTEM_PYTHON</userinput></screen>
+<screen><userinput>unset CC CXX MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE</userinput></screen>
 
   </sect2>
 
@@ -297,26 +298,35 @@ class="username">root</systemitem>&nbsp;:
       fix i686 builds and preserve the optimization on x86_64.
     </para>-->
 <para>
-      <!-- For more info, see Ticket #13969. ~12GB to ~5GB build size,
-      significantly smaller build time.-->
-<command>CC=gcc CXX=g++ ./mach configure</command>&nbsp;:
-<application>Thunderbird</application> utilise maintenant ce script
-<application>python3</application> pour lancer la construction et
-l'installation. Forcer GCC fait que la construction est plus petite et fini
-plus rapidement.
-      
+      <command>MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system</command>: Use the
+system python to create a virtual environment for <command>mach</command>
+without downloading any python wheels.
     </para>
 
     <para>
-      <command>MACH_USE_SYSTEM_PYTHON=1</command>&nbsp;: utilise le python du
-système pour créer un environnement virtuel pour <command>mach</command>
-sans télécharger de wheel python.
+      <command>./mach configure</command>: This validates the supplied
+dependencies and the <filename>mozconfig</filename>.
     </para>
 
     <para>
       <option>./mach build --verbose</option>&nbsp;: utilisez cette alternative si
 vous voulez des détails sur les fichiers compilés, avec les drapeaux C ou
 C++ utilisés.
+    </para>
+
+    <para>
+      <option>./mach build -jN</option>: The build should, by default, use all the
+online CPU cores. If using all the cores causes the build to swap because
+you have insufficient memory, using fewer cores can be faster.
+    </para>
+
+    <para>
+      <parameter><envar>CC=gcc CXX=g++</envar></parameter>: BLFS used to prefer to
+use gcc and g++ instead of upstream's defaults of the
+<application>clang</application> programs. With the release of gcc-12 the
+build takes longer with gcc and g++, primarily because of extra warnings,
+and is bigger. Set these environment variables <emphasis>before you run the
+configure script</emphasis> if you wish to continue to use gcc, g++.
     </para>
 
   </sect2>
