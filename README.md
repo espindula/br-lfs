@@ -2,11 +2,11 @@
 
 Translation project of the book "Linux From Scratch" into Brazilian Portuguese.
 
-git clone https://github.com/espindula/LFS-pt_BR.git
+git clone https://github.com/espindula/lfs-pt_br.git
 
-git clone https://gitlab.com/jafesp/LFS-pt_BR.git
+git clone https://gitlab.com/jafesp/lfs-pt_br.git
 
-git clone https://salsa.debian.org/jamenson/LFS-pt_BR.git
+git clone https://salsa.debian.org/jamenson/lfs-pt_br.git
 
 
 Direitos autorais (Copyright) da versão modificada traduzida para a 
