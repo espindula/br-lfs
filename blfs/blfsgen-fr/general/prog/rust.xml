@@ -36,6 +36,32 @@ les tests, dans les deux cas avec 4 processeurs)">
   <sect2 role="package">
     <title>Introduction à Rust</title>
 
+    <note>
+      <para>
+        Actuellement le compilateur Rust produit des instructions SSE2 pour les
+systèmes x86 32&nbsp;bits, ce qui casse le code généré sur les systèmes
+32&nbsp;bits sans processeur capable d'utiliser SSE2. Tous les modèles de
+processeur x86 vendus après 2004 devraient avoir SSE2. Exécutez
+<command>lscpu | grep sse2</command> pour tester. Si la sortie affiche
+quelque chose, votre CPU prend en charge SSE2 et c'est bon. Sinon vous
+devrez essayer de construire ce paquet <emphasis>sur un système compatible
+SSE2</emphasis> avec la correction suivante appliquée&nbsp;:
+      </para>
+
+      
+<screen role="nodump"><!-- computeroutput used deliberately to stop anyone from copying
+           blindly -->
+<computeroutput>sed 's@pentium4@pentiumpro@' -i \
+    compiler/rustc_target/src/spec/i686_unknown_linux_gnu.rs</computeroutput></screen>
+
+      <para>
+        Puis copiez le dossier <filename
+class="directory">/opt/rustc-&rust-version;</filename> qui en résulte vers
+le système sans SSE2. Mais ce changement est toujours en cours de revue en
+amont et n'est pas testé par les rédacteurs de BLFS.
+      </para>
+    </note>
+
     <para>
       Le langage de programmation <application>Rust</application> est conçu pour
 être un langage sûr, concurrent et pratique.
@@ -117,12 +143,17 @@ efficace lors du lancement de certains tests de rustc.
     <para>
       La version actuelle du paquet rust num_cpus peut désormais utiliser les
 cgroups pour restreindre les processeurs qui peuvent être utilisés. Donc si
-votre machine manque de DRAM (typiquement moins de 2Go de DRAM par cœur),
-cela peut être une bonne alternative à passer vos CPU hors-ligne. <phrase
-revision="sysv">Pour les systèmes sysv, les cgroups nécessitent <ulink
+votre machine manque de DRAM (typiquement moins de 2&nbsp;Go de DRAM par
+cœur), cela peut être une bonne alternative à passer vos CPU
+hors-ligne. <phrase revision="sysv">Pour les systèmes sysv, les cgroups
+nécessitent <ulink
 url="https://sourceforge.net/projects/libcg/">libcgroup</ulink>.</phrase>
-<phrase revision="systemd">Cela peut apparemment se faire en écrivant des
-fichiers d'unité systemd personnalisés.</phrase>
+<phrase revision="systemd">Cela peut se faire en utilisant la commande
+<command>systemd-run</command> avec les options <parameter>-p
+User=$(whoami)</parameter> et <parameter>-p
+AllowedCPUs=0-<replaceable>x</replaceable></parameter> (avec
+<replaceable>x</replaceable> remplacé par le nombre de cœurs CPU que vous
+voulez moins un).</phrase>
     </para>
 
     <para>
@@ -153,7 +184,7 @@ important.
       </para>
     </note>
 
-    &lfs111_checked;
+    &lfs112_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -340,8 +371,8 @@ construction, cela utilisera tous les CPU disponibles.
 gdb</command> is installed,  another failure
       (debuginfo/function-names.rs) can be expected.
       # seems ok with 11.2 ken -->
-Au minimum, 49 tests échoueront&nbsp;: les 43 tests de la suite
-<quote>assembly</quote> qui ne sont pas passés (plusieurs options de
+Au minimum, 44 tests échoueront&nbsp;: les 43 tests de la suite
+<quote>assembly</quote> qui ne sont pas ignorés (plusieurs options de
 vérification font que les avertissements sont traités comme des erreurs) et
 run-make-fulldeps/long-linker-command-lines.
 

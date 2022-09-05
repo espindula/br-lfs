@@ -6,15 +6,15 @@
 
   <!ENTITY firefox-download-http "&mozilla-http;/firefox/releases/&firefox-version;esr/source/firefox-&firefox-version;esr.source.tar.xz">
   <!ENTITY firefox-download-ftp  "">
-  <!ENTITY firefox-md5sum        "962e19c22ed43a3c21f9dbfe2f7f5cdd">
-  <!ENTITY firefox-size          "465&nbsp;Mo">
+  <!ENTITY firefox-md5sum        "dd6b04f0972a2256b8e2d66ae6b855e3">
+  <!ENTITY firefox-size          "458&nbsp;Mo">
   <!-- NB with stylo, much of the build uses rust, and therefore cargo files.
     But the extra cached cargo files, if any, seem to be minimal -->
-  <!ENTITY firefox-buildsize     "6,9&nbsp;Go (199&nbsp;Mo installés) sans les tests">
+  <!ENTITY firefox-buildsize     "7,0&nbsp;Go (199&nbsp;Mo installés) sans les tests">
   <!-- editors: with ff63 and rust-1.29, ./mach build -j4 is probably the
    most practical way to get a timing on a machine with more cores, if taking
    cores offline is not practical. If in doubt, round up -->
-  <!ENTITY firefox-time          "23&nbsp;SBU (sur une machine usuelle à 4 cœurs) sans les tests">
+  <!ENTITY firefox-time          "26&nbsp;SBU (sur une machine usuelle à 4 cœurs) sans les tests">
 ]>
 
 <sect1 id="firefox" xreflabel="Firefox-&firefox-version;">
@@ -42,7 +42,7 @@ Firefox-&firefox-version;</title>-->
 base de code de <application>Mozilla</application>.
     </para>
 
-    &lfs111_checked;
+    &lfs112_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -128,20 +128,7 @@ attendez. Le temps de construction peut augmenter significativement si la
 machine doit utiliser l'espace d'échange pour cela.
       </para>
 
-      
-
-      <!-- commented, by 78.0 it seems to work reliably
       <para>
-
-        The mach build system (Python scripts) can be somewhat unreliable: if
-        the build fails and reports an Error, it can still return a status of
-        success, causing a scripted build to try to install (which does not rerun
-        the build), fail during the preparations for installing, but still exit
-        with a status of success. Also, on occasion it may limit itself to only
-        running one set of jobs - that will make the build take about 3 times as
-        long as running with four sets of jobs.
-      </para>-->
-<para>
         Bien qu'en amont on préfère utiliser <application>PulseAudio</application>,
 pour le moment <application>Alsa</application> peut toujours être
 utilisé. Les deux ont besoin de configuration à l'exécution pour que le son
@@ -153,10 +140,7 @@ fonctionne.
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required">
-      <!-- rustc is required by cbindgen so not needed here
-      <xref linkend="rust"/>
-,-->
-<xref linkend="autoconf213"/>, <xref linkend="cbindgen"/>, <xref
+      <xref linkend="autoconf213"/>, <xref linkend="cbindgen"/>, <xref
 linkend="dbus-glib"/>, <xref linkend="gtk3"/>, <xref linkend="libnotify"/>,
 <xref linkend="llvm"/> (clang, utilisé pour bindgen même si vous utilisez
 gcc), <xref linkend="nodejs"/>, <xref linkend="pulseaudio"/> (ou <xref
@@ -184,11 +168,7 @@ sécurité.
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      <!--      <phrase revision="sysv">
-<ulink url="https://sourceforge.net/projects/liboauth/files/">liboauth</ulink></phrase> -->
-<!--<xref linkend="openjdk"/>
-, Not seen in logs -->
-<xref linkend="curl"/>, <xref linkend="doxygen"/>, <xref role="runtime"
+      <xref linkend="curl"/>, <xref linkend="doxygen"/>, <xref role="runtime"
 linkend="ffmpeg"/> (à l'exécution, pour jouer des fichiers mov, mp3 ou mp4),
 <xref linkend="liboauth"/>, <xref linkend="valgrind"/>, <xref
 linkend="wget"/>, <xref linkend="wireless_tools"/>, <ulink
@@ -225,7 +205,7 @@ ac_add_options --disable-necko-wifi
 # Uncomment the following line if you wish to use Mozilla Location Service
 #ac_add_options --with-mozilla-api-keyfile=$PWD/mozilla-key
 
-# Uncomment the following line if you wish to use Google's geolocaton API
+# Uncomment the following line if you wish to use Google's geolocation API
 # (needed for use with saved maps with Google Maps)
 #ac_add_options --with-google-location-service-api-keyfile=$PWD/google-key
 
@@ -311,45 +291,29 @@ EOF</userinput></screen>
 suivantes&nbsp;:
     </para>
 
-
-
-    <!--<para>
-
-      First apply a patch which works around unexplained failures on some machines
-      (a message that a python check on libgkrust.a identified 1 networking
-      function, getsockname) in the rust static library.
-    </para>
-
-<screen><userinput>patch -Np1 -i ../firefox-&firefox-version;esr-disable_rust_test-1.patch</userinput></screen>
-
     <para>
-      Now apply a patch which allows the build to complete when using gcc-12 or later.
-    </para>
-
-<screen><userinput>patch -Np1 -i ../firefox-&firefox-version;esr-gcc12_fix-1.patch</userinput></screen>-->
-<para>
       Un changement dans cbindgen-0.24.2 fait maintenant créer un symbole à
 cbindgen, mais il a déjà été défini dans un en-tête. Ce sed empêche la
 construction d'échouer&nbsp;:
     </para>
 
-<!-- applying this for 11.1: upstream haven't made their mind yet
+<!-- Not needed with clang. Upstream bug at
      https://bugzilla.mozilla.org/show_bug.cgi?id=1729459
-     Still applies in 102.0, 32-bit build NOT tested for that. -->
-<screen><userinput>sed -i '/ROOT_CLIP_CHAIN/d' gfx/webrender_bindings/webrender_ffi.h</userinput></screen>
-
-
 
     <para>
-      Si vous construisez sur une machine 32&nbsp;bits, le sed suivant contourne
-un problème avec un type <quote>double</quote> incompatible dans un
-en-tête&nbsp;:
+
+      If building on a 32 bit machine, the following sed works around
+      an issue with an incompatible <quote>double</quote> type in one
+      header file:
     </para>
 
 <screen><userinput>case "$(uname -m)" in
     i?86) sed -e '/typedef[ ]*double/s/double/long double/' \
               -i modules/fdlibm/src/math_private.h ;;
 esac</userinput></screen>
+-->
+<screen><userinput>sed -i '/ROOT_CLIP_CHAIN/d' gfx/webrender_bindings/webrender_ffi.h</userinput></screen>
+
 
     <para>
       Si vous avez besoin des API de géolocalisation&nbsp;:
@@ -386,27 +350,8 @@ echo "613364a7-9418-4c86-bcee-57e32fd70c23" > mozilla-key</userinput></screen>
        href="../../xincludes/mozmach.xml"/>
 
     </note>
-    
 
-
-    <!--
     <para>
-
-      If you are building on i686, apply a fix to prevent Internal Compiler
-      Errors in GCC-7+:
-    </para>
-
-<screen><userinput remap="pre">case $(uname -m) in
-   i?86) sed -i "562 s/mips64/i386/" gfx/skia/skia/third_party/skcms/src/Transform_inl.h ;;
-esac</userinput></screen>
-    -->
-<!--<para>
-
-      Apply a patch to allow this to be compiled with <xref linkend="rust"/>:
-    </para>
-
-<screen><userinput remap="pre">patch -p1 -i ../firefox-&firefox-version;esr-rustc1470-1.patch</userinput></screen>-->
-<para>
       Invoquez maintenant le script Python <command>mach</command> pour compiler
 le paquet.
     </para>
@@ -482,9 +427,10 @@ fournies et le <filename>mozconfig</filename>.
 
     <para>
       <option>./mach build --verbose</option>&nbsp;: utilisez cette alternative si
-vous avez besoin de détails sur les fichiers qui sont compilés avec les
-drapeaux C ou C++ utilisés. Mais n'ajoutez pas «&nbsp;--verbose&nbsp;» à la
-commande d'installation, elle n'est pas acceptée.
+vous avez besoin de détails sur les fichiers qui sont compilés, ainsi que
+sur les drapeaux C ou C++ utilisés. Mais n'ajoutez pas
+«&nbsp;--verbose&nbsp;» à la commande d'installation, elle n'est pas
+acceptée.
     </para>
 
     <para>
@@ -495,13 +441,14 @@ de RAM, utiliser moins de cœurs peut être plus rapide.
     </para>
 
     <para>
-      <parameter><envar>CC=gcc CXX=g++</envar></parameter>&nbsp;: BLFS préférait
+      <option><envar>CC=gcc CXX=g++</envar></option>&nbsp;: BLFS préférait
 utiliser gcc et g++ au lieu des programmes <application>clang</application>
 par défaut en amont. Avec la publication de gcc-12 la construction prend
 plus de temps avec gcc et g++, surtout à cause d'avertissements
 supplémentaires, et est plus grosse. Initialisez ces variables
 d'environnement <emphasis>avant de lancer le script configure</emphasis> si
-vous voulez continuer à utiliser gcc et g++.
+vous voulez continuer à utiliser gcc et g++. La construction avec GCC sur
+i?86 est actuellement cassée.
     </para>
 
   </sect2>
@@ -580,7 +527,7 @@ i686).
       <para>
         Si vous utilisez <command>pulseaudio</command> dans un environnement de
 bureau, il est peut-être déjà démarré par celui-ci. Mais si ce n'est pas le
-cas, bien que firefox-57 arrivait à le démarrer, firefox-58 n'y arrive
+cas, bien que firefox-57 arrivait à le démarrer, firefox-58 n'y arrivait
 pas. Si vous lancez <command>firefox</command> depuis un terminal et que ce
 problème est présent, essayer de jouer un son produira des avertissements
 <literal>Impossible de trouver le contexte cubeb !</literal>

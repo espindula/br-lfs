@@ -7,25 +7,25 @@
   <!ENTITY libreoffice-dl "https://download.documentfoundation.org/libreoffice/src/&libreoffice-version;">
 
   <!ENTITY libreoffice-core-download-http "&libreoffice-dl;/libreoffice-&libreoffice-dlversion;.tar.xz">
-  <!ENTITY libreoffice-core-md5sum        "4dc75caa0eed5ade12275fc1663a764c">
-  <!ENTITY libreoffice-core-size          "245&nbsp;Mo">
+  <!ENTITY libreoffice-core-md5sum        "5bfb607d302a21315faa5bb49c57cebe">
+  <!ENTITY libreoffice-core-size          "251&nbsp;Mo">
 
   <!ENTITY libreoffice-dict-download-http "&libreoffice-dl;/libreoffice-dictionaries-&libreoffice-dlversion;.tar.xz">
-  <!ENTITY libreoffice-dict-md5sum        "872412c6d3ce95b194d9b084d2f04e88">
-  <!ENTITY libreoffice-dict-size          "49&nbsp;Mo">
+  <!ENTITY libreoffice-dict-md5sum        "1a3255535dd07328b9f3e69a24c97091">
+  <!ENTITY libreoffice-dict-size          "50&nbsp;Mo">
 
   <!ENTITY libreoffice-help-download-http "&libreoffice-dl;/libreoffice-help-&libreoffice-dlversion;.tar.xz">
-  <!ENTITY libreoffice-help-md5sum        "1dd117c63a9f936fd542e73e78c340fa">
+  <!ENTITY libreoffice-help-md5sum        "b72bfa99272b1b91cbd06e7827681158">
   <!ENTITY libreoffice-help-size          "108&nbsp;Mo">
 
   <!ENTITY libreoffice-translations-download-http "&libreoffice-dl;/libreoffice-translations-&libreoffice-dlversion;.tar.xz">
-  <!ENTITY libreoffice-translations-md5sum        "b4a77d4975d0d4aeda208136bf6eb06d">
-  <!ENTITY libreoffice-translations-size          "188&nbsp;Mo">
+  <!ENTITY libreoffice-translations-md5sum        "97478a0b2f4ac10fea44c87e170afeeb">
+  <!ENTITY libreoffice-translations-size          "190&nbsp;Mo">
 
   <!-- full size remeasured for 7.0.0.3 -->
 
-  <!ENTITY libreoffice-buildsize  "9,7&nbsp;Go avec les fichiers supplémentaires s'ils sont téléchargés durant
-la construction (833&nbsp;Mo installés). L'installation de la totalité des
+  <!ENTITY libreoffice-buildsize  "6,7&nbsp;Go avec les fichiers supplémentaires s'ils sont téléchargés durant
+la construction (682&nbsp;Mo installés). L'installation de la totalité des
 langues prend jusqu'à 25&nbsp;Go (environ 3&nbsp;Go installés)">
 
  <!-- Editors: many updates to poppler will break LO using system poppler until
@@ -58,7 +58,7 @@ langues prend jusqu'à 25&nbsp;Go (environ 3&nbsp;Go installés)">
        For 7.2.5.2, It was 58 SBU including DL time.
 
   -->
-  <!ENTITY libreoffice-time "68&nbsp;SBU avec parallélisme = 4 (peut varier en fonction du temps de
+  <!ENTITY libreoffice-time "48&nbsp;SBU avec parallélisme = 4 (peut varier en fonction du temps de
 téléchargement)">
 
 ]>
@@ -85,7 +85,7 @@ Office</application> et c'est un héritier d'<application>Open
 Office</application>.
     </para>
 
-    &lfs111_checked;
+    &lfs112_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -341,28 +341,18 @@ class="username">root</systemitem>.
     </important>
 
 <!-- keep a commented instruction if no patches are currently required -->
-<!-- fixed in 7.3.3
+<!-- fixed in 7.3.5
     <para>
 
-     First, fix a problem if bison-3.8 or later is installed:
+     Fix build failures introduced by the latest poppler version:
     </para>
 
-<screen><userinput>if bison - -version|grep -q 3.8; then
-  sed -i 's/yyn/yyrule/' connectivity/source/parse/sqlbison.y
-fi</userinput></screen>
+<screen><userinput>patch -Np1 -i ../libreoffice-&libreoffice-dlversion;-poppler_2204_fix-1.patch</userinput></screen>
 -->
 <screen role="nodump"><userinput>tar -xf libreoffice-&libreoffice-dlversion;.tar.xz --no-overwrite-dir &amp;&amp;
 cd libreoffice-&libreoffice-dlversion;</userinput></screen>
 
 
-
-
-    <para>
-     Corrigez des échecs à la construction introduits par la dernière version de
-poppler&nbsp;:
-    </para>
-
-<screen><userinput>patch -Np1 -i ../libreoffice-&libreoffice-dlversion;-poppler_2204_fix-1.patch</userinput></screen>
 
     <para>
       Si vous avez téléchargé les dictionnaires, les aides et les traductions,
@@ -437,10 +427,28 @@ spécifiée&nbsp;:
 <screen><userinput>export ANT_OPTS="-Djava.security.manager=allow"</userinput></screen>
 
     <para>
+      La dernière version de GPGME casse la configuration à cause d'un changement
+de bibliothèque. Corrigez-la en paramétrant la variable suivante&nbsp;:
+    </para>
+
+<screen><userinput remap="pre">export ac_cv_lib_gpgmepp_progress_callback=yes</userinput></screen>
+
+    <para>
       Préparez <application>LibreOffice</application> pour la compilation en
 lançant les commandes suivantes&nbsp;:
     </para>
 
+<!--
+    <para>
+
+      The instructions below will only build the package without running
+      any unit tests. If you prefer to run the unit tests, replace
+      <command>make build-nocheck</command> with <command>make build</command>
+      or (as a regular user only) just <command>make</command>, but do not be
+      surprised if a unit test fails right at the end of the build and
+      breaks it.
+    </para>
+-->
 <screen><userinput>sed -e "/gzip -f/d"   \
     -e "s|.1.gz|.1|g" \
     -i bin/distro-install-desktop-integration &amp;&amp;
@@ -460,7 +468,6 @@ sed -e "/distro-install-file-lists/d" -i Makefile.in &amp;&amp;
              --enable-release-build=yes  \
              --enable-python=system      \
              --with-jdk-home=/opt/jdk    \
-             --with-system-apr           \
              --with-system-boost         \
              --with-system-clucene       \
              --with-system-curl          \
@@ -476,7 +483,6 @@ sed -e "/distro-install-file-lists/d" -i Makefile.in &amp;&amp;
              --with-system-libatomic_ops \
              --with-system-libpng        \
              --with-system-libxml        \
-             --with-system-neon          \
              --with-system-nss           \
              --with-system-odbc          \
              --with-system-openldap      \
@@ -484,23 +490,15 @@ sed -e "/distro-install-file-lists/d" -i Makefile.in &amp;&amp;
              --with-system-poppler       \
              --with-system-postgresql    \
              --with-system-redland       \
-             --with-system-serf          \
+             --with-system-libtiff       \
+             --with-system-libwebp       \
              --with-system-zlib</userinput></screen>
-
-    <para>
-      Les instructions suivantes vont seulement construire le paquet sans lancer
-aucun test unitaire. Si vous préférez lancer les tests unitaires, remplacez
-<command>make build-nocheck</command> par <command>make build</command> ou
-(en tant qu'utilisateur normal seulement) simplement
-<command>make</command>, mais ne soyez pas surpris si un test unitaire
-échoue à la toute fin de la construction et la casse.
-    </para>
 
     <para>
       Construisez le paquet&nbsp;:
     </para>
 
-<screen><userinput>make build-nocheck</userinput></screen>
+<screen><userinput>make build</userinput></screen>
 
     <para>
       Maintenant, en tant qu'utilisateur <systemitem

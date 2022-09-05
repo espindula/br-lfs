@@ -514,28 +514,104 @@ home page&nbsp;» vous trouverez le site web du responsable.</para>
   <sect2 id="stripping">
     <title>Nettoyage une fois de plus</title>
 
-    <warning>
-      <para>Si vous n'avez pas nettoyé les programmes et les bibliothèques dans LFS, ce
-qui suit rendra probablement votre système inutilisable. Pour éviter cela,
-suivez plutôt les instructions de <ulink
-url="&lfs-root;/chapter08/strippingagain.html"/>. Après avoir nettoyé les
-fichiers critiques avec ces instructions, les instructions ci-dessous
-peuvent être lancées pour chaque installation de nouveau paquet.
-      </para>
-    </warning>
-
     <para>
-      Dans LFS, le nettoyage des symboles de débogage a été discuté de nombreuses
-fois.  Pour la construction des paquets BLFS, il n'y a généralement pas
-d'instructions qui discutent de nouveau du nettoyage. Ce n'est probablement
-pas une bonne idée de nettoyer un exécutable ou une bibliothèque tant qu'ils
-sont utilisés, alors sortir des environnements de fenêtrage est une bonne
-idée. Ensuite vous pouvez faire&nbsp;:
+      Dans LFS, le nettoyage des symboles de débogage et des entrées de la table
+des symboles inutiles a été abordé plusieurs fois.  Pour la construction des
+paquets BLFS, il n'y a généralement pas d'instructions qui abordent de
+nouveau le nettoyage. Le nettoyage peut avoir lieu après l'installation d'un
+paquet, ou plus tard.
     </para>
 
-<screen><userinput>find /usr/{bin,lib,sbin} \
-    -type f \( -name \*.so* -a ! -name \*dbg \) \
-    -exec strip --strip-unneeded {} \;</userinput></screen>
+    <bridgehead renderas="sect3" id="stripping-install">Nettoyage à l'installation d'un paquet</bridgehead>
+
+    <para>
+      Il y a plusieurs manières de nettoyer les exécutables installés par un
+paquet. Elles dépendent du système de construction utilisé (voir plus bas
+<link linkend="buildsystems">la section sur les systèmes de
+construction</link>), c'est pourquoi nous ne listons que quelques
+généralités ici&nbsp;:
+    </para>
+
+    <note>
+      <para>
+        Les méthodes suivantes qui utilisent la fonctionnalité d'un système de
+construction (autotools, meson ou cmake) ne nettoieront pas les
+bibliothèques statiques si elles sont installées. Heureusement il n'y a pas
+tant de bibliothèques statiques dans BLFS et une bibliothèque statique peut
+toujours être nettoyée sans problème en exécutant <command>strip
+--strip-unneeded</command> dessus manuellement.
+      </para>
+    </note>
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          Les paquets qui utilisent les autotools ont habituellement une cible
+<parameter>install-strip</parameter> dans leur fichier
+<filename>Makefile</filename> généré. Donc installer des exécutables
+nettoyer est aussi simple qu'utiliser <command>make install-strip</command>
+au lieu de <command>make install</command>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Les paquets qui utilisent le système de construction meson acceptent
+<parameter>-Dstrip=true</parameter> au lancement de
+<command>meson</command>. Si vous avez oublié d'ajouter cette option en
+lançant <command>meson</command>, vous pouvez aussi lancer <command>meson
+install --strip</command> au lieu de <command>ninja install</command>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>cmake</command> génère des cibles
+<parameter>install/strip</parameter> aussi bien pour le générateur de
+<parameter>Makefiles Unix</parameter> que pour le générateur
+<parameter>Ninja</parameter> (par défaut c'est le générateur de
+<parameter>Makefiles Unix</parameter> qui sera utilisé sur linux). Lancez
+simplement <command>make install/strip</command> ou <command>ninja
+install/strip</command> au lieu de l'équivalent avec
+<command>install</command>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Supprimer (ou éviter de générer) les symboles de débogage peut aussi se
+faire en supprimant les options <parameter>-g&lt;quelque
+chose&gt;</parameter> dans les appels au compilateur C/C++. La manière de
+procéder est spécifique à chaque paquet. En plus, cela ne supprime pas les
+entrées inutiles de la table des symboles. Nous ne l'expliquons donc pas
+ici. Voir plus bas les paragraphes sur l'optimisation.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <bridgehead renderas="sect3" id="stripping-installed">Nettoyer les exécutables installés</bridgehead>
+
+    <para>
+      L'utilitaire <command>strip</command> modifie les fichiers en place, ce qui
+peut casser tout ce qui l'utilise s'il est chargé en mémoire. Remarquez que
+si un fichier est utilisé mais simplement supprimé du disque (c.-à-d. pas
+écrasé ou modifié), ce n'est pas un problème car le noyau peut utiliser des
+fichiers <quote>supprimés</quote>. Regardez
+<filename>/proc/*/maps</filename>, et il est probable que vous verrez des
+entrées <emphasis>(deleted)</emphasis>. La commande <command>mv</command>
+supprime seulement le fichier de destination du répertoire mais ne change
+pas son contenu, donc elle satisfait aux conditions pour que le noyau
+utilise l'ancien fichier supprimé. Le script ci-dessous est juste un
+exemple. Vous pouvez ajouter des détections d'erreur plus poussées, d'autres
+répertoires à scanner, etc. Il devrait être lancé en &root;&nbsp;:
+    </para>
+
+<screen role="root"><userinput>{ find /usr/lib -type f \( -name \*.a -o \
+    \( -name \*.so* ! -name \*dbg \) \)
+ find /usr/{bin,sbin,libexec} -type f; } | while read file; do
+      if readelf -h $file >/dev/null 2>&amp;1; then
+        cp -a $file ${file}.tmp            &amp;&amp;
+        strip --strip-unneeded ${file}.tmp &amp;&amp;
+        mv ${file}.tmp $file
+      fi
+    done</userinput></screen>
 
     <para>
       Si vous installez des programmes dans d'autres répertoires tels que
@@ -550,6 +626,7 @@ url="http://www.technovelty.org/linux/stripping-shared-libraries.html"/>.
     </para>
 
   </sect2>
+
 
   <!--
   <sect2 id="libtool">

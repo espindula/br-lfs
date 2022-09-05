@@ -61,7 +61,7 @@ clé USB)&nbsp;:
 
 <screen role="nodump"><userinput>fdisk /dev/sdx</userinput>
 <literal>
-Welcome to fdisk (util-linux 2.37.4).
+Welcome to fdisk (util-linux 2.38.1).
 Changes will remain in memory only, until you decide to write them.
 Be careful before using the write command.
 
@@ -89,7 +89,7 @@ mount -v -t vfat /dev/sdx1 /mnt/rescue</userinput></screen>
       Installez GRUB pour EFI sur la partition&nbsp;:
     </para>
 
-<screen role="nodump"><userinput>grub-install --removable --efi-directory=/mnt/rescue --boot-directory=/mnt/rescue/grub</userinput></screen>
+<screen role="nodump"><userinput>grub-install --target=x86_64-efi --removable --efi-directory=/mnt/rescue --boot-directory=/mnt/rescue</userinput></screen>
 
     <para>
       Démontez la partition&nbsp;:
@@ -239,6 +239,106 @@ qu'elle soient montée automatiquement au démarrage du système&nbsp;:
   </sect2>
 
   <sect2>
+    <title>Configuration de démarrage minimale avec GRUB et EFI</title>
+
+    <para>
+      Sur les systèmes basés sur UEFI, GRUB fonctionne en installant une
+application EFI (un type d'exécutable spécial) dans l'ESP. Le micrologiciel
+EFI recherchera les chargeurs d'amorçage dans les applications EFI à partir
+des entrées de démarrage enregistrées dans les variables EFI, en plus d'un
+chemin codé en dur, <filename>EFI/BOOT/BOOTX64.EFI</filename>. Normalement,
+un chargeur d'amorçage devrait être installé dans un chemin personnalisé et
+le chemin devrait être enregistré dans les variables EFI. L'utilisation du
+chemin codé en dur est à éviter le plus possible. Cependant, dans certains
+cas nous devons utiliser le chemin codé en dur&nbsp;:
+    </para>
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          Le système n'est pas encore démarré avec EFI, ce qui rend les variables EFI
+inaccessibles.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Le micrologiciel EFI est en 64&nbsp;bits mais le système LFS en
+32&nbsp;bits, ce qui rend les variables EFI inaccessibles car le noyau ne
+peut pas invoquer les services EFI à l'exécution avec une longueur
+d'adressage virtuel différente.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          LFS est construit pour une Live USB, donc nous ne pouvons pas nous reposer
+sur les variables EFI qui sont stockées en NVRAM ou EEPROM sur la machine
+locale.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Vous ne pouvez pas ou ne voulez pas installer
+<application>efibootmgr</application> pour manipuler les entrées de
+démarrage dans les variables EFI.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      Dans tous ces cas, suivez cette section pour installer l'application EFI
+GRUB dans le chemin codé en dur et créez une configuration de démarrage
+minimale. Sinon, il vaut mieux passer cette section et lire les sections
+restantes pour paramétrer la configuration de démarrage normalement.
+    </para>
+
+    <para>
+      Pour installer GRUB avec une application EFI installée dans le chemin codé
+en dur <filename>EFI/BOOT/BOOTX64.EFI</filename>, assurez-vous d'abord que
+la partition de démarrage est montée dans <filename
+class="directory">/boot</filename> et l'ESP est monté dans <filename
+class="directory">/boot/efi</filename>. Puis en tant qu'utilisateur &root;,
+lancez la commande&nbsp;:
+    </para>
+
+    <note>
+      <para>
+        La commande remplacera
+<filename>/boot/efi/EFI/BOOT/BOOTX64.EFI</filename>. Elle peut casser un
+chargeur d'amorçage déjà installé. Sauvegardez-le si vous n'êtes pas sur·e.
+      </para>
+    </note>
+
+    <screen role="nodump"><userinput>grub-install --target=x86_64-efi --removable</userinput></screen>
+
+    <para>
+      La commande installerait l'application EFI GRUB dans le chemin codé en dur
+<filename>/boot/efi/EFI/BOOT/BOOTX64.EFI</filename>, pour que le
+micrologiciel EFI puisse le trouver et le charger. Les fichiers GRUB
+restants sont installés dans le répertoire <filename
+class="directory">/boot/grub</filename> et sera chargé par
+<filename>BOOTX64.EFI</filename> au démarrage du système.
+    </para>
+
+    <note>
+      <para>
+        Le micrologiciel EFI préfère les applications EFI avec le chemin enregistré
+dans les entrées de démarrage stockées dans les variables EFI à
+l'application EFI dans le chemin codé en dur. Vous devrez alors peut-être
+invoquer le menu de sélection de démarrage ou l'interface de configuration
+du micrologiciel pour choisir le GRUB nouvellement installé au prochain
+démarrage. Consultez le manuel de votre carte mère ou de votre ordinateur
+portable pour trouver comment.
+      </para>
+    </note>
+
+    <para>
+      Si vous suivez cette section et paramétrez une configuration de démarrage
+minimale, sautez maintenant à <quote>Créer le fichier de configuration
+GRUB</quote>.
+    </para>
+  </sect2>
+
+  <sect2>
     <title>Monter le système de fichiers des variables EFI</title>
 
     <para>
@@ -276,7 +376,8 @@ démarrage du système&nbsp;:
         Si le système n'est pas démarré avec UEFI, le répertoire <filename
 class="directory">/sys/firmware/efi</filename> n'existera pas. Dans ce cas
 vous devriez démarrer le système en mode UEFI avec le disque de démarrage
-d'urgence créé plus haut.
+d'urgence créé plus haut, puis monter <systemitem
+class="filesystem">efivarfs</systemitem> et continuer.
       </para>
     </warning>
   </sect2>
@@ -297,12 +398,12 @@ le charger.
     </para>
 
     <para>
-      <filename>grubx64.efi</filename> est très léger (136 Ko pour GRUB-2.06~rc1)
-donc il n'utilisera pas de place dans l'ESP. Une taille typique d'ESP est
-100 Mo (pour le chargeur d'amorçage de Windows, qui prend environ 50 Mo dans
-l'ESP). Une fois <filename>grubx64.efi</filename> chargé par le
-micrologiciel, il chargera les modules GRUB dans la partition de
-démarrage. L'emplacement par défaut est <filename
+      <filename>grubx64.efi</filename> est très léger (136&nbsp;Ko pour GRUB-2.06)
+donc il n'utilisera pas beaucoup de place dans l'ESP. Une taille typique
+d'ESP est 100&nbsp;Mo (pour le chargeur d'amorçage de Windows, qui prend
+environ 50&nbsp;Mo dans l'ESP). Une fois <filename>grubx64.efi</filename>
+chargé par le micrologiciel, il chargera les modules GRUB dans la partition
+de démarrage. L'emplacement par défaut est <filename
 class="directory">/boot/grub</filename>.
     </para>
 
@@ -374,8 +475,8 @@ if loadfont /boot/grub/fonts/unicode.pf2; then
   terminal_output gfxterm
 fi
 
-menuentry "GNU/Linux, Linux 5.18.8-lfs-r11.1-147"  {
-  linux   /boot/vmlinuz-5.18.8-lfs-r11.1-147 root=/dev/sda2 ro
+menuentry "GNU/Linux, Linux 5.19.2-lfs-11.2"  {
+  linux   /boot/vmlinuz-5.19.2-lfs-11.2 root=/dev/sda2 ro
 }
 
 menuentry "Firmware Setup" {
@@ -385,8 +486,7 @@ menuentry "Firmware Setup" {
 
     <para>
       Vous devez remplacer <literal>(hd0,2)</literal>, <literal>sda2</literal> et
-<literal>5.18.8-lfs-r11.1-147</literal> pour correspondre à votre
-configuration.
+<literal>5.19.2-lfs-r11.2</literal> pour correspondre à votre configuration.
     </para>
 
     <note>
@@ -417,7 +517,7 @@ nommée <quote>configuration BIOS</quote>).
 <screen role="nodump"><userinput>cat &gt;&gt; /boot/grub/grub.cfg &lt;&lt; EOF</userinput>
 <literal># Begin Windows addition
 
-menuentry "Windows 10" {
+menuentry "Windows 11" {
   insmod fat
   insmod chain
   set root=(hd0,1)

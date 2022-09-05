@@ -6,10 +6,10 @@
 
   <!ENTITY thunderbird-download-http "&mozilla-http;/thunderbird/releases/&thunderbird-version;/source/thunderbird-&thunderbird-version;.source.tar.xz">
   <!ENTITY thunderbird-download-ftp  "">
-  <!ENTITY thunderbird-md5sum        "d74f2d068e97491aa498e7c8ed2f8877">
-  <!ENTITY thunderbird-size          "481&nbsp;Mo">
+  <!ENTITY thunderbird-md5sum        "9cbd22da350b2d097d9de0ee9f55a81e">
+  <!ENTITY thunderbird-size          "477&nbsp;Mo">
   <!ENTITY thunderbird-buildsize     "7,4&nbsp;Go (204&nbsp;Mo installés)">
-  <!ENTITY thunderbird-time          "22&nbsp;SBU (sur une machine à 4 cœurs)">
+  <!ENTITY thunderbird-time          "21&nbsp;SBU (sur une machine à 4 cœurs)">
   <!-- Removed the -j1 time because python and rust do not obey it, although
        the C/C++ code appears to obey it -->
 ]>
@@ -35,7 +35,7 @@ basé sur le code source de <application>Mozilla</application>. Il utilise le
 moteur de rendement Gecko afin d'afficher et d'écrire des courriels HTML
     </para>
 
-    &lfs111_checked;
+    &lfs112_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -87,10 +87,7 @@ Additional Downloads</bridgehead>
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required">
-
-      <!--      <xref linkend="alsa-lib"/>
-, no mention in log -->
-<!-- Searched for and used a few times -->
+      <!-- Searched for and used a few times -->
 <xref linkend="autoconf213"/>, <xref linkend="cbindgen"/>, <xref
 linkend="dbus-glib"/>, à la fois <xref linkend="gtk3"/> et <xref
 linkend="gtk2"/>, <xref linkend="llvm"/> avec clang, <xref
@@ -118,18 +115,7 @@ sécurité.
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      
-      <!-- <xref linkend="curl"/>
-, not in build log-->
-<!--<xref linkend="gst10-plugins-base"/>
- (with
-      <xref linkend="gst10-plugins-good"/> and
-      <xref linkend="gst10-libav"/> at runtime),-->
-<!-- <xref linkend="openjdk"/>
-, not in build log -->
-<!--<xref linkend="pulseaudio"/>
-,-->
-<xref linkend="cyrus-sasl"/>, <xref linkend="doxygen"/>, <xref
+      <xref linkend="cyrus-sasl"/>, <xref linkend="doxygen"/>, <xref
 linkend="GConf"/>, <xref linkend="wget"/>, <xref linkend="wireless_tools"/>
 et <ulink url="https://facebook.github.io/watchman/">watchman</ulink>
     </para>
@@ -160,12 +146,6 @@ disponibles (et une brève description de chacune), lancez
 commande suivante&nbsp;:
     </para>
 
-<!--<para>
-
-      Apply a patch which allows compilation on systems with gcc-12:
-    </para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../thunderbird-&thunderbird-version;-gcc12_fix-1.patch</userinput></screen>-->
 <screen><!-- always built in versions 78+. The option is a noop
 # If you want to compile the Mozilla Calendar, uncomment this line:
 #ac_add_options - -enable-calendar
@@ -224,31 +204,28 @@ ac_add_options --with-system-zlib
 ac_add_options --without-wasm-sandboxed-libraries</literal>
 EOF</userinput></screen>
 
-
-
-
     <para>
-      A change in cbindgen-0.24.2 causes a symbol to now be output by cbindgen,
-but it has already been defined in a header. This sed prevents the build
-eventually failing:
+      Un changement dans cbindgen-0.24.2 fait qu'un symbole est maintenant renvoyé
+par cbindgen, mais il est déjà défini dans un en-tête. Ce sed évite que la
+construction ne finisse par échouer&nbsp;:
     </para>
 
-<!-- applying this for 11.1: upstream haven't make their mind yet
+<!-- Not needed with clang
      https://bugzilla.mozilla.org/show_bug.cgi?id=1729459 
-     Still not fixed in 102.0. -->
-<screen><userinput>sed -i '/ROOT_CLIP_CHAIN/d' gfx/webrender_bindings/webrender_ffi.h</userinput></screen>
-
-
     <para>
-      Si vous construisez sur une machine 32&nbsp;bits, le sed suivant contourne
-un problème avec un type <quote>double</quote> incompatible dans un fichier
-d'en-tête&nbsp;:
+
+      If building on a 32 bit machine, the following sed works around
+      an issue with an incompatible <quote>double</quote> type in one
+      header file:
     </para>
 
 <screen><userinput>case "$(uname -m)" in
     i?86) sed -e '/typedef[ ]*double/s/double/long double/' \
               -i modules/fdlibm/src/math_private.h ;;
 esac</userinput></screen>
+-->
+<screen><userinput>sed -i '/ROOT_CLIP_CHAIN/d' gfx/webrender_bindings/webrender_ffi.h</userinput></screen>
+
 
     <para>
       Maintenant invoquez le script Python <command>mach</command> pour compiler
@@ -294,24 +271,15 @@ class="username">root</systemitem>&nbsp;:
   <sect2 role="commands">
     <title>Explication des commandes</title>
 
-
-    <!-- might be necessary, we need to verify this.
     <para>
-
-      <command>test $(uname -m) = "i686" &amp;&amp; sed ...</command>: On this
-      version of thunderbird, an old bug has reappeared in 32-bit builds.  With
-      optimization, the install fails with a Python error.  This command will
-      fix i686 builds and preserve the optimization on x86_64.
-    </para>-->
-<para>
-      <command>MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system</command>: Use the
-system python to create a virtual environment for <command>mach</command>
-without downloading any python wheels.
+      <command>MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system</command>&nbsp;:
+utilise le python du système pour créer un environnement virtuel pour
+<command>mach</command> sans télécharger de wheel python.
     </para>
 
     <para>
-      <command>./mach configure</command>: This validates the supplied
-dependencies and the <filename>mozconfig</filename>.
+      <command>./mach configure</command>&nbsp;: cela valide les dépendances
+fournies et le <filename>mozconfig</filename>.
     </para>
 
     <para>
@@ -321,18 +289,20 @@ C++ utilisés.
     </para>
 
     <para>
-      <option>./mach build -jN</option>: The build should, by default, use all the
-online CPU cores. If using all the cores causes the build to swap because
-you have insufficient memory, using fewer cores can be faster.
+      <option>./mach build -jN</option>&nbsp;: la construction devrait, par
+défaut, utiliser tous les cœurs de CPU en ligne. Si utiliser tous les cœurs
+fait utiliser l'espace d'échange à la construction parce que vous n'avez pas
+asse de mémoire, utiliser moins de cœurs peut être plus rapide.
     </para>
 
     <para>
-      <parameter><envar>CC=gcc CXX=g++</envar></parameter>: BLFS used to prefer to
-use gcc and g++ instead of upstream's defaults of the
-<application>clang</application> programs. With the release of gcc-12 the
-build takes longer with gcc and g++, primarily because of extra warnings,
-and is bigger. Set these environment variables <emphasis>before you run the
-configure script</emphasis> if you wish to continue to use gcc, g++.
+      <option><envar>CC=gcc CXX=g++</envar></option>&nbsp;: BLFS préférait
+utiliser gcc et g++ au lieu des programmes <application>clang</application>
+par défaut en amont. Avec la publication de gcc-12 la construction est plus
+longue avec gcc et g++, surtout à cause d'avertissements supplémentaires, et
+est plus grosse. Paramétrez ces variables d'environnement <emphasis>avant de
+lancer le script configure</emphasis> si vous voulez continuer à utiliser
+gcc et g++. La construction avec GCC sur i?86 est actuellement cassée.
     </para>
 
   </sect2>
@@ -436,7 +406,8 @@ ln -sfv /usr/lib/thunderbird/chrome/icons/default/default256.png \
           thunderbird
         </seg>
         <seg>
-          Numerous libraries and modules in the /usr/lib/thunderbird directory
+          De nombreuses bibliothèques et modules dans le répertoire
+/usr/lib/thunderbird
         </seg>
         <seg>
           /usr/lib/thunderbird
