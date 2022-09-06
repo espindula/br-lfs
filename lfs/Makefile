@@ -37,7 +37,7 @@ RENDERTMP=~/tmp
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 11.2
+MILESTONE := 11.3
 
 # Select the current version we are tracking from master
 REVISION := $(shell (cd $(ORIGDIR); git rev-parse HEAD))
