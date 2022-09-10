@@ -4,7 +4,7 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY iptables-download-http "http://www.netfilter.org/projects/iptables/files/iptables-&iptables-version;.tar.bz2">
+  <!ENTITY iptables-download-http "https://www.netfilter.org/projects/iptables/files/iptables-&iptables-version;.tar.bz2">
   <!ENTITY iptables-download-ftp  "ftp://ftp.netfilter.org/pub/iptables/iptables-&iptables-version;.tar.bz2">
   <!ENTITY iptables-md5sum        "93da73116b7934a8da940b95a5f3e590">
   <!ENTITY iptables-size          "732&nbsp;Ko">
@@ -234,11 +234,11 @@ vos données privées.
       </para>
 
       <para>
-        Voici une version légèrement modifiée de la recommandation de Rusty Russell
-sur <ulink
-url="http://www.netfilter.org/documentation/HOWTO/packet-filtering-HOWTO.html">le
-guide de Packet Filter de Linux 2.4</ulink>. Elle est toujours d'actualité
-pour les noyaux 5.x.
+        Below is a slightly modified version of Rusty Russell's recommendation from
+the <ulink
+url="https://www.netfilter.org/documentation/HOWTO/packet-filtering-HOWTO.html">
+Linux 2.4 Packet Filtering HOWTO</ulink>. It is still applicable to the
+Linux 5.x kernels.
       </para>
 
 <screen role="root" revision="sysv"><?dbfo keep-together="auto"?><userinput>cat &gt; /etc/rc.d/rc.iptables &lt;&lt; "EOF"
@@ -528,22 +528,22 @@ chmod 700 /etc/rc.d/rc.iptables</userinput></screen>
 cat &gt; /etc/systemd/scripts/iptables &lt;&lt; "EOF"
 <literal>#!/bin/sh
 
-# Début de /etc/systemd/scripts/iptables
+# Begin /etc/systemd/scripts/iptables
 
 echo
-echo "Vous utilisez la configuration d'exemple de mise en place d'un pare-feu"
-echo "de Beyond Linux From Scratch."
-echo "Cet exemple est loin d'être complet, il n'est conçu que"
-echo "pour référence."
-echo "La sécurité des pare-feux est un problème complexe qui dépasse la portée"
-echo "des règles de configuration ci-dessous."
+echo "You're using the example configuration for a setup of a firewall"
+echo "from Beyond Linux From Scratch."
+echo "This example is far from being complete, it is only meant"
+echo "to be a reference."
+echo "Firewall security is a complex issue, that exceeds the scope"
+echo "of the configuration rules below."
 
-echo "Vous trouverez des compléments d'information"
-echo "sur les pare-feux au chapitre 4 du livre BLFS."
+echo "You can find additional information"
+echo "about firewalls in Chapter 4 of the BLFS book."
 echo "https://www.&lfs-domainname;/blfs"
 echo
 
-# Insertion des modules iptables (inutile si vous les avez construits en dur dans le noyau).
+# Insert iptables modules (not needed if built into the kernel).
 
 modprobe nf_conntrack
 modprobe nf_conntrack_ftp
@@ -551,87 +551,87 @@ modprobe xt_conntrack
 modprobe xt_LOG
 modprobe xt_state
 
-# Activation de la protection contre echo en broadcast
+# Enable broadcast echo Protection
 echo 1 &gt; /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
 
-# Désactivation des paquets routés à la source
+# Disable Source Routed Packets
 echo 0 &gt; /proc/sys/net/ipv4/conf/all/accept_source_route
 
-# Activation de la protection du cookie TCP SYN
+# Enable TCP SYN Cookie Protection
 echo 1 &gt; /proc/sys/net/ipv4/tcp_syncookies
 
-# Désactivation de l'acceptation des redirections ICMP
+# Disable ICMP Redirect Acceptance
 echo 0 &gt; /proc/sys/net/ipv4/conf/all/accept_redirects
 
-# Ne pas envoyer de messages de redirection
+# Don't send Redirect Messages
 echo 0 &gt; /proc/sys/net/ipv4/conf/default/send_redirects
 
-# Abandon des paquets spoofés qui arrivent sur une interface si une réponse
-# demanderait d'envoyer la réponse sur une autre interface.
+# Drop Spoofed Packets coming in on an interface where responses
+# would result in the reply going out a different interface.
 echo 1 &gt; /proc/sys/net/ipv4/conf/default/rp_filter
 
-# Enregistrement des paquets avec des adresses impossibles.
+# Log packets with impossible addresses.
 echo 1 &gt; /proc/sys/net/ipv4/conf/all/log_martians
 
-# être verbeux pour les adresses dynamiques (inutile pour les adresses IP statiques)
+# Be verbose on dynamic ip-addresses  (not needed in case of static IP)
 echo 2 &gt; /proc/sys/net/ipv4/ip_dynaddr
 
-# désactivation de la notification de congestion explicite
-# trop de routeurs les ignorent encore
+# Disable Explicit Congestion Notification
+# Too many routers are still ignorant
 echo 0 &gt; /proc/sys/net/ipv4/tcp_ecn
 
-# Appliquer un état connu
+# Set a known state
 iptables -P INPUT   DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT  DROP
 
-# Ces lignes se trouvent ici au cas où les règles seraient déjà mises en place et que le
-# script est relancé à la volée. Nous voulons supprimer toutes les règles et
-# les chaînes personnalisées préexistantes avant d'implanter de nouvelles règles.
+# These lines are here in case rules are already in place and the
+# script is ever rerun on the fly. We want to remove all rules and
+# pre-existing user defined chains before we implement new rules.
 iptables -F
 iptables -X
 iptables -Z
 
 iptables -t nat -F
 
-# Permettre les connections locales
+# Allow local connections
 iptables -A INPUT  -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
 
-# Permettre le transfert s'il est initié par l'intranet
+# Allow forwarding if the initiated on the intranet
 iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A FORWARD ! -i WAN1 -m conntrack --ctstate NEW       -j ACCEPT
 
-# Effectuer le masquage
-# (pas requis si l'intranet n'utilise pas des adresses IP privéesf intranet is not using private ip-addresses)
+# Do masquerading
+# (not needed if intranet is not using private ip-addresses)
 iptables -t nat -A POSTROUTING -o WAN1 -j MASQUERADE
 
-# Tout enregistrer pour le débogage
-# (dernière de toutes les règles, mais avant les règles de politique)
+# Log everything for debugging
+# (last of all rules, but before policy rules)
 iptables -A INPUT   -j LOG --log-prefix "FIREWALL:INPUT "
 iptables -A FORWARD -j LOG --log-prefix "FIREWALL:FORWARD "
 iptables -A OUTPUT  -j LOG --log-prefix "FIREWALL:OUTPUT "
 
-# Activer le transfert IP
+# Enable IP Forwarding
 echo 1 &gt; /proc/sys/net/ipv4/ip_forward
 
-# Les sections suivantes permettent les paquets entrants pour des exemples spécifiques
-# Décommentez les lignes d'exemple et ajustez-les au besoin
+# The following sections allow inbound packets for specific examples
+# Uncomment the example lines and adjust as necessary
 
-# Permet le ping sur l'interface externe
+# Allow ping on the external interface
 #iptables -A INPUT  -p icmp -m icmp --icmp-type echo-request -j ACCEPT
 #iptables -A OUTPUT -p icmp -m icmp --icmp-type echo-reply   -j ACCEPT
 
-# Rejette les paquets ident avec un TCP reset pour éviter les délais avec FTP ou IRC
+# Reject ident packets with TCP reset to avoid delays with FTP or IRC
 #iptables -A INPUT  -p tcp --dport 113 -j REJECT --reject-with tcp-reset
 
-# Permet HTTP et HTTPS vers 192.168.0.2
+# Allow HTTP and HTTPS to 192.168.0.2
 #iptables -A PREROUTING -t nat -i WAN1 -p tcp --dport 80 -j DNAT --to 192.168.0.2
 #iptables -A PREROUTING -t nat -i WAN1 -p tcp --dport 443 -j DNAT --to 192.168.0.2
 #iptables -A FORWARD -p tcp -d 192.168.0.2 --dport 80 -j ACCEPT
 #iptables -A FORWARD -p tcp -d 192.168.0.2 --dport 443 -j ACCEPT
 
-# Fin de /etc/systemd/scripts/iptables</literal>
+# End /etc/systemd/scripts/iptables</literal>
 EOF
 chmod 700 /etc/systemd/scripts/iptables</userinput></screen>
 
