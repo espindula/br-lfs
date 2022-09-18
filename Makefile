@@ -136,7 +136,7 @@ validate: tmpdir version
 	$(Q)xmllint --nonet                      \
                --noent                      \
                --postvalid                  \
-	            -o $(RENDERTMP)/lfs-full.xml \
+               -o $(RENDERTMP)/lfs-full.xml \
                $(RENDERTMP)/lfs-html2.xml
 
 	$(Q)rm -f appendices/*.script
@@ -147,9 +147,9 @@ profile-html:
 	@echo "Generating profiled XML for XHTML..."
 	$(Q)xsltproc --nonet                              \
                 --stringparam profile.condition html \
-	             --output $(RENDERTMP)/lfs-html.xml   \
+                --output $(RENDERTMP)/lfs-html.xml   \
                 stylesheets/lfs-xsl/profile.xsl      \
-	             $(RENDERTMP)/lfs-full.xml
+                $(RENDERTMP)/lfs-full.xml
 
 wget-list: $(BASEDIR)/wget-list $(BASEDIR)/wget-list-$(REV)
 $(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml \
@@ -158,7 +158,7 @@ $(BASEDIR)/wget-list: stylesheets/wget-list.xsl chapter03/chapter03.xml \
 	$(Q)mkdir -p $(BASEDIR)
 	$(Q)xsltproc --xinclude --nonet            \
                 --output $(BASEDIR)/wget-list \
-	             stylesheets/wget-list.xsl     \
+                stylesheets/wget-list.xsl     \
                 chapter03/chapter03.xml
 
 $(BASEDIR)/wget-list-$(REV): stylesheets/wget-list.xsl \
