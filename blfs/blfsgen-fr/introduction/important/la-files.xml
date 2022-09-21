@@ -24,39 +24,46 @@
 
     <para>
 
-      Dans LFS, nous avons installé un paquet, libtool, qui est utilisé par de
-nombreux paquets pour pouvoir se construire sur différentes plateformes
-Unix. Cela comprend des plateformes comme AIX, Solaris, IRIX, HP-UX et
-Cygwin, ainsi que Linux. Les origines de cet outil sont assez anciennes. Son
-objectif premier était de gérer les bibliothèques sur des systèmes aux
-capacités moins avancées qu'un système Linux moderne.
+      In LFS and BLFS, many packages use a internally shipped libtool copy to
+build on a variety of Unix platforms.  This includes platforms such as AIX,
+Solaris, IRIX, HP-UX, and Cygwin as well as Linux.  The origins of this tool
+are quite dated.  It was intended to manage libraries on systems with less
+advanced capabilities than a modern Linux system.
 
     </para>
 
     <para>
 
-      Sur un système Linux, les fichiers spécifiques à libtool sont généralement
-inutiles. En temps normal, les bibliothèques sont spécifiées dans le
-processus de construction pendant l'édition des liens. Comme un système
-Linux utilise le  <ulink
-url="https://fr.wikipedia.org/wiki/Executable_and_Linkable_Format">format
-exécutable et liable (ELF)</ulink> pour les exécutables et les
-bibliothèques, les informations nécessaires à cette tâche sont incluses dans
-les fichiers. À l'exécution le chargeur de programme peut demander les
-fichiers requis, ainsi que charger et exécuter correctement le programme.
+      On a Linux system, libtool specific files are generally unneeded.  Normally
+libraries are specified in the build process during the link phase.  Since a
+linux system uses the <ulink
+url="https://en.wikipedia.org/wiki/Executable_and_Linkable_Format">
+Executable and Linkable Format (ELF)</ulink> for executables and dynamic
+libraries, information needed to complete the task is embedded in the
+files.  Both the linker and the program loader can query the appropriate
+files and properly link or execute the program.
 
     </para>
 
     <para>
+      Static libraries are rarely used in LFS and BLFS.  And, nowadays most
+packages store the information needed for linking against a static library
+into a .pc file, instead of relying on libtool.  A <command>pkg-config
+--static --libs</command> command will output the sufficient flags for the
+linker to link against a static library without any libtool magic.
+    </para>
 
-       Le problème est que libtool crée typiquement un ou plusieurs fichiers texte
-pour les paquets de bibliothèques appelés archives libtool. Ces petits
-fichiers ont l'extension «&nbsp;.la&nbsp;» et contiennent des informations
-identiques à celles incluses dans les bibliothèques. Lors de la construction
-d'un paquet qui utilise libtool, le processus cherche automatiquement ces
-fichiers. Si un paquet est mis à jour et n'utilise plus de fichier .la, le
-processus de construction peut échouer.
-
+    <para>
+      The problem is that libtool usually creates one or more text files for
+package libraries called libtool archives.  These small files have a ".la"
+extension and contain information that is similar to that embedded in the
+libraries or pkg-config files.  When building a package that uses libtool,
+the process automatically looks for these files.  Sometimes a .la file can
+contains the name or path of a static library used during build but not
+installed, then the build process will break because the .la file refers to
+something nonexistent on the system.  Similarly, if a package is updated and
+no longer uses the .la file, then the build process can break with the old
+.la files.
     </para>
 
     <para>
@@ -138,11 +145,11 @@ for d in $(echo $PKG_CONFIG_PATH | tr : ' ') $STD_PC_PATH; do
       fi
     done
   done
-done
+done</literal>
 
 EOF
 
-chmod +x /usr/sbin/remove-la-files.sh</literal></userinput></screen>
+chmod +x /usr/sbin/remove-la-files.sh</userinput></screen>
 
     <para condition="html" role="usernotes">
        Notes utilisateur&nbsp;: <ulink url="&blfs-wiki;/la-files"/>
