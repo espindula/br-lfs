@@ -300,7 +300,7 @@ if ( $package == "zstd"       ) $dirpath = "https://github.com/facebook/zstd/rel
      $max = find_max( $lines, "/FILE5/", "/^.*FILE(5_\d+)*$/" );
      return str_replace( "_", ".", $max );
   }
-print_r($lines);
+
   if ( $package == "libffi" )
      return find_max( $lines, "/v\d/", "/^.*v([\d\.]+)$/" );
 
