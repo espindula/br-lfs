@@ -6,19 +6,19 @@
 
   <!ENTITY rust-download-http "https://static.rust-lang.org/dist/rustc-&rust-version;-src.tar.xz">
   <!ENTITY rust-download-ftp  "">
-  <!ENTITY rust-md5sum        "7b8d77e094cf003ed9500c961b282343">
-  <!ENTITY rust-size          "130&nbsp;Mo">
+  <!ENTITY rust-md5sum        "e77ac3a786d013604061b17f99dd9b27">
+  <!ENTITY rust-size          "131&nbsp;Mo">
   <!-- Gentle Reminder: buildsize is how much the user requires for the real
        install, i.e. the source with its DESTDIR *plus* the DESTDIR.  You
        can 'mkdir /tmp/RUST ; cp -a install/* /tmp/RUST' and then run 'du -sch'
        to measure it, or du -sm to look at the size of the build tree before and
        after the tests. -->
 
-  <!ENTITY rust-buildsize     "8,8&nbsp;Go (472&nbsp;Mo installés), dont 266&nbsp;Mo de fichiers ~/.cargo
-pour l'utilisateur qui le construit. Plus 6,9&nbsp;Go si vous lancez les
-tests, dont 243&nbsp;Mo supplémentaires de fichiers ~/.cargo.">
-  <!ENTITY rust-time          "20&nbsp;SBU (en comptant le temps de téléchargement, plus 13&nbsp;SBU pour
-les tests, dans les deux cas avec 4 processeurs)">
+  <!ENTITY rust-buildsize     "10 GB (516 MB installed) including 266 MB of ~/.cargo files for the user
+building this. Add 6.2 GB including extra 243 MB of ~/.cargo files if
+running the tests">
+  <!ENTITY rust-time          "15 SBU (including download time; add 7 SBU for tests, both on a 4-core
+machine)">
 ]>
 
 <sect1 id="rust" xreflabel="rustc-&rust-version;">
@@ -35,33 +35,6 @@ les tests, dans les deux cas avec 4 processeurs)">
 
   <sect2 role="package">
     <title>Introduction à Rust</title>
-
-    <note>
-      <para>
-        Actuellement le compilateur Rust produit des instructions SSE2 pour les
-systèmes x86 32&nbsp;bits, ce qui casse le code généré sur les systèmes
-32&nbsp;bits sans processeur capable d'utiliser SSE2. Tous les modèles de
-processeur x86 vendus après 2004 devraient avoir SSE2. Exécutez
-<command>lscpu | grep sse2</command> pour tester. Si la sortie affiche
-quelque chose, votre CPU prend en charge SSE2 et c'est bon. Sinon vous
-devrez essayer de construire ce paquet <emphasis>sur un système compatible
-SSE2</emphasis> avec la correction suivante appliquée&nbsp;:
-      </para>
-
-      
-<screen role="nodump"><!-- computeroutput used deliberately to stop anyone from copying
-           blindly -->
-<computeroutput>sed 's@pentium4@pentiumpro@' -i \
-    compiler/rustc_target/src/spec/i686_unknown_linux_gnu.rs</computeroutput></screen>
-
-      <para>
-        Puis copiez le dossier <filename
-class="directory">/opt/rustc-&rust-version;</filename> qui en résulte vers
-le système sans SSE2. Mais ce changement est toujours en cours de revue en
-amont et n'est pas testé par les rédacteurs de BLFS.
-      </para>
-    </note>
-
     <para>
       Le langage de programmation <application>Rust</application> est conçu pour
 être un langage sûr, concurrent et pratique.
@@ -259,6 +232,32 @@ intégrée)
   <sect2 role="installation">
     <title>Installation de Rust</title>
 
+    <note>
+      <para>
+        Actuellement le compilateur Rust produit des instructions SSE2 pour les
+systèmes x86 32&nbsp;bits, ce qui casse le code généré sur les systèmes
+32&nbsp;bits sans processeur capable d'utiliser SSE2. Tous les modèles de
+processeur x86 vendus après 2004 devraient avoir SSE2. Exécutez
+<command>lscpu | grep sse2</command> pour tester. Si la sortie affiche
+quelque chose, votre CPU prend en charge SSE2 et c'est bon. Sinon vous
+devrez essayer de construire ce paquet <emphasis>sur un système compatible
+SSE2</emphasis> avec la correction suivante appliquée&nbsp;:
+      </para>
+
+      
+<screen role="nodump"><!-- computeroutput used deliberately to stop anyone from copying
+           blindly -->
+<computeroutput>sed 's@pentium4@pentiumpro@' -i \
+    compiler/rustc_target/src/spec/i686_unknown_linux_gnu.rs</computeroutput></screen>
+
+      <para>
+        And copy the resulting <filename
+class="directory">/opt/rustc-&rust-version;</filename> to the system without
+SSE2 capability. But this change is still under upstream review and not
+tested by BLFS editors.
+      </para>
+    </note>
+
     <para>
       Pour installer dans le répertoire <filename
 class="directory">/opt</filename>, supprimez le lien symbolique et créez un
@@ -371,10 +370,12 @@ construction, cela utilisera tous les CPU disponibles.
 gdb</command> is installed,  another failure
       (debuginfo/function-names.rs) can be expected.
       # seems ok with 11.2 ken -->
-Au minimum, 44 tests échoueront&nbsp;: les 43 tests de la suite
-<quote>assembly</quote> qui ne sont pas ignorés (plusieurs options de
-vérification font que les avertissements sont traités comme des erreurs) et
-run-make-fulldeps/long-linker-command-lines.
+At a minimum, 51 tests will fail: all 46 of the tests in the
+<quote>assembly</quote> suite which are not skipped (various lints cause the
+warnings in these tests to be treated as errors), and 5 other tests, 4 of
+which involve the <filename>rustdoc-ui/issue-98690.rs</filename> file, and
+another one,
+<filename>run-make-fulldeps/long-linker-command-lines</filename>.
 
     </para>
 
@@ -515,14 +516,13 @@ inclure libffi à moins d'utiliser cela. La raison n'est pas très claire.
     <para>
       <!-- might be unbroken in 1.36.0, if so remove broken from description
        of miri below. https://github.com/rust-lang/rust/issues/61830 -->
-<command>--exclude src/tools/miri</command>&nbsp;: Depuis longtemps, la
-recette de miri (un interpréteur pour la représentation intermédiaire de
-mi-niveau) n'arrive pas à se construire dans les versions publiées. Il est
-facultatif, mais les messages d'erreurs peuvent persuader les gens que la
-construction complète a échouée. Cependant, bien qu'il ne soit pas compilé
-pendant la compilation principale, avec rust-1.35.0 il est maintenant
-compilé pendant l'installation, mais il était cassé dans cette
-version. L'omettre devrait faire gagner un peu de temps.
+<command>--exclude src/tools/miri</command>: For a long time, the miri crate
+(an interpreter for the Midlevel Intermediate Representation)  has failed to
+build on releases. It is optional, but the failure messages can persuade
+people that the whole build failed.  However, although it is not built in
+the main compile, with rustc-1.35.0 it now got compiled during the install,
+but it was broken in that version.  Omitting it should save a little
+time. Even if this switch is not given, miri is not installed.
     </para>
 
     <para>
@@ -629,9 +629,9 @@ shell en tant qu'utilisateur normal&nbsp;:
 
       <seglistitem>
         <seg>
-          cargo-clippy, cargo-fmt, cargo-miri (facultatif), cargo, clippy-driver, miri
-(optional), rls, rust-demangler, rust-gdb, rust-gdbgui, rust-lldb, rustc,
-rustdoc et rustfmt
+          cargo-clippy, cargo-fmt, cargo-miri (optional), cargo, clippy-driver, miri
+(optional), rls, rust-analyzer, rust-demangler, rust-gdb, rust-gdbgui,
+rust-lldb, rustc, rustdoc, and rustfmt
         </seg>
         <seg>
           librustc-driver-&lt;16-byte-hash&gt;.so, libstd-&lt;16-byte-hash&gt;.so et
@@ -675,10 +675,8 @@ libtest-&lt;16-byte-hash&gt;.so
         <term><command>cargo-miri</command></term>
         <listitem>
           <para>
-            
-            <!-- FIXME reword to 'is used by' if Miri installed
-             AND works enough to report its \-\-help -->
-est utilisé par Miri pour interpréter des recettes binaires et des tests
+            is for use by Miri to interpret bin crates and tests. It is not installed by
+default.
           </para>
           <indexterm zone="rust cargo-miri">
             <primary sortas="b-cargo-miri">cargo-miri</primary>
@@ -714,8 +712,8 @@ est utilisé par Miri pour interpréter des recettes binaires et des tests
         <term><command>miri</command></term>
         <listitem>
           <para>
-            est un interpréteur pour la représentation intermédiaire de mi-niveau de
-Rust (MIR). Il est cassé dans cette version
+            is an interpreter for Rust's mid-level intermediate representation (MIR). It
+is not installed by default.
           </para>
           <indexterm zone="rust miri">
             <primary sortas="b-miri">miri</primary>
@@ -746,6 +744,19 @@ programmation Rust.
           </para>
           <indexterm zone="rust rust-analyzer">
             <primary sortas="b-rust-analyzer">rust-analyzer</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="rust-demangler">
+        <term><command>rust-demangler</command></term>
+        <listitem>
+          <para>
+            converts a list of Rust mangled symbols into a corresponding list of
+demangled symbols
+          </para>
+          <indexterm zone="rust rust-demangler">
+            <primary sortas="b-rust-demangler">rust-demangler</primary>
           </indexterm>
         </listitem>
       </varlistentry>
