@@ -65,7 +65,8 @@ regexps.append([re.compile('([0-9\\.]+) SBU \(using parallelism=([0-9]+)\)$'), '
 regexps.append([re.compile('([0-9\\.]+) SBU \(using parallelism=([0-9]+); with tests\)$'), '#1&nbsp;SBU (avec parallélisme = #2&nbsp;; avec les tests)'])
 regexps.append([re.compile('([0-9\\.]+) SBU \(additional ([0-9\\.]+) SBU for the tests\)$'), '#1&nbsp;SBU (#2&nbsp;SBU supplémentaires pour les tests)'])
 regexps.append([re.compile('([0-9\\.]+) SBU \(add ([0-9\\.]+) SBU for tests\)$'), '#1&nbsp;SBU (plus #2&nbsp;SBU pour les tests)'])
-regexps.append([re.compile('less than 0.1 SBU$'), 'moins de 0.1&nbsp;SBU'])
+regexps.append([re.compile('less than 0.1 SBU$'), 'moins de 0,1&nbsp;SBU'])
+regexps.append([re.compile('less than 0.1 SBU (with tests)'), 'moins de 0,1&nbsp;SBU (avec les tests)'])
 # termes à gauche des informations
 regexps.append([re.compile('Package Information$'), 'Informations sur le paquet'])
 regexps.append([re.compile('Download \(HTTP\): (.*)$'), 'Téléchargement (HTTP)&nbsp;: #1'])
