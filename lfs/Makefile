@@ -266,10 +266,14 @@ lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	    -e "s/Test suite depends on/La suite de tests dépend de/g"\
 	    -e "s/Must be installed before/Doit être installé avant/g"\
 	    -e "s/Optional dependencies/Dépendances facultatives/g"\
-	    -e "s|&lfs-root;blfs/|http://fr.linuxfromscratch.org/blfs|g"\
-	    -e "s|&lfs-root;faq/|http://fr.linuxfromscratch.org/faq|g"\
+	    -e "s|&lfs-root;blfs/|https://fr.linuxfromscratch.org/blfs|g"\
+	    -e "s|&lfs-root;faq/|https://fr.linuxfromscratch.org/faq|g"\
 	    -e "s|&blfs-root;view/|\&blfs-root;/../view/blfs-|g"\
-	    -e "s|&lfs-root;hints/downloads/files/|http://fr.linuxfromscratch.org/view/astuces/|g"\
+	    -e "s|&lfs-root;hints/downloads/files/|https://fr.linuxfromscratch.org/view/astuces/|g"\
+	    -e "s|short-version   \"%relnum;-systemd\"|short-version   \"%relnum;-systemd-fr\"|g"\
+	    -e "s|short-version   \"%relnum;\"|short-version   \"%relnum;-fr\"|g"\
+	    -e "s|generic-version \"%relnum;-systemd\"|generic-version \"%relnum;-systemd-fr\"|g"\
+	    -e "s|generic-version \"%relnum;\"|generic-version \"%relnum;-fr\"|g"\
 	    $< > $@
 
 lfsgen-fr/packages.ent: $(ORIGDIR)/packages.ent
