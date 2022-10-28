@@ -40,8 +40,8 @@
     <note>
       <para>
         The LFS book is not (and does not contain) a general tutorial to
-        build a cross (or native) toolchain. Don't use the commands in the
-        book for a cross toolchain for some purpose other
+        build a cross- (or native) toolchain. Don't use the commands in the
+        book for a cross-toolchain for some purpose other
         than building LFS, unless you really understand what you are doing.
       </para>
     </note>
@@ -74,7 +74,7 @@
     </variablelist>
 
     <para>As an example, let us imagine the following scenario (sometimes
-    referred to as <quote>Canadian Cross</quote>): we have a
+    referred to as <quote>Canadian Cross</quote>). We have a
     compiler on a slow machine only, let's call it machine A, and the compiler
     ccA. We also have a fast machine (B), but no compiler for (B), and we
     want to produce code for a third, slow machine (C). We will build a
@@ -145,32 +145,36 @@
     <title>Implementation of Cross-Compilation for LFS</title>
 
     <note>
-      <para>All packages involved with cross compilation in the book use an
+      <para>All the packages involved with cross-compilation use an
       autoconf-based building system.  The autoconf-based building system
       accepts system types in the form cpu-vendor-kernel-os,
-      referred to as the system triplet.  Since the vendor field is mostly
-      irrelevant, autoconf allows to omit it. An astute reader may wonder
+      referred to as the system triplet.  Since the vendor field is often
+      irrelevant, autoconf lets you omit it.</para>
+      
+      <para>An astute reader may wonder
       why a <quote>triplet</quote> refers to a four component name. The
-      reason is the kernel field and the os field originated from one
+      kernel field and the os field began as a single
       <quote>system</quote> field.  Such a three-field form is still valid
-      today for some systems, for example
-      <literal>x86_64-unknown-freebsd</literal>.  But for other systems,
-      two systems can share the same kernel but still be too different to
-      use a same triplet for them.  For example, an Android running on a
+      today for some systems, for example,
+      <literal>x86_64-unknown-freebsd</literal>.  But
+      two systems can share the same kernel and still be too different to
+      use the same triplet to describe them.  For example, Android running on a
       mobile phone is completely different from Ubuntu running on an ARM64
-      server, despite they are running on the same type of CPU (ARM64) and
-      using the same kernel (Linux).
-      Without an emulation layer, you cannot run an
-      executable for the server on the mobile phone or vice versa.  So the
-      <quote>system</quote> field is separated into kernel and os fields to
-      designate these systems unambiguously.  For our example, the Android
+      server, even though they are both running on the same type of CPU (ARM64) and
+      using the same kernel (Linux).</para>
+      
+      <para>Without an emulation layer, you cannot run an
+      executable for a server on a mobile phone or vice versa.  So the
+      <quote>system</quote> field has been divided into kernel and os fields, to
+      designate these systems unambiguously.  In our example, the Android
       system is designated <literal>aarch64-unknown-linux-android</literal>,
       and the Ubuntu system is designated
-      <literal>aarch64-unknown-linux-gnu</literal>.  The word
-      <quote>triplet</quote> remained. A simple way to determine your
+      <literal>aarch64-unknown-linux-gnu</literal>.</para>
+      
+      <para>The word <quote>triplet</quote> remains embedded in the lexicon. A simple way to determine your
       system triplet is to run the <command>config.guess</command>
       script that comes with the source for many packages. Unpack the binutils
-      sources and run the script: <userinput>./config.guess</userinput> and note
+      sources, run the script <userinput>./config.guess</userinput>, and note
       the output. For example, for a 32-bit Intel processor the
       output will be <emphasis>i686-pc-linux-gnu</emphasis>. On a 64-bit
       system it will be <emphasis>x86_64-pc-linux-gnu</emphasis>. On most
@@ -193,11 +197,11 @@
       tree.</para>
     </note>
 
-    <para>In order to fake a cross compilation in LFS, the name of the host triplet
+    <para>In order to fake a cross-compilation in LFS, the name of the host triplet
     is slightly adjusted by changing the &quot;vendor&quot; field in the
     <envar>LFS_TGT</envar> variable so it says &quot;lfs&quot;. We also use the
-    <parameter>--with-sysroot</parameter> option when building the cross linker and
-    cross compiler to tell them where to find the needed host files. This
+    <parameter>--with-sysroot</parameter> option when building the cross-linker and
+    cross-compiler to tell them where to find the needed host files. This
     ensures that none of the other programs built in <xref
     linkend="chapter-temporary-tools"/> can link to libraries on the build
     machine. Only two stages are mandatory, plus one more for tests.</para>
@@ -237,11 +241,11 @@
     <para>Now, there is more about cross-compiling: the C language is not
     just a compiler, but also defines a standard library. In this book, the
     GNU C library, named glibc, is used (there is an alternative, &quot;musl&quot;). This library must
-    be compiled for the LFS machine; that is, using the cross compiler cc1.
-    But the compiler itself uses an internal library implementing complex
+    be compiled for the LFS machine; that is, using the cross-compiler cc1.
+    But the compiler itself uses an internal library providing complex
     subroutines for functions not available in the assembler instruction set. This
     internal library is named libgcc, and it must be linked to the glibc
-    library to be fully functional! Furthermore, the standard library for
+    library to be fully functional. Furthermore, the standard library for
     C++ (libstdc++) must also be linked with glibc. The solution to this
     chicken and egg problem is first to build a degraded cc1-based libgcc,
     lacking some functionalities such as threads and exception handling, and then
@@ -249,36 +253,35 @@
     degraded), and also to build libstdc++. This last library will lack some of the
     functionality of libgcc.</para>
 
-    <para>This is not the end of the story: the upshot of the preceding
+    <para>The upshot of the preceding
     paragraph is that cc1 is unable to build a fully functional libstdc++, but
     this is the only compiler available for building the C/C++ libraries
-    during stage 2! Of course, the compiler built during stage 2, cc-lfs,
+    during stage 2. Of course, the compiler built by stage 2, cc-lfs,
     would be able to build those libraries, but (1) the build system of
-    gcc does not know that it is usable on pc, and (2) using it on pc
+    gcc does not know cc-lfs can run on pc, and (2) using cc-lfs on pc
     would create a risk of linking to the pc libraries, since cc-lfs is a native
     compiler. So we have to re-build libstdc++ later as a part of
     gcc stage 2.</para>
 
-    <para>In &ch-final; (or <quote>stage 3</quote>), all packages needed for
-    the LFS system are built. Even if a package is already installed into
-    the LFS system in a previous chapter, we still rebuild the package
-    unless we are completely sure it's unnecessary.  The main reason for
-    rebuilding these packages is to settle them down: if we reinstall a LFS
+    <para>In &ch-final; (or <quote>stage 3</quote>), all the packages needed for
+    the LFS system are built. Even if a package has already been installed into
+    the LFS system in a previous chapter, we still rebuild the package.  The main reason for
+    rebuilding these packages is to make them stable: if we reinstall a LFS
     package on a complete LFS system, the installed content of the package
-    should be same as the content of the same package installed in
+    should be the same as the content of the same package when installed in
     &ch-final;.  The temporary packages installed in &ch-tmp-cross; or
-    &ch-tmp-chroot; cannot satisfy this expectation because some of them
-    are built without optional dependencies installed, and autoconf cannot
-    perform some feature checks in &ch-tmp-cross; because of cross
-    compilation, causing the temporary packages to lack optional features
+    &ch-tmp-chroot; cannot satisfy this requirement, because some of them
+    are built without optional dependencies, and autoconf cannot
+    perform some feature checks in &ch-tmp-cross; because of cross-compilation,
+    causing the temporary packages to lack optional features,
     or use suboptimal code routines. Additionally, a minor reason for
-    rebuilding the packages is allowing to run the testsuite.</para>
+    rebuilding the packages is to run the test suites.</para>
 
   </sect2>
 
   <sect2 id="other-details">
 
-    <title>Other procedural details</title>
+    <title>Other Procedural Details</title>
 
     <para>The cross-compiler will be installed in a separate <filename
     class="directory">$LFS/tools</filename> directory, since it will not
@@ -300,11 +303,11 @@
     its library search order. Detailed information can be obtained from
     <command>ld</command> by passing it the <parameter>--verbose</parameter>
     flag. For example, <command>$LFS_TGT-ld --verbose | grep SEARCH</command>
-    will illustrate the current search paths and their order. Note that this
-    example can be run as shown only while being user
+    will illustrate the current search paths and their order. (Note that this
+    example can be run as shown only while logged in as user
     <systemitem class="username">lfs</systemitem>. If you come back to this
-    page later, replace <command>$LFS_TGT-ld</command> with just
-    <command>ld</command>.</para>
+    page later, replace <command>$LFS_TGT-ld</command> with
+    <command>ld</command>).</para>
 
     <para>The next package installed is gcc. An example of what can be
     seen during its run of <command>configure</command> is:</para>
@@ -317,28 +320,28 @@ checking what linker to use... /mnt/lfs/tools/i686-lfs-linux-gnu/bin/ld</compute
     directories to find which tools to use. However, during the actual
     operation of <command>gcc</command> itself, the same search paths are not
     necessarily used. To find out which standard linker <command>gcc</command>
-    will use, run: <command>$LFS_TGT-gcc -print-prog-name=ld</command>. Again,
-    remove the <command>$LFS_TGT-</command> part if coming back to this
-    later.</para>
+    will use, run: <command>$LFS_TGT-gcc -print-prog-name=ld</command>. (Again,
+    remove the <command>$LFS_TGT-</command> prefix if coming back to this
+    later.)</para>
 
     <para>Detailed information can be obtained from <command>gcc</command> by
     passing it the <parameter>-v</parameter> command line option while compiling
     a program. For example, <command>$LFS_TGT-gcc -v
     <replaceable>example.c</replaceable></command> (or without <command>
-    $LFS_TGT-</command> if coming back later to this) will show
+    $LFS_TGT-</command> if coming back later) will show
     detailed information about the preprocessor, compilation, and assembly
     stages, including <command>gcc</command>'s search paths for included
     headers and their order.</para>
 
-    <para>Next installed are sanitized Linux API headers. These allow the
+    <para>Next up: sanitized Linux API headers. These allow the
     standard C library (glibc) to interface with features that the Linux
     kernel will provide.</para>
 
-    <para>The next package installed is glibc. The most important
+    <para>Next comes glibc. The most important
     considerations for building glibc are the compiler, binary tools, and
     kernel headers. The compiler is generally not an issue since glibc will
     always use the compiler relating to the <parameter>--host</parameter>
-    parameter passed to its configure script; e.g. in our case, the compiler
+    parameter passed to its configure script; e.g., in our case, the compiler
     will be <command>$LFS_TGT-gcc</command>. The binary tools and kernel
     headers can be a bit more complicated. Therefore, we take no risks and use
     the available configure switches to enforce the correct selections. After
@@ -350,12 +353,12 @@ checking what linker to use... /mnt/lfs/tools/i686-lfs-linux-gnu/bin/ld</compute
     and the use of the <parameter>-nostdinc</parameter> and
     <parameter>-isystem</parameter> flags to control the compiler's include
     search path. These items highlight an important aspect of the glibc
-    package&mdash;it is very self-sufficient in terms of its build machinery
+    package&mdash;it is very self-sufficient in terms of its build machinery,
     and generally does not rely on toolchain defaults.</para>
 
     <para>As mentioned above, the standard C++ library is compiled next, followed in
-    <xref linkend="chapter-temporary-tools"/> by other programs that need
-    to be cross compiled for breaking circular dependencies at build time.
+    <xref linkend="chapter-temporary-tools"/> by other programs that must
+    be cross-compiled to break circular dependencies at build time.
     The install step of all those packages uses the
     <envar>DESTDIR</envar> variable to force installation
     in the LFS filesystem.</para>
@@ -377,7 +380,7 @@ checking what linker to use... /mnt/lfs/tools/i686-lfs-linux-gnu/bin/ld</compute
     operation of the toolchain are performed. From this point onwards, the
     core toolchain is self-contained and self-hosted. In
     <xref linkend="chapter-building-system"/>, final versions of all the
-    packages needed for a fully functional system are built, tested and
+    packages needed for a fully functional system are built, tested, and
     installed.</para>
 
   </sect2>
