@@ -25,7 +25,8 @@
 
     <para>The Python 3 package contains the Python development environment. It
     is useful for object-oriented programming, writing scripts, prototyping
-    large programs, or developing entire applications.</para>
+    large programs, and developing entire applications. Python is an interpreted
+    computer language.</para>
 
     <segmentedlist>
       <segtitle>&buildtime;</segtitle>
@@ -56,7 +57,7 @@
     <varlistentry>
       <term><parameter>--with-system-expat</parameter></term>
       <listitem>
-        <para>This switch enables linking against system version of
+        <para>This switch enables linking against the system version of
         <application>Expat</application>.</para>
        </listitem>
      </varlistentry>
@@ -64,15 +65,19 @@
     <varlistentry>
       <term><parameter>--with-system-ffi</parameter></term>
       <listitem>
-        <para>This switch enables linking against system version of
-        <application>libffi</application>.</para>
+        <para>This switch enables linking against the system version of
+        <application>libffi.so</application>.</para>
       </listitem>
     </varlistentry>
 
     <varlistentry>
       <term><parameter>--enable-optimizations</parameter></term>
       <listitem>
-        <para>This switch enables stable, but expensive, optimizations.</para>
+        <para>This switch enables extensive, but time-consuming, optimization
+        steps. The interpreter is built twice; tests performed on the first 
+        build are used to improve the optimized final version.</para>
+        <!-- This description was drawn from the README.rst file
+        in the Python-3.11.0 package. -->
       </listitem>
     </varlistentry>
 
@@ -84,7 +89,7 @@
 
     <para>Running the tests at this point is not recommended.  The
     tests are known to hang indefinitely in the partial LFS environment.
-    If desired, the tests can be rerun at the end of this chapter or
+    If desired, the tests can be rerun at the end of this chapter, or
     when Python 3 is reinstalled in BLFS.  To run the tests anyway,
     issue <command>make test</command>.</para>
 
@@ -92,29 +97,34 @@
 
 <screen><userinput remap="install">make install</userinput></screen>
 
-    <para>In several places we use the <command>pip3</command> command to
+    <para>We use the <command>pip3</command> command to
     install Python 3 programs and modules for all users as
-    <systemitem class='username'>root</systemitem>. This conflicts
-    with the Python developers recommendation to install packages into a
-    virtual environment or the home directory of a regular user (by running
-    <command>pip3</command> as this user). To this end, a multi-line warning
-    is written when using <command>pip3</command> as the
-    <systemitem class='username'>root</systemitem> user.  The main reason
-    of this recommendation is for avoiding a conflict with the system
-    package manager (<command>dpkg</command> for example), but LFS does not
-    have a system-wide package manager so this is not a problem.  And,
-    <command>pip3</command> will attempt to check for a new version of
-    itself whenever it's run.  As domain name resolving is not configured
-    yet in LFS chroot environment, it will fail to check for a new version
-    and produce a warning.  Once we boot the LFS system and set up network
-    connection, it will then produce a warning telling the user to update it
-    from a pre-built wheel on PyPI if any new version is available.  But LFS
-    consider <command>pip3</command> a part of Python 3 so it should not be
-    updated separately, and an update from a pre-built wheel will deviate
-    from our purpose to build a Linux system from source code.  So the
-    warning for a new <command>pip3</command> version should be ignored as
-    well. If desired, suppress these warnings by running the following
-    commands:</para>
+    <systemitem class='username'>root</systemitem> in several places in this book.
+    This conflicts with the Python developers' recommendation: to install packages into a
+    virtual environment, or into the home directory of a regular user (by running
+    <command>pip3</command> as this user). A multi-line warning
+    is triggered whenever <command>pip3</command> is issued by the
+    <systemitem class='username'>root</systemitem> user.</para>
+    
+    <para>The main reason
+    for the recommendation is to avoid conflicts with the system's
+    package manager (<command>dpkg</command>, for example). LFS does not
+    have a system-wide package manager, so this is not a problem.  Also,
+    <command>pip3</command> will check for a new version of
+    itself whenever it's run.  Since domain name resolution is not yet configured
+    in the LFS chroot environment, <command>pip3</command> cannot check
+    for a new version of itself, and will
+    produce a warning. </para>
+  
+    <para>After we boot the LFS system and set up a network connection,
+    a different warning will be issued, telling the user to update <command>pip3</command>
+    from a pre-built wheel on PyPI (whenever a new version is available).  But LFS
+    considers <command>pip3</command> to be a part of Python 3, so it should not be
+    updated separately. Also, an update from a pre-built wheel would deviate
+    from our objective: to build a Linux system from source code.  So the
+    warning about a new version of <command>pip3</command> should be ignored as
+    well. If you wish, you can suppress all these warnings by running the following
+    command, which creates a configuration file:</para>
 
 <screen><userinput remap="install">cat &gt; /etc/pip.conf &lt;&lt; EOF
 <literal>[global]
@@ -130,20 +140,20 @@ EOF
     <important>
       <para>
         In LFS and BLFS we normally build and install Python modules with the
-        <command>pip3</command> command.  Please take care that the
-        <command>pip3 install</command> commands in both the books should be
-        run as the &root; user unless it's for a Python virtual environment.
-        Running a <command>pip3 install</command> as a non-&root; user may seem
-        to work fine, but it will cause the installed module to be inaccessible
+        <command>pip3</command> command.  Please be sure that the
+        <command>pip3 install</command> commands in both books are
+        run as the &root; user (unless it's for a Python virtual environment).
+        Running <command>pip3 install</command> as a non-&root; user may seem
+        to work, but it will cause the installed module to be inaccessible
         by other users.
       </para>
 
       <para>
         <command>pip3 install</command> will not reinstall an already installed
-        module by default.  For using the <command>pip3 install</command>
+        module automatically.  When using the <command>pip3 install</command>
         command to upgrade a module (for example, from meson-0.61.3 to
         meson-0.62.0), insert the option <parameter>--upgrade</parameter> into
-        the command line.  If it's really necessary to downgrade a module or
+        the command line.  If it's really necessary to downgrade a module, or
         reinstall the same version for some reason, insert
         <parameter>--force-reinstall --no-deps</parameter> into the command
         line.
@@ -167,7 +177,7 @@ tar --strip-components=1  \
       <term><option>--no-same-owner</option> and <option>--no-same-permissions</option></term>
       <listitem>
         <para>Ensure the installed files have the correct ownership and
-        permissions.  Without these options, using <application>tar</application>
+        permissions.  Without these options, <application>tar</application>
         will install the package files with the upstream creator's values.
         </para>
       </listitem>
@@ -226,8 +236,8 @@ tar --strip-components=1  \
           <para>
             is a wrapper script that opens a <application>Python</application>
             aware GUI editor. For this script to run, you must have installed
-            <application>Tk</application> before Python so that the Tkinter
-            Python module is built
+            <application>Tk</application> before Python, so that the Tkinter
+            Python module is built.
           </para>
           <indexterm zone="ch-system-Python">
             <primary sortas="b-idle3">idle3</primary>
@@ -240,7 +250,7 @@ tar --strip-components=1  \
         <listitem>
           <para>
             The package installer for Python. You can use pip to install
-            packages from Python Package Index and other indexes
+            packages from Python Package Index and other indexes.
           </para>
           <indexterm zone="ch-system-Python">
             <primary sortas="b-pip3">pip3</primary>
@@ -264,8 +274,8 @@ tar --strip-components=1  \
         <term><command>python3</command></term>
         <listitem>
           <para>
-            is an interpreted, interactive, object-oriented programming
-            language
+            is the interpreter for Python, an interpreted, interactive, 
+            object-oriented programming language
           </para>
           <indexterm zone="ch-system-Python">
             <primary sortas="b-python3">python3</primary>
