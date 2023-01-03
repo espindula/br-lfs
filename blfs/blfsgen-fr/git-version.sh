@@ -25,7 +25,7 @@ if ! git status > /dev/null; then
 fi
 
 export LC_ALL=en_US.utf8
-export TZ=US/Pacific
+export TZ=America/Chicago
 
 commit_date=$(git show -s --format=format:"%cd" --date=local)
 short_date=$(date --date "$commit_date" "+%Y-%m-%d")
