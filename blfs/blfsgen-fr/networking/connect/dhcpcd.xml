@@ -89,15 +89,20 @@ url="https://github.com/thkukuk/ypbind-mt/">ypbind</ulink>
 
   </sect2>
 
-  <sect2 role="installation">
-    <title>Installation de dhcpcd</title>
+  <sect2 id='dhcpcd-privsep'>
+    <title>Privilege separation</title>
 
     <para>
-      Les versions récentes de <application>dhcpcd</application> implémentent la
-séparation de privilèges. Des étapes d'installation supplémentaires sont
-nécessaires pour configurer l'environnement approprié, elles sont effectuées
-en exécutant les commandes suivantes en tant qu'utilisateur <systemitem
-class="username">root</systemitem>&nbsp;:
+      Recent releases of <application>dhcpcd</application> optionally support
+privilege separation. As the practical security benefits of this are unclear
+for a program like <application>dhcpcd</application> and the setup is more
+complicated, the book currently defaults to disable it.
+    </para>
+    <para>
+      If you however would like to use privilege separation, additional
+installation steps are necessary to set up the proper environment. Issue the
+following commands as the <systemitem class="username">root</systemitem>
+user:
     </para>
 
 <screen role="root"><userinput>install  -v -m700 -d /var/lib/dhcpcd &amp;&amp;
@@ -110,6 +115,11 @@ useradd  -c 'dhcpcd PrivSep' \
          -u 52 dhcpcd &amp;&amp;
 chown    -v dhcpcd:dhcpcd /var/lib/dhcpcd </userinput></screen>
 
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Installation de dhcpcd</title>
+
     <para>Corrigez un problème à l'exécution causé par un changement dans
 glibc-2.36&nbsp;:</para>
 
@@ -117,8 +127,21 @@ glibc-2.36&nbsp;:</para>
     -i src/privsep-linux.c</userinput></screen>
 
     <para>
-      Installez <application>dhcpcd</application> en exécutant les commandes
-suivantes&nbsp;:
+      Build <application>dhcpcd</application> without privilege separation by
+running the following command:
+    </para>
+
+<screen><userinput>./configure --prefix=/usr                \
+            --sysconfdir=/etc            \
+            --libexecdir=/usr/lib/dhcpcd \
+            --dbdir=/var/lib/dhcpcd      \
+            --runstatedir=/run           \
+            --disable-privsep         &amp;&amp;
+make</userinput></screen>
+
+    <para>
+      Build <application>dhcpcd</application> with privilege separation by running
+the following commands:
     </para>
 
 <screen><userinput>./configure --prefix=/usr                \
@@ -173,6 +196,24 @@ emplacement plus correct pour les bibliothèques internes à dhcpcd.
       <parameter>--runstatedir=/run</parameter>&nbsp;: le répertoire par défaut
 <filename class="directory">/var/run</filename> est un lien symbolique vers
 <filename class="directory">/run</filename>.
+    </para>
+
+    <para>
+      <option>--with-hook=...</option>&nbsp;: Vous pouvez éventuellement installer
+plus de crochets, par exemple pour installer quelques fichiers de
+configuration comme <filename>ntp.conf</filename>. L'ensemble des crochets
+est dans le répertoire <filename class="directory">dhcpcd-hooks</filename>
+dans l'arbre de construction.
+    </para>
+
+    <para>
+      <parameter>--disable-privsep</parameter>: Do not use privileg separation,
+which is the default.
+    </para>
+
+    <para>
+      <parameter>--privsepuser=dhcpcd</parameter>: Use this unpriviled user in a
+privilege separation setup.
     </para>
 
     <para>
