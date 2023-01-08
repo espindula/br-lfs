@@ -587,35 +587,49 @@ ici. Voir plus bas les paragraphes sur l'optimisation.
     <bridgehead renderas="sect3" id="stripping-installed">Nettoyer les exécutables installés</bridgehead>
 
     <para>
-      L'utilitaire <command>strip</command> modifie les fichiers en place, ce qui
-peut casser tout ce qui l'utilise s'il est chargé en mémoire. Remarquez que
-si un fichier est utilisé mais simplement supprimé du disque (c.-à-d. pas
-écrasé ou modifié), ce n'est pas un problème car le noyau peut utiliser des
-fichiers <quote>supprimés</quote>. Regardez
-<filename>/proc/*/maps</filename>, et il est probable que vous verrez des
-entrées <emphasis>(deleted)</emphasis>. La commande <command>mv</command>
-supprime seulement le fichier de destination du répertoire mais ne change
-pas son contenu, donc elle satisfait aux conditions pour que le noyau
-utilise l'ancien fichier supprimé. Le script ci-dessous est juste un
-exemple. Vous pouvez ajouter des détections d'erreur plus poussées, d'autres
-répertoires à scanner, etc. Il devrait être lancé en &root;&nbsp;:
+      The <command>strip</command> utility changes files in place, which may break
+anything using it if it is loaded in memory. Note that if a file is in use
+but just removed from the disk (i.e. not overwritten nor modified), this is
+not a problem since the kernel can use <quote>deleted</quote> files.  Look
+at <filename>/proc/*/maps</filename> and it is likely that you'll see some
+<emphasis>(deleted)</emphasis> entries. The <command>mv</command> just
+removes the destination file from the directory but does not touch its
+content, so that it satisfies the condition for the kernel to use the old
+(deleted) file. The script below is just an example.  It should be run as
+the &root; user:
     </para>
 
-<screen role="root"><userinput>{ find /usr/lib -type f \( -name \*.a -o \
-    \( -name \*.so* ! -name \*dbg \) \)
- find /usr/{bin,sbin,libexec} -type f; } | while read file; do
-      if readelf -h $file >/dev/null 2>&amp;1; then
-        cp -a $file ${file}.tmp            &amp;&amp;
-        strip --strip-unneeded ${file}.tmp &amp;&amp;
-        mv ${file}.tmp $file
-      fi
-    done</userinput></screen>
+<screen><userinput>cat &gt; strip-all.sh &lt;&lt; "EOF"
+<literal>#!/bin/bash
+
+if [ $EUID -ne 0 ]; then
+  echo "Need to be root"
+  exit 1
+fi
+
+{ find /usr/lib -type f -name '*.so*' ! -name '*dbg'
+  find /usr/lib -type f -name '*.a'
+  find /usr/{bin,sbin,libexec} -type f;
+} |  while read file; do
+       if ! readelf -h $file >/dev/null 2>&amp;1; then continue; fi
+       if $( file $file | grep --quiet --invert-match 'not stripped' ); then
+         continue; 
+       fi
+
+       base=$(basename $file)
+       cp --preserve $file    ${base}.tmp
+       strip --strip-unneeded ${base}.tmp
+       mv ${base}.tmp $file
+     done</literal>
+EOF
+chmod 755 strip-all.sh</userinput></screen>
 
     <para>
-      Si vous installez des programmes dans d'autres répertoires tels que
-<filename class="directory">/opt</filename> ou <filename
-class="directory">/usr/local</filename>, vous pouvez vouloir nettoyer les
-fichiers ici aussi.
+      If you install programs in other directories such as <filename
+class="directory">/opt</filename> or <filename
+class="directory">/usr/local</filename>, you may want to strip the files
+there too. Just add other directories to scan in the compound list of
+<command>find</command> commands between the braces.
     </para>
 
     <para>
