@@ -8,15 +8,7 @@
   <!ENTITY rust-download-ftp  "">
   <!ENTITY rust-md5sum        "96b082a8b44707eafa9d696923f40c28">
   <!ENTITY rust-size          "136&nbsp;Mo">
-  <!-- Gentle Reminder: buildsize is how much the user requires for the real
-       install, i.e. the source with its DESTDIR *plus* the DESTDIR.  You
-       can 'mkdir /tmp/RUST ; cp -a install/* /tmp/RUST' and then run 'du -sch'
-       to measure it, or du -sm to look at the size of the build tree before and
-       after the tests. -->
-
-  <!ENTITY rust-buildsize     "9.4 GB (674 MB installed) including 360 MB of ~/.cargo files for the user
-building this. Add 6.5 GB including extra 312 MB of ~/.cargo files if
-running the tests">
+  <!ENTITY rust-buildsize     "9.1 GB (323 MB installed); add 6.2 GB if running the tests">
   <!ENTITY rust-time          "17 SBU (including download time; add 23 SBU for tests, both on a 4-core
 machine)">
 ]>
@@ -48,28 +40,9 @@ paquet d'être construite).
     </para>
 
     <para>
-      Comme avec tous les langages de programmation, rustc (le compilateur rust)
-requiert un binaire à partir duquel bootstraper. Il téléchargera un binaire
-stage0, et plusieurs fichier cargo (ce sont en fait des archives de source
-en .tar.gz) au début de la construction, donc vous ne pouvez pas le compiler
-sans connexion internet.
-    </para>
-
-    <para>
-      Ces recettes resteront éternellement dans divers formats (caches, répertoire
-des sources) dans <filename class="directory">~/.cargo</filename>. Les gros
-paquets <application>rust</application> utilisent régulièrement plusieurs
-versions de certaines recettes. Si vous supprimez les fichiers avant de
-mettre à jour ce paquet, très peut de recettes devront être mises à jour par
-les paquets dans ce livre (et elles seront téléchargé au besoin). Mais si
-vous gardez une ancienne version comme option de secours puis l'utilisez (il
-ne faudrait alors <emphasis>pas</emphasis> construire dans <filename
-class="directory">/usr</filename>), il est fort probable qu'elle
-re-téléchargera certaines recettes. Pour un téléchargement complet
-(c.-à-d.&nbsp;à partir d'un répertoire <filename
-class="directory">~/.cargo</filename> vide ou manquant), le téléchargement
-des fichiers cargo externes pour cette version ne prend qu'une minute ou
-deux sur un réseau rapide.
+      As with many other programming languages, rustc (the rust compiler)  needs a
+binary from which to bootstrap. It will download a stage0 binary at the
+start of the build, so you cannot compile it without an Internet connection.
     </para>
 
     <note>
@@ -92,9 +65,8 @@ différent, comme /opt/rust-&rust-version;-build2.
       </para>
 
       <para>
-        Si vous préférez, vous pouvez évidemment changer le préfixe en <filename
-class="directory">/usr</filename> et omettre le lancement de
-<command>ldconfig</command> et les actions pour ajouter rustc au PATH.
+        If you prefer, you can of course change the prefix to <filename
+class="directory">/usr</filename>.
       </para>
     </note>
 
@@ -144,14 +116,6 @@ construction peut ne pas vous satisfaire.
 même machine sont souvent assez cohérents, mais comme avec toutes les
 compilations qui utilisent <command>rustc</command> il peut y avoir quelques
 exceptions très lentes.
-      </para>
-      <para>
-        De manière inhabituelle, la méthode DESTDIR est utilisée pour installer ce
-paquet. Cela est dû au fait que lancer l'installation en root télécharge
-tous les fichiers cargo de nouveau (dans <filename>/root/.cargo</filename>)
-puis passe encore beaucoup de temps à tout recompiler. Cette méthode réduit
-de beaucoup le temps de construction au prix d'un espace disque plus
-important.
       </para>
     </note>
 
@@ -316,8 +280,16 @@ docs = false
 # install extended tools: cargo, clippy, etc
 extended = true
 
+# Do not query new versions of dependencies online.
+locked-deps = true
+
 # Specify which extended tools (those from the default install).
 tools = ["cargo", "clippy", "rustfmt"]
+
+# Use the source code shipped in the tarball for the dependencies.
+# The combination of this and the "locked-deps" entry avoids downloading
+# many crates from Internet, and makes the Rustc build more stable.
+vendor = true
 
 [install]
 prefix = "/opt/rustc-&rust-version;"
@@ -325,7 +297,7 @@ docdir = "share/doc/rustc-&rust-version;"
 
 [rust]
 channel = "stable"
-rpath = false
+description = "for BLFS &version;"
 
 # BLFS used to not install the FileCheck executable from llvm,
 # so disabled codegen tests.  The assembly tests rely on FileCheck
@@ -378,9 +350,7 @@ be terminated.
       To run the tests (again using all available CPUs) issue:
     </para>
 
-<screen remap="test"><userinput>export LD_LIBRARY_PATH=$PWD/build/x86_64-unknown-linux-gnu/stage1/lib/ &amp;&amp;
-python3 ./x.py test --verbose --no-fail-fast | tee rustc-testlog
-unset LD_LIBRARY_PATH</userinput></screen>
+<screen remap="test"><userinput>python3 ./x.py test --verbose --no-fail-fast | tee rustc-testlog</userinput></screen>
 
     <para>
       If <command>FileCheck</command> from <application>LLVM</application> has not
@@ -426,19 +396,10 @@ last two are probably zero.
     </para>
 
     <para>
-      Toujours en tant qu'utilisateur normal, installez avec la méthode
-DESTDIR&nbsp;:
+      Now, as the &root; user, install the package:
     </para>
 
-<screen><userinput>DESTDIR=${PWD}/install python3 ./x.py install &amp;&amp;</userinput></screen>
-
-    <para>
-      Maintenant, en tant qu'utilisateur <systemitem
-class="username">root</systemitem> installez les fichiers du DESTDIR&nbsp;:
-    </para>
-
-<screen role="root"><userinput>chown -R root:root install &amp;&amp;
-cp -a install/* /</userinput></screen>
+<screen role='root'><userinput>python3 ./x.py install</userinput></screen>
 
   </sect2>
 
@@ -454,14 +415,15 @@ p. ex. <command>ls -l</command>.
     </para>
 
     <para>
-      <command>targets = "X86"</command>&nbsp;: cela évite de construire tous les
-compilateurs croisés disponibles (Aarch64, MIPS, PowerPC, SystemZ,
-etc). Malheureusement, rust insiste pour installer leurs fichiers sources
-sous <filename class="directory">/opt/rustc/lib/src</filename>.
+      <command>targets = "X86"</command>: this avoids building all the available
+linux cross-compilers (AArch64, MIPS, PowerPC, SystemZ, etc). Unfortunately,
+rust insists on installing source files for these below <filename
+class="directory">/opt/rustc/lib/src</filename>.
     </para>
 
     <para>
-      <command>extended = true</command>&nbsp;: Cela installe Cargo avec Rust.
+      <command>extended = true</command>: this installs several tools (specified
+by the <literal>tools</literal> entry) alongside <command>rustc</command>.
     </para>
 
     <para>
@@ -480,15 +442,6 @@ disabled at the start of the '[build]' section.
 fonctionnalités stables peuvent être utilisée, la valeur par défaut dans
 <filename>config.toml</filename> est d'utiliser les fonctionnalités de
 développement, qui ne sont pas appropriées pour une version publique.
-    </para>
-
-    <para>
-      <command>rpath = false</command>&nbsp;: par défaut, <command>rust</command>
-peut être lancé depuis son emplacement de construction sans être
-installé. Cela ajoute des entrées DT_RPATH à tous les fichiers ELF, ce qui
-produit une sortie très chargée de la part de <command>ldd</command>,
-contenant les bibliothèques à l'emplacement de leur construction, même si
-elles ont été supprimées de là après l'installation.
     </para>
 
     
@@ -534,15 +487,6 @@ temps.
       since one person reported needing this, keep it commented for the moment.
     </para>-->
 <para>
-      <command>export
-LD_LIBRARY_PATH=$PWD/build/x86_64-unknown-linux-gnu/stage1/lib/</command>:
-In builds where rpath is enabled, the stage1 libraries can be used by the
-tests. But BLFS has disabled rpath: this environment variable allows a lot
-more tests to run. Without it there are no reported failures in most runs,
-but some odd messages in the test log implying failures.
-    </para>
-
-    <para>
       <command>--verbose</command>&nbsp;: ce paramètre peut parfois fournir plus
 d'informations sur un test qui échoue.
     </para>
@@ -550,21 +494,6 @@ d'informations sur un test qui échoue.
     <para>
       <command>--no-fail-fast</command>: this switch ensures that the test suite
 will not stop at the first error.
-    </para>
-
-    <para>
-      <command>DESTDIR=${PWD}/install python3 ./x.py install</command>&nbsp;: Cela
-fait une installation DESTDIR dans l'arborescence des sources, en créant un
-répertoire <filename class="directory">install</filename>. Remarquez que les
-installation DESTDIR ont besoin d'un chemin absolu. Passer
-«&nbsp;install&nbsp;» ne fonctionnera pas.
-    </para>
-
-    <para>
-      <command>chown -R root:root install</command>&nbsp;: l'installation DESTDIR
-a été lancée par un utilsateur normal qui possède les fichiers. Par
-sécurité, changez l'appartenance avant de faire une copie pour les
-installer.
     </para>
 
   </sect2>
@@ -581,26 +510,6 @@ class="directory">/opt</filename>, vous devez mettre à jour les fichiers de
 configuration suivants pour que <application>rustc</application> puisse être
 trouvé correctement par les autres paquets et les processus du système.
       </para>
-
-      <para>
-        En tant qu'utilisateur <systemitem class="username">root</systemitem>,
-mettez à jour le fichier <filename>/etc/ld.so.conf</filename> et le fichier
-de cache d'exécution de l'éditeur de lien dynamique&nbsp;:
-      </para>
-
-<screen role="root"><userinput>cat &gt;&gt; /etc/ld.so.conf &lt;&lt; EOF
-<literal># Begin rustc addition
-
-/opt/rustc/lib
-
-# End rustc addition</literal>
-EOF
-
-ldconfig</userinput></screen>
-
-      <indexterm zone="rust rustc-config">
-        <primary sortas="e-etc-ld.so.conf">/etc/ld.so.conf</primary>
-      </indexterm>
 
       <para>
         En tant qu'utilisateur <systemitem class="username">root</systemitem>, créez
