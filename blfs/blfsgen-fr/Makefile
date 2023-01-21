@@ -1,3 +1,4 @@
+# vim:ts=3
 # Makefile for BLFS Book generation.
 # By Tushar Teredesai <tushar@linuxfromscratch.org>
 # 2004-01-31
@@ -8,10 +9,13 @@ CHUNK_QUIET  = 1
 ROOT_ID      =
 SHELL        = /bin/bash
 
+PYHOSTED = general/prog/python-dependencies/pythonhosted.xml
 ALLXML := $(filter-out $(RENDERTMP)/%, \
-	$(wildcard *.xml */*.xml */*/*.xml */*/*/*.xml */*/*/*/*.xml))
+	$(filter-out $(PYHOSTED), \
+	$(wildcard *.xml */*.xml */*/*.xml */*/*/*.xml */*/*/*/*.xml)))
 ALLXSL := $(filter-out $(RENDERTMP)/%, \
 	$(wildcard *.xsl */*.xsl */*/*.xsl */*/*/*.xsl */*/*/*/*.xsl))
+
 
 ifdef V
   Q =
@@ -101,7 +105,7 @@ world: all blfs-patch-list dump-commands test-links
 include epub.mk
 include pdf.mk
 html: $(BASEDIR)/index.html
-$(BASEDIR)/index.html: $(RENDERTMP)/$(BLFSHTML) version
+$(BASEDIR)/index.html: $(RENDERTMP)/$(BLFSHTML)
 	@echo "Generating chunked XHTML files..."
 	$(Q)xsltproc --nonet                                    \
                 --stringparam chunk.quietly $(CHUNK_QUIET) \
@@ -135,7 +139,7 @@ $(BASEDIR)/index.html: $(RENDERTMP)/$(BLFSHTML) version
    done;
 
 nochunks: $(BASEDIR)/$(NOCHUNKS_OUTPUT)
-$(BASEDIR)/$(NOCHUNKS_OUTPUT): $(RENDERTMP)/$(BLFSHTML) version
+$(BASEDIR)/$(NOCHUNKS_OUTPUT): $(RENDERTMP)/$(BLFSHTML)
 	@echo "Generating non-chunked XHTML file..."
 	$(Q)xsltproc --nonet                                \
                 --stringparam rootid "$(ROOT_ID)"      \
@@ -158,13 +162,13 @@ clean:
 	$(Q)rm -f $(RENDERTMP)/blfs*
 
 validate: $(RENDERTMP)/$(BLFSFULL)
-$(RENDERTMP)/$(BLFSFULL): general.ent packages.ent $(ALLXML) $(ALLXSL) version
+$(RENDERTMP)/$(BLFSFULL): $(PYHOSTED) version.ent
 	$(Q)[ -d $(RENDERTMP) ] || mkdir -p $(RENDERTMP)
 
 	@echo "Adjusting for revision $(REV)..."
 	$(Q)xsltproc --nonet                               \
                 --xinclude                            \
-                --output $(RENDERTMP)/$(BLFSHTML2)  \
+                --output $(RENDERTMP)/$(BLFSHTML2)    \
                 --stringparam profile.revision $(REV) \
                 stylesheets/lfs-xsl/profile.xsl       \
                 index.xml
@@ -173,15 +177,15 @@ $(RENDERTMP)/$(BLFSFULL): general.ent packages.ent $(ALLXML) $(ALLXSL) version
 	$(Q)xmllint --nonet                             \
                --noent                             \
                --postvalid                         \
-               --output $(RENDERTMP)/$(BLFSFULL) \
+               --output $(RENDERTMP)/$(BLFSFULL)   \
                $(RENDERTMP)/$(BLFSHTML2)
 
 profile-html: $(RENDERTMP)/$(BLFSHTML)
-$(RENDERTMP)/$(BLFSHTML): $(RENDERTMP)/$(BLFSFULL) version
+$(RENDERTMP)/$(BLFSHTML): $(RENDERTMP)/$(BLFSFULL)
 	@echo "Generating profiled XML for XHTML..."
 	$(Q)xsltproc --nonet                              \
                 --stringparam profile.condition html \
-                --output $(RENDERTMP)/$(BLFSHTML)  \
+                --output $(RENDERTMP)/$(BLFSHTML)    \
                 stylesheets/lfs-xsl/profile.xsl      \
                 $(RENDERTMP)/$(BLFSFULL)
 
@@ -190,7 +194,7 @@ blfs-patch-list: blfs-patches.sh
 	$(Q)awk '{if ($$1 == "copy") {sub(/.*\//, "", $$2); print $$2}}' \
 	  blfs-patches.sh > blfs-patch-list
 
-blfs-patches.sh: $(RENDERTMP)/$(BLFSFULL) version
+blfs-patches.sh: $(RENDERTMP)/$(BLFSFULL)
 	@echo "Generating blfs patch script..."
 	$(Q)xsltproc --nonet                     \
                 --output blfs-patches.sh    \
@@ -198,7 +202,7 @@ blfs-patches.sh: $(RENDERTMP)/$(BLFSFULL) version
                 $(RENDERTMP)/$(BLFSFULL)
 
 wget-list: $(BASEDIR)/wget-list
-$(BASEDIR)/wget-list: $(RENDERTMP)/$(BLFSFULL) version
+$(BASEDIR)/wget-list: $(RENDERTMP)/$(BLFSFULL)
 	@echo "Generating wget list for $(REV) at $(BASEDIR)/wget-list ..."
 	$(Q)mkdir -p $(BASEDIR)
 	$(Q)xsltproc --nonet                       \
@@ -207,7 +211,7 @@ $(BASEDIR)/wget-list: $(RENDERTMP)/$(BLFSFULL) version
                 $(RENDERTMP)/$(BLFSFULL)
 
 test-links: $(BASEDIR)/test-links
-$(BASEDIR)/test-links: $(RENDERTMP)/$(BLFSFULL) version
+$(BASEDIR)/test-links: $(RENDERTMP)/$(BLFSFULL)
 	@echo "Generating test-links file..."
 	$(Q)mkdir -p $(BASEDIR)
 	$(Q)xsltproc --nonet                        \
@@ -250,16 +254,16 @@ bootscripts:
 
 systemd-units:
 	@VERSION=`grep "systemd-units-version " general.ent | cut -d\" -f2`; \
-   UNITS="blfs-systemd-units-$$VERSION";                        \
-   if [ ! -e $$UNITS.tar.xz ]; then                             \
-     rm -rf $(RENDERTMP)/$$UNITS;                               \
-     mkdir $(RENDERTMP)/$$UNITS;                                \
-     cp -a ../systemd-units/* $(RENDERTMP)/$$UNITS;             \
-     tar -cJhf $$UNITS.tar.xz -C $(RENDERTMP) $$UNITS;          \
+   UNITS="blfs-systemd-units-$$VERSION";                                \
+   if [ ! -e $$UNITS.tar.xz ]; then                                     \
+     rm -rf $(RENDERTMP)/$$UNITS;                                       \
+     mkdir $(RENDERTMP)/$$UNITS;                                        \
+     cp -a ../systemd-units/* $(RENDERTMP)/$$UNITS;                     \
+     tar -cJhf $$UNITS.tar.xz -C $(RENDERTMP) $$UNITS;                  \
    fi
 
 dump-commands: $(DUMPDIR)
-$(DUMPDIR): $(RENDERTMP)/$(BLFSFULL) version
+$(DUMPDIR): $(RENDERTMP)/$(BLFSFULL)
 	@echo "Dumping book commands..."
 	$(Q)xsltproc --output $(DUMPDIR)/          \
                 stylesheets/dump-commands.xsl \
@@ -267,8 +271,31 @@ $(DUMPDIR): $(RENDERTMP)/$(BLFSFULL) version
 	$(Q)touch $(DUMPDIR)
 
 .PHONY: blfs all world html nochunks tmpdir clean  \
-   validate profile-html blfs-patch-list wget-list test-links \
-   dump-commands  bootscripts systemd-units version
+   validate profile-html blfs-patch-list wget-list \
+	test-links dump-commands  bootscripts systemd-units
 
-version:
+version.ent: general.ent packages.ent $(ALLXML) $(ALLXSL)
 	$(Q)./git-version.sh $(REV)
+
+ALL_PYTHON_DEPS := $(filter-out $(PYHOSTED), \
+                   $(wildcard general/prog/python-dependencies/*.xml))
+
+PYTHONHOSTED_MODS := requests sphinx_rtd_theme pytest gi-docgen
+
+PYTHONHOSTED_MOD_PAGES := $(addprefix general/prog/python-modules/,\
+                          $(addsuffix .xml,$(PYTHONHOSTED_MODS)))
+
+$(PYHOSTED): $(ALL_PYTHON_DEPS)           \
+             $(PYTHONHOSTED_MOD_PAGES)    \
+             stylesheets/pyhosted-inc.xsl \
+             stylesheets/pythonhosted.xsl | version.ent
+	@echo Generating pythonhosted.xml;               \
+   if [ ! -f $@ ]; then                             \
+      echo The following warning can be ignored...; \
+   fi
+	$(Q)xsltproc --xinclude                                    \
+                --output temp.xml                             \
+                --stringparam packages "$(PYTHONHOSTED_MODS)" \
+                stylesheets/pythonhosted.xsl                  \
+                general/prog/python-modules.xml
+	$(Q)mv temp.xml $@
