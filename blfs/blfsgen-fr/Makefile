@@ -289,9 +289,9 @@ $(PYHOSTED): $(ALL_PYTHON_DEPS)           \
              $(PYTHONHOSTED_MOD_PAGES)    \
              stylesheets/pyhosted-inc.xsl \
              stylesheets/pythonhosted.xsl | version.ent
-	@echo Generating pythonhosted.xml;               \
-   if [ ! -f $@ ]; then                             \
-      echo The following warning can be ignored...; \
+	@echo Generating pythonhosted.xml; \
+   if [ ! -f $@ ]; then               \
+      cp dummy.xml $(PYHOSTED);       \
    fi
 	$(Q)xsltproc --xinclude                                    \
                 --output temp.xml                             \
