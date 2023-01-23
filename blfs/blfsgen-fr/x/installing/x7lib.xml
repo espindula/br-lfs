@@ -37,8 +37,8 @@
   <!ENTITY libXmu-version                  "1.1.4">
   <!ENTITY libXmu-md5sum                   "ed52d396115fbc4d05300762aab79685">
 
-  <!ENTITY libXpm-version                  "3.5.14">
-  <!ENTITY libXpm-md5sum                   "8001c7e6d2727609da2a78d8e08a2977">
+  <!ENTITY libXpm-version                  "3.5.15">
+  <!ENTITY libXpm-md5sum                   "b3c58c94e284fd6940d3615e660a0007">
 
   <!ENTITY libXaw-version                  "1.0.14">
   <!ENTITY libXaw-md5sum                   "c1ce21c296bbf3da3e30cf651649563e">
@@ -170,10 +170,12 @@ de bibliothèque utilisées dans touts les applications X Window.
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      <xref linkend="asciidoc"/>, <xref linkend="xmlto"/> avec au moins un des
-suivants&nbsp;: <xref linkend="fop"/>, <xref linkend="Links"/>, <xref
-linkend="lynx"/>, et <ulink url="&w3m-url;">W3m</ulink> (pour générer la
-documentation supplémentaire en PDF ou texte pour le paquet libXfont).
+      <xref linkend="asciidoc"/>, <xref linkend="xmlto"/> with one or more of the
+following: <xref linkend="fop"/>, <xref linkend="Links"/>, <xref
+linkend="lynx"/>, <ulink
+url="https://github.com/vapier/ncompress">ncompress</ulink> (for some
+tests), and <ulink url="&w3m-url;">W3m</ulink> (to generate additional PDF
+or text documentation for the libXfont package).
     </para>
 
     <bridgehead renderas="sect4" revision="systemd">Recommandées à l'exécution</bridgehead>
@@ -262,7 +264,8 @@ vérifier les résultats des tests avec&nbsp;:
 
     <para>
       BLFS developers have confirmed that <application>libX11</application>,
-<application>libXt</application>, <application>libXmu</application>, and
+<application>libXt</application>, <application>libXmu</application>,
+<application>libXpm</application>, and
 <application>libxshmfence</application> are distributed with working test
 suites.
     </para>
@@ -297,12 +300,17 @@ do
       ./configure $XORG_CONFIG $docdir \
                   --with-appdefaultdir=/etc/X11/app-defaults
     ;;
-    
 
+    libXpm-[0-9]* )
+      sed -i '/TestAll.*TRUE/s|^|//|' test/TestAllFiles.h
+      ./configure $XORG_CONFIG $docdir --disable-open-zfile
+    ;;
+    
     * )
       ./configure $XORG_CONFIG $docdir
     ;;
   esac
+
   make
   #make check 2>&amp;1 | tee ../$packagedir-make_check.log
   as_root make install
@@ -323,7 +331,6 @@ done</userinput></screen>
     <title>Explication des commandes</title>
 
 
-
     <!--
     <para>
 
@@ -331,14 +338,18 @@ done</userinput></screen>
       This fixes a bug in (at least) XFCE at runtime.
     </para>
 -->
-<!--
-    <para>
-
-      <command>sed ... src/xftfreetype.c include/X11/Xft/XftCompat.h</command>:
-      Add fixes for changes in recent glibc headers.
-    </para>
--->
 <para>
+      <command>sed ... test/TestAllFiles.h</command>: Fix a test file to work
+without the optional <command>compress</command> program.
+    </para>
+
+    <para>
+      <parameter>--disable-open-zfile</parameter>: Allow
+<application>libXpm</application> to build without the optional
+<command>compress</command> command present.
+    </para>
+
+    <para>
       <parameter>--disable-devel-docs</parameter>&nbsp;:  Désactive la génération
 de la documentation texte dans le paquet libXfont2 si <xref
 linkend="xmlto"/> est installé sans navigateur de texte. Omettre ce
