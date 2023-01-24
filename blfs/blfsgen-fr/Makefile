@@ -9,13 +9,12 @@ CHUNK_QUIET  = 1
 ROOT_ID      =
 SHELL        = /bin/bash
 
-PYHOSTED = general/prog/python-dependencies/pythonhosted.xml
-ALLXML := $(filter-out $(RENDERTMP)/%, \
-	$(filter-out $(PYHOSTED), \
-	$(wildcard *.xml */*.xml */*/*.xml */*/*/*.xml */*/*/*/*.xml)))
-ALLXSL := $(filter-out $(RENDERTMP)/%, \
-	$(wildcard *.xsl */*.xsl */*/*.xsl */*/*/*.xsl */*/*/*/*.xsl))
-
+#PYHOSTED = general/prog/python-dependencies/pythonhosted.xml
+#ALLXML := $(filter-out $(RENDERTMP)/%, \
+#	$(filter-out $(PYHOSTED), \
+#	$(wildcard *.xml */*.xml */*/*.xml */*/*/*.xml */*/*/*/*.xml)))
+#ALLXSL := $(filter-out $(RENDERTMP)/%, \
+#	$(wildcard *.xsl */*.xsl */*/*.xsl */*/*/*.xsl */*/*/*/*.xsl))
 
 ifdef V
   Q =
@@ -162,7 +161,8 @@ clean:
 	$(Q)rm -f $(RENDERTMP)/blfs*
 
 validate: $(RENDERTMP)/$(BLFSFULL)
-$(RENDERTMP)/$(BLFSFULL): $(PYHOSTED) version.ent
+#$(RENDERTMP)/$(BLFSFULL): $(PYHOSTED) version.ent
+$(RENDERTMP)/$(BLFSFULL): version.ent
 	$(Q)[ -d $(RENDERTMP) ] || mkdir -p $(RENDERTMP)
 
 	@echo "Adjusting for revision $(REV)..."
@@ -277,25 +277,25 @@ $(DUMPDIR): $(RENDERTMP)/$(BLFSFULL)
 version.ent: general.ent packages.ent $(ALLXML) $(ALLXSL)
 	$(Q)./git-version.sh $(REV)
 
-ALL_PYTHON_DEPS := $(filter-out $(PYHOSTED), \
-                   $(wildcard general/prog/python-dependencies/*.xml))
-
-PYTHONHOSTED_MODS := requests sphinx_rtd_theme pytest gi-docgen
-
-PYTHONHOSTED_MOD_PAGES := $(addprefix general/prog/python-modules/,\
-                          $(addsuffix .xml,$(PYTHONHOSTED_MODS)))
-
-$(PYHOSTED): $(ALL_PYTHON_DEPS)           \
-             $(PYTHONHOSTED_MOD_PAGES)    \
-             stylesheets/pyhosted-inc.xsl \
-             stylesheets/pythonhosted.xsl | version.ent
-	@echo Generating pythonhosted.xml; \
-   if [ ! -f $@ ]; then               \
-      cp dummy.xml $(PYHOSTED);       \
-   fi
-	$(Q)xsltproc --xinclude                                    \
-                --output temp.xml                             \
-                --stringparam packages "$(PYTHONHOSTED_MODS)" \
-                stylesheets/pythonhosted.xsl                  \
-                general/prog/python-modules.xml
-	$(Q)mv temp.xml $@
+#ALL_PYTHON_DEPS := $(filter-out $(PYHOSTED), \
+#                   $(wildcard general/prog/python-dependencies/*.xml))
+#
+#PYTHONHOSTED_MODS := requests sphinx_rtd_theme pytest gi-docgen
+#
+#PYTHONHOSTED_MOD_PAGES := $(addprefix general/prog/python-modules/,\
+#                          $(addsuffix .xml,$(PYTHONHOSTED_MODS)))
+#
+#$(PYHOSTED): $(ALL_PYTHON_DEPS)           \
+#             $(PYTHONHOSTED_MOD_PAGES)    \
+#             stylesheets/pyhosted-inc.xsl \
+#             stylesheets/pythonhosted.xsl | version.ent
+#	@echo Generating pythonhosted.xml; \
+#   if [ ! -f $@ ]; then               \
+#      cp dummy.xml $(PYHOSTED);       \
+#   fi
+#	$(Q)xsltproc --xinclude                                    \
+#                --output temp.xml                             \
+#                --stringparam packages "$(PYTHONHOSTED_MODS)" \
+#                stylesheets/pythonhosted.xsl                  \
+#                general/prog/python-modules.xml
+#	$(Q)mv temp.xml $@
