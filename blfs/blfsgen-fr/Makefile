@@ -13,8 +13,10 @@ SHELL        = /bin/bash
 #ALLXML := $(filter-out $(RENDERTMP)/%, \
 #	$(filter-out $(PYHOSTED), \
 #	$(wildcard *.xml */*.xml */*/*.xml */*/*/*.xml */*/*/*/*.xml)))
-#ALLXSL := $(filter-out $(RENDERTMP)/%, \
-#	$(wildcard *.xsl */*.xsl */*/*.xsl */*/*/*.xsl */*/*/*/*.xsl))
+ALLXML := $(filter-out $(RENDERTMP)/%, \
+            $(wildcard *.xml */*.xml */*/*.xml */*/*/*.xml */*/*/*/*.xml))
+ALLXSL := $(filter-out $(RENDERTMP)/%, \
+            $(wildcard *.xsl */*.xsl */*/*.xsl */*/*/*.xsl */*/*/*/*.xsl))
 
 ifdef V
   Q =
@@ -48,7 +50,6 @@ else
   BLFSFULL        ?= blfs-systemd-full.xml
 
 endif
-
 
 blfs: html wget-list
 
@@ -274,7 +275,7 @@ $(DUMPDIR): $(RENDERTMP)/$(BLFSFULL)
    validate profile-html blfs-patch-list wget-list \
 	test-links dump-commands  bootscripts systemd-units
 
-version.ent: general.ent packages.ent $(ALLXML) $(ALLXSL)
+version.ent: general.ent packages.ent gnome.ent $(ALLXML) $(ALLXSL) build-env
 	$(Q)./git-version.sh $(REV)
 
 #ALL_PYTHON_DEPS := $(filter-out $(PYHOSTED), \
@@ -299,3 +300,12 @@ version.ent: general.ent packages.ent $(ALLXML) $(ALLXSL)
 #                stylesheets/pythonhosted.xsl                  \
 #                general/prog/python-modules.xml
 #	$(Q)mv temp.xml $@
+
+build-env: update-build-env
+	$(Q)echo REV=$(REV) > build-env.new
+	$(Q)echo BASEDIR=$(BASEDIR) >> build-env.new
+	$(Q)diff build-env{.new,} 2>/dev/null >/dev/null || mv build-env{.new,}
+	$(Q)rm -f build-env.new
+
+.PHONY: update-build-env
+update-build-env: ; @true
