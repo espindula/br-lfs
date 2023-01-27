@@ -11,8 +11,6 @@ else
     exit 1
 fi
 
-shift 1
-
 echo "<!ENTITY % sysv    \"$SYSV\">"     >  conditional.ent
 echo "<!ENTITY % systemd \"$SYSTEMD\">"  >> conditional.ent
 
@@ -29,8 +27,7 @@ fi
 export LC_ALL=en_US.utf8
 export TZ=America/Chicago
 
-sha=$(git log -s --format=format:"%H" --date=local -1 $*)
-commit_date=$(git log -s --format=format:"%cd" --date=local -1 $*)
+commit_date=$(git show -s --format=format:"%cd" --date=local)
 short_date=$(date --date "$commit_date" "+%Y-%m-%d")
 
 year=$(date --date "$commit_date" "+%Y")
@@ -47,8 +44,12 @@ esac
 
 full_date="$month $day$suffix, $year"
 
-sha="$(git describe --abbrev=1 $sha)"
+sha="$(git describe --abbrev=1)"
 version=$(echo "$sha" | sed 's/-g[^-]*$//')
+
+if [ "$(git diff HEAD | wc -l)" != "0" ]; then
+    version="$version+"
+fi
 
 echo "<!ENTITY year              \"$year\">"               >  version.ent
 echo "<!ENTITY version           \"$version\">"            >> version.ent
