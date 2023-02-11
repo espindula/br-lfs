@@ -4,11 +4,11 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY transmission-download-http "https://raw.githubusercontent.com/transmission/transmission-releases/master/transmission-&transmission-version;.tar.xz">
+  <!ENTITY transmission-download-http "https://github.com/transmission/transmission/releases/download/&transmission-version;/transmission-&transmission-version;.tar.xz">
   <!ENTITY transmission-download-ftp  "">
-  <!ENTITY transmission-md5sum        "a23a32672b83c89b9b61e90408f53d98">
-  <!ENTITY transmission-size          "3.2&nbsp;Mo">
-  <!ENTITY transmission-buildsize     "228&nbsp;Mo">
+  <!ENTITY transmission-md5sum        "d73915000cf2871404b45a64969cea83">
+  <!ENTITY transmission-size          "9.9 MB">
+  <!ENTITY transmission-buildsize     "337 MB">
   <!ENTITY transmission-time          "0,5 SBU (avec les interfaces graphiques Qt et GTK&nbsp;; avec parallélisme =
 4)">
 ]>
@@ -32,14 +32,6 @@ multi-plateforme. Il sert à télécharger de gros fichiers (comme des ISO
 Linux) et il réduit, pour les distributeurs, le besoin de bande passante du
 serveur.
     </para>
-
-    <note><para>
-      La vitesse de téléchargement du client par défaut est de 50 Ko/s, ce qui est
-plutôt faible. Elle peut être augmentée, mais même sur une connexion
-internet rapide, les vitesse maximales observées étaient autour de 500
-Ko/s. Pour ceux qui ont une connectivité plus rapide que 1 Mo/s, le
-téléchargement direct (si disponible) sera bien plus rapide.
-    </para></note>
 
     &lfs112_checked;
 
@@ -77,16 +69,6 @@ téléchargement direct (si disponible) sera bien plus rapide.
       </listitem>
     </itemizedlist>
 
-    <bridgehead renderas="sect3">Téléchargements supplémentaires</bridgehead>
-    <itemizedlist spacing="compact">
-      <listitem>
-        <para>
-          Correctif facultatif&nbsp;: <ulink
-url="&patch-root;/transmission-&transmission-version;-pidfile_doc-1.patch"/>
-        </para>
-      </listitem>
-    </itemizedlist>
-
 
     <bridgehead renderas="sect3">Dépendances de Transmission</bridgehead>
 
@@ -97,12 +79,13 @@ url="&patch-root;/transmission-&transmission-version;-pidfile_doc-1.patch"/>
 
     <bridgehead renderas="sect4">Recommandées (pour construire une interface graphique)</bridgehead>
     <para role="recommended">
-      <xref linkend="gtk3"/> et <xref linkend="qt5"/>
+      <xref linkend="gtkmm3"/> or <xref linkend="qt5"/>
     </para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      <xref linkend="doxygen"/> et <xref linkend="gdb"/>
+      <xref linkend="nodejs"/> (only for building, not a run-time dependency),
+<xref linkend="doxygen"/> and <xref linkend="gdb"/>
     </para>
 
     <para condition="html" role="usernotes">
@@ -113,12 +96,6 @@ url="&patch-root;/transmission-&transmission-version;-pidfile_doc-1.patch"/>
   <sect2 role="installation">
     <title>Installation de Transmission</title>
 
-    <para>
-      Appliquez un correctif facultatif pour documenter l'option pid-file dans la
-page de manuel de <command>transmission-daemon</command>&nbsp;:
-    </para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../transmission-&transmission-version;-pidfile_doc-1.patch</userinput></screen>
 
 
     <para>
@@ -126,21 +103,17 @@ page de manuel de <command>transmission-daemon</command>&nbsp;:
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>./configure --prefix=/usr --enable-cli &amp;&amp;
+<screen><userinput>mkdir build &amp;&amp;
+cd    build &amp;&amp;
+
+cmake -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_BUILD_TYPE=Release  \
+
+cmake -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_BUILD_TYPE=Release  \
+      -DENABLE_QT=OFF -DENABLE_WEB=ON -DENABLE_CLI=ON .. &amp;&amp;
 make</userinput></screen>
 
-    <para>
-      Compilez l'interface Qt avec les commandes suivantes&nbsp;:
-    </para>
-
-<screen><userinput>pushd qt        &amp;&amp;
-  qmake qtr.pro &amp;&amp;
-  make          &amp;&amp;
-popd</userinput></screen>
-
-    <para>
-      Ce paquet n'a pas de suite de tests.
-    </para>
 
     <para>
       Maintenant, en tant qu'utilisateur <systemitem
@@ -149,16 +122,14 @@ class="username">root</systemitem>&nbsp;:
 
 <screen role="root"><userinput>make install</userinput></screen>
 
+
     <para>
-      Si vous avez compilé l'interface graphique en Qt, installez-la en exécutant
-les commandes suivantes en tant qu'utilisateur <systemitem
-class="username">root</systemitem>&nbsp;:
+      As transmission.png seems to be missing, create it from the svg::
     </para>
 
-<screen role="root"><userinput>make INSTALL_ROOT=/usr -C qt install &amp;&amp;
-
-install -m644 qt/transmission-qt.desktop /usr/share/applications/transmission-qt.desktop &amp;&amp;
-install -m644 qt/icons/transmission.png  /usr/share/pixmaps/transmission-qt.png</userinput></screen>
+<screen role="root"><userinput>rsvg-convert \
+/usr/share/icons/hicolor/scalable/apps/transmission.svg \
+/usr/share/pixmaps/transmission.png</userinput></screen>
 
   </sect2>
 
@@ -166,17 +137,18 @@ install -m644 qt/icons/transmission.png  /usr/share/pixmaps/transmission-qt.png<
     <title>Explication des commandes</title>
 
     <para>
-      <option>--enable-cli</option>&nbsp;. ce paramètre active la construction du
-client en ligne de commande.
+      <option>--DENABLE_QT=OFF</option>: This switch disable building the
+<application>Qt5</application> client. Set to ON for building it.
     </para>
 
-    
-    <!-- with-gtk is auto detected if gtk3 is present -->
-<para>
-      <option>--without-gtk</option>&nbsp;: Ce paramètre désactive la construction
-de l'interface <application>GTK+</application> si
-<application>GTK+</application>  est présent sur le système (utile pour
-<application>Qt5</application> ou les constructions de cli seulement).
+    <para>
+      <option>--DENABLE_CLI=ON</option>: This switch enables building the cli
+client.
+    </para>
+
+    <para>
+      <option>--DENABLE_WEB=ON</option>: This switch enables building the web
+client.
     </para>
 
   </sect2>
