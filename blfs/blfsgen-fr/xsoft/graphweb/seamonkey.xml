@@ -6,9 +6,9 @@
 
   <!ENTITY seamonkey-download-http "&mozilla-http;/seamonkey/releases/&seamonkey-version;/source/seamonkey-&seamonkey-version;.source.tar.xz">
   <!ENTITY seamonkey-download-ftp  "">
-  <!ENTITY seamonkey-md5sum        "a179b07515ba05d33d111ee89fe2dbe5">
-  <!ENTITY seamonkey-size          "244&nbsp;Mo">
-  <!ENTITY seamonkey-buildsize     "3,0&nbsp;Go (159&nbsp;Mo installés)">
+  <!ENTITY seamonkey-md5sum        "d04916f10d082a503af9a309184365dd">
+  <!ENTITY seamonkey-size          "249&nbsp;Mo">
+  <!ENTITY seamonkey-buildsize     "3.2 GB (159 MB installed)">
   <!ENTITY seamonkey-time          "11&nbsp;SBU (avec parallélisme = 4)">
 ]>
 
@@ -137,15 +137,19 @@ sécurité.
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
     <para role="optional">
-      <!--<xref linkend="openjdk"/>
+      <!--<xref linkend="curl"/>
+,-->
+<!--<xref linkend="doxygen"/>
+,-->
+<!--<xref linkend="gst10-plugins-base"/>
+ (and other plugins, only for tests),-->
+<!--<xref linkend="openjdk"/>
 , Not seen in logs -->
-<xref linkend="alsa-lib"/>, <xref linkend="curl"/>, <xref
-linkend="dbus-glib"/>, <xref linkend="doxygen"/>, <xref linkend="GConf"/>,
-<xref linkend="gst10-plugins-base"/> (et les autres greffons, uniquement
-pour les tests), <xref linkend="startup-notification"/>, <xref
+<xref linkend="alsa-lib"/>, <xref linkend="dbus-glib"/>, <xref
+linkend="GConf"/>, <xref linkend="startup-notification"/>, <xref
 linkend="valgrind"/>, <xref linkend="wget"/>, <xref
 linkend="wireless_tools"/>, <ulink
-url="https://hunspell.sourceforge.net/">Hunspell</ulink> et <ulink
+url="https://hunspell.sourceforge.net/">Hunspell</ulink>, and <ulink
 url="https://facebook.github.io/watchman/">Watchman</ulink>
     </para>
 
@@ -271,17 +275,27 @@ EOF</userinput></screen>
 supprimé de python-3.11&nbsp;:
     </para>
 
-<screen><userinput>grep -rl \"rU\" | xargs sed -i 's/"rU"/"r"/'</userinput></screen>
-
+<!-- Causes issues since xpidl is python2 in Seamonkey
     <para>
-      Ensuite, corrigez un problème avec les expressions régulières ans
-python-3.11&nbsp;:
+
+      Then fix an issue with regular expressions in python-3.11:
     </para>
 
 <screen><userinput>sed -e 's/?s)\./?s:.)/'               \
     -e '/?m)/{s/?m)/?m:/;s/\$"/$)"/}' \
     -e '/?s)%/{s/?s)/?s:/;s/?"/?)"/}' \
     -i xpcom/idl-parser/xpidl/xpidl.py</userinput></screen>
+-->
+<screen><userinput>grep -rl \"rU\" | xargs sed -i 's/"rU"/"r"/'</userinput></screen>
+
+
+
+    <para>
+      Next, work around a problem in the Python virtual environment:
+    </para>
+
+<screen><userinput>sed -i "/if sys.executable !=/i\ open(join(bin_dir, 'pyvenv.cfg'), 'w').close()" \
+    third_party/python/virtualenv/virtualenv.py</userinput></screen>
 
     <para>
       Compilez <application>seaMonkey</application> en exécutant les commandes
@@ -296,8 +310,8 @@ suivantes&nbsp;:
         <xref linkend="llvm"/> is installed and you do not want to use clang.
       </para>
     </note>-->
-<screen><userinput>export CC=clang CXX=clang++ &amp;&amp;
-./mach configure            &amp;&amp;
+<screen><userinput>export CC=clang CXX=clang++          &amp;&amp;
+./mach configure || ./mach configure &amp;&amp;
 ./mach build</userinput></screen>
 
 
@@ -336,8 +350,9 @@ par défaut.
     </para>
 
     <para>
-      <command>./mach configure</command>&nbsp;: ceci valide les dépendances
-fournies et le <filename>mozconfig</filename>.
+      <command>./mach configure || ./mach configure</command>: This validates the
+supplied dependencies and the <filename>mozconfig</filename>.  This is run
+twice because problems with mach will cause it to fail the first time.
     </para>
 
     <para>
