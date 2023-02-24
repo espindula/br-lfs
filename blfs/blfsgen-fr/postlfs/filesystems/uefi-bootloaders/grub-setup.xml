@@ -144,9 +144,9 @@ File systems ---&gt;
       <varlistentry>
         <term><parameter>CONFIG_EFI_STUB</parameter></term>
         <listitem>
-          <para>On EFI systems, GRUB boots the Linux kernel by invoking the EFI firmware to
-load it as an EFI application.  So, EFI stub is needed to wrap the kernel as
-an EFI application.</para>
+          <para>Sur les systèmes EFI, GRUB démarre le noyau linux en invoquant le
+micrologiciel EFI pour le charger comme application EFI. Donc, le « EFI stub
+» est requis pour envelopper le noyau comme application EFI.</para>
         </listitem>
       </varlistentry>
 
@@ -159,10 +159,10 @@ an EFI application.</para>
 <parameter>CONFIG_FB</parameter> et
 <parameter>CONFIG_FRAMEBUFFER_CONSOLE</parameter></term>
         <listitem>
-          <para>The combination of these options provides the Linux console support on top
-of the UEFI framebuffer.  To allow the kernel to print debug messages at an
-early boot stage, they shouldn't be built as kernel modules unless an
-initramfs will be used.</para>
+          <para>La combinaison de ces options fournit la prise en charge de la console linux
+sur le framebuffer UEFI. Pour permettre au noyau d'afficher des messagesqde
+débogage tôt dans le processus de démarrage, elles ne devraient pas être
+construites en tant que modules à moins que vous n'utilisiez un initramfs.</para>
         </listitem>
       </varlistentry>
 
@@ -192,17 +192,18 @@ System</literal>.
     </para>
 
     <para>
-      If the system or the hard drive is new, or it's the first installation of a
-UEFI-booted OS on the system, the ESP may not exist.  In that case, create a
-new partition, make a <systemitem class="filesystem">vfat</systemitem> file
-system on it, and set the partition type to <quote>EFI system</quote>.  See
-the instructions for the emergency boot device above as a reference.
+      Si le système ou le disque dur est neuf, ou si c'est la première
+installation d'un système UEFI sur le système, l'ESP n'existe peut-être
+pas. Dans ce cas, créez une nouvelle partition, mettez un système de fichier
+<systemitem class="filesystem">vfat</systemitem> dessus et indiquez
+<quote>EFI system</quote> comme type de partition. Voir les instructions sur
+le périphérique de démarrage d'urgence plus haut pour référence.
     </para>
 
     <warning>
       <para>
-        Some (old) UEFI implementations may require the ESP to be the first
-partition on the disk.
+        Certaines (vieilles) implémentations UEFI peuvent demander que l'ESP soit la
+première partition du disque.
       </para>
     </warning>
 
@@ -231,91 +232,99 @@ qu'elle soient montée automatiquement au démarrage du système&nbsp;:
     <title>Configuration de démarrage minimale avec GRUB et EFI</title>
 
     <para>
-      On UEFI based systems, GRUB works by installing an EFI application (a
-special kind of executable) into the ESP.  The EFI firmware will search boot
-loaders in EFI applications from boot entries recorded in EFI variables, and
-additionally a hardcoded path <filename>EFI/BOOT/BOOTX64.EFI</filename>.
-Normally, a boot loader should be installed into a custom path and the path
-should be recorded in the EFI variables.  The use of the hardcoded path
-should be avoided if possible.  However, in some cases we have to use the
-hardcoded path:
+      Sur les systèmes basés sur UEFI, GRUB fonctionne en installant une
+application EFI (un type d'exécutable spécial) dans l'ESP. Le micrologiciel
+EFI recherchera les chargeurs d'amorçage dans les applications EFI à partir
+des entrées de démarrage enregistrées dans les variables EFI, en plus d'un
+chemin codé en dur, <filename>EFI/BOOT/BOOTX64.EFI</filename>. Normalement,
+un chargeur d'amorçage devrait être installé dans un chemin personnalisé et
+le chemin devrait être enregistré dans les variables EFI. L'utilisation du
+chemin codé en dur est à éviter le plus possible. Cependant, dans certains
+cas nous devons utiliser le chemin codé en dur&nbsp;:
     </para>
 
     <itemizedlist>
       <listitem>
         <para>
-          The system is not booted with EFI yet, making EFI variables inaccessible.
+          Le système n'est pas encore démarré avec EFI, ce qui rend les variables EFI
+inaccessibles.
         </para>
       </listitem>
       <listitem>
         <para>
-          The EFI firmware is 64-bit but the LFS system is 32-bit, making EFI
-variables inaccessible because the kernel cannot invoke EFI runtime services
-with a different virtual address length.
+          Le micrologiciel EFI est en 64&nbsp;bits mais le système LFS en
+32&nbsp;bits, ce qui rend les variables EFI inaccessibles car le noyau ne
+peut pas invoquer les services EFI à l'exécution avec une longueur
+d'adressage virtuel différente.
         </para>
       </listitem>
       <listitem>
         <para>
-          LFS is built for a Live USB, so we cannot rely on EFI variables, which are
-stored in NVRAM or EEPROM on the local machine.
+          LFS est construit pour une Live USB, donc nous ne pouvons pas nous reposer
+sur les variables EFI qui sont stockées en NVRAM ou EEPROM sur la machine
+locale.
         </para>
       </listitem>
       <listitem>
         <para>
-          You are unable or unwilling to install the
-<application>efibootmgr</application> for manipulating boot entries in EFI
-variables.
+          Vous ne pouvez pas ou ne voulez pas installer
+<application>efibootmgr</application> pour manipuler les entrées de
+démarrage dans les variables EFI.
         </para>
       </listitem>
     </itemizedlist>
 
     <para>
-      In these cases, follow these instructions to install the GRUB EFI
-application into the hardcoded path and make a minimal boot
-configuration. Otherwise it's better to skip ahead and set up the boot
-configuration normally.
+      Dans tous ces cas, suivez ces instructions pour installer l'application EFI
+GRUB dans le chemin codé en dur et créer une configuration de démarrage
+minimale. Sinon, il vaut mieux passer cette section et lire les sections
+restantes pour paramétrer la configuration de démarrage normalement.
     </para>
 
     <para>
-      To install GRUB with the EFI application in the hardcoded path
-<filename>EFI/BOOT/BOOTX64.EFI</filename>, first ensure the boot partition
-is mounted at <filename class="directory">/boot</filename> and the ESP is
-mounted at <filename class="directory">/boot/efi</filename>.  Then, as the
-&root; user, run the command:
+      Pour installer GRUB avec une application EFI installée dans le chemin codé
+en dur <filename>EFI/BOOT/BOOTX64.EFI</filename>, assurez-vous d'abord que
+la partition de démarrage est montée dans <filename
+class="directory">/boot</filename> et l'ESP est monté dans <filename
+class="directory">/boot/efi</filename>. Puis en tant qu'utilisateur &root;,
+lancez la commande&nbsp;:
     </para>
 
     <note>
       <para>
-        This command will overwrite
-<filename>/boot/efi/EFI/BOOT/BOOTX64.EFI</filename>.  It may break a
-bootloader already installed there.  Back it up if you are not sure.
+        La commande remplacera
+<filename>/boot/efi/EFI/BOOT/BOOTX64.EFI</filename>. Elle peut casser un
+chargeur d'amorçage déjà installé. Sauvegardez-le si vous n'êtes pas sur·e.
       </para>
     </note>
 
     <screen role="nodump"><userinput>grub-install --target=x86_64-efi --removable</userinput></screen>
 
     <para>
-      This command will install the GRUB EFI application into the hardcoded path
-<filename>/boot/efi/EFI/BOOT/BOOTX64.EFI</filename>, so the EFI firmware can
-find and load it.  The remaining GRUB files are installed in the <filename
-class="directory">/boot/grub</filename> directory and will be loaded by
-<filename>BOOTX64.EFI</filename> during system boot.
+      Cette commande installera l'application EFI GRUB dans le chemin codé en dur
+<filename>/boot/efi/EFI/BOOT/BOOTX64.EFI</filename>, pour que le
+micrologiciel EFI puisse le trouver et le charger. Les fichiers GRUB
+restants sont installés dans le répertoire <filename
+class="directory">/boot/grub</filename> et sera chargé par
+<filename>BOOTX64.EFI</filename> au démarrage du système.
     </para>
 
     <note>
       <para>
-        The EFI firmware usually prefers the EFI applications with a path stored in
-EFI variables to the EFI application at the hardcoded path.  So you may need
-to invoke the boot selection menu or firmware setting interface to select
-the newly installed GRUB manually on the next boot.  Read the manual of your
-motherboard or laptop to learn how.
+        Le micrologiciel EFI préfère les applications EFI avec le chemin enregistré
+dans les entrées de démarrage stockées dans les variables EFI à
+l'application EFI dans le chemin codé en dur. Vous devrez alors peut-être
+invoquer le menu de sélection de démarrage ou l'interface de configuration
+du micrologiciel pour choisir le GRUB nouvellement installé au prochain
+démarrage. Consultez le manuel de votre carte mère ou de votre ordinateur
+portable pour trouver comment.
       </para>
     </note>
 
     <para>
-      If you've followed the instructions in this section and set up a minimal
-boot configuration, now skip ahead to <quote>Creating the GRUB Configuration
-File</quote>.
+      Si vous avez suivi les instructions de cette section et paramétrez une
+configuration de démarrage minimale, sautez maintenant à <quote>Créer le
+fichier de configuration GRUB</quote>.
     </para>
   </sect2>
 
@@ -323,20 +332,21 @@ File</quote>.
     <title>Monter le système de fichiers des variables EFI</title>
 
     <para>
-      The installation of GRUB on a UEFI platform requires that the EFI Variable
-file system, <systemitem class="filesystem">efivarfs</systemitem>, is
-mounted.  As the <systemitem class="username">root</systemitem> user, mount
-it if it's not already mounted:
+      L'installation de GRUB sur une plateforme UEFI demande que le système de
+fichiers des variables EFI, <systemitem
+class="filesystem">efivarfs</systemitem> soit monté. En tant qu'utilisateur
+<systemitem class="username">root</systemitem>, montez-le s'il n'est pas
+encore monté&nbsp;:
     </para>
 
 <screen role="nodump"><userinput>mountpoint /sys/firmware/efi/efivars || mount -v -t efivarfs efivarfs /sys/firmware/efi/efivars</userinput></screen>
 
     <note revision="systemd">
       <para>
-        If the system is booted with UEFI and systemd, <systemitem
-class="filesystem">efivarfs</systemitem> will be mounted automatically.
-However, in the LFS chroot environment it still needs to be mounted
-manually.
+        Si le système est démarré avec UEFI et systemd, <systemitem
+class="filesystem">efivarfs</systemitem> sera monté
+automatiquement. Cependant dans l'environnement chroot de LFS il faudra
+toujours le monter manuellement.
       </para>
     </note>
 
@@ -353,11 +363,12 @@ démarrage du système&nbsp;:
 
     <warning>
       <para>
-        If the system is not booted with UEFI, the directory <filename
-class="directory">/sys/firmware/efi</filename> will be missing. In this case
-you should boot the system in UEFI mode with the emergency boot disk or
-using a minimal boot configuration created as above, then mount <systemitem
-class="filesystem">efivarfs</systemitem> and continue.
+        Si le système n'est pas démarré avec UEFI, le répertoire <filename
+class="directory">/sys/firmware/efi</filename> n'existera pas. Dans ce cas
+vous devriez démarrer le système en mode UEFI avec le disque de démarrage
+d'urgence ou en utilisant la configuration de démarrage minimale créée plus
+haut, puis monter <systemitem class="filesystem">efivarfs</systemitem> et
+continuer.
       </para>
     </warning>
   </sect2>
@@ -378,12 +389,13 @@ le charger.
     </para>
 
     <para>
-      <filename>grubx64.efi</filename> is very lightweight (136 KB with GRUB-2.06)
-so it will not use much space in the ESP.  A typical ESP size is 100 MB (for
-Windows boot manager, which uses about 50 MB in the ESP). Once
-<filename>grubx64.efi</filename> has been loaded by the firmware, it will
-load GRUB modules from the boot partition.  The default location is
-<filename class="directory">/boot/grub</filename>.
+      <filename>grubx64.efi</filename> est très léger (136&nbsp;Ko pour GRUB-2.06)
+donc il n'utilisera pas beaucoup de place dans l'ESP. Une taille typique
+d'ESP est 100&nbsp;Mo (pour le chargeur d'amorçage de Windows, qui prend
+environ 50&nbsp;Mo dans l'ESP). Une fois <filename>grubx64.efi</filename>
+chargé par le micrologiciel, il chargera les modules GRUB dans la partition
+de démarrage. L'emplacement par défaut est <filename
+class="directory">/boot/grub</filename>.
     </para>
 
     <para>
@@ -404,8 +416,8 @@ démarrage dans les variables EFI&nbsp;:
 Installation finished. No error reported.</literal></screen>
 
     <para>
-      Issue the <command>efibootmgr | cut -f 1</command> command to recheck the
-EFI boot configuration.  An example of the output is:
+      Tapez <command>efibootmgr | cut -f 1</command> pour revérifier la
+configuration de démarrage EFI. Voici un exemple de sortie&nbsp;:
     </para>
 
 <screen role="nodump"><literal>BootCurrent: 0000
@@ -464,16 +476,17 @@ menuentry "Firmware Setup" {
 <userinput>EOF</userinput></screen>
 
     <para>
-      <literal>(hd0,2)</literal>, <literal>sda2</literal>, and
-<literal>6.1.11-lfs-11.3</literal> must match your configuration.
+      Vous devez remplacer <literal>(hd0,2)</literal>, <literal>sda2</literal> et
+<literal>6.1.11-lfs-11.3</literal> pour correspondre à votre configuration.
     </para>
 
     <note>
       <para>
-        From GRUB's perspective, the files are relative to the partitions used. If
-you used a separate /boot partition, remove /boot from the above paths (to
-kernel and to <filename>unicode.pf2</filename>). You will also need to
-change the "set root" line to point to the boot partition.
+        Du point de vu de GRUB, les fichiers sont relatifs à la partition
+utilisée. Si vous utilisez une partition /boot séparée, supprimez /boot dans
+les chemins précédents (vers le noyau et vers
+<filename>unicode.pf2</filename>). Vous devrez aussi changer la ligne
+«&nbsp;set root&nbsp;» pour pointer vers la partition de démarrage.
       </para>
     </note>
 
@@ -504,12 +517,12 @@ menuentry "Windows 11" {
 <userinput>EOF</userinput></screen>
 
     <para>
-      <literal>(hd0,1)</literal> should be replaced with the GRUB designated name
-for the ESP.  The <literal>chainloader</literal> directive can be used to
-tell GRUB to run another EFI executable, in this case the Windows Boot
-Manager. You may put more usable tools in EFI executable format (for
-example, an EFI shell) into the ESP and create GRUB entries for them, as
-well.
+      Vous devriez remplacer <literal>(hd0,1)</literal> par le nom désigné par
+GRUB pour l'ESP. Vous pouvez utiliser la directive
+<literal>chainloader</literal> pour dire à GRUB de lancer un autre
+exécutable EFI, dans ce cas le gestionnaire de démarrage de Windows. Vous
+pouvez ajouter des outils supplémentaires au format exécutable EFI (par
+exemple un shell EFI) dans l'ESP et leur créer des entrées GRUB.
     </para>
 
   </sect2>
