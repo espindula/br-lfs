@@ -281,6 +281,7 @@ blfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	    -e "s|<!ENTITY lfssvn_checked2 [^\r]*\">|<!ENTITY lfssvn_checked2 \" .\">|g" \
 	    -e "s|<!ENTITY lfssvn_built2 [^\r]*\">|<!ENTITY lfssvn_built2 \" mais n'a pas été testé.\">|g" \
 	    -e "s|<!ENTITY as_root *\"[^\"]*\">||g" \
+	    -e "s|<!ENTITY gi-doc-disable *\"[^\"]*\">|<!ENTITY gi-doc-disable \"permet de construire ce paquet sans installer <xref linkend='gi-docgen'/>. Si vous avez installé <xref linkend='gi-docgen'/> et souhaitez reconstruire et installer la documentation de l'API, une commande <command>meson configure</command> enlèvera cette option.\">|g" \
 	    -e "s|<!ENTITY not-katamari *\"[^\"]*\">|<!ENTITY not-katamari \"<para>Ce paquet ne fait pas partie de Xorg Katamari et est seulement fourni comme dépendance d'autres paquets ou pour tester l'installation complète de Xorg.</para>\">|g" \
 	    -e "s|<!ENTITY parallel_issues *\"[^\"]*\">|<!ENTITY parallel_issues \"<note><para>Ce paquet peut parfois échouer quand il est construit avec plusieurs processeurs. Voir <xref linkend='parallel-builds'/> pour plus d'information.</para></note>\">|g" \
 	    | tr '\r' '\n' > $@
