@@ -24,6 +24,9 @@ faq-en.html:
 complete.html: faq-en.html faq-blfs-en.html faq-lfs-en.html
 	cat $^ > $@
 
+faq.pot: complete.html
+	LANG=en_US.UTF-8 po4a-updatepo -f xhtml -m $< -p $@
+
 %.po: complete.html
 	LANG=$(LANG_$@) po4a-updatepo -f xhtml -m $< -p $@
 
