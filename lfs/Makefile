@@ -18,6 +18,9 @@ EN_REPO:=git://git.linuxfromscratch.org/lfs.git
 
 RENDERTMP=~/tmp
 
+WEBLATE_API:=https://bright.lepiller.eu/api
+CURL=curl -H "Authorization: Token $(WEBLATE_KEY)"
+
 
 # Note for releasing a new stable version:
 # ----------------------------------------
@@ -109,6 +112,7 @@ config.mk:
 	@echo 'USER:=my-user'
 	@echo 'PRIVKEY:=~/.ssh/id_rsa'
 	@echo 'USE_SSH_AGENT:=yes'
+	@echo 'WEBLATE_KEY:=abcdefgh'
 	@false
 
 # So, if USE_SSH_AGENT = yes ...
@@ -211,12 +215,31 @@ gentar: $(TARDEPS)
 update: $(PO)
 	$(ECHO) 'Done updating for $(BRANCH) \n'
 
-pootle:
-	pootle sync_stores --project=lfs
+define createcomponent
+{ \
+	"file_format": "po", \
+	"repo": "weblate://faq/faq", \
+	"filemask": "lfs/*/$(patsubst fr/%,%,$<)", \
+	"name": "$(subst /,_,$(patsubst weblate/%,%,$@))", \
+	"slug": "$(subst /,_,$(patsubst weblate/%,%,$@))", \
+	"new_lang": "contact" \
+}
+endef
+
+weblate/%: fr/%.po
+	if $(CURL) $(WEBLATE_API)/components/linux-from-scratch/$(subst /,_,$(patsubst weblate/%,%,$@))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
+		$(CURL) -H "Content-Type: application/json" \
+			--data-binary "$(subst ",\",${createcomponent})" \
+			$(WEBLATE_API)/projects/linux-from-scratch/components/; \
+	fi
+
+weblate-up:
+	git pull --ff-only
 	$(MAKE) gitup
 	$(MAKE) update
 	python3 changelogtranslator.py $(L)
-	pootle update_stores --project=lfs
+
+weblate: $(addprefix weblate/,$(patsubst %.po,%,$(patsubst fr/%,%,$(PO_fr))))
 
 ssh-agent:
 	(ssh-add -l | grep $(PRIVKEY)) || \
@@ -239,10 +262,11 @@ release: $(SSH_AGENT) genhtml genpdf gentar genepub
 		rsync --progress LFS-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/LFS-$(MILESTONE)-systemd/ ;\
 	done
 
-commit: pootle
+commit: weblate-up
 	git add .
 	git commit -m 'Automatic LFS commit based on $(REVISION)'
 	git push
+	$(MAKE) weblate
 
 ###############################################################################
 # These files are not translated using po files. We use sed to modify them    #
