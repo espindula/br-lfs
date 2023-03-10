@@ -14,7 +14,10 @@ ORIGDIR := blfs-en
 FR_REPO:=git@git.linuxfromscratch.org:fr-lfs.git
 EN_REPO:=git://git.linuxfromscratch.org/blfs.git
 
-RENDERTMP=/data/tyreunom/tmp
+RENDERTMP=/tmp
+
+WEBLATE_API:=https://bright.lepiller.eu/api
+CURL=curl -H "Authorization: Token $(WEBLATE_KEY)"
 
 
 # Note for releasing a new stable version:
@@ -108,6 +111,7 @@ config.mk:
 	@echo 'PRIVKEY:=~/.ssh/id_rsa'
 	@echo 'USE_SSH_AGENT:=yes'
 	@echo 'DOCBOOK_LOCATION:=/usr/share/xml/xsl/docbook-xsl-1.79.1'
+	@echo 'WEBLATE_KEY:=abcdefgh'
 	@false
 
 # So, if USE_SSH_AGENT = yes ...
@@ -207,15 +211,36 @@ gentar: $(TARDEPS)
 update: $(PO)
 	printf 'Done updating for $(BRANCH) \n'
 
-pootle:
-	pootle sync_stores --project=blfs
+define createcomponent
+{ \
+	"file_format": "po", \
+	"repo": "weblate://faq/faq", \
+	"filemask": "blfs/*/$(patsubst fr/%,%,$<)", \
+	"name": "$(subst /,_,$(patsubst weblate/%,%,$@))", \
+	"slug": "$(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@))))", \
+	"new_lang": "contact" \
+}
+endef
+
+weblate/%: fr/%.po
+	@if $(CURL) $(WEBLATE_API)/components/beyond-linux-from-scratch/$(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@))))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
+		echo $(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@)))); \
+		$(CURL) -H "Content-Type: application/json" \
+			--data-binary "$(subst ",\",${createcomponent})" \
+			$(WEBLATE_API)/projects/beyond-linux-from-scratch/components/; \
+		echo "";\
+	fi
+
+weblate-up:
+	git pull --ff-only
 	$(MAKE) gitup
 	$(MAKE) update
 	python3 changelogtranslator.py fr/introduction/welcome/changelog.po
 	for lang in $(LANGUAGES); do \
 		python3 templatetranslator.py `find $$lang -name '*.po'` ;\
 	done
-	pootle update_stores --project=blfs
+
+weblate: $(addprefix weblate/,$(patsubst %.po,%,$(patsubst fr/%,%,$(PO_fr))))
 
 ssh-agent:
 	(ssh-add -l | grep $(PRIVKEY)) || \
@@ -238,7 +263,7 @@ release: $(SSH_AGENT) genhtml genpdf gentar genepub
 		rsync --progress BLFS-$(MILESTONE)-systemd-$$lang.epub $(USER)@www.linuxfromscratch.org:/srv/www/www.$$lang.linuxfromscratch.org/archives/BLFS-$(MILESTONE)-systemd/ ;\
 	done
 
-commit: pootle
+commit: weblate-up
 	git add .
 	git commit -m 'Automatic BLFS commit based on $(REVISION)'
 	git push
