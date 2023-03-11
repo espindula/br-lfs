@@ -13,7 +13,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
         Sets global params and include customized elements templates. -->
 
     <!-- Upstream XHTML presentation templates -->
-  <xsl:import href="/usr/share/xml/docbook/stylesheet/docbook-xsl/xhtml/docbook.xsl"/>
+  <xsl:import href="/usr/share/xml/xsl/docbook-xsl-1.79.1/xhtml/docbook.xsl"/>
 
     <!-- Use ISO-8859-1 for output instead of default UTF-8 -->
   <xsl:param name="chunker.output.encoding" select="'UTF-8'"/>

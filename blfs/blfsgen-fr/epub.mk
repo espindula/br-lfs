@@ -10,7 +10,7 @@ epub: validate
 	        mkdir -p $(BASEDIR); \
 	fi;
 	$(Q)mkdir -p $(RENDERTMP)/blfs-epub-$(REV)/
-	$(Q)xsltproc --nonet --output $(RENDERTMP)/blfs-epub-$(REV)/ /usr/share/xml/docbook/stylesheet/docbook-xsl/epub/docbook.xsl \
+	$(Q)xsltproc --nonet --output $(RENDERTMP)/blfs-epub-$(REV)/ /usr/share/xml/xsl/docbook-xsl-1.79.1/epub/docbook.xsl \
 		$(if $(ISSYSD), $(RENDERTMP)/blfs-systemd-full.xml,$(RENDERTMP)/blfs-full.xml)
 	@echo "Generating EPUB file..."
 	echo "application/epub+zip" > $(RENDERTMP)/mimetype

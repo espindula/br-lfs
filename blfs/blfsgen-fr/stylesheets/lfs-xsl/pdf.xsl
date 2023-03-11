@@ -14,7 +14,7 @@ $Date: 2007-07-07 12:25:55 +0200 (sam, 07 jui 2007) $
 
     <!-- Upstream FO templates. Profiled version is not supported by
          xsltproc, thus pofiling must be done in two steps (see Makefile) -->
-  <xsl:import href="/usr/share/xml/docbook/stylesheet/docbook-xsl/fo/docbook.xsl"/>
+  <xsl:import href="/usr/share/xml/xsl/docbook-xsl-1.79.1/fo/docbook.xsl"/>
 
     <!-- Uncomment the next for debugging the raw FO code.
          Note that FOP will complaints about a lot of paragraph overflows
