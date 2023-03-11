@@ -227,7 +227,8 @@ define createcomponent
 endef
 
 weblate/%: fr/%.po
-	if $(CURL) $(WEBLATE_API)/components/linux-from-scratch/$(subst /,_,$(patsubst weblate/%,%,$@))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
+	@if $(CURL) $(WEBLATE_API)/components/linux-from-scratch/$(subst /,_,$(patsubst weblate/%,%,$@))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
+		echo $(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@)))); \
 		$(CURL) -H "Content-Type: application/json" \
 			--data-binary "$(subst ",\",${createcomponent})" \
 			$(WEBLATE_API)/projects/linux-from-scratch/components/; \
