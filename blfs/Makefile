@@ -298,7 +298,7 @@ blfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	sed -e "s|The BLFS Team|L'équipe de BLFS|g" \
 	    -e "s|The BLFS Development Team|L'équipe de développement de BLFS|g" \
 	    -e "s|Unknown|Inconnu|g" \
-	    -e "s|<!ENTITY lfs\([0-9]\)\([0-9]\)_checked [^\r]*\r[^\r]*\">|<!ENTITY lfs\1\2_checked \"<para>Ce paquet est connu pour se construire correctement sur une plateforme LFS-\1.\2.</para>\">|g" \
+	    -e "s|<!ENTITY lfs\([0-9]+\)\([0-9]\)_checked [^\r]*\r[^\r]*\">|<!ENTITY lfs\1\2_checked \"<para>Ce paquet est connu pour se construire correctement sur une plateforme LFS-\1.\2.</para>\">|g" \
 	    -e "s|<!ENTITY lfs\([0-9]\)\([0-9]\)_built [^\r]*\r[^\r]*\">|<!ENTITY lfs\1\2_built \"<para>Ce paquet est connu pour se construire correctement sur une plateforme LFS-\1.\2 mais n'a pas été testé.</para>\">|g" \
             -e "s|<!ENTITY gcc7_checked [^\r]*\r[^\r]*\">|<!ENTITY gcc7_checked \"<para>Ce paquet est connu pour se construire correctement avec gcc-7.1.</para>\">|g" \
 	    -e "s|<!ENTITY lfssvn_checked [^\r]*\r[^\r]*\">|<!ENTITY lfssvn_checked \"Ce paquet est connu pour se construire correctement sur une plateforme LFS-SVN-\">|g" \
@@ -306,6 +306,7 @@ blfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	    -e "s|<!ENTITY lfssvn_checked2 [^\r]*\">|<!ENTITY lfssvn_checked2 \" .\">|g" \
 	    -e "s|<!ENTITY lfssvn_built2 [^\r]*\">|<!ENTITY lfssvn_built2 \" mais n'a pas été testé.\">|g" \
 	    -e "s|<!ENTITY as_root *\"[^\"]*\">||g" \
+	    -e "s|<!ENTITY gi-doc-disable *\"[^\"]*\">|<!ENTITY gi-doc-disable \"permet de construire ce paquet sans installer <xref linkend='gi-docgen'/>. Si vous avez installé <xref linkend='gi-docgen'/> et souhaitez reconstruire et installer la documentation de l'API, une commande <command>meson configure</command> enlèvera cette option.\">|g" \
 	    -e "s|<!ENTITY gi-doc-disable *\"[^\"]*\">|<!ENTITY gi-doc-disable \"permet de construire ce paquet sans installer <xref linkend='gi-docgen'/>. Si vous avez installé <xref linkend='gi-docgen'/> et souhaitez reconstruire et installer la documentation de l'API, une commande <command>meson configure</command> enlèvera cette option.\">|g" \
 	    -e "s|<!ENTITY not-katamari *\"[^\"]*\">|<!ENTITY not-katamari \"<para>Ce paquet ne fait pas partie de Xorg Katamari et est seulement fourni comme dépendance d'autres paquets ou pour tester l'installation complète de Xorg.</para>\">|g" \
 	    -e "s|<!ENTITY parallel_issues *\"[^\"]*\">|<!ENTITY parallel_issues \"<note><para>Ce paquet peut parfois échouer quand il est construit avec plusieurs processeurs. Voir <xref linkend='parallel-builds'/> pour plus d'information.</para></note>\">|g" \

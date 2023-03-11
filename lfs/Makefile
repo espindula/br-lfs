@@ -227,8 +227,8 @@ define createcomponent
 endef
 
 weblate/%: fr/%.po
+	@echo "[WEBLATE]" $(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@))))
 	@if $(CURL) $(WEBLATE_API)/components/linux-from-scratch/$(subst /,_,$(patsubst weblate/%,%,$@))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
-		echo $(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@)))); \
 		$(CURL) -H "Content-Type: application/json" \
 			--data-binary "$(subst ",\",${createcomponent})" \
 			$(WEBLATE_API)/projects/linux-from-scratch/components/; \
@@ -288,6 +288,7 @@ lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	    -e "s/Approximate build time/Temps de construction approximatif/g"\
 	    -e "s/Required disk space/Espace disque requis/g"\
 	    -e "s/Installation depends on/L'installation dépend de/g"\
+	    -e "s/Required at runtime/Requis à l'exécution/g"\
 	    -e "s/Test suite depends on/La suite de tests dépend de/g"\
 	    -e "s/Must be installed before/Doit être installé avant/g"\
 	    -e "s/Optional dependencies/Dépendances facultatives/g"\
