@@ -4,12 +4,12 @@
   <!ENTITY % general-entities SYSTEM "../../general.ent">
   %general-entities;
 
-  <!ENTITY libpaper-download-http "https://ftp.debian.org/debian/pool/main/libp/libpaper/libpaper_&libpaper-version;.tar.gz">
+  <!ENTITY libpaper-download-http "https://github.com/rrthomas/libpaper/releases/download/v&libpaper-version;/libpaper-&libpaper-version;.tar.gz">
   <!ENTITY libpaper-download-ftp  "">
-  <!ENTITY libpaper-md5sum        "38bc55688c0fc5544edaa5a951a45fbd">
-  <!ENTITY libpaper-size          "48 Ko">
-  <!ENTITY libpaper-buildsize     "3.5 Mo">
-  <!ENTITY libpaper-time          "moins de 0,1&nbsp;SBU">
+  <!ENTITY libpaper-md5sum        "39322b429e795e33410db65b6d2fe163">
+  <!ENTITY libpaper-size          "1,2&nbsp;Mo">
+  <!ENTITY libpaper-buildsize     "11&nbsp;Mo (avec les tests)">
+  <!ENTITY libpaper-time          "0,1&nbsp;SBU (avec les tests)">
 ]>
 
 <sect1 id="libpaper" xreflabel="libpaper-&libpaper-version;">
@@ -81,89 +81,24 @@ par l'utilisateur.
 suivantes&nbsp;:
     </para>
 
-<screen><userinput>autoreconf -fi                &amp;&amp;
-./configure --prefix=/usr     \
-            --sysconfdir=/etc \
-            --disable-static &amp;&amp;
+<screen><userinput>./configure --prefix=/usr        \
+            --sysconfdir=/etc    \
+            --disable-static     \
+            --enable-relocatable \
+            --docdir=/usr/share/doc/paper-&libpaper-version; &amp;&amp;
 make</userinput></screen>
 
     <para>
-      Ce paquet n'a pas de suite de tests.
+      Pour tester les résultats lancez&nbsp;: <command>make check</command>.
     </para>
 
     <para>
-      Maintenant, en tant qu'utilisateur <systemitem
-class="username">root</systemitem>&nbsp;:
+      Maintenant, en tant qu'utilisateur &root;&nbsp;:
     </para>
 
-<screen role="root"><userinput>make install &amp;&amp;
-mkdir -vp /etc/libpaper.d</userinput></screen>
+<screen role="root"><userinput>make install</userinput></screen>
 
-     <para>
-       Le répertoire /etc/libpaper.d contient des scripts à lancer après avoir
-changé la taille de papier. Ce paquet ne mais aucun script ici, mais
-d'autres paquets peuvent le faire. Si le paquet fcron n'a pas été installé,
-créez le script <command>run-parts</command> comme le montre la section
-<xref linkend='run-parts'/>.
-     </para>
-
-
-  <!--
-cat &gt; /usr/bin/run-parts &lt;&lt; "EOF"
-<literal>
-#!/bin/sh
-# run-parts:  Runs all the scripts found in a directory.
-# from Slackware, by Patrick J. Volkerding with ideas borrowed
-# from the Red Hat and Debian versions of this utility.
-
-# keep going when something fails
-set +e
-
-if [ $# -lt 1 ]; then
-  echo "Usage: run-parts &lt;directory&gt;"
-  exit 1
-fi
-
-if [ ! -d $1 ]; then
-  echo "Not a directory: $1"
-  echo "Usage: run-parts &lt;directory&gt;"
-  exit 1
-fi
-
-# There are several types of files that we would like to
-# ignore automatically, as they are likely to be backups
-# of other scripts:
-IGNORE_SUFFIXES="~ ^ , .bak .new .rpmsave .rpmorig .rpmnew .swp"
-
-# Main loop:
-for SCRIPT in $1/* ; do
-  # If this is not a regular file, skip it:
-  if [ ! -f $SCRIPT ]; then
-    continue
-  fi
-  # Determine if this file should be skipped by suffix:
-  SKIP=false
-  for SUFFIX in $IGNORE_SUFFIXES ; do
-    if [ ! "$(basename $SCRIPT $SUFFIX)" = "$(basename $SCRIPT)" ]; then
-      SKIP=true
-      break
-    fi
-  done
-  if [ "$SKIP" = "true" ]; then
-    continue
-  fi
-  # If we've made it this far, then run the script if it's executable:
-  if [ -x $SCRIPT ]; then
-    $SCRIPT || echo "$SCRIPT failed."
-  fi
-done
-
-exit 0</literal>
-EOF
-
-chmod -v 755 /usr/bin/run-parts</userinput></screen>
--->
-</sect2>
+  </sect2>
 
   <sect2 role="commands">
     <title>Explication des commandes</title>
@@ -172,22 +107,11 @@ chmod -v 755 /usr/bin/run-parts</userinput></screen>
       href="../../xincludes/static-libraries.xml"/>
 
     <para>
-      <command>mkdir -pv /etc/libpaper.d</command>&nbsp;:
-<application>libpaper</application> fait que les paquets installeront les
-fichiers dans ce répertoire.
+      <option>--enable-relocatable</option>: This option is needed to run the
+tests.
     </para>
 
-  <!--
-    <para>
-
-      <command>cat &gt; /usr/bin/run-parts &lt;&lt; "EOF"</command> :
-      <filename>paperconfig</filename> is a script which will invoke
-      <command>run-parts</command> if <filename
-      class="directory">/etc/libpaper.d</filename> exists. No other BLFS
-      package installs this, so we create it here.
-    </para>
--->
-</sect2>
+  </sect2>
 
   <sect2 role="configuration">
     <title>Configuration de libpaper</title>
@@ -196,16 +120,26 @@ fichiers dans ce répertoire.
       <title>Information de configuration</title>
 
       <para>
-        Créez <filename>/etc/papersize</filename> pour initialiser la taille de
-papier par défaut. Tapez les commandes suivantes en tant qu'utilisateur
-<systemitem class="username">root</systemitem> pour l'initialiser à
-&apos;A4&apos; (libpaper préfère la forme en minuscule). Vous pouvez vouloir
-utiliser une taille différente, comme letter.
+        The paper size is automatically determined from the system locale; see
+<literal>LC_PAPER</literal> in <filename>locale(7)</filename>.  If you want
+to override it, create a <filename>papersize</filename> file in the user
+configuration directory.  For example:
       </para>
 
-<screen role="root"><userinput>cat &gt; /etc/papersize &lt;&lt; "EOF"
-<literal>a4</literal>
-EOF</userinput></screen>
+<screen role="nodump"><userinput>mkdir -pv ~/.config &amp;&amp;
+echo "a4" &gt; ~/.config/papersize</userinput></screen>
+
+      <para>
+        If you want to override the paper size globally (for all users), set up the
+<envar>PAPERSIZE</envar> environment variable.  For example:
+      </para>
+
+<screen role="nodump"><userinput>echo "PAPERSIZE=a4" &gt; /etc/profile.d/libpaper.sh</userinput></screen>
+
+      <para>
+        You may use a different paper size, such as
+<quote><literal>letter</literal></quote>.
+      </para>
 
     </sect3>
 
@@ -221,13 +155,13 @@ EOF</userinput></screen>
 
       <seglistitem>
         <seg>
-          paperconf, paperconfig, run-parts
+          paper
         </seg>
         <seg>
           libpaper.so
         </seg>
         <seg>
-          /etc/libpaper.d
+          /usr/share/doc/paper-&libpaper-version;
         </seg>
       </seglistitem>
     </segmentedlist>
@@ -236,45 +170,19 @@ EOF</userinput></screen>
       <bridgehead renderas="sect3">Descriptions courtes</bridgehead>
       <?dbfo list-presentation="list"?> <?dbhtml list-presentation="table"?>
 
-      <varlistentry id="paperconf">
-        <term><command>paperconf</command></term>
+      <varlistentry id="paper">
+        <term><command>paper</command></term>
         <listitem>
           <para>
             affiche les informations de configuration du papier
           </para>
-          <indexterm zone="libpaper paperconf">
-            <primary sortas="b-paperconf">paperconf</primary>
+          <indexterm zone="libpaper paper">
+            <primary sortas="b-paper">paper</primary>
           </indexterm>
         </listitem>
       </varlistentry>
 
-      <varlistentry id="paperconfig">
-        <term><command>paperconfig</command></term>
-        <listitem>
-          <para>
-            configure la taille par défaut du papier pour le système
-          </para>
-          <indexterm zone="libpaper paperconfig">
-            <primary sortas="b-paperconfig">paperconfig</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <!--
-      <varlistentry id="run-parts">
-
-        <term><command>run-parts</command></term>
-        <listitem>
-          <para>
-            runs all the scripts found in a directory.
-          </para>
-          <indexterm zone="libpaper run-parts">
-            <primary sortas="b-run-parts">run-parts</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
--->
-<varlistentry id="libpaper-lib">
+      <varlistentry id="libpaper-lib">
         <term><filename class="libraryfile">libpaper.so</filename></term>
         <listitem>
           <para>
