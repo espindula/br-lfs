@@ -11,7 +11,7 @@ git clone https://salsa.debian.org/jamenson/lfs-pt_br.git
 
 Direitos autorais (Copyright) da Obra Derivada traduzida para o idioma 
 português escrito e falado no Brasil: (c) 2022, 2023 Jamenson Ferreira 
-Espindula de Almeida Melo (\<jafesp@gmail.com\>).
+Espindula de Almeida Melo (<jafesp@gmail.com>).
 
 # Atenção: todos os documentos aqui publicados são distribuídos sem qualquer garantia, implícita e (ou) explícita.
 
@@ -24,7 +24,8 @@ Espindula de Almeida Melo (\<jafesp@gmail.com\>).
   Compartilhamento pela mesma licença 2.0 Brasil (CC-BY-NC-SA 2.0 BR).  
   O texto da Licença pode ser acessado no endereço eletrônico 
   <https://creativecommons.org/licenses/by-nc-sa/2.0/br/legalcode>.
-  
+
+
 # Warning: all the files herein published are released with no warranty, implicit and (or) explicit.
 
   All source files and all rendered files from the source files of this 
