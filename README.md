@@ -32,10 +32,10 @@ Espindula de Almeida Melo (<jafesp@gmail.com>).
   translation work of the book "Linux From Scratch" are classified by 
   Creative Commons Corporation as being "Derivative Works" of the 
   respective originals written in the English language of the mentioned 
-  book and are licensed under the terms of the Creative Commons License 
-  - Attribution - Non-Commercial - Share Alike 2.0 Brazil (CC-BY-NC-SA 
-  2.0 BR). The text of the License can be accessed at the electronic 
-  address 
+  book and are licensed under the terms of the Creative Commons
+  License - Attribution - Non-Commercial - Share Alike 2.0 Brazil 
+  (CC-BY-NC-SA 2.0 BR). The text of the License can be accessed at the 
+  electronic address 
   <https://creativecommons.org/licenses/by-nc-sa/2.0/br/legalcode>.
 
 
