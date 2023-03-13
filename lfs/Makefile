@@ -298,8 +298,6 @@ lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 	    -e "s|&lfs-root;hints/downloads/files/|https://fr.linuxfromscratch.org/view/astuces/|g"\
 	    -e "s|short-version   \"%relnum;-systemd\"|short-version   \"%relnum;-systemd-fr\"|g"\
 	    -e "s|short-version   \"%relnum;\"|short-version   \"%relnum;-fr\"|g"\
-	    -e "s|generic-version \"%relnum;-systemd\"|generic-version \"%relnum;-systemd-fr\"|g"\
-	    -e "s|generic-version \"%relnum;\"|generic-version \"%relnum;-fr\"|g"\
 	    $< > $@
 
 lfsgen-fr/packages.ent: $(ORIGDIR)/packages.ent
