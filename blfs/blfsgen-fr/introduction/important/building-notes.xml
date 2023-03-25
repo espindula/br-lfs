@@ -614,17 +614,20 @@ ici. Voir plus bas les paragraphes sur l'optimisation.
     <bridgehead renderas="sect3" id="stripping-installed">Nettoyer les exécutables installés</bridgehead>
 
     <para>
-      L'utilitaire <command>strip</command> modifie les fichiers en place, ce qui
-peut casser tout ce qui l'utilise s'il est chargé en mémoire. Remarquez que
-si un fichier est utilisé mais simplement supprimé du disque (c.-à-d. pas
-écrasé ou modifié), ce n'est pas un problème car le noyau peut utiliser des
-fichiers <quote>supprimés</quote>. Regardez dans
-<filename>/proc/*/maps</filename>, et il est probable que vous verrez des
-entrées <emphasis>(deleted)</emphasis>. La commande <command>mv</command>
-supprime seulement le fichier de destination du répertoire mais ne change
-pas son contenu, donc elle satisfait aux conditions pour que le noyau
-utilise l'ancien fichier supprimé. Le script ci-dessous est juste un
-exemple. Il devrait être lancé en &root;&nbsp;:
+      The <command>strip</command> utility changes files in place, which may break
+anything using it if it is loaded in memory. Note that if a file is in use
+but just removed from the disk (i.e. not overwritten nor modified), this is
+not a problem since the kernel can use <quote>deleted</quote> files.  Look
+at <filename>/proc/*/maps</filename> and it is likely that you'll see some
+<emphasis>(deleted)</emphasis> entries. The <command>mv</command> just
+removes the destination file from the directory but does not touch its
+content, so that it satisfies the condition for the kernel to use the old
+(deleted) file.  But this approach can detach hard links into duplicated
+copies, causing a bloat which is obviously unwanted as we are stripping to
+reduce system size.  If two files in a same file system share the same inode
+number, they are hard links to each other and we should reconstruct the
+link.  The script below is just an example.  It should be run as the &root;
+user:
     </para>
 
 <screen><userinput>cat &gt; /usr/sbin/strip-all.sh &lt;&lt; "EOF"
@@ -635,17 +638,28 @@ if [ $EUID -ne 0 ]; then
   exit 1
 fi
 
+last_fs_inode=
+last_file=
+
 { find /usr/lib -type f -name '*.so*' ! -name '*dbg'
   find /usr/lib -type f -name '*.a'
   find /usr/{bin,sbin,libexec} -type f
-} |  while read file; do
+} | xargs stat -c '%m %i %n' | sort | while read file; do
        if ! readelf -h $file >/dev/null 2>&amp;1; then continue; fi
        if file $file | grep --quiet --invert-match 'not stripped'; then continue; fi
+
+       if [ "$fs $inode" = "$last_fs_inode" ]; then
+         ln -f $last_file $file;
+         continue;
+       fi
 
        cp --preserve $file    ${file}.tmp
        strip --strip-unneeded ${file}.tmp
        mv ${file}.tmp $file
-     done</literal>
+
+       last_fs_inode="$fs $inode"
+       last_file=$file
+done</literal>
 EOF
 chmod 744 /usr/sbin/strip-all.sh</userinput></screen>
 
