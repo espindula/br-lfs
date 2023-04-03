@@ -220,15 +220,15 @@ define createcomponent
 	"file_format": "po", \
 	"repo": "weblate://faq/faq", \
 	"filemask": "lfs/*/$(patsubst fr/%,%,$<)", \
-	"name": "$(subst /,_,$(patsubst weblate/%,%,$@))", \
-	"slug": "$(subst /,_,$(patsubst weblate/%,%,$@))", \
+	"name": "$(subst /,_,$(subst +,_,$(patsubst weblate/%,%,$@)))", \
+	"slug": "$(subst /,_,$(subst +,_,$(patsubst weblate/%,%,$@)))", \
 	"new_lang": "contact" \
 }
 endef
 
 weblate/%: fr/%.po
-	@echo "[WEBLATE]" $(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@))))
-	@if $(CURL) $(WEBLATE_API)/components/linux-from-scratch/$(subst /,_,$(patsubst weblate/%,%,$@))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
+	@echo "[WEBLATE]" $(subst /,_,$(subst +,_,$(patsubst weblate/%,%,$@)))
+	@if $(CURL) $(WEBLATE_API)/components/linux-from-scratch/$(subst /,_,$(subst +,_,$(patsubst weblate/%,%,$@)))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
 		$(CURL) -H "Content-Type: application/json" \
 			--data-binary "$(subst ",\",${createcomponent})" \
 			$(WEBLATE_API)/projects/linux-from-scratch/components/; \
