@@ -2,8 +2,9 @@
 
 # Use make L=... to build only a subset of the languages.
 
-LANGUAGES := fr zh_CN
+LANGUAGES := fr pt_BR zh_CN
 LANG_fr := fr_FR.UTF-8
+LANG_pt_BR := pt_BR.UTF-8
 LANG_zh_CN := zh_CN.UTF-8
 UPLOAD_LANGUAGES := fr
 L = all
@@ -330,4 +331,54 @@ lfsgen-fr/epub.mk: epub.mk
 lfsgen-fr/.git: $(ORIGDIR)/.git
 	mkdir -p lfsgen-fr
 	cp -r $< lfsgen-fr
+	chmod +w -R $@
+
+##
+## Brazilian Portuguese translation of non po files
+##
+
+lfsgen-pt_BR/general.ent: $(ORIGDIR)/general.ent
+	mkdir -p lfsgen-pt_BR
+	sysv_date=$$(grep " version " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
+	sysd_date=$$(grep " versiond " $< | sed 's/.*"\([^"]\+\)".*/\1/');\
+	date=$$(grep "% reldate" $< | sed 's/.*"\([^"]\+\)".*/\1/');\
+	ptdate=$$(LANG=$(LANG_pt_BR) date -d "$$(echo $${date} | sed 's|1st|1|')" "+%d %B %Y");\
+	sed -e "s/$$date/$$ptdate/g"\
+	    -e "s/Approximate build time/Tempo aproximado de construção/g"\
+	    -e "s/Required disk space/Espaço em disco exigido/g"\
+	    -e "s/Installation depends on/A Instalação depende de/g"\
+	    -e "s/Required at runtime/Exigido em tempo de execução/g"\
+	    -e "s/Test suite depends on/A suíte de teste depende de/g"\
+	    -e "s/Must be installed before/Precisa ser instalado antes de/g"\
+	    -e "s/Optional dependencies/Dependências opcionais/g"\
+	    $< > $@
+
+lfsgen-pt_BR/packages.ent: $(ORIGDIR)/packages.ent
+	mkdir -p lfsgen-pt_BR
+	sed -e "s/less than/menos que/g"\
+	    -e "s/typically about/tipicamente cerca de/g"\
+	    -e "s/about/cerca de/g"\
+	    -e "s/with tests/com os testes/g"\
+	    $< > $@
+
+lfsgen-pt_BR/patches.ent: $(ORIGDIR)/patches.ent
+	mkdir -p lfsgen-pt_BR
+	cp $< $@
+
+lfsgen-pt_BR/tidy.conf: $(ORIGDIR)/tidy.conf
+	mkdir -p lfsgen-pt_BR
+	sed -e "s/latin1/UTF8/g" \
+	    $< > $@
+
+lfsgen-pt_BR/Makefile: $(ORIGDIR)/Makefile lfsgen-pt_BR/epub.mk
+	mkdir -p lfsgen-pt_BR
+	sed -e '/&copy;/d' -e 's|book:|include epub.mk\nbook:|' $< > $@
+
+lfsgen-pt_BR/epub.mk: epub.mk
+	mkdir -p lfsgen-pt_BR
+	cp $< $@
+
+lfsgen-pt_BR/.git: $(ORIGDIR)/.git
+	mkdir -p lfsgen-pt_BR
+	cp -r $< lfsgen-pt_BR
 	chmod +w -R $@
