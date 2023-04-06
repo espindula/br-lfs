@@ -52,6 +52,8 @@ regexps = []
 
 # no translation
 regexps.append([re.compile('(<\\?dbfo list-presentation="list"\\?> <\\?dbhtml list-presentation="table"\\?>)$'), '#1'])
+regexps.append([re.compile('(<othername>.*</othername> <date>.*</date>)', re.MULTILINE|re.DOTALL), '#1'])
+regexps.append([re.compile('(<date>.*</date>)', re.MULTILINE|re.DOTALL), '#1'])
 # find an MD5 sum
 regexps.append([re.compile('([a-f0-9]{32})$'), '#1'])
 # convert KB to Ko, MB to Mo and GB to Go, and keep SBU
@@ -91,10 +93,8 @@ regexps.append([re.compile('User Notes: (.*)$'), 'Notes utilisateur&nbsp;: #1'])
 # Titres
 regexps.append([re.compile('Installation of (.*)$'), 'Installation de #1'])
 regexps.append([re.compile('Command Explanations$'), 'Explication des commandes'])
-regexps.append([re.compile('Config files$'), 'Fichiers de configuration'])
-regexps.append([re.compile('Config file$'), 'Fichier de configuration'])
-regexps.append([re.compile('Config Files$'), 'Fichiers de configuration'])
-regexps.append([re.compile('Config File$'), 'Fichier de configuration'])
+regexps.append([re.compile('Config [fF]iles$'), 'Fichiers de configuration'])
+regexps.append([re.compile('Config [fF]ile$'), 'Fichier de configuration'])
 regexps.append([re.compile('Configuring ([^ ]+)$'), 'Configuration de #1'])
 regexps.append([re.compile('Kernel Configuration$'), 'Configuration du noyau'])
 regexps.append([re.compile('Enable the following options in the kernel configuration and recompile the kernel if necessary:$'), 'Activez les options suivantes dans la configuration du noyau et recompilez le noyau si nécessaire&nbsp;:'])
@@ -146,8 +146,6 @@ regexps.append([re.compile('(<.*>): This switch is used to apply( a)? higher lev
 regexps.append([re.compile('(<ulink [^>]*/>)$', re.MULTILINE|re.DOTALL), '#1'])
 regexps.append([re.compile('(<ulink [^>]*/>, )+, and (<ulink [^>]*/>)$', re.MULTILINE|re.DOTALL), '#1 et #2'])
 regexps.append([re.compile('Fix a build issue with ([^ ]+)$', re.MULTILINE|re.DOTALL), 'Corrigez un problème de construction avec #1.'])
-regexps.append([re.compile('(<othername>.*</othername> <date>.*</date>)', re.MULTILINE|re.DOTALL), '#1'])
-regexps.append([re.compile('(<date>.*</date>)', re.MULTILINE|re.DOTALL), '#1'])
 
 
 #regexps.append([re.compile('$'), ''])
