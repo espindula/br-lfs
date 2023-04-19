@@ -303,11 +303,15 @@ lfsgen-fr/general.ent: $(ORIGDIR)/general.ent
 
 lfsgen-fr/packages.ent: $(ORIGDIR)/packages.ent
 	mkdir -p lfsgen-fr
-	sed -e "s/KB/Ko/g" -e "s/MB/Mo/g" -e "s/GB/Go/g"\
+	sed -e "s/ KB/\&nbsp;Ko/g" -e "s/ MB/\&nbsp;Mo/g" -e "s/ GB/\&nbsp;Go/g"\
+	    -e "s/ SBU/\&nbsp;SBU/g"\
 	    -e "s/less than/moins de/g"\
 	    -e "s/typically about/en général environ/g"\
 	    -e "s/about/environ/g"\
 	    -e "s/with tests/avec les tests/g"\
+	    -e "s/\([0-9]\+\),\([0-9]\+\)/\1\&nbsp;\2/g"\
+	    -e "s/\([0-9]\+\)\.\([0-9]\+\)&/\1,\2\&/g"\
+	    -e "s/\(-sbu.*\)\([0-9]\+\)\.\([0-9]\+\)/\1\2,\3/g"\
 	    $< > $@
 
 lfsgen-fr/patches.ent: $(ORIGDIR)/patches.ent
@@ -359,6 +363,11 @@ lfsgen-pt_BR/packages.ent: $(ORIGDIR)/packages.ent
 	    -e "s/typically about/tipicamente cerca de/g"\
 	    -e "s/about/cerca de/g"\
 	    -e "s/with tests/com os testes/g"\
+	    -e "s/SBU/UPC/g"\
+	    -e "s/\([0-9]\+\),\([0-9]\+\)/\1:::\2/g"\
+	    -e "s/\(-sbu.*\)\([0-9]\+\)\.\([0-9]\+\)/\1\2,\3/g"\
+	    -e "s/\([0-9]\+\)\.\([0-9]\+\) /\1,\2 /g"\
+	    -e "s/\([0-9]\+\):::\([0-9]\+\)/\1.\2/g"\
 	    $< > $@
 
 lfsgen-pt_BR/patches.ent: $(ORIGDIR)/patches.ent
