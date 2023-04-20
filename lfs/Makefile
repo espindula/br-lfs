@@ -314,6 +314,7 @@ lfsgen-fr/packages.ent: $(ORIGDIR)/packages.ent
 	    -e "s/\(-sbu.*\)\([0-9]\+\)\.\([0-9]\+\)/\1\2,\3/g"\
 	    -e "s/on a spinning disk/sur un disque dur/g"\
 	    -e "s/on an SSD/sur un SSD/g"\
+	    -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g'\
 	    $< > $@
 
 lfsgen-fr/patches.ent: $(ORIGDIR)/patches.ent
@@ -372,6 +373,7 @@ lfsgen-pt_BR/packages.ent: $(ORIGDIR)/packages.ent
 	    -e "s/\([0-9]\+\):::\([0-9]\+\)/\1.\2/g"\
 	    -e "s/on a spinning disk/em um disco rotatório/g"\
 	    -e "s/on an SSD/em um SSD/g"\
+	    -e 's|encoding="ISO-8859-1"|encoding="UTF-8"|g'\
 	    $< > $@
 
 lfsgen-pt_BR/patches.ent: $(ORIGDIR)/patches.ent
