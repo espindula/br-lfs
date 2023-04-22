@@ -7,10 +7,10 @@
   <!ENTITY nfs-utils-root "&kernel-dl;/linux/utils/nfs-utils" >
   <!ENTITY nfs-utils-download-http "&nfs-utils-root;/&nfs-utils-version;/nfs-utils-&nfs-utils-version;.tar.xz">
   <!ENTITY nfs-utils-download-ftp  "">
-  <!ENTITY nfs-utils-md5sum        "0961dc4777363b88f10305fc4957449f">
-  <!ENTITY nfs-utils-size          "700&nbsp;Ko">
-  <!ENTITY nfs-utils-buildsize     "17 Mo">
-  <!ENTITY nfs-utils-time          "0.2 SBU">
+  <!ENTITY nfs-utils-md5sum        "d47ff4ca79b71d64d37c0f0e81aae134">
+  <!ENTITY nfs-utils-size          "712&nbsp;Ko">
+  <!ENTITY nfs-utils-buildsize     "17 MB (with tests">
+  <!ENTITY nfs-utils-time          "0,2&nbsp;SBU (avec les tests)">
 ]>
 
 <sect1 id="nfs-utils" xreflabel="nfs-utils-&nfs-utils-version;">
@@ -73,7 +73,8 @@ fichiers sur un réseau.
 
     <bridgehead renderas="sect4">Requises</bridgehead>
     <para role="required">
-      <xref linkend="libtirpc"/> et <xref linkend="rpcsvc-proto"/>
+      <xref linkend="libtirpc"/>, <xref linkend="libevent"/>, <xref
+linkend="rpcsvc-proto"/>, and <xref linkend="sqlite"/>
     </para>
 
     <bridgehead renderas="sect4">Facultatives</bridgehead>
@@ -81,15 +82,13 @@ fichiers sur un réseau.
       <!--<xref linkend="libnfsidmap"/>
  (for NFSv4 support),
       This is now built in, as of 2.2.1-->
-<xref linkend="cyrus-sasl"/> (pour l'authentification SASL), <xref
-linkend="lvm2"/> (libdevmapper pour la prise en charge de NFSv4), <xref
-linkend="libnsl"/> (pour le client NIS), <xref linkend="openldap"/> (pour
-l'authentification LDAP), <xref linkend="sqlite"/>, <xref linkend="mitkrb"/>
-ou <ulink
-url="http://www.citi.umich.edu/projects/nfsv4/linux/">libgssapi</ulink> et
-<ulink
-url="http://www.citi.umich.edu/projects/nfsv4/linux/">librpcsecgss</ulink>
-(pour la prise en charge de la sécurité RPC et GSS) et <xref
+<xref linkend="cyrus-sasl"/> (for SASL authentication), <xref
+linkend="lvm2"/> (libdevmapper for NFSv4 support), <xref linkend="libnsl"/>
+(for NIS client support), <xref linkend="openldap"/> (for LDAP
+authentication), <xref linkend="mitkrb"/> or <ulink
+url="http://www.citi.umich.edu/projects/nfsv4/linux/"> libgssapi </ulink>,
+and <ulink url="http://www.citi.umich.edu/projects/nfsv4/linux/">
+librpcsecgss </ulink> (for GSS and RPC security support), and <xref
 linkend="libcap-pam"/>
     </para>
 
@@ -194,45 +193,43 @@ commandes suivantes&nbsp;:
     </para>
 
 <!-- Test breakage: see
-    http://lists.linuxfromscratch.org/pipermail/blfs-book/2017-December/071861.html -->
+    http://lists.linuxfromscratch.org/pipermail/blfs-book/2017-December/071861.html 
+    <para>
+
+      This package does not come with a working test suite.
+    </para>
+    -->
 <screen><userinput>./configure --prefix=/usr          \
             --sysconfdir=/etc      \
             --sbindir=/usr/sbin    \
             --disable-nfsv4        \
-            --disable-gss &amp;&amp;
+            --disable-gss i        \
+            LIBS="-lsqlite3 -levent_core" &amp;&amp;
 make</userinput></screen>
 
     
-    <para>
-      Ce paquet ne contient pas de suite de tests utilisable.
-    </para>
 
     <para>
-      Maintenant, en tant qu'utilisateur <systemitem
-class="username">root</systemitem>&nbsp;:
+      Maintenant, en tant qu'utilisateur &root;&nbsp;:
     </para>
 
 
 
-<!-- commented, in case the tests get fixed
-    <para>
-
-      The tests for this package require that the package be installed and
-      configured as specified below.  In addition, the daemon from <xref
-      linkend="rpcbind"/> needs to be running and the tests need to be run as
-      the <systemitem class="username">root</systemitem> user.
-    </para>
-
-    <para>
-      To test the results, issue, as root: <command>make check</command>.
-    </para>-->
 <screen role='root'><!-- dev note: make statduser=$(whoami) DESTDIR=<DESTDIR>
  install -->
-<userinput>make install                      &amp;&amp;
-chmod u+w,go+r /usr/sbin/mount.nfs    &amp;&amp;
-chown nobody.nogroup /var/lib/nfs</userinput></screen>
+<userinput>make install                       &amp;&amp;
+chmod u+w,go+r /usr/sbin/mount.nfs &amp;&amp;
+chown nobody:nogroup /var/lib/nfs</userinput></screen>
 
-    
+    <para>
+      The tests for this package require that the package be installed.  In
+addition, the rpc.statd daemon must not be running and the tests need to be
+run as the &root; user.
+    </para>
+
+    <para>
+      To test the results, issue, as &root;: <command>make check</command>.
+    </para>
 
   </sect2>
 
@@ -258,9 +255,14 @@ GSS (RPC Security).
     </para>
 
     <para>
-      <command>chown nobody.nogroup /var/lib/nfs</command>&nbsp;: Le programme
-rpc.statd utilise la propriété de ce répertoire pour initialiser son UID et
-son GID. Cette commande les donne à un utilisateur non privilégié.
+      <parameter>LIBS="-lsqlite3 -levent_core"</parameter>: is required for the
+fsidd program.
+    </para>
+
+    <para>
+      <command>chown nobody:nogroup /var/lib/nfs</command>: The rpc.statd program
+uses the ownership of this directory to set it's UID and GID.  This command
+sets those to unprivileged entries.
     </para>
 
   </sect2>
@@ -462,10 +464,10 @@ le script de démarrage <filename>netfs</filename> comme décrit au chapitre
       <segtitle>Répertoires installés</segtitle>
 
       <seglistitem>
-        <seg>exportfs, mountstats, mount.nfs, mount.nfs4 (lien vers mount.nfs), nfsconf,
-nfsdclnts, nfsiostat, nfsstat, rpc.mountd, rpc.nfsd, rpc.statd, rpcdebug,
-showmount, sm-notify, start-statd, umount.nfs (lien vers mount.nfs) et
-umount.nfs4 (lien vers mount.nfs)</seg>
+        <seg>exportfs, fsidd, mountstats, mount.nfs, mount.nfs4 (link to mount.nfs),
+nfsconf, nfsdclnts, nfsiostat, nfsstat, rpc.mountd, rpc.nfsd, rpc.statd,
+rpcdebug, showmount, sm-notify, start-statd, umount.nfs (link to mount.nfs),
+and umount.nfs4 (link to mount.nfs)</seg>
         <seg>Aucune</seg>
         <seg>/var/lib/nfs</seg>
       </seglistitem>
@@ -483,6 +485,19 @@ umount.nfs4 (lien vers mount.nfs)</seg>
           </para>
           <indexterm zone="nfs-utils exportfs">
             <primary sortas="b-exportfs">exportfs</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="fsidd">
+        <term><command>fsidd</command></term>
+        <listitem>
+          <para>
+            offers a local UNIX domain socket interface for all NFS userspace to query
+the reexport database
+          </para>
+          <indexterm zone="nfs-utils fsidd">
+            <primary sortas="b-fsidd">fsidd</primary>
           </indexterm>
         </listitem>
       </varlistentry>
