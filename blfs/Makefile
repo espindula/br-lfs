@@ -17,6 +17,7 @@ EN_REPO:=git://git.linuxfromscratch.org/blfs.git
 RENDERTMP=/tmp
 
 WEBLATE_API:=https://bright.lepiller.eu/api
+WEBLATE_SHARED_COMPONENT=faq/faq
 CURL=curl -H "Authorization: Token $(WEBLATE_KEY)"
 
 
@@ -232,6 +233,9 @@ weblate/%: fr/%.po
 	fi
 
 weblate-up:
+	wlc commit $(WEBLATE_SHARED_COMPONENT)
+	wlc push $(WEBLATE_SHARED_COMPONENT)
+	wlc lock $(WEBLATE_SHARED_COMPONENT)
 	git pull --ff-only
 	$(MAKE) gitup
 	$(MAKE) update
@@ -267,6 +271,9 @@ commit: weblate-up
 	git add .
 	git commit -m 'Automatic BLFS commit based on $(REVISION)'
 	git push
+	wlc pull $(WEBLATE_SHARED_COMPONENT)
+	wlc unlock $(WEBLATE_SHARED_COMPONENT)
+	$(MAKE) weblate
 
 blfsgen-%/pdf.mk: pdf.mk
 	mkdir -p $$(dirname $@)
