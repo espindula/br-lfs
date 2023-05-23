@@ -273,7 +273,7 @@ commit: weblate-up
 	git push
 	wlc pull $(WEBLATE_SHARED_COMPONENT)
 	wlc unlock $(WEBLATE_SHARED_COMPONENT)
-	$(MAKE) weblate
+	#$(MAKE) weblate # too much memory needed
 
 blfsgen-%/pdf.mk: pdf.mk
 	mkdir -p $$(dirname $@)
