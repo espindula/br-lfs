@@ -274,7 +274,7 @@ commit: weblate-up
 	git push
 	wlc pull $(WEBLATE_SHARED_COMPONENT)
 	wlc unlock $(WEBLATE_SHARED_COMPONENT)
-	$(MAKE) weblate
+	#$(MAKE) weblate
 
 ###############################################################################
 # These files are not translated using po files. We use sed to modify them    #
