@@ -5,10 +5,10 @@
   %general-entities;
 
   <!ENTITY gnome-session-download-http
-           "&gnome-download-http;/gnome-session/&gnome-43;/gnome-session-&gnome-session-version;.tar.xz">
+           "&gnome-download-http;/gnome-session/&gnome-44;/gnome-session-&gnome-session-version;.tar.xz">
   <!ENTITY gnome-session-download-ftp
-           "&gnome-download-ftp;/gnome-session/&gnome-43;/gnome-session-&gnome-session-version;.tar.xz">
-  <!ENTITY gnome-session-md5sum        "02ae90bc41fd06e780169b760fb55670">
+           "&gnome-download-ftp;/gnome-session/&gnome-44;/gnome-session-&gnome-session-version;.tar.xz">
+  <!ENTITY gnome-session-md5sum        "0223353306fb2e5b84bd42e3fde905f0">
   <!ENTITY gnome-session-size          "476 Ko">
   <!ENTITY gnome-session-buildsize     "12&nbsp;Mo">
   <!ENTITY gnome-session-time          "0,1&nbsp;SBU">
@@ -102,15 +102,16 @@ pour que <command>gnome-session</command> utilise un shell de
 connexion&nbsp;:
     </para>
 
-<screen><userinput>sed 's@/bin/sh@/bin/sh -l@' -i gnome-session/gnome-session.in</userinput></screen>
-
-
+<!--
     <para revision="sysv">
-      Adaptez meson.build pour que gnome-session puisse construire sans
-systemd&nbsp;:
+
+      Adapt meson.build so that gnome-session can build without systemd:
     </para>
 
 <screen revision="sysv"><userinput remap="pre">sed -i "/  systemd_dep/,+3d;/if enable_systemd/a \    systemd_userunitdir = '/tmp\'" meson.build</userinput></screen>
+-->
+<screen><userinput>sed 's@/bin/sh@/bin/sh -l@' -i gnome-session/gnome-session.in</userinput></screen>
+
 
     <para>
       Installez <application>GNOME Session</application> en exécutant les
@@ -120,10 +121,11 @@ commandes suivantes&nbsp;:
 <screen revision="sysv"><userinput>mkdir build &amp;&amp;
 cd    build &amp;&amp;
 
-meson setup --prefix=/usr           \
-            --buildtype=release     \
-            -Dsystemd_journal=false \
-            ..                      &amp;&amp;
+meson setup --prefix=/usr             \
+            --buildtype=release       \
+            -Dsystemd_journal=false   \
+            -Dsystemduserunitdir=/tmp \
+            ..                        &amp;&amp;
 ninja</userinput></screen>
 
 <screen revision="systemd"><userinput>mkdir build &amp;&amp;
@@ -163,18 +165,19 @@ le fichier supplémentaire ne s'affiche comme option dans un gestionnaire
 d'affichage. En tant qu'utilisateur &root;&nbsp;:
     </para>
 
-<screen role="root"><userinput>rm -v /usr/share/xsessions/gnome.desktop &amp;&amp;
-rm -v /usr/share/wayland-sessions/gnome.desktop</userinput></screen>
-
+<!--
     <para revision="sysv">
-      Maintenant, en tant qu'utilisateur <systemitem
-class="username">root</systemitem>, supprimez les unités systemd qui sont
-inutels sur un système SysV&nbsp;:
+
+      Now, as the <systemitem class="username">root</systemitem> user,
+      remove systemd units that are useless on SysV systems:
     </para>
 
+<screen role="root" revision="sysv"><userinput>rm -rv /tmp/{*.d,*.target,*.service}</userinput></screen>
+-->
 <!-- this part is not needed on systemd, since the dbus session is created
 by systemd-user.-->
-<screen role="root" revision="sysv"><userinput>rm -rv /tmp/{*.d,*.target,*.service}</userinput></screen>
+<screen role="root"><userinput>rm -v /usr/share/xsessions/gnome.desktop &amp;&amp;
+rm -v /usr/share/wayland-sessions/gnome.desktop</userinput></screen>
 
 
     <para revision="sysv">
@@ -194,7 +197,14 @@ tant qu'utilisateur &root;&nbsp;:
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
       href="../../xincludes/meson-buildtype-release.xml"/>
-   </sect2>
+
+    <para revision="sysv">
+      <parameter>-Dsystemd_journal=false</parameter> and
+<parameter>-Dsystemduserunitdir=/tmp</parameter>: Allow building with
+elogind support on a SysV based system.
+    </para>
+
+  </sect2>
 
   <sect2 role="starting">
     <title>Démarrer GNOME</title>
