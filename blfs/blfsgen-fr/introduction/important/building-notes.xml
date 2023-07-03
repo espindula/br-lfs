@@ -21,12 +21,11 @@ laquelle vous pouvez télécharger le paquet. Cependant, les correctifs sont
 enregistrés sur les serveurs LFS et disponibles via HTTP. Ces derniers sont
 référencés, si besoin, dans les instructions d'installation.</para>
 
-  <para>Même si vous pouvez placer les fichiers sources où vous voulez, nous
-supposons que vous avez extrait le paquet et êtes allé dans le répertoire
-créé par le processus de décompression (le répertoire de
-«&nbsp;construction&nbsp;»). Nous supposons aussi que vous avez décompressé
-les correctifs requis et qu'ils sont dans le répertoire directement
-au-dessus du répertoire de «&nbsp;construction&nbsp;».</para>
+  <para>While you can keep the source files anywhere you like, we assume that you
+have unpacked the package and changed into the directory created by the
+unpacking process (the source directory).  We also assume you have
+uncompressed any required patches and they are in the directory immediately
+above the source directory.</para>
 
   <para>Nous ne saurions que trop vous recommander de démarrer à partir d'une
 <emphasis>arborescence de sources propre</emphasis> à chaque fois.  Cela
@@ -77,16 +76,21 @@ plus évidentes les erreurs produites durant le processus.</para>
 
 <screen><userinput>bzcat filename.tar.bz2 | tar -xv</userinput></screen>
 
-    <para>Enfin, vous avez parfois besoin de décompresser des correctifs qui ne sont
-généralement pas au format <filename class='extension'>.tar</filename>. La
-meilleure manière de le faire est de copier le fichier correctif dans le
-parent du répertoire de «&nbsp;construction&nbsp;» puis d'exécuter une des
-commandes suivantes selon que le fichier est un <filename
-class='extension'>.gz</filename> ou un <filename
-class='extension'>.bz2</filename>&nbsp;:</para>
+    <para>
+      Finally, sometimes we have a compressed patch file in <filename
+class='extension'>.patch.gz</filename> or <filename
+class='extension'>.patch.bz2</filename> format.  The best way to apply the
+patch is piping the output of the decompressor to the
+<command>patch</command> utility.  For example:
+    </para>
 
-<screen><userinput>gunzip -v patchname.gz
-bunzip2 -v patchname.bz2</userinput></screen>
+    <screen><userinput>gzip -cd ../patchname.patch.gz | patch -p1</userinput></screen>
+
+    <para>
+      Or for a patch compressed with <command>bzip2</command>:
+    </para>
+
+    <screen><userinput>bzcat ../patchname.patch.bz2 | patch -p1</userinput></screen>
 
   </sect2>
 
@@ -229,38 +233,40 @@ utiliser&nbsp;:
     <screen><userinput>ninja -j2</userinput></screen>
 
     <para>
-      mais pour ninja, le nombre de processus par défaut est &lt;N&gt;+2, où
-&lt;N&gt; est le nombre de processeurs disponibles, de telle sorte que la
-commande précédente sert plutôt à limiter le nombre de tâches (voir plus bas
-pour comprendre pourquoi).
+      but for ninja, the default number of jobs is N + 2, if the number of logical
+processors N is greater than 2; or N + 1 if N is 1 or 2.  The reason to use
+a number of jobs slightly greater than the number of logical processors is
+keeping all logical processors busy even if some jobs are performing I/O
+operatations.
     </para>
 
-    <para>Généralement le nombre de processus ne doit pas dépasser le nombre de cœurs
-supportés par le CPU. Pour lister les processeurs de votre système,
-tapez&nbsp;: <userinput>grep processor /proc/cpuinfo</userinput>.
+    <para>Generally the number of processes should not exceed the number of cores
+supported by the CPU too much.  To list the processors on your system,
+issue: <userinput>grep processor /proc/cpuinfo</userinput>.
     </para>
 
-    <para>Dans certains cas, l'utilisation de processeurs multiples peut amener dans
-une situation de «&nbsp;compétition&nbsp;» où le succès de la construction
-dépend de l'ordre des commandes lancées par le programme
-<command>make</command>. Par exemple, si un exécutable demande un fichier A
-et un fichier B, essayer de lier le programme avant qu'un des composants
-dépendants ne soit disponible aboutira à un échec.  Cela arrive en général
-quand les développeurs n'ont pas correctement désigné tous les prérequis
-utiles pour accomplir une étape du Makefile.</para>
+    <para>In some cases, using multiple processes may result in a race condition where
+the success of the build depends on the order of the commands run by the
+<command>make</command> program.  For instance, if an executable needs File
+A and File B, attempting to link the program before one of the dependent
+components is available will result in a failure.  This condition usually
+arises because the upstream developer has not properly designated all the
+prerequisites needed to accomplish a step in the Makefile.</para>
 
-    <para>Si cela arrive, la meilleure chose à faire est de recommencer la
-construction avec un seul processeur. En ajoutant «&nbsp;-j1&nbsp;» à une
-commande make, cela écrasera l'initialisation similaire dans une variable
-d'environnement <envar>MAKEFLAGS</envar>.</para>
+    <para>If this occurs, the best way to proceed is to drop back to a single
+processor build.  Adding <option>-j1</option> to a make command will
+override the similar setting in the <envar>MAKEFLAGS</envar> environment
+variable.</para>
 
-    <note><para>Lorsque vous lancez les tests du paquet ou l'installation du paquet, nous ne
-recommandons pas d'utiliser une option plus grande que «&nbsp;-j1&nbsp;» à
-moins que cela ne soit spécifiquement indiqué. Les procédures d'installation
-et les tests n'ont pas été validés avec des processus en parallèle et
-peuvent échouer avec des problème difficiles à déboguer.</para></note>
-
-    <important>
+    <!-- outdated
+    <note>
+<para>When running the package tests or the install portion of the
+    package build process, we do not recommend using an option greater than
+    '-j1' unless specified otherwise.  The installation procedures or checks
+    have not been validated using parallel procedures and may fail with issues
+    that are difficult to debug.</para></note>
+-->
+<important>
       <para>
         Un autre problème peut survenir avec les CPU modernes avec beaucoup de
 cœurs. Chaque tâche démarrée consomme de la mémoire, et si la somme de la
@@ -307,18 +313,19 @@ questions. Une méthode pour automatiser ce type de scénario est de mettre
 les réponses désirées dans un fichier et d'utiliser la redirection pour que
 le programme utilise les données du fichier comme réponses aux questions.</para>
 
-    <para>La construction du paquet <application>CUPS</application> est un bon exemple
-de la façon de rediriger un fichier comme entrée aux invites, cela peut vous
-aider à automatiser la construction. Si vous lancez la suite de test, on
-vous demande de répondre à une série de questions concernant le type de test
-à exécuter et si vous avez des programmes auxiliaires que le test peut
-utiliser. Vous pouvez créer un fichier avec vos réponses, une par ligne, et
-utiliser une commande ressemblant à celle indiquée ci-dessous pour
-automatiser l'exécution de la suite de tests&nbsp;:</para>
+    <!-- outdated
+    <para>
+Building the <application>CUPS</application> package is a good
+    example of how redirecting a file as input to prompts can help you automate
+    the build. If you run the test suite, you are asked to respond to a series
+    of questions regarding the type of test to run and if you have any
+    auxiliary programs the test can use. You can create a file with your
+    responses, one response per line, and use a command similar to the
+    one shown below to automate running the test suite:</para>
 
 <screen><userinput>make check &lt; ../cups-1.1.23-testsuite_parms</userinput></screen>
-
-    <para>Cela fait logiquement utilise les réponses du fichier comme entrée pour les
+-->
+<para>Cela fait logiquement utilise les réponses du fichier comme entrée pour les
 questions de la suite de tests. Vous aurez parfois à faire des séries
 d'essais et erreurs pour déterminer le format exact de votre fichier
 d'entrée pour certaines choses, mais une fois expérimenté et documenté, vous
@@ -395,15 +402,15 @@ sortie à l'écran. Ici on ne verra la sortie que dans un fichier.</para>
     <para>De nouveau, la manière la plus facile de montrer la technique est de
 présenter un exemple. Lancez d'abord la commande&nbsp;:</para>
 
-<screen><userinput>ls -l /usr/bin | more</userinput></screen>
+<screen><userinput>ls -l /usr/bin | less</userinput></screen>
 
-    <para>Bien entendu, vous devrez voir la sortie page par page car on a utilisé le
-filtre <command>more</command>. Essayez maintenant la même commande, mais en
-redirigeant cette fois la sortie vers un fichier. Le fichier spécial
-<filename>/dev/null</filename> peut être utilisé à la place du fichier
-indiqué, mais vous n'aurez pas de fichier journal à examiner&nbsp;:</para>
+    <para>Of course, you'll be required to view the output one page at a time because
+the <command>less</command> filter was used. Now try the same command, but
+this time redirect the output to a file. The special file
+<filename>/dev/null</filename> can be used instead of the filename shown,
+but you will have no log file to examine:</para>
 
-<screen><userinput>ls -l /usr/bin | more &gt; redirect_test.log 2&gt;&amp;1</userinput></screen>
+<screen><userinput>ls -l /usr/bin | less &gt; redirect_test.log 2&gt;&amp;1</userinput></screen>
 
     <para>Vous remarquerez que cette fois, la commande est immédiatement revenue à
 l'invite du shell sans devoir parcourir la sortie page par page. Vous pouvez
@@ -421,7 +428,7 @@ Pour cet exemple, on a besoin d'un autre petit script
 <screen><userinput>cat &gt; blfs-yes-test2 &lt;&lt; "EOF"
 <literal>#!/bin/bash
 
-ls -l /usr/bin | more
+ls -l /usr/bin | less
 
 echo -n -e "\n\nDid you enjoy reading this? (y,n) "
 
@@ -712,53 +719,56 @@ url="https://www.technovelty.org/linux/stripping-shared-libraries.html"/>.
     <title>Travailler avec différents systèmes de construction</title>
 
     <para>
-      Il y a maintenant trois systèmes de construction différents utilisés
-régulièrement pour convertir du code source C ou C++ en un programme compilé
-ou en une bibliothèque et leur fonctionnement (en particulier, comment
-trouver les options disponibles et leurs valeurs par défaut) est
-différent. Il peut être plus facile de comprendre les problèmes causés par
-certains choix (typiquement une exécution lente ou l'utilisation inattendue,
-ou l'omission, des optimisations en commençant par les variables
-d'environnement CFLAGS et CXXFLAGS. Certains programmes utilisent aussi
-rust.
+      There are now three different build systems in common use for converting C
+or C++ source code into compiled programs or libraries and their details
+(particularly, finding out about available options and their default values)
+differ. It may be easiest to understand the issues caused by some choices
+(typically slow execution or unexpected use of, or omission of,
+optimizatons) by starting with the <envar>CFLAGS</envar>,
+<envar>CXXFLAGS</envar>, and <envar>LDFLAGS</envar> environment variables.
+There are also some programs which use Rust.
     </para>
 
     <para>
-      La plupart des lecteurs de LFS et de BLFS connaissent probablement déjà les
-bases de l'utilisation de CFLAGS et CXXFLAGS pour altérer la compilation
-d'un programme. En général, certaines formes d'optimisations sont utilisées
-par les développeurs en amont (-O2 ou -O3), parfois avec la création de
-symboles de débogage (-g) par défaut.
+      Most LFS and BLFS builders are probably aware of the basics of
+<envar>CFLAGS</envar> and <envar>CXXFLAGS</envar> for altering how a program
+is compiled. Typically, some form of optimization is used by upstream
+developers (<option>-O2</option> or <option>-O3</option>), sometimes with
+the creation of debug symbols (<option>-g</option>), as defaults.
     </para>
 
     <para>
-      S'il y a des drapeaux contradictoires (p. ex. plusieurs valeurs différentes
-de -O), la <emphasis>dernière</emphasis> valeur sera utilisée. Parfois les
-drapeaux spécifiés dans les variables d'environnement sont insérés avant les
-valeurs en dur dans le Makefile, ce qui signifie qu'ils sont ignorés. Par
-exemple, si un utilisateur spécifie «&nbsp;-O2&nbsp;» et qu'il est suivi de
-«&nbsp;-O3&nbsp;», la construction utilisera «&nbsp;-O3&nbsp;».
+      If there are contradictory flags (e.g. multiple different
+<option>-O</option> values), the <emphasis>last</emphasis> value will be
+used. Sometimes this means that flags specified in environment variables
+will be picked up before values hardcoded in the Makefile, and therefore
+ignored.  For example, where a user specifies <option>-O2</option> and that
+is followed by <option>-O3</option> the build will use <option>-O3</option>.
     </para>
 
     <para>
-      On peut passer divers autres drapeaux dans CFLAGS et CXXFLAGS, comme forcer
-la compilation pour une microarchitecture spécifique
-(p. ex. -march=amdfam10, -march=native) ou pour spécifier un standard C ou
-C++ particulier (-std=c++17 par exemple). Mais ce qui commence à apparaître,
-c'est l'inclusion par les développeurs d'assertions de débogage dans leur
-code qui sont généralement désactivés dans les versions publiées avec
--DNDEBUG. Plus spécifiquement, si <xref linkend="mesa"/> est construit avec
-ces assertions, certaines activités comme le chargement de niveaux dans les
-jeux peuvent prendre très longtemps, même sur des cartes vidéo haut de
-gamme.
+      There are various other things which can be passed in CFLAGS or CXXFLAGS,
+such as allowing using the instruction set extensions available with a
+specific microarchitecture (e.g.  <option>-march=amdfam10</option> or
+<option>-march=native</option>), tune the generated code for a specific
+microarchitecture (e. g.  <option>-mtune=tigerlake</option> or
+<option>-mtune=native</option>, if <option>-mtune=</option> is not used, the
+microarchitecture from <option>-march=</option> setting will be used), or
+specifying a specific standard for C or C++ (<option>-std=c++17</option> for
+example).  But one thing which has now come to light is that programmers
+might include debug assertions in their code, expecting them to be disabled
+in releases by using <option>-DNDEBUG</option>.  Specifically, if <xref
+linkend="mesa"/> is built with these assertions enabled, some activities
+such as loading levels of games can take extremely long times, even on
+high-class video cards.
     </para>
 
     <bridgehead renderas="sect3" id="autotools-info">Autotools avec Make</bridgehead>
 
       <para>
-       Cette combinaison est souvent décrite comme «&nbsp;CMMI&nbsp;» (configure,
-make, make install) et est utilisée ici pour couvrir aussi certains paquets
-dont le script configure n'a pas été généré par les autotools.
+        This combination is often described as <quote>CMMI</quote> (configure, make,
+make install) and is used here to also cover the few packages which have a
+configure script that is not generated by autotools.
       </para>
 
       <para>
@@ -778,25 +788,24 @@ après la suggestion des programmeurs).
       </para>
 
       <para>
-       Dans la plupart des paquets CMMI, «&nbsp;make&nbsp;» listera les commandes
-lancées, séparées par des avertissements éventuels. Mais certains paquets
-essayent d'être «&nbsp;silencieux&nbsp;» et ne montrent que les fichiers
-qu'ils compilent ou dont ils éditent les liens au lieu de montrer la ligne
-de commande. Si vous devez inspecter la commande, soit à cause d'une erreur,
-ou juste pour voir les options et les drapeaux utilisés, ajouter
-«&nbsp;V=1&nbsp;» à l'invocation make peut aider.
-     </para>
+        In most CMMI packages, running <command>make</command> will list each
+command and run it, interspersed with any warnings. But some packages try to
+be <quote>silent</quote> and only show which file they are compiling or
+linking instead of showing the command line.  If you need to inspect the
+command, either because of an error, or just to see what options and flags
+are being used, adding <option>V=1</option> to the make invocation may help.
+      </para>
 
     <bridgehead renderas="sect3" id="cmake-info">CMake</bridgehead>
 
       <para>
-        CMake fonctionne de manière différente et il a deux moteurs qui peuvent être
-utilisés sur BLFS&nbsp;: «&nbsp;make&nbsp;» et «&nbsp;ninja&nbsp;». Le
-moteur par défaut est make, mais ninja est plus rapide sur les paquets plus
-gros avec plusieurs processeurs. Pour utiliser ninja, spécifiez «&nbsp;-G
-Ninja&nbsp;» dans la commande cmake. Cependant, certains paquets peuvent
-avoir des erreurs fatales dans leurs fichiers ninja tout en pouvant être
-construits sans problème avec les Makefile Unix par défaut.
+        CMake works in a very different way, and it has two backends which can be
+used on BLFS: <command>make</command> and <command>ninja</command>. The
+default backend is make, but ninja can be faster on large packages with
+multiple processors. To use ninja, specify <option>-G Ninja</option> in the
+cmake command.  However, there are some packages which create fatal errors
+in their ninja files but build successfully using the default of Unix
+Makefiles.
       </para>
 
       <para>
@@ -807,14 +816,14 @@ de regarder la sortie pour cette configuration par défaut.
       </para>
 
       <para>
-        Peut-être que la chose la plus importante à propos de CMake est qu'il a
-plusieurs valeurs de CMAKE_BUILD_TYPE et qu'elles affectent les drapeaux. La
-valeur par défaut est vide et aucun drapeau n'est généré. Les CFLAGS et
-CXXFLAGS dans l'environnement seront utilisés. Si le programmeur a codé des
-assertions de débogage, elles seront activées à moins que vous n'utilisiez
--DNDEBUG. Les valeurs CMAKE_BUILD_TYPE suivantes généreront les drapeaux
-associés et ils seront ajoutés <emphasis>après</emphasis> les drapeaux dans
-l'environnement et prennent donc le pas dessus.
+        Perhaps the most-important thing about CMake is that it has a variety of
+CMAKE_BUILD_TYPE values, and these affect the flags. The default is that
+this is not set and no flags are generated. Any <envar>CFLAGS</envar> or
+<envar>CXXFLAGS</envar> in the environment will be used. If the programmer
+has coded any debug assertions, those will be enabled unless -DNDEBUG is
+used. The following CMAKE_BUILD_TYPE values will generate the flags shown,
+and these will come <emphasis>after</emphasis> any flags in the environment
+and therefore take precedence.
       </para>
 
       <informaltable align="center">
@@ -893,77 +902,79 @@ l'environnement et prennent donc le pas.
 
       <itemizedlist>
         <listitem>
-          <para>plain&nbsp;: pas de drapeau supplémentaire. Cela est utilisé pour spécifier
-ses propres CFLAGS, CXXFLAGS et LDFLAGS. Il n'y a pas de raison évidente
-pour utiliser cela dans BLFS.</para>
+          <para>plain : no added flags. This is for distributors to supply their own
+<envar>CFLAGS</envar>, <envar>CXXFLAGS</envar> and
+<envar>LDFLAGS</envar>. There is no obvious reason to use this in BLFS.</para>
         </listitem>
         <listitem>
-          <para>debug&nbsp;: «&nbsp;-g&nbsp;» - c'est la valeur par défaut si rien n'est
-spécifié dans <filename>meson.build</filename> ni sur la ligne de
-command. Cependant, cela crée des binaires gros et lents, donc vous devez le
-remplacer dans BLFS.</para>
+          <para>debug : <option>-g</option> - this is the default if nothing is specified in
+either <filename>meson.build</filename> or the command line. However it
+results large and slow binaries, so we should override it in BLFS.</para>
         </listitem>
         <listitem>
-           <para>debugoptimized&nbsp;: «&nbsp;-O2 -g&nbsp;»&nbsp;: c'est la valeur par défaut
-spécifiée dans <filename>meson.build</filename> pour certains paquets.</para>
+          <para>debugoptimized : <option>-O2 -g</option> - this is the default specified in
+<filename>meson.build</filename> of some packages.</para>
         </listitem>
         <listitem>
-           <para>release&nbsp;: «&nbsp;-O3 -DNDEBUG&nbsp;» (mais parfois un paquet forcera
--O2)</para>
+          <para>release : <option>-O3</option> (occasionally a package will force
+<option>-O2</option> here) - this is the buildtype we use for most packages
+with Meson build system in BLFS.</para>
         </listitem>
       </itemizedlist>
 
-      <para>
-        Bien que le type «&nbsp;release&nbsp;» soit décrit comme activant -DNDEBUG
-et que toutes les constructions CMake en Release le passent, cela n'a été
-observé jusque là (sur les constructions verbeuses) que pour <xref
-linkend="mesa"/>. Cela suggère qu'il ne serait utilisé que s'il y a des
-assertions de débogage.
+      
+      <!-- From https://mesonbuild.com/Builtin-options.html#core-options:
+           b_ndebug: Default value = false, Possible values are
+           true, false, if-release.  Some packages sets it to if-release
+           so we mistakenly believed if-release had been the default.  -->
+<para>
+        The <option>-DNDEBUG</option> flag is implied by the release buildtype for
+some packages (for example <xref linkend='mesa'/>).  It can also be provided
+explicitly by passing <option>-Db_ndebug=true</option>.
       </para>
 
       <para>
-        Le drapeau -DNDEBUG peut aussi être fournit en passant
-<command>-Db_ndebug=true</command>.
-      </para>
-
-      <para>
-        Pour voir les détails des commandes qui sont lancées dans un paquet qui
-utilise meson, utilisez «&nbsp;ninja -v&nbsp;».
+        To see the details of the commands which are being run in a package using
+meson, use <command>ninja -v</command>.
       </para>
 
     <bridgehead renderas="sect3" id="rust-info">Rustc et Cargo</bridgehead>
 
       <para>
-        La plupart des programmes rustc publiés sont fournis dans des archives (ou
-«&nbsp;crates&nbsp;») qui demanderont à un serveur de vérifier les versions
-actuelles des dépendances et les téléchargera au besoin. Ces paquets sont
-construits avec <command>cargo --release</command>. En théorie, on peut
-manipuler les RUSTFLAGS pour changer le niveau d'optimisation (par défaut 3,
-come -O3, p. ex. <literal>-Copt-level=3</literal>) ou pour forcer la
-construction pour la machine sur laquelle il est compilé, avec
-<literal>-Ctarget-cpu=native</literal> mais en pratique cela ne semble pas
-faire de réelle différence.
+        Most released rustc programs are provided as crates (source tarballs)  which
+will query a server to check current versions of dependencies and then
+download them as necessary.  These packages are built using <command>cargo
+--release</command>. In theory, you can manipulate the RUSTFLAGS to change
+the optimize-level (default for <option>--release</option> is 3, i. e.
+<option>-Copt-level=3</option>, like <option>-O3</option>) or to force it to
+build for the machine it is being compiled on, using
+<option>-Ctarget-cpu=native</option> but in practice this seems to make no
+significant difference.
       </para>
 
       <para>
-        Si vous trouvez un programme rustc intéressant qui n'est fournit que sous
-forme de sources sans paquet, vous devez au moins spécifier
-<literal>RUSTFLAGS=-Copt-level=2</literal> sans quoi rustc effectuera une
-compilation sans optimisation et avec les informations de débogage et le
-résultat sera <emphasis>beaucoup</emphasis> plus lent.
+        If you are compiling a standalone Rust program (as an unpackaged <filename
+class='extension'>.rs</filename> file) by running <command>rustc</command>
+directly, you should specify <option>-O</option> (the abbreviation of
+<option>-Copt-level=2</option>) or <option>-Copt-level=3</option> otherwise
+it will do an unoptimized compile and run <emphasis>much</emphasis> slower.
+If are compiling the program for debugging it, replace the
+<option>-O</option> or <option>-Copt-level=</option> options with
+<option>-g</option> to produce an unoptimized program with debug info.
       </para>
 
       <para>
-        Les développeurs de rust ont l'air de supposer que tout le monde compile sur
-une machine dédiée aux constructions de production, donc par défaut tous les
-CPU sont utilisés. Cela peut souvent être changé, soit en exportant
-CARGO_BUILD_JOBS=&lt;N&gt; ou en passant --jobs &lt;N&gt; à cargo. Pour
-compiler rustc lui-même, spécifiez --jobs &lt;N&gt; lors de l'invocation de
-x.py (avec la variable d'environnement <envar>CARGO_BUILD_JOBS</envar>, ce
-qui ressemble à une approche «&nbsp;ceinture et bretelle&nbsp;» mais a l'air
-nécessaire). L'exception est le lancement des tests à la construction de
-rustc, où certains d'entre eux utiliseront tout de même tous les CPU en
-ligne, au moins à partir de rustc-1.42.0.
+        Like <command>ninja</command>, by default <command>cargo</command> uses all
+logical processors.  This can often be worked around, either by exporting
+<envar>CARGO_BUILD_JOBS=<replaceable>&lt;N&gt;</replaceable></envar> or
+passing <option>--jobs <replaceable>&lt;N&gt;</replaceable></option> to
+<command>cargo</command>.  For compiling rustc itself, specifying
+<option>--jobs <replaceable>&lt;N&gt;</replaceable></option> for invocations
+of <command>x.py</command> (together with the
+<envar>CARGO_BUILD_JOBS</envar> environment variable, which looks like a
+<quote>belt and braces</quote> approach but seems to be necessary) mostly
+works. The exception is running the tests when building rustc, some of them
+will nevertheless use all online CPUs, at least as of rustc-1.42.0.
       </para>
 
   </sect2>
@@ -972,41 +983,67 @@ ligne, au moins à partir de rustc-1.42.0.
     <title>Optimisation de la construction</title>
 
       <para>
-        De nombreuses personnes préfèrent optimiser la compilation à leur goût, en
-fournissant CFLAGS ou CXXFLAGS. Vous trouverez une introduction aux options
-disponibles avec gcc et g++ sur <ulink
-url="https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html"/>, <ulink
-url="https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html"/> et
-dans <command>info gcc</command>.
-
+        Many people will prefer to optimize compiles as they see fit, by providing
+<envar>CFLAGS</envar> or <envar>CXXFLAGS</envar>. For an introduction to the
+options available with gcc and g++ see <ulink
+url="https://gcc.gnu.org/onlinedocs/gcc-&gcc-version;/gcc/Optimize-Options.html"/>.
+The same content can be also found in <command>info gcc</command>.
       </para>
 
       <para>
-        Certains paquets utilisent par défaut «&nbsp;-O2 -g&nbsp;», d'autres
-«&nbsp;-O3 -g&nbsp;» et si les CFLAGS ou CXXFLAGS sont fournis ils peuvent
-être ajoutés aux valeurs par défaut du paquet, remplacer les valeurs par
-défaut ou même être ignorés. Il y a des détails sur les dernières versions
-(en avril 2019) de certains paquets graphiques sur <ulink
-url="https://www.linuxfromscratch.org/~ken/tuning/"/> — en particulier,
-README.txt, tuning-1-packages-and-notes.txt et tuning-notes-2B.txt. Ce dont
-il faut se souvenir, c'est que si vous voulez essayer certains des drapeaux
-les plus intéressants vous devez forcer les constructions à être plus
-verbeuses pour confirmer qu'elles sont utilisées.
+        Some packages default to <option>-O2 -g</option>, others to <option>-O3
+-g</option>, and if <envar>CFLAGS</envar> or <envar>CXXFLAGS</envar> are
+supplied they might be added to the package's defaults, replace the
+package's defaults, or even be ignored.  There are details on some desktop
+packages which were mostly current in April 2019 at <ulink
+url="https://www.linuxfromscratch.org/~ken/tuning/"/> - in particular,
+<filename>README.txt</filename>,
+<filename>tuning-1-packages-and-notes.txt</filename>, and
+<filename>tuning-notes-2B.txt</filename>. The particular thing to remember
+is that if you want to try some of the more interesting flags you may need
+to force verbose builds to confirm what is being used.
       </para>
 
       <para>
-        Clairement, si vous optimisez votre propre programme vous pouvez passer du
-temps à effectuer des mesures et peut-être recoder certaines parties plutôt
-lentes. Mais pour construire un système complet cette approche est
-impossible. En général, -O3 produit des programmes plus rapides que
--O2. Spécifier -march=native est aussi bénéfique, mais cela signifie que
-vous ne pouvez pas utiliser les binaires sur une machine incompatible — cela
-s'applique aussi à des machines plus récentes, pas seulement à des machines
-plus vieilles. Par exemple les programmes compilés pour
-«&nbsp;amdfam10&nbsp;» peuvent tourner sur les vieux Phenoms, Kaveris et
-Ryzens&nbsp;; mais les programmes compilés pour un Kaveri ne tourneront pas
-sur un Ryzen parce que certains opcodes ne sont pas présents. De même, si
-vous construisez pour un Haswell tout ne tournera pas sur un SandyBridge.
+        Clearly, if you are optimizing your own program you can spend time to
+profile it and perhaps recode some of it if it is too slow. But for building
+a whole system that approach is impractical. In general,
+<option>-O3</option> usually produces faster programs than
+<option>-O2</option>.  Specifying <option>-march=native</option> is also
+beneficial, but means that you cannot move the binaries to an incompatible
+machine - this can also apply to newer machines, not just to older
+machines. For example programs compiled for <literal>amdfam10</literal> run
+on old Phenoms, Kaveris, and Ryzens : but programs compiled for a Kaveri
+will not run on a Ryzen because certain op-codes are not present.
+Similarly, if you build for a Haswell not everything will run on a
+SandyBridge.
+      </para>
+
+      <note>
+        <para>
+          Be careful that the name of a <option>-march</option> setting does not
+always match the baseline of the microarchitecture with the same name.  For
+example, the Skylake-based Intel Celeron processors do not support AVX at
+all, but <option>-march=skylake</option> assumes AVX and even AVX2.
+        </para>
+      </note>
+
+      <para>
+        When a shared library is built by GCC, a feature named <quote>semantic
+interposition</quote> is enabled by default.  When the shared library refers
+to a symbol name with external linkage and default visbility, if the symbol
+exists in both the shared library and the main executable, semantic
+interposition guarantees the symbol in the main executable is always used.
+This feature was invented in an attempt to make the behavior of linking a
+shared library and linking a static library as similar as possible.  Today
+only a small number of packages still depend on semantic interposition, but
+the feature is still on by the default of GCC, causing many optimizations
+disabled for shared libraries because they conflict with semantic
+interposition.  The <option>-fno-semantic-interposition</option> option can
+be passed to <command>gcc</command> or <command>g++</command> to disable
+semantic interposition and enable more optimizations for shared libraries.
+This option is used as the default of some packages (for example <xref
+linkend='python3'/>), and it's also the default of Clang.
       </para>
 
       <para>
@@ -1016,9 +1053,35 @@ utilisation ces options ne font rien de spécial.
       </para>
 
       <para>
-        Si vous construisez des modules Perl ou Python, ou des paquets Qt qui
-utilisent qmake, en général les CFLAGS et CXXFLAGS utilisés sont ceux
-utilisés pour construire ces paquets «&nbsp;parents&nbsp;».
+        If building Perl or Python modules, or Qt packages which use qmake, in
+general the <envar>CFLAGS</envar> and <envar>CXXFLAGS</envar> used are those
+which were used by those <quote>parent</quote> packages.
+      </para>
+
+      <para>
+        For <envar>LDFLAGS</envar>, there are two options can be used for
+optimization.  With <option>-Wl,-O1</option>, the linker will optimize the
+hash table to speed up the dynamic linking.  And with
+<option>-Wl,--as-needed</option>, the linker will disregard unnecessary
+<option>-l<replaceable>foo</replaceable></option> options from the command
+line, i. e. the shared library <systemitem
+class='library'>lib<replaceable>foo</replaceable></systemitem> will only be
+linked if a symbol in <systemitem
+class='library'>lib<replaceable>foo</replaceable></systemitem> is really
+referred from the executable or shared library being linked.  This can
+sometimes mitigate the <quote>excessive dependencies to shared
+librarues</quote> issues caused by <application>libtool</application>.  Note
+that the <option>-Wl,</option> prefix is necessary because despite the
+variable is named <envar>LDFLAGS</envar>, its content is actually passed to
+<command>gcc</command> (or <command>g++</command>, <command>clang</command>,
+etc.) during the link stage, not directly passed to <command>ld</command>.
+      </para>
+
+      <para>
+        Note that <option>-Wl,-O1</option> is completely unrelated to the compiler
+optimization flag <option>-O1</option>.  Some packages are using
+<option>-Wl,-O1</option> and <option>-Wl,--as-needed</option> as the default
+in their building systems.
       </para>
 
   </sect2>
