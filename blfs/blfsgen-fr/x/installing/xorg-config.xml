@@ -398,21 +398,82 @@ utile pour un clavier QWERTY (US).
       <title>Réglage fin des paramètres d'affichage</title>
 
       <para>
-        Encore une fois, avec Xorg, peu ou aucune configuration supplémentaire n'est
-nécessaire. Si vous avez besoin d'options supplémentaires à passer à votre
-pilote vidéo, par exemple, vous pouvez utiliser ce qui suit (de nouveau,
-exécuté en tant que <systemitem class="username">root</systemitem>)&nbsp;:
+        If you want to set the monitor resolution for Xorg, first run
+<command>xrandr</command> in a X terminal to list the supported resolutions
+and the corresponding refresh rates.  For example, it outputs the following
+for one monitor:
       </para>
 
-<screen role="root"><userinput>cat &gt; /etc/X11/xorg.conf.d/videocard-0.conf &lt;&lt; "EOF"
-<literal>Section "Device"
-    Identifier  "Videocard0"
-    Driver      "radeon"
-    VendorName  "Videocard vendor"
-    BoardName   "ATI Radeon 7500"
-    Option      "NoAccel" "true"
+<screen><computeroutput>Screen 0: minimum 16 x 16, current 5760 x 2160, maximum 32767 x 32767
+DP-1 connected primary 3840x2160+0+0 (normal left inverted right x axis y axis) 600mm x 340mm
+   3840x2160     59.98*+
+   2048x1536     59.95  
+   1920x1440     59.90  
+   1600x1200     59.87  
+   1440x1080     59.99  
+   1400x1050     59.98  
+   1280x1024     59.89  
+   1280x960      59.94  
+   1152x864      59.96  
+   1024x768      59.92  
+   800x600       59.86  
+   640x480       59.38  </computeroutput></screen>
+
+      <para>
+        From the output we can see the monitor is identified
+<literal>DP-1</literal>.  Select a suitable resolution from the outputed
+list, for example <literal>1920x1440</literal>.  Then as the &root; user,
+create a configuration file for the Xorg server:
+      </para>
+
+<screen role="root"><userinput>cat &gt; /etc/X11/xorg.conf.d/monitor-DP-1.conf &lt;&lt; "EOF"
+<literal>Section "Monitor"
+    Identifier  "DP-1"
+    Option      "PerferredMode" "1920x1440"
 EndSection</literal>
 EOF</userinput></screen>
+
+      <para>
+        Sometimes <command>xrandr</command> may fail to detect some resolution
+settings supported by the monitor.  It usually happens with virtual monitors
+of virtual machine managers like <xref linkend='qemu'/> or VMWare: a virtual
+monitor actually supports all pairs of integers in a range as the
+resolution, but <command>xrandr</command> will only list a few.  To use a
+resolution not listed by <command>xrandr</command>, first run
+<command>cvt</command> to get the mode line for the resolution.  For
+example:
+      </para>
+
+      <screen><userinput>cvt 1600 900</userinput></screen>
+
+      <para>
+        As the &root; user, create a Xorg server configuration file containing this
+mode line, and specify the mode as preferred mode:
+      </para>
+
+<screen role="root"><userinput>cat &gt; /etc/X11/xorg.conf.d/monitor-DP-1.conf &lt;&lt; "EOF"
+<literal>Section "Monitor"
+    Identifier  "DP-1"
+    Modeline    "1600x900_60.00"  118.25  1600 1696 1856 2112  900 903 908 934 -hsync +vsync
+    Option      "PerferredMode"   "1600x900_60.00"
+EndSection</literal>
+EOF</userinput></screen>
+
+      <para>
+        Some high-end LCD monitors support a refresh rate higher than 100 Hz but
+<command>xrandr</command> may fail to recognize the supported refresh rate
+and use 60 Hz instead.  This issue would prevent you from utilizing the full
+capability of the monitor, and may cause the screen to flicker or show
+<quote>artifacts</quote> like meshes or grids.  To resolve the issue, again
+use <command>cvt</command> to get the mode line with a custom refresh rate:
+      </para>
+
+      <screen><userinput>cvt 3840 2160 144</userinput></screen>
+
+      <para>
+        Then paste it into the Xorg server configuration file and set it as the
+preferred mode.
+      </para>
 
       <para>
         Une autre configuration courante est d'avoir des configurations
@@ -427,6 +488,23 @@ peut obtenir un ordre incorrect&nbsp;:
     Screen      0  "Screen0" 0 0
     Screen      1  "Screen1" LeftOf "Screen0"
     Option         "Xinerama"
+EndSection</literal>
+EOF</userinput></screen>
+
+      <para>
+        With modern Xorg, little or no additional graphic card configuration is
+necessary. If you should need extra options passed to your video driver, for
+instance, you could use something like the following (again, executed as the
+&root; user):
+      </para>
+
+<screen role="root"><userinput>cat &gt; /etc/X11/xorg.conf.d/videocard-0.conf &lt;&lt; "EOF"
+<literal>Section "Device"
+    Identifier  "Videocard0"
+    Driver      "modesetting"
+    VendorName  "Videocard vendor"
+    BoardName   "ATI Radeon 7500"
+    Option      "AccelMethod" "none"
 EndSection</literal>
 EOF</userinput></screen>
 

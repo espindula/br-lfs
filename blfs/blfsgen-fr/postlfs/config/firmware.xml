@@ -508,32 +508,14 @@ ensuite installez les&nbsp;:
 <screen><userinput>mkdir -pv /lib/firmware/radeon
 cp -v &lt;YOUR_BLOBS&gt; /lib/firmware/radeon</userinput></screen>
 
-      <para>
-        Il y a en fait deux façons d'installer ces firmwares. BLFS, dans le
-sous-chapitre 'Configuration du noyau pour les firmwares supplémentaires' du
-chapitre <xref linkend="xorg-ati-driver"/> donne un exemple de compilation
-des firmwares dans le noyau - c'est légèrement plus rapide à charger, mais
-utilises plus de mémoire pour le noyau. Ici nous utiliserons la méthode
-alternative en faisant un module du pilote radeon. Dans votre configuration
-du noyau initialisez la suite&nbsp;:
-      </para>
-
-<screen><literal>Device Drivers ---&gt;
-  Graphics support ---&gt;
-      Direct Rendering Manager ---&gt;
-        [*] Direct Rendering Manager (XFree86 ... support)  [CONFIG_DRM]
-      [M] ATI Radeon                                        [CONFIG_DRM_RADEON]</literal></screen>
-
-      <para>
-        Le chargement de plusieurs blobs volumineux dans /lib/firmware prend un
-temps notable, pendant lequel l'écran est blanc. Si vous n'avez pas activé
-le logo framebuffer du pingouin, ou changé la taille de la console en
-utilisant une police plus grosse, cela n'a probablement pas d'importance. Si
-vous le souhaitez, vous pouvez légèrement réduire le temps si vous suivez la
-méthode alternative en spécifiant 'y' pour CONFIG_DRM_RADEON couvert dans
-BLFS au lien précédent &mdash; vous devez spécifier chaque blob radeon utile
-si vous faite cela.
-      </para>
+    <para>
+      Building the kernel amdgpu driver as a module is recommended because the
+firmware files need to be accessible at the time it is loaded.  If you are
+building it as a part of the kernel image for any reason, you need to either
+include the firmware files in the initramfs (read <xref
+linkend='initramfs'/> for details), or include them in the kernel image
+itself (read <xref linkend='firmware-in-kernel-image'/> for details).
+    </para>
 
     </sect3>
 
@@ -580,31 +562,13 @@ installée.
     </para>
 
     <para>
-      Nous vous recommandons de construire le pilote amdgpu du noyau en tant que
-module. Dans le .config de votre noyau indiquez au moins les options
-suivantes et vérifiez les autres options AMDGPU en fonction du matériel pour
-lequel vous construisez, par exemple la prise en charge d'ACP (co-processeur
-audio)&nbsp;:
+      Building the kernel amdgpu driver as a module is recommended because the
+firmware files need to be accessible at the time it is loaded.  If you are
+building it as a part of the kernel image for any reason, you need to either
+include the firmware files in the initramfs (read <xref
+linkend='initramfs'/> for details), or include them in the kernel image
+itself (read <xref linkend='firmware-in-kernel-image'/> for details).
     </para>
-
-<screen><literal>Device Drivers ---&gt;
-  Graphics support ---&gt;
-      Direct Rendering Manager ---&gt;
-        [*] Direct Rendering Manager (XFree86 ... support)  [CONFIG_DRM]
-        [M] AMD GPU                                         [CONFIG_DRM_AMDGPU]
-        Display Engine Configuration ---&gt;
-          [*] AMD DC - Enable new display engine (NEW)      [CONFIG_DRM_AMD_DC]</literal></screen>
-
-      <para>
-        Comme nous l'avons écrit plus haut à la fin de la section sur les « Firmware
-pour les puces vidéo ATI », le chargement de gros blobs dans /lib/firmware
-peut prendre un temps notable pendant lequel l'écran sera vide. Sur une
-machine lente vous voudrez peut-être consulter la partie
-«&nbsp;Configuration du noyau pour les firmwares supplémentaires&nbsp;» de
-<xref linkend="xorg-amdgpu-driver"/> et compiler tous les modules requis
-dans le noyau pour réduire ce tems, au prix de l'utilisation de plus de
-mémoire du noyau.
-      </para>
 
     </sect3>
 
@@ -773,6 +737,52 @@ linkend='wireless_tools'/>, or <xref linkend='wpa_supplicant'/>.
 les contrôleurs SCSI, les adaptateurs Bluetooth, ou les enregistreurs
 TV. Les mêmes principes s'appliquent.
     </para>
+
+  </sect2>
+
+  <sect2 id='firmware-in-kernel-image'>
+    <title>Include Firmware Blobs in the Kernel Image</title>
+
+    <para>
+      Some drivers, notably the drivers for ATI or AMD GPU, requires the firmware
+files accessible at the time it is loaded.  The easiest method to handle
+these drivers is building them as a kernel module.  An alternative method is
+creating an initramfs (read <xref linkend='initramfs'/> for details)
+including the firmware files.  If you don't want to use either methods, you
+may include the firmware files in the kernel image itself.  Install the
+needed firmware files into <filename
+class='directory'>/lib/firmware</filename> first, then set the following
+kernel configuration and rebuild the kernel:
+    </para>
+
+    <screen><literal>Device Drivers  ---&gt;
+  Generic Driver Options  ---&gt;
+    Firmware loader ---*gt;
+      -*- Firmware loading facility
+      (<replaceable>amdgpu/aaaa.bin amdgpu/bbbb.bin</replaceable>) Build named firmware blobs into the kernel binary
+      (/lib/firmware) Firmware blobs root directory</literal></screen>
+
+    <para>
+      Replace <replaceable>amdgpu/aaa.bin amdgpu/bbbb.bin</replaceable> with a
+whitespace-separated list of paths to the needed firmware files, relative to
+<filename class='directory'>/lib/firmware</filename>.  A method easier than
+manually typing the list (it may be long) is running the following command:
+    </para>
+
+    <screen><userinput>echo CONFIG_EXTRA_FIRMWARE='"'$({ cd /lib/firmware; echo <replaceable>amdgpu/*</replaceable> })'"' &gt;&gt; .config
+make oldconfig</userinput></screen>
+
+    <para>
+      Replace <replaceable>amdgpu/*</replaceable> with a shell pattern matching
+the needed firmware files.
+    </para>
+
+    <warning>
+      <para>
+        Do not distribute a kernel image containing the firmware to others or you
+may violate GPL.
+      </para>
+    </warning>
 
   </sect2>
 
