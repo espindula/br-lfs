@@ -112,17 +112,15 @@ le fichier journal <filename>$HOME/.local/share/xorg/Xorg.0.log</filename>
 linkend="xorg-server"/> avec le bit suid) contient des messages comme&nbsp;:
     </para>
 
-<screen><literal>(II) intel(0): direct rendering: DRI2 Enabled</literal></screen>
-
-    <para>ou</para>
-
-<screen><literal>(II) NOUVEAU(0): Loaded DRI module</literal></screen>
+<screen><literal>(II) modeset(0): [DRI2] Setup complete
+(II) modeset(0): [DRI2]   DRI driver: crocus
+(II) modeset(0): [DRI2]   VDPAU driver: va_gl</literal></screen>
 
     <note>
       <para>
-        Il se peut que la configuration DRI diffère si vous utilisez d'autres
-pilotes tels que ceux de <ulink
-url="https://www.nvidia.com/page/home.html">NVIDIA</ulink> ou de <ulink
+        DRI configuration may differ if you are using alternate drivers, such as
+traditional DDX drivers, or the proprietary drivers from <ulink
+url="https://www.nvidia.com/page/home.html">NVIDIA</ulink> or <ulink
 url="https://www.amd.com/">AMD</ulink>.
       </para>
     </note>
@@ -253,13 +251,13 @@ fermeture de l'écran.
     <bridgehead renderas="sect5">(WW) VGA arbiter: cannot open kernel arbiter, no multi-card support</bridgehead>
 
     <para>
-      Cet avertissement est affiché quand un utilisateur normal démarre Xorg. La
-bibliothèque <filename>libpciaccess.so</filename> lance cet avertissement
-quand elle essaye d'ouvrir <filename>/dev/vga_arbiter</filename>. S'il n'y a
-qu'une seule carte vidéo sur le système, il peut être ignoré sans
-problème. Si vous le souhaitez, les permissions pour ce périphérique peuvent
-être changées avec une règle udev et en ajoutant l’utilisateur local au
-groupe video. En tant qu'utilisateur &root;&nbsp;:
+      This warning is displayed when a regular user starts Xorg.  The library
+<filename>libpciaccess.so</filename> issues this warning when it tries to
+open <filename>/dev/vga_arbiter</filename>.  If there is no more than one
+legacy PCI (not PCIe) graphic cards on the system, it can safely be
+ignored.  If really necessary, the permissions of this device can be changed
+by adding a udev rule and adding the local user to the video group. As the
+&root; user:
     </para>
 
 <screen role="root"><userinput>cat > /etc/udev/rules.d/99-vga-arbiter.rules &lt;&lt; EOF
@@ -269,25 +267,6 @@ ACTION=="add", KERNEL=="vga_arbiter", GROUP="video" MODE="0660"
 EOF
 
 usermod -a -G video &lt;user running xorg&gt;</userinput></screen>
-
-    <bridgehead renderas="sect5">(EE) AIGLX error: dlopen of /opt/xorg/lib/dri/i965_dri.so failed</bridgehead>
-
-  <para>
-    Cette erreur, accompagnée par (EE) AIGLX error: unable to load driver i965,
-arrive sur certains systèmes avec des périphériques graphiques basés sur
-Intel. Elle est causée par une incompatibilité entre le <xref
-linkend='xorg-server'/> actuel et <xref linkend='mesa'/>. Xorg n'utilise
-plus le pilote i965 et utilise les pilotes crocus ou iris comme indiqué par
-la commande <command>xdriinfo</command>. Elle peut être ignorée sans
-problème.
-  </para>
-
-  <para>
-    Si vous le souhaite, cet avertissement peut être supprimé en commentant les
-lignes 330-331 et 337-338 (LogMessage) de
-<filename>glx/glxdricommon.c</filename> dans le paquet <xref
-linkend='xorg-server'/>.
-  </para>
 
   </sect2>
 
@@ -319,23 +298,27 @@ automatiquement. Vous pouvez le vérifier en lançant&nbsp;:
       Il devrait y avoir deux (ou plus) fournisseurs indiqués, par exemple&nbsp;:
     </para>
 
+<!-- Well, both "id" and "name" are supposed to work here but after
+         the xf86-video-* removal all the names will be modesetting unless
+         a proprietary driver used... -->
 <screen><computeroutput>Providers: number : 2
-Provider 0: id: 0x7d cap: 0xb, Source Output, Sink Output, Sink Offload crtcs: 3 outputs: 4 associated providers: 1 name:Intel
-Provider 1: id: 0x56 cap: 0xf, Source Output, Sink Output, Source Offload, Sink Offload crtcs: 6 outputs: 1 associated providers: 1 name:radeon</computeroutput></screen>
+Provider 0: id: 0x7d cap: 0xb, Source Output, Sink Output, Sink Offload crtcs: 3 outputs: 4 associated providers: 1 name:modesetting
+Provider 1: id: 0x56 cap: 0xf, Source Output, Sink Output, Source Offload, Sink Offload crtcs: 6 outputs: 1 associated providers: 1 name:modesetting</computeroutput></screen>
 
+    
     <para>
-      Pour pouvoir lancer une application GLX sur un GPU particulier, vous devrez
-lancer la commande suivante, où &lt;provider&gt; est le plus puissant et
-&lt;sink&gt; est la carte qui fait l'affichage.
+      In order to be able to run a GLX application on a discrete GPU, you will
+need to run the following command, where &lt;provider&gt; is the id of the
+more powerful discrete card, and &lt;sink&gt; is the id of card which has a
+display connected:
     </para>
 
 <screen><userinput>xrandr --setprovideroffloadsink <replaceable>&lt;provider&gt; &lt;sink&gt;</replaceable></userinput></screen>
 
     <note>
       <para>
-        Avec les nouveaux pilotes <application>Xorg</application>, comme modesetting
-ou intel, qui peuvent utiliser DRI3, la commande ci-dessus n'est plus
-nécessaire. Ça ne fait pas de mal non plus.
+        With the <application>Xorg</application> modesetting driver, which is DRI3
+capable, the above command is no longer necessary. It does no harm however.
       </para>
     </note>
 
@@ -491,37 +474,31 @@ EndSection</literal>
 EOF</userinput></screen>
 
       <para>
-        With modern Xorg, little or no additional graphic card configuration is
-necessary. If you should need extra options passed to your video driver, for
-instance, you could use something like the following (again, executed as the
-&root; user):
-      </para>
-
-<screen role="root"><userinput>cat &gt; /etc/X11/xorg.conf.d/videocard-0.conf &lt;&lt; "EOF"
-<literal>Section "Device"
-    Identifier  "Videocard0"
-    Driver      "modesetting"
-    VendorName  "Videocard vendor"
-    BoardName   "ATI Radeon 7500"
-    Option      "AccelMethod" "none"
-EndSection</literal>
-EOF</userinput></screen>
-
-      <para>
-        Some graphics cards may have problems with screen tearing now that Xorg has
-moved to using the modesetting driver in BLFS. To resolve the screen tearing
+        When you drag a window in twm (or any non-compositing window manager)
+horizontally, you may observe that the vertical borders of the window are
+broken into multiple segments.  This is an example of the visual artifacts
+called <emphasis>screen tearing</emphasis>.  To resolve the screen tearing
 problems, create a configuration file that enables the TearFree option. Note
 that you must have the Tearfree patch applied from <xref role="nodep"
-linkend="xorg-server"/> for this to function properly.
+linkend="xorg-server"/> for this to function properly, and it may increase
+memory allocation and reduce performance.
       </para>
 
-<screen role="root"><userinput>cat &gt; /usr/share/X11/xorg.conf.d/20-tearfree.conf &lt;&lt; "EOF"
+<screen role="root"><userinput>cat &gt; /etc/X11/xorg.conf.d/20-tearfree.conf &lt;&lt; "EOF"
 <literal>Section "Device"
    Identifier "Graphics Adapter"
    Driver     "modesetting"
    Option     "TearFree" "true"
 EndSection</literal>
 EOF</userinput></screen>
+
+      <para>
+        With modern Xorg, little or no additional graphic card configuration is
+necessary. If you should need extra options passed to your video driver, add
+them into the <literal>Device</literal> section as well.  The options
+supported by the modesetting driver are documented in the man page
+<filename>modesetting(4)</filename>.
+      </para>
 
     </sect3>
   </sect2>
