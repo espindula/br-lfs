@@ -332,13 +332,47 @@ ninja docs-llvm-html  docs-llvm-man</userinput></screen>
       La documentation de clang peut être aussi construite&nbsp;:
     </para>
 
+<!-- The excessive core dump made my system irresponsive.  -->
 <screen remap="doc"><userinput>ninja docs-clang-html docs-clang-man</userinput></screen>
+
+    
+    <para>
+      LLVM test suite can produce many core dump files.  They will occupy a large
+amount of disk space, and the core dump process can significantly slow down
+the testing.  To test the results with core dump disabled, <phrase
+revision='systemd'>ensure <xref linkend='systemd'/> is rebuilt with <xref
+linkend='linux-pam'/> support and the current login session is started after
+updating the <filename>/etc/pam.d/system-session</filename> file to include
+<filename class='libraryfile'>pam_systemd.so</filename>, then
+</phrase>issue:
+    </para>
+
+    <screen remap="test" revision="sysv"><userinput>sh -c 'ulimit -c 0 &amp;&amp; ninja check-all'</userinput></screen>
+
+    
+    <screen remap="test" revision="systemd"><!-- From core(5): "RLIMIT_CORE will be ignored if the system is
+         configured to pipe core dumps to a program".  Here "the program"
+         is systemd-coredumpd.  So we need some fancy systemd setting.
+         -&ndash;user: Run it under per-user systemd manager, avoiding
+                       the necessity of root priviledge.
+         -&nash;pty: Run it in a pseudo-terminal, so we can monitor the
+                     process or interrupt it with Ctrl-C if we want.
+         -d: Run it with $PWD as the working directory.
+         -G: Delete the transient service unit even if the command fails,
+             to prevent "systemctl -&ndash;user status" from reporting
+             "degraded".
+         -p LimitCORE=0: Disable core dump.
+    -->
+<userinput>
+systemctl   --user start dbus &amp;&amp;
+systemd-run --user --pty -d -G -p LimitCORE=0 ninja check-all</userinput></screen>
 
     <para>
       
       <!-- EDITORS - if you have more than 4 cores, take some offline to measure
       the elapsed time for the tests.  Also, libstdc++.a and perhaps libstdc++fs.a
       are used by a couple of the link-static tests. -->
+<!-- TODO: make or find a report to upstream -->
 <!-- 16.0.3: 67327 Passed, 23510 Unsupported, 85 Skipped,
                    124 Expectedly Failed 
            16.0.4  67327 Passed, 23507 Unsupported, 85 Skipped,
@@ -357,6 +391,15 @@ ninja docs-llvm-html  docs-llvm-man</userinput></screen>
            67330 Passed, 23512 Unsupported, 85 Skipped,
            124 Expectedly Failed, 1 Failed
            FAIL: ThreadSanitizer-x86_64 :: Linux/clone_setns.cpp - xry111
+
+           16.0.5 with Glibc-2.38:
+           63716 Passed, 23512 Unsupported, 85 Skipped,
+           124 Expectedly Failed, 15 Failed
+
+           - AtoiAndFriendsOOBTest, StrtolOOBTest, StrtollOOBTest
+             (repeated 4 times with different configurations)
+           - interception_malloc_test.cpp (repeated 2 times)
+           - scanf-allocate.cpp
       -->
 <!-- To editors: it seems there is a more thorough test suite named
            "test-suite-16.0.0.src.tar.xz" on the GitHub release download
@@ -366,16 +409,19 @@ ninja docs-llvm-html  docs-llvm-man</userinput></screen>
 
            Let's let it go.  llvm is complex enough as it is.  Adding
            the additional testsuite is IMO overkill.  - bdubbs -->
-To test the results, issue: <command>ninja check-all</command>. Tests are
-built with all <emphasis>available</emphasis> cores, but run using the
-number of <emphasis>online</emphasis> processors. (The difference is that
-available cores can be limited using <command>taskset</command>, but taking
-them offline requires echoing 0 to <filename
+Tests are built with all <emphasis>available</emphasis> cores, but run using
+the number of <emphasis>online</emphasis> processors. (The difference is
+that available cores can be limited using <command>taskset</command>, but
+taking them offline requires echoing 0 to <filename
 class="directory">/sys/devices/system/cpu/cpu&lt;N&gt;/online</filename> by
 the <systemitem class="username">root</systemitem> user and makes them
 temporarily unusable by all jobs on the machine.)  One test named
 <filename>Linux/clone_setns.cpp</filename> will fail if
-<option>CONFIG_USER_NS</option> is not enabled in kernel configuration.
+<option>CONFIG_USER_NS</option> is not enabled in kernel configuration.  The
+tests named <filename>AtoiAndFriendsOOBTest</filename>,
+<filename>StrtolOOBTest</filename>, <filename>StrtollOOBTest</filename>,
+<filename>interception_malloc_test.cpp</filename>, and
+<filename>scanf-allocate.cpp</filename> are known to fail with Glibc-2.38.
       
 
       
