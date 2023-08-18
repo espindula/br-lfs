@@ -23,6 +23,53 @@ système pour trouver comment faire.
     </para>
   </sect2>
 
+  <sect2 role="kernel" id="uefi-kernel">
+    <title>Configuration du noyau pour la prise en charge de l'UEFI</title>
+
+    <para>
+      Activez les options suivantes dans la configuration du noyau et recompilez
+le noyau si nécessaire&nbsp;:
+    </para>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+      href="grub-setup-kernel.xml"/>
+
+    <variablelist>
+      <title>Voici la signification des options de configuration&nbsp;:</title>
+
+      <varlistentry>
+        <term><parameter>CONFIG_PARTITION_ADVANCED</parameter></term>
+        <listitem>
+          <para>Si cette option n'est pas activée,
+<parameter>CONFIG_EFI_PARTITION</parameter> sera automatiquement
+activée. Mais si elle est activée, vous devez activer
+<parameter>CONFIG_EFI_PARTITION</parameter> quand même.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <parameter>CONFIG_SYSFB_SIMPLEFB</parameter>,
+<parameter>CONFIG_DRM</parameter>,
+<parameter>CONFIG_DRM_FBDEV_EMULATION</parameter>,
+<parameter>CONFIG_DRM_SIMPLEDRM</parameter>,
+<parameter>CONFIG_FB</parameter> et
+<parameter>CONFIG_FRAMEBUFFER_CONSOLE</parameter></term>
+        <listitem>
+          <para>La combinaison de ces options fournit la prise en charge de la console linux
+sur le framebuffer UEFI. Pour permettre au noyau d'afficher des messagesqde
+débogage tôt dans le processus de démarrage, elles ne devraient pas être
+construites en tant que modules à moins que vous n'utilisiez un initramfs.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <indexterm zone="grub-setup uefi-kernel">
+      <primary sortas="d-uefi">UEFI</primary>
+    </indexterm>
+  </sect2>
+
   <sect2>
     <title>Créer un disque de démarrage d'urgence</title>
 
@@ -80,14 +127,15 @@ class="username">root</systemitem>, créez un point de montage pour la
 partition EFI sur la clé USB et montez-la&nbsp;:
     </para>
 
-<screen role="nodump"><userinput>mkdir -pv /mnt/rescue &amp;&amp;
-mount -v -t vfat /dev/sdx1 /mnt/rescue</userinput></screen>
+<screen role="nodump"><userinput>mount --mkdir -v -t vfat /dev/sdx1 -o codepage=437,iocharset=iso8859-1 \
+      /mnt/rescue</userinput></screen>
 
     <para>
       Installez GRUB pour EFI sur la partition&nbsp;:
     </para>
 
-<screen role="nodump"><userinput>grub-install --target=x86_64-efi --removable --efi-directory=/mnt/rescue --boot-directory=/mnt/rescue</userinput></screen>
+<screen role="nodump"><userinput>grub-install --target=x86_64-efi --removable \
+             --efi-directory=/mnt/rescue --boot-directory=/mnt/rescue</userinput></screen>
 
     <para>
       Démontez la partition&nbsp;:
@@ -104,52 +152,6 @@ choisir le périphérique de démarrage, lisez le manuel de votre carte mère ou
 de votre ordinateur portable.
     </para>
 
-  </sect2>
-
-  <sect2 role="kernel" id="uefi-kernel">
-    <title>Configuration du noyau pour la prise en charge de l'UEFI</title>
-
-    <para>
-      Activez les options suivantes dans la configuration du noyau et recompilez
-le noyau si nécessaire&nbsp;:
-    </para>
-
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
-      href="grub-setup-kernel.xml"/>
-
-    <variablelist>
-      <title>Voici la signification des options de configuration&nbsp;:</title>
-
-      <varlistentry>
-        <term><parameter>CONFIG_PARTITION_ADVANCED</parameter></term>
-        <listitem>
-          <para>If it's not enabled, <parameter>CONFIG_EFI_PARTITION</parameter> will be
-enabled automatically.  But when it's enabled, you must set
-<parameter>CONFIG_EFI_PARTITION</parameter> to enabled as well.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>
-          <parameter>CONFIG_SYSFB_SIMPLEFB</parameter>,
-<parameter>CONFIG_DRM</parameter>,
-<parameter>CONFIG_DRM_FBDEV_EMULATION</parameter>,
-<parameter>CONFIG_DRM_SIMPLEDRM</parameter>,
-<parameter>CONFIG_FB</parameter> et
-<parameter>CONFIG_FRAMEBUFFER_CONSOLE</parameter></term>
-        <listitem>
-          <para>La combinaison de ces options fournit la prise en charge de la console linux
-sur le framebuffer UEFI. Pour permettre au noyau d'afficher des messagesqde
-débogage tôt dans le processus de démarrage, elles ne devraient pas être
-construites en tant que modules à moins que vous n'utilisiez un initramfs.</para>
-        </listitem>
-      </varlistentry>
-
-    </variablelist>
-
-    <indexterm zone="grub-setup uefi-kernel">
-      <primary sortas="d-uefi">UEFI</primary>
-    </indexterm>
   </sect2>
 
   <sect2>
@@ -190,21 +192,23 @@ première partition du disque.
     </warning>
 
     <para>
-      As the &root; user, add an entry for the ESP in
-<filename>/etc/fstab</filename>, so it will be mounted automatically during
-system boot (replace <userinput>sda1</userinput> with the device node
-corresponding to the ESP):
+      Maintenant, en tant qu'utilisateur <systemitem
+class="username">root</systemitem>, créez le point de montage pour l'ESP et
+montez-la (remplacez <userinput>sda1</userinput> par le nœud de périphérique
+correspondant à l'ESP)&nbsp;:
+    </para>
+
+<screen role="nodump"><userinput>mount --mkdir -v -t vfat /dev/sda1 -o codepage=437,iocharset=iso8859-1 \
+      /boot/efi</userinput></screen>
+
+    <para>
+      If you want to mount the ESP automatically during system boot, as the &root;
+user, add an entry for the ESP into <filename>/etc/fstab</filename>:
     </para>
 
 <screen role="nodump"><userinput>cat &gt;&gt; /etc/fstab &lt;&lt; EOF</userinput>
 <literal>/dev/sda1 /boot/efi vfat codepage=437,iocharset=iso8859-1 0 1</literal>
 <userinput>EOF</userinput></screen>
-
-    <para>
-      Still as the &root; user, create the mount point for the ESP and mount it:
-    </para>
-
-<screen role="nodump"><userinput>mount /boot/efi --mkdir</userinput></screen>
 
   </sect2>
 
@@ -455,8 +459,8 @@ menuentry "Firmware Setup" {
 <userinput>EOF</userinput></screen>
 
     <para>
-      Vous devez remplacer <literal>(hd0,2)</literal>, <literal>sda2</literal> et
-<literal>6.1.11-lfs-11.3</literal> pour correspondre à votre configuration.
+      <literal>(hd0,2)</literal>, <literal>sda2</literal>, and
+<literal>6.4.10-lfs-12.0</literal> must match your configuration.
     </para>
 
     <note>
