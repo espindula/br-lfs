@@ -120,7 +120,7 @@ exceptions très lentes.
       </para>
     </note>
 
-    &lfs113_checked;
+    &lfs120_checked;
 
     <bridgehead renderas="sect3">Informations sur le paquet</bridgehead>
     <itemizedlist spacing="compact">
@@ -175,16 +175,16 @@ Additional Downloads</bridgehead>
       <!-- Required for downloading stage 0 binaries.
            Otherwise it's recommended (if not installed, a vendored copy
            will be built). -->
-<xref linkend="cmake"/> and <xref linkend="curl"/>
+<xref linkend="cmake"/> et <xref linkend="curl"/>
     </para>
 
     &build-use-internet;
 
     <bridgehead renderas="sect4">Recommandées</bridgehead>
     <para role="recommended">
-      <xref linkend="libssh2"/> and <xref linkend="llvm"/> (built with
--DLLVM_LINK_LLVM_DYLIB=ON so that rust can link to system LLVM instead of
-building its shipped version)
+      <xref linkend="libssh2"/> et <xref linkend="llvm"/> (construit avec
+-DLLVM_LINK_LLVM_DYLIB=ON pour que rust puisse se lier au LLVM du système au
+lieu de compiler la version intégrée)
     </para>
 
     <note>
@@ -210,13 +210,14 @@ l'archive des sources de Rustc sera construite et utilisée.
 
     <note>
       <para>
-        Currently the rust compiler produces SSE2 instructions for 32-bit x86,
-causing the generated code to be broken on 32-bit systems without a
-SSE2-capable processor.  All x86 processor models released after 2004 should
-be SSE2-capable.  Run <command>lscpu | grep sse2</command> as a test.  If it
-outputs anything, your CPU is SSE2-capable and OK.  Otherwise you may try to
-build this package <emphasis>on a SSE2-capable system</emphasis> with the
-following fix applied:
+        Actuellement le compilateur rust produit des instructions SSE2 pour les
+systèmes x86 32&nbsp;bits, ce qui casse le code généré sur les systèmes
+32&nbsp;bits sans processeur capable d'utiliser SSE2. Tous les modèles de
+processeur x86 vendus après 2004 devraient avoir SSE2. Exécutez
+<command>lscpu | grep sse2</command> pour tester. Si la sortie affiche
+quelque chose, votre CPU prend en charge SSE2 et c'est bon. Sinon vous
+devrez essayer de construire ce paquet <emphasis>sur un système compatible
+SSE2</emphasis> avec la correction suivante appliquée&nbsp;:
       </para>
 
       
@@ -364,9 +365,9 @@ python3 ./x.py test --verbose --no-fail-fast | tee rustc-testlog</userinput></sc
 
     
     <para>
-      Two <literal>ui</literal> tests may fail (depending on the length of
-absolute path of the <filename
-class='directory'>rustc-&rust-version;-src</filename> directory).
+      Deux tests <literal>ui</literal> peuvent échouer (en fonction de la longueur
+du chemin absolu du répertoire <filename
+class='directory'>rustc-&rust-version;-src</filename>).
     </para>
 
     <para>
@@ -375,10 +376,22 @@ class='directory'>rustc-&rust-version;-src</filename> directory).
     </para>
 
     <para>
-      As with all large test suites, other tests might fail on some machines - if
-the number of additional failures is low, check the log for 'failures:' and
-review lines above that, particularly the 'stderr:' lines. Any mention of
-SIGSEGV or signal 11 in a failing test is a cause for concern.
+      Sur certains systèmes, scripter les tests peut résulter en des tests qui
+attendent indéfiniment sur <filename>test:
+combine_install_with_separate_uninstall</filename>. Dans ce cas, vous pouvez
+contourner le problème en appuyant sur la touche Entrée. Le test peut
+également être supprimé avec&nbsp;:
+    </para>
+
+<screen role="nodump"><userinput>sed -e '/runtest combine_install_with/s/^/#/g' -i src/tools/rust-installer/test.sh</userinput></screen>
+
+    <para>
+      Comme avec toutes les grosses suites de tests, d'autres tests peuvent
+échouer sur certaines machines&nbsp;: s'il y a peu d'échecs supplémentaires,
+cherchez les lignes commençant par «&nbsp;failures:&nbsp;» dans le journal
+et regardez les lignes au-dessus, surtout les lignes
+«&nbsp;stderr:&nbsp;». Toute mention de SIGSEGV ou signal 11 dans un test
+échoué peut s'avérer problématique.
     </para>
 
     <para>
@@ -428,11 +441,22 @@ commande suivante pourrait complètement reconstruire le paquet. Pour
       </para>
     </note>
 
+<!-- TODO: Report to upstream if this persists in the next release -->
 <screen role='root'><userinput>python3 ./x.py install</userinput></screen>
 
+    
     <para>
-      Still as the &root; user, symlink a <application>Zsh</application>
-completion file into the correct location:
+      The building system attempts to install some files twice, and during the
+second attempt it renames the old one (installed in the first attempt) with
+the <filename class='extension'>.old</filename> suffix.  As the &root; user,
+remove these files:
+    </para>
+
+    <screen role='root'><userinput>find /opt/rustc-&rust-version; -name "*.old" -delete</userinput></screen>
+
+    <para>
+      Toujours en tant qu'utilisateur &root;, créez un lien symbolique pour le
+fichier de complétion <application>Zsh</application> au bon endroit&nbsp;:
     </para>
 
 <screen role='root'><userinput>install -vdm755 /usr/share/zsh/site-functions      &amp;&amp;
@@ -453,41 +477,46 @@ p. ex. <command>ls -l</command>.
     </para>
 
     <para>
-      <literal>targets = "X86"</literal>: this avoids building all the available
-linux cross-compilers (AArch64, MIPS, PowerPC, SystemZ, etc). Unfortunately,
-rust insists on installing source files for these below <filename
-class="directory">/opt/rustc/lib/src</filename>.
+      <literal>targets = "X86"</literal>&nbsp;: cela évite de construire tous les
+compilateurs croisés disponibles (Aarch64, MIPS, PowerPC, SystemZ,
+etc). Malheureusement, rust insiste pour installer leurs fichiers sources
+sous <filename class="directory">/opt/rustc/lib/src</filename>.
     </para>
 
     <para>
-      <literal>extended = true</literal>: this installs several tools (specified
-by the <literal>tools</literal> entry) alongside <command>rustc</command>.
+      <literal>extended = true</literal>&nbsp;: cela installe plusieurs outils
+(spécifiés par l'entrée <literal>tools</literal>) à côté de
+<command>rustc</command>.
     </para>
 
     <para>
-      <literal>tools = ["cargo", "clippy", "rustdoc", "rustfmt"]</literal>: only
-build the tools from the 'default' profile in binary command
-<command>rustup</command> which are recommended for most users.  The other
-tools are unlikely to be useful unless using (old) code analyzers or editing
-the standard library.
+      <literal>tools = ["cargo", "clippy", "rustdoc", "rustfmt"]</literal>&nbsp;:
+ne construit que les outils du profil «&nbsp;default&nbsp;» dans la commande
+binaire <command>rustup</command> qui sont recommandées pour la plupart des
+utilisateurs. Les autres outils sont probablement inutiles à moins
+d'utiliser d'anciens analyseurs de code ou d'éditer la bibliothèque
+standard.
     </para>
 
     <para>
-      <literal>channel = "stable"</literal>: this ensures only stable features can
-be used, the default in <filename>config.toml</filename> is to use
-development features, which is not appropriate for a released version.
+      <literal>channel = "stable"</literal>&nbsp;: cela s'assure que seules les
+fonctionnalités stables peuvent être utilisée, la valeur par défaut dans
+<filename>config.toml</filename> est d'utiliser les fonctionnalités de
+développement, qui ne sont pas appropriées pour une version publique.
     </para>
 
     
     <!-- comment while using shipped LLVM -->
 <para>
-      <literal>[target.x86_64-unknown-linux-gnu]</literal>: the syntax of
-<filename>config.toml</filename> requires an <literal>llvm-config</literal>
-entry for each target for which system-llvm is to be used. Change the target
-to <literal>[target.i686-unknown-linux-gnu]</literal> if you are building on
-32-bit x86. This whole section may be omitted if you wish to build against
-the shipped llvm, or do not have clang, but the resulting build will be
-larger and take longer.
+      <literal>[target.x86_64-unknown-linux-gnu]</literal>&nbsp;: la syntaxe de
+<filename>config.toml</filename> requiert une entrée
+<literal>llvm-config</literal> pour chaque cible pour laquelle system-llvm
+doit être utilisé. Modifiez la cible en
+<literal>[target.i686-unknown-linux-gnu]</literal> si vous construisez sur
+x86 32&nbsp;bits. La section complète peut être omise si vous souhaitez
+construire avec la version de llvm incluse ou que vous n'avez pas clang,
+mais la construction qui en résultera sera plus grande et prendra plus de
+temps.
     </para>
 
 
@@ -521,19 +550,19 @@ larger and take longer.
     </para>-->
 <!-- https://github.com/alexcrichton/openssl-probe/issues/25 -->
 <para>
-      <envar>SSL_CERT_DIR=/etc/ssl/certs</envar>: Work around an issue causing
-test failures with the CA certificate store layout used by <xref
-linkend='make-ca'/>.
+      <envar>SSL_CERT_DIR=/etc/ssl/certs</envar>&nbsp;: contourne un problème qui
+cause des échecs des tests avec la structure du magasin de certificats
+d'autorités de certification utilisée par <xref linkend='make-ca'/>.
     </para>
 
     <para>
-      <parameter>--verbose</parameter>: this switch can sometimes provide more
-information about a test which fails.
+      <parameter>--verbose</parameter>&nbsp;: ce paramètre peut parfois fournir
+plus d'informations sur un test qui échoue.
     </para>
 
     <para>
-      <parameter>--no-fail-fast</parameter>: this switch ensures that the test
-suite will not stop at the first error.
+      <parameter>--no-fail-fast</parameter>&nbsp;: ce paramètre s'assure que la
+suite de tests ne s'arrêtera pas après la première erreur.
     </para>
 
   </sect2>
