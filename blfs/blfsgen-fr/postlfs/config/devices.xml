@@ -75,61 +75,28 @@ pilote existant du noyau.
     </para>
 
     <para>
-      Accéder aux nœuds périphériques USB directement est nécessaire quand un
-programme de l'espace utilisateur est considéré comme un pilote de
-périphérique.  Cependant, pour que le programme ouvre avec succès le
-périphérique, les permissions doivent être initialisées correctement. Par
-défaut, pour des considérations de sécurité, tous les périphériques USB
-directs appartiennent à l'utilisateur root et au groupe usb, et ont la
-permission 0664 (l'accès en lecture est nécessaire, par exemple pour que
-lsusb puisse travailler et pour les programmes d'accès aux concentrateurs
-USB). Des paquets (comme SANE et libgphoto2) contenant un pilote de
-périphérique USB dans l'espace utilisateur utilisent aussi les règles udev
-pour changer les permissions des périphériques USB contrôlés. Ce qui fait
-que les règles installées par SANE changent les permissions pour les
-scanners reconnus, mais pas pour les imprimantes. Si le mainteneur du paquet
-oublie d'écrire une règle pour votre périphérique, signalez le bogue à BLFS
-(si le paquet est ici) et en amont, et vous aurez besoin d'écrire votre
-propre règle.
+      Access to raw USB device nodes is needed when a userspace program is acting
+as a device driver. However, for the program to open the device
+successfully, the permissions have to be set correctly. By default, due to
+security concerns, all raw USB devices are owned by user root and group
+root, and have 0664 permissions (the read access is needed, e.g., for lsusb
+to work and for programs to access USB hubs). Packages (such as SANE and
+libgphoto2) containing userspace USB device drivers also ship udev rules
+that change the permissions of the controlled raw USB devices. That is,
+rules installed by SANE change permissions for known scanners, but not
+printers.  If a package maintainer forgot to write a rule for your device,
+report a bug to both BLFS (if the package is there) and upstream, and you
+will need to write your own rule.
     </para>
 
     <para>
-      Il y a une situation ou un contrôle d'accès fin avec des règles udev
-pré-générées ne marche pas. Nommément, les émulateurs de PC comme KVM, QEMU
-et VirtualBox utilisent des nœuds de périphérique USB direct pour les
-périphériques USB arbitrairement présents dans le système d'exploitation
-invité (note&nbsp;: des correctifs sont nécessaires pour que cela fonctionne
-dans les points de montage obsolètes /proc/bus/usb décris
-précédemment). Naturellement, les mainteneurs de ces paquets ne peuvent pas
-connaître quels périphériques USB seront connectés sur le système
-d'exploitation invité. Vous pouvez soit écrire des règles udev séparées pour
-tous les périphériques USB nécessaires vous même, soit utiliser les règles
-par défaut du groupe "usb", les membres de celui-ci pouvant envoyer des
-commandes arbitraires pour tous périphériques USB.
+      Before Linux-2.6.15, raw USB device access was performed not with
+/dev/bus/usb/BBB/DDD device nodes, but with /proc/bus/usb/BBB/DDD
+pseudofiles. Some applications still use only this deprecated technique and
+can't use the new device nodes.  They cannot work with Linux kernel version
+3.5 or newer.  If you need to run such an application, contact the developer
+of it for a fix.
     </para>
-
-    <para>
-      Avant Linux-2.6.15, l'accès direct aux périphériques USB n'était pas géré
-avec les nœuds de périphériques /dev/bus/usb/BBB/DDD, mais avec des
-pseudo-fichiers /proc/bus/usb/BBB/DDD. Quelques applications (par exemple.,
-VMware Workstation)  semblent utiliser seulement cette technique obsolète et
-ne peuvent pas utiliser les nouveaux nœuds de périphériques. Pour qu'elles
-puissent fonctionner, utiliser le groupe "usb", mais rappelez-vous que les
-membres ont un accès complet à tous les périphériques USB.  Pour créer
-l'entrée fstab pour le fichier système obsolète usbfs:
-    </para>
-
-<screen><literal>usbfs  /proc/bus/usb  usbfs  devgid=14,devmode=0660  0  0</literal></screen>
-
-    <note>
-      <para>
-        Ajouter les utilisateurs dans le groupe "usb" est par nature pas sécurisé,
-car cela court-circuite les restrictions d'accès imposées par les pilotes
-spécifiques des nœuds de périphériques USB. Par nature, ils peuvent lire des
-données sensibles des disques USB sans être dans le groupe "disque". Évitez
-d'ajouter des utilisateurs dans ce groupe si vous le pouvez.
-    </para>
-    </note>
 
   </sect2>
 
