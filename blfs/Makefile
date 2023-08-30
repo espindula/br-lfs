@@ -39,7 +39,7 @@ CURL=curl -H "Authorization: Token $(WEBLATE_KEY)"
 # development branch and commit.
 
 # What we follow from upstream.
-MILESTONE := 11.4
+MILESTONE := 12.0
 
 # Select the current version we are tracking from master
 REVISION := $(shell (cd $(ORIGDIR); git rev-parse HEAD))
