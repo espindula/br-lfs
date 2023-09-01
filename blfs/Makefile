@@ -17,7 +17,7 @@ EN_REPO:=git://git.linuxfromscratch.org/blfs.git
 RENDERTMP=/tmp
 
 WEBLATE_API:=https://bright.lepiller.eu/api
-WEBLATE_SHARED_COMPONENT=faq/faq
+WEBLATE_SHARED_COMPONENT=linux-from-scratch-12-0/index
 CURL=curl -H "Authorization: Token $(WEBLATE_KEY)"
 
 
@@ -215,7 +215,7 @@ update: $(PO)
 define createcomponent
 { \
 	"file_format": "po", \
-	"repo": "weblate://faq/faq", \
+	"repo": "weblate://$(WEBLATE_SHARED_COMPONENT)", \
 	"filemask": "blfs/*/$(patsubst fr/%,%,$<)", \
 	"name": "$(subst /,_,$(patsubst weblate/%,%,$@))", \
 	"slug": "$(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@))))", \
@@ -224,11 +224,11 @@ define createcomponent
 endef
 
 weblate/%: fr/%.po
-	@if $(CURL) $(WEBLATE_API)/components/beyond-linux-from-scratch/$(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@))))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
+	@if $(CURL) $(WEBLATE_API)/components/beyond-linux-from-scratch-12-0/$(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@))))/ 2>/dev/null | grep '"detail":"Not found."' 1>/dev/null; then \
 		echo $(subst /,_,$(subst .,_,$(subst +,_,$(patsubst weblate/%,%,$@)))); \
 		$(CURL) -H "Content-Type: application/json" \
 			--data-binary "$(subst ",\",${createcomponent})" \
-			$(WEBLATE_API)/projects/beyond-linux-from-scratch/components/; \
+			$(WEBLATE_API)/projects/beyond-linux-from-scratch-12-0/components/; \
 		echo "";\
 	fi
 
