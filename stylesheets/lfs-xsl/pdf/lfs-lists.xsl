@@ -1,4 +1,9 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--
+$LastChangedBy: bdubbs $
+$Date: 2012-08-29 22:45:23 +0200 (mer. 29 août 2012) $
+-->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"

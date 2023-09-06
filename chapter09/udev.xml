@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-udev">
+  <?dbhtml filename="udev.html"?>
+
+  <title>Visão Geral do Manuseio de Dispositivo e de Módulo</title>
+
+  <indexterm zone="ch-config-udev">
+    <primary sortas="a-Udev">Udev</primary>
+    <secondary>uso</secondary>
+  </indexterm>
+
+  <para>No <xref linkend="chapter-building-system"/>, nós instalamos o processo de
+segundo plano Udev quando <phrase revision="sysv">udev</phrase> <phrase
+revision="systemd">systemd</phrase> foi construído. Antes de entrarmos nos
+detalhes referentes a como o Udev funciona, um histórico breve dos métodos
+anteriores de manuseio de dispositivos é oportuno.</para>
+
+  <para>Sistemas Linux em geral tradicionalmente usavam um método estático de
+criação de dispositivo, pelo qual um grande número de nós de dispositivo era
+criado sob <filename class="directory">/dev</filename> (às vezes
+literalmente milhares de nós), independente de se os dispositivos de
+hardware correspondentes atualmente existissem. Isso tipicamente era feito
+via um script <command>MAKEDEV</command>, o qual continha um número de
+chamadas ao aplicativo <command>mknod</command> com os números relevantes de
+dispositivo maior e menor para cada dispositivo possível que pudesse existir
+no mundo.</para>
+
+  <para>Usando o método Udev, nós de dispositivo somente são criados para aqueles
+dispositivos que são detectados pelo núcleo. Esses nós de dispositivo são
+criados a cada vez que o sistema inicializa; eles serão armazenados em um
+sistema de arquivos <systemitem class="filesystem">devtmpfs</systemitem> (um
+sistema de arquivos virtuais que reside inteiramente na memória do
+sistema). Nós de dispositivo não exigem muito espaço, de forma que a memória
+que é usada é insignificante.</para>
+
+  <sect2>
+    <title>Histórico</title>
+
+    <para>Em fevereiro de 2000, um novo sistema de arquivos chamado <systemitem
+class="filesystem">devfs</systemitem> foi mesclado no núcleo 2.3.46 e foi
+tornado disponível durante as séries 2.4 de núcleos estáveis. Embora ele
+estivesse presente no próprio fonte do núcleo, esse método de criar
+dispositivos dinamicamente nunca recebeu suporte decisivo dos(as)
+desenvolvedores(as) centrais do núcleo.</para>
+
+    <para>O problema principal com a abordagem adotada pelo <systemitem
+class="filesystem">devfs</systemitem> era a maneira como ele lidava com
+detecção, criação e nomenclatura de dispositivo. O último problema, esse da
+nomenclatura de nó de dispositivo, era talvez o mais crítico. Geralmente é
+aceito que, se nomes de dispositivo forem configuráveis, [então] a política
+de nomenclatura de dispositivo deveria ser escolhida pelos(as)
+administradores(as) do sistema e não imposta a eles(as) pelos(as)
+desenvolvedores(as). O sistema de arquivos <systemitem
+class="filesystem">devfs</systemitem> também sofria com algumas condições
+que eram inerentes ao projeto dele; essas não poderiam ser corrigidas sem
+uma revisão substancial do núcleo. O <systemitem
+class="filesystem">devfs</systemitem> ficou marcado como obsoleto por um
+longo tempo, e finalmente foi removido do núcleo em junho de 2006.</para>
+
+    <para>Com o desenvolvimento da árvore do núcleo instável 2.5, liberada
+posteriormente como a série 2.6 dos núcleos estáveis, um novo sistema de
+arquivos virtuais chamado <systemitem class="filesystem">sysfs</systemitem>
+veio a existir. O trabalho do <systemitem
+class="filesystem">sysfs</systemitem> é o de fornecer informação a respeito
+da configuração de hardware do sistema para processos do espaço de
+usuário(a). Com essa representação visível ao espaço de usuário(a),
+tornou-se possível desenvolver um substituto de espaço de usuário(a) para o
+<systemitem class="filesystem">devfs</systemitem>.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Implementação do Udev</title>
+
+    <sect3>
+      <title>Sysfs</title>
+
+      <para>O sistema de arquivos <systemitem class="filesystem">sysfs</systemitem> foi
+brevemente mencionado acima. Alguém possivelmente questione como o
+<systemitem class="filesystem">sysfs</systemitem> sabe a respeito dos
+dispositivos presentes em um sistema e quais números de dispositivo deveriam
+ser usados para eles. Controladores que tenham sido compilados internamente
+no núcleo registram os objetos deles em <systemitem
+class="filesystem">sysfs</systemitem> (devtmpfs internamente) assim que são
+detectados pelo núcleo. Para controladores compilados como módulos, o
+registro acontece quando o módulo for carregado. Assim que o sistema de
+arquivos <systemitem class="filesystem">sysfs</systemitem> for montado (em
+<filename class="directory">/sys</filename>), os dados os quais os
+controladores tenham registrado com <systemitem
+class="filesystem">sysfs</systemitem> ficam disponíveis para os processos de
+espaço de usuário(a) e para o udevd para processamento (incluindo
+modificações para nós de dispositivo).</para>
+
+    </sect3>
+
+    <sect3 id='ch-config-udev-device-node-creation'>
+      <title>Criação de Nó de Dispositivo</title>
+
+      <para>Arquivos de dispositivo são criados pelo núcleo no sistema de arquivos
+<systemitem class="filesystem">devtmpfs</systemitem>. Qualquer controlador
+que deseje registrar um nó de dispositivo usará o <systemitem
+class="filesystem">devtmpfs</systemitem> (via núcleo do controlador) para
+fazê-lo. Quando uma instância do <systemitem
+class="filesystem">devtmpfs</systemitem> é montada em <filename
+class="directory">/dev</filename>, o nó de dispositivo inicialmente será
+exposto para o espaço de usuário(a) com um nome, permissões e
+proprietário(a) fixos.</para>
+
+      <para>Pouco tempo depois, o núcleo enviará um uevent para
+<command>udevd</command>. Baseado nas regras especificadas nos arquivos
+dentro dos diretórios <filename
+class="directory">/etc/udev/rules.d</filename>, <filename
+class="directory">/usr/lib/udev/rules.d</filename> e <filename
+class="directory">/run/udev/rules.d</filename>, <command>udevd</command>
+criará links simbólicos adicionais para o nó de dispositivo ou mudará as
+permissões, proprietário(a) ou grupo deles, ou modificará a entrada interna
+(nome) de base de dados do <command>udevd</command> para aquele objeto.</para>
+
+      <para>As regras nesses três diretórios são numeradas e todos os três diretórios
+são mesclados. Se <command>udevd</command> não puder encontrar uma regra
+para o dispositivo que ele esteja criando, [então] ele deixará as permissões
+e propriedade no que <systemitem class="filesystem">devtmpfs</systemitem>
+usou inicialmente.</para> </sect3>
+
+    <sect3 id="module-loading">
+      <title>Carregamento de Módulo</title>
+
+      <para>Controladores de dispositivo compilados como módulos possivelmente tenham
+apelidos construídos dentro deles. Apelidos são visíveis na saída gerada do
+aplicativo <command>modinfo</command> e geralmente estão relacionados aos
+identificadores específicos ao barramento dos dispositivos suportados por um
+módulo. Por exemplo, o controlador <emphasis>snd-fm801</emphasis> suporta
+dispositivos PCI com ID de fornecedor 0x1319 e ID de dispositivo 0x0801 e
+tem um apelido de
+<quote>pci:v00001319d00000801sv*sd*bc04sc01i*</quote>. Para a maioria dos
+dispositivos, o controlador de barramento exporta o apelido do controlador
+que lidaria com o dispositivo via <systemitem
+class="filesystem">sysfs</systemitem>. Por exemplo, o arquivo
+<filename>/sys/bus/pci/devices/0000:00:0d.0/modalias</filename> pode conter
+a sequência de caracteres
+<quote>pci:v00001319d00000801sv00001319sd00001319bc04sc01i00</quote>. As
+regras padrão fornecidas com o Udev causarão <command>udevd</command> chamar
+<command>/sbin/modprobe</command> com o conteúdo da variável de ambiente do
+uevent <envar>MODALIAS</envar> (o qual deveria ser o mesmo que o conteúdo do
+arquivo <filename>modalias</filename> em sysfs), dessa forma carregando
+todos os módulos cujos apelidos correspondem a essa sequência de caracteres
+depois da expansão de carácter curinga.</para>
+
+      <para>Nesse exemplo, isso significa que, em adição a
+<emphasis>snd-fm801</emphasis>, o obsoleto (e indesejado) controlador
+<emphasis>forte</emphasis> será carregado se ele estiver disponível. Veja-se
+abaixo para maneiras nas quais o carregamento de controladores indesejados
+pode ser evitado.</para>
+
+      <para>O próprio núcleo também é capaz de carregar módulos para protocolos de rede
+de comunicação, sistemas de arquivos e suporte NLS sob demanda.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Lidando com Dispositivos Plugáveis a Quente/Dinâmicos</title>
+
+      <para>Quando você pluga um dispositivo, como um reprodutor de MP3 Universal Serial
+Bus (USB), o núcleo reconhece que o dispositivo agora está conectado e gera
+um uevent. Esse uevent é então tratado pelo <command>udevd</command> como
+descrito acima.</para>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2>
+    <title>Problemas ao Carregar Módulos e Criar Dispositivos</title>
+
+    <para>Existem uns poucos possíveis problemas quando se trata de criar
+automaticamente nós de dispositivos.</para>
+
+    <sect3>
+      <title>Um Módulo do Núcleo Não é Carregado Automaticamente</title>
+
+      <para>O Udev só carregará um módulo se ele tiver um apelido específico de
+barramento e o controlador de barramento exportar adequadamente os apelidos
+necessários para <systemitem class="filesystem">sysfs</systemitem>. Em
+outros casos, deve-se organizar o carregamento de módulo por outros
+meios. Com o Linux-&linux-version;, o Udev é conhecido por carregar
+controladores escritos adequadamente para dispositivos INPUT, IDE, PCI, USB,
+SCSI, SERIO e FireWire.</para>
+
+      <para>Para determinar se o controlador de dispositivo que você exige tem o suporte
+necessário para o Udev, execute <command>modinfo</command> com o nome do
+módulo como o argumento. Agora tente localizar o diretório do dispositivo
+sob <filename class="directory">/sys/bus</filename> e verifique se existe um
+arquivo <filename>modalias</filename> lá.</para>
+
+      <para>Se o arquivo <filename>modalias</filename> existir em <systemitem
+class="filesystem">sysfs</systemitem>, [então] o controlador suporta o
+dispositivo e pode falar com ele diretamente, mas não tem o apelido, isso é
+um defeito no controlador. Carregue o controlador sem a ajuda do Udev e
+espere que o problema seja corrigido posteriormente.</para>
+
+      <para>Se não existir arquivo <filename>modalias</filename> no diretório relevante
+sob <filename class="directory">/sys/bus</filename>, [então] isso significa
+que os(as) desenvolvedores(as) do núcleo ainda não adicionaram suporte
+modalias para esse tipo de barramento. Com o Linux-&linux-version;, esse é o
+caso com barramentos ISA. Espere que esse problema seja corrigido em versões
+posteriores do núcleo.</para>
+
+      <para>O Udev não é destinado para carregar controladores
+<quote>encapsuladores</quote>, tais como <emphasis>snd-pcm-oss</emphasis>, e
+controladores de não hardware, tais como <emphasis>loop</emphasis>, de
+maneira alguma.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Um Módulo do Núcleo Não é Carregado Automaticamente e o Udev Não é Destinado
+para Carregá-lo</title>
+
+      <para>Se o módulo <quote>encapsulador</quote> somente aprimora a funcionalidade
+fornecida por algum outro módulo (por exemplo,
+<emphasis>snd-pcm-oss</emphasis> aprimora a funcionalidade de
+<emphasis>snd-pcm</emphasis> tornando as placas de som disponíveis para
+aplicações OSS), [então] configure o <command>modprobe</command> para
+carregar o encapsulador depois que o Udev carregar o módulo
+encapsulado. Para fazer isso, adicione uma linha <quote>softdep</quote> ao
+arquivo
+<filename>/etc/modprobe.d/<replaceable>&lt;nome_arquivo&gt;</replaceable>.conf</filename>
+correspondente. Por exemplo:</para>
+
+<screen role="nodump"><literal>softdep snd-pcm post: snd-pcm-oss</literal></screen>
+
+      <para>Observe que o comando <quote>softdep</quote> também permite dependências
+<literal>pre:</literal>, ou uma mistura de ambas as dependências
+<literal>pre:</literal> e <literal>post:</literal>. Veja-se a página de
+manual <filename>modprobe.d(5)</filename> para mais informação a respeito da
+sintaxe e recursos <quote>softdep</quote>.</para>
+
+      <para revision="sysv">Se o módulo em questão não é um encapsulador e é útil por ele próprio,
+[então] configure o script de inicialização <command>modules</command> para
+carregar esse módulo na inicialização do sistema. Para fazer isso, adicione
+o nome do módulo ao arquivo <filename>/etc/sysconfig/modules</filename> em
+uma linha separada. Isso funciona para módulos encapsuladores também, mas é
+abaixo do ideal nesse caso.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>O Udev Carrega Algum Módulo Indesejado</title>
+
+      <para>Ou não construa o módulo, ou coloque-o na lista negra em um arquivo
+<filename>/etc/modprobe.d/blacklist.conf</filename> como feito com o módulo
+<emphasis>forte</emphasis> no exemplo abaixo:</para>
+
+<screen role="nodump"><literal>blacklist forte</literal></screen>
+
+      <para>Módulos em listas negras ainda podem ser carregados manualmente com o
+comando explícito <command>modprobe</command>.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>O Udev Cria um Dispositivo Incorretamente ou Faz o Link Simbólico Errado</title>
+
+      <para>Isso geralmente acontece se uma regra inesperadamente corresponder com um
+dispositivo. Por exemplo, uma regra mal escrita pode corresponder com ambos
+um disco SCSI (como desejado) e o dispositivo genérico SCSI correspondente
+(incorretamente) por fornecedor(a). Encontre a regra infratora e torne-a
+mais específica, com a ajuda do comando <command>udevadm info</command>.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Regra do Udev Funciona de Forma Não Confiável</title>
+
+      <para>Isso possivelmente seja outra manifestação do problema anterior. Se não, e
+sua regra usar atributos do <systemitem
+class="filesystem">sysfs</systemitem>, [então] isso possivelmente seja um
+problema de temporização do núcleo, a ser corrigido em núcleos
+posteriores. Por hora, você pode contorná-lo criando uma regra que aguarda o
+atributo usado do <systemitem class="filesystem">sysfs</systemitem> e o
+adiciona ao arquivo
+<filename>/etc/udev/rules.d/10-wait_for_sysfs.rules</filename> (crie esse
+arquivo se ele não existir). Por favor, notifique a lista LFS Development se
+você o fizer e isso ajudar.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>O Udev Não Cria um Dispositivo</title>
+
+      <para>Primeiro, esteja certo(a) de que o driver está construído internamente no
+núcleo ou já carregado como um módulo e que o Udev não está criando um
+dispositivo mal nomeado.</para>
+
+      <para>Se um controlador do núcleo não exportar os dados dele para o <systemitem
+class="filesystem">sysfs</systemitem>, [então] o Udev carece da informação
+necessária para criar um nó de dispositivo. Isso é mais provável de
+acontecer com controladores terceirizados oriundos de fora da árvore do
+núcleo. Crie um nó de dispositivo estático em
+<filename>/usr/lib/udev/devices</filename> com os números maior/menor
+apropriados (veja-se o arquivo <filename>devices.txt</filename> dentro da
+documentação do núcleo ou a documentação fornecida pelo(a) fornecedor(a) do
+controlador terceirizado). O nó de dispositivo estático será copiado para
+<filename class="directory">/dev</filename> pelo <command>udev</command>.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>A Ordem de Nomenclatura do Dispositivo Muda Aleatoriamente Depois de
+Reinicializar</title>
+
+      <para>Isso é devido ao fato de o Udev, pelo projeto, lidar com uevents e carregar
+módulos em paralelo e, assim, em uma ordem imprevisível. Isso nunca será
+<quote>corrigido</quote>. Você não deveria confiar nos nomes de dispositivos
+do núcleo sendo estáveis. Em vez disso, crie suas próprias regras que fazem
+links simbólicos com nomes estáveis baseados em alguns atributos estáveis do
+dispositivo, tais como um número de série ou a saída gerada dos vários
+utilitários *_id instalados pelo Udev. Veja-se a <xref
+linkend="ch-config-symlinks"/> e <xref linkend="ch-config-network"/> para
+exemplos.</para>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2>
+    <title>Leitura Útil</title>
+
+    <para>Documentação útil adicional está disponível nos seguintes sítios:</para>
+
+    <itemizedlist>
+
+      <listitem>
+        <para>Uma implementação de espaço de usuário(a) do <systemitem
+class="filesystem">devfs</systemitem> <ulink
+url="http://www.kroah.com/linux/talks/ols_2003_udev_paper/Reprint-Kroah-Hartman-OLS2003.pdf"/></para>
+      </listitem>
+
+      <listitem>
+        <para>O Sistema de Arquivos <systemitem class="filesystem">sysfs</systemitem>
+<ulink
+url="http://www.kernel.org/pub/linux/kernel/people/mochel/doc/papers/ols-2005/mochel.pdf"/></para>
+      </listitem>
+
+
+    <!--  No longer available
+      <listitem>
+
+        <para>Pointers to further reading
+        <ulink url="http://www.kernel.org/pub/linux/utils/kernel/hotplug/udev.html"/>
+        </para>
+      </listitem>
+-->
+</itemizedlist>
+
+  </sect2>
+
+</sect1>

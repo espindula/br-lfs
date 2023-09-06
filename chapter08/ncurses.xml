@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-ncurses" role="wrap">
+  <?dbhtml filename="ncurses.html"?>
+
+  <sect1info condition="script">
+<productname>ncurses</productname>
+<productnumber>&ncurses-version;</productnumber> <address>&ncurses-url;</address></sect1info>
+
+  <title>Ncurses-&ncurses-version;</title>
+
+  <indexterm zone="ch-system-ncurses">
+    <primary sortas="a-Ncurses">Ncurses</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>O pacote Ncurses contém bibliotecas para manuseio independente de terminal
+das telas de caracteres .</para>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&ncurses-fin-sbu;</seg>
+        <seg>&ncurses-fin-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do Ncurses</title>
+
+    <para>Prepare o Ncurses para compilação:</para>
+
+<screen><userinput remap="configure">./configure --prefix=/usr           \
+            --mandir=/usr/share/man \
+            --with-shared           \
+            --without-debug         \
+            --without-normal        \
+            --with-cxx-shared       \
+            --enable-pc-files       \
+            --enable-widec          \
+            --with-pkg-config-libdir=/usr/lib/pkgconfig</userinput></screen>
+
+    <variablelist>
+      <title>O significado das novas opções de configuração:</title>
+
+      <varlistentry>
+        <term><parameter>--with-shared</parameter></term>
+        <listitem>
+          <para>Isso faz com que o Ncurses construa e instale bibliotecas C compartilhadas.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-normal</parameter></term>
+        <listitem>
+          <para>Isso evita que o Ncurses construa e instale bibliotecas C estáticas.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-debug</parameter></term>
+        <listitem>
+          <para>Isso evita que o Ncurses construa e instale bibliotecas de depuração.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-cxx-shared</parameter></term>
+        <listitem>
+          <para>Isso faz com que o Ncurses construa e instale vínculos C++
+compartilhados. Também evita a construção e instalação de vínculos C++
+estáticos.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-pc-files</parameter></term>
+        <listitem>
+          <para>Essa chave gera e instala arquivos .pc para o pkg-config.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-widec</parameter></term>
+        <listitem>
+          <para>Essa chave faz com que bibliotecas de caracteres largos (por exemplo,
+<filename class="libraryfile">libncursesw.so.&ncurses-version;</filename>)
+sejam construídas em vez das normais (por exemplo, <filename
+class="libraryfile">libncurses.so.&ncurses-version;</filename>). Essas
+bibliotecas de caracteres largos são utilizáveis tanto em locales de
+múltiplos bytes quanto em tradicionais de oito (08) bits, enquanto
+bibliotecas normais funcionam adequadamente só em locales de oito (08)
+bits. Bibliotecas de caracteres largos e normais são compatíveis em fonte,
+mas não são compatíveis em binário.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile o pacote:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Esse pacote tem uma suíte de teste, entretanto ela só pode ser executada
+depois que o pacote tiver sido instalado. Os testes residem no diretório
+<filename class="directory">test/</filename>. Veja-se o arquivo
+<filename>README</filename> naquele diretório para maiores detalhes.
+    </para>
+
+    
+
+    <!-- To editors: crash of shell process was very rare but really
+         observed.  We can't simply remove /usr/lib/libncursesw.so.6.x like
+         how we handle libmozjs-xx.so in BLFS because bash needs it, and
+         make will spawn new shell processes during "make install".  -->
+<para>A instalação desse pacote sobrescreverá <filename
+class="libraryfile">libncursesw.so.&ncurses-version;</filename> no
+local. Isso possivelmente quebre o processo de shell que está usando código
+e dados a partir do arquivo da biblioteca. Instale o pacote com
+<literal>DESTDIR</literal> e substitua o arquivo da biblioteca corretamente
+usando comando <command>install</command>:</para>
+
+<screen><userinput remap="install">make DESTDIR=$PWD/dest install
+install -vm755 dest/usr/lib/libncursesw.so.&ncurses-version; /usr/lib
+rm -v  dest/usr/lib/libncursesw.so.&ncurses-version;
+cp -av dest/* /</userinput></screen>
+
+    <para>Muitos aplicativos ainda esperam que o vinculador seja capaz de encontrar
+bibliotecas Ncurses de caracteres não largos. Ajuste tais aplicativos para
+vincularem com bibliotecas de caracteres largos por meio de links simbólicos
+e scripts de vinculador:</para>
+
+<screen><userinput remap="install">for lib in ncurses form panel menu ; do
+    rm -vf                    /usr/lib/lib${lib}.so
+    echo "INPUT(-l${lib}w)" &gt; /usr/lib/lib${lib}.so
+    ln -sfv ${lib}w.pc        /usr/lib/pkgconfig/${lib}.pc
+done</userinput></screen>
+
+    <para>Finalmente, certifique-se de que aplicativos antigos que procuram por
+<filename class="libraryfile">-lcurses</filename> em tempo de construção
+ainda sejam construíveis:</para>
+
+<screen><userinput remap="install">rm -vf                     /usr/lib/libcursesw.so
+echo "INPUT(-lncursesw)" &gt; /usr/lib/libcursesw.so
+ln -sfv libncurses.so      /usr/lib/libcurses.so</userinput></screen>
+
+    <para>Se desejado, [então] instale a documentação do Ncurses:</para>
+
+<screen><userinput remap="install">cp -v -R doc -T /usr/share/doc/ncurses-&ncurses-version;</userinput></screen>
+
+    <note>
+
+      <para>As instruções acima não criam bibliotecas Ncurses de caracteres não largos,
+uma vez que nenhum pacote instalado por compilação a partir dos fontes se
+vincularia a elas em tempo de execução. Entretanto, os únicos aplicativos
+somente binário conhecidos que se vinculam à bibliotecas Ncurses de
+caracteres não largos exigem a versão 5. Se você precisa ter tais
+bibliotecas, por causa de algum aplicativo somente binário ou para estar
+conforme com a LSB, [então] construa o pacote novamente com os seguintes
+comandos:</para>
+
+<screen role="nodump"><userinput>make distclean
+./configure --prefix=/usr    \
+            --with-shared    \
+            --without-normal \
+            --without-debug  \
+            --without-cxx-binding \
+            --with-abi-version=5
+make sources libs
+cp -av lib/lib*.so.5* /usr/lib</userinput></screen>
+    </note>
+
+  </sect2>
+
+  <sect2 id="contents-ncurses" role="content">
+    <title>Conteúdo do Ncurses</title>
+
+    <segmentedlist>
+      <segtitle>Aplicativos instalados</segtitle>
+      <segtitle>Bibliotecas instaladas</segtitle>
+      <segtitle>Diretórios instalados</segtitle>
+
+      <seglistitem>
+        <seg>
+           captoinfo (link para tic), clear, infocmp, infotocap (link para tic),
+ncursesw6-config, reset (link para tset), tabs, tic, toe, tput e tset
+        </seg>
+        <seg>
+           libcursesw.so (link simbólico e script de vinculador para libncursesw.so),
+libformw.so, libmenuw.so, libncursesw.so, libncurses++w.so, libpanelw.so e
+homônimos delas de caractere não largo sem "w" nos nomes de biblioteca.</seg>
+        <seg>
+           /usr/share/tabset, /usr/share/terminfo e
+/usr/share/doc/ncurses-&ncurses-version;
+        </seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descrições Curtas</bridgehead>
+      <?dbfo list-presentation="list"?> <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="captoinfo">
+        <term><command>captoinfo</command></term>
+        <listitem>
+          <para>Converte uma descrição termcap em uma descrição terminfo</para>
+          <indexterm zone="ch-system-ncurses captoinfo">
+            <primary sortas="b-captoinfo">captoinfo</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="clear">
+        <term><command>clear</command></term>
+        <listitem>
+          <para>Limpa a tela, se possível</para>
+          <indexterm zone="ch-system-ncurses clear">
+            <primary sortas="b-clear">clear</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="infocmp">
+        <term><command>infocmp</command></term>
+        <listitem>
+          <para>Compara ou imprime descrições terminfo</para>
+          <indexterm zone="ch-system-ncurses infocmp">
+            <primary sortas="b-infocmp">infocmp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="infotocap">
+        <term><command>infotocap</command></term>
+        <listitem>
+          <para>Converte uma descrição terminfo em uma descrição termcap</para>
+          <indexterm zone="ch-system-ncurses infotocap">
+            <primary sortas="b-infotocap">infotocap</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="ncursesw6-config">
+        <term><command>ncursesw6-config</command></term>
+        <listitem>
+          <para>Fornece informação de configuração para o ncurses</para>
+          <indexterm zone="ch-system-ncurses ncursesw6-config">
+            <primary sortas="b-ncursesw6-config">ncursesw6-config</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="reset">
+        <term><command>reset</command></term>
+        <listitem>
+          <para>Reinicializa um terminal para valores padrão dele</para>
+          <indexterm zone="ch-system-ncurses reset">
+            <primary sortas="b-reset">reset</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="tabs">
+        <term><command>tabs</command></term>
+        <listitem>
+          <para>Limpa e configura paradas de tabulação em um terminal</para>
+          <indexterm zone="ch-system-ncurses tabs">
+            <primary sortas="b-tabs">tabs</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="tic">
+        <term><command>tic</command></term>
+        <listitem>
+          <para>O compilador de descrição de entrada do terminfo que traduz um arquivo
+terminfo do formato fonte para o formato binário necessário para as rotinas
+de biblioteca do ncurses [Um arquivo terminfo contém informação a respeito
+dos recursos de um certo terminal].</para>
+          <indexterm zone="ch-system-ncurses tic">
+            <primary sortas="b-tic">tic</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="toe">
+        <term><command>toe</command></term>
+        <listitem>
+          <para>Lista todos os tipos de terminal disponíveis, dando o nome primário e
+descrição para cada</para>
+          <indexterm zone="ch-system-ncurses toe">
+            <primary sortas="b-toe">toe</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="tput">
+        <term><command>tput</command></term>
+        <listitem>
+          <para>Torna os valores de recursos dependentes de terminal disponíveis para o
+shell; também pode ser usado para reconfigurar ou inicializar um terminal ou
+informar o nome longo dele</para>
+          <indexterm zone="ch-system-ncurses tput">
+            <primary sortas="b-tput">tput</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="tset">
+        <term><command>tset</command></term>
+        <listitem>
+          <para>Pode ser usado para inicializar terminais</para>
+          <indexterm zone="ch-system-ncurses tset">
+            <primary sortas="b-tset">tset</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libcursesw">
+        <term><filename class="libraryfile">libcursesw</filename></term>
+        <listitem>
+          <para>Um link para <filename>libncursesw</filename></para>
+          <indexterm zone="ch-system-ncurses libcursesw">
+            <primary sortas="c-libcursesw">libcursesw</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libncursesw">
+        <term><filename class="libraryfile">libncursesw</filename></term>
+        <listitem>
+          <para>Contém funções para exibir texto em muitas maneiras complexas em uma tela de
+terminal; um bom exemplo do uso dessas funções é o menu exibido durante o
+<command>make menuconfig</command> do núcleo</para>
+          <indexterm zone="ch-system-ncurses libncursesw">
+            <primary sortas="c-libncursesw">libncursesw</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libncurses__w">
+        <term><filename class="libraryfile">libncurses++w</filename></term>
+        <listitem>
+          <para>Contém vinculamentos C++ para outras bibliotecas nesse pacote</para>
+          <indexterm zone="ch-system-ncurses libncurses__w">
+            <primary sortas="c-libncurses++w">libncurses++w</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libformw">
+        <term><filename class="libraryfile">libformw</filename></term>
+        <listitem>
+          <para>Contém funções para implementar formulários</para>
+          <indexterm zone="ch-system-ncurses libformw">
+            <primary sortas="c-libformw">libformw</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libmenuw">
+        <term><filename class="libraryfile">libmenuw</filename></term>
+        <listitem>
+          <para>Contém funções para implementar menus</para>
+          <indexterm zone="ch-system-ncurses libmenuw">
+            <primary sortas="c-libmenuw">libmenuw</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libpanelw">
+        <term><filename class="libraryfile">libpanelw</filename></term>
+        <listitem>
+          <para>Contém funções para implementar painéis</para>
+          <indexterm zone="ch-system-ncurses libpanelw">
+            <primary sortas="c-libpanelw">libpanelw</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

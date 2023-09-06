@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-pkgmgt">
+  <?dbhtml filename="pkgmgt.html"?>
+
+  <title>Gerenciamento de Pacote</title>
+
+  <para>Gerenciamento de Pacote é uma adição frequentemente solicitada ao Livro
+LFS. Um Gerenciador de Pacote rastreia a instalação de arquivos, tornando
+mais fácil remover e atualizar pacotes. Um bom gerenciador de pacote também
+lidará com os arquivos de configuração, especialmente para manter a
+configuração do(a) usuário(a) quando o pacote for reinstalado ou
+atualizado. Antes que você comece a questionar, NÃO&mdash;esta seção não
+falará nem recomendará qualquer gerenciador de pacote em particular. O que
+ela fornece é um resumo acerca das técnicas mais populares e como elas
+funcionam. O gerenciador de pacote perfeito para você possivelmente esteja
+entre essas técnicas ou possivelmente seja uma combinação de duas ou mais
+dessas técnicas. Esta seção menciona brevemente problemas que possivelmente
+surjam quando da atualização de pacotes.</para>
+
+  <para>Algumas razões porque nenhum gerenciador de pacote é mencionado no LFS ou no
+BLFS incluem:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>Lidar com gerenciamento de pacote retira o foco das finalidades desses
+livros&mdash;ensinar como um sistema Linux é construído.</para>
+    </listitem>
+
+    <listitem>
+      <para>Existem múltiplas soluções para gerenciamento de pacote, cada uma tendo seus
+pontos fortes e fracos. Encontrar uma solução que satisfaça todas as
+audiências é difícil.</para>
+    </listitem>
+  </itemizedlist>
+
+  <para>Existem algumas dicas escritas no tópico do gerenciamento de pacote. Visite
+o <ulink url="&hints-root;">Hints Project</ulink> e veja se uma delas se
+adéqua às suas necessidades.</para>
+
+  <sect2 id='pkgmgmt-upgrade-issues'>
+    <title>Problemas de Atualização</title>
+
+    <para>Um Gerenciador de Pacote torna fácil atualizar para versões mais novas
+quando elas são liberadas. Geralmente as instruções nos livros LFS e BLFS
+podem ser usadas para atualizar para as versões mais novas. Aqui estão
+alguns pontos que você deveria estar ciente quando da atualização de
+pacotes, especialmente em um sistema em execução.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Se o núcleo Linux precisar ser atualizado (por exemplo, de 5.10.17 para
+5.10.18 ou 5.11.1), [então] nada mais precisa ser reconstruído. O sistema
+seguirá funcionando bem graças à interface bem definida entre o núcleo e o
+espaço de usuária(o). Especificamente, os cabeçalhos da API do Linux não
+precisam ser (e não deveriam ser, veja-se o próximo item) atualizados
+juntamente com o núcleo. Você meramente precisará reiniciar seu sistema para
+usar o núcleo atualizado.</para>
+      </listitem>
+
+      <listitem>
+        <para>Se os cabeçalhos da API do Linux ou os da Glibc precisarem ser atualizados
+para uma versão mais nova (por exemplo, da Glibc-2.31 para a Glibc-2.32),
+[então] é mais seguro reconstruir o LFS. Ainda que você
+<emphasis>possivelmente</emphasis> seja capaz de reconstruir todos os
+pacotes na ordem de dependência deles, nós não recomendamos isso.  </para>
+      </listitem>
+
+      <listitem> <para>Se um pacote contendo uma biblioteca compartilhada for atualizado e se o
+nome da biblioteca mudar, então quaisquer pacotes dinamicamente vinculados à
+biblioteca precisam ser recompilados, para vincular contra a biblioteca mais
+nova. (Observe que não existe correlação entre a versão de pacote e o nome
+da biblioteca). Por exemplo, considere um pacote foo-1.2.3 que instala uma
+biblioteca compartilhada com o nome <filename
+class='libraryfile'>libfoo.so.1</filename>. Suponha que você atualize o
+pacote para uma versão mais nova foo-1.2.4 que instala uma biblioteca
+compartilhada com o nome <filename
+class='libraryfile'>libfoo.so.2</filename>. Nesse caso, quaisquer pacotes
+que estiverem dinamicamente vinculados à <filename
+class='libraryfile'>libfoo.so.1</filename> precisam ser recompilados para
+vincular contra <filename class='libraryfile'>libfoo.so.2</filename> com a
+finalidade de usar a nova versão da biblioteca. Você não deveria remover as
+bibliotecas antigas até que todos os pacotes dependentes tenham sido
+recompilados.</para>
+      </listitem>
+
+      <listitem><para>Se um pacote estiver (direta ou indiretamente) vinculado aos nomes antigo e
+novo de uma biblioteca compartilhada (por exemplo, o pacote aponta para
+<filename class='libraryfile'>libfoo.so.2</filename> e <filename
+class='libraryfile'>libbar.so.1</filename>, enquanto o último se vincula a
+<filename class='libraryfile'>libfoo.so.3</filename>), [então] o pacote
+possivelmente funcione mal, pois as diferentes revisões da biblioteca
+compartilhada apresentam definições incompatíveis para alguns nomes de
+símbolo. Isso pode ser causado pela recompilação de alguns, mas não todos,
+dos pacotes vinculados à antiga biblioteca compartilhada depois que o pacote
+que fornece a biblioteca compartilhada for atualizado. Para evitar o
+problema, os(as) usuários(as) precisarão reconstruir cada pacote vinculado a
+uma biblioteca compartilhada com uma revisão atualizada (por exemplo,
+libfoo.so.2 para libfoo.so.3) o mais rápido possível.
+      </para></listitem>
+
+      <listitem> <para>Se um pacote contendo uma biblioteca compartilhada for atualizado e o nome
+da biblioteca não mudar, porém o número de versão do <emphasis
+role="bold">arquivo</emphasis> da biblioteca decrescer (por exemplo, a
+biblioteca ainda é chamada de <filename
+class='libraryfile'>libfoo.so.1</filename>, porém o nome do arquivo da
+biblioteca for mudado de <filename
+class='libraryfile'>libfoo.so.1.25</filename> para <filename
+class='libraryfile'>libfoo.so.1.24</filename>), [então] você deveria remover
+o arquivo da biblioteca originário da versão previamente instalada
+(<filename class='libraryfile'>libfoo.so.1.25</filename> nesse caso). Do
+contrário, um comando <command>ldconfig</command> (invocado por você
+mesmo(a) a partir da linha de comando ou pela instalação de algum pacote)
+reconfigurará o link simbólico <filename
+class='libraryfile'>libfoo.so.1</filename> para apontar para o antigo
+arquivo da biblioteca, pois ele aparenta ser uma versão <quote>mais
+nova</quote>; o número de versão dele é mais largo. Essa situação
+possivelmente surge se você tiver que desatualizar um pacote ou se os(as)
+autores(as) mudarem o esquema de versionamento para arquivos de biblioteca.</para> </listitem>
+
+      <listitem><para>Se um pacote contendo uma biblioteca compartilhada for atualizado e o nome
+da biblioteca não mudar, porém um problema severo (especialmente, uma
+vulnerabilidade de segurança) for corrigido, [então] todos os aplicativos em
+execução vinculados à biblioteca compartilhada deveriam ser reiniciados. O
+seguinte comando, executado como <systemitem
+class="username">root</systemitem> depois que a atualização estiver
+completa, listará quais processos estão usando as versões antigas daquelas
+bibliotecas (substitua <replaceable>libfoo</replaceable> pelo nome da
+biblioteca):</para>
+
+<screen role="nodump"><userinput>grep -l '<replaceable>libfoo</replaceable>.*deleted' /proc/*/maps | tr -cd 0-9\\n | xargs -r ps u</userinput></screen>
+
+      <para>
+        Se o <application>OpenSSH</application> estiver sendo usado para acessar o
+sistema e ele estiver vinculado à biblioteca atualizada, [então] você
+precisa reiniciar o serviço <command>sshd</command>, então deslogar-se,
+logar-se novamente e executar o comando precedente novamente para confirmar
+se nada ainda está usando as bibliotecas deletadas.
+      </para>
+
+      <para revision='systemd'>
+        Se o daemon <command>systemd</command> (executando como o PID 1) for
+vinculado à biblioteca atualizada, [então] você pode reiniciá-lo sem
+reinicializar executando <command>systemctl daemon-reexec</command> como
+o(a) usuário(a) <systemitem class='username'>root</systemitem>.
+      </para></listitem>
+
+      <listitem>
+        <para>Se um aplicativo executável ou uma biblioteca compartilhada for sobrescrito,
+[então] os processos usando o código ou os dados naquele aplicativo ou
+biblioteca possivelmente quebrem. A maneira correta para atualizar um
+aplicativo ou uma biblioteca compartilhada sem causar quebra ao processo é a
+de removê-lo primeiro, então instalar a versão nova. O comando
+<command>install</command> fornecido por
+<application>coreutils</application> já implementou isso e a maioria dos
+pacotes usa esse comando para instalar arquivos binários e bibliotecas. Isso
+significa que você não estaria encrencada(o) por esse problema a maior parte
+do tempo. Entretanto, o processo de instalação de alguns pacotes
+(notadamente Mozilla JS no BLFS) apenas sobrescreve o arquivo se ele
+existir; isso causa uma quebra. Assim, é mais seguro salvar seu trabalho e
+fechar processos em execução desnecessários antes de atualizar um pacote.</para> 
+      <!-- binary is an adjective, not a noun. -->
+</listitem>
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>Técnicas de Gerenciamento de Pacote</title>
+
+    <para>As seguintes são algumas técnicas comuns de gerenciamento de pacote. Antes
+de se decidir acerca de um gerenciador de pacote, pesquise sobre as várias
+técnicas, particularmente os pontos fracos de cada esquema em particular.</para>
+
+    <sect3>
+      <title>Está Tudo na Minha Cabeça!</title>
+
+      <para>Sim, essa é uma técnica de gerenciamento de pacote. Algumas pessoas não
+necessitam de um gerenciador de pacote, pois elas conhecem os pacotes
+intimamente e sabem quais arquivos estão instalados por cada
+pacote. Alguns(mas) usuários(as) também não precisam de qualquer
+gerenciamento de pacote, pois eles(as) planejam reconstruir o sistema
+inteiro sempre que um pacote for mudado.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Instalação em Diretórios Separados</title>
+
+      <para>Esse é um gerenciamento de pacote simplista que não necessita de um
+aplicativo especial para gerenciar os pacotes. Cada pacote é instalado em um
+diretório separado. Por exemplo, o pacote foo-1.1 é instalado em <filename
+class='directory'>/usr/pkg/foo-1.1</filename> e um link simbólico é feito de
+<filename>/usr/pkg/foo</filename> para <filename
+class='directory'>/usr/pkg/foo-1.1</filename>. Quando uma nova versão
+foo-1.2 vier junto, ela é instalada em <filename
+class='directory'>/usr/pkg/foo-1.2</filename> e o link simbólico anterior é
+substituído por um link simbólico para a nova versão.</para>
+
+      <para>Variáveis de ambiente, tais como <envar>PATH</envar>,
+<envar>LD_LIBRARY_PATH</envar>, <envar>MANPATH</envar>,
+<envar>INFOPATH</envar> e <envar>CPPFLAGS</envar>, precisam ser expandidas
+para incluir <filename>/usr/pkg/foo</filename>. Se você instalar mais que
+uns poucos pacotes, [então] esse esquema se torna ingerenciável.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Gerenciamento de Pacote Estilo Link Simbólico</title>
+
+      <para>Essa é uma variação da técnica de gerenciamento de pacote anterior. Cada
+pacote é instalado como no esquema anterior. Mas, em vez de fazer o link
+simbólico via um nome genérico de pacote, cada arquivo é simbolicamente
+vinculado à hierarquia <filename class='directory'>/usr</filename>. Isso
+remove a necessidade de expandir as variáveis de ambiente. Ainda que os
+links simbólicos possam ser criados pelo(a) usuário(a), muitos gerenciadores
+de pacote usam essa abordagem e automatizam a criação dos links
+simbólicos. Alguns dos populares inclui Stow, Epkg, Graft, e Depot.</para>
+
+      <para>O script de instalação precisa ser falseado, de modo que o pacote pense que
+está instalado em <filename class="directory">/usr</filename>, ainda que, na
+realidade, ele esteja instalado na hierarquia <filename
+class="directory">/usr/pkg</filename>. Instalar dessa maneira geralmente não
+é uma tarefa trivial. Por exemplo, suponha que você está instalando um
+pacote libfoo-1.1. As seguintes instruções possivelmente não instalem
+adequadamente o pacote:</para>
+
+<screen role="nodump"><userinput>./configure --prefix=/usr/pkg/libfoo/1.1
+make
+make install</userinput></screen>
+
+      <para>A instalação funcionará, mas os pacotes dependentes possivelmente não se
+vinculem à libfoo conforme você esperaria. Se você compilar um pacote que se
+vincula contra a libfoo, [então] você possivelmente perceba que ele está
+vinculado a <filename
+class='libraryfile'>/usr/pkg/libfoo/1.1/lib/libfoo.so.1</filename> em vez de
+<filename class='libraryfile'>/usr/lib/libfoo.so.1</filename> como você
+esperaria. A abordagem correta é a de usar a variável <envar>DESTDIR</envar>
+para direcionar a instalação. Essa abordagem funciona como se segue:</para>
+
+<screen role="nodump"><userinput>./configure --prefix=/usr
+make
+make DESTDIR=/usr/pkg/libfoo/1.1 install</userinput></screen>
+
+      <para>A maioria dos pacotes suporta essa abordagem, mas existem alguns que
+não. Para os pacotes não conformes, você possivelmente ou precise instalar
+manualmente o pacote, ou você possivelmente ache que é mais fácil instalar
+alguns pacotes problemáticos em <filename class='directory'>/opt</filename>.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Baseado em Carimbo de Tempo</title>
+
+      <para>Nessa técnica, um arquivo é carimbado temporalmente antes da instalação do
+pacote. Depois da instalação, um simples uso do comando
+<command>find</command> com as opções apropriadas consegue gerar um registro
+de todos os arquivos instalados após o arquivo de carimbo de tempo ser
+criado. Um gerenciador de pacote que use essa abordagem é
+instalação-registro.</para>
+
+      <para>Ainda que esse esquema tenha a vantagem de ser simples, ele tem duas
+desvantagens. Se, durante a instalação, os arquivos forem instalados com
+algum outro carimbo de tempo que não a hora atual, [então] aqueles arquivos
+não serão rastreados pelo gerenciador de pacote. Além disso, esse esquema
+pode ser usado apenas quando um pacote for instalado de cada vez. Os
+registros não são confiáveis se dois pacotes forem instalados
+simultaneamente a partir de dois consoles.</para>
+
+    </sect3>
+
+    <sect3>
+      <title>Scripts de Rastreamento de Instalação</title>
+
+      <para>Nessa abordagem, os comandos que os scripts de instalação realizam são
+gravados. Existem duas técnicas que se pode usar:</para>
+
+      <para>A variável de ambiente <envar>LD_PRELOAD</envar> pode ser configurada para
+apontar para uma biblioteca a ser pré-carregada antes da instalação. Durante
+a instalação, essa biblioteca rastreia os pacotes que estão sendo instalados
+anexando-se a vários executáveis, tais como o <command>cp</command>, o
+<command>install</command>e o <command>mv</command>, e rastreando as
+chamadas de sistema que modificam o sistema de arquivos. Para essa abordagem
+funcionar, todos os executáveis precisam ser dinamicamente vinculados sem o
+bit suid ou sgid. Pré-carregar a biblioteca possivelmente cause alguns
+efeitos colaterais indesejados durante a instalação. Portanto, é uma boa
+ideia realizar alguns testes para garantir que o gerenciador de pacote não
+quebre nada e que ele registre todos os arquivos adequados.</para>
+
+      <para>Outra técnica é a de usar o <command>strace</command>, que registra todas as
+chamadas de sistema feitas durante a execução dos scripts de instalação.</para>
+    </sect3>
+
+    <sect3>
+      <title>Criando Arquivamentos de Pacote</title>
+
+      <para>Nesse esquema, a instalação do pacote é falseada em uma árvore separada como
+descrito previamente na seção do gerenciamento de pacote estilo Link
+Simbólico. Depois da instalação, um arquivamento de pacote é criado usando
+os arquivos instalados. Esse arquivamento é então usado para instalar o
+pacote na máquina local ou até mesmo em outras máquinas.</para>
+
+      <para>Essa abordagem é a usada pela maioria dos gerenciadores de pacote
+encontrados nas distribuições comerciais. Exemplos de gerenciadores de
+pacote que seguem essa abordagem são RPM (o qual, incidentalmente, é exigido
+pela <ulink url="http://refspecs.linuxfoundation.org/lsb.shtml">Linux
+Standard Base Specification</ulink>), pkg-utils, apt do Debian, e sistema
+Portage do Gentoo. Uma dica descrevendo como adotar esse estilo de
+gerenciamento de pacote para sistemas LFS está localizada em <ulink
+url="&hints-root;fakeroot.txt"/>.</para>
+
+      <para>A criação de arquivos de pacote que incluem informação de dependência é
+complexa e além do escopo do LFS.</para>
+
+      <para>O Slackware usa um sistema baseado em <command>tar</command> para
+arquivamentos de pacote. Esse sistema intencionalmente não manuseia
+dependências de pacote como gerenciadores de pacote mais complexos
+fazem. Para detalhes de gerenciamento de pacote do Slackware, veja-se <ulink
+url="http://www.slackbook.org/html/package-management.html"/>.</para>
+    </sect3>
+
+    <sect3>
+      <title>Gerenciamento Baseado em Usuária(o)</title>
+
+      <para>Esse esquema, único para LFS, foi concebido por Matthias Benkmann e está
+disponível a partir do <ulink url="&hints-root;">Hints
+Project</ulink>. Nesse esquema, cada pacote é instalado como uma(m)
+usuária(o) separada(o) nos locais padrão. Arquivos pertencentes a um pacote
+são facilmente identificados checando o ID de usuária(o). As características
+e deficiências dessa abordagem são muito complexas para serem descritas
+nesta seção. Para os detalhes, por favor veja-se a dica em <ulink
+url="&hints-root;more_control_and_pkg_man.txt"/>.</para>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2>
+    <title>Implantando o LFS em Múltiplos Sistemas</title>
+
+    <para><!-- D. Bryant created LFS 11.2 in October 2022; 900MB is (roughly) the size of his rsync archive. -->
+Uma das vantagens de um sistema LFS é a de que não existem arquivos que
+dependam da posição de arquivos em um sistema de disco. Clonar uma
+construção do LFS para outro computador com a mesma arquitetura que a do
+sistema base é tão simples quanto usar <command>tar</command> na partição do
+LFS que contém o diretório raiz (cerca de 900MB descomprimido para uma
+construção básica do LFS), copiando aquele arquivo via transferência de rede
+ou CD-ROM/stick USB para o novo sistema e expandindo-o. Depois disso, uns
+poucos arquivos de configuração terão que ser mudados. Arquivos de
+configuração que possivelmente precisem ser atualizados incluem:
+<filename>/etc/hosts</filename>, <filename>/etc/fstab</filename>,
+<filename>/etc/passwd</filename>, <filename>/etc/group</filename>, <phrase
+revision="systemd"> <filename>/etc/shadow</filename> e
+<filename>/etc/ld.so.conf</filename>. </phrase> <phrase revision="sysv">
+<filename>/etc/shadow</filename>, <filename>/etc/ld.so.conf</filename>,
+<filename>/etc/sysconfig/rc.site</filename>,
+<filename>/etc/sysconfig/network</filename> e
+<filename>/etc/sysconfig/ifconfig.eth0</filename>. </phrase>
+    </para>
+
+    <para>Um núcleo personalizado possivelmente seja necessário para o novo sistema,
+dependendo das diferenças no hardware do sistema e a configuração original
+do núcleo.</para>
+
+    <note><para>Tem havido alguns relatos de problemas quando da cópia entre arquiteturas
+similares, porém não idênticas. Por exemplo, o conjunto de instruções para
+um sistema Intel não é idêntico às instruções do processador AMD, e versões
+posteriores de alguns processadores possivelmente forneçam instruções que
+estão indisponíveis em versões anteriores.</para></note>
+
+    <para>Finalmente, o novo sistema tem de ser tornado inicializável via <xref
+linkend="ch-bootable-grub"/>.</para>
+
+  </sect2>
+
+</sect1>

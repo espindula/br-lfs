@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-bootable-fstab">
+  <?dbhtml filename="fstab.html"?>
+
+  <title>Criando o Arquivo /etc/fstab</title>
+
+  <indexterm zone="ch-bootable-fstab">
+    <primary sortas="e-/etc/fstab">/etc/fstab</primary>
+  </indexterm>
+
+  <para>O arquivo <filename>/etc/fstab</filename> é usado por alguns aplicativos
+para determinar onde sistemas de arquivos são para serem montados por
+padrão; em qual ordem; e quais precisam ser verificados (para erros de
+integridade) antes da montagem. Crie uma nova tabela de sistemas de arquivos
+como esta:</para>
+
+<screen revision="sysv"><userinput>cat &gt; /etc/fstab &lt;&lt; "EOF"
+<literal># Início /etc/fstab
+
+# sistema de arquivos  ponto de montagem    tipo     opções             despejo  ordem de fsck
+#                                                                
+
+/dev/<replaceable>&lt;xxx&gt;</replaceable>     /              <replaceable>&lt;fff&gt;</replaceable>    defaults            1     1
+/dev/<replaceable>&lt;yyy&gt;</replaceable>     swap           swap     pri=1               0     0
+proc           /proc          proc     nosuid,noexec,nodev 0     0
+sysfs          /sys           sysfs    nosuid,noexec,nodev 0     0
+devpts         /dev/pts       devpts   gid=5,mode=620      0     0
+tmpfs          /run           tmpfs    defaults            0     0
+devtmpfs       /dev           devtmpfs mode=0755,nosuid    0     0
+tmpfs          /dev/shm       tmpfs    nosuid,nodev        0     0
+cgroup2        /sys/fs/cgroup cgroup2  nosuid,noexec,nodev 0     0
+
+# Fim /etc/fstab</literal>
+EOF</userinput></screen>
+
+<screen revision="systemd"><userinput>cat &gt; /etc/fstab &lt;&lt; "EOF"
+<literal># Início de /etc/fstab
+
+# sistema de arquivos ponto de montagem tipo opções despejo ordem do
+# fsck
+
+/dev/<replaceable>&lt;xxx&gt;</replaceable>     /            <replaceable>&lt;fff&gt;</replaceable>    defaults            1     1
+/dev/<replaceable>&lt;yyy&gt;</replaceable>     swap         swap     pri=1               0     0
+
+# Fim do /etc/fstab</literal>
+EOF</userinput></screen>
+
+  <para>Substitua <replaceable>&lt;xxx&gt;</replaceable>;
+<replaceable>&lt;yyy&gt;</replaceable>; e
+<replaceable>&lt;fff&gt;</replaceable> pelos valores apropriados para o
+sistema, por exemplo, <filename class="partition">sda2</filename>; <filename
+class="partition">sda5</filename>; e <systemitem
+class="filesystem">ext4</systemitem>. Para detalhes a respeito dos seis
+campos nesse arquivo, veja-se <command>man 5 fstab</command>.</para>
+
+  <para>Sistemas de arquivos com origem MS-DOS ou Windows (isto é, vfat, ntfs,
+smbfs, cifs, iso9660, udf) precisam de uma opção especial, utf8, para a
+finalidade de caracteres não ASCII nos nomes de arquivo serem interpretados
+corretamente. Para locales não UTF-8, o valor de <option>iocharset</option>
+deveria ser configurado para ser o mesmo que o conjunto de caracteres do
+locale, ajustado de tal maneira que o núcleo o entenda. Isso funciona se a
+definição relevante de conjunto de caracteres (encontrada sob File systems
+-&gt; Native Language Support quando da configuração do núcleo) tenha sido
+compilada no núcleo ou construída como um módulo. Entretanto, se o conjunto
+de caracteres do locale for UTF-8, [então] a correspondente opção
+<option>iocharset=utf8</option> tornaria o sistema de arquivos sensível a
+maiúsculas e minúsculas. Para corrigir isso, use a opção especial
+<option>utf8</option> em vez de <option>iocharset=utf8</option>, para
+locales UTF-8. A opção <quote>codepage</quote> também é necessária para
+sistemas de arquivos vfat e smbfs. Ela deveria ser configurada para o número
+da página de código usada sob MS-DOS em seu país. Por exemplo, para a
+finalidade de montar unidades USB flash, um(a) usuário(a) do ru_RU.KOI8-R
+precisaria do seguinte na porção de opções da linha mount dele em
+<filename>/etc/fstab</filename>:</para>
+
+<screen><literal>noauto,user,quiet,showexec,codepage=866,iocharset=koi8r</literal></screen>
+
+  <para>O correspondente fragmento das opções para usuários(as) do ru_RU.UTF-8 é:</para>
+
+<screen><literal>noauto,user,quiet,showexec,codepage=866,utf8</literal></screen>
+
+  <para>Observe que usar <option>iocharset</option> é o padrão para
+<literal>iso8859-1</literal> (a qual mantém o sistema de arquivos insensível
+a maiúsculas e minúsculas) e a opção <option>utf8</option> diz ao núcleo
+para converter os nomes de arquivo usando UTF-8, de forma que eles podem ser
+interpretados no locale UTF-8.</para>
+
+  
+
+  <!--note>
+
+    <para>In the latter case, the kernel emits the following message:</para>
+
+<screen><computeroutput>FAT: utf8 is not a recommended IO charset for FAT filesystems,
+    filesystem will be case sensitive!</computeroutput></screen>
+
+    <para>This negative recommendation should be ignored, since all other values
+    of the <quote>iocharset</quote> option result in wrong display of filenames in
+    UTF-8 locales.</para>
+  </note-->
+<para>É possível também especificar os valores padrão de página de código e
+iocharset para alguns sistemas de arquivos durante a configuração do
+núcleo. Os parâmetros relevantes são chamados de <quote>Default NLS
+Option</quote> (<option>CONFIG_NLS_DEFAULT</option>); <quote>Default Remote
+NLS Option</quote> (<option>CONFIG_SMB_NLS_DEFAULT</option>); <quote>Default
+codepage for FAT</quote> (<option>CONFIG_FAT_DEFAULT_CODEPAGE</option>); e
+<quote>Default iocharset for FAT</quote>
+(<option>CONFIG_FAT_DEFAULT_IOCHARSET</option>). Não existe maneira de
+especificar essas configurações para o sistema de arquivos NTFS em tempo de
+compilação do núcleo.</para>
+
+  <para>É possível tornar o sistema de arquivos ext3 confiável em casos de falhas de
+eletricidade para alguns tipos de disco rígido. Para fazer isso, adicione a
+opção de montagem <option>barrier=1</option> à entrada apropriada em
+<filename>/etc/fstab</filename>. Para verificar se a unidade de disco
+suporta essa opção, execute <ulink
+url="&blfs-book;general/hdparm.html">hdparm</ulink> na unidade de disco
+aplicável. Por exemplo, se:</para>
+
+<screen role="nodump"><userinput>hdparm -I /dev/sda | grep NCQ</userinput></screen>
+
+  <para>retornar saída gerada não vazia, [então] a opção é suportada.</para>
+
+  <para>Observe: partições baseadas em Logical Volume Management (LVM) não podem
+usar a opção <option>barrier</option>.</para>
+
+</sect1>

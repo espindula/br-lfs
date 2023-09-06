@@ -1,4 +1,9 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--
+$LastChangedBy: manuel $
+$Date: 2007-07-05 23:18:33 +0200 (jeu. 05 juil. 2007) $
+-->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
@@ -129,12 +134,11 @@
     <!-- sect1info mode svn-keys:
            Self-made template to process SVN keywords found in sect1info. -->
   <xsl:template match="sect1info" mode="svn-keys">
-  <!--  <p class="updated">Last updated --><!-- by
+    <p class="updated">Last updated <!-- by
       <xsl:apply-templates select="othername" mode="svn-keys"/> -->
-  <!--    on
+      on
       <xsl:apply-templates select="date" mode="svn-keys"/>
     </p>
-comment out entire template for now.  We do not use this.  bdubbs 2017/12/30  -->
   </xsl:template>
 
     <!-- othername mode svn-keys:

@@ -1,4 +1,9 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--
+$LastChangedBy: manuel $
+$Date: 2007-06-12 20:18:51 +0200 (mar, 12 jun 2007) $
+-->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"

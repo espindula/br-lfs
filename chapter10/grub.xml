@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-bootable-grub" role="wrap">
+  <?dbhtml filename="grub.html"?>
+
+  <sect1info condition="script">
+<productname>grub</productname>
+<productnumber>&grub-version;</productnumber> <address>&grub-url;</address></sect1info>
+
+  <title>Usando o GRUB para Configurar o Processo de Inicialização</title>
+
+  <note>
+    <para>
+      Se o seu sistema tem suporte UEFI e você deseja inicializar o LFS com UEFI,
+[então] você deveria pular as instruções nesta página, mas ainda assim
+aprender a sintaxe do <filename>grub.cfg</filename> e o método para
+especificar uma partição no arquivo a partir desta página e configurar o
+GRUB com suporte UEFI usando as instruções fornecidas na <ulink
+url="&blfs-book;postlfs/grub-setup.html">página BLFS</ulink>.
+    </para>
+  </note>
+
+  <sect2>
+    <title>Introdução</title>
+
+    <warning><para>Configurar o GRUB incorretamente pode tornar seu sistema inoperável sem um
+dispositivo alternativo de inicialização, como um CD-ROM ou unidade USB
+inicializável. Esta seção não é exigida para inicializar seu sistema
+LFS. Você possivelmente apenas queira modificar seu carregador de
+inicialização atual, por exemplo, Grub-Legacy, GRUB2 ou LILO.</para></warning>
+
+    <para> Certifique-se de que um disco de inicialização de emergência esteja pronto
+para <quote>resgatar</quote> o computador se o computador se tornar
+inutilizável (não inicializável). Se você ainda não tiver um dispositivo de
+inicialização, [então] você pode criar um. Para a finalidade de que o
+procedimento abaixo funcione, você precisa saltar para a frente para o BLFS
+e instalar <userinput>xorriso</userinput> oriundo do pacote <ulink
+url="&blfs-book;multimedia/libisoburn.html">libisoburn</ulink>.</para>
+
+<screen role="nodump"><userinput>cd /tmp
+grub-mkrescue --output=grub-img.iso
+xorriso -as cdrecord -v dev=/dev/cdrw blank=as_needed grub-img.iso</userinput></screen>
+
+  </sect2>
+
+  <sect2>
+    <title>Convenções de Nomenclatura do GRUB</title>
+
+    <para>O GRUB usa estrutura de nomenclatura própria dele para unidades e partições
+na forma de <emphasis>(hdn,m)</emphasis>, onde <emphasis>n</emphasis> é o
+número da unidade rígida e <emphasis>m</emphasis> é o número da partição. Os
+números da unidade rígida começam do zero, porém os números da partição
+começam do um para partições normais (do cinco para partições
+estendidas). Observe que isso é diferente de versões anteriores, onde ambos
+os números começavam do zero. Por exemplo, a partição <filename
+class="partition">sda1</filename> é <emphasis>(hd0,1)</emphasis> para o GRUB
+e <filename class="partition">sdb3</filename> é
+<emphasis>(hd1,3)</emphasis>. Em contraste com o Linux, GRUB não considera
+unidades de CD-ROM como unidades rígidas. Por exemplo, se usar um CD em
+<filename class="partition">hdb</filename> e uma segunda unidade rígida em
+<filename class="partition">hdc</filename>, [então] aquela segunda unidade
+rígida ainda seria <emphasis>(hd1)</emphasis>.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Definindo a Configuração</title>
+
+    <para>O GRUB funciona escrevendo dados na a primeira trilha física do disco
+rígido. Essa área não é parte de nenhum sistema de arquivos. Os aplicativos
+lá acessam módulos do GRUB na partição de inicialização. O local padrão é
+/boot/grub/.</para>
+
+    <para>O local da partição de inicialização é uma escolha do(a) usuário(a) que
+afeta a configuração. Uma recomendação é ter uma partição pequena (tamanho
+sugerido é 200 MB) separada somente para informação de inicialização. Dessa
+forma, cada construção, seja LFS ou alguma distribuição comercial, consegue
+acessar os mesmos arquivos de inicialização e o acesso pode ser feito a
+partir de qualquer sistema inicializado. Se você escolher fazer isso,
+[então] você precisará montar a partição separada, mover todos os arquivos
+no diretório <filename class="directory">/boot</filename> atual (por
+exemplo, o núcleo Linux que você recém construiu na seção anterior) para a
+nova partição. Você então precisará desmontar a partição e remontá-la como
+<filename class="directory">/boot</filename>. Se você fizer isso, [então]
+tenha certeza de atualizar <filename>/etc/fstab</filename>.</para>
+
+    <para>Deixar <filename class="directory">/boot</filename> na partição LFS atual
+também funcionará, porém a configuração para múltiplos sistemas é mais
+complicada.</para>
+
+    <para>Usando a informação acima, determine o designador apropriado para a partição
+raiz (ou partição de inicialização, se uma separada for usada). Para o
+exemplo seguinte, é assumido que a partição raiz (ou inicialização separada)
+é <filename class="partition">sda2</filename>.</para>
+
+    <para>Instale os arquivos do GRUB em <filename
+class="directory">/boot/grub</filename> e configure a trilha de
+inicialização:</para>
+
+    <warning>
+      <para>O seguinte comando sobrescreverá o carregador de inicialização atual. Não
+execute o comando de isso não for desejado, por exemplo, se usar um
+gerenciador de inicialização de terceiro para gerenciar o Master Boot Record
+(MBR).</para>
+    </warning>
+
+<screen role="nodump"><userinput>grub-install /dev/sda</userinput></screen>
+
+    <note>
+      <para>Se o sistema tiver sido inicializado usando UEFI, [então] o
+<command>grub-install</command> tentará instalar arquivos para o alvo
+<emphasis>x86_64-efi</emphasis>, porém aqueles arquivos não foram instalados
+no <xref linkend="chapter-building-system"/>. Se esse for o caso, [então]
+adicione <option>--target i386-pc</option> ao comando acima.</para>
+    </note>
+
+
+  <!-- This does not seem to be true any more
+    <note>
+<para><application>grub-install</application> is a script and calls another
+    program, grub-probe, that may fail with a message "cannot stat `/dev/root'".
+    If so, create a temporary symbolic link from your root partition to /dev/root:</para>
+
+<screen role="nodump"><userinput>ln -sv /dev/sda2 /dev/root</userinput></screen>
+
+    <para>The symbolic link will only be present until the system is rebooted.
+    The link is only needed for the installation procedure.
+    </para></note>
+-->
+</sect2>
+
+  <sect2 id="grub-cfg">
+    <title>Criando o Arquivo de Configuração do GRUB</title>
+
+    <para>Gere o <filename>/boot/grub/grub.cfg</filename>:</para>
+
+    <screen><userinput>cat &gt; /boot/grub/grub.cfg &lt;&lt; "EOF"
+<literal># Begin /boot/grub/grub.cfg
+set default=0
+set timeout=5
+
+insmod part_gpt
+insmod ext2
+set root=(hd0,2)
+
+menuentry "GNU/Linux, Linux &linux-version;-lfs-&version;" {
+       linux   /boot/vmlinuz-&linux-version;-lfs-&version; root=/dev/sda2 ro
+}</literal>
+EOF</userinput></screen>
+
+    <para>
+      Os comandos <command>insmod</command> carregam os módulos
+<application>GRUB</application> chamados <filename>part_gpt</filename> e
+<filename>ext2</filename>. Apesar da nomenclatura, <filename>ext2</filename>
+na verdade suporta sistemas de arquivos <systemitem
+class='filesystem'>ext2</systemitem>, <systemitem
+class='filesystem'>ext3</systemitem> e <systemitem
+class='filesystem'>ext4</systemitem>. O comando
+<command>grub-install</command> incorporou alguns módulos na imagem
+principal do <application>GRUB</application> (instalada no "MBR" ou na
+partição "BIOS" do GRUB) para acessar os outros módulos (em <filename
+class='directory'>/boot/grub/i386-pc</filename>) sem um problema de galinha
+ou ovo, de modo que, com uma configuração típica, esses dois módulos já
+estão incorporados e esses dois comandos <command>insmod</command> não farão
+nada. Mas eles não fazem mal de qualquer maneira e possivelmente sejam
+necessários com algumas configurações raras.
+    </para>
+
+    <note><para>A partir da perspectiva do <application>GRUB</application>, os arquivos do
+núcleo estão relativos à partição usada. Se você usou uma partição /boot
+separada, [então] remova /boot da linha <emphasis>linux</emphasis>
+acima. Você também precisará mudar a linha <emphasis>set root</emphasis>
+para apontar para a partição de inicialização.
+    </para></note>
+
+    <note>
+      <para>O designador do GRUB para uma partição possivelmente mude se você adicionou
+ou removeu alguns discos (incluindo discos removíveis, como dispositivos USB
+miniatura). A mudança possivelmente cause falha de inicialização, pois o
+<filename>grub.cfg</filename> se refere a alguns designadores
+<quote>antigos</quote>. Se você deseja evitar tal problema, [então] você
+possivelmente use o UUID de uma partição e o UUID de um sistema de arquivos,
+em vez de um designador do GRUB para especificar um dispositivo. Execute
+<command>lsblk -o UUID,PARTUUID,PATH,MOUNTPOINT</command> para exibir os
+UUIDs dos seus sistemas de arquivos (na coluna <literal>UUID</literal>) e
+das suas partições (na coluna <literal>PARTUUID</literal>). Então substitua
+<literal>set root=(hdx,y)</literal> por <literal>search --set=root --fs-uuid
+<replaceable>&lt;UUID do sistema de arquivos onde o núcleo está
+instalado&gt;</replaceable></literal>; e substitua
+<literal>root=/dev/sda2</literal> por
+<literal>root=PARTUUID=<replaceable>&lt;UUID da partição onde o LFS está
+construído&gt;</replaceable></literal>.</para>
+      <para>Observe que o UUID de uma partição é completamente diferente do UUID do
+sistema de arquivos nessa partição. Alguns recursos online possivelmente
+instruam você a usar o <literal>root=UUID=<replaceable>&lt;UUID do sistema
+de arquivos&gt;</replaceable></literal>, em vez do
+<literal>root=PARTUUID=<replaceable>&lt;UUID da
+partição&gt;</replaceable></literal>, porém fazer isso exigirá um initramfs,
+o qual está além do escopo do LFS.</para>
+      <para>O nome do nó de dispositivo para uma partição em <filename
+class='directory'>/dev</filename> também possivelmente mude (isso é menos
+provável que uma mudança do designador do GRUB). Você também pode substituir
+caminhos para nós de dispositivo, como <literal>/dev/sda1</literal>, por
+<literal>PARTUUID=<replaceable>&lt;UUID da
+partição&gt;</replaceable></literal>, em <filename>/etc/fstab</filename>,
+para evitar uma potencial falha de inicialização no caso do nome do nó de
+dispositivo tiver mudado.</para>
+    </note>
+
+    <para>O GRUB é um aplicativo extremamente poderoso e ele fornece um tremendo
+número de opções para inicializar a partir de uma ampla variedade de
+dispositivos, sistemas operacionais e tipos de partição. Existem também
+muitas opções para personalização, tais como telas gráficas de abertura;
+reprodução de sons; entrada gerada de mouse; etc. Os detalhes dessas opções
+estão além do escopo desta introdução.</para>
+
+    <caution><para>Existe um comando, <application>grub-mkconfig</application>, que consegue
+escrever um arquivo de configuração automaticamente. Ele usa um conjunto de
+scripts em /etc/grub.d/ e destruirá quaisquer personalizações que você
+fizer. Esses scripts são projetados primariamente para distribuições não
+fonte e não são recomendados para o LFS. Se você instalar uma distribuição
+comercial do Linux, [então] existe uma boa chance de que esse aplicativo
+seja executado. Tenha certeza de produzir uma cópia de segurança do seu
+arquivo grub.cfg.</para></caution>
+
+   </sect2>
+
+</sect1>

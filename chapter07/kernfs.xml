@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-kernfs">
+  <?dbhtml filename="kernfs.html"?>
+
+  <title>Preparando Sistemas de Arquivos Virtuais do Núcleo</title>
+
+  <indexterm zone="ch-tools-kernfs">
+    <primary sortas="e-/dev/">/dev/*</primary>
+  </indexterm>
+
+    <para>Os aplicativos executando no espaço do(a) usuário(a) utilizam vários
+sistemas de arquivos criados pelo núcleo para comunicar com o próprio
+núcleo. Esses sistemas de arquivos são virtuais: nenhum espaço em disco é
+usado por eles. O conteúdo desses sistemas de arquivos reside em
+memória. Esses sistemas de arquivos precisam estar montados na árvore de
+diretórios $LFS, de modo que os aplicativos consigam encontrá-los no
+ambiente chroot.</para>
+
+    <para>Comece criando os diretórios nos quais esses sistemas de arquivos virtuais
+serão montados:</para>
+
+<screen><userinput>mkdir -pv $LFS/{dev,proc,sys,run}</userinput></screen>
+
+  <sect2 id="ch-tools-bindmount">
+    <title>Montando e Povoando /dev</title>
+
+      <para>Durante uma inicialização normal de um sistema LFS, o núcleo automaticamente
+monta o sistema de arquivos <systemitem
+class="filesystem">devtmpfs</systemitem> no diretório <filename
+class="directory">/dev</filename>; o núcleo cria nós de dispositivo naquele
+sistema de arquivos virtuais durante o processo de inicialização ou quando
+um dispositivo for primeiro detectado ou acessado. O daemon udev
+possivelmente mude a propriedade ou as permissões dos nós de dispositivo
+criados pelo núcleo e crie novos nós de dispositivo ou links simbólicos para
+facilitar o trabalho dos(as) mantenedores(as) de distribuição e de
+administradores(as) de sistema. (Veja-se o <xref
+linkend='ch-config-udev-device-node-creation'/> para detalhes). Se o núcleo
+do anfitrião suportar &devtmpfs;, [então] nós podemos simplesmente montar um
+&devtmpfs; em <filename class='directory'>$LFS/dev</filename> e confiar no
+núcleo para povoá-lo.</para>
+
+      <para>Porém, alguns núcleos de anfitrião carecem de suporte a &devtmpfs;; essas
+distribuições anfitriãs usam métodos diferentes para criar o conteúdo do
+<filename class="directory">/dev</filename>. Assim, a única maneira
+agnóstica ao anfitrião para povoar o diretório <filename
+class="directory">$LFS/dev</filename> é a de montar vinculadamente o
+diretório <filename class="directory">/dev</filename> do sistema
+anfitrião. Uma montagem vinculada é um tipo especial de montagem que produz
+uma sub árvore de diretórios ou de um arquivo visível em algum outro
+local. Use o seguinte comando para fazer isso.</para>
+
+<screen><userinput>mount -v --bind /dev $LFS/dev</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="ch-tools-kernfsmount">
+    <title>Montando Sistemas de Arquivos Virtuais do Núcleo</title>
+
+      <para>Agora monte os restantes sistemas de arquivos virtuais do núcleo:</para>
+
+<!--
+    <variablelist>
+
+      <title>The meaning of the mount options for devpts:</title>
+
+      <varlistentry>
+        <term><parameter>gid=5</parameter></term>
+        <listitem>
+          <para>This ensures that all devpts-created device nodes are owned by
+          group ID 5.  This is the ID we will use later on for the <systemitem
+          class="groupname">tty</systemitem> group.  We use the group ID instead
+          of a name, since the host system might use a different ID for its
+          <systemitem class="groupname">tty</systemitem> group.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>mode=0620</parameter></term>
+        <listitem>
+          <para>This ensures that all devpts-created device nodes have mode 0620
+          (user readable and writable, group writable).  Together with the
+          option above, this ensures that devpts will create device nodes that
+          meet the requirements of grantpt(), meaning the Glibc
+          <command>pt_chown</command> helper binary (which is not installed by
+          default) is not necessary.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+-->
+<screen><userinput>mount -v --bind /dev/pts $LFS/dev/pts
+mount -vt proc proc $LFS/proc
+mount -vt sysfs sysfs $LFS/sys
+mount -vt tmpfs tmpfs $LFS/run</userinput></screen>
+
+      <para>Em alguns sistemas anfitriões, <filename>/dev/shm</filename> é um link
+simbólico para <filename class="directory">/run/shm</filename>. O tmpfs /run
+foi montado acima, de modo que, nesse caso, somente um diretório precisa ser
+criado.</para>
+
+      <para>Em outros sistemas anfitriões, <filename>/dev/shm</filename> é um ponto de
+montagem para um tmpfs. Nesse caso, a montagem do /dev acima somente criará
+/dev/shm como um diretório no ambiente chroot. Nessa situação, nós
+precisamos montar explicitamente um tmpfs:</para>
+
+<screen><userinput>if [ -h $LFS/dev/shm ]; then
+  mkdir -pv $LFS/$(readlink $LFS/dev/shm)
+else
+  mount -t tmpfs -o nosuid,nodev tmpfs $LFS/dev/shm
+fi</userinput></screen>
+
+  </sect2>
+
+</sect1>

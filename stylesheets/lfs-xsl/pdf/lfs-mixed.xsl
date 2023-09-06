@@ -1,4 +1,9 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--
+$LastChangedBy: bdubbs $
+$Date: 2011-10-10 04:59:11 +0200 (lun. 10 oct. 2011) $
+-->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
@@ -103,7 +108,7 @@
           <xsl:otherwise>
             <xsl:choose>
               <xsl:when test="ancestor::appendix">auto</xsl:when>
-              <!-- Modified by Bruce Dubbs.  Allow user to specify
+              <!-- Modified by Bruce Dubbs.  Allow user to specify 
               automatic screen formatting to split across pages. -->
               <xsl:when test="@role='auto'">auto</xsl:when>
               <xsl:otherwise>always</xsl:otherwise>
@@ -114,8 +119,8 @@
         </xsl:choose>
       </xsl:attribute>
 
-<!-- The following lines were inserted by Martin Miehe. Scripts and rules
-     in the appendices should have a smaller font-size so that at least
+<!-- The following lines were inserted by Martin Miehe. Scripts and rules 
+     in the appendices should have a smaller font-size so that at least 
      80 characters fit to one line. -->
 
       <xsl:if test="ancestor::appendix">    <!-- name(/) != appendix" -->

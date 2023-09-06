@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-gcc-pass1" role="wrap" xreflabel="gcc-pass1">
+  <?dbhtml filename="gcc-pass1.html"?>
+
+  <sect1info condition="script">
+<productname>gcc-pass1</productname>
+<productnumber>&gcc-version;</productnumber> <address>&gcc-url;</address></sect1info>
+
+  <title>GCC-&gcc-version; - Passagem 1</title>
+
+  <indexterm zone="ch-tools-gcc-pass1">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>ferramentas, passagem 1</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter08/gcc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&gcc-tmpp1-sbu;</seg>
+        <seg>&gcc-tmpp1-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do GCC Cruzado</title>
+
+    <para>O GCC exige os pacotes GMP, MPFR e MPC. Uma vez que esses pacotes talvez não
+estejam incluídos na sua distribuição anfitriã, eles serão construídos com o
+GCC. Desempacote cada pacote dentro do diretório de fonte do GCC e renomeie
+os diretórios resultantes, de forma que os procedimentos de construção do
+GCC automaticamente os usarão:</para>
+
+    <note><para>Existem mal-entendidos frequentes a respeito deste capítulo. Os
+procedimentos são os mesmos que todos os outros capítulos, conforme
+explicados anteriormente (<xref linkend='buildinstr'/>). Primeiro, extraia o
+tarball gcc-&gcc-version; a partir do diretório dos fontes e então mude para
+o diretório criado. Somente então deveria você prosseguir com as instruções
+abaixo.</para></note>
+
+<screen><userinput remap="pre">tar -xf ../mpfr-&mpfr-version;.tar.xz
+mv -v mpfr-&mpfr-version; mpfr
+tar -xf ../gmp-&gmp-version;.tar.xz
+mv -v gmp-&gmp-version; gmp
+tar -xf ../mpc-&mpc-version;.tar.gz
+mv -v mpc-&mpc-version; mpc</userinput></screen>
+
+    <para>Em anfitriões x86_64, configure o nome padrão de diretório para bibliotecas
+de 64 bits para <quote>lib</quote>:</para>
+
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' \
+        -i.orig gcc/config/i386/t-linux64
+ ;;
+esac</userinput></screen>
+
+    <para>A documentação do GCC recomenda construir o GCC em um diretório de
+construção dedicado:</para>
+
+<screen><userinput remap="pre">mkdir -v build
+cd      build</userinput></screen>
+
+    <para>Prepare o GCC para compilação:</para>
+
+<screen><userinput remap="configure">../configure                  \
+    --target=$LFS_TGT         \
+    --prefix=$LFS/tools       \
+    --with-glibc-version=&glibc-version; \
+    --with-sysroot=$LFS       \
+    --with-newlib             \
+    --without-headers         \
+    --enable-default-pie      \
+    --enable-default-ssp      \
+    --disable-nls             \
+    --disable-shared          \
+    --disable-multilib        \
+    --disable-threads         \
+    --disable-libatomic       \
+    --disable-libgomp         \
+    --disable-libquadmath     \
+    --disable-libssp          \
+    --disable-libvtv          \
+    --disable-libstdcxx       \
+    --enable-languages=c,c++</userinput></screen>
+    <variablelist>
+      <title>O significado das opções do configure:</title>
+
+      <varlistentry>
+        <term><parameter>--with-glibc-version=&glibc-version;</parameter></term>
+        <listitem>
+          <para>Essa opção especifica a versão da Glibc que será usada no alvo. Ela não é
+relevante para a libc da distribuição anfitriã, pois tudo compilado pela
+passagem 1 do GCC executará no ambiente chroot, o qual é isolado da libc da
+distribuição anfitriã.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-newlib</parameter></term>
+        <listitem>
+          <para>Uma vez que uma biblioteca C funcional ainda não está disponível, isso
+assegura que a constante inhibit_libc esteja definida quando da construção
+de libgcc. Isso evita a compilação de qualquer código que exija suporte à
+libc.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-headers</parameter></term>
+        <listitem>
+          <para>Quando da criação de um compilador cruzado completo, o GCC exige cabeçalhos
+padrão compatíveis com o sistema alvo. Para nossos propósitos esses
+cabeçalhos não serão necessários. Essa chave evita que o GCC procure por
+eles.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term><parameter>--enable-default-pie e --enable-default-ssp</parameter></term>
+        <listitem>
+          <para>Essas chaves permitem que o GCC compile aplicativos com alguns recursos de
+segurança reforçados (mais informação a respeito deles na <xref
+linkend="pie-ssp-info"/> no capítulo 8) por padrão. Eles não são
+estritamente necessários neste estágio, pois o compilador produzirá apenas
+executáveis temporários. Mas, é mais limpo ter os pacotes temporários o mais
+próximo possível dos finais.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-shared</parameter></term>
+        <listitem>
+          <para>Essa chave força o GCC a vincular as bibliotecas internas dele
+estaticamente. Nós precisamos disso, pois as bibliotecas compartilhadas
+exigem a Glibc, que ainda não está instalada no sistema alvo.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-multilib</parameter></term>
+        <listitem>
+          <para>Em x86_64, o LFS não suporta uma configuração multi bibliotecas. Essa chave
+é inofensiva para x86.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-threads, --disable-libatomic, --disable-libgomp,
+--disable-libquadmath, --disable-libssp, --disable-libvtv e
+--disable-libstdcxx</parameter></term>
+        <listitem>
+          <para>Essas chaves desabilitam o suporte para threading, libatomic, libgomp,
+libquadmath, libssp, libvtv e à biblioteca padrão C++ respectivamente. Esses
+recursos possivelmente falhem para compilar quando da construção de um
+compilador cruzado e não são necessários para a tarefa de compilar
+cruzadamente a libc temporária.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-languages=c,c++</parameter></term>
+        <listitem>
+          <para>Essa opção garante que apenas os compiladores C e C++ sejam
+construídos. Essas são as únicas linguagens necessárias agora.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile o GCC executando:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Instale o pacote:</para>
+
+    <screen><userinput remap="install">make install</userinput></screen>
+
+    <para>Essa construção do GCC instalou um par de cabeçalhos internos de
+sistema. Normalmente um deles, <filename>limits.h</filename>,
+sequencialmente incluiria o correspondente cabeçalho de sistema
+<filename>limits.h</filename>, nesse caso,
+<filename>$LFS/usr/include/limits.h</filename>. Entretanto, ao tempo dessa
+construção do GCC, <filename>$LFS/usr/include/limits.h</filename> não
+existe, de forma que o cabeçalho interno que tenha sido instalado é um
+arquivo parcial, auto-contido, e não inclui os recursos estendidos do
+cabeçalho de sistema. Isso é adequado para a construção da Glibc, porém o
+cabeçalho interno completo será necessário posteriormente. Crie uma versão
+completa do cabeçalho interno usando um comando que é idêntico ao que o
+sistema de construção do GCC faz em circunstâncias normais:</para>
+
+    <note>
+      <para>O comando abaixo mostra um exemplo da substituição de comando aninhada
+usando dois métodos: aspas invertidas e uma construção
+<literal>$()</literal>. Poderia ser reescrito usando o mesmo método para
+ambas as substituições, porém é mostrado dessa maneira para demonstrar o
+como eles podem ser misturados. Geralmente o método <literal>$()</literal> é
+preferido.</para>
+    </note>
+
+<screen><userinput remap="install">cd ..
+cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
+  `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include/limits.h</userinput></screen>
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Detalhes acerca deste pacote estão localizados na <xref
+linkend="contents-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>

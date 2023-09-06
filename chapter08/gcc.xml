@@ -1,0 +1,707 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-gcc" role="wrap">
+  <?dbhtml filename="gcc.html"?>
+
+  <sect1info condition="script">
+<productname>gcc</productname> <productnumber>&gcc-version;</productnumber>
+<address>&gcc-url;</address></sect1info>
+
+  <title>GCC-&gcc-version;</title>
+
+  <indexterm zone="ch-system-gcc">
+    <primary sortas="a-GCC">GCC</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>O pacote GCC contém a GNU Compiler Collection, a qual inclui os compiladores
+C e C++.</para>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&gcc-fin-sbu;</seg>
+        <seg>&gcc-fin-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do GCC</title>
+
+
+    <!--
+    <para>
+At first, fix an issue breaking
+    <filename class="libraryfile">libasan.a</filename> building this package
+    with Glibc-2.34 or later:</para>
+
+<screen><userinput remap="pre">sed -e '/static.*SIGSTKSZ/d' \
+    -e 's/return kAltStackSize/return SIGSTKSZ * 4/' \
+    -i libsanitizer/sanitizer_common/sanitizer_posix_libcdep.cpp</userinput></screen>
+-->
+<!--
+    <para>
+First fix a problem with the latest version of glibc:</para>
+
+    <screen><userinput remap="pre">patch -Np1 -i ../&gcc-upstream-fixes-patch;</userinput></screen>
+-->
+<para>Se construir em x86_64, [então] mude o nome padrão de diretório para
+bibliotecas de 64 bits para <quote>lib</quote>:</para>
+
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' \
+        -i.orig gcc/config/i386/t-linux64
+  ;;
+esac</userinput></screen>
+
+    <para>A documentação do GCC recomenda construir o GCC em um diretório de
+construção dedicado:</para>
+
+<screen><userinput remap="pre">mkdir -v build
+cd      build</userinput></screen>
+
+    <para>Prepare o GCC para compilação:</para>
+
+<screen><userinput remap="configure">../configure --prefix=/usr            \
+             LD=ld                    \
+             --enable-languages=c,c++ \
+             --enable-default-pie     \
+             --enable-default-ssp     \
+             --disable-multilib       \
+             --disable-bootstrap      \
+             --disable-fixincludes    \
+             --with-system-zlib</userinput></screen>
+
+    <para>O GCC suporta sete linguagens computacionais, porém os pré-requisitos para a
+maior parte delas ainda não foram instalados. Veja-se a <ulink
+url="&blfs-book;general/gcc.html">página do GCC do Livro BLFS</ulink> para
+instruções a respeito do como construir todas as linguagens suportadas do
+GCC.</para>
+
+    <variablelist>
+      <title>O significado dos novos parâmetros do configure:</title>
+
+      <varlistentry>
+        <term><parameter>LD=ld</parameter></term>
+        <listitem>
+          <para>Esse parâmetro induz o script configure a usar o aplicativo ld instalado
+pelo pacote Binutils, construído anteriormente neste capítulo, em vez da
+versão construída cruzadamente, a qual de outra maneira seria usada.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-fixincludes</parameter></term>
+        <listitem>
+          <para>Por padrão, durante a instalação do GCC alguns cabeçalhos de sistema seriam
+<quote>corrigidos</quote> para serem usados com o GCC. Isso não é necessário
+para um sistema moderno Linux e potencialmente danoso se um pacote for
+reinstalado depois de instalar o GCC. Essa chave evita que o GCC
+<quote>corrija</quote> os cabeçalhos.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-system-zlib</parameter></term>
+        <listitem>
+          <para>Essa chave diz ao GCC para vincular à cópia instalada do sistema da
+biblioteca Zlib, em vez da própria cópia interna dele.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <note>
+      <anchor id="pie-ssp-info" xreflabel="observação a respeito de PIE e SSP"/>
+      <para>
+        PIE (position-independent executables) são aplicativos binários que
+conseguem ser carregados em qualquer lugar em memória. Sem PIE, o recurso de
+segurança chamado de ASLR (Address Space Layout Randomization) consegue ser
+aplicado para as bibliotecas compartilhadas, porém não para os próprios
+executáveis. Habilitar PIE permite ASLR para os executáveis em adição às
+bibliotecas compartilhadas e mitiga alguns ataques baseados em endereços
+fixos de código ou dados sensível(is) nos executáveis.
+      </para>
+      <para>
+        SSP (Stack Smashing Protection) é uma técnica para garantir que a pilha de
+parâmetros não está corrompida. A corrupção da pilha consegue, por exemplo,
+alterar o endereço de retorno de uma sub-rotina, dessa forma transferindo
+controle para algum código perigoso (existente no aplicativo ou nas
+bibliotecas compartilhadas; ou injetado pelo(a) atacante de alguma maneira).
+      </para>
+    </note>
+
+    <para>Compile o pacote:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <important>
+      <para>Nesta seção, a suíte de teste para o GCC é considerada importante, porém ela
+toma um tempo longo. Construtoras(es) de primeira vez são encorajadas(os) a
+executar a suíte de teste. O tempo para executar os testes pode ser reduzido
+significantemente adicionando-se -jx ao comando <command>make -k
+check</command> abaixo, onde x é o número de núcleos da CPU em seu sistema.</para>
+    </important>
+
+   <para>Um conjunto de testes na suíte de teste do GCC é conhecido por esgotar a
+pilha padrão, então aumente o tamanho de pilha para executar os testes:</para>
+
+<screen><userinput remap="test">ulimit -s 32768</userinput></screen>
+
+    <para>Teste os resultados como um(a) usuário(a) não privilegiado(a), porém não
+pare em erros:</para>
+
+<screen><userinput remap="test">chown -Rv tester .
+su tester -c "PATH=$PATH make -k check"</userinput></screen>
+
+    <para>Para extrair um sumário dos resultados da suíte de teste, execute:</para>
+
+<screen><userinput remap="test">../contrib/test_summary</userinput></screen>
+
+    <para>Para filtrar somente os sumários, entube a saída gerada por <userinput>grep
+-A7 Summ</userinput>.</para>
+
+    <para>Os resultados podem ser comparados com aqueles localizados em <ulink
+url="&test-results;"/> e <ulink
+url="https://gcc.gnu.org/ml/gcc-testresults/"/>.</para>
+
+ <para>
+    
+    <!--Two tests named <filename>
+pr104610.c</filename> and
+    <filename>pr69482-1.c</filename> are known to fail because the test
+    files does not account for the
+    <parameter>- -enable-default-ssp</parameter> option.-->
+<!-- https://gcc.gnu.org/PR106375 and https://gcc.gnu.org/PR109353 -->
+<!-- https://gcc.gnu.org/PR107855#c6 -->
+Dois testes chamados <filename>copy.cc</filename> e
+<filename>pr56837.c</filename> são conhecidos por falharem. Adicionalmente,
+vários testes no diretório <filename class='directory'>vect</filename> são
+conhecidos por falharem se o hardware não suportar "AVX".</para>
+
+    <para>
+      Com "Glibc-2.38", os testes do analisador chamados
+<filename>data-model-4.c</filename> e <filename>conftest-1.c</filename> são
+conhecidos por falharem. Nos testes "asan", vários testes em
+<filename>asan_test.C</filename> são conhecidos por falharem. O teste
+chamado <filename>interception-malloc-test-1.C</filename> é conhecido por
+falhar.
+    </para>
+
+    <para>Umas poucas falhas inesperadas não podem ser evitadas sempre. Os(As)
+desenvolvedores(as) do GCC geralmente estão cientes desses problemas, mas
+ainda não os resolveram. A menos que os resultados do teste sejam amplamente
+diferentes daqueles na URL acima, é seguro continuar.</para>
+
+    
+
+    <!--note>
+<para>
+      On some combinations of kernel configuration and AMD processors
+      there may be more than 1100 failures in the gcc.target/i386/mpx
+      tests (which are designed to test the MPX option on recent
+      Intel processors). These can safely be ignored on AMD
+      processors. These tests will also fail on Intel processors if MPX support
+      is not enabled in the kernel even though it is present on the CPU.
+    </para></note-->
+<para>Instale o pacote:</para>
+
+<screen><userinput remap="install">make install</userinput></screen>
+
+    <para>O diretório de construção do GCC é de propriedade de <systemitem
+class="username">tester</systemitem> agora e a propriedade do diretório do
+cabeçalho instalado (e o conteúdo dele) está incorreto. Mude a propriedade
+para o(a) usuário(a) e grupo <systemitem class="username">root</systemitem>:</para>
+
+<screen><userinput remap="install">chown -v -R root:root \
+    /usr/lib/gcc/$(gcc -dumpmachine)/&gcc-version;/include{,-fixed}</userinput></screen>
+
+    <para>Crie um link simbólico exigido pelo <ulink
+url="https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s09.html">FHS</ulink>
+por razões "históricas".</para>
+
+<screen><userinput remap="install">ln -svr /usr/bin/cpp /usr/lib</userinput></screen>
+
+    <para>Muitos pacotes usam o nome <command>cc</command> para chamar o compilador
+C. Já criamos <command>cc</command> como um link simbólico em <xref
+linkend='ch-tools-gcc-pass2'/>; crie a página de manual dele como um link
+simbólico também:</para>
+
+<screen><userinput remap="install">ln -sv gcc.1 /usr/share/man/man1/cc.1</userinput></screen>
+
+    <para>Adicione um link simbólico de compatibilidade para habilitar a construção de
+aplicativos com Link Time Optimization (LTO):</para>
+
+<screen><userinput remap="install">ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/&gcc-version;/liblto_plugin.so \
+        /usr/lib/bfd-plugins/</userinput></screen>
+
+    <para>Agora que nosso conjunto de ferramentas final está no lugar, é importante
+certificar-se novamente de que compilação e vinculação funcionarão como
+esperado. Nós fazemos isso realizando algumas verificações de sanidade:</para>
+
+<screen><userinput>echo 'int main(){}' &gt; dummy.c
+cc dummy.c -v -Wl,--verbose &amp;&gt; dummy.log
+readelf -l a.out | grep ': /lib'</userinput></screen>
+
+  <para>Não deveriam existir erros e a saída gerada do último comando será
+(permitindo diferenças específicas de plataforma no nome do vinculador
+dinâmico):</para>
+
+<screen><computeroutput>[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</computeroutput></screen>
+
+  <para>Agora tenha certeza de que nós estamos configurados para usar os arquivos de
+início corretos:</para>
+
+<screen><userinput>grep -E -o '/usr/lib.*/S?crt[1in].*succeeded' dummy.log</userinput></screen>
+
+  <para>A saída gerada do último comando deveria ser:</para>
+
+<screen><computeroutput>/usr/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/../../../../lib/Scrt1.o succeeded
+/usr/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/../../../../lib/crti.o succeeded
+/usr/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/../../../../lib/crtn.o succeeded</computeroutput></screen>
+
+  <para>Dependendo da arquitetura da sua máquina, o acima possivelmente difira
+ligeiramente. A diferença será o nome do diretório depois de <filename
+class="directory">/usr/lib/gcc</filename>. A coisa importante a se olhar
+aqui é que o <command>gcc</command> tenha encontrado todos os três arquivos
+<filename>crt*.o</filename> sob o diretório <filename
+class="directory">/usr/lib</filename>.</para>
+
+  <para>Verifique se o compilador está procurando os arquivos de cabeçalho corretos:</para>
+
+<screen><userinput>grep -B4 '^ /usr/include' dummy.log</userinput></screen>
+
+  <para>Esse comando deveria retornar a seguinte saída gerada:</para>
+
+<screen><computeroutput>#include &lt;...&gt; search starts here:
+ /usr/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/include
+ /usr/local/include
+ /usr/lib/gcc/x86_64-pc-linux-gnu/&gcc-version;/include-fixed
+ /usr/include</computeroutput></screen>
+
+   <para>Novamente, o diretório nomeado depois do seu trio alvo possivelmente seja
+diferente do acima, dependendo da arquitetura do seu sistema.</para>
+
+  <para>Agora, verifique se o novo vinculador está sendo usado com os caminhos de
+procura corretos:</para>
+
+<screen><userinput>grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'</userinput></screen>
+
+  <para>As referências a caminhos que tem componentes com '-linux-gnu' deveriam ser
+ignoradas, porém, do contrário, a saída gerada do último comando deveria
+ser:</para>
+
+<screen><computeroutput>SEARCH_DIR("/usr/x86_64-pc-linux-gnu/lib64")
+SEARCH_DIR("/usr/local/lib64")
+SEARCH_DIR("/lib64")
+SEARCH_DIR("/usr/lib64")
+SEARCH_DIR("/usr/x86_64-pc-linux-gnu/lib")
+SEARCH_DIR("/usr/local/lib")
+SEARCH_DIR("/lib")
+SEARCH_DIR("/usr/lib");</computeroutput></screen>
+
+   <para>Um sistema de 32 bits possivelmente use uns poucos outros diretórios. Por
+exemplo, aqui está a saída gerada originária de uma máquina i686:</para>
+
+<screen><computeroutput>SEARCH_DIR("/usr/i686-pc-linux-gnu/lib32")
+SEARCH_DIR("/usr/local/lib32")
+SEARCH_DIR("/lib32")
+SEARCH_DIR("/usr/lib32")
+SEARCH_DIR("/usr/i686-pc-linux-gnu/lib")
+SEARCH_DIR("/usr/local/lib")
+SEARCH_DIR("/lib")
+SEARCH_DIR("/usr/lib");</computeroutput></screen>
+
+  <para>Em seguida, tenha certeza de que nós estamos usando a libc correta:</para>
+
+<screen><userinput>grep "/lib.*/libc.so.6 " dummy.log</userinput></screen>
+
+  <para>A saída gerada do último comando deveria ser:</para>
+
+<screen><computeroutput>attempt to open /usr/lib/libc.so.6 succeeded</computeroutput></screen>
+
+  <para>Tenha certeza de que o GCC está usando o vinculador dinâmico correto:</para>
+
+<screen><userinput>grep found dummy.log</userinput></screen>
+
+  <para>A saída gerada do último comando deveria ser (permitindo diferenças
+específicas de plataforma no nome do vinculador dinâmico):</para>
+
+<screen><computeroutput>found ld-linux-x86-64.so.2 at /usr/lib/ld-linux-x86-64.so.2</computeroutput></screen>
+
+  <para><!--The most likely
+  reason is that something went wrong with the specs file adjustment.-->
+Se a saída gerada não aparecer como mostrada acima ou não for recebida de
+jeito nenhum, então alguma coisa está seriamente errada. Investigue e refaça
+os passos para descobrir onde o problema está e corrigi-lo. Quaisquer
+problemas deveriam ser resolvidos antes de continuar com o processo.</para>
+
+  <para>Uma vez que tudo esteja funcionando corretamente, remova os arquivos de
+teste:</para>
+
+<screen><userinput>rm -v dummy.c a.out dummy.log</userinput></screen>
+
+    <para>Finalmente, mova um arquivo mal colocado:</para>
+
+<screen><userinput remap="install">mkdir -pv /usr/share/gdb/auto-load/usr/lib
+mv -v /usr/lib/*gdb.py /usr/share/gdb/auto-load/usr/lib</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-gcc" role="content">
+    <title>Conteúdo do GCC</title>
+
+    <segmentedlist>
+      <segtitle>Aplicativos instalados</segtitle>
+      <segtitle>Bibliotecas instaladas</segtitle>
+      <segtitle>Diretórios instalados</segtitle>
+
+      <seglistitem>
+        <seg>c++, cc (link para gcc), cpp, g++, gcc, gcc-ar, gcc-nm, gcc-ranlib, gcov,
+gcov-dump, gcov-tool e lto-dump</seg>
+
+        <seg>libasan.{a,so}, libatomic.{a,so}, libcc1.so, libgcc.a, libgcc_eh.a,
+libgcc_s.so, libgcov.a, libgomp.{a,so}, libhwasan.{a,so}, libitm.{a,so},
+liblsan.{a,so}, liblto_plugin.so, libquadmath.{a,so}, libssp.{a,so},
+libssp_nonshared.a, libstdc++.{a,so}, libstdc++exp.a, libstdc++fs.a,
+libsupc++.a, libtsan.{a,so} e libubsan.{a,so}</seg>
+
+        <seg>/usr/include/c++, /usr/lib/gcc, /usr/libexec/gcc e
+/usr/share/gcc-&gcc-version;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descrições Curtas</bridgehead>
+      <?dbfo list-presentation="list"?> <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="c">
+        <term><command>c++</command></term>
+        <listitem>
+          <para>O compilador C++</para>
+          <indexterm zone="ch-system-gcc c">
+            <primary sortas="b-c++">c++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="cc">
+        <term><command>cc</command></term>
+        <listitem>
+          <para>O compilador C</para>
+          <indexterm zone="ch-system-gcc cc">
+            <primary sortas="b-cc">cc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="cpp">
+        <term><command>cpp</command></term>
+        <listitem>
+          <para>O preprocessador C; é usado pelo compilador para expandir as diretivas
+#include, #define e similares nos arquivos fonte</para>
+          <indexterm zone="ch-system-gcc cpp">
+            <primary sortas="b-cpp">cpp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="g">
+        <term><command>g++</command></term>
+        <listitem>
+          <para>O compilador C++</para>
+          <indexterm zone="ch-system-gcc g">
+            <primary sortas="b-g++">g++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcc">
+        <term><command>gcc</command></term>
+        <listitem>
+          <para>O compilador C</para>
+          <indexterm zone="ch-system-gcc gcc">
+            <primary sortas="b-gcc">gcc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcc-ar">
+        <term><command>gcc-ar</command></term>
+        <listitem>
+          <para>Um encapsulador em torno de <command>ar</command> que adiciona um plugin à
+linha de comando. Esse aplicativo é usado somente para adicionar "link time
+optimization" e não é útil com as opções padrão de construção.</para>
+          <indexterm zone="ch-system-gcc gcc-ar">
+            <primary sortas="b-gcc-ar">gc-ar</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcc-nm">
+        <term><command>gcc-nm</command></term>
+        <listitem>
+          <para>Um encapsulador em torno de <command>nm</command> que adiciona um plugin à
+linha de comando. Esse aplicativo é usado somente para adicionar "link time
+optimization" e não é útil com as opções padrão de construção.</para>
+          <indexterm zone="ch-system-gcc gcc-nm">
+            <primary sortas="b-gcc-nm">gc-nm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcc-ranlib">
+        <term><command>gcc-ranlib</command></term>
+        <listitem>
+          <para>Um encapsulador em torno de <command>ranlib</command> que adiciona um plugin
+à linha de comando. Esse aplicativo é usado somente para adicionar "link
+time optimization" e não é útil com as opções padrão de construção.</para>
+          <indexterm zone="ch-system-gcc gcc-ranlib">
+            <primary sortas="b-gcc-ranlib">gc-ranlib</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcov">
+        <term><command>gcov</command></term>
+        <listitem>
+          <para>Uma ferramenta de testagem de cobertura; usada para analisar aplicativos
+para determinar onde as otimizações terão o maior efeito</para>
+          <indexterm zone="ch-system-gcc gcov">
+            <primary sortas="b-gcov">gcov</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcov-dump">
+        <term><command>gcov-dump</command></term>
+        <listitem>
+          <para>Ferramenta de despejo de perfil offline gcda e gcno</para>
+          <indexterm zone="ch-system-gcc gcov-dump">
+            <primary sortas="b-gcov-dump">gcov-dump</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gcov-tool">
+        <term><command>gcov-tool</command></term>
+        <listitem>
+          <para>Ferramenta de processamento de perfil offline gcda</para>
+          <indexterm zone="ch-system-gcc gcov-tool">
+            <primary sortas="b-gcov-tool">gcov-tool</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="lto-dump">
+        <term><command>lto-dump</command></term>
+        <listitem>
+          <para>Ferramenta para despejar arquivos objeto produzidos pelo GCC com LTO
+habilitado</para>
+          <indexterm zone="ch-system-gcc lto-dump">
+            <primary sortas="b-lto-dump">lto-dump</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libasan">
+        <term><filename class="libraryfile">libasan</filename></term>
+        <listitem>
+          <para>A biblioteca de tempo de execução Address Sanitizer</para>
+          <indexterm zone="ch-system-gcc libasan">
+            <primary sortas="b-libasan">libasan</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libatomic">
+        <term><filename class="libraryfile">libatomic</filename></term>
+        <listitem>
+          <para>Biblioteca de tempo de execução integrada atômica do GCC</para>
+          <indexterm zone="ch-system-gcc libatomic">
+            <primary sortas="b-libatomic">libatomic</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libcc1">
+        <term><filename class="libraryfile">libcc1</filename></term>
+        <listitem>
+          <para>A biblioteca de pré-processamento C</para>
+          <indexterm zone="ch-system-gcc libcc1">
+            <primary sortas="b-libcc1">libcc1</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libgcc">
+        <term><filename class="libraryfile">libgcc</filename></term>
+        <listitem>
+          <para>Contém suporte de tempo de execução para o <command>gcc</command></para>
+          <indexterm zone="ch-system-gcc libgcc">
+            <primary sortas="c-libgcc">libgcc</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libgcov">
+        <term><filename class="libraryfile">libgcov</filename></term>
+        <listitem>
+          <para>Essa biblioteca é vinculada a um aplicativo quando o GCC for instruído a
+habilitar criação de perfil</para>
+          <indexterm zone="ch-system-gcc libgcov">
+            <primary sortas="c-libgcov">libgcov</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libgomp">
+        <term><filename class="libraryfile">libgomp</filename></term>
+        <listitem>
+          <para>Implementação GNU da API OpenMP para programação paralela de memória
+compartilhada multiplataforma em C/C++ e Fortran</para>
+          <indexterm zone="ch-system-gcc libgomp">
+            <primary sortas="c-libgomp">libgomp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libhwasan">
+        <term><filename class="libraryfile">libhwasan</filename></term>
+        <listitem>
+          <para>A biblioteca de tempo de execução do Address Sanitizer assistida por
+hardware</para>
+          <indexterm zone="ch-system-gcc libhwasan">
+            <primary sortas="c-libhwasan">libhwasan</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libitm">
+        <term><filename class="libraryfile">libitm</filename></term>
+        <listitem>
+          <para>A biblioteca de memória transacional GNU</para>
+          <indexterm zone="ch-system-gcc libitm">
+            <primary sortas="c-libitm">libitm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="liblsan">
+        <term><filename class="libraryfile">liblsan</filename></term>
+        <listitem>
+          <para>A biblioteca de tempo de execução Leak Sanitizer</para>
+          <indexterm zone="ch-system-gcc liblsan">
+            <primary sortas="c-liblsan">liblsan</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="liblto_plugin">
+        <term><filename class="libraryfile">liblto_plugin</filename></term>
+        <listitem>
+          <para>Plugin LTO do GCC permite ao Binutils processar arquivos objeto produzidos
+pelo GCC com LTO habilitado</para>
+          <indexterm zone="ch-system-gcc liblto_plugin">
+            <primary sortas="c-liblto_plugin">liblto_plugin</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libquadmath">
+        <term><filename class="libraryfile">libquadmath</filename></term>
+        <listitem>
+          <para>API da Biblioteca GCC Quad Precision Math</para>
+          <indexterm zone="ch-system-gcc libquadmath">
+            <primary sortas="c-libquadmath">libquadmath</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libssp">
+        <term><filename class="libraryfile">libssp</filename></term>
+        <listitem>
+          <para>Contém rotinas suportantes da funcionalidade de proteção contra esmagamento
+de pilha do GCC.</para>
+          <indexterm zone="ch-system-gcc libssp">
+            <primary sortas="c-libssp">libssp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libstdc">
+        <term><filename class="libraryfile">libstdc++</filename></term>
+        <listitem>
+          <para>A biblioteca padrão C++</para>
+          <indexterm zone="ch-system-gcc libstdc">
+            <primary sortas="c-libstdc++">libstdc++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libstdcexp">
+        <term><filename class="libraryfile">libstdc++exp</filename></term>
+        <listitem>
+          <para>Biblioteca Experimental de Contratos C++</para>
+          <indexterm zone="ch-system-gcc libstdcexp">
+            <primary sortas="c-libstdc++exp">libstdc++exp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libstdcfs">
+        <term><filename class="libraryfile">libstdc++fs</filename></term>
+        <listitem>
+          <para>Biblioteca de Sistema de Arquivos ISO/IEC TS 18822:2015</para>
+          <indexterm zone="ch-system-gcc libstdcfs">
+            <primary sortas="c-libstdc++fs">libstdc++fs</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libsupc">
+        <term><filename class="libraryfile">libsupc++</filename></term>
+        <listitem>
+          <para>Fornece rotinas suportantes para a linguagem de programação C++</para>
+          <indexterm zone="ch-system-gcc libsupc">
+            <primary sortas="c-libsupc++">libsupc++</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libtsan">
+        <term><filename class="libraryfile">libtsan</filename></term>
+        <listitem>
+          <para>A biblioteca de tempo de execução Thread Sanitizer</para>
+          <indexterm zone="ch-system-gcc libtsan">
+            <primary sortas="c-libtsan">libtsan</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libubsan">
+        <term><filename class="libraryfile">libubsan</filename></term>
+        <listitem>
+          <para>A biblioteca de tempo de execução Undefined Behavior Sanitizer</para>
+          <indexterm zone="ch-system-gcc libubsan">
+            <primary sortas="c-libubsan">libubsan</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-symlinks">
+  <?dbhtml filename="symlinks.html"?>
+
+  <title>Gerenciando Dispositivos</title>
+
+  <sect2 revision="sysv">
+
+    <title>Dispositivos da Rede de Comunicação</title>
+
+    <para>O Udev, por padrão, nomeia dispositivos da rede de comunicação de acordo com
+dados de Firmware/BIOS ou características físicas, como o barramento, slot
+ou endereço MAC. O propósito dessa convenção de nomenclatura é o de garantir
+que dispositivos da rede de comunicação sejam nomeados consistentemente e
+não baseados em quando a placa de rede de comunicação foi descoberta. Em
+versões mais antigas do Linux&mdash;em um computador com duas placas de rede
+de comunicação feitas por Intel e Realtek, por exemplo&mdash;a placa de rede
+de comunicação fabricada pela Intel talvez se torne eth0, enquanto que e a
+placa Realtek se tornou eth1. Depois de uma reinicialização, as placas
+poderiam, às vezes, serem renumeradas da maneira inversa.</para>
+
+    <para>No novo esquema de nomenclatura, nomes típicos de dispositivo da rede de
+comunicação são alguma coisa como enp5s0 ou wlp3s0. Se essa convenção de
+nomenclatura não for desejada, [então] o esquema de nomenclatura
+tradicional, ou um esquema personalizado, pode ser implementado.</para>
+
+    <sect3>
+      <title>Desabilitando Nomenclatura Persistente na Linha de Comando do Núcleo</title>
+
+      <para>O esquema tradicional de nomenclatura usando eth0, eth1, etc., pode ser
+restaurado adicionando-se <userinput>net.ifnames=0</userinput> na linha de
+comando do núcleo. Isso é mais apropriado para sistemas que tenham apenas um
+dispositivo ethernet de um tipo específico. Laptops frequentemente tem duas
+conexões ethernet nomeadas de eth0 e wlan0; tais laptops também conseguem
+usar esse método. A linha de comando está no arquivo de configuração do
+GRUB. Veja-se <xref linkend="grub-cfg"/>.</para>
+    </sect3>
+
+    <sect3>
+      <title>Criando Regras Personalizadas do Udev</title>
+
+      <para>O esquema de nomenclatura pode ser personalizado criando-se regras
+personalizadas do Udev. Um script foi incluído que gera as regras
+iniciais. Gere essas regras executando:</para>
+
+<screen role="install"><userinput>bash /usr/lib/udev/init-net-rules.sh</userinput></screen>
+
+      <para> Agora, inspecione o arquivo
+<filename>/etc/udev/rules.d/70-persistent-net.rules</filename>, para
+descobrir qual nome foi atribuído a qual dispositivo da rede de comunicação:</para>
+
+<screen role="nodump"><userinput>cat /etc/udev/rules.d/70-persistent-net.rules</userinput></screen>
+
+      <note><para>Em alguns casos, tais como quando endereços MAC tenham sido atribuídos para
+uma placa de rede de comunicação manualmente, ou em um ambiente virtual,
+como Qemu ou Xen, o arquivo das regras da rede de comunicação possivelmente
+não seja gerado, pois endereços não são atribuídos consistentemente. Nesses
+casos, esse método não pode ser usado.</para></note>
+
+      <para>O arquivo começa com um bloco de comentário seguido por duas linhas para
+cada NIC. A primeira linha para cada NIC é uma descrição comentada mostrando
+os IDs de hardware delas (por exemplo, fornecedor(a) de PCI delas e IDs de
+dispositivo, se ela for uma placa PCI), juntamente com o controlador delas
+(entre parênteses, se o controlador puder ser encontrado). Nem o ID de
+hardware, nem o controlador, é usado para determinar quais nomes dar para
+uma interface; essa informação é somente para referência. A segunda linha é
+a regra do Udev que corresponde a essa NIC e atualmente atribui a ela um
+nome.</para>
+
+      <para>Todas as regras do Udev são compostas de várias palavras chave, separadas
+por vírgulas e espaços em branco opcionais. Aqui estão as palavras chave e
+uma explicação de cada uma:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><literal>SUBSYSTEM=="net"</literal> - Isso diz ao Udev para ignorar
+dispositivos que não sejam placas da rede de comunicação.</para>
+        </listitem>
+        <listitem>
+          <para><literal>ACTION=="add"</literal> - Isso diz ao Udev para ignorar essa regra
+para um uevent que não seja um adicionar (uevents "remover" e "mudar" também
+acontecem, porém não precisam renomear interfaces da rede de comunicação).</para>
+        </listitem>
+        <listitem>
+          <para><literal>DRIVERS=="?*"</literal> - Isso existe, de forma que o Udev ignorará
+sub-interfaces VLAN ou bridge (pois essas sub-interfaces não tem
+controladores). Essas sub-interfaces são puladas, pois o nome que seria
+atribuído conflitaria com os dispositivos ancestrais delas.</para>
+        </listitem>
+        <listitem>
+          <para><literal>ATTR{address}</literal> - O valor dessa palavra chave é o endereço
+MAC da NIC.</para>
+        </listitem>
+        <listitem>
+          <para><literal>ATTR{type}=="1"</literal> - Isso garante que a regra corresponda
+somente à interface primária no caso de certos controladores sem fios os
+quais criam múltiplas interfaces virtuais. As interfaces secundárias são
+puladas pela mesma razão que sub-interfaces VLAN e bridge são puladas:
+existiria um conflito de nome do contrário.</para>
+        </listitem>
+        <listitem>
+          <para><literal>NAME</literal> - O valor dessa palavra chave é o nome que o Udev
+atribuirá para essa interface.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>O valor de <literal>NAME</literal> é a parte importante. Assegure-se de que
+você sabe qual nome foi atribuído para cada uma das suas placas da rede de
+comunicação antes de prosseguir, e tenha certeza de usar esse valor
+<literal>NAME</literal> quando criar seus arquivos de configuração da rede
+de comunicação.</para>
+
+    </sect3>
+
+  </sect2>
+
+  <sect2 revision="sysv">
+
+    <title>Links Simbólicos de CD-ROM</title>
+
+    <para>Alguns aplicativos que você possivelmente queira instalar posteriormente
+(por exemplo, vários reprodutores de mídia) esperam que os links simbólicos
+<filename class="symlink">/dev/cdrom</filename> e <filename
+class="symlink">/dev/dvd</filename> existam, e apontem para um dispositivo
+de CD-ROM ou de DVD-ROM. Também, possivelmente seja conveniente colocar
+referências a esses links simbólicos em <filename>/etc/fstab</filename>. O
+Udev vem com um script que gerará arquivos de regras para criar esses links
+simbólicos para você, dependendo dos recursos de cada dispositivo, mas você
+precisa decidir qual dos dois modos de operação você deseja ter para o
+script usar.</para>
+
+    <para>Primeiro, o script pode operar em modo <quote>por-caminho</quote> (usado por
+padrão para dispositivos USB e FireWire), onde as regras que ele cria
+dependem do caminho físico para o dispositivo de CD ou de DVD. Segundo, ele
+pode operar em modo <quote>por-id</quote> (padrão para dispositivos IDE e
+SCSI), onde as regras que ele cria dependem das sequências de caracteres de
+identificação armazenadas no próprio dispositivo de CD ou de DVD. O caminho
+é determinado pelo script <command>path_id</command> do Udev, e as
+sequências de caracteres de identificação são lidas a partir do hardware
+pelos aplicativos <command>ata_id</command> ou <command>scsi_id</command>
+dele, dependendo de qual tipo de dispositivo você tenha.</para>
+
+    <para>Existem vantagens para cada abordagem; a abordagem correta depende de que
+tipos de mudanças de dispositivo possivelmente aconteçam. Se você espera o
+caminho físico para o dispositivo (isto é, as portas e (ou) slots aos quais
+ele se pluga) mudar, por exemplo porque você planeja mover a unidade para
+uma porta IDE diferente ou um conector USB diferente, então você deveria
+usar o modo <quote>por-id</quote>. Por outro lado, se você espera que a
+identificação do dispositivo mude, por exemplo porque ele possivelmente
+morra, e você pretende substitui-lo por um dispositivo diferente que pluga
+nos mesmos conectores, então você deveria usar o modo
+<quote>por-caminho</quote>.</para>
+
+    <para>Se ambos os tipos de mudanças são possíveis com a sua unidade, então escolha
+um modo baseado no tipo de mudança que você espera acontecer mais
+frequentemente.</para>
+
+
+
+    <!-- If you use by-id mode, the symlinks will survive even the transition
+     to libata for IDE drives, but that is not for the book. -->
+<important><para>Dispositivos externos (por exemplo, uma unidade de CD conectada via USB) não
+deveria usar persistência por caminho, porque cada vez que o dispositivo for
+plugado em uma nova porta externa, o caminho físico dele mudará. Todos os
+dispositivos conectados externamente terão esse problema se você escrever
+regras do Udev para reconhecê-los pelo caminho físico deles; o problema não
+está limitado a unidades de CD e de DVD.</para></important>
+
+    <para>Se você deseja ver os valores que os scripts do Udev usarão, então para o
+dispositivo apropriado de CD-ROM, encontre o diretório correspondente sob
+<filename class="directory">/sys</filename> (por exemplo, isso pode ser
+<filename class="directory">/sys/block/hdd</filename>) e execute um comando
+similar ao seguinte:</para>
+
+<screen role="nodump"><userinput>udevadm test /sys/block/hdd</userinput></screen>
+
+    <para>Olhe para as linhas contendo a saída gerada de vários aplicativos *_id. O
+modo <quote>por-id</quote> usará o valor ID_SERIAL se ele existir e não
+estiver vazio; do contrário ele usará uma combinação de ID_MODEL e
+ID_REVISION. O modo <quote>por-caminho</quote> usará o valor ID_PATH.</para>
+
+    <para>Se o modo padrão não for adequado para a sua situação, então a seguinte
+modificação pode ser feita para o arquivo
+<filename>/etc/udev/rules.d/83-cdrom-symlinks.rules</filename>, como se
+segue (onde <replaceable>mode</replaceable> é um de <quote>por-id</quote> ou
+<quote>por-caminho</quote>):</para>
+
+<screen role="nodump"><userinput>sed -e 's/"write_cd_rules"/"write_cd_rules <replaceable>mode</replaceable>"/' \
+    -i /etc/udev/rules.d/83-cdrom-symlinks.rules</userinput></screen>
+
+    <para>Observe que não é necessário criar os arquivos de regras ou links simbólicos
+neste momento, porque você montou vinculadamente o diretório do sistema
+anfitrião <filename class="directory">/dev</filename> dentro do sistema LFS,
+e nós assumimos que os links simbólicos existem no anfitrião. As regras e
+links simbólicos serão criados na primeira vez que você inicializar seu
+sistema LFS.</para>
+
+    <para>Entretanto, se você tiver múltiplos dispositivos de CD-ROM, então os links
+simbólicos gerados naquele momento possivelmente apontem para dispositivos
+diferentes dos que eles apontam em seu anfitrião, porque os dispositivos não
+são descobertos em uma ordem previsível. As atribuições criadas quando você
+inicializar o sistema LFS pela primeira vez serão estáveis, de forma que
+isso é um problema somente se você precisar dos links simbólicos em ambos os
+sistemas para apontarem para o mesmo dispositivo. Se você precisar disso,
+então inspecione (e possivelmente edite) o arquivo
+<filename>/etc/udev/rules.d/70-persistent-cd.rules</filename> gerado após a
+inicialização, para ter certeza que os links simbólicos atribuídos
+correspondem às suas necessidades.</para>
+
+  </sect2>
+
+  <sect2>
+
+    <title>Lidando com Dispositivos Duplicados</title>
+
+    <para>Como explicado na <xref linkend="ch-config-udev"/>, a ordem na qual
+dispositivos com a mesma função aparecem em <filename
+class="directory">/dev</filename> é essencialmente aleatória. Por exemplo,
+se você tiver uma câmera web USB e um sintonizador de TV, às vezes
+<filename>/dev/video0</filename> se refere à câmera e
+<filename>/dev/video1</filename> se refere ao sintonizador; e às vezes
+depois de uma reinicialização a ordem muda. Para todas as classes de
+hardware, exceto placas de som e placas de rede de comunicação, isso é
+corrigível criando-se regras do Udev para criar links simbólicos
+persistentes. O caso das placas da rede de comunicação é coberto
+separadamente na <xref linkend="ch-config-network"/>, e configuração de
+placa de som pode ser encontrado em <ulink
+url="&blfs-book;postlfs/devices.html">BLFS</ulink>.</para>
+
+    <para>Para cada um dos seus dispositivos que é provável ter esse problema (mesmo
+que o problema não exista em sua distribuição atual Linux), encontre o
+diretório correspondente sob <filename
+class="directory">/sys/class</filename> ou <filename
+class="directory">/sys/block</filename>. Para dispositivos de vídeo, isso
+possivelmente seja <filename
+class="directory">/sys/class/video4linux/video<replaceable>X</replaceable></filename>.
+Descubra os atributos que identificam o dispositivo de maneira única
+(geralmente, IDs de fornecedor(a) e produto e (ou) números seriais
+funcionam):</para>
+
+<screen role="nodump"><userinput>udevadm info -a -p /sys/class/video4linux/video0</userinput></screen>
+
+    <para>Então escreva regras que criam os links simbólicos, por exemplo:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/udev/rules.d/83-duplicate_devs.rules &lt;&lt; "EOF"
+<literal>
+# Links simbólicos persistentes para webcam e sintonizador
+KERNEL=="video*", ATTRS{idProduct}=="1910", ATTRS{idVendor}=="0d81", SYMLINK+="webcam"
+KERNEL=="video*", ATTRS{device}=="0x036f",  ATTRS{vendor}=="0x109e", SYMLINK+="tvtuner"
+</literal>
+EOF</userinput></screen>
+
+    <para>O resultado é que os dispositivos <filename>/dev/video0</filename> e
+<filename>/dev/video1</filename> ainda se referem aleatoriamente ao
+sintonizador e à câmera web (e, portanto, nunca deveriam ser usados
+diretamente), mas existem links simbólicos <filename>/dev/tvtuner</filename>
+e <filename>/dev/webcam</filename> que sempre apontam para o dispositivo
+correto.</para>
+
+ </sect2>
+
+</sect1>

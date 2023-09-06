@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-preps-settingenviron">
+  <?dbhtml filename="settingenvironment.html"?>
+
+  <title>Configurando o Ambiente</title>
+
+  <para>Configure um bom ambiente de trabalho criando dois novos arquivos de
+inicialização para o shell <command>bash</command>. Enquanto logada(o) como
+usuária(o) <systemitem class="username">lfs</systemitem>, emita o seguinte
+comando para criar um novo <filename>.bash_profile</filename>:</para>
+
+<screen><userinput>cat &gt; ~/.bash_profile &lt;&lt; "EOF"
+<literal>exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash</literal>
+EOF</userinput></screen>
+
+  <para>Enquanto logada(o) como usuária(o) <systemitem
+class="username">lfs</systemitem> ou quando alternado para o(a) usuário(a)
+&lfs-user; usando um comando <command>su</command> com a opção
+<quote><parameter>-</parameter></quote>, o shell inicial é um shell de
+<emphasis>login</emphasis> que lê o <filename>/etc/profile</filename> do
+anfitrião (provavelmente contendo algumas configurações e variáveis de
+ambiente) e então <filename>.bash_profile</filename>. O comando
+<command>exec env -i.../bin/bash</command> no arquivo
+<filename>.bash_profile</filename> substitui o shell em execução por um novo
+com um ambiente completamente vazio, exceto pelas variáveis
+<envar>HOME</envar>, <envar>TERM</envar> e <envar>PS1</envar>. Isso garante
+que nenhuma variável de ambiente indesejada e potencialmente danosa oriunda
+do sistema anfitrião vaze para o ambiente de construção.</para>
+
+  <para>A nova instância do shell é um shell de <emphasis>não-login</emphasis>, que
+não lê, e executa, o conteúdo dos arquivos <filename>/etc/profile</filename>
+ou <filename>.bash_profile</filename>, porém, ao invés, lê, e executa, o
+arquivo <filename>.bashrc</filename>. Crie o arquivo
+<filename>.bashrc</filename> agora:</para>
+
+<screen><userinput>cat &gt; ~/.bashrc &lt;&lt; "EOF"
+<literal>set +h
+umask 022
+LFS=/mnt/lfs
+LC_ALL=POSIX
+LFS_TGT=$(uname -m)-lfs-linux-gnu
+PATH=/usr/bin
+if [ ! -L /bin ]; then PATH=/bin:$PATH; fi
+PATH=$LFS/tools/bin:$PATH
+CONFIG_SITE=$LFS/usr/share/config.site
+export LFS LC_ALL LFS_TGT PATH CONFIG_SITE</literal>
+EOF</userinput></screen>
+
+  <variablelist>
+    <title>O significado das configurações em <filename>.bashrc</filename></title>
+
+    <varlistentry>
+      <term><parameter>set +h</parameter></term>
+      <listitem>
+  <para>O comando <command>set +h</command> desliga a função hash do
+<command>bash</command>. “Hashing” geralmente é uma característica
+útil&mdash;<command>bash</command> usa uma tabela hash para lembrar o
+caminho completo para arquivos executáveis para evitar procurar o
+<envar>PATH</envar> várias vezes para encontrar o mesmo
+executável. Entretanto, as novas ferramentas deveriam ser usadas tão logo
+sejam instaladas. Alternando para desligada a função hash força o shell a
+procurar no <envar>PATH</envar> sempre que um aplicativo estiver para ser
+executado. Dessa forma, o shell encontrará as ferramentas recém compiladas
+em <filename class="directory">$LFS/tools/bin</filename> tão logo elas
+estejam disponíveis sem lembrar da versão anterior do mesmo aplicativo
+fornecida pela distribuição anfitriã, em <filename
+class='directory'>/usr/bin</filename> ou <filename
+class='directory'>/bin</filename>.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>umask 022</parameter></term>
+      <listitem>
+  <para>Configurar a máscara de criação de arquivos do(a) usuário(a) (umask) para
+022 garante que recém criados arquivos e diretórios são graváveis somente
+por seus(uas) donos(as), mas são legíveis e executáveis por qualquer pessoa
+(assumindo que os modos padrão são usados pelas chamadas de sistema
+<function>open(2)</function>, novos arquivos terminarão com modo de
+permissão 644 e diretórios com modo 755).</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>LFS=/mnt/lfs</parameter></term>
+      <listitem>
+  <para>A variável <envar>LFS</envar> deveria ser configurada para o ponto de
+montagem escolhido.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>LC_ALL=POSIX</parameter></term>
+      <listitem>
+  <para>A variável <envar>LC_ALL</envar> controla a localização de certos
+aplicativos, fazendo suas mensagens seguirem as convenções de um país
+especificado. Configurar <envar>LC_ALL</envar> para <quote>POSIX</quote> ou
+<quote>C</quote> (as duas são equivalentes) garante que tudo vai funcionar
+como esperado no ambiente de compilação cruzada.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>LFS_TGT=$(uname -m)-lfs-linux-gnu</parameter></term>
+      <listitem>
+  <para>A variável <envar>LFS_TGT</envar> configura uma não padrão, porém compatível
+descrição de máquina para uso quando da construção do nosso compilador
+cruzado e vinculador e quando da compilação cruzada do nosso conjunto de
+ferramentas temporárias. Mais informação é fornecida pelas <xref
+linkend="ch-tools-toolchaintechnotes" role=""/>.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>PATH=/usr/bin</parameter></term>
+      <listitem>
+  <para>Muitas distribuições modernas do Linux mesclaram <filename
+class="directory">/bin</filename> e <filename
+class="directory">/usr/bin</filename>. Quando esse for o caso, a variável
+<envar>PATH</envar> padrão deveria ser configurada para <filename
+class="directory">/usr/bin/</filename> para o ambiente do <xref
+linkend="chapter-temporary-tools"/>. Quando esse não for o caso, a seguinte
+linha acrescenta <filename class="directory">/bin</filename> ao caminho.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>if [ ! -L /bin ]; then PATH=/bin:$PATH; fi</parameter></term>
+      <listitem>
+  <para>Se <filename class="directory">/bin</filename> não for um link simbólico,
+[então] ele precisa ser acrescentado à variável <envar>PATH</envar>.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>PATH=$LFS/tools/bin:$PATH</parameter></term>
+      <listitem>
+  <para>Ao se colocar <filename class="directory">$LFS/tools/bin</filename> a frente
+do <envar>PATH</envar> padrão, o compilador cruzado instalado no início do
+<xref linkend="chapter-cross-tools"/> é pego pelo shell imediatamente depois
+da instalação dele. Isso, combinado com a desativação do hashing, limita o
+risco de que o compilador originário do anfitrião seja usado em vez do
+compilador cruzado.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>CONFIG_SITE=$LFS/usr/share/config.site</parameter></term>
+      <listitem>
+  <para>No <xref linkend="chapter-cross-tools"/> e no <xref
+linkend="chapter-temporary-tools"/>, se essa variável não estiver
+configurada, [então] os scripts <command>configure</command> possivelmente
+tentem carregar itens de configuração específicos para algumas distribuições
+a partir de <filename>/usr/share/config.site</filename> no sistema
+anfitrião. Substitua-o para evitar uma potencial contaminação oriunda do
+anfitrião.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>export ...</parameter></term>
+      <listitem>
+        <para>Ao tempo que os comandos precedentes tenham configurado algumas variáveis,
+com a finalidade de torná-las visíveis dentro de quaisquer sub-shells, nós
+as exportamos.</para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
+
+  <important>
+
+     <para>Muitas distribuições comerciais acrescentam uma instância não documentada de
+<filename>/etc/bash.bashrc</filename> à inicialização do
+<command>bash</command>. Esse arquivo tem o potencial de modificar o
+ambiente do(a) usuário(a) <systemitem class="username">lfs</systemitem> de
+formas que podem afetar a construção de pacotes LFS críticos. Para assegurar
+que o ambiente do(a) usuário(a) <systemitem
+class="username">lfs</systemitem> esteja limpo, verifique a presença de
+<filename>/etc/bash.bashrc</filename> e, se presente, mova-o para fora do
+caminho. Como o(a) usuário(a) <systemitem
+class="username">root</systemitem>, execute:</para>
+
+     <screen role="nodump"><userinput>[ ! -e /etc/bash.bashrc ] || mv -v /etc/bash.bashrc /etc/bash.bashrc.NOUSE</userinput></screen>
+
+     <para>Quando o(a) usuário(a) <systemitem class="username">lfs</systemitem> não
+mais for necessária(o) (no início do <xref
+linkend="chapter-chroot-temporary-tools"/>), você pode seguramente restaurar
+<filename>/etc/bash.bashrc</filename> (se desejado).</para>
+
+     <para>Perceba que o pacote Bash do LFS que nós construiremos na <xref
+linkend="ch-system-bash"/> não é configurado para carregar ou para executar
+<filename>/etc/bash.bashrc</filename>, de modo que esse arquivo é inútil em
+um sistema LFS finalizado.</para>
+  </important>
+
+  <para>Finalmente, para garantir que o ambiente esteja totalmente preparado para a
+construção das ferramentas temporárias, force o shell
+<command>bash</command> a ler o perfil do(a) novo(a) usuário(a):</para>
+
+<screen><userinput>source ~/.bash_profile</userinput></screen>
+
+</sect1>

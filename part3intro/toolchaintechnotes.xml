@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-toolchaintechnotes" xreflabel="Observações Técnicas do Conjunto de Ferramentas">
+  <?dbhtml filename="toolchaintechnotes.html"?>
+
+  <title>Observações Técnicas do Conjunto de Ferramentas</title>
+
+  <para>Esta seção explica algumas das razões e detalhes técnicos por trás do método
+completo de construção. Não tente imediatamente entender tudo nesta seção. A
+maior parte desta informação ficará mais clara depois de realizar uma
+construção atual. Volte e releia este capítulo a qualquer tempo durante o
+processo de construção.</para>
+
+  <para>O objetivo geral do <xref linkend="chapter-cross-tools"/> e do <xref
+linkend="chapter-temporary-tools"/> é o de produzir uma área temporária que
+contendo um conjunto de ferramentas que são conhecidas por serem boas e que
+estão isoladas do sistema anfitrião. Usando-se o comando
+<command>chroot</command>, as compilações nos capítulos subsequentes estarão
+isolados naquele ambiente, assegurando uma construção limpa e livre de
+problemas do sistema LFS alvo. O processo de construção foi projetado para
+minimizar os riscos para leitores(as) novatos(as) e para prover o maior
+valor educacional ao mesmo tempo.</para>
+
+  <para>O processo de construção é baseado em <emphasis>compilação
+cruzada</emphasis>. A compilação cruzada normalmente é usada para construir
+um compilador e o conjunto de ferramentas associadas dele para uma máquina
+diferente daquela que é usada para a construção. Isso não é estritamente
+necessário para o LFS, dado que a máquina onde o novo sistema executará é a
+mesma que aquela usada para a construção. Porém, a compilação cruzada tem a
+grande vantagem: tudo o que for compilado cruzadamente não pode depender do
+ambiente do anfitrião.</para>
+
+  <sect2 id="cross-compile" xreflabel="Acerca da Compilação Cruzada">
+
+    <title>Acerca da Compilação Cruzada</title>
+
+    <note>
+      <para>
+        O livro LFS não é (e não contém) um tutorial geral para construir um
+conjunto de ferramentas cruzado (ou nativo). Não use os comandos no livro
+para um conjunto de ferramentas cruzado para algum outro propósito que não
+construir o LFS, a menos que você realmente entenda o que está fazendo.
+      </para>
+    </note>
+
+    <para>Compilação cruzada envolve alguns conceitos que merecem uma seção por si
+próprios. Apesar que esta seção possivelmente seja omitida em uma primeira
+leitura, retornar até ela posteriormente te ajudará a ganhar um entendimento
+mais completo do processo.</para>
+
+    <para>Permita-nos primeiro definir alguns termos usados nesse contexto.</para>
+
+    <variablelist>
+      <varlistentry><term>A construtora</term><listitem>
+        <para>é a máquina onde nós construímos aplicativos. Observe que essa máquina
+também é referenciada como sendo a <quote>anfitriã</quote>.</para></listitem>
+      </varlistentry>
+
+      <varlistentry><term>A anfitriã</term><listitem>
+        <para>é a máquina/sistema onde os aplicativos construídos executarão. Observe que
+esse uso de <quote>host</quote> não é o mesmo que em outras seções.</para></listitem>
+      </varlistentry>
+
+      <varlistentry><term>O alvo</term><listitem>
+        <para>é usado somente para compiladores. Ele é a máquina para a qual o compilador
+produz código. Ele possivelmente seja diferente tanto da construtora quanto
+da anfitriã.</para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Como um exemplo, permita-nos imaginar o seguinte cenário (de vez em quando
+referenciado como <quote>Cruzado Canadense</quote>). Nós temos um compilador
+somente em uma máquina lenta, vamos chamá-la de máquina A, e o compilador de
+ccA. Nós também temos uma máquina rápida (B), porém nenhum compilador para
+(B), e nós queremos produzir código para uma terceira, máquina lenta
+(C). Nós construiremos um compilador para a máquina C em três estágios.</para>
+
+    <informaltable align="center">
+      <tgroup cols="5">
+        <colspec colnum="1" align="center"/>
+        <colspec colnum="2" align="center"/>
+        <colspec colnum="3" align="center"/>
+        <colspec colnum="4" align="center"/>
+        <colspec colnum="5" align="left"/>
+        <thead>
+          <row><entry>Estágio</entry><entry>Construtora</entry><entry>Anfitriã</entry>
+               <entry>Alvo</entry><entry>Ação</entry></row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>1</entry><entry>A</entry><entry>A</entry><entry>B</entry>
+            <entry>Construir compilador cruzado cc1 usando ccA na máquina A.</entry>
+          </row>
+          <row>
+            <entry>2</entry><entry>A</entry><entry>B</entry><entry>C</entry>
+            <entry>Construir compilador cruzado cc2 usando cc1 na máquina A.</entry>
+          </row>
+          <row>
+            <entry>3</entry><entry>B</entry><entry>C</entry><entry>C</entry>
+            <entry>Construir compilador ccC usando cc2 na máquina B.</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>Então, todos os aplicativos necessários para a máquina C podem ser
+compilados usando cc2 na rápida máquina B. Observe que a menos que B possa
+executar aplicativos produzidos por C, não existe maneira de testar os
+aplicativos recém construídos até que a própria máquina C esteja em
+execução. Por exemplo, para executar uma suíte de teste em ccC, nós
+possivelmente queiramos adicionar um quarto estágio:</para>
+
+    <informaltable align="center">
+      <tgroup cols="5">
+        <colspec colnum="1" align="center"/>
+        <colspec colnum="2" align="center"/>
+        <colspec colnum="3" align="center"/>
+        <colspec colnum="4" align="center"/>
+        <colspec colnum="5" align="left"/>
+        <thead>
+          <row><entry>Estágio</entry><entry>Construtora</entry><entry>Anfitriã</entry>
+               <entry>Alvo</entry><entry>Ação</entry></row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>4</entry><entry>C</entry><entry>C</entry><entry>C</entry>
+            <entry>Reconstruir e testar ccC usando ccC na máquina C.</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>No exemplo acima, somente cc1 e cc2 são compiladores cruzados, isto é, eles
+produzem código para uma máquina diferente daquela na qual estão em
+execução. Os outros compiladores, ccA e ccC, produzem código para a máquina
+na qual estão em execução. Tais compiladores são chamados de compiladores
+<emphasis>nativos</emphasis>.</para>
+
+  </sect2>
+
+  <sect2 id="lfs-cross">
+    <title>Implementação da Compilação Cruzada para o LFS</title>
+
+    <note>
+      <para>Todos os pacotes compilados cruzadamente neste livro usam um sistema de
+construção baseado no autoconf. O sistema de construção baseado no autoconf
+aceita tipos de sistema na forma cpu-vendor-kernel-os, referenciado como o
+triplo do sistema. Dado que o campo vendor frequentemente é irrelevante, o
+autoconf te permite omiti-lo.</para>
+      
+      <para>Um(a) leitor(a) astuto(a) possivelmente questione porque <quote>trio</quote>
+se refere a um nome de quatro componentes. O campo "kernel" e o campo "os"
+iniciaram como um campo único do <quote>sistema</quote>. Tal forma de três
+campos ainda é válida atualmente para alguns sistemas, por exemplo,
+<literal>x86_64-unknown-freebsd</literal>. Porém, dois sistemas conseguem
+compartilhar o mesmo núcleo e ainda serem muito diferentes para usarem o
+mesmo trio para descrevê-los. Por exemplo, o Android executando em um
+telefone móvel é completamente diferente do Ubuntu executando em um servidor
+ARM64, apesar de ambos estarem executando no mesmo tipo de CPU (ARM64) e
+usando o mesmo núcleo (Linux).</para>
+      
+      <para>Sem uma camada de emulação, você não consegue executar um executável para um
+servidor em um telefone móvel ou vice versa. Assim, o campo
+<quote>system</quote> foi dividido nos campos "kernel" e "os" para designar
+esses sistemas inequívoca. No nosso exemplo, O sistema Android é designado
+como <literal>aarch64-unknown-linux-android</literal> e o sistema Ubuntu é
+designado como <literal>aarch64-unknown-linux-gnu</literal>.</para>
+      
+      <para>A palavra <quote>trio</quote> permanece embutida no léxico. Uma maneira
+simples para determinar o seu trio do sistema é a de executar o script
+<command>config.guess</command> que vem com o fonte para muitos
+pacotes. Desempacote os fontes do binutils, execute o script
+<userinput>./config.guess</userinput> e observe a saída gerada. Por exemplo,
+para um processador Intel de 32 bits, a saída gerada será
+<emphasis>i686-pc-linux-gnu</emphasis>. Em um sistema de 64 bits, será
+<emphasis>x86_64-pc-linux-gnu</emphasis>. Na maior parte dos sistemas Linux,
+o comando ainda mais simples <command>gcc -dumpmachine</command> te dará
+informação semelhante.</para>
+
+      <para>Você também deveria estar ciente do nome do vinculador dinâmico da
+plataforma, frequentemente referido como o carregador dinâmico (não seja
+confundido com o vinculador padrão <command>ld</command> que é parte do
+binutils). O vinculador dinâmico fornecido pelo pacote glibc encontra e
+carrega as bibliotecas compartilhadas necessárias para um aplicativo,
+prepara o aplicativo para execução e então o executa. O nome do vinculador
+dinâmico para uma máquina Intel de 32 bits é <filename
+class="libraryfile">ld-linux.so.2</filename>; e é <filename
+class="libraryfile">ld-linux-x86-64.so.2</filename> em sistemas de 64
+bits. Uma maneira infalível para determinar o nome do vinculador dinâmico é
+a de inspecionar uma biblioteca aleatória oriunda do sistema anfitrião
+executando: <userinput>readelf -l &lt;nome do binário&gt; | grep
+interpreter</userinput> e observar a saída gerada. A referência oficial
+cobrindo todas as plataformas está no arquivo
+<filename>shlib-versions</filename> na raiz da árvore do fonte do glibc.</para>
+    </note>
+
+    <para>Para a finalidade de falsificar uma compilação cruzada no LFS, o nome do
+trio do anfitrião é ligeiramente ajustado mudando-se o campo
+&quot;vendor&quot; na variável <envar>LFS_TGT</envar>, de forma que diga
+&quot;lfs&quot;. Nós também usamos a opção
+<parameter>--with-sysroot</parameter> quando da construção do vinculador
+cruzado e do compilador cruzado para informá-los onde encontrar os arquivos
+necessários do anfitrião. Isso assegura que nenhum dos outros aplicativos
+construídos no <xref linkend="chapter-temporary-tools"/> consegue se
+vincular a bibliotecas na máquina de construção. Somente dois estágios são
+obrigatórios e mais um para testes.</para>
+
+    <informaltable align="center">
+      <tgroup cols="5">
+        <colspec colnum="1" align="center"/>
+        <colspec colnum="2" align="center"/>
+        <colspec colnum="3" align="center"/>
+        <colspec colnum="4" align="center"/>
+        <colspec colnum="5" align="left"/>
+        <thead>
+          <row><entry>Estágio</entry><entry>Construtora</entry><entry>Anfitriã</entry>
+               <entry>Alvo</entry><entry>Ação</entry></row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>1</entry><entry>pc</entry><entry>pc</entry><entry>lfs</entry>
+            <entry>Construir compilador cruzado cc1 usando cc-pc em pc.</entry>
+          </row>
+          <row>
+            <entry>2</entry><entry>pc</entry><entry>lfs</entry><entry>lfs</entry>
+            <entry>Construir compilador cc-lfs usando cc1 em pc.</entry>
+          </row>
+          <row>
+            <entry>3</entry><entry>lfs</entry><entry>lfs</entry><entry>lfs</entry>
+            <entry>Reconstruir e testar cc-lfs usando cc-lfs em lfs.</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>Na tabela precedente, <quote>em pc</quote> significa que os comandos são
+executados em uma máquina usando a distribuição já instalada. <quote>Em
+lfs</quote> significa que os comandos são executados em um ambiente chroot.</para>
+
+    <para>Esse não é ainda o fim da estória. A linguagem C não é apenas um compilador;
+também define uma biblioteca padrão. Neste livro, a biblioteca GNU C,
+chamada de glibc, é usada (existe uma alternativa, &quot;musl&quot;). Essa
+biblioteca precisa ser compilada para a máquina LFS; isto é, usando o
+compilador cruzado cc1. Porém, o próprio compilador usa uma biblioteca
+interna fornecendo sub rotinas complexas para funções não disponíveis no
+conjunto de instruções do montador. Essa biblioteca interna é chamada de
+libgcc e precisa ser vinculada à biblioteca glibc para ser completamente
+funcional. Além disso, a biblioteca padrão para C++ (libstdc++) também
+precisa estar vinculada com a glibc. A solução para esse problema de ovo e
+galinha é a de primeiro construir uma libgcc degradada baseada em cc1,
+faltando algumas funcionalidades, tais como camadas e manuseio de exceções,
+e então construir a glibc usando esse compilador degradado (a própria glibc
+não é degradada), e também construir a libstdc++. Essa última biblioteca
+carecerá de algumas das funcionalidades da libgcc.</para>
+
+    <para>O resultado do parágrafo precedente é o de que cc1 é inapto para construir
+uma libstdc++ completamente funcional com a libgcc degradada, porém cc1 é o
+único compilador disponível para construir as bibliotecas C/C++ durante o
+estágio 2. Existem duas razões pelas quais nós não usamos imediatamente o
+compilador construído no estágio 2, cc-lfs, para construir essas
+bibliotecas.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          Falando genericamente, cc-lfs não consegue executar em pc (o sistema
+anfitrião). Ainda que os trios para pc e lfs sejam compatíveis entre si, um
+executável para lfs precisa depender da glibc-&glibc-version;; a
+distribuição anfitriã possivelmente utilize ou uma implementação diferente
+da libc (por exemplo, musl), ou um lançamento anterior da glibc (por
+exemplo, glibc-2.13).
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Ainda se cc-lfs conseguisse executar em pc, usá-la em pc criaria um risco de
+vinculação às bibliotecas de pc, dado que cc-lfs é um compilador nativo.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Assim, quando nós construirmos gcc estágio 2, nós instruímos o sistema de
+construção a reconstruir libgcc e libstdc++ com cc1, porém nós vinculamos
+libstdc++ à libgcc reconstruída recentemente, em vez da antiga, degradada
+construção. Isso torna a libstdc++ reconstruída completamente funcional.</para>
+
+    <para>No &ch-final; (ou <quote>estágio 3</quote>), todos os pacotes necessários
+para o sistema LFS são construídos. Ainda se um pacote já tenha sido
+instalado no sistema LFS em um capítulo anterior, nós ainda reconstruímos o
+pacote. A razão principal para reconstruir esses pacotes é a de torná-los
+estáveis: se nós reinstalarmos um pacote LFS em um sistema LFS completo,
+[então] o conteúdo reinstalado do pacote deveria ser o mesmo que o conteúdo
+do mesmo pacote quando primeiro instalado no &ch-final;. Os pacotes
+temporários instalados no &ch-tmp-cross; ou no &ch-tmp-chroot; não conseguem
+satisfazer essa exigência, pois alguns deles são construídos sem
+dependências opcionais e o autoconf não consegue realizar algumas
+verificações de recursos no &ch-tmp-cross;, por causa da compilação cruzada,
+causando nos pacotes temporários a falta de recursos opcionais ou o uso de
+rotinas sub ótimas de código. Adicionalmente, uma razão menor para
+reconstruir os pacotes é a de executar as suítes de teste.</para>
+
+  </sect2>
+
+  <sect2 id="other-details">
+
+    <title>Outros Detalhes Procedurais</title>
+
+    <para>O compilador cruzado será instalado em um diretório <filename
+class="directory">$LFS/tools</filename> separado, dado que ele não será
+parte do sistema final.</para>
+
+    <para>O Binutils é instalado primeiro, pois as execuções do
+<command>configure</command> de ambos gcc e glibc realizam vários testes de
+recursos no montador e no vinculador para determinar quais recursos de
+software habilitar ou desabilitar. Isso é mais importante do que,
+inicialmente, alguém possa perceber. Um gcc ou uma glibc configurado
+incorretamente pode resultar em um conjunto de ferramentas sutilmente
+quebrado, onde o impacto de tal quebra talvez não se manifeste até próximo
+do final da construção de uma distribuição inteira. Uma falha de suíte de
+teste normalmente destacará tal erro antes que muito mais trabalho adicional
+seja realizado.</para>
+
+    <para>O Binutils instala o montador e o vinculador dele em dois locais, <filename
+class="directory">$LFS/tools/bin</filename> e <filename
+class="directory">$LFS/tools/$LFS_TGT/bin</filename>. As ferramentas em um
+local são rigidamente vinculadas às outras. Uma faceta importante do
+vinculador é a ordem de procura de biblioteca dele. Informação detalhada
+pode ser obtida do <command>ld</command> passando-lhe a flag
+<parameter>--verbose</parameter>. Por exemplo, <command>$LFS_TGT-ld
+--verbose | grep SEARCH</command> exibirá os caminhos atuais de procura e a
+ordem deles. (Observe que esse exemplo pode ser executado como mostrado
+somente enquanto logado(a) como usuário(a) <systemitem
+class="username">lfs</systemitem>. Se você retornar a esta página
+posteriormente, [então] substitua <command>$LFS_TGT-ld</command> por
+<command>ld</command>).</para>
+
+    <para>O próximo pacote instalado é o gcc. Um exemplo do que pode ser visto durante
+a execução dele do <command>configure</command> é:</para>
+
+<screen><computeroutput>checking what assembler to use... /mnt/lfs/tools/i686-lfs-linux-gnu/bin/as
+checking what linker to use... /mnt/lfs/tools/i686-lfs-linux-gnu/bin/ld</computeroutput></screen>
+
+    <para>Isso é importante pelas razões mencionadas acima. Também demonstra que o
+script de configuração do gcc não procura nos diretórios do PATH para
+encontrar quais ferramentas usar. Entretanto, durante a operação atual do
+próprio <command>gcc</command>, os mesmos caminhos de procura não são
+necessariamente usados. Para descobrir qual vinculador padrão o
+<command>gcc</command> usará, execute: <command>$LFS_TGT-gcc
+-print-prog-name=ld</command>. (Novamente, remova o prefixo
+<command>$LFS_TGT-</command> se retornar a isso posteriormente).</para>
+
+    <para>Informação detalhada pode ser obtida do <command>gcc</command> passando-se a
+opção de linha de comando <parameter>-v</parameter> enquanto compilar um
+aplicativo. Por exemplo, <command>$LFS_TGT-gcc -v
+<replaceable>example.c</replaceable></command> (ou sem <command>
+$LFS_TGT-</command> se retornar posteriormente) exibirá informação detalhada
+acerca do preprocessador, compilação e estágios da montagem, incluindo os
+caminhos de procura do <command>gcc</command> para cabeçalhos inclusos e a
+ordem deles.</para>
+
+    <para>Em seguida: cabeçalhos sanitizados da API do Linux. Eles permitem que a
+biblioteca C padrão (glibc) interaja com os recursos que o núcleo Linux
+fornecerá.</para>
+
+    <para>Próximo vem a glibc. As considerações mais importantes para a construção da
+glibc são o compilador, ferramentas binárias e os cabeçalhos do núcleo. O
+compilador geralmente não é um problema dado que a glibc sempre usará o
+compilador relacionado ao parâmetro <parameter>--host</parameter> passado ao
+script configure dela; por exemplo, em nosso caso, o compilador será
+<command>$LFS_TGT-gcc</command>. As ferramentas binárias e os cabeçalhos do
+núcleo podem ser um bocado mais complicados. Dessa maneira, nós não nos
+arriscamos e usamos as chaves do configure disponíveis para impor as
+seleções corretas. Após a execução do <command>configure</command>,
+verifique o conteúdo do arquivo <filename>config.make</filename> no
+diretório <filename class="directory">build</filename> para todos os
+detalhes importantes. Observe o uso de
+<parameter>CC="$LFS_TGT-gcc"</parameter> (com <envar>$LFS_TGT</envar>
+expandida) para controlar quais ferramentas binárias são usadas e o uso das
+flags <parameter>-nostdinc</parameter> e <parameter>-isystem</parameter>
+para controlar o caminho de procura de include do compilador. Esses itens
+destacam um importante aspecto do pacote glibc&mdash;ele é muito
+autossuficiente em termos de maquinário de construção e geralmente não
+confia em padrões de conjuntos de ferramentas.</para>
+
+    <para>Como mencionado acima, a biblioteca C++ padrão é compilada depois, seguida
+no <xref linkend="chapter-temporary-tools"/> por outros aplicativos que
+precisam ser compilados cruzadamente para quebrar dependências circulares em
+tempo de construção. A etapa de instalação de todos aqueles pacotes usa a
+variável <envar>DESTDIR</envar> para forçar a instalação no sistema de
+arquivos do LFS.</para>
+
+    <para>Ao final do <xref linkend="chapter-temporary-tools"/> o compilador nativo do
+LFS é instalado. Primeiro binutils passagem 2 é construído, no mesmo
+diretório <envar>DESTDIR</envar> que os outros aplicativos, então a segunda
+passagem do gcc é construída, omitindo algumas bibliotecas não
+críticas. Devido a algumas lógicas estranhas no script configure do gcc,
+<envar>CC_FOR_TARGET</envar> termina como <command>cc</command> quando o
+anfitrião for o mesmo que o alvo, porém for diferente do sistema de
+construção. Essa é a razão pela qual
+<parameter>CC_FOR_TARGET=$LFS_TGT-gcc</parameter> é declarado explicitamente
+como uma das opções de configuração.</para>
+
+    <para>Uma vez dentro do ambiente chroot no <xref
+linkend="chapter-chroot-temporary-tools"/>, as instalações temporárias de
+aplicativos necessários para a operação apropriada do conjunto de
+ferramentas são realizadas. Deste ponto em diante, o conjunto central de
+ferramentas está auto-contido e auto-hospedado. No <xref
+linkend="chapter-building-system"/>, as versões finais de todos os pacotes
+necessários para um sistema completamente funcional são construídas,
+testadas e instaladas.</para>
+
+  </sect2>
+
+</sect1>

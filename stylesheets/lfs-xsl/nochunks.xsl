@@ -1,4 +1,9 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--
+$LastChangedBy: matthew $
+$Date: 2013-10-08 22:03:29 +0200 (mar. 08 oct. 2013) $
+-->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns="http://www.w3.org/1999/xhtml"
@@ -8,10 +13,10 @@
        Replaces {docbook-xsl}/xhtml/profile-docbook.xsl -->
 
   <!-- Upstream XHTML templates -->
-  <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/docbook.xsl"/>
+  <xsl:import href="docbook-xsl-1.78.1/xhtml/docbook.xsl"/>
 
   <!-- Fix encoding issues with default UTF-8 output of the xhtml stylesheet -->
-  <xsl:output method="html" encoding="ISO-8859-1" indent="no" />
+  <xsl:output method="html" encoding="utf-8" indent="no" />
 
   <!-- Include our customized templates -->
   <xsl:include href="common.xsl"/>

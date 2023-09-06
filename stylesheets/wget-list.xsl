@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='utf-8'?>
 
 <!-- Create a list of upstream URLs for packages and patches to be used
      with wget. -->
@@ -16,9 +16,8 @@
       <!-- If some package don't have the predefined strings in their
       name, the next test must be fixed to match it also. Skip possible
       duplicated URLs due that may be splitted for PDF output -->
-    <xsl:if test="(contains(@url, '.tar.') or
-                   contains(@url, '.tgz')  or
-                   contains(@url, '.patch')) and
+    <xsl:if test="(contains(@url, '.tar.') or contains(@url, '.tgz')
+                  or contains(@url, '.patch')) and
                   not(ancestor-or-self::*/@condition = 'pdf')">
       <xsl:choose>
         <xsl:when test="contains(@url,'?download')">

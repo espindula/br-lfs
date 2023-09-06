@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-udev" role="wrap" revision="sysv">
+  <?dbhtml filename="udev.html"?>
+
+  <sect1info condition="script">
+<productname>udev</productname>
+<productnumber>&systemd-version;</productnumber> <address>&systemd-url;</address></sect1info>
+
+  <title>Udev originário de Systemd-&systemd-version;</title>
+
+  <indexterm zone="ch-system-udev">
+    <primary sortas="a-Udev">Udev</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>O pacote "Udev" contém aplicativos para criação dinâmica de nós de
+dispositivos.</para>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&udev-fin-sbu;</seg>
+        <seg>&udev-fin-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do "Udev"</title>
+
+    <para>O "Udev" é parte do pacote systemd-&systemd-version;. Use o arquivo
+systemd-&systemd-version;.tar.xz como o tarball fonte.</para>
+
+    <para>Remova dois grupos desnecessários, <systemitem
+class="groupname">render</systemitem> e <systemitem
+class="groupname">sgx</systemitem>, das regras padrão do "udev":</para>
+
+ <screen><userinput remap="pre">sed -i -e 's/GROUP="render"/GROUP="video"/' \
+       -e 's/GROUP="sgx", //' rules.d/50-udev-default.rules.in</userinput></screen>
+
+    <para>Remova uma regra do "udev" que exige uma instalação completa do "Systemd":</para>
+
+ <screen><userinput remap="pre">sed '/systemd-sysctl/s/^/#/' -i rules.d/99-systemd.rules.in</userinput></screen>
+
+    <para>Prepare o "Udev" para compilação:</para>
+
+<screen><userinput remap="configure">mkdir -p build
+cd       build
+
+meson setup \
+      --prefix=/usr                 \
+      --buildtype=release           \
+      -Dmode=release                \
+      -Ddev-kvm-mode=0660           \
+      -Dlink-udev-shared=false      \
+      ..</userinput></screen>
+
+    <variablelist>
+      <title>O significado das opções "meson":</title>
+
+      <varlistentry>
+        <term><parameter>--buildtype=release</parameter></term>
+        <listitem>
+          <para>Essa chave substitui o tipo de construção padrão (<quote>debug</quote>), que
+produz binários não otimizados.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dmode=release</parameter></term>
+        <listitem>
+          <para>Desabilite alguns recursos considerados experimentais pelo(a)
+desenvolvedor(a).
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Ddev-kvm-mode=0660</parameter></term>
+        <listitem>
+          <para>A regra padrão do "udev" permitiria que todos(as) os(as) usuários(as)
+acessassem <filename class='devicefile'>/dev/kvm</filename>. Os(As)
+editores(as) a consideram perigosa. Essa opção a substitui.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dlink-udev-shared=false</parameter></term>
+        <listitem>
+          <para>Essa opção evita que o "udev" se vincule à biblioteca interna compartilhada
+do "systemd", <systemitem
+class='library'>libsystemd-shared</systemitem>. Essa biblioteca foi
+projetada para ser compartilhada por muitos componentes do "Systemd" e é
+muito exagerada para uma instalação somente do "udev".</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Construa somente os componentes necessários para o "udev":</para>
+
+    <screen><userinput remap="make">ninja udevadm systemd-hwdb \
+      $(grep -o -E "^build (src/libudev|src/udev|rules.d|hwdb.d)[^:]*" \
+        build.ninja | awk '{ print $2 }')                              \
+      $(realpath libudev.so --relative-to .)</userinput></screen>
+
+    <para>Remova um arquivo de regra do "udev" que exige uma instalação completa do
+"Systemd":</para>
+
+<screen><userinput remap="make">rm rules.d/90-vconsole.rules</userinput></screen>
+
+    <para>Instale o pacote:</para>
+
+    <screen><userinput remap="install">install -vm755 -d {/usr/lib,/etc}/udev/{hwdb,rules}.d
+install -vm755 -d /usr/{lib,share}/pkgconfig
+install -vm755 udevadm                     /usr/bin/
+install -vm755 systemd-hwdb                /usr/bin/udev-hwdb
+ln      -svfn  ../bin/udevadm              /usr/sbin/udevd
+cp      -av    libudev.so{,*[0-9]}         /usr/lib/
+install -vm644 ../src/libudev/libudev.h    /usr/include/
+install -vm644 src/libudev/*.pc            /usr/lib/pkgconfig/
+install -vm644 src/udev/*.pc               /usr/share/pkgconfig/
+install -vm644 ../src/udev/udev.conf       /etc/udev/
+install -vm644 rules.d/* ../rules.d/{*.rules,README} /usr/lib/udev/rules.d/
+install -vm644 hwdb.d/*  ../hwdb.d/{*.hwdb,README}   /usr/lib/udev/hwdb.d/
+install -vm755 $(find src/udev -type f | grep -F -v ".") /usr/lib/udev</userinput></screen>
+
+    <para>Instale algumas regras personalizadas e arquivos de suporte úteis em um
+ambiente LFS:</para>
+
+<screen><userinput remap="install">tar -xvf ../../&udev-lfs-version;.tar.xz
+make -f &udev-lfs-version;/Makefile.lfs install</userinput></screen>
+
+    <para>Instale as páginas de manual:</para>
+
+    
+<screen><!-- Please make sure systemd man pages tarball has a common leading
+         component in the path.  -->
+<userinput remap="install">tar -xf ../../systemd-man-pages-&systemd-man-version;.tar.xz                            \
+    --no-same-owner --strip-components=1                              \
+    -C /usr/share/man --wildcards '*/udev*' '*/libudev*'              \
+                                  '*/systemd-'{hwdb,udevd.service}.8
+sed 's/systemd\(\\\?-\)/udev\1/' /usr/share/man/man8/systemd-hwdb.8   \
+                               > /usr/share/man/man8/udev-hwdb.8
+sed 's|lib.*udevd|sbin/udevd|'                                        \
+    /usr/share/man/man8/systemd-udevd.service.8                       \
+  > /usr/share/man/man8/udevd.8
+rm  /usr/share/man/man8/systemd-*.8</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="conf-udev" role="configuration">
+    <title>Configurando o "Udev"</title>
+
+    <indexterm zone="conf-udev">
+      <primary sortas="a-Udev">Udev</primary>
+      <secondary>configurando</secondary>
+    </indexterm>
+
+    <indexterm zone="conf-udev">
+      <primary sortas="e-/etc/udev/hwdb.bin">/etc/udev/hwdb.bin</primary>
+    </indexterm>
+
+    <para>Informações acerca de dispositivos de hardware são mantidas nos diretórios
+<filename class="directory">/etc/udev/hwdb.d</filename> e <filename
+class="directory">/usr/lib/udev/hwdb.d</filename>. O
+<application>Udev</application> precisa que essas informações sejam
+compiladas em uma base de dados binária
+<filename>/etc/udev/hwdb.bin</filename>. Crie a base de dados inicial:</para>
+
+<screen><userinput>udev-hwdb update</userinput></screen>
+
+    <para>Esse comando precisa ser executado sempre que as informações de hardware
+forem atualizadas.</para>
+
+  </sect2>
+
+  <sect2 id="contents-udev" role="content">
+    <title>Conteúdo do "Udev"</title>
+
+    <segmentedlist>
+      <segtitle>Aplicativos instalados</segtitle>
+      <segtitle>Bibliotecas instaladas</segtitle>
+      <segtitle>Diretórios instalados</segtitle>
+
+      <seglistitem>
+        <seg>udevadm, udevd (link simbólico para udevadm) e udev-hwdb</seg>
+
+        <seg>libudev.so</seg>
+
+        <seg>/etc/udev e /usr/lib/udev</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descrições Curtas</bridgehead>
+      <?dbfo list-presentation="list"?> <?dbhtml list-presentation="table"?>
+      <varlistentry id="udevadm" revision="sysv">
+        <term><command>udevadm</command></term>
+        <listitem>
+          <para>Ferramenta genérica de administração do "udev": controla o processo de
+segundo plano "udevd"; fornece informações a partir da base de dados do
+"Udev"; monitora "uevents"; aguarda "uevents" finalizarem; testa a
+configuração do "Udev"; e aciona "uevents" para um dado dispositivo</para>
+          <indexterm zone="ch-system-udev udevadm">
+            <primary sortas="b-udevadm">udevadm</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udevd">
+        <term><command>udevd</command></term>
+        <listitem>
+          <para>Um processo de segundo plano que escuta "uevents" no soquete "netlink", cria
+dispositivos e executa os aplicativos externos configurados em resposta a
+esses "uevents"</para>
+          <indexterm zone="ch-system-udev udevd">
+            <primary sortas="b-udevd">udevd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="udev-hwdb">
+        <term><command>udev-hwdb</command></term>
+        <listitem>
+          <para>Atualiza ou consulta a base de dados de hardware.</para>
+          <indexterm zone="ch-system-udev udev-hwdb">
+            <primary sortas="b-udev-hwdb">udev-hwdb</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libudev">
+        <term><filename class="libraryfile">libudev</filename></term>
+        <listitem>
+          <para>Uma interface de biblioteca para informações de dispositivo do "udev"</para>
+          <indexterm zone="ch-system-udev libudev">
+            <primary sortas="c-libudev">libudev</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="etc-udev">
+        <term><filename class="directory">/etc/udev</filename></term>
+        <listitem>
+          <para>Contém arquivos de configuração do "Udev", permissões de dispositivos e
+regras para nomeação de dispositivos</para>
+          <indexterm zone="ch-system-udev etc-udev">
+            <primary sortas="e-/etc/udev">/etc/udev</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

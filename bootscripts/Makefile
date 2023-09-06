@@ -88,10 +88,10 @@ rcS: files
 rc0: files
 	ln -sf ../init.d/network     ${ETCDIR}/rc.d/rc0.d/K80network
 	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc0.d/K90sysklogd
-	ln -sf ../init.d/sendsignals ${ETCDIR}/rc.d/rc0.d/S60sendsignals
-	ln -sf ../init.d/swap        ${ETCDIR}/rc.d/rc0.d/S65swap
-	ln -sf ../init.d/mountfs     ${ETCDIR}/rc.d/rc0.d/S70mountfs
-	ln -sf ../init.d/localnet    ${ETCDIR}/rc.d/rc0.d/S90localnet
+	ln -sf ../init.d/sendsignals ${ETCDIR}/rc.d/rc0.d/K92sendsignals
+	ln -sf ../init.d/swap        ${ETCDIR}/rc.d/rc0.d/K94swap
+	ln -sf ../init.d/mountfs     ${ETCDIR}/rc.d/rc0.d/K96mountfs
+	ln -sf ../init.d/localnet    ${ETCDIR}/rc.d/rc0.d/K98localnet
 	ln -sf ../init.d/halt        ${ETCDIR}/rc.d/rc0.d/S99halt
 
 rc1: files
@@ -99,8 +99,8 @@ rc1: files
 	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc1.d/K90sysklogd
 
 rc2: files
-	ln -sf ../init.d/network     ${ETCDIR}/rc.d/rc2.d/K80network
-	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc2.d/K90sysklogd
+	ln -sf ../init.d/network     ${ETCDIR}/rc.d/rc2.d/S10network
+	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc2.d/S20sysklogd
 
 rc3: files
 	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc3.d/S10sysklogd
@@ -117,10 +117,10 @@ rc5: files
 rc6: files
 	ln -sf ../init.d/network     ${ETCDIR}/rc.d/rc6.d/K80network
 	ln -sf ../init.d/sysklogd    ${ETCDIR}/rc.d/rc6.d/K90sysklogd
-	ln -sf ../init.d/sendsignals ${ETCDIR}/rc.d/rc6.d/S60sendsignals
-	ln -sf ../init.d/swap        ${ETCDIR}/rc.d/rc6.d/S65swap
-	ln -sf ../init.d/mountfs     ${ETCDIR}/rc.d/rc6.d/S70mountfs
-	ln -sf ../init.d/localnet    ${ETCDIR}/rc.d/rc6.d/S90localnet
+	ln -sf ../init.d/sendsignals ${ETCDIR}/rc.d/rc6.d/K92sendsignals
+	ln -sf ../init.d/swap        ${ETCDIR}/rc.d/rc6.d/K94swap
+	ln -sf ../init.d/mountfs     ${ETCDIR}/rc.d/rc6.d/K96mountfs
+	ln -sf ../init.d/localnet    ${ETCDIR}/rc.d/rc6.d/K98localnet
 	ln -sf ../init.d/reboot      ${ETCDIR}/rc.d/rc6.d/S99reboot
 
 uninstall:

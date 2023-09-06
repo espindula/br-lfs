@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-gcc-pass2" role="wrap" xreflabel="gcc-passagem2">
+  <?dbhtml filename="gcc-pass2.html"?>
+
+  <sect1info condition="script">
+<productname>gcc-pass2</productname>
+<productnumber>&gcc-version;</productnumber> <address>&gcc-url;</address></sect1info>
+
+  <title>GCC-&gcc-version; - Passagem 2</title>
+
+  <indexterm zone="ch-tools-gcc-pass2">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>ferramentas, passagem 2</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter08/gcc.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&gcc-tmpp2-sbu;</seg>
+        <seg>&gcc-tmpp2-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do GCC</title>
+
+    <!--
+    <para>
+First fix a problem with the latest version of glibc:</para>
+
+    <screen><userinput remap="pre">patch -Np1 -i ../&gcc-upstream-fixes-patch;</userinput></screen>
+-->
+<para>Como na primeira construção do GCC, os pacotes GMP, MPFR e MPC são
+exigidos. Desempacote os tarballs e mova-os para os diretórios exigidos:</para>
+
+<screen><userinput remap="pre">tar -xf ../mpfr-&mpfr-version;.tar.xz
+mv -v mpfr-&mpfr-version; mpfr
+tar -xf ../gmp-&gmp-version;.tar.xz
+mv -v gmp-&gmp-version; gmp
+tar -xf ../mpc-&mpc-version;.tar.gz
+mv -v mpc-&mpc-version; mpc</userinput></screen>
+
+    <para>Se construir em x86_64, [então] mude o nome padrão de diretório para
+bibliotecas de 64 bits para <quote>lib</quote>:</para>
+
+<screen><userinput remap="pre">case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
+  ;;
+esac</userinput></screen>
+
+    <para>Substitua a regra de construção dos cabeçalhos da libgcc e da libstdc++ para
+permitir construir essas bibliotecas com suporte a camadas POSIX:</para>
+
+<screen><userinput remap="pre">sed '/thread_header =/s/@.*@/gthr-posix.h/' \
+    -i libgcc/Makefile.in libstdc++-v3/include/Makefile.in</userinput></screen>
+
+    <para>Crie um diretório de construção separado novamente:</para>
+
+<screen><userinput remap="pre">mkdir -v build
+cd      build</userinput></screen>
+
+    <para>Antes de iniciar a construção do GCC, lembre-se de desconfigurar quaisquer
+variáveis de ambiente que substituam os sinalizadores de otimização padrão.</para>
+
+    <para>Agora prepare o GCC para compilação:</para>
+
+<screen><userinput remap="configure">../configure                                      \
+    --build=$(../config.guess)                     \
+    --host=$LFS_TGT                                \
+    --target=$LFS_TGT                              \
+    LDFLAGS_FOR_TARGET=-L$PWD/$LFS_TGT/libgcc      \
+    --prefix=/usr                                  \
+    --with-build-sysroot=$LFS                      \
+    --enable-default-pie                           \
+    --enable-default-ssp                           \
+    --disable-nls                                  \
+    --disable-multilib                             \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libsanitizer                         \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --enable-languages=c,c++</userinput></screen>
+
+    <variablelist>
+      <title>O significado das novas opções de configuração:</title>
+
+      <!-- WIP -->
+<varlistentry>
+        <term><parameter>--with-build-sysroot=$LFS</parameter></term>
+        <listitem>
+          <para>Normalmente, usar <parameter>--host</parameter> garante que um compilador
+cruzado seja usado para construir o GCC e que o compilador sabe que tem que
+procurar por cabeçalhos e por bibliotecas em <filename
+class="directory">$LFS</filename>. Porém, o sistema de construção para o GCC
+usa outras ferramentas, que não estão cientes desse local. Essa chave é
+necessária, de forma que tais ferramentas procurarão pelos arquivos
+necessários em <filename class="directory">$LFS</filename>, e não no
+anfitrião.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--target=$LFS_TGT</parameter></term>
+        <listitem>
+          <para>Nós estamos compilando cruzadamente o GCC, de forma que é impossível
+construir bibliotecas alvo (<filename class="libraryfile">libgcc</filename>
+e <filename class="libraryfile">libstdc++</filename>) com os binários do GCC
+compilados previamente&mdash;esses binários não executariam no anfitrião. O
+sistema de construção do GCC tentará usar os compiladores C e C++ do
+anfitrião como um contorno por padrão. Construir as bibliotecas alvo do GCC
+com uma versão diferente do GCC não é suportado, de forma que usar
+compiladores do anfitrião possivelmente cause falha de construção. Esse
+parâmetro assegura que as bibliotecas sejam construídas pelo GCC passagem 1.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>LDFLAGS_FOR_TARGET=...</parameter></term>
+        <listitem>
+          <para>Permite <filename class="libraryfile">libstdc++</filename> usar a <filename
+class="libraryfile">libgcc</filename> compartilhada sendo construída nesta
+passagem, em vez da versão estática que foi construída na passagem 1 do
+GCC. Isso é necessário para suportar o tratamento de exceção C++.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-libsanitizer</parameter></term>
+        <listitem>
+          <para>Desabilita as bibliotecas sanitizadoras de tempo de execução do GCC. Elas
+não são necessárias para a instalação temporária. Essa chave é necessária
+para construir o GCC sem <systemitem class='library'>libcrypt</systemitem>
+instalada para o destino. Em <xref linkend='ch-tools-gcc-pass1'/> estava
+implícita em <parameter>--disable-libstdcxx</parameter>, mas agora temos que
+passá-la explicitamente.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile o pacote:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Instale o pacote:</para>
+
+<screen><userinput remap="install">make DESTDIR=$LFS install</userinput></screen>
+
+    <para>Como um toque final, crie um link simbólico utilitário. Muitos aplicativos e
+scripts executam <command>cc</command> em vez de <command>gcc</command>, o
+que é usado para manter genéricos os aplicativos e, assim, utilizáveis em
+todos os tipos de sistemas UNIX onde o compilador GNU C nem sempre está
+instalado. Executar <command>cc</command> deixa o(a) administrador(a) do
+sistema livre para decidir qual compilador C instalar:</para>
+
+<screen><userinput remap="install">ln -sv gcc $LFS/usr/bin/cc</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Detalhes acerca deste pacote estão localizados na <xref
+linkend="contents-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>

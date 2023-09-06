@@ -1,0 +1,663 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-system-shadow" role="wrap">
+  <?dbhtml filename="shadow.html"?>
+
+  <sect1info condition="script">
+<productname>shadow</productname>
+<productnumber>&shadow-version;</productnumber> <address>&shadow-url;</address></sect1info>
+
+  <title>Shadow-&shadow-version;</title>
+
+  <indexterm zone="ch-system-shadow">
+    <primary sortas="a-Shadow">Shadow</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>O pacote Shadow contém aplicativos para manusear senhas de uma maneira
+segura.</para>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&shadow-fin-sbu;</seg>
+        <seg>&shadow-fin-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do Shadow</title>
+
+    <note>
+      <para>Se você gostaria de reforçar o uso de senhas fortes, [então] recorra a
+<ulink url="&blfs-book;postlfs/cracklib.html"/> para instalar o CrackLib
+antes de construir o Shadow. Então adicione
+<parameter>--with-libcrack</parameter> ao comando
+<command>configure</command> abaixo.</para>
+    </note>
+
+    <para>Desabilite a instalação do aplicativo <command>groups</command> e as páginas
+de manual dele, uma vez que o Coreutils fornece uma versão melhor. Também,
+impeça a instalação de páginas de manual que já foram instaladas no <xref
+linkend="ch-system-man-pages"/>:</para>
+
+<screen><userinput remap="pre">sed -i 's/groups$(EXEEXT) //' src/Makefile.in
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /'   {} \;
+find man -name Makefile.in -exec sed -i 's/getspnam\.3 / /' {} \;
+find man -name Makefile.in -exec sed -i 's/passwd\.5 / /'   {} \;</userinput></screen>
+
+    <para id="shadow-login_defs">Em vez de usar o método padrão <emphasis>crypt</emphasis>, use o método
+muito mais seguro <emphasis>YESCRYPT</emphasis> de encriptação de senha, que
+também permite senhas com mais de oito (08) caracteres. Também é necessário
+mudar o local obsoleto <filename
+class="directory">/var/spool/mail</filename> para as caixas de correio de
+usuário(a) que o Shadow usa por padrão para o local <filename
+class="directory">/var/mail</filename> usado atualmente. E, remova <filename
+class="directory">/bin</filename> e <filename
+class="directory">/sbin</filename> do <envar>PATH</envar>, pois eles são
+simplesmente links simbólicos para seus contrapartes em <filename
+class="directory">/usr</filename>.</para>
+
+    <note>
+      <para>Se você deseja incluir <filename class="directory">/bin</filename> e (ou)
+<filename class="directory">/sbin</filename> no <envar>PATH</envar> por
+alguma razão, [então] modifique a <envar>PATH</envar> em
+<filename>.bashrc</filename> depois que o LFS tenha sido construído.</para>
+    </note>
+
+<screen><userinput remap="pre">sed -e 's:#ENCRYPT_METHOD DES:ENCRYPT_METHOD YESCRYPT:' \
+    -e 's:/var/spool/mail:/var/mail:'                  \
+    -e '/PATH=/{s@/sbin:@@;s@/bin:@@}'                  \
+    -i etc/login.defs</userinput></screen>
+
+    <note>
+      <para>Se você escolher construir o Shadow com suporte a CrackLib, [então] emita
+este comando:</para>
+
+<screen role="nodump"><userinput>sed -i 's:DICTPATH.*:DICTPATH\t/lib/cracklib/pw_dict:' etc/login.defs</userinput></screen>
+    </note>
+
+
+    <!--
+    <para>
+Make a minor change to make the first group number generated
+    by useradd 1000:</para>
+
+<screen><userinput remap="pre">sed -i 's/1000/999/' etc/useradd</userinput></screen>
+-->
+<!--
+    <para>
+Fix a simple programming error by modifying a file with following command:</para>
+
+<screen><userinput remap="pre">sed -e "224s/rounds/min_rounds/" -i libmisc/salt.c</userinput></screen>
+-->
+<para>Prepare Shadow para compilação:</para>
+
+<screen><userinput remap="configure">touch /usr/bin/passwd
+./configure --sysconfdir=/etc   \
+            --disable-static    \
+            --with-{b,yes}crypt \
+            --with-group-name-max-length=32</userinput></screen>
+
+    <variablelist>
+      <title>O significado das novas opções de configuração:</title>
+
+      <varlistentry>
+        <term><command>touch /usr/bin/passwd</command></term>
+        <listitem>
+          <para>O arquivo <filename>/usr/bin/passwd</filename> precisa existir, pois o local
+dele é codificado rigidamente em alguns aplicativos; se ele já não existir,
+[então] o script de instalação o criará no lugar errado.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-{b,yes}crypt</parameter></term>
+        <listitem>
+          <para>O shell expande isso para duas chaves, <parameter>--with-bcrypt</parameter>
+e <parameter>--with-yescrypt</parameter>. Elas permitem que o shadow use os
+algoritmos Bcrypt e Yescrypt implementados pelo
+<application>Libxcrypt</application> para resumir senhas. Esses algoritmos
+são mais seguros (em particular, muito mais resistentes a ataques baseados
+em GPU) que os algoritmos SHA tradicionais.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-group-name-max-length=32</parameter></term>
+        <listitem>
+          <para>O nome de usuária(o) mais longo permissível é o de trinta e dois (32)
+caracteres. Torne o comprimento máximo de um nome de grupo o mesmo.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile o pacote:</para>
+
+    <screen><userinput remap="make">make</userinput></screen>
+
+    <para>Esse pacote não vem com uma suíte de teste.</para>
+
+    <para>Instale o pacote:</para>
+
+    <screen><userinput remap="install">make exec_prefix=/usr install
+make -C man install-man</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="conf-shadow" role="configuration">
+    <title>Configurando o Shadow</title>
+
+    <indexterm zone="conf-shadow">
+      <primary sortas="a-Shadow">Shadow</primary>
+      <secondary>configurando</secondary>
+    </indexterm>
+
+    <para>Esse pacote contém utilitários para adicionar, modificar e deletar
+usuárias(os) e grupos; configura e modifica as senhas delas(es); e realiza
+outras tarefas administrativas. Para uma explicação completa do que
+<emphasis>sombreamento de senha</emphasis> significa, veja-se o arquivo
+<filename>doc/HOWTO</filename> dentro da árvore desempacotada do fonte. Se
+usar suporte ao Shadow, [então] tenha na mente que aplicativos que
+necessitem verificar senhas (gerenciadores de tela, aplicativos de FTP,
+daemons pop3, etc.) precisam ser conformes com o Shadow. Isto é, eles
+precisam ser capazes de trabalhar com senhas sombreadas.</para>
+
+    <para>Para habilitar senhas sombreadas, execute o seguinte comando:</para>
+
+<screen><userinput>pwconv</userinput></screen>
+
+    <para>Para habilitar senhas sombreadas de grupo, execute:</para>
+
+<screen><userinput>grpconv</userinput></screen>
+
+    <para>A configuração padrão do Shadow para o utilitário <command>useradd</command>
+precisa de alguma explicação. Primeiro, a ação padrão para o utilitário
+<command>useradd</command> é a de criar o(a) usuário(a) e um grupo com o
+mesmo nome que o(a) usuário(a). Por padrão, os números de ID de usuária(o)
+(UID) e ID de grupo (GID) iniciarão em 1000. Isso significa que, se você não
+passar parâmetros extras para o <command>useradd</command>, [então] cada
+usuária(o) será um(a) membro(a) de um grupo único no sistema. Se esse
+comportamento for indesejável, [então] você precisará passar, ou o parâmetro
+<parameter>-g</parameter>, ou o <parameter>-N</parameter> para o
+<command>useradd</command>, ou, do contrário, mudar a configuração de
+<parameter>USERGROUPS_ENAB</parameter> em
+<filename>/etc/login.defs</filename>. Veja-se
+<filename>useradd(8)</filename> para mais informação.</para>
+
+    <para>Segundo, para mudar os parâmetros padrão, o arquivo
+<filename>/etc/default/useradd</filename> precisa ser criado e adaptado para
+se adequar às suas necessidades particulares. Crie-o com:</para>
+
+<screen><userinput>mkdir -p /etc/default
+useradd -D --gid 999</userinput></screen>
+
+    <variablelist>
+      <title>Explicações do parâmetro do <filename>/etc/default/useradd</filename></title>
+
+      <varlistentry>
+        <term><parameter>GROUP=999</parameter></term>
+        <listitem>
+          <para>Esse parâmetro configura o início dos números de grupo usados no arquivo
+<filename>/etc/group</filename>. O valor específico 999 vem do parâmetro
+<parameter>--gid</parameter> acima. Você possivelmente o configure para
+qualquer valor desejado. Observe que o <command>useradd</command> nunca
+reusará um UID ou um GID. Se o número identificado nesse parâmetro estiver
+usado, [então] ele usará o próximo número disponível. Observe também que, se
+você não tiver um grupo com um ID igual a esse número em seu sistema, então
+na primeira vez que você usar o <command>useradd</command> sem o parâmetro
+<parameter>-g</parameter>, uma mensagem de erro será
+gerada&mdash;<computeroutput>useradd: unknown GID 999</computeroutput>,
+ainda que a conta tenha sido criada corretamente. Esse é o motivo pelo qual
+nós criamos o grupo <systemitem class="groupname">users</systemitem> com
+esse ID de grupo no <xref linkend='ch-tools-createfiles'/>.</para>
+
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><parameter>CREATE_MAIL_SPOOL=yes</parameter></term>
+        <listitem>
+          <para>Esse parâmetro faz com que o <command>useradd</command> crie um arquivo de
+caixa de correio para cada novo(a) usuário(a). O <command>useradd</command>
+atribuirá a propriedade de grupo desse arquivo para o grupo <systemitem
+class="groupname">mail</systemitem> com permissões 0660. Se você, em vez
+disso, não quisesse criar esses arquivos, [então] emita o seguinte comando:</para>
+
+<screen><userinput>sed -i '/MAIL/s/yes/no/' /etc/default/useradd</userinput></screen>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+  <sect2 role="configuration">
+    <title>Configurando a Senha do(a) Root</title>
+
+    <para>Escolha uma senha para o(a) usuário(a) <emphasis>root</emphasis> e
+configure-a executando:</para>
+
+<screen role="nodump"><userinput>passwd root</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-shadow" role="content">
+    <title>Conteúdo do Shadow</title>
+
+    <segmentedlist>
+      <segtitle>Aplicativos instalados</segtitle>
+      <segtitle>Diretórios instalados</segtitle>
+      <segtitle>Bibliotecas instaladas</segtitle>
+
+      <seglistitem>
+        <seg>chage, chfn, chgpasswd, chpasswd, chsh, expiry, faillog, getsubids, gpasswd,
+groupadd, groupdel, groupmems, groupmod, grpck, grpconv, grpunconv, lastlog,
+login, logoutd, newgidmap, newgrp, newuidmap, newusers, nologin, passwd,
+pwck, pwconv, pwunconv, sg (link para newgrp), su, useradd, userdel,
+usermod, vigr (link para vipw) e vipw</seg>
+      <seg>/etc/default e /usr/include/shadow</seg>
+        <seg>libsubid.so</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descrições Curtas</bridgehead>
+      <?dbfo list-presentation="list"?> <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="chage">
+        <term><command>chage</command></term>
+        <listitem>
+          <para>Usado para mudar o número máximo de dias entre mudanças obrigatórias de
+senha</para>
+          <indexterm zone="ch-system-shadow chage">
+            <primary sortas="b-chage">chage</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="chfn">
+        <term><command>chfn</command></term>
+        <listitem>
+          <para>Usado para mudar um nome completo do(a) usuário(a) e outra informação</para>
+          <indexterm zone="ch-system-shadow chfn">
+            <primary sortas="b-chfn">chfn</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="chgpasswd">
+        <term><command>chgpasswd</command></term>
+        <listitem>
+          <para>Usado para atualizar senhas de grupo em modo de lote</para>
+          <indexterm zone="ch-system-shadow chgpasswd">
+            <primary sortas="b-chgpasswd">chgpasswd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="chpasswd">
+        <term><command>chpasswd</command></term>
+        <listitem>
+          <para>Usado para atualizar senhas de usuária(o) em modo de lote</para>
+          <indexterm zone="ch-system-shadow chpasswd">
+            <primary sortas="b-chpasswd">chpasswd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="chsh">
+        <term><command>chsh</command></term>
+        <listitem>
+          <para>Usado para mudar um shell de login padrão do(a) usuário(a)</para>
+          <indexterm zone="ch-system-shadow chsh">
+            <primary sortas="b-chsh">chsh</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="expiry">
+        <term><command>expiry</command></term>
+        <listitem>
+          <para>Verifica e reforça a política atual de expiração de senha</para>
+          <indexterm zone="ch-system-shadow expiry">
+            <primary sortas="b-expiry">expiry</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="faillog">
+        <term><command>faillog</command></term>
+        <listitem>
+          <para>É Usado para examinar o registro de falhas de login, configurar um número
+máximo de falhas antes que uma conta seja bloqueada ou zerar a contagem de
+falhas</para>
+          <indexterm zone="ch-system-shadow faillog">
+            <primary sortas="b-faillog">faillog</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="getsubids">
+        <term><command>getsubids</command></term>
+        <listitem>
+          <para>É usado para listar os intervalos subordinados de id para um(a) usuário(a)</para>
+          <indexterm zone="ch-system-shadow getsubids">
+            <primary sortas="b-getsubids">getsubids</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="gpasswd">
+        <term><command>gpasswd</command></term>
+        <listitem>
+          <para>É usado para adicionar e deletar membros(as) e administradores(as) a grupos</para>
+          <indexterm zone="ch-system-shadow gpasswd">
+            <primary sortas="b-gpasswd">gpasswd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="groupadd">
+        <term><command>groupadd</command></term>
+        <listitem>
+          <para>Cria um grupo com o nome dado</para>
+          <indexterm zone="ch-system-shadow groupadd">
+            <primary sortas="b-groupadd">groupadd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="groupdel">
+        <term><command>groupdel</command></term>
+        <listitem>
+          <para>Deleta o grupo com o nome dado</para>
+          <indexterm zone="ch-system-shadow groupdel">
+            <primary sortas="b-groupdel">groupdel</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="groupmems">
+        <term><command>groupmems</command></term>
+        <listitem>
+          <para>Permite que um(a) usuário(a) administre a própria lista de filiação de grupo
+dele/dela sem a exigência de privilégios de superusuário(a).</para>
+          <indexterm zone="ch-system-shadow groupmems">
+            <primary sortas="b-groupmems">groupmems</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="groupmod">
+        <term><command>groupmod</command></term>
+        <listitem>
+          <para>É usado para modificar o nome ou GID do grupo dado</para>
+          <indexterm zone="ch-system-shadow groupmod">
+            <primary sortas="b-groupmod">groupmod</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="grpck">
+        <term><command>grpck</command></term>
+        <listitem>
+          <para>Verifica a integridade dos arquivos de grupo <filename>/etc/group</filename>
+e <filename>/etc/gshadow</filename></para>
+          <indexterm zone="ch-system-shadow grpck">
+            <primary sortas="b-grpck">grpck</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="grpconv">
+        <term><command>grpconv</command></term>
+        <listitem>
+          <para>Cria ou atualiza o arquivo de grupo de sombra a partir do arquivo de grupo
+normal</para>
+          <indexterm zone="ch-system-shadow grpconv">
+            <primary sortas="b-grpconv">grpconv</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="grpunconv">
+        <term><command>grpunconv</command></term>
+        <listitem>
+          <para>Atualiza <filename>/etc/group</filename> a partir de
+<filename>/etc/gshadow</filename> e então deleta o último</para>
+          <indexterm zone="ch-system-shadow grpunconv">
+            <primary sortas="b-grpunconv">grpunconv</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="lastlog">
+        <term><command>lastlog</command></term>
+        <listitem>
+          <para>Informa o login mais recente de todas(os) as(os) usuárias(os) ou de um(a)
+usuário(a) dado(a)</para>
+          <indexterm zone="ch-system-shadow lastlog">
+            <primary sortas="b-lastlog">lastlog</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="login">
+        <term><command>login</command></term>
+        <listitem>
+          <para>É usado pelo sistema para permitir usuárias(os) logar</para>
+          <indexterm zone="ch-system-shadow login">
+            <primary sortas="b-login">login</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="logoutd">
+        <term><command>logoutd</command></term>
+        <listitem>
+          <para>É um processo em segundo plano usado para reforçar restrições sobre horário
+de logon e portas</para>
+          <indexterm zone="ch-system-shadow logoutd">
+            <primary sortas="b-logoutd">logoutd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="newgidmap">
+        <term><command>newgidmap</command></term>
+        <listitem>
+          <para>É usado para configurar o mapeamento gid de um espaço de nome de usuária(o)</para>
+          <indexterm zone="ch-system-shadow newgidmap">
+            <primary sortas="b-newgidmap">newgidmap</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="newgrp">
+        <term><command>newgrp</command></term>
+        <listitem>
+          <para>É usado para mudar o GID atual durante uma sessão de login</para>
+          <indexterm zone="ch-system-shadow newgrp">
+            <primary sortas="b-newgrp">newgrp</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="newuidmap">
+        <term><command>newuidmap</command></term>
+        <listitem>
+          <para>É usado para configurar o mapeamento uid de um espaço de nome de usuária(o)</para>
+          <indexterm zone="ch-system-shadow newuidmap">
+            <primary sortas="b-newuidmap">newuidmap</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="newusers">
+        <term><command>newusers</command></term>
+        <listitem>
+          <para>É usado para criar ou atualizar uma série inteira de contas de usuárias(os)</para>
+          <indexterm zone="ch-system-shadow newusers">
+            <primary sortas="b-newusers">newusers</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="nologin">
+        <term><command>nologin</command></term>
+        <listitem>
+          <para>Exibe uma mensagem dizendo que uma conta não está disponível; é projetado
+para ser usado como o shell padrão para contas desabilitadas</para>
+          <indexterm zone="ch-system-shadow nologin">
+            <primary sortas="b-nologin">nologin</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="passwd">
+        <term><command>passwd</command></term>
+        <listitem>
+          <para>É usado para mudar a senha para uma conta de usuária(o) ou grupo</para>
+          <indexterm zone="ch-system-shadow passwd">
+            <primary sortas="b-passwd">passwd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="pwck">
+        <term><command>pwck</command></term>
+        <listitem>
+          <para>Verifica a integridade dos arquivos de senha
+<filename>/etc/passwd</filename> e <filename>/etc/shadow</filename></para>
+          <indexterm zone="ch-system-shadow pwck">
+            <primary sortas="b-pwck">pwck</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="pwconv">
+        <term><command>pwconv</command></term>
+        <listitem>
+          <para>Cria ou atualiza o arquivo de senha de sombra a partir do arquivo de senha
+normal</para>
+          <indexterm zone="ch-system-shadow pwconv">
+            <primary sortas="b-pwconv">pwconv</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="pwunconv">
+        <term><command>pwunconv</command></term>
+        <listitem>
+          <para>Atualiza <filename>/etc/passwd</filename> a partir de
+<filename>/etc/shadow</filename> e então deleta o último</para>
+          <indexterm zone="ch-system-shadow pwunconv">
+            <primary sortas="b-pwunconv">pwunconv</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="sg">
+        <term><command>sg</command></term>
+        <listitem>
+          <para>Executa um comando dado enquanto o GID do(a) usuário(a) estiver configurado
+para aquele do grupo dado</para>
+          <indexterm zone="ch-system-shadow sg">
+            <primary sortas="b-sg">sg</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="su">
+        <term><command>su</command></term>
+        <listitem>
+          <para>Executa um shell com IDs de usuária(o) e grupo substitutos</para>
+          <indexterm zone="ch-system-shadow su">
+            <primary sortas="b-su">su</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="useradd">
+        <term><command>useradd</command></term>
+        <listitem>
+          <para>Cria um(a) usuário(a) novo(a) com o nome dado ou atualiza a informação
+padrão de novo(a) usuário(a)</para>
+          <indexterm zone="ch-system-shadow useradd">
+            <primary sortas="b-useradd">useradd</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="userdel">
+        <term><command>userdel</command></term>
+        <listitem>
+          <para>Deleta a conta de usuária(o) especificada</para>
+          <indexterm zone="ch-system-shadow userdel">
+            <primary sortas="b-userdel">userdel</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="usermod">
+        <term><command>usermod</command></term>
+        <listitem>
+          <para>É usado para modificar o nome de login do(a) usuário(a) dada(o),
+identificação de usuária(o) (UID), shell, grupo inicial, diretório home,
+etc.</para>
+          <indexterm zone="ch-system-shadow usermod">
+            <primary sortas="b-usermod">usermod</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="vigr">
+        <term><command>vigr</command></term>
+        <listitem>
+          <para>Edita os arquivos <filename>/etc/group</filename> ou
+<filename>/etc/gshadow</filename></para>
+          <indexterm zone="ch-system-shadow vigr">
+            <primary sortas="b-vigr">vigr</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="vipw">
+        <term><command>vipw</command></term>
+        <listitem>
+          <para>Edita os arquivos <filename>/etc/passwd</filename> ou
+<filename>/etc/shadow</filename></para>
+          <indexterm zone="ch-system-shadow vipw">
+            <primary sortas="b-vipw">vipw</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="libsubid">
+        <term><filename class='libraryfile'>libsubid</filename></term>
+        <listitem>
+          <para>Biblioteca para lidar com intervalos subordinados de id para usuárias(os) e
+grupos</para>
+          <indexterm zone="ch-system-shadow libsubid">
+            <primary sortas="c-libsubid">libsubid</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

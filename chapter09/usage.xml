@@ -1,0 +1,719 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  <!ENTITY site               SYSTEM "../appendices/rc.site.script">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-usage" revision="sysv">
+  <?dbhtml filename="usage.html"?>
+
+  <title>Uso e Configuração do Script de Inicialização do System V</title>
+
+  <indexterm zone="ch-config-usage">
+    <primary sortas="a-Bootscripts">Scripts de inicialização</primary>
+    <secondary>uso</secondary>
+  </indexterm>
+
+  <sect2>
+    <title>Como os Scripts de Inicialização do System V funcionam?</title>
+
+    <para>Esta versão do LFS usa um aparato especial de inicialização chamado
+SysVinit, baseado em uma série de <emphasis>níveis de execução</emphasis>. O
+procedimento de inicialização pode ser bem diferente de um sistema para
+outro; o fato de que as coisas funcionam de uma maneira em uma distribuição
+específica do Linux não garante que elas funcionarão da mesma forma no
+LFS. O LFS tem a própria maneira de fazer as coisas, mas ele respeita os
+padrões geralmente aceitos.</para>
+  
+    <para>Existe um procedimento alternativo de inicialização chamado
+<command>systemd</command>. Nós não mais discutiremos esse processo de
+inicialização aqui. Para uma descrição detalhada, visite-se <ulink
+url="https://www.linux.com/training-tutorials/understanding-and-using-systemd/"/>.</para>
+
+    <para>O SysVinit (o qual será referido como <quote>init</quote> daqui pra frente)
+usa um esquema de níveis de execução. Existem sete níveis de execução,
+numerados de 0 a 6. (Atualmente, existem mais níveis de execução, mas os
+outros são para casos especiais e geralmente não são usados. Veja-se
+<filename>init(8)</filename> para mais detalhes). Cada um dos sete
+corresponde às ações que o computador é suposto realizar quando ele inicia
+ou desliga. O nível de execução padrão é o 3. Aqui estão as descrições dos
+diferentes níveis de execução conforme eles estão implementados no LFS:</para>
+
+<literallayout>0: parar o computador
+1: Modo de usuário(a) único(a)
+2: Reservado para personalização, do contrário faz o mesmo que 3
+3: Modo de multi-usuário(a), com rede de comunicação
+4: Reservado para personalização, do contrário faz o mesmo que 3
+5: Mesmo que 4, ele é usado usualmente para login GUI (como o <command>gdm</command> do GNOME ou o <command>lxdm</command> do LXDE)
+6: reinicializar o computador</literallayout>
+
+    <note>
+       <para>
+          Classicamente, o nível de execução 2 acima era definido como "modo de
+multi-usuário(a), sem rede de comunicação", porém isso somente foi o caso
+muitos anos atrás quando múltiplos(as) usuários(as) podiam se conectar a um
+sistema via portas seriais. No ambiente da atualidade isso não faz sentido e
+agora nós dizemos que ele está "reservado".
+       </para>
+    </note>
+
+  </sect2>
+
+  <sect2 id="conf-sysvinit" role="configuration">
+  <title>Configurando o Sysvinit</title>
+
+  <indexterm zone="conf-sysvinit">
+    <primary sortas="a-Sysvinit">Sysvinit</primary>
+    <secondary>configurando</secondary>
+  </indexterm>
+
+  <indexterm zone="conf-sysvinit">
+    <primary sortas="e-/etc/inittab">/etc/inittab</primary>
+  </indexterm>
+
+  <para>Durante a inicialização do núcleo, o primeiro aplicativo que é executado (se
+não substituído na linha de comando) é o <command>init</command>. Esse
+aplicativo lê o arquivo de inicialização
+<filename>/etc/inittab</filename>. Crie esse arquivo com:</para>
+
+<screen><userinput>cat &gt; /etc/inittab &lt;&lt; "EOF"
+<literal># Início do /etc/inittab
+
+id:3:initdefault:
+
+si::sysinit:/etc/rc.d/init.d/rc S
+
+l0:0:wait:/etc/rc.d/init.d/rc 0
+l1:S1:wait:/etc/rc.d/init.d/rc 1
+l2:2:wait:/etc/rc.d/init.d/rc 2
+l3:3:wait:/etc/rc.d/init.d/rc 3
+l4:4:wait:/etc/rc.d/init.d/rc 4
+l5:5:wait:/etc/rc.d/init.d/rc 5
+l6:6:wait:/etc/rc.d/init.d/rc 6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+su:S06:once:/sbin/sulogin
+s1:1:respawn:/sbin/sulogin
+
+1:2345:respawn:/sbin/agetty --noclear tty1 9600
+2:2345:respawn:/sbin/agetty tty2 9600
+3:2345:respawn:/sbin/agetty tty3 9600
+4:2345:respawn:/sbin/agetty tty4 9600
+5:2345:respawn:/sbin/agetty tty5 9600
+6:2345:respawn:/sbin/agetty tty6 9600
+
+# Fim do /etc/inittab</literal>
+EOF</userinput></screen>
+
+  <para>Uma explicação desse arquivo de inicialização está na página de manual para
+<emphasis>inittab</emphasis>. No LFS, o comando chave é
+<command>rc</command>. O arquivo de inicialização acima instrui
+<command>rc</command> a executar todos os scripts começando com um S no
+diretório <filename class="directory">/etc/rc.d/rcS.d</filename> seguido por
+todos os scripts começando com um S no diretório <filename
+class="directory">/etc/rc.d/rc?.d</filename> onde o ponto de interrogação é
+especificado pelo valor de initdefault.</para>
+
+  <para>Como uma conveniência, o script <command>rc</command> lê uma biblioteca de
+funções em <filename
+class="directory">/lib/lsb/init-functions</filename>. Essa biblioteca também
+lê um arquivo de configuração opcional,
+<filename>/etc/sysconfig/rc.site</filename>. Quaisquer dos parâmetros de
+configuração do sistema descritos em seções subsequentes podem ser colocados
+nesse arquivo, permitindo a consolidação de todos os parâmetros do sistema
+nesse único arquivo.</para>
+
+  <para>Como uma conveniência de depuração, o script de funções também registra
+todas as saídas geradas em <filename>/run/var/bootlog</filename>. Dado que o
+diretório <filename class="directory">/run</filename> é um tmpfs, esse
+arquivo não é persistente ao longo de inicializações; entretanto, ele é
+adicionado ao arquivo mais permanente <filename>/var/log/boot.log</filename>
+ao final do processo de inicialização.</para>
+
+  <sect3 id="init-levels" >
+  <title>Mudando Níveis de Execução</title>
+
+  <para>A mudança de níveis de execução é feita com <command>init
+<replaceable>&lt;runlevel&gt;</replaceable></command>, onde
+<replaceable>&lt;runlevel&gt;</replaceable> é o nível de execução alvo. Por
+exemplo, para reinicializar o computador, um(a) usuário(a) poderia emitir o
+comando <command>init 6</command>, o qual é um apelido para o comando
+<command>reboot</command>. Da mesma forma, <command>init 0</command> é um
+apelido para o comando <command>halt</command>.</para>
+
+  <para>Existe um número de diretórios sob <filename
+class="directory">/etc/rc.d</filename> que se parecem com <filename
+class="directory">rc?.d</filename> (onde ? é o número do nível de execução)
+e <filename class="directory">rcS.d</filename>, todos contendo um número de
+links simbólicos. Alguns links começam com um <emphasis>K</emphasis>; os
+outros começam com um <emphasis>S</emphasis>, e todos eles tem dois números
+seguindo a letra inicial. O K significa parar (kill) um serviço e o S
+significa iniciar um serviço. Os números determinam a ordem na qual os
+scripts são executados, de 00 a 99&mdash;quanto menor o número, mais cedo o
+script executa. Quando <command>init</command> alterna para outro nível de
+execução, os serviços adequados são tanto iniciados quanto parados,
+dependendo do nível de execução escolhido.</para>
+
+  <para>Os scripts reais estão em <filename
+class="directory">/etc/rc.d/init.d</filename>. Eles fazem o trabalho atual e
+os links simbólicos todos apontam para eles. Os links K e os links S apontam
+para o mesmo script em <filename
+class="directory">/etc/rc.d/init.d</filename>. Isso é porque os scripts
+podem ser chamados com parâmetros diferentes como
+<parameter>start</parameter>, <parameter>stop</parameter>,
+<parameter>restart</parameter>, <parameter>reload</parameter> e
+<parameter>status</parameter>. Quando um link K é encontrado, o script
+apropriado é executado com o argumento <parameter>stop</parameter>. Quando
+um link S é encontrado, o script apropriado é executado com o argumento
+<parameter>start</parameter>.</para>
+
+  <!-- Changed for March 24th, 2022 version of bootscripts
+  <para>
+There is one exception to this explanation. Links that start
+  with an <emphasis>S</emphasis> in the <filename
+  class="directory">rc0.d</filename> and <filename
+  class="directory">rc6.d</filename> directories will not cause anything
+  to be started. They will be called with the parameter
+  <parameter>stop</parameter> to stop something. The logic behind this
+  is that when a user is going to reboot or halt the system, nothing
+  needs to be started, but the order of shutdown needs to be controlled.
+  For these run levels, all <emphasis>K</emphasis> prefixed scripts will be
+  run before any <emphasis>S</emphasis> prefixed scripts are run with the
+  <parameter>stop</parameter> parameter.
+  </para>
+-->
+<para>Estas são descrições do que os argumentos fazem os scripts fazer:</para>
+
+  <variablelist>
+
+    <varlistentry>
+      <term><parameter>start</parameter></term>
+      <listitem>
+        <para>O serviço é iniciado.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>stop</parameter></term>
+      <listitem>
+        <para>O serviço é parado.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>restart</parameter></term>
+      <listitem>
+        <para>O serviço é parado e então iniciado novamente.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>reload</parameter></term>
+      <listitem>
+        <para>A configuração do serviço é atualizada. Isso é usado depois que o arquivo de
+configuração de um serviço foi modificado, quando o serviço não precisa ser
+reiniciado.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><parameter>status</parameter></term>
+      <listitem>
+        <para>Diz se o serviço está executando e com quais PIDs.</para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
+
+  <para>Sinta-se livre para modificar a maneira como o processo de inicialização
+funciona (afinal de contas, este é seu próprio sistema LFS). Os arquivos
+dados aqui são um exemplo de como isso pode ser feito.</para>
+
+  </sect3>
+  </sect2>
+
+  <sect2>
+    <title>Scripts de Inicialização do Udev</title>
+
+      <para>O script de iniciação <filename>/etc/rc.d/init.d/udev</filename> inicia o
+<command>udevd</command>, aciona quaisquer dispositivos "plugue frio" que já
+tenham sido criados pelo núcleo e aguarda por quaisquer regras para
+completar. O script também desconfigura o manuseador do uevent do padrão do
+<filename>/sbin/hotplug</filename>. Isso é feito, pois o núcleo não mais
+precisa chamar um binário externo. Em vez disso, o <command>udevd</command>
+escutará em um soquete de link de rede os uevents que o núcleo gera.</para>
+
+      <para>O script <command>/etc/rc.d/init.d/udev_retry</command> se ocupa de
+re-acionar eventos para subsistemas cujas regras possivelmente dependam de
+sistemas de arquivos que não estão montados até que o script
+<command>mountfs</command> seja executado (em particular, <filename
+class="directory">/usr</filename> e <filename
+class="directory">/var</filename> possivelmente causem isso). Esse script
+executa depois do script <command>mountfs</command>, de forma que aquelas
+regras (se re-acionadas) deveriam prosperar na segunda vez. Ele é
+configurado pelo arquivo <filename>/etc/sysconfig/udev_retry</filename>;
+quaisquer palavras nesse arquivo outras que comentários são consideradas
+nomes de subsistema para acionar ao tempo de re-tentativa. Para encontrar o
+subsistema de um dispositivo, use <command>udevadm info --attribute-walk
+&lt;dispositivo&gt;</command>, onde &lt;dispositivo&gt; é um caminho
+absoluto em /dev ou /sys, tais como /dev/sr0 ou /sys/class/rtc.</para>
+
+      <para>Para informação acerca de carregamento de módulo do núcleo e Udev, veja-se
+<xref linkend="module-loading"/>.</para>
+  </sect2>
+
+  <sect2 id="ch-config-clock">
+    <title>Configurando o Relógio do Sistema</title>
+
+    <indexterm zone="ch-config-clock">
+      <primary sortas="d-setclock">configura relógio</primary>
+    <secondary>configurando</secondary></indexterm>
+
+    <para>O script <command>setclock</command> lê a hora a partir do relógio do
+hardware, também conhecido como relógio do BIOS ou do Complementary Metal
+Oxide Semiconductor (CMOS). Se o relógio do hardware estiver configurado
+para UTC, [então] esse script converterá a hora do relógio do hardware para
+a hora local usando o arquivo <filename>/etc/localtime</filename> (o qual
+diz ao aplicativo <command>hwclock</command> qual fuso horário usar). Não
+existe maneira de detectar se o relógio do hardware está ou não configurado
+para UTC, de forma que isso precisa ser configurado manualmente.</para>
+
+    <para>O aplicativo <command>setclock</command> é executado via
+<application>udev</application> quando o núcleo detecta o recurso do
+hardware em consequência da inicialização. Ele também pode ser executado
+manualmente com o parâmetro pare para armazenar a hora do sistema para o
+relógio CMOS.</para>
+
+    <para>Se você não conseguir lembrar se o relógio do hardware está ou não
+configurado para UTC, [então] descubra executando o comando
+<userinput>hwclock --localtime --show</userinput>. Isso mostrará o que é a
+hora atual de acordo com o relógio do hardware. Se essa hora corresponder à
+que o seu relógio diz, então o relógio do hardware está configurado para
+hora local. Se a saída gerada originária do <command>hwclock</command> não
+for a hora local, [então] as chances são as de que ele esteja configurado
+para hora UTC. Verifique isso adicionando ou subtraindo a número apropriado
+de horas para o seu fuso horário à (da) hora mostrada pelo
+<command>hwclock</command>. Por exemplo, se você estiver atualmente no fuso
+horário MST, o qual é conhecido também como GMT -0700, [então] adicione sete
+horas à hora local.</para>
+
+    <para>Mude o valor da variável <envar>UTC</envar> abaixo para um valor de
+<parameter>0</parameter> (zero) se o relógio do hardware
+<emphasis>NÃO</emphasis> estiver configurado para hora UTC.</para>
+
+    <para>Crie um novo arquivo <filename>/etc/sysconfig/clock</filename> executando o
+seguinte:</para>
+
+<screen><userinput>cat &gt; /etc/sysconfig/clock &lt;&lt; "EOF"
+<literal># Início do /etc/sysconfig/clock
+
+UTC=1
+
+# Configure isto para quaisquer opções que você pudesse precisar dar para hwclock,
+# tais como tipo do relógio de hardware de máquina para Alphas.
+CLOCKPARAMS=
+
+# Fim do /etc/sysconfig/clock</literal>
+EOF</userinput></screen>
+
+    <para>Uma boa dica explicando como lidar com hora no LFS está disponível em <ulink
+url="&hints-root;time.txt"/>. Ela explica problemas como fusos horários, UTC
+e a variável de ambiente <envar>TZ</envar>.</para>
+
+    <note><para>Os parâmetros CLOCKPARAMS e UTC também possivelmente sejam configurados no
+arquivo <filename>/etc/sysconfig/rc.site</filename>.</para></note>
+
+  </sect2>
+
+  <sect2 id="ch-config-console">
+  <?dbhtml filename="console.html"?>
+
+  <title>Configurando o Console do Linux</title>
+
+  <indexterm zone="ch-config-console">
+    <primary sortas="d-console">console</primary>
+    <secondary>configurando</secondary>
+  </indexterm>
+
+  <para>Esta seção discute como configurar o script de inicialização
+<command>console</command> que configura o mapa de teclado, fonte do console
+e nível de registro do núcleo do console. Se caracteres não-ASCII (por
+exemplo, o sinal de direitos autorais, o sinal da libra britânica e o
+símbolo do Euro) não serão usados e o teclado for um dos Estados Unidos da
+América do Norte, [então] muito desta seção pode ser pulada. Sem o arquivo
+de configuração, (ou configurações equivalentes em
+<filename>rc.site</filename>), o script de inicialização
+<command>console</command> não fará nada.</para>
+
+  <para>O script <command>console</command> lê o arquivo
+<filename>/etc/sysconfig/console</filename> para informação de
+configuração. Decida qual mapa de teclas e fonte de tela serão
+usados. Vários HOWTOs específicos de idiomas também podem ajudar com isso;
+veja-se <ulink
+url="https://tldp.org/HOWTO/HOWTO-INDEX/other-lang.html"/>. Se ainda em
+dúvida, [então] olhe nos diretórios <filename
+class="directory">/usr/share/keymaps</filename> e <filename
+class="directory">/usr/share/consolefonts</filename> para mapas de teclas
+válidos e fontes de tela. Leiam-se as páginas de manual
+<filename>loadkeys(1)</filename> e <filename>setfont(8)</filename> para
+determinar os argumentos corretos para esses aplicativos.</para>
+
+  <para>O arquivo <filename>/etc/sysconfig/console</filename> deveria conter linhas
+da forma: VARIÁVEL="valor". As seguintes variáveis são reconhecidas:</para>
+  <variablelist>
+
+    <varlistentry>
+      <term>LOGLEVEL</term>
+      <listitem>
+        <para>Essa variável especifica o nível de registro para mensagens do núcleo
+enviadas para o console, conforme configurado por <command>dmesg
+-n</command>. Níveis válidos são de "1" (sem mensagens) até "8". O nível
+padrão é "7".</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>KEYMAP</term>
+      <listitem>
+        <para>Essa variável especifica os argumentos para o aplicativo
+<command>loadkeys</command>, tipicamente, o nome do mapa de teclas a
+carregar, por exemplo, <quote>it</quote>. Se essa variável não estiver
+configurada, [então] o script de inicialização não executará o aplicativo
+<command>loadkeys</command> e o mapa padrão de teclas do núcleo será
+usado. Observe que uns poucos mapas de teclas tem múltiplas versões com o
+mesmo nome (cz e variantes dele em qwerty/ e qwertz/; es em olpc/ e qwerty/;
+e trf em fgGIod/ e qwerty/). Nesses casos, o diretório ancestral também
+deveria ser especificado (por exemplo, qwerty/es) para garantir que o mapa
+de teclas adequado seja carregado.
+        </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>KEYMAP_CORRECTIONS</term>
+      <listitem>
+        <para>Essa (raramente usada) variável especifica os argumentos para a segunda
+chamada ao aplicativo <command>loadkeys</command>. Isso é útil se o mapa
+padrão de teclas não for completamente satisfatório e um pequeno ajuste
+tenha que ser feito. Por exemplo, para incluir o símbolo do Euro em um mapa
+de teclas que normalmente não o tem, configure essa variável para
+<quote>euro2</quote>.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>FONT</term>
+      <listitem>
+        <para><!-- because of the copyright sign -->
+Essa variável especifica os argumentos para o aplicativo
+<command>setfont</command>. Tipicamente, isso inclui o nome da fonte,
+<quote>-m</quote>, e o nome do mapa de caracteres de aplicação a
+carregar. Por exemplo, para a finalidade de carregar a fonte
+<quote>lat1-16</quote> juntamente com o mapa de caracteres de aplicação
+<quote>8859-1</quote> (apropriado nos Estados Unidos da América do Norte),
+configure essa variável para <quote>lat1-16 -m 8859-1</quote>. Em modo
+UTF-8, o núcleo usa o mapa de caracteres de aplicação para converter os
+códigos de tecla de 8 bits para UTF-8. Dessa maneira, o argumento do
+parâmetro "-m" deveria ser configurado para a codificação dos códigos
+compostos de tecla no mapa de teclas.</para>
+
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>UNICODE</term>
+      <listitem>
+        <para>Configure essa variável para <quote>1</quote>, <quote>yes</quote> ou
+<quote>true</quote> para a finalidade de colocar o console em modo
+UTF-8. Isso é útil em locales baseados em UTF-8 e danoso de outra forma.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>LEGACY_CHARSET</term>
+      <listitem>
+        <para>Para muitos esquemas de teclado, não existe mapa padrão de teclado Unicode
+no pacote Kbd. O script de inicialização <command>console</command>
+converterá um mapa de teclas disponível para UTF-8 em tempo real se essa
+variável estiver configurada para a codificação do mapa disponível de teclas
+não-UTF-8.</para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
+
+  <para>Alguns exemplos:</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Para uma configuração não-Unicode, somente as variáveis KEYMAP e FONT
+geralmente são necessárias. Por exemplo, para uma configuração em polonês,
+alguém usaria:</para>
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Início do /etc/sysconfig/console
+
+KEYMAP="pl2"
+FONT="lat2a-16 -m 8859-2"
+
+# Fim do /etc/sysconfig/console</literal>
+EOF</userinput></screen>
+    </listitem>
+
+    <listitem>
+      <para>Como mencionado acima, às vezes é necessário ajustar um mapa padrão de
+teclas um pouco. O exemplo seguinte adiciona o símbolo do Euro ao mapa de
+teclas alemão:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Início do /etc/sysconfig/console
+
+KEYMAP="de-latin1"
+KEYMAP_CORRECTIONS="euro2"
+FONT="lat0-16 -m 8859-15"
+UNICODE="1"
+
+# Fim do /etc/sysconfig/console</literal>
+EOF</userinput></screen>
+    </listitem>
+
+    <listitem>
+      <para>O seguinte é um exemplo habilitado para Unicode para búlgaro, onde um mapa
+padrão de teclas UTF-8 existe:</para>
+
+<screen><!-- This is what is used by jhalfs for creating the console file: whenever
+     you change the following, please inform the jhalfs maintainer(s). -->
+<userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Início do /etc/sysconfig/console
+
+UNICODE="1"
+KEYMAP="bg_bds-utf8"
+FONT="LatArCyrHeb-16"
+
+# Fim do /etc/sysconfig/console</literal>
+EOF</userinput></screen>
+    </listitem>
+
+    <listitem>
+      <para>Devido ao uso de uma fonte LatArCyrHeb-16 de 512 glifos no exemplo anterior,
+cores brilhantes não mais estão disponíveis no console do Linux, a menos que
+uma parte da RAM usada para armazenamento temporário de dados que estão
+esperando para serem enviados para um dispositivo e que armazene o conteúdo
+de uma imagem pixel por pixel seja usada. Se alguém quiser ter cores
+brilhantes sem uma parte da RAM usada para armazenamento temporário de dados
+que estão esperando para serem enviados para um dispositivo e que armazene o
+conteúdo de uma imagem pixel por pixel e puder viver sem caracteres que não
+pertencem a seu idioma, [então] ainda é possível usar uma fonte de 256
+glifos específica para o idioma, conforme ilustrado abaixo:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Início do /etc/sysconfig/console
+
+UNICODE="1"
+KEYMAP="bg_bds-utf8"
+FONT="cyr-sun16"
+
+# Fim do /etc/sysconfig/console</literal>
+EOF</userinput></screen>
+    </listitem>
+
+    <listitem>
+      <para>O seguinte exemplo ilustra conversão automática de mapa de teclas de
+ISO-8859-15 para UTF-8 e habilitação de teclas mortas em modo Unicode:</para>
+
+<screen role="nodump"><userinput>cat &gt; /etc/sysconfig/console &lt;&lt; "EOF"
+<literal># Início do /etc/sysconfig/console
+
+UNICODE="1"
+KEYMAP="de-latin1"
+KEYMAP_CORRECTIONS="euro2"
+LEGACY_CHARSET="iso-8859-15"
+FONT="LatArCyrHeb-16 -m 8859-15"
+
+# Fim do /etc/sysconfig/console</literal>
+EOF</userinput></screen>
+    </listitem>
+
+    <listitem>
+      <para>Alguns mapas de teclas tem teclas mortas (isto é, teclas que não produzem um
+carácter por elas próprias, mas põem um acento no carácter produzido pela
+próxima tecla) ou definem regras de composição (tais como: <quote>press
+Ctrl+. A E para obter &AElig;</quote> no mapa de teclas padrão). O
+Linux-&linux-version; interpreta teclas mortas e regras de composição no
+mapa de teclas corretamente somente quando os caracteres fonte a serem
+compostos juntos não são multi-byte. Essa deficiência não afeta mapas de
+teclas para idiomas europeus, pois lá acentos são adicionados a caracteres
+ASCII não acentuados, ou dois caracteres ASCII são compostos
+juntos. Entretanto, em modo UTF-8 isso é um problema; por exemplo, para o
+idioma grego, onde alguém de vez em quando precisa colocar um acento na
+letra <quote>alpha</quote>. A solução é ou evitar o uso de UTF-8, ou
+instalar o sistema de janelas X que não tem essa limitação no manuseio de
+entradas geradas dele.</para>
+    </listitem>
+
+    <listitem>
+      <para>Para chinês, japonês, coreano e alguns outros idiomas, o console do Linux
+não pode ser configurado para exibir os caracteres necessários. Usuários(as)
+que precisam de tais idiomas deveriam instalar o Sistema de Janelas X,
+fontes que cobrem os intervalos necessários de caracteres, e o método de
+entrada adequado (por exemplo, SCIM, suporta uma ampla variedade de
+idiomas).</para>
+    </listitem>
+
+  </itemizedlist>
+
+  
+  <!-- Added because folks keep posting their console file with X questions
+  to blfs-support list -->
+<note>
+    <para>O arquivo <filename>/etc/sysconfig/console</filename> somente controla a
+localização do console de texto do Linux. Ele não tem nada a ver com
+configurar o esquema adequado de teclado e fontes de terminal no Sistema de
+Janelas X; com sessões do ssh; ou com um console serial. Em tais situações,
+as limitações mencionadas nos últimos dois itens de lista acima não se
+aplicam.</para>
+  </note>
+
+  </sect2>
+
+  <sect2 id="ch-config-createfiles">
+    <title>Criando Arquivos na Inicialização</title>
+
+    <indexterm zone="ch-config-createfiles">
+      <primary sortas="d-createfiles">Criação de arquivo na inicialização</primary>
+      <secondary>configurando</secondary>
+    </indexterm>
+
+    <para>De vez em quando, é desejável criar arquivos em tempo de inicialização. Por
+exemplo, o diretório <filename class="directory">/tmp/.ICE-unix</filename>
+frequentemente é necessário. Isso pode ser feito criando-se uma entrada no
+script de configuração <filename>/etc/sysconfig/createfiles</filename>. O
+formato desse arquivo está embutido nos comentários do arquivo padrão de
+configuração.</para>
+  </sect2>
+
+  <sect2 id="ch-config-sysklogd">
+    <title>Configurando o Script Sysklogd</title>
+
+    <indexterm zone="ch-config-sysklogd">
+      <primary sortas="d-sysklogd">sysklogd</primary>
+      <secondary>configurando</secondary>
+    </indexterm>
+
+    <para>O script <filename>sysklogd</filename> invoca o aplicativo
+<command>syslogd</command> como uma parte da inicialização do System V. A
+opção <parameter>-m 0</parameter> desliga a marca de carimbo de tempo
+periódica que o <command>syslogd</command> escreve nos arquivos de registro
+a cada 20 minutos por padrão. Se você quiser ligar essa marca de carimbo de
+tempo periódica, [então] edite <filename>/etc/sysconfig/rc.site</filename> e
+defina a variável SYSKLOGD_PARMS para o valor desejado. Por exemplo, para
+remover todos os parâmetros, configure a variável para um valor nulo:</para>
+
+<screen role="nodump">SYSKLOGD_PARMS=</screen>
+
+    <para>Veja-se <userinput>man syslogd</userinput> para mais opções.</para>
+
+  </sect2>
+
+  <sect2 id="ch-config-site">
+    <title>O Arquivo rc.site</title>
+
+    <indexterm zone="ch-config-site">
+      <primary sortas="a-rc.site">rc.site</primary>
+    </indexterm>
+
+    <para>O arquivo opcional <filename>/etc/sysconfig/rc.site</filename> contém
+configurações que são automaticamente configuradas para cada script de
+inicialização do SystemV. Ele pode alternativamente configurar os valores
+especificados nos arquivos <filename>hostname</filename>,
+<filename>console</filename> e <filename>clock</filename> no diretório
+<filename class='directory'>/etc/sysconfig/</filename>. Se as variáveis
+associadas estiverem presentes em ambos desses arquivos separados e
+<filename>rc.site</filename>, [então] os valores nos arquivos específicos de
+script tem precedência. </para>
+
+    <para><filename>rc.site</filename> também contém parâmetros que podem personalizar
+outros aspectos do processo de inicialização. Configurar a variável IPROMPT
+habilitará a execução seletiva de scripts de inicialização. Outras opções
+estão descritas nos comentários de arquivo. A versão padrão do arquivo é
+como se segue:</para>
+
+    
+    <screen role="auto"><!-- Use role to fix a pdf generation problem -->
+&site;</screen>
+
+    <sect3>
+      <title>Personalizando os Scripts de Inicialização e Desligamento</title>
+
+      <para>Os scripts de inicialização do LFS inicializam e desligam um sistema de uma
+maneira bastante eficiente, porém existem uns poucos ajustes que você pode
+fazer no arquivo rc.site para aumentar a velocidade ainda mais e ajustar
+mensagens de acordo com suas preferências. Para fazer isso, ajuste as
+configurações no arquivo <filename>/etc/sysconfig/rc.site</filename> acima.</para>
+
+      <itemizedlist>
+
+      <listitem><para>Durante o script de inicialização <filename>udev</filename>, existe uma
+chamada para <command>udev settle</command> que exige algum tempo para
+completar. Esse tempo possivelmente ou possivelmente não seja exigido
+dependendo dos dispositivos no sistema. Se você tiver somente partições
+simples e uma placa ethernet, [então] o processo de inicialização
+provavelmente não precisará esperar por esse comando. Para pulá-lo,
+configure a variável OMIT_UDEV_SETTLE=y.</para></listitem>
+
+      <listitem><para>O script de inicialização <filename>udev_retry</filename> também executa
+<command>udev settle</command> por padrão. Esse comando é necessário somente
+se o diretório <filename class='directory'>/var</filename> for montado
+separadamente, pois o relógio precisa do arquivo
+<filename>/var/lib/hwclock/adjtime</filename>. Outras personalizações
+possivelmente também precisem esperar que o Udev complete, porém em muitas
+instalações ele não é necessário. Pule o comando configurando a variável
+OMIT_UDEV_RETRY_SETTLE=y.
+      </para></listitem>
+
+      <listitem><para>Por padrão, as verificações do sistema de arquivos são silenciosas. Isso
+pode parecer um atraso durante o processo de inicialização. Para ligar a
+saída gerada do <command>fsck</command>, configure a variável
+VERBOSE_FSCK=y.
+      </para></listitem>
+
+      <listitem><para>Quando reinicializar, você possivelmente queira pular a verificação do
+sistema de arquivos, <command>fsck</command>, completamente. Para fazer
+isso, ou crie o arquivo <filename>/fastboot</filename> ou reinicialize o
+sistema com o comando <command>/sbin/shutdown -f -r now</command>. Por outro
+lado, você pode forçar que todos os sistemas de arquivos sejam verificados
+criando <filename>/forcefsck</filename> ou executando
+<command>shutdown</command> com o parâmetro <parameter>-F</parameter> em vez
+de <parameter>-f</parameter>.
+      </para>
+
+      <para>Configurar a variável FASTBOOT=y desabilitará <command>fsck</command>
+durante o processo de inicialização até que ela seja removida. Isso não é
+recomendado em uma base permanente.</para></listitem>
+
+      <listitem><para>Normalmente, todos os arquivos no diretório <filename
+class='directory'>/tmp</filename> são deletados em tempo de
+inicialização. Dependendo do número de arquivos ou diretórios presentes,
+isso pode causar um atraso notável no processo de inicialização. Para pular
+a remoção desses arquivos configure a variável SKIPTMPCLEAN=y.</para></listitem>
+
+      <listitem><para>Durante o desligamento, o aplicativo <command>init</command> envia um sinal
+TERM para cada aplicativo que ele tenha iniciado (por exemplo agetty),
+espera um tempo configurado (padrão 3 segundos), então envia a cada processo
+um sinal KILL e aguarda novamente. Esse processo é repetido no script
+<command>sendsignals</command> para quaisquer processos que não sejam
+desligados pelos scripts próprios deles. O atraso para
+<command>init</command> pode ser configurado passando-se um parâmetro. Por
+exemplo, para remover o atraso no <command>init</command>, passe o parâmetro
+-t0 quando desligar ou reinicializar (por exemplo <command>/sbin/shutdown
+-t0 -r now</command>). O atraso para o script <command>sendsignals</command>
+pode ser pulado configurando-se o parâmetro KILLDELAY=0.</para></listitem>
+
+      </itemizedlist>
+
+    </sect3>
+  </sect2>
+</sect1>

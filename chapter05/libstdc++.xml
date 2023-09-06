@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-libstdcpp" role="wrap">
+  <?dbhtml filename="gcc-libstdc++.html"?>
+
+  <sect1info condition="script">
+<productname>gcc-libstdc++</productname>
+<productnumber>&gcc-version;</productnumber> <address>&gcc-url;</address></sect1info>
+
+  <title>Libstdc++ oriundo de GCC-&gcc-version;</title>
+
+  <indexterm zone="ch-tools-libstdcpp">
+    <primary sortas="a-GCC">GCC</primary>
+    <secondary>ferramentas, libstdc++ passagem 1</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>Libstdc++ é a biblioteca padrão C++. Ela é necessária para compilar código
+C++ (parte de GCC é escrito em C++), porém nós tivemos que adiar a
+instalação dela quando construímos <xref linkend="ch-tools-gcc-pass1"/>,
+pois a Libstdc++ depende da Glibc, que ainda não estava disponível no
+diretório alvo.
+    </para>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&libstdcpp-tmpp1-sbu;</seg>
+        <seg>&libstdcpp-tmpp1-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação da Libstdc++ Alvo</title>
+
+    <note>
+      <para><application>Libstdc++</application> é parte dos fontes do GCC. Você deveria
+primeiro desempacotar o tarball do GCC e mudar para o diretório
+<filename>gcc-&gcc-version;</filename>.</para>
+    </note>
+
+    <para>Crie um diretório separado de construção para a Libstdc++ e entre nele:</para>
+
+<screen><userinput remap="pre">mkdir -v build
+cd      build</userinput></screen>
+
+    <para>Prepare a Libstdc++ para compilação:</para>
+
+<screen><userinput remap="configure">../libstdc++-v3/configure           \
+    --host=$LFS_TGT                 \
+    --build=$(../config.guess)      \
+    --prefix=/usr                   \
+    --disable-multilib              \
+    --disable-nls                   \
+    --disable-libstdcxx-pch         \
+    --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/&gcc-version;</userinput></screen>
+
+    <variablelist>
+      <title>O significado das opções do configure:</title>
+
+      <varlistentry>
+        <term><parameter>--host=...</parameter></term>
+        <listitem>
+          <para>Especifica que o compilador cruzado que nós acabamos de construir deveria
+ser usado em vez daquele em <filename>/usr/bin</filename>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-libstdcxx-pch</parameter></term>
+        <listitem>
+          <para>Essa chave evita a instalação de arquivos pré-compilados include, os quais
+não são necessários neste estágio.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-gxx-include-dir=/tools/$LFS_TGT/include/c++/&gcc-version;</parameter></term>
+        <listitem>
+          <para>Isso especifica o diretório de instalação para arquivos include. Por causa
+da Libstdc++ ser a biblioteca padrão C++ para o LFS, esse diretório deveria
+corresponder com o local onde o compilador C++
+(<command>$LFS_TGT-g++</command>) procuraria pelos arquivos padrão include
+C++ . Em uma construção normal, essa informação é automaticamente passada
+para as opções <command>configure</command> da Libstdc++ a partir do
+diretório de nível de topo. Em nosso caso, essa informação precisa ser
+explicitamente dada. O compilador C++ precederá o caminho raiz do sistema
+<filename class="directory">$LFS</filename> (especificado quando da
+construção do GCC passagem 1) para o caminho de pesquisa de arquivo include,
+de forma que ele atualmente pesquisará em <filename
+class="directory">$LFS/tools/$LFS_TGT/include/c++/&gcc-version;</filename>.
+A combinação da variável <parameter>DESTDIR</parameter> (no comando
+<command>make install</command> abaixo) e essa chave causa os cabeçalhos
+serem instalados lá.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile a Libstdc++ executando:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Instale a biblioteca:</para>
+
+<screen><userinput remap="install">make DESTDIR=$LFS install</userinput></screen>
+
+    <para>Remova os arquivos de arquivamento do libtool, pois eles são danosos para
+compilação cruzada:</para>
+
+<screen><userinput remap="install">rm -v $LFS/usr/lib/lib{stdc++,stdc++fs,supc++}.la</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Detalhes acerca deste pacote estão localizados na <xref
+linkend="contents-gcc" role="."/></para>
+
+  </sect2>
+
+</sect1>

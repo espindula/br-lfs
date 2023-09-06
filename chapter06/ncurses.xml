@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-ncurses" role="wrap">
+  <?dbhtml filename="ncurses.html"?>
+
+  <sect1info condition="script">
+<productname>ncurses</productname>
+<productnumber>&ncurses-version;</productnumber> <address>&ncurses-url;</address></sect1info>
+
+  <title>Ncurses-&ncurses-version;</title>
+
+  <indexterm zone="ch-tools-ncurses">
+    <primary sortas="a-Ncurses">Ncurses</primary>
+    <secondary>ferramentas</secondary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+    href="../chapter08/ncurses.xml"
+    xpointer="xpointer(/sect1/sect2[1]/para[1])"/>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&ncurses-tmp-sbu;</seg>
+        <seg>&ncurses-tmp-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do Ncurses</title>
+
+    <para>Primeiro, assegure que <command>gawk</command> é encontrado primeiro durante
+a configuração:</para>
+
+<screen><userinput remap="pre">sed -i s/mawk// configure</userinput></screen>
+
+    <para>Então, execute os seguintes comandos para construir o aplicativo
+<quote>tic</quote> no anfitrião de construção:</para>
+
+<screen><userinput remap="pre">mkdir build
+pushd build
+  ../configure
+  make -C include
+  make -C progs tic
+popd</userinput></screen>
+
+    <para>Prepare o Ncurses para compilação:</para>
+
+<screen><userinput remap="configure">./configure --prefix=/usr                \
+            --host=$LFS_TGT              \
+            --build=$(./config.guess)    \
+            --mandir=/usr/share/man      \
+            --with-manpage-format=normal \
+            --with-shared                \
+            --without-normal             \
+            --with-cxx-shared            \
+            --without-debug              \
+            --without-ada                \
+            --disable-stripping          \
+            --enable-widec</userinput></screen>
+
+    <variablelist>
+      <title>O significado das novas opções de configuração:</title>
+
+      <varlistentry>
+        <term><parameter>--with-manpage-format=normal</parameter></term>
+        <listitem>
+          <para>Isso evita que o Ncurses instale páginas de manual comprimidas, o que
+possivelmente aconteça se a própria distribuição anfitriã tiver páginas de
+manual comprimidas.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-shared</parameter></term>
+        <listitem>
+          <para>Isso faz com que o Ncurses construa e instale bibliotecas C compartilhadas.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-normal</parameter></term>
+        <listitem>
+          <para>Isso evita que o Ncurses construa e instale bibliotecas C estáticas.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-debug</parameter></term>
+        <listitem>
+          <para>Isso evita que o Ncurses construa e instale bibliotecas de depuração.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-cxx-shared</parameter></term>
+        <listitem>
+          <para>Isso faz com que o Ncurses construa e instale vínculos C++
+compartilhados. Também evita a construção e instalação de vínculos C++
+estáticos.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--without-ada</parameter></term>
+        <listitem>
+          <para>Isso assegura que o Ncurses não construa suporte para o compilador Ada, o
+qual possivelmente esteja presente no anfitrião, porém não estará disponível
+até que nós entremos no ambiente <command>chroot</command>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-stripping</parameter></term>
+        <listitem>
+          <para>Essa chave impede o sistema de construção de usar o aplicativo
+<command>strip</command> oriundo do anfitrião. Usar ferramentas do anfitrião
+em aplicativos compilados cruzadamente pode causar falha.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--enable-widec</parameter></term>
+        <listitem>
+          <para>Essa chave faz com que bibliotecas de caracteres largos (por exemplo,
+<filename class="libraryfile">libncursesw.so.&ncurses-version;</filename>)
+sejam construídas em vez das normais (por exemplo, <filename
+class="libraryfile">libncurses.so.&ncurses-version;</filename>). Essas
+bibliotecas de caracteres largos são utilizáveis tanto em locales de
+múltiplos bytes quanto em tradicionais de oito (08) bits, enquanto
+bibliotecas normais funcionam adequadamente só em locales de oito (08)
+bits. Bibliotecas de caracteres largos e normais são compatíveis em fonte,
+mas não são compatíveis em binário.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile o pacote:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Instale o pacote:</para>
+
+<screen><userinput remap="install">make DESTDIR=$LFS TIC_PATH=$(pwd)/build/progs/tic install
+echo "INPUT(-lncursesw)" > $LFS/usr/lib/libncurses.so</userinput></screen>
+
+    <variablelist>
+      <!--
+    <para>
+Remove an unneeded static library not handled by
+    <command>configure</command>:</para>
+
+<screen><userinput remap="install">rm -v $LFS/usr/lib/libncurses++w.a</userinput></screen>
+-->
+<title>O significado das opções do install:</title>
+
+      <varlistentry>
+        <term><parameter>TIC_PATH=$(pwd)/build/progs/tic</parameter></term>
+        <listitem>
+          <para>Nós precisamos passar o caminho do recém construído aplicativo
+<command>tic</command> que executa na máquina de construção, de forma que a
+base de dados de terminal possa ser criada sem erros.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><command>echo "INPUT(-lncursesw)" > $LFS/usr/lib/libncurses.so</command></term>
+        <listitem>
+          <para>A biblioteca <filename>libncurses.so</filename> é necessária para uns poucos
+pacotes que nós construiremos breve. Nós criamos esse pequeno script
+vinculador, pois isso é o que é feito no <xref
+linkend="chapter-building-system"/>.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+  <sect2 role="content">
+    <title/>
+
+    <para>Detalhes acerca deste pacote estão localizados na <xref
+linkend="contents-ncurses" role="."/></para>
+
+  </sect2>
+
+</sect1>

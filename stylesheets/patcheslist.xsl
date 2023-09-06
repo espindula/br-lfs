@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version='1.0' encoding='utf-8'?>
 <!DOCTYPE xsl:stylesheet [
  <!ENTITY % general-entities SYSTEM "../general.ent">
   %general-entities;
@@ -11,7 +11,7 @@
 
     <!-- Allow select the dest dir at runtime -->
   <xsl:param name="dest.dir">
-    <xsl:value-of select="concat('/srv/www/', substring-after('&patches-root;', 'https://'))"/>
+    <xsl:value-of select="concat('/srv/www/', substring-after('&patches-root;', 'http://'))"/>
   </xsl:param>
 
   <xsl:template match="/">
@@ -38,7 +38,7 @@ umask 002 &#x0a;&#x0a;</xsl:text>
     <xsl:text>&#x0a;chgrp lfswww *.patch &amp;&amp;&#x0a;</xsl:text>
     <xsl:text>
 if [ `wc -l copyerrs | sed 's/ *//' | cut -f1 -d' '` -gt 0 ]; then
-  mail -s "Missing LFS patches" lfs-book@lists.linuxfromscratch.org &lt; copyerrs
+  mail -s "Missing LFS patches" lfs-book@linuxfromscratch.org &lt; copyerrs
 fi&#x0a;&#x0a;</xsl:text>
 
     <xsl:text>exit&#x0a;</xsl:text>

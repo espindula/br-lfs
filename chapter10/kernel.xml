@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-bootable-kernel" role="wrap">
+  <?dbhtml filename="kernel.html"?>
+
+  <sect1info condition="script">
+<productname>kernel</productname>
+<productnumber>&linux-version;</productnumber> <address>&linux-url;</address></sect1info>
+
+  <title>Linux-&linux-version;</title>
+
+  <indexterm zone="ch-bootable-kernel">
+    <primary sortas="a-Linux">Linux</primary>
+  </indexterm>
+
+  <sect2 role="package">
+    <title/>
+
+    <para>O pacote Linux contém o núcleo Linux.</para>
+
+    <segmentedlist>
+      <segtitle>&buildtime;</segtitle>
+      <segtitle>&diskspace;</segtitle>
+
+      <seglistitem>
+        <seg>&linux-knl-sbu;</seg>
+        <seg>&linux-knl-du;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do Núcleo</title>
+
+    <para>Construir o núcleo envolve uns poucos passos&mdash;configuração; compilação;
+e instalação. Leia-se o arquivo <filename>README</filename> na árvore do
+fonte do núcleo para métodos alternativos à maneira que este livro configura
+o núcleo.</para>
+
+    <important>
+      <para>
+        Construir o núcleo Linux pela primeira vez é uma das tarefas mais
+desafiadoras no LFS. Acertar depende do hardware específico para o sistema
+alvo e de suas necessidades específicas. Existem quase 12.000 itens de
+configuração que estão disponíveis para o núcleo, embora somente cerca de um
+terço deles sejam necessários para a maioria dos computadores. Os(As)
+editores(as) do LFS recomendam que os(as) usuários(as) não
+familiarizados(as) com esse processo sigam os procedimentos abaixo bastante
+de perto. O objetivo é o de obter um sistema inicial em um ponto onde você
+possa se logar na linha de comando quando reinicializar posteriormente na
+<xref linkend="ch-finish-reboot"/>. Nesse ponto, otimização e personalização
+não é um objetivo.
+      </para>
+
+      
+      <para>
+        Para informação geral a respeito da configuração do núcleo, veja-se <ulink
+url="&hints-root;kernel-configuration.txt"/>. Informação adicional acerca de
+configurar e construir o núcleo podem ser encontradas em <ulink
+url="&anduin-sources;/kernel-nutshell/"/>. Essas referências estão um pouco
+desatualizadas, mas ainda fornecem uma visão geral razoável do processo.
+      </para>
+
+      <para>
+        Se tudo mais falhar, você consegue pedir ajuda na lista de discussão <ulink
+url="https://www.linuxfromscratch.org/mail.html">lfs-support</ulink>.
+Observe que a assinatura é exigida para a finalidade de que a lista evite
+mensagens indesejadas.
+      </para>
+    </important>
+
+    <para>Prepare para compilação executando o seguinte comando:</para>
+
+<screen><userinput remap="pre">make mrproper</userinput></screen>
+
+    <para>Isso garante que a árvore do núcleo esteja absolutamente limpa. A equipe do
+núcleo recomenda que esse comando seja emitido antes de cada compilação do
+núcleo. Não confie que a árvore do fonte esteja limpa depois de
+descompactar.</para>
+
+    <para>Existem várias maneiras para configurar as opções do núcleo. Usualmente,
+isso é feito por meio de uma interface controlada por menu, por exemplo:</para>
+
+<!-- Support for compiling a keymap into the kernel is deliberately removed -->
+<screen role="nodump"><userinput>make menuconfig</userinput></screen>
+
+    <variablelist>
+      <title>O significado das variáveis opcionais de ambiente do make:</title>
+
+      <varlistentry>
+        <term><parameter>LANG=&lt;host_LANG_value&gt; LC_ALL=</parameter></term>
+        <listitem>
+          <para>Isso estabelece a configuração do locale para aquela usada no
+anfitrião. Isso possivelmente seja necessário para um adequado desenho de
+linha da interface ncurses do menuconfig em um console de texto UTF-8 do
+Linux.</para>
+
+          <para>Se usada, [então] assegure-se de substituir
+<replaceable>&lt;host_LANG_value&gt;</replaceable> pelo valor da variável
+<envar>$LANG</envar> oriunda do seu anfitrião. Você pode, alternativamente,
+usar, em vez disso, o valor do anfitrião de <envar>$LC_ALL</envar> ou
+<envar>$LC_CTYPE</envar>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><command>make menuconfig</command></term>
+        <listitem>
+          <para>Isso lança uma interface ncurses controlada por menu. Para outras (gráficas)
+interfaces, digite <command>make help</command>.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    
+
+    <note>
+      <?dbfo keep-together="auto"?>
+      <para>Um bom lugar de partida para configurar a configuração do núcleo é executar
+<command>make defconfig</command>. Isso configurará a configuração base para
+um bom estado que leve a sua atual arquitetura de sistema em conta.</para>
+
+      <para>Assegure-se de habilitar/desabilitar/configurar os seguintes recursos ou o
+sistema poderia não funcionar corretamente ou inicializar de jeito nenhum:</para>
+
+      
+
+      <!-- To editors: for updating kernel configuration, edit
+           kernel/*.toml and regenerate kernel/*.xml with
+           "make -C kernel KERNEL_TREE=</usr/src/linux-&linux-version> -->
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+        href="kernel/sysv.xml"/>
+
+      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+        href="kernel/systemd.xml"/>
+
+      <para>Habilite alguns recursos adicionais se você estiver construindo um sistema
+de 64 bits. Se você estiver usando o menuconfig, [então] habilite-as na
+ordem de <parameter>CONFIG_PCI_MSI</parameter> primeiro; então
+<parameter>CONFIG_IRQ_REMAP</parameter>; e finalmente
+<parameter>CONFIG_X86_X2APIC</parameter>, pois uma opção somente aparece
+depois que as dependências dela forem selecionadas.</para>
+
+      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+        href="kernel/x2apic.xml"/>
+
+      <para>Se você estiver construindo um sistema de 32 bits executando em um hardware
+com RAM mais que 4 GB, ajuste a configuração, de modo que o núcleo consiga
+usar até 64 GB de RAM física:</para>
+
+      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+        href="kernel/highmem.xml"/>
+
+      <para>Se a partição para o sistema LFS estiver em um SSD NVME (isto é, o nó do
+dispositivo para a partição for <filename>/dev/nvme*</filename>, em vez de
+<filename>/dev/sd*</filename>), habilite o suporte a NVME ou o sistema LFS
+não inicializaria:</para>
+
+      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+        href="kernel/nvme.xml"/>
+    </note>
+
+    <note revision="systemd">
+      <para>Enquanto que "The IPv6 Protocol" não é estritamente exigido, ela é altamente
+recomendada pelos(as) desenvolvedores(as) do systemd.</para>
+    </note>
+
+    <para>Existem várias outras opções que possivelmente sejam desejadas, dependendo
+das exigências para o sistema. Para uma lista das opções necessárias para
+pacotes do BLFS, veja-se o <ulink
+url="&lfs-root;blfs/view/&short-version;/longindex.html#kernel-config-index">Índice
+do BLFS das Configurações do Núcleo</ulink>.</para>
+
+    <note>
+      <para>Se seu hardware do anfitrião estiver usando UEFI e você desejar inicializar
+o sistema LFS com ela, [então] você deveria ajustar alguma configuração do
+núcleo seguindo <ulink url="&blfs-book;postlfs/grub-setup.html#uefi-kernel">
+a página do BLFS</ulink>, <emphasis role='bold'>mesmo se você usará o
+carregador de inicialização UEFI da distribuição anfitriã</emphasis>.</para>
+    </note>
+
+    <variablelist>
+      <title>A justificativa para os itens de configuração acima:</title>
+
+      <varlistentry>
+        <term><parameter>Torne aleatório o endereço da imagem do núcleo
+(KASLR)</parameter></term>
+        <listitem>
+          <para>Habilita ASLR para imagem do núcleo, para mitigar alguns ataques baseados em
+endereços fixos de dados ou código sensíveis no núcleo.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <parameter> Compila o núcleo com avisos como erros </parameter>
+        </term>
+        <listitem>
+          <para>Isso possivelmente cause falha de construção se o compilador e (ou) a
+configuração forem diferentes daqueles dos(as) desenvolvedores(as) do
+núcleo.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <parameter> Habilita cabeçalhos do núcleo por meio de
+/sys/kernel/kheaders.tar.xz </parameter>
+        </term>
+        <listitem>
+          <para>Isso exigirá <command>cpio</command> ao se construir o
+núcleo. <command>cpio</command> não é instalado pelo LFS.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <parameter> Configurar recursos padrão do núcleo (usuários(as) experientes)
+</parameter>
+        </term>
+        <listitem>
+          <para>Isso fará com que algumas opções apareçam na interface de configuração, mas
+alterar essas opções possivelmente seja perigoso. Não use isso, a menos que
+você saiba o que está fazendo.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>Protetor Forte da Pilha</parameter></term>
+        <listitem>
+          <para>Habilita SSP para o núcleo. Nós o habilitamos para o espaço inteiro de
+usuário(a) com <parameter>--enable-default-ssp</parameter> ao configurar o
+GCC, porém o núcleo não usa a configuração padrão do GCC para SSP. Nós o
+habilitamos explicitamente aqui.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>Suporte a auxiliar do uevent</parameter></term>
+        <listitem>
+          <para>Ter essa opção configurada possivelmente interfira com o gerenciamento de
+dispositivo quando se usar o Udev.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>Mantém um devtmpfs</parameter></term>
+        <listitem>
+          <para>Isso criará nós automatizados de dispositivos, os quais são povoados pelo
+núcleo, mesmo sem o Udev executando. O Udev então executa no topo disso,
+gerenciando permissões e adicionando links simbólicos. Esse item de
+configuração é exigido para todos(as) os(as) usuários(as) do Udev.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>Automonta devtmpfs em /dev</parameter></term>
+        <listitem>
+          <para>Isso montará a visão do núcleo dos dispositivos em /dev assim que alternar
+para o sistema de arquivos raiz pouco antes de iniciar o init.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>Suporte a Console do Framebuffer</parameter></term>
+        <listitem>
+          <para>Isso é necessário para exibir o console do Linux em um dispositivo de buffer
+de quadros. Para permitir que o núcleo imprima mensagens de depuração em um
+estágio inicial de inicialização, não deveria ser construído como um módulo
+do núcleo, a menos que um initramfs seja usado. E, se
+<option>CONFIG_DRM</option> (Direct Rendering Manager) estiver habilitado,
+[então] é provável que <option>CONFIG_DRM_FBDEV_EMULATION</option> (Habilita
+suporte legado a fbdev para o seu controlador de configuração de modo)
+devesse estar habilitado também.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>Suporte a x2apic</parameter></term>
+        <listitem>
+          <para>Support running the interrupt controller of 64-bit x86 processors in x2APIC
+mode.  x2APIC may be enabled by firmware on 64-bit x86 systems, and a kernel
+without this option enabled will panic on boot if x2APIC is enabled by
+firmware.  This option has has no effect, but also does no harm if x2APIC is
+disabled by the firmware.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Alternativamente, <command>make oldconfig</command> possivelmente seja mais
+apropriado em algumas situações. Veja-se o arquivo
+<filename>README</filename> para mais informação.</para>
+
+    <para>Se desejado, [então] pule a configuração do núcleo copiando o arquivo config
+do núcleo, <filename>.config</filename>, a partir do sistema anfitrião
+(assumindo que ele esteja disponível) para o diretório <filename
+class="directory">linux-&linux-version;</filename>
+desempacotado. Entretanto, nós não recomendamos essa opção. Frequentemente é
+melhor explorar todos os menus de configuração e criar a configuração do
+núcleo a partir do zero.</para>
+
+    <para>Compile a imagem do núcleo e módulos:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Se usar módulos do núcleo, [então] a configuração do módulo em <filename
+class="directory">/etc/modprobe.d</filename> possivelmente seja
+exigida. Informação pertinente à configuração de módulos e núcleo está
+localizada na <xref linkend="ch-config-udev"/> e na documentação do núcleo
+no diretório <filename
+class="directory">linux-&linux-version;/Documentation</filename>. Também,
+<filename>modprobe.d(5)</filename> possivelmente seja de interesse.</para>
+
+    <para>A menos que o suporte a módulo tenha sido desabilitado na configuração do
+núcleo, instale os módulos com:</para>
+
+<screen><userinput remap="install">make modules_install</userinput></screen>
+
+    <para>Depois que a compilação do núcleo estiver completa, passos adicionais são
+exigidos para completar a instalação. Alguns arquivos precisam ser copiados
+para o diretório <filename class="directory">/boot</filename>.</para>
+
+    <caution>
+      <para>Se você tiver decidido usar uma partição &boot-dir; separada para o sistema
+LFS (talvez compartilhando uma partição &boot-dir; com a distribuição
+anfitriã), [então] os arquivos copiados abaixo deveriam ir para lá. A
+maneira mais fácil de fazer isso é a de criar a entrada para &boot-dir; em
+&fstab; primeiro (leia-se a seção anterior para detalhes), então emitir o
+seguinte comando como o(a) usuário(a) &root; dentro do <emphasis>ambiente
+chroot</emphasis>:</para>
+
+<screen role="nodump"><userinput>mount /boot</userinput></screen>
+
+      <para>O caminho para o nó de dispositivo está omitido no comando, pois
+<command>mount</command> consegue lê-lo a partir de &fstab;.</para>
+    </caution>
+
+    <para>O caminho para a imagem do núcleo possivelmente varie, dependendo da
+plataforma sendo usada. O nome de arquivo abaixo pode ser mudado para se
+adequar ao seu gosto, porém o tronco do nome de arquivo deveria ser
+<emphasis>vmlinuz</emphasis> para ser compatível com a configuração
+automática do processo de inicialização descrito na próxima seção. O
+seguinte comando assume uma arquitetura x86:</para>
+
+<screen><userinput remap="install">cp -iv arch/x86/boot/bzImage /boot/vmlinuz-&linux-version;-lfs-&version;</userinput></screen>
+
+    <para><filename>System.map</filename> é um arquivo de símbolo para o núcleo. Ele
+mapeia os pontos de entrada de função de cada função na API do núcleo, bem
+como os endereços das estruturas de dados do núcleo para o núcleo em
+execução. Ele é usado como um recurso quando se investigar problemas do
+núcleo. Emita o seguinte comando para instalar o arquivo de mapa:</para>
+
+<screen><userinput remap="install">cp -iv System.map /boot/System.map-&linux-version;</userinput></screen>
+
+    <para>O arquivo de configuração do núcleo <filename>.config</filename> produzido
+pelo passo <command>make menuconfig</command> acima contém todas as seleções
+de configuração para o núcleo que foi recém compilado. É uma boa ideia
+manter esse arquivo para futura referência:</para>
+
+<screen><userinput remap="install">cp -iv .config /boot/config-&linux-version;</userinput></screen>
+
+    <para>Instale a documentação para o núcleo Linux:</para>
+
+<screen><userinput remap="install">cp -r Documentation -T /usr/share/doc/linux-&linux-version;</userinput></screen>
+
+    <para>É importante observar que os arquivos no diretório do fonte do núcleo não
+são de propriedade do(a) <emphasis>root</emphasis>. Sempre que um pacote é
+desempacotado como o(a) usuário(a) <emphasis>root</emphasis> (como nós
+fizemos dentro do chroot), os arquivos tem os IDs de usuário(a) e de grupo
+do que quer que fossem no computador do(a) empacotador(a). Isso geralmente
+não é um problema para qualquer outro pacote ser instalado, pois a árvore do
+fonte é removida depois da instalação. Entretanto, a árvore do fonte do
+Linux frequentemente é mantida por um longo tempo. Devido a isso, existe uma
+chance de que qualquer ID de usuário(a) que o(a) empacotador(a) usou seja
+atribuído para alguém na máquina. Essa pessoa então teria acesso de escrita
+ao fonte do núcleo.</para>
+
+    <note>
+      <para>Em muitos casos, a configuração do núcleo precisará ser atualizada para
+pacotes que serão instalados posteriormente no BLFS. Diferente de outros
+pacotes, não é necessário remover a árvore do fonte do núcleo depois que o
+recém construído núcleo for instalado.</para>
+
+      <para>Se a árvore do fonte do núcleo será mantida, [então] execute <command>chown
+-R 0:0</command> no diretório <filename
+class="directory">linux-&linux-version;</filename> para assegurar que todos
+os arquivos sejam de propriedade do(a) usuário(a) <emphasis>root</emphasis>.</para>
+    </note>
+
+    <warning>
+      <para>Alguma documentação do núcleo recomenda criar um link simbólico a partir de
+<filename class="symlink">/usr/src/linux</filename> apontando para o
+diretório do fonte do núcleo. Isso é específico para núcleos anteriores à
+série 2.6 e <emphasis>precisa não</emphasis> ser criado em um sistema LFS,
+uma vez que ele pode causar problemas para pacotes que você possivelmente
+deseje construir tão logo seu sistema base LFS esteja completo.</para>
+    </warning>
+
+    <warning>
+      <para>Os cabeçalhos no diretório <filename class="directory">include</filename> do
+sistema (<filename class="directory">/usr/include</filename>) deveriam
+<emphasis>sempre</emphasis> ser aqueles contra os quais a Glibc foi
+compilada, isto é, os cabeçalhos sanitizados instalados na <xref
+linkend="ch-tools-linux-headers"/>. Portanto, eles
+<emphasis>nunca</emphasis> deveriam ser substituídos nem pelos cabeçalhos
+crus do núcleo nem por quaisquer outros cabeçalhos sanitizados do núcleo.</para>
+    </warning>
+
+  </sect2>
+
+  <sect2 id="conf-modprobe" role="configuration">
+    <title>Configurando a Ordem de Carregamento de Módulo do Linux</title>
+
+    <indexterm zone="conf-modprobe">
+      <primary sortas="e-/etc/modprobe.d/usb.conf">/etc/modprobe.d/usb.conf</primary>
+    </indexterm>
+
+    <para>Na maior parte do tempo, os módulos do Linux são carregados automaticamente,
+porém algumas vezes precisa-se de alguma direção específica. O aplicativo
+que carrega os módulos, <command>modprobe</command> ou o
+<command>insmod</command>, usa <filename>/etc/modprobe.d/usb.conf</filename>
+para esse propósito. Esse arquivo precisa ser criado, de forma que, se os
+controladores do USB (ehci_hcd, ohci_hcd e uhci_hcd) tiverem sido
+construídos como módulos, [então] eles sejam carregados na ordem correta;
+ehci_hcd precisa ser carregado antes de ohci_hcd e uhci_hcd para a
+finalidade de evitar um aviso sendo produzido em tempo de inicialização.</para>
+
+    <para>Crie um novo arquivo <filename>/etc/modprobe.d/usb.conf</filename>
+executando o seguinte:</para>
+
+<screen><userinput>install -v -m755 -d /etc/modprobe.d
+cat &gt; /etc/modprobe.d/usb.conf &lt;&lt; "EOF"
+<literal># Início do /etc/modprobe.d/usb.conf
+
+install ohci_hcd /sbin/modprobe ehci_hcd ; /sbin/modprobe -i ohci_hcd ; true
+install uhci_hcd /sbin/modprobe ehci_hcd ; /sbin/modprobe -i uhci_hcd ; true
+
+# Fim do /etc/modprobe.d/usb.conf</literal>
+EOF</userinput></screen>
+
+  </sect2>
+
+  <sect2 id="contents-kernel" role="content">
+    <title>Conteúdo do Linux</title>
+
+    <segmentedlist>
+      <segtitle>Arquivos instalados</segtitle>
+      <segtitle>Diretórios instalados</segtitle>
+
+      <seglistitem>
+        <seg>config-&linux-version;, vmlinuz-&linux-version;-lfs-&version; e
+System.map-&linux-version;</seg>
+        <seg>/lib/modules e /usr/share/doc/linux-&linux-version;</seg>
+      </seglistitem>
+    </segmentedlist>
+
+    <variablelist>
+      <bridgehead renderas="sect3">Descrições Curtas</bridgehead>
+      <?dbfo list-presentation="list"?> <?dbhtml list-presentation="table"?>
+
+      <varlistentry id="config">
+        <term><filename>config-&linux-version;</filename></term>
+        <listitem>
+          <para>Contém todas as seleções de configuração para o núcleo</para>
+          <indexterm zone="ch-bootable-kernel config">
+            <primary sortas="e-/boot/config">/boot/config-&linux-version;</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="lfskernel">
+        <term><filename>vmlinuz-&linux-version;-lfs-&version;</filename></term>
+        <listitem>
+          <para>O motor do sistema Linux. Quando se liga o computador, o núcleo é a primeira
+parte do sistema operacional que se torna carregada. Ele detecta e
+inicializa todos os componentes do hardware do computador, então torna esses
+componentes disponíveis como uma árvore de arquivos para o software e
+transforma uma CPU individual em uma máquina multitarefa capaz de executar
+dezenas de aplicativos aparentemente ao mesmo tempo</para>
+          <indexterm zone="ch-bootable-kernel lfskernel">
+            <primary sortas="b-lfskernel">lfskernel-&linux-version;</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="System.map">
+        <term><filename>System.map-&linux-version;</filename></term>
+        <listitem>
+          <para>Uma lista de endereços e símbolos; ele mapeia os pontos de entrada e
+endereços de todas as funções e estruturas de dados no núcleo</para>
+          <indexterm zone="ch-bootable-kernel System.map">
+            <primary sortas="e-/boot/System.map">/boot/System.map-&linux-version;</primary>
+          </indexterm>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+
+</sect1>

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-tools-cleanup">
+  <?dbhtml filename="cleanup.html"?>
+
+  <title>Limpando e Salvando o Sistema Temporário</title>
+
+  <sect2>
+    <title>Limpando</title>
+
+    <para>Primeiro, remova a documentação atualmente instalada para evitar que ela
+termine no sistema final e para salvar cerca de 35 MB:</para>
+
+<screen><userinput>rm -rf /usr/share/{info,man,doc}/*</userinput></screen>
+
+    <para>Segundo, em um sistema moderno Linux, os arquivos libtool.la somente são
+úteis para a libltdl. Nenhuma biblioteca no LFS é carregada pela libltdl e é
+sabido que alguns arquivos .la podem causar falhas de pacote do BLFS. Remova
+tais arquivos agora:</para>
+
+<screen><userinput>find /usr/{lib,libexec} -name \*.la -delete</userinput></screen>
+
+    <para>
+      O tamanho atual do sistema é agora de cerca de 3 GB, entretanto o diretório
+/tools não mais é necessário. Ele usa cerca de 1 GB de espaço de
+disco. Delete ele agora:
+    </para>
+
+<screen><userinput>rm -rf /tools</userinput></screen>
+  </sect2>
+
+  <sect2>
+    <title>Cópia de segurança</title>
+
+    <para>
+      Neste ponto, os aplicativos e bibliotecas essenciais foram criados e o seu
+sistema LFS atual está em um bom estado. Seu sistema agora pode ser copiado
+para posterior reuso. Em caso de falhas fatais nos capítulos subsequentes,
+frequentemente acontece que remover tudo e começar de novo (mais
+cuidadosamente) é a melhor maneira para recuperar. Infelizmente, todos os
+arquivos temporários serão removidos, também. Para evitar desperdiçar tempo
+extra para refazer tudo o que tenha sido feito com sucesso, criar uma cópia
+de segurança do sistema LFS atual possivelmente se prove útil.
+    </para>
+
+    <note><para>
+      Todos os passos restantes nesta seção são opcionais. Apesar disso, tão logo
+você comece a instalar pacotes no <xref linkend="chapter-building-system"/>,
+os arquivos temporários serão sobrescritos. Assim, possivelmente seja uma
+boa ideia fazer uma cópia de segurança do sistema atual conforme descrito
+abaixo.
+    </para></note>
+
+    <para>
+      Os passos seguintes são realizados a partir do lado de fora do ambiente
+chroot. Isso significa que você tem de deixar o ambiente chroot primeiro
+antes de continuar. A razão para isso é a de conseguir acesso a locais do
+sistema de arquivos do lado de fora do ambiente chroot para armazenar/ler o
+arquivamento da cópia de segurança, o qual convém não ser colocado dentro da
+hierarquia do <filename class="directory">$LFS</filename>.
+    </para>
+
+    <para>
+       Se você decidiu fazer uma cópia de segurança, [então] deixe o ambiente
+chroot:
+    </para>
+
+<screen role="nodump"><userinput>exit</userinput></screen>
+
+    <important>
+      <para>
+        Todas as instruções seguintes são executadas pelo(a) <systemitem
+class="username">root</systemitem> no seu sistema anfitrião. Tome cuidado
+extra acerca dos comandos que você vai executar, uma vez que erros cometidos
+aqui podem modificar seu sistema anfitrião. Esteja ciente de que a variável
+de ambiente <envar>LFS</envar> está configurada para usuário(a) <systemitem
+class="username">lfs</systemitem> por padrão, porém possivelmente
+<emphasis>não</emphasis> esteja configurada para <systemitem
+class="username">root</systemitem>.
+     </para>
+     <para>
+        Sempre que comandos forem ser executados por <systemitem
+class="username">root</systemitem>, tenha certeza de que você configurou
+<envar>LFS</envar>.
+     </para>
+     <para>
+        Isso foi discutido na <xref linkend='ch-partitioning-aboutlfs'/>.
+      </para>
+    </important>
+
+    <para>Antes de fazer uma cópia de segurança, desmonte os sistemas de arquivos
+virtuais:</para>
+
+<screen role="nodump"><userinput>mountpoint -q $LFS/dev/shm &amp;&amp; umount $LFS/dev/shm
+umount $LFS/dev/pts
+umount $LFS/{sys,proc,run,dev}</userinput></screen>
+
+    <para>
+      Tenha certeza de que tem pelo menos um (01) GB de espaço livre no disco (os
+tarballs do fonte serão incluídos no arquivamento da cópia de segurança) no
+sistema de arquivos contendo o diretório onde você criar o arquivamento da
+cópia de segurança.
+    </para>
+
+    <para>
+      Observe que as instruções abaixo especificam o diretório home do(a)
+usuário(a) <systemitem class="username">root</systemitem> do sistema
+anfitrião, o qual tipicamente é encontrado no sistema de arquivos
+raiz. Substitua <envar>$HOME</envar> por um diretório da sua escolha se não
+quiser ter a cópia de segurança armazenada no diretório home
+do(a)<systemitem class="username">root</systemitem>.
+    </para>
+
+    <para>
+      Crie o arquivamento da cópia de segurança executando o seguinte comando:
+    </para>
+
+    <note>
+       <para>
+          Por causa de que o arquivamento da cópia de segurança é comprimido, dura um
+tempo relativamente longo (mais que dez (10) minutos) mesmo em um sistema
+razoavelmente rápido.
+       </para>
+    </note>
+
+<screen role="nodump"><userinput>cd $LFS
+tar -cJpf $HOME/lfs-temp-tools-&version;.tar.xz .</userinput></screen>
+
+    <note>
+      <para>
+        Se continuar para o capítulo 8, [então] não se esqueça de entrar novamente
+no ambiente chroot conforme explicado na caixa <quote>Importante</quote>
+abaixo.
+      </para>
+    </note>
+
+  </sect2>
+
+  <sect2>
+    <title>Restauro</title>
+
+    <para>
+      No caso de alguns erros tiverem sido cometidos e você precisar começar de
+novo, você pode usar essa cópia de segurança para restaurar o sistema e
+economizar algum tempo de recuperação. Desde que os fontes estão localizados
+sob <filename class="directory">$LFS</filename>, eles são incluídos no
+arquivamento da cópia de segurança também, de forma que não precisam ser
+transferidos novamente. Após verificar se <envar>$LFS</envar> está
+configurada adequadamente, você consegue restaurar a cópia de segurança
+executando os seguintes comandos:
+    </para>
+
+
+
+    <!-- Make the following look different so users don't blindly run the
+     restore when they don't need to. -->
+<warning><para>Os seguintes comandos são extremamente perigosos. Se você executar
+<command>rm -rf ./*</command> como o(a) usuário(a) &root; e você não mudar
+para o diretório $LFS ou a variável de ambiente <envar>LFS</envar> não
+estiver configurada para o(a) usuário(a) &root;, [então] isso destruirá seu
+sistema anfitrião inteiro. VOCÊ ESTÁ AVISADO(A).</para></warning>
+
+<screen role="nodump"><computeroutput>cd $LFS
+rm -rf ./*
+tar -xpf $HOME/lfs-temp-tools-&version;.tar.xz</computeroutput></screen>
+
+    <para>
+       Novamente, verifique duplamente se o ambiente foi configurado adequadamente
+e continue construindo o resto do sistema.
+    </para>
+
+    <important>
+      <para>
+         Se você deixou o ambiente chroot para criar uma cópia de segurança ou
+reiniciar a construção usando um restauro, [então] lembre-se de verificar se
+os sistemas de arquivos virtuais ainda estão montados (<command>findmnt |
+grep $LFS</command>). Se eles não estiverem montados, [então] remonte-os
+agora conforme descrito na <xref linkend='ch-tools-kernfs'/> e entre
+novamente no ambiente chroot (veja-se a <xref linkend='ch-tools-chroot'/>)
+antes de continuar.
+       </para>
+    </important>
+
+  </sect2>
+
+</sect1>

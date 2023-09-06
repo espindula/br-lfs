@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-profile" revision="sysv">
+  <?dbhtml filename="profile.html"?>
+
+  <title>Os Arquivos de Inicialização do Shell Bash</title>
+
+  <indexterm zone="ch-config-profile">
+    <primary sortas="e-/etc/profile">/etc/profile</primary>
+  </indexterm>
+
+  <para>O aplicativo de shell <command>/bin/bash</command> (daqui por diante
+referenciado como <quote>o shell</quote>) usa uma coleção de arquivos de
+iniciação para auxiliar a criar o ambiente para executar dentro. Cada
+arquivo tem um uso específico e possivelmente afete o login e ambientes
+interativos diferentemente. Os arquivos no diretório <filename
+class="directory">/etc</filename> fornecem configurações globais. Se
+arquivos equivalentes existirem no diretório lar, [então] eles possivelmente
+substituam as configurações globais.</para>
+
+  <para>Um shell de login interativo é iniciado depois de um login bem sucedido,
+usando o <command>/bin/login</command>, lendo o arquivo
+<filename>/etc/passwd</filename>. Um shell de não-login interativo é
+iniciado na linha de comando (por exemplo,
+<prompt>[prompt]$</prompt><command>/bin/bash</command>). Um shell
+não-interativo geralmente está presente quando um script de shell está
+executando. Ele é não-interativo porque ele está processando um script e não
+esperando pela entrada gerada de usuário(a) entre comandos.</para>
+
+<para>Para mais informação, vejam-se as seções <emphasis>Bash Startup
+Files</emphasis> e <emphasis>Interactive Shells</emphasis> no capítulo
+<emphasis>Bash Features</emphasis> das páginas info do Bash (<command>info
+bash</command>).</para>
+
+  <para>Os arquivos <filename>/etc/profile</filename> e
+<filename>~/.bash_profile</filename> são lidos quando o shell é invocado
+como um shell de login interativo.</para>
+
+  <para>O <filename>/etc/profile</filename> de base abaixo configura algumas
+variáveis de ambiente necessárias para o suporte ao idioma
+nativo. Configurá-las adequadamente resulta em:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>A saída gerada dos aplicativos traduzida para o idioma nativo</para>
+    </listitem>
+    <listitem>
+      <para>Classificação correta dos caracteres em letras, dígitos e outras
+classes. Isso é necessário para o <command>bash</command> aceitar
+adequadamente caracteres não ASCII em linhas de comando em locales não
+ingleses</para>
+    </listitem>
+    <listitem>
+      <para>A sequência de ordenação alfabética correta para o país</para>
+    </listitem>
+    <listitem>
+      <para>Tamanho de papel padrão apropriado</para>
+    </listitem>
+    <listitem>
+      <para>Formatação correta de valores monetário, hora e data</para>
+    </listitem>
+  </itemizedlist>
+
+  <para>Substitua <replaceable>&lt;ll&gt;</replaceable> abaixo pelo código de duas
+letras para o idioma desejado (por exemplo, <quote>en</quote>) e
+<replaceable>&lt;CC&gt;</replaceable> pelo código de duas letras para o país
+apropriado (por exemplo,
+<quote>GB</quote>). <replaceable>&lt;charmap&gt;</replaceable> deveria ser
+substituído pelo mapa de caracteres canônico para seu locale
+escolhido. Modificadores opcionais, tais como <quote>@euro</quote>,
+possivelmente também estejam presentes.</para>
+
+  <para>A lista de todos os locales suportados pela Glibc pode ser obtida
+executando-se o seguinte comando:</para>
+
+<screen role="nodump"><userinput>locale -a</userinput></screen>
+
+  <para>Mapas de caracteres podem ter um número de apelidos, por exemplo,
+<quote>ISO-8859-1</quote>, também é referenciado como
+<quote>iso8859-1</quote> e <quote>iso88591</quote>. Alguns aplicativos não
+conseguem lidar com os vários sinônimos corretamente (por exemplo, exigem
+que <quote>UTF-8</quote> seja escrito como <quote>UTF-8</quote>, não
+<quote>utf8</quote>), de forma que é mais seguro, na maioria dos casos,
+escolher o nome canônico para um locale específico. Para determinar o nome
+canônico, execute o seguinte comando, onde <replaceable>&lt;nome do
+locale&gt;</replaceable> é a saída gerada dada por <command>locale
+-a</command> para seu locale preferido (<quote>en_GB.iso88591</quote> no
+nosso exemplo).</para>
+
+<screen role="nodump"><userinput>LC_ALL=<replaceable>&lt;nome do locale&gt;</replaceable> mapa de caracteres do locale</userinput></screen>
+
+  <para>Para o locale <quote>en_GB.iso88591</quote>, o comando acima imprimirá:</para>
+
+<screen><computeroutput>ISO-8859-1</computeroutput></screen>
+
+  <para>Isso resulta em uma configuração final de "locale" de
+<quote>en_GB.ISO-8859-1</quote>. É importante que o "locale" encontrado
+usando-se a heurística acima seja testado antes que ele seja adicionado aos
+arquivos de inicialização do Bash:</para>
+
+<screen role="nodump"><userinput>LC_ALL=&lt;nome do locale&gt; locale language
+LC_ALL=&lt;nome do locale&gt; locale charmap
+LC_ALL=&lt;nome do locale&gt; locale int_curr_symbol
+LC_ALL=&lt;nome do locale&gt; locale int_prefix</userinput></screen>
+
+  <para>Os comandos acima deveriam imprimir o nome do idioma, a codificação de
+caracteres usada pelo locale, a moeda local, e o prefixo para discar antes
+do número de telefone para a finalidade de se alcançar o país. Se quaisquer
+dos comandos acima falhar com uma mensagem similar àquela mostrada abaixo,
+[então] isso significa que seu locale ou não foi instalado no <xref
+linkend="ch-system-glibc"/> ou não é suportado pela instalação padrão da
+Glibc.</para>
+
+<screen><computeroutput>locale: Cannot set LC_* to default locale: No such file or directory</computeroutput></screen>
+
+  <para>Se isso acontecer, [então] você deveria ou instalar o locale desejado usando
+o comando <command>localedef</command>, ou considerar escolher um locale
+diferente. As instruções posteriores assumem que não existem tais mensagens
+de erro originárias da Glibc.</para>
+
+  
+  
+  <!-- FIXME: the xlib example will became obsolete real soon -->
+<!--<para>
+Some packages beyond LFS may also lack support for your chosen locale. One
+  example is the X library (part of the X Window System), which outputs the
+  following error message if the locale does not exactly match one of the character
+  map names in its internal files:</para>
+
+<screen><computeroutput>Warning: locale not supported by Xlib, locale set to C</computeroutput></screen>
+
+  <para>In several cases Xlib expects that the character map will be listed in
+  uppercase notation with canonical dashes. For instance, "ISO-8859-1" rather
+  than "iso88591". It is also  possible to find an appropriate specification by
+  removing the charmap part of the locale specification.  This can be checked
+  by running the <command>locale charmap</command> command in both locales.
+  For example, one would have to change "de_DE.ISO-8859-15@euro" to
+  "de_DE@euro" in order to get this locale recognized by Xlib.</para>
+-->
+<para>Outros pacotes também possivelmente funcionem incorretamente (mas, não
+necessariamente exibirão quaisquer mensagens de erro) se o nome do locale
+não corresponder às expectativas deles. Nesses casos, investigar como outras
+distribuições do Linux suportam seu locale poderia fornecer alguma
+informação útil.</para>
+
+  <para>Uma vez que as configurações adequadas de locale tenham sido determinadas,
+crie o arquivo <filename>/etc/profile</filename>:</para>
+
+<screen><userinput>cat &gt; /etc/profile &lt;&lt; "EOF"
+<literal># Início do /etc/profile
+
+export LANG=<replaceable>&lt;ll&gt;_&lt;CC&gt;.&lt;mapa_de_caracteres&gt;&lt;@modificadores&gt;</replaceable>
+
+# Fim do /etc/profile</literal>
+EOF</userinput></screen>
+
+  <para>Os locales <quote>C</quote> (padrão) e <quote>en_US.utf8</quote> (aquele
+recomendado para usuários(as) do inglês dos Estados Unidos da América do
+Norte) são diferentes. <quote>C</quote> usa o conjunto de caracteres de 7
+bits US-ASCII e trata bytes com o bit de ordem alta configurado
+<quote>on</quote> como caracteres inválidos. Esse é o porquê, por exemplo,
+do comando <command>ls</command> exibi-los como pontos de interrogação nesse
+locale. Também, uma tentativa de enviar correio com tais caracteres a partir
+do Mutt ou do Pine resulta em mensagens de não conformidade com RFC sendo
+enviadas (o conjunto de caracteres no correio de saída é indicado como
+<quote>unknown 8-bit</quote>). Portanto, você somente pode usar o locale
+<quote>C</quote> se você tiver certeza de que nunca precisará de caracteres
+de 8 bits.</para>
+
+  <para>Locales baseados em UTF-8 não são bem suportados por alguns
+aplicativos. Trabalho está em progresso para documentar e, se possível,
+corrigir tais problemas. Veja-se <ulink
+url="&blfs-book;introduction/locale-issues.html"/>.</para>
+
+</sect1>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-clock" revision="systemd">
+  <?dbhtml filename="clock.html"?>
+
+  <title>Configurando o relógio do sistema</title>
+
+  <indexterm zone="ch-config-clock">
+    <primary sortas="d-clock">relógio</primary>
+  <secondary>configurando</secondary></indexterm>
+
+  <para>Esta seção discute como configurar o serviço de sistema
+<command>systemd-timedated</command>, o qual configura o relógio e fuso
+horário do sistema.</para>
+
+  <para>Se você não conseguir se lembrar se ou não o relógio do hardware está
+configurado para UTC, [então] descubra executando o comando
+<userinput>hwclock --localtime --show</userinput>. Isso mostrará o que a
+hora atual é de acordo com o relógio do hardware. Se essa hora corresponder
+à que o seu relógio diz, então o relógio do hardware está configurado para
+hora local. Se a saída gerada originária do <command>hwclock</command> não
+for a hora local, [então] as chances são as de que ele esteja configurado
+para hora UTC. Verifique isso adicionando ou subtraindo a quantidade
+apropriada de horas para o fuso horário à (da) hora mostrada pelo
+<command>hwclock</command>. Por exemplo, se você estiver atualmente no fuso
+horário MST, o qual é conhecido também como GMT -0700, [então] adicione sete
+horas à hora local.</para>
+
+  <para>O <command>systemd-timedated</command> lê <filename>/etc/adjtime</filename>
+e, dependendo do conteúdo do arquivo, configura o relógio para ou UTC ou
+hora local.</para>
+
+  <para>Crie o arquivo <filename>/etc/adjtime</filename> com o seguinte conteúdo se
+seu relógio do hardware estiver configurado para hora local:</para>
+
+<screen><userinput>cat &gt; /etc/adjtime &lt;&lt; "EOF"
+<literal>0.0 0 0.0
+0
+LOCAL</literal>
+EOF</userinput></screen>
+
+  <para>Se <filename>/etc/adjtime</filename> não estiver presente na primeira
+inicialização, [então] <command>systemd-timedated</command> assumirá que o
+relógio do hardware está configurado para UTC e ajustará o arquivo de acordo
+com isso.</para>
+
+  <para>Você também pode usar o utilitário <command>timedatectl</command> para dizer
+ao <command>systemd-timedated</command> se o seu relógio do hardware está
+configurado para UTC ou hora local:</para>
+
+<screen role="nodump"><userinput>timedatectl set-local-rtc 1</userinput></screen>
+
+  <para>O <command>timedatectl</command> também pode ser usado para mudar a hora e
+fuso horário do sistema.</para>
+
+  <para>Para mudar sua atual hora do sistema, emita:</para>
+
+<screen role="nodump"><userinput>timedatectl set-time YYYY-MM-DD HH:MM:SS</userinput></screen>
+
+  <para>O relógio do hardware também será atualizado de acordo.</para>
+
+  <para>Para mudar seu fuso horário atual, emita:</para>
+
+<screen role="nodump"><userinput>timedatectl set-timezone FUSO_HORÁRIO</userinput></screen>
+
+  <para>Você consegue obter uma lista dos fusos horários disponíveis executando:</para>
+
+<screen role="nodump"><userinput>timedatectl list-timezones</userinput></screen>
+
+  <note><para>Por favor, observe que o comando <command>timedatectl</command> não funciona
+no ambiente chroot. Ele somente pode ser usado depois que o sistema LFS for
+inicializado com o systemd.</para></note>
+
+  <sect2>
+    <title>Sincronização da Hora da Rede de Comunicação</title>
+
+    <para>Iniciando com a versão 213, o systemd embarca um processo de segundo plano
+chamado <command>systemd-timesyncd</command> o qual pode ser usado para
+sincronizar a hora do sistema com servidores remotos do NTP.</para>
+
+    <para>O processo de segundo plano não é destinado como um substituto para o bem
+estabelecido processo de segundo plano do NTP, porém como uma implementação
+somente cliente do protocolo SNTP, o qual pode ser usado para tarefas menos
+avançadas e em sistemas de recurso limitado.</para>
+
+    <para>Iniciando com o systemd versão 216, o processo de segundo plano
+<command>systemd-timesyncd</command> está habilitado por padrão. Se você
+desejar desabilitá-lo, [então] emita o seguinte comando:</para>
+
+<screen role="nodump"><userinput>systemctl disable systemd-timesyncd</userinput></screen>
+
+    <para>O arquivo <filename>/etc/systemd/timesyncd.conf</filename> pode ser usado
+para mudar os servidores do NTP que o <command>systemd-timesyncd</command>
+sincroniza com.</para>
+
+    <para>Por favor, observe que, quando o relógio do sistema estiver configurado para
+Hora Local, [então] o <command>systemd-timesyncd</command> não atualizará o
+relógio do hardware.</para>
+
+  </sect2>
+
+</sect1>

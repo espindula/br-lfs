@@ -2,13 +2,14 @@
 ########################################################################
 # Begin mountvirtfs
 #
-# Description : Mount proc, sysfs, and run
+# Description : Ensure proc, sysfs, run, and dev are mounted
 #
 # Authors     : Gerard Beekmans - gerard@linuxfromscratch.org
 #               DJ Lucas - dj@linuxfromscratch.org
 # Update      : Bruce Dubbs - bdubbs@linuxfromscratch.org
+#               Xi Ruoyao - xry111@xry111.site
 #
-# Version     : LFS 7.0
+# Version     : LFS 12.0
 #
 ########################################################################
 
@@ -20,10 +21,12 @@
 # Should-Stop:
 # Default-Start:       S
 # Default-Stop:
-# Short-Description:   Mounts /sys and /proc virtual (kernel) filesystems.
-#                      Mounts /run (tmpfs) and /dev (devtmpfs).
+# Short-Description:   Mounts various special fs needed at start
 # Description:         Mounts /sys and /proc virtual (kernel) filesystems.
 #                      Mounts /run (tmpfs) and /dev (devtmpfs).
+#                      This is done only if they are not already mounted.
+#                      with the kernel config proposed in the book, dev
+#                      should be automatically mounted by the kernel.
 # X-LFS-Provided-By:   LFS
 ### END INIT INFO
 
@@ -36,8 +39,8 @@ case "${1}" in
          mount /run || failed=1
       fi
 
-      mkdir -p /run/lock /run/shm
-      chmod 1777 /run/shm /run/lock
+      mkdir -p   /run/lock 
+      chmod 1777 /run/lock
 
       log_info_msg "Mounting virtual file systems: ${INFO}/run"
 
@@ -56,7 +59,36 @@ case "${1}" in
          mount -o mode=0755,nosuid /dev  || failed=1
       fi
 
-      ln -sfn /run/shm /dev/shm
+      mkdir -p /dev/shm
+      log_info_msg2 " ${INFO}/dev/shm"
+      mount -o nosuid,nodev /dev/shm || failed=1
+
+      mkdir -p /sys/fs/cgroup
+      log_info_msg2 " ${INFO}/sys/fs/cgroup"
+      mount -o nosuid,noexec,nodev /sys/fs/cgroup || failed=1
+
+      (exit ${failed})
+      evaluate_retval
+      if [ "${failed}" = 1 ]; then
+         exit 1
+      fi
+
+      log_info_msg "Create symlinks in /dev targeting /proc: ${INFO}/dev/stdin"
+      ln -sf /proc/self/fd/0 /dev/stdin  || failed=1
+
+      log_info_msg2 " ${INFO}/dev/stdout"
+      ln -sf /proc/self/fd/1 /dev/stdout || failed=1
+
+      log_info_msg2 " ${INFO}/dev/stderr"
+      ln -sf /proc/self/fd/2 /dev/stderr || failed=1
+
+      log_info_msg2 " ${INFO}/dev/fd"
+      ln -sf /proc/self/fd   /dev/fd     || failed=1
+
+      if [ -e /proc/kcore ]; then
+         log_info_msg2 " ${INFO}/dev/core"
+         ln -sf /proc/kcore  /dev/core   || failed=1
+      fi
 
       (exit ${failed})
       evaluate_retval

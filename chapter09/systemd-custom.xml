@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+  <!ENTITY % general-entities SYSTEM "../general.ent">
+  %general-entities;
+]>
+
+<sect1 id="ch-config-systemd-custom" revision="systemd">
+  <?dbhtml filename="systemd-custom.html"?>
+
+  <title>Uso e Configuração do Systemd</title>
+
+  <indexterm zone="ch-config-systemd-custom">
+    <primary sortas="e-Systemd">Personalização do Systemd</primary>
+  </indexterm>
+
+  <sect2>
+    <title>Configuração Básica</title>
+
+    <para>O arquivo <filename>/etc/systemd/system.conf</filename> contém um conjunto
+de opções para controlar as operações básicas do systemd. O arquivo padrão
+tem todas as entradas comentadas com as configurações padrão indicadas. Esse
+arquivo é onde o nível de registro possivelmente seja mudado, bem como
+algumas configurações básicas de registro. Veja-se a página de manual
+<filename>systemd-system.conf(5)</filename> para detalhes a respeito de cada
+opção de configuração.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Desabilitando a Limpeza da Tela em Tempo de Inicialização</title>
+
+    <para>O comportamento normal para o systemd é o de limpar a tela ao final da
+sequência de inicialização. Se desejado, esse comportamento possivelmente
+seja mudado executando o seguinte comando:</para>
+
+<screen role="nodump"><userinput>mkdir -pv /etc/systemd/system/getty@tty1.service.d
+
+cat &gt; /etc/systemd/system/getty@tty1.service.d/noclear.conf &lt;&lt; EOF
+<literal>[Service]
+TTYVTDisallocate=no</literal>
+EOF</userinput></screen>
+
+    <para>As mensagens de inicialização sempre podem ser revistas usando-se o comando
+<userinput>journalctl -b</userinput> como o(a) usuário(a) <systemitem
+class="username">root</systemitem>.</para>
+
+  </sect2>
+
+  <sect2 id='systemd-no-tmpfs'>
+    <title>Desabilitando tmpfs para /tmp</title>
+
+    <para>Por padrão, <filename class="directory">/tmp</filename> é criado como um
+tmpfs. Se isso não for desejado, [então] ele pode ser sobreposto
+executando-se o seguinte comando:</para>
+
+<screen role="nodump"><userinput>ln -sfv /dev/null /etc/systemd/system/tmp.mount</userinput></screen>
+
+    <para>Alternativamente, se uma partição separada para <filename
+class="directory">/tmp</filename> for desejada, [então] especifique essa
+partição em uma entrada do <filename>/etc/fstab</filename>.</para>
+
+    <warning>
+      <para>
+        Não crie o link simbólico acima se uma partição separada for usada para o
+<filename class="directory">/tmp</filename>. Isso impedirá o sistema de
+arquivos raiz (/) de ser remontado leitura/escrita e tornará o sistema
+inutilizável quando inicializado.
+      </para>
+    </warning>
+
+  </sect2>
+
+  <sect2>
+    <title>Configurando a Criação e Deleção Automática de Arquivo</title>
+
+    <para>Existem vários serviços que criam ou deletam arquivos ou diretórios:</para>
+
+    <itemizedlist>
+      <listitem><para>systemd-tmpfiles-clean.service</para></listitem>
+      <listitem><para>systemd-tmpfiles-setup-dev.service</para></listitem>
+      <listitem><para>systemd-tmpfiles-setup.service</para></listitem>
+    </itemizedlist>
+
+    <para>O local de sistema para os arquivos de configuração é
+<filename>/usr/lib/tmpfiles.d/*.conf</filename>. Os arquivos locais de
+configuração estão em <filename
+class="directory">/etc/tmpfiles.d</filename>. Os arquivos em <filename
+class="directory">/etc/tmpfiles.d</filename> sobrepõem os arquivos com o
+mesmo nome em <filename
+class="directory">/usr/lib/tmpfiles.d</filename>. Veja-se a página de manual
+<filename>tmpfiles.d(5)</filename> para detalhes do formato do arquivo.</para>
+
+    <para>
+      Observe que a sintaxe para os arquivos
+<filename>/usr/lib/tmpfiles.d/*.conf</filename> pode ser confusa. Por
+exemplo, a deleção padrão de arquivos no diretório /tmp está localizada em
+<filename>/usr/lib/tmpfiles.d/tmp.conf</filename> com a linha: <screen role="nodump">q /tmp 1777 root root 10d</screen> O campo tipo, q, discute criar um sub-volume com
+cotas, o qual realmente é aplicável somente para sistemas de arquivos
+btrfs. Ele referencia tipo v, o qual sequencialmente referencia tipo d
+(diretório). Isso então cria o diretório especificado se ele não estiver
+presente e ajusta as permissões e propriedade como especificado. O conteúdo
+do diretório estará sujeito a limpeza baseada em hora se o argumento idade
+for especificado.
+     </para>
+
+     <para>
+      Se os parâmetros padrão não forem desejados, então o arquivo deveria ser
+copiado para <filename class="directory">/etc/tmpfiles.d</filename> e
+editado conforme desejado. Por exemplo: <screen role="nodump"><userinput>mkdir -p /etc/tmpfiles.d
+cp /usr/lib/tmpfiles.d/tmp.conf /etc/tmpfiles.d</userinput></screen>
+     </para>
+
+  </sect2>
+
+  <sect2>
+    <title>Sobrepondo o Comportamento Padrão de Serviços</title>
+
+    <para>Os parâmetros de uma unidade podem ser sobrepostos criando-se um diretório e
+um arquivo de configuração em <filename
+class="directory">/etc/systemd/system</filename>. Por exemplo:</para>
+
+<screen role="nodump"><userinput>mkdir -pv /etc/systemd/system/foobar.service.d
+
+cat > /etc/systemd/system/foobar.service.d/foobar.conf &lt;&lt; EOF
+<literal>[Service]
+Restart=always
+RestartSec=30</literal>
+EOF</userinput></screen>
+
+     <para>Veja-se a página de manual <filename>systemd.unit(5)</filename> para mais
+informação. Depois de criar o arquivo de configuração, execute
+<userinput>systemctl daemon-reload</userinput> e <userinput>systemctl
+restart foobar</userinput> para ativar as mudanças para um serviço.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Depurando a Sequência de Inicialização</title>
+
+    <para>Em vez de scripts planos de shell usados nos sistemas de inicialização
+estilo SysVinit ou BSD, o systemd usa um formato unificado para tipos
+diferentes dos arquivos de inicialização (ou unidades). O comando
+<command>systemctl</command> é usado para habilitar; desabilitar; controlar
+estado; e obter a situação dos arquivos de unidade. Aqui estão alguns
+exemplos dos comandos frequentemente usados:</para>
+
+    <itemizedlist>
+       <listitem>
+         <para><command>systemctl list-units -t <replaceable>&lt;serviço&gt;</replaceable>
+[--all]</command>: lista os arquivos carregados de unidade do tipo serviço.</para>
+       </listitem>
+       <listitem>
+         <para><command>systemctl list-units -t <replaceable>&lt;alvo&gt;</replaceable>
+[--all]</command>: lista os arquivos carregados de unidade do tipo alvo.</para>
+       </listitem>
+       <listitem>
+         <para><command>systemctl show -p Wants
+<replaceable>&lt;multi-user.target&gt;</replaceable></command>: mostra todas
+as unidades que dependem do alvo multi-user. Alvos são arquivos especiais de
+unidade que são análogos a níveis de execução sob o SysVinit.</para>
+       </listitem>
+       <listitem>
+         <para><command>systemctl status
+<replaceable>&lt;nome_serviço.service&gt;</replaceable></command>: mostra a
+situação do serviço nome_serviço. A extensão .service pode ser omitida se
+não existirem outros arquivos de unidade com o mesmo nome, tais como
+arquivos .socket (os quais criam um soquete de escuta que fornece
+funcionalidade similar ao inetd/xinetd).</para>
+       </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>Trabalhando com o Diário do Systemd</title>
+
+    <para>O registro em um sistema inicializado com o systemd é manuseado com o
+systemd-journald (por padrão), em vez de um processo de segundo plano típico
+do Unix syslog. Você também pode adicionar um processo de segundo plano
+normal syslog e ter ambos operando lado a lado se desejado. O aplicativo
+systemd-journald armazena entradas de diário em um formato binário, em vez
+de um arquivo plano de registro de texto. Para auxiliar na análise do
+arquivo, o comando <command>journalctl</command> é fornecido. Aqui estão
+alguns exemplos dos comandos frequentemente usados:</para>
+
+    <itemizedlist>
+       <listitem>
+         <para><command>journalctl -r</command>: mostra todo o conteúdo do diário em ordem
+cronológica reversa.</para>
+       </listitem>
+       <listitem>
+         <para><command>journalctl -u <replaceable>UNIDADE</replaceable></command>: mostra
+as entradas de diário associadas com o arquivo especificado de UNIDADE.</para>
+       </listitem>
+       <listitem>
+         <para><command>journalctl -b[=ID] -r</command>: mostra as entradas de diário desde
+a mais recente inicialização bem sucedida (ou para a ID de inicialização) em
+ordem cronológica reversa.</para>
+       </listitem>
+       <listitem>
+         <para><command>journalctl -f</command>: fornece funcionalidade similar ao tail -f
+(seguir).</para>
+       </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>Trabalhando com Despejos de Núcleo</title>
+
+    <para>Despejos de núcleo são úteis para depurar aplicativos quebrados,
+especialmente quando um processo de aplicativo de segundo plano quebra. Em
+sistemas inicializados do systemd, o despejamento de núcleo é manuseado pelo
+<command>systemd-coredump</command>. Ele registrará o despejo de núcleo no
+diário e armazenará o próprio despejo de núcleo em <filename
+class="directory">/var/lib/systemd/coredump</filename>. Para recuperar e
+processar despejos de núcleo, a ferramenta <command>coredumpctl</command> é
+fornecida. Aqui estão alguns exemplos de comandos frequentemente usados:
+    </para>
+
+    <itemizedlist>
+      <listitem>
+        <para><command>coredumpctl -r</command>: lista todos os despejos de núcleo em
+ordem cronológica reversa.</para>
+      </listitem>
+      <listitem>
+        <para><command>coredumpctl -1 info</command>: mostra a informação a partir do mais
+recente despejo de núcleo.</para>
+      </listitem>
+      <listitem>
+        <para><command>coredumpctl -1 debug</command>: carrega o mais recente despejo de
+núcleo no <ulink url="&blfs-book;general/gdb.html">GDB</ulink>.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Despejos de núcleo possivelmente usem um monte de espaço em disco. O espaço
+máximo em disco usado por despejos de núcleo pode ser limitado criando-se um
+arquivo de configuração em <filename
+class="directory">/etc/systemd/coredump.conf.d</filename>. Por exemplo:</para>
+
+<screen role="nodump"><userinput>mkdir -pv /etc/systemd/coredump.conf.d
+
+cat &gt; /etc/systemd/coredump.conf.d/maxuse.conf &lt;&lt; EOF
+<literal>[Coredump]
+MaxUse=5G</literal>
+EOF</userinput></screen>
+
+    <para>Vejam-se as páginas de manual <filename>systemd-coredump(8)</filename>;
+<filename>coredumpctl(1)</filename>; e
+<filename>coredump.conf.d(5)</filename> para mais informação.</para>
+  </sect2>
+
+  <sect2>
+    <title>Processos de Execução Longa</title>
+
+    <para>Iniciando com o systemd-230, todos os processos de usuário(a) são
+finalizados quando uma sessão de usuário(a) for terminada, mesmo se nohup
+for usado ou o processo usar as funções <function>daemon()</function> ou
+<function>setsid()</function>. Isso é uma mudança deliberada de um ambiente
+historicamente permissivo para um mais restritivo. O novo comportamento
+possivelmente cause problemas se você depender de aplicativos de execução
+longa (por exemplo, <command>screen</command> ou <command>tmux</command>)
+para continuarem ativos depois de terminar sua sessão de usuário(a). Existem
+três maneiras de habilitar processos persistentes para continuarem depois
+que uma sessão de usuário(a) for terminada.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          <emphasis>Habilitar persistência de processo somente para usuários(as)
+selecionados(as)</emphasis>: Usuários(as) normais tem permissão para
+habilitar persistência de processo com o comando <command>loginctl
+enable-linger</command> para os(as) próprios(as) usuários(as)
+deles(as). Administradores(as) do sistema podem usar o mesmo comando com um
+argumento <parameter>user</parameter> ao habilitar para um(a)
+usuário(a). Esse(a) usuário(a) consegue então usar o comando
+<command>systemd-run</command> para iniciar processos de execução longa. Por
+exemplo: <command>systemd-run --scope --user /usr/bin/screen</command>. Se
+você habilitar a persistência para seu(ua) usuário(a), [então] a
+user@.service continuará, mesmo depois que todas as sessões de login forem
+fechadas e automaticamente iniciará na inicialização do sistema. Isso tem a
+vantagem de explicitamente permitir e proibir processos para execução depois
+que a sessão de usuário(a) tenha terminado, porém quebra
+retrocompatibilidade com ferramentas como <command>nohup</command> e
+utilitários que usam <function>daemon()</function>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <emphasis>Habilitar persistência de processo abrangente ao
+sistema</emphasis>: Você pode configurar
+<parameter>KillUserProcesses=no</parameter> em
+<filename>/etc/systemd/logind.conf</filename> para habilitar a persistência
+de processo globalmente para todos(as) os(as) usuários(as). Isso tem o
+benefício de deixar o método antigo disponível para todos(as) os(as)
+usuários(as) à custa do controle explícito.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <emphasis>Desabilitar em tempo de construção</emphasis>: Você pode
+desabilitar a persistência por padrão enquanto construir o systemd
+adicionando a chave
+<parameter>-Ddefault-kill-user-processes=false</parameter> ao comando
+<command>meson</command> para o systemd. Isso desabilita completamente a
+habilidade do systemd para finalizar processos de usuário(a) ao fim da
+sessão.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
