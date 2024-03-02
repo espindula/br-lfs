@@ -42,13 +42,22 @@ e desligamento do sistema.</para>
 class="groupname">render</systemitem> e <systemitem
 class="groupname">sgx</systemitem>, das regras padrão do "udev":</para>
 
- <screen><userinput remap="pre">sed -i -e 's/GROUP="render"/GROUP="video"/' \
+ <!-- https://github.com/systemd/systemd/pull/30549 -->
+<screen><userinput remap="pre">sed -i -e 's/GROUP="render"/GROUP="video"/' \
        -e 's/GROUP="sgx", //' rules.d/50-udev-default.rules.in</userinput></screen>
+
+    
+    <para>Agora corrija uma vulnerabilidade de segurança na verificação DNSSEC de
+<command>systemd-resolved</command> e um defeito que quebra
+<command>systemd-analyze verify</command> em uma unidade instanciada do
+systemd:</para>
+
+<screen><userinput remap='pre'>patch -Np1 -i ../&systemd-upstream-patch;</userinput></screen>
 
     <para>Prepare systemd para compilação:</para>
 
 <screen><userinput remap="configure">mkdir -p build
-cd       build
+cd        build
 
 meson setup \
       --prefix=/usr                 \
@@ -59,12 +68,15 @@ meson setup \
       -Dldconfig=false              \
       -Dsysusers=false              \
       -Drpmmacrosdir=no             \
-      -Dhomed=false                 \
+      -Dhomed=disabled              \
       -Duserdb=false                \
-      -Dman=false                   \
+      -Dman=disabled                \
       -Dmode=release                \
       -Dpamconfdir=no               \
       -Ddev-kvm-mode=0660           \
+      -Dnobody-group=nogroup        \
+      -Dsysupdate=disabled          \
+      -Dukify=disabled              \
       -Ddocdir=/usr/share/doc/systemd-&systemd-version; \
       ..</userinput></screen>
 
@@ -133,7 +145,8 @@ pois o LFS não suporta RPM.</para>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>-D{userdb,homed}=false</parameter></term>
+        <term><parameter>-Dhomed=disabled</parameter> e
+<parameter>-Duserdb=false</parameter></term>
         <listitem>
           <para>Remova dois processos de segundo plano com dependências que não se encaixam
 no escopo do LFS.</para>
@@ -141,7 +154,7 @@ no escopo do LFS.</para>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>-Dman=false</parameter></term>
+        <term><parameter>-Dman=disabled</parameter></term>
         <listitem>
           <para>Impeça a geração de páginas de manual para evitar dependências extras. Nós
 instalaremos páginas de manual pré-geradas para o systemd a partir de um
@@ -174,6 +187,37 @@ acessassem <filename class='devicefile'>/dev/kvm</filename>. Os(As)
 editores(as) a consideram perigosa. Essa opção a substitui.</para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dnobody-group=nogroup</parameter></term>
+        <listitem>
+          <para>Informe ao pacote que o nome do grupo com GID 65534 é <systemitem
+class='groupname'>nogroup</systemitem>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dsysupdate=disabled</parameter></term>
+        <listitem>
+          <para>Não instale a ferramenta
+&quot;<command>systemd-sysupdate</command>&quot;. Ela foi projetada para
+atualizar automaticamente distribuições binárias, de forma que é inútil para
+um sistema básico do Linux construído a partir do fonte. E informará erros
+na inicialização se estiver habilitada, mas não configurada corretamente.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dukify=disabled</parameter></term>
+        <listitem>
+          <para>Não instale o conjunto de comandos sequenciais
+&quot;<command>systemd-ukify</command>&quot;. Em tempo de execução, esse
+conjunto de comandos sequenciais exige o módulo do &quot;Python&quot;
+&quot;<application>pefile</application>&quot; que nem o LFS nem o BLFS
+fornecem.</para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
 
     <para>Compile o pacote:</para>
@@ -200,12 +244,6 @@ editores(as) a consideram perigosa. Essa opção a substitui.</para>
 
     <para>Configure a estrutura básica alvo:</para>
 
-<screen><userinput remap="adjust">systemctl preset-all</userinput></screen>
-
-    <para>Desabilite dois serviços para atualizar distribuições de binário. Eles são
-inúteis para um sistema básico Linux construído a partir do fonte e cada um
-informará um erro se estiver habilitado, mas não configurado:</para>
-
 <!-- dev: 50-pid-max.conf is not removed in BLFS, so I commented the following out.
           If it causes any trouble, we can add this back and also copy it into BLFS -->
 <!--
@@ -215,7 +253,7 @@ Prevent systemd from resetting the maximum PID value which causes
 
 <screen><userinput remap="adjust">rm -f /usr/lib/sysctl.d/50-pid-max.conf</userinput></screen>
 -->
-<screen><userinput remap="adjust">systemctl disable systemd-sysupdate{,-reboot}</userinput></screen>
+<screen><userinput remap="adjust">systemctl preset-all</userinput></screen>
 
 
 

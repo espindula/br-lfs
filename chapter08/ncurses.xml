@@ -96,14 +96,14 @@ estáticos.</para>
         <term><parameter>--enable-widec</parameter></term>
         <listitem>
           <para>Essa chave faz com que bibliotecas de caracteres largos (por exemplo,
-<filename class="libraryfile">libncursesw.so.&ncurses-version;</filename>)
+<filename class="libraryfile">libncursesw.so.&ncurses-release;</filename>)
 sejam construídas em vez das normais (por exemplo, <filename
-class="libraryfile">libncurses.so.&ncurses-version;</filename>). Essas
-bibliotecas de caracteres largos são utilizáveis tanto em locales de
+class="libraryfile">libncurses.so.&ncurses-release;</filename>). Essas
+bibliotecas de caracteres largos são usáveis tanto em localidades de
 múltiplos bytes quanto em tradicionais de oito (08) bits, enquanto
-bibliotecas normais funcionam adequadamente só em locales de oito (08)
-bits. Bibliotecas de caracteres largos e normais são compatíveis em fonte,
-mas não são compatíveis em binário.</para>
+bibliotecas normais funcionam adequadamente somente em localidades de oito
+(08) bits. Bibliotecas de caracteres largos e normais são compatíveis em
+fonte, mas não são compatíveis em binário.</para>
         </listitem>
       </varlistentry>
 
@@ -125,36 +125,41 @@ depois que o pacote tiver sido instalado. Os testes residem no diretório
          observed.  We can't simply remove /usr/lib/libncursesw.so.6.x like
          how we handle libmozjs-xx.so in BLFS because bash needs it, and
          make will spawn new shell processes during "make install".  -->
-<para>A instalação desse pacote sobrescreverá <filename
-class="libraryfile">libncursesw.so.&ncurses-version;</filename> no
-local. Isso possivelmente quebre o processo de shell que está usando código
-e dados a partir do arquivo da biblioteca. Instale o pacote com
-<literal>DESTDIR</literal> e substitua o arquivo da biblioteca corretamente
-usando comando <command>install</command>:</para>
+<para>A instalação desse pacote sobrescreverá &quot;<filename
+class="libraryfile">libncursesw.so.&ncurses-release;</filename>&quot; no
+local. Isso possivelmente quebre o processo de &quot;shell&quot; que esteja
+usando código e dados oriundo do arquivo da biblioteca. Instale o pacote com
+&quot;<literal>DESTDIR</literal>&quot; e substitua o arquivo da biblioteca
+corretamente usando o comando &quot;<command>install</command>&quot; (o
+cabeçalho &quot;<filename>curses.h</filename>&quot; também é editado para
+garantir que a &quot;ABI&quot; de caracteres largos seja usada como fizemos
+em &quot;<xref linkend='ch-tools-ncurses'/>&quot;):</para>
 
 <screen><userinput remap="install">make DESTDIR=$PWD/dest install
-install -vm755 dest/usr/lib/libncursesw.so.&ncurses-version; /usr/lib
-rm -v  dest/usr/lib/libncursesw.so.&ncurses-version;
+install -vm755 dest/usr/lib/libncursesw.so.&ncurses-release; /usr/lib
+rm -v   dest/usr/lib/libncursesw.so.&ncurses-release;
+sed -e 's/^#if.*XOPEN.*$/#if 1/' \
+    -i dest/usr/include/curses.h
 cp -av dest/* /</userinput></screen>
 
     <para>Muitos aplicativos ainda esperam que o vinculador seja capaz de encontrar
-bibliotecas Ncurses de caracteres não largos. Ajuste tais aplicativos para
-vincularem com bibliotecas de caracteres largos por meio de links simbólicos
-e scripts de vinculador:</para>
+bibliotecas &quot;Ncurses&quot; de caracteres não largos. Engane esses
+aplicativos para se vincularem a bibliotecas de caracteres largos por meio
+de links simbólicos (observe que os links &quot;<filename
+class='extension'>.so</filename>&quot; só são seguros com
+&quot;<filename>curses.h</filename>&quot; editado para sempre usar a
+&quot;ABI&quot; de caracteres largos):</para>
 
 <screen><userinput remap="install">for lib in ncurses form panel menu ; do
-    rm -vf                    /usr/lib/lib${lib}.so
-    echo "INPUT(-l${lib}w)" &gt; /usr/lib/lib${lib}.so
-    ln -sfv ${lib}w.pc        /usr/lib/pkgconfig/${lib}.pc
+     ln -sfv lib${lib}w.so /usr/lib/lib${lib}.so
+     ln -sfv ${lib}w.pc    /usr/lib/pkgconfig/${lib}.pc
 done</userinput></screen>
 
     <para>Finalmente, certifique-se de que aplicativos antigos que procuram por
 <filename class="libraryfile">-lcurses</filename> em tempo de construção
 ainda sejam construíveis:</para>
 
-<screen><userinput remap="install">rm -vf                     /usr/lib/libcursesw.so
-echo "INPUT(-lncursesw)" &gt; /usr/lib/libcursesw.so
-ln -sfv libncurses.so      /usr/lib/libcurses.so</userinput></screen>
+<screen><userinput remap="install">ln -sfv libncursesw.so /usr/lib/libcurses.so</userinput></screen>
 
     <para>Se desejado, [então] instale a documentação do Ncurses:</para>
 
@@ -198,9 +203,11 @@ cp -av lib/lib*.so.5* /usr/lib</userinput></screen>
 ncursesw6-config, reset (link para tset), tabs, tic, toe, tput e tset
         </seg>
         <seg>
-           libcursesw.so (link simbólico e script de vinculador para libncursesw.so),
-libformw.so, libmenuw.so, libncursesw.so, libncurses++w.so, libpanelw.so e
-homônimos delas de caractere não largo sem "w" nos nomes de biblioteca.</seg>
+           libcurses.so (link simbólico), libform.so (link simbólico), libformw.so,
+libmenu.so (link simbólico), libmenuw.so, libncurses.so (link simbólico),
+libncursesw.so, libncurses++w.so, libpanel.so (link simbólico) e
+libpanelw.so,
+        </seg>
         <seg>
            /usr/share/tabset, /usr/share/terminfo e
 /usr/share/doc/ncurses-&ncurses-version;
@@ -324,16 +331,6 @@ informar o nome longo dele</para>
           <para>Pode ser usado para inicializar terminais</para>
           <indexterm zone="ch-system-ncurses tset">
             <primary sortas="b-tset">tset</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="libcursesw">
-        <term><filename class="libraryfile">libcursesw</filename></term>
-        <listitem>
-          <para>Um link para <filename>libncursesw</filename></para>
-          <indexterm zone="ch-system-ncurses libcursesw">
-            <primary sortas="c-libcursesw">libcursesw</primary>
           </indexterm>
         </listitem>
       </varlistentry>

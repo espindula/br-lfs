@@ -52,10 +52,15 @@ class="groupname">sgx</systemitem>, das regras padrão do "udev":</para>
 
  <screen><userinput remap="pre">sed '/systemd-sysctl/s/^/#/' -i rules.d/99-systemd.rules.in</userinput></screen>
 
+    <para>Ajuste os caminhos rigidamente codificados para os arquivos de configuração
+da rede de intercomunicação para a instalação autônoma do &quot;Udev&quot;:</para>
+
+ <screen><userinput remap="pre">sed '/NETWORK_DIRS/s/systemd/udev/' -i src/basic/path-lookup.h</userinput></screen>
+
     <para>Prepare o "Udev" para compilação:</para>
 
 <screen><userinput remap="configure">mkdir -p build
-cd       build
+cd      build
 
 meson setup \
       --prefix=/usr                 \
@@ -63,6 +68,8 @@ meson setup \
       -Dmode=release                \
       -Ddev-kvm-mode=0660           \
       -Dlink-udev-shared=false      \
+      -Dlogind=false                \
+      -Dvconsole=false              \
       ..</userinput></screen>
 
     <variablelist>
@@ -104,35 +111,49 @@ projetada para ser compartilhada por muitos componentes do "Systemd" e é
 muito exagerada para uma instalação somente do "udev".</para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term><parameter>-Dlogind=false -Dvconsole=false</parameter></term>
+        <listitem>
+          <para>Essas opções evitam a geração de vários arquivos de regras do
+&quot;Udev&quot; pertencentes a outros componentes do &quot;Systemd&quot;
+que nós não instalaremos.</para>
+        </listitem>
+      </varlistentry>
     </variablelist>
+
+    <para>Obtenha a lista dos auxiliares &quot;Udev&quot; enviados e salve-a em uma
+variável de ambiente (exportá-la não é estritamente necessário, mas facilita
+construir como um(a) usuário(a) comum ou usar um gerenciador de pacotes):</para>
+
+    <screen><userinput remap="make">export udev_helpers=$(grep "'name' :" ../src/udev/meson.build | \
+                       awk '{print $3}' | tr -d ",'" | grep -v 'udevadm')</userinput></screen>
 
     <para>Construa somente os componentes necessários para o "udev":</para>
 
-    <screen><userinput remap="make">ninja udevadm systemd-hwdb \
-      $(grep -o -E "^build (src/libudev|src/udev|rules.d|hwdb.d)[^:]*" \
-        build.ninja | awk '{ print $2 }')                              \
-      $(realpath libudev.so --relative-to .)</userinput></screen>
-
-    <para>Remova um arquivo de regra do "udev" que exige uma instalação completa do
-"Systemd":</para>
-
-<screen><userinput remap="make">rm rules.d/90-vconsole.rules</userinput></screen>
+    <screen><userinput remap="make">ninja udevadm systemd-hwdb                                            \
+      $(ninja -n | grep -Eo '(src/(lib)?udev|rules.d|hwdb.d)/[^ ]*') \
+      $(realpath libudev.so --relative-to .)                         \
+      $udev_helpers</userinput></screen>
 
     <para>Instale o pacote:</para>
 
-    <screen><userinput remap="install">install -vm755 -d {/usr/lib,/etc}/udev/{hwdb,rules}.d
+    <screen><userinput remap="install">install -vm755 -d {/usr/lib,/etc}/udev/{hwdb.d,rules.d,network}
 install -vm755 -d /usr/{lib,share}/pkgconfig
-install -vm755 udevadm                     /usr/bin/
-install -vm755 systemd-hwdb                /usr/bin/udev-hwdb
-ln      -svfn  ../bin/udevadm              /usr/sbin/udevd
-cp      -av    libudev.so{,*[0-9]}         /usr/lib/
-install -vm644 ../src/libudev/libudev.h    /usr/include/
-install -vm644 src/libudev/*.pc            /usr/lib/pkgconfig/
-install -vm644 src/udev/*.pc               /usr/share/pkgconfig/
-install -vm644 ../src/udev/udev.conf       /etc/udev/
-install -vm644 rules.d/* ../rules.d/{*.rules,README} /usr/lib/udev/rules.d/
-install -vm644 hwdb.d/*  ../hwdb.d/{*.hwdb,README}   /usr/lib/udev/hwdb.d/
-install -vm755 $(find src/udev -type f | grep -F -v ".") /usr/lib/udev</userinput></screen>
+install -vm755 udevadm                            /usr/bin/
+install -vm755 systemd-hwdb                        /usr/bin/udev-hwdb
+ln      -svfn  ../bin/udevadm                      /usr/sbin/udevd
+cp      -av    libudev.so{,*[0-9]}                 /usr/lib/
+install -vm644 ../src/libudev/libudev.h            /usr/include/
+install -vm644 src/libudev/*.pc                    /usr/lib/pkgconfig/
+install -vm644 src/udev/*.pc                       /usr/share/pkgconfig/
+install -vm644 ../src/udev/udev.conf               /etc/udev/
+install -vm644 rules.d/* ../rules.d/README         /usr/lib/udev/rules.d/
+install -vm644 $(find ../rules.d/*.rules \
+                      -not -name '*power-switch*') /usr/lib/udev/rules.d/
+install -vm644 hwdb.d/*  ../hwdb.d/{*.hwdb,README} /usr/lib/udev/hwdb.d/
+install -vm755 $udev_helpers                       /usr/lib/udev
+install -vm644 ../network/99-default.link          /usr/lib/udev/network</userinput></screen>
 
     <para>Instale algumas regras personalizadas e arquivos de suporte úteis em um
 ambiente LFS:</para>
@@ -145,16 +166,31 @@ make -f &udev-lfs-version;/Makefile.lfs install</userinput></screen>
     
 <screen><!-- Please make sure systemd man pages tarball has a common leading
          component in the path.  -->
-<userinput remap="install">tar -xf ../../systemd-man-pages-&systemd-man-version;.tar.xz                            \
+<userinput remap="install">tar -xf ../../systemd-man-pages-&systemd-man-version;.tar.xz                           \
     --no-same-owner --strip-components=1                              \
     -C /usr/share/man --wildcards '*/udev*' '*/libudev*'              \
+                                  '*/systemd.link.5'                  \
                                   '*/systemd-'{hwdb,udevd.service}.8
+
+sed 's|systemd/network|udev/network|'                                 \
+    /usr/share/man/man5/systemd.link.5                                \
+  > /usr/share/man/man5/udev.link.5
+
 sed 's/systemd\(\\\?-\)/udev\1/' /usr/share/man/man8/systemd-hwdb.8   \
                                > /usr/share/man/man8/udev-hwdb.8
+
 sed 's|lib.*udevd|sbin/udevd|'                                        \
     /usr/share/man/man8/systemd-udevd.service.8                       \
   > /usr/share/man/man8/udevd.8
-rm  /usr/share/man/man8/systemd-*.8</userinput></screen>
+
+rm /usr/share/man/man*/systemd*</userinput></screen>
+
+    <para>Finalmente, desconfigure a variável &quot;<envar>udev_helpers</envar>&quot;:</para>
+
+    
+    <screen><!-- remap="make" seems confusing but we don't have sth. like
+         remap="clean".  -->
+<userinput remap="install">unset udev_helpers</userinput></screen>
 
   </sect2>
 

@@ -48,12 +48,14 @@ tempo de execução deles. Aplique o seguinte remendo para fazer com que tais
 aplicativos armazenem os dados em tempo de execução deles nos locais
 conformes com o FHS:</para>
 
+<!--
+    <para>
+Now fix two security vulnerabilities and a regression causing the
+    posix_memalign() function very slow in some conditions:</para>
+
+<screen><userinput remap="pre">patch -Np1 -i ../&glibc-upstream-fixes-patch;</userinput></screen>
+-->
 <screen><userinput remap="pre">patch -Np1 -i ../&glibc-fhs-patch;</userinput></screen>
-
-    <para>Agora corrija uma regressão causando a função "posix_memalign()" ficar muito
-lenta em algumas condições:</para>
-
-<screen><userinput remap="pre">patch -Np1 -i ../&glibc-memalign-patch;</userinput></screen>
 
     <para>A documentação da Glibc recomenda construir a Glibc em um diretório dedicado
 à construção:</para>
@@ -69,11 +71,11 @@ class="directory">/usr/sbin</filename>:</para>
 
     <para>Prepare a Glibc para compilação:</para>
 
-<screen><userinput remap="configure">../configure --prefix=/usr                           \
+<screen><userinput remap="configure">../configure --prefix=/usr                            \
              --disable-werror                         \
              --enable-kernel=&min-kernel;                     \
              --enable-stack-protector=strong          \
-             --with-headers=/usr/include              \
+             --disable-nscd                           \
              libc_cv_slibdir=/usr/lib</userinput></screen>
 
     <variablelist>
@@ -100,17 +102,19 @@ versão posterior, não pode ser usada.</para>
       <varlistentry>
         <term><parameter>--enable-stack-protector=strong</parameter></term>
         <listitem>
-          <para>Essa opção aumenta a segurança de sistema adicionando código extra para
-verificar estouros de buffer, tais como ataques de esmagamento de pilha.</para>
+          <para>Essa opção aumenta a segurança do sistema adicionando código extra para
+verificar estouros de buffer, como ataques de esmagamento de pilha. Observe
+que a Glibc sempre substitui explicitamente o padrão do GCC, de forma que
+essa opção ainda é necessária mesmo que já tenhamos especificado
+<option>--enable-default-ssp</option> para GCC.</para>
         </listitem>
       </varlistentry>
 
-      <!-- do we need this one? -->
-<varlistentry>
-        <term><parameter>--with-headers=/usr/include</parameter></term>
+      <varlistentry>
+        <term><parameter>--disable-nscd</parameter></term>
         <listitem>
-          <para>Essa opção diz ao sistema de construção onde encontrar os cabeçalhos da API
-do núcleo.</para>
+          <para>Não construa o processo de segundo plano de armazenamento temporário do
+serviço de nomes, o qual não mais é usado.</para>
         </listitem>
       </varlistentry>
 
@@ -163,32 +167,33 @@ problemas mais comuns vistos para versões recentes do LFS:</para>
 do LFS.</para>
       </listitem>
 
-
-
-      
-      <!-- Did not fail with glibc-2.38
-      <listitem>
-
-        <para><emphasis>misc/tst-ttyname</emphasis>
-        is known to fail in the LFS chroot environment.</para>
-      </listitem>
--->
-<!-- https://sourceware.org/pipermail/libc-alpha/2022-August/141567.html -->
-<listitem>
-        <para>O teste <emphasis>stdlib/tst-arc4random-thread</emphasis> é conhecido por
-falhar se o núcleo do anfitrião for relativamente antigo.</para>
-      </listitem>
-
       <listitem>
         <para>Alguns testes, por exemplo
-<emphasis>nss/tst-nss-files-hosts-multi</emphasis>, são conhecidos por
-falharem em sistemas relativamente lentos devido a um de tempo limite
-interno.</para>
+<emphasis>nss/tst-nss-files-hosts-multi</emphasis> e
+<emphasis>nptl/tst-thread-affinity*</emphasis> são conhecidos por falharem
+devido a um tempo limite (especialmente quando o sistema está relativamente
+lento e (ou) executando a suíte de teste com várias tarefas make
+paralelas). Esses testes podem ser identificados com:</para>
+
+        
+        <screen role="nodump"><!-- TODO: Using nodump for freeze.  Change it to role="test" after
+             12.1 release so jhalfs can list these in the log.  -->
+<userinput>grep "Timed out" -l $(find -name \*.out)</userinput></screen>
+
+        <para>É possível reexecutar um teste com tempo limite aumentado com
+<command>TIMEOUTFACTOR=<replaceable>&lt;fator&gt;</replaceable> make test
+t=<replaceable>&lt;nome do teste&gt;</replaceable></command>. Por exemplo,
+<command>TIMEOUTFACTOR=10 make test
+t=nss/tst-nss-files-hosts-multi</command> reexecutará
+<emphasis>nss/tst-nss-files-hosts-multi</emphasis> com dez vezes o tempo
+limite original.</para>
       </listitem>
 
       <listitem>
-        <para>Além disso, alguns testes possivelmente falhem com um modelo de CPU ou
-versão do núcleo do anfitrião relativamente antigo.</para>
+        <para>Além disso, alguns testes possivelmente falhem com um modelo de CPU
+relativamente antigo (por exemplo
+<emphasis>elf/tst-cpu-features-cpuinfo</emphasis>) ou versão do núcleo do
+anfitrião (por exemplo <emphasis>stdlib/tst-arc4random-thread</emphasis>).</para>
       </listitem>
     </itemizedlist>
 
@@ -205,6 +210,123 @@ falha com uma configuração moderna da Glibc:</para>
 
 <screen><userinput remap="install">sed '/test-installation/s@$(PERL)@echo not running@' -i ../Makefile</userinput></screen>
 
+    <important>
+      <para>
+        Se atualizar a Glibc para uma nova versão secundária (por exemplo, da
+Glibc-2.36 para a Glibc-&glibc-version;) em um sistema LFS em execução,
+[então] você precisará tomar algumas precauções extras para evitar quebrar o
+sistema:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          
+          <!-- There are two reasons we don't support this:
+               1. Upgrading on a system with separate /lib and /usr/lib is
+                  tricky.
+               2. With Glibc prior to 2.34 libc.so.6 etc. are symlinks to
+                  libc-2.33.so etc., again causing the upgradation tricky.
+                  The Glibc NEWS file explicit states they no longer use
+                  symlinks for the ABI names to avoid upgradation
+                  issues.  -->
+<para>
+            Atualizar a Glibc em um sistema LFS anterior ao 11.0 (exclusivo) não é
+suportado. Reconstrua o LFS se você estiver executando um sistema LFS
+antigo, mas precisar de uma Glibc mais recente.
+          </para>
+        </listitem>
+
+        
+        <!-- https://sourceware.org/pipermail/libc-alpha/2024-January/154095.html -->
+<listitem>
+          <para>
+            Se atualizar em um sistema LFS anterior a 12.0 (exclusivo), [então] instale
+a <application>Libxcrypt</application> seguindo a <xref role='.'
+linkend='ch-system-libxcrypt'/> Além de uma instalação normal da
+<application>Libxcrypt</application>, <emphasis role='bold'>você DEVE seguir
+a observação na seção Libxcrypt para instalar a <filename
+class='libraryfile'>libcrypt.so.1*</filename> (substituindo <filename
+class='libraryfile'>libcrypt.so.1</filename> originária da instalação
+anterior da Glibc)</emphasis>.
+          </para>
+        </listitem>
+
+        
+        <!-- Otherwise on lfs-systemd nscd will fail to start on boot,
+             and on both lfs-sysv and lfs-systemd useradd etc. will try
+             to start nscd, then nscd will fail to start as well and
+             produce some spurious error message.  -->
+<listitem>
+          <para>
+            Se atualizar em um sistema LFS anterior ao 12.1 (exclusivo), [então] remova
+o aplicativo <command>nscd</command>:
+          </para>
+
+          <screen role='nodump'><userinput>rm -f /usr/sbin/nscd</userinput></screen>
+
+          <para revision='systemd'>
+            Se esse sistema (anterior ao LFS 12.1, exclusivo) for baseado em Systemd,
+[então] também é necessário desabilitar e parar o serviço
+<command>nscd</command> agora:
+          </para>
+
+          <screen revision='systemd' role='nodump'><userinput>systemctl disable --now nscd</userinput></screen>
+        </listitem>
+
+        <listitem>
+          <para>
+            Atualize o núcleo e reinicialize se ele for mais antigo que &min-kernel;
+(verifique a versão atual com <command>uname -r</command>) ou se quiser
+atualizá-lo mesmo assim, seguindo a <xref linkend='ch-bootable-kernel'
+role='.'/>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Atualize os cabeçalhos da API do núcleo se forem mais antigos que
+&min-kernel; (verifique a versão atual com <command>cat
+/usr/include/linux/version.h</command>) ou se quiser atualizá-los mesmo
+assim, seguindo a <xref linkend='ch-tools-linux-headers'/> (mas removendo
+<envar>$LFS</envar> do comando <command>cp</command>).
+          </para>
+        </listitem>
+
+        
+        <!-- This is to ensure we don't start a process at the time point
+             where some Glibc shared libraries are updated but the others
+             are not.  Such mismatches can cause programs crash on startup,
+             esp. a mismatch between ld-linux-x86-64.so.2 and
+             libc.so.6.  Note that a crash in the installation process
+             will leave the system in a state with the mismatch forever,
+             unrecoverable without the help of another distro.  -->
+<listitem>
+          <para>
+            Realize uma instalação <envar>DESTDIR</envar> e atualize as bibliotecas
+compartilhadas da Glibc no sistema usando um comando simples
+<command>install</command>:
+          </para>
+
+          <screen role='nodump'><userinput>make DESTDIR=$PWD/dest install
+install -vm755 dest/usr/lib/*.so.* /usr/lib</userinput></screen>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        É obrigatório seguir rigorosamente essas etapas acima, a menos que você
+entenda completamente o que está fazendo. <emphasis role='bold'>Qualquer
+desvio inesperado possivelmente torne o sistema completamente
+desusável. VOCÊ ESTÁ AVISADO(A).</emphasis>
+      </para>
+
+      <para>
+        Em seguida, continue a executar o comando <command>make install</command>, o
+comando <command>sed</command> contra o <filename>/usr/bin/ldd</filename> e
+os comandos para instalar as localidades. Assim que estiverem finalizados,
+reinicialize o sistema imediatamente.
+      </para>
+    </important>
+
     <para>Instale o pacote:</para>
 
 <screen><userinput remap="install">make install</userinput></screen>
@@ -212,18 +334,21 @@ falha com uma configuração moderna da Glibc:</para>
     <para>Corrija um caminho codificado rigidamente para o carregador de executável no
 script <command>ldd</command>:</para>
 
-<screen><userinput remap="install">sed '/RTLDLIST=/s@/usr@@g' -i /usr/bin/ldd</userinput></screen>
-
-    <para>Instale o arquivo de configuração e diretório de tempo de execução para o
-<command>nscd</command>:</para>
+<!--
+    <para>
+Install the configuration file and runtime directory for
+    <command>nscd</command>:</para>
 
 <screen><userinput remap="install">cp -v ../nscd/nscd.conf /etc/nscd.conf
 mkdir -pv /var/cache/nscd</userinput></screen>
 
-    <para revision="systemd">Instale os arquivos de suporte do systemd para o <command>nscd</command>:</para>
+    <para revision="systemd">Install the systemd support files for
+    <command>nscd</command>:</para>
 
     <screen revision="systemd"><userinput remap="install">install -v -Dm644 ../nscd/nscd.tmpfiles /usr/lib/tmpfiles.d/nscd.conf
 install -v -Dm644 ../nscd/nscd.service /usr/lib/systemd/system/nscd.service</userinput></screen>
+-->
+<screen><userinput remap="install">sed '/RTLDLIST=/s@/usr@@g' -i /usr/bin/ldd</userinput></screen>
 
     <para>Em seguida, instale os locales que podem fazer o sistema responder em um
 idioma diferente. Nenhum desses locales é exigido, mas se alguns deles
@@ -242,7 +367,7 @@ instalarão o conjunto mínimo de locales necessário para a cobertura ótima de
 testes:</para>
 
 <screen role="nodump"><userinput remap="locale-test">mkdir -pv /usr/lib/locale
-localedef -i POSIX -f UTF-8 C.UTF-8 2> /dev/null || true
+localedef -i C -f UTF-8 C.UTF-8
 localedef -i cs_CZ -f UTF-8 cs_CZ.UTF-8
 localedef -i de_DE -f ISO-8859-1 de_DE
 localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
@@ -294,7 +419,7 @@ locales não listados no arquivo
 precisar deles. Por exemplo, os seguintes dois locales são necessários para
 alguns testes posteriormente neste capítulo:</para>
 
-<screen role="nodump"><userinput remap="locale-full">localedef -i POSIX -f UTF-8 C.UTF-8 2> /dev/null || true
+<screen role="nodump"><userinput remap="locale-full">localedef -i C -f UTF-8 C.UTF-8
 localedef -i ja_JP -f SHIFT_JIS ja_JP.SJIS 2> /dev/null || true</userinput></screen>
 
     <note><para>A Glibc agora usa a libidn2 quando resolver nomes internacionalizados de
@@ -326,7 +451,7 @@ os padrões da Glibc não funcionam bem em um ambiente de rede de comunicação.
     <para>Crie um novo arquivo <filename>/etc/nsswitch.conf</filename> executando o
 seguinte:</para>
 
-<screen><userinput>cat &gt; /etc/nsswitch.conf &lt;&lt; "EOF"
+<screen revision='sysv'><userinput>cat &gt; /etc/nsswitch.conf &lt;&lt; "EOF"
 <literal># Begin /etc/nsswitch.conf
 
 passwd: files
@@ -342,6 +467,24 @@ ethers: files
 rpc: files
 
 # End /etc/nsswitch.conf</literal>
+EOF</userinput></screen>
+
+<screen revision='systemd'><userinput>cat &gt; /etc/nsswitch.conf &lt;&lt; "EOF"
+<literal># Começo /etc/nsswitch.conf
+
+passwd: files systemd
+group: files systemd
+shadow: files systemd
+
+hosts: mymachines resolve [!UNAVAIL=return] files myhostname dns
+networks: files
+
+protocols: files
+services: files
+ethers: files
+rpc: files
+
+# Fim /etc/nsswitch.conf</literal>
 EOF</userinput></screen>
 
     </sect3>
@@ -483,7 +626,7 @@ mkdir -pv /etc/ld.so.conf.d</userinput></screen>
       <seglistitem>
         <seg>gencat, getconf, getent, iconv, iconvconfig, ldconfig, ldd, lddlibc4, ld.so
 (link simbólico para ld-linux-x86-64.so.2 ou ld-linux.so.2), locale,
-localedef, makedb, mtrace, nscd, pcprofiledump, pldd, sln, sotruss, sprof,
+localedef, makedb, mtrace, pcprofiledump, pldd, sln, sotruss, sprof,
 tzselect, xtrace, zdump e zic</seg>
         <seg>ld-linux-x86-64.so.2, ld-linux.so.2, libBrokenLocale.{a,so}, libanl.{a,so},
 libc.{a,so}, libc_nonshared.a, libc_malloc_debug.so, libdl.{a,so.2}, libg.a,
@@ -497,8 +640,8 @@ libthread_db.so e libutil.{a,so.1}</seg>
 /usr/include/netiucv, /usr/include/netpacket, /usr/include/netrom,
 /usr/include/netrose, /usr/include/nfs, /usr/include/protocols,
 /usr/include/rpc, /usr/include/sys, /usr/lib/audit, /usr/lib/gconv,
-/usr/lib/locale, /usr/libexec/getconf, /usr/share/i18n, /usr/share/zoneinfo,
-/var/cache/nscd e /var/lib/nss_db</seg>
+/usr/lib/locale, /usr/libexec/getconf, /usr/share/i18n, /usr/share/zoneinfo
+e /var/lib/nss_db</seg>
       </seglistitem>
     </segmentedlist>
 
@@ -627,17 +770,6 @@ arquiteturas mais novas como x86_64</para>
 formato legível por humanos</para>
           <indexterm zone="ch-system-glibc mtrace">
             <primary sortas="b-mtrace">mtrace</primary>
-          </indexterm>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="nscd">
-        <term><command>nscd</command></term>
-        <listitem>
-          <para>Um daemon que fornece um cache para as solicitações de serviço de nomes mais
-comuns</para>
-          <indexterm zone="ch-system-glibc nscd">
-            <primary sortas="b-nscd">nscd</primary>
           </indexterm>
         </listitem>
       </varlistentry>

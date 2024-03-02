@@ -25,13 +25,14 @@ documentado.
   <sect2>
      <title>Software</title>
 
-    <para>Seu sistema anfitrião deveria ter o software seguinte com as versões mínimas
-indicadas. Isso não deveria ser um problema para a maioria das distribuições
-Linux modernas. Também, perceba que muitas distribuições colocarão
-cabeçalhos de aplicativos dentro de pacotes separados, frequentemente na
-forma de <quote>&lt;nome-pacote&gt;-devel</quote> ou
-<quote>&lt;nome-pacote&gt;-dev</quote>. Certifique-se de instalá-los se sua
-distribuição os fornecer.</para>
+    <para>O teu sistema anfitrião deveria ter o seguinte logiciário com as versões
+mínimas indicadas. Isso não deveria ser um problema para a maioria das
+distribuições modernas do Linux. Também, observe que muitas distribuições
+colocarão cabeçalhos de logiciários dentro de pacotes separados,
+frequentemente na forma de
+<literal><replaceable>&lt;nome-pacote&gt;</replaceable>-devel</literal> ou
+<literal><replaceable>&lt;nome-pacote&gt;</replaceable>-dev</literal>.
+Certifique-se de instalá-los se a tua distribuição os fornecer.</para>
 
    <para>Versões anteriores dos pacotes de software listados possivelmente funcionem,
 porém não foram testados.</para>
@@ -53,8 +54,10 @@ simbólico ou real para bash)</para>
 link para bison ou script pequeno que executa bison)</para>
     </listitem>
 
-    <listitem>
-      <para><emphasis role="strong">Coreutils-7.0</emphasis></para>
+    
+    <!-- In Coreutils-8.1 the nproc program is added.  -->
+<listitem>
+      <para><emphasis role="strong">Coreutils-8.1</emphasis></para>
     </listitem>
 
     <listitem>
@@ -71,7 +74,10 @@ link para gawk)</para>
     </listitem>
 
     <listitem>
-      <para><emphasis role="strong">GCC-5.1</emphasis> incluindo o compilador C++,
+      
+      <!-- Pass 1 GCC FTBFS with GCC-5.1 because of
+           https://gcc.gnu.org/PR65801. -->
+<para><emphasis role="strong">GCC-5.2</emphasis> incluindo o compilador C++,
 <command>g++</command> (Versões maiores que &gcc-version; não são
 recomendadas dado que elas não foram testadas). As bibliotecas C e C++
 padrão (com cabeçalhos) também precisam estar presentes, de forma que o
@@ -89,13 +95,18 @@ compilador C++ possa construir aplicativos hospedados</para>
     <listitem>
       <para><emphasis role="strong">Núcleo Linux-&min-kernel;</emphasis></para>
 
-      <para>A razão para a exigência da versão do núcleo é a que nós especificamos essa
-versão quando da construção da <application>glibc</application> no <xref
-linkend="chapter-cross-tools"/> e <xref linkend="chapter-building-system"/>,
-de forma que as soluções alternativas para os núcleos mais antigos não estão
-habilitadas e a <application>glibc</application> compilada é ligeiramente
-mais rápida e menor. Em junho de 2023, &min-kernel; é o lançamento mais
-antigo do núcleo ainda suportado pelos(as) desenvolvedores(as) do núcleo.</para>
+      <para>A razão para a exigência da versão do núcleo é a de que nós especificamos
+essa versão quando da construção da <application>glibc</application> no
+<xref linkend="chapter-cross-tools"/> e <xref
+linkend="chapter-building-system"/>, de forma que as soluções alternativas
+para os núcleos mais antigos não estão habilitadas e a
+<application>glibc</application> compilada é ligeiramente mais rápida e
+menor. Em fevereiro de 2024, &min-kernel; é o lançamento mais antigo do
+núcleo ainda suportado pelos(as) desenvolvedores(as) do núcleo. Alguns
+lançamentos de núcleo mais antigos que &min-kernel; possivelmente ainda
+sejam suportados por equipes de terceiros, porém não são considerados
+lançamentos oficiais de desenvolvedor(a) do núcleo; leia-se <ulink
+url='https://kernel.org/category/releases.html'/> para os detalhes.</para>
 
       <para>Se o núcleo do anfitrião for anterior a &min-kernel;, [então] você precisará
 substituir o núcleo por uma versão mais atualizada. Existem duas maneiras de
@@ -178,10 +189,10 @@ habilidade de compilar aplicativos, execute os seguintes comandos:</para>
 
 <screen role="nodump"><?dbfo keep-together="auto"?><userinput>cat &gt; version-check.sh &lt;&lt; "EOF"
 <literal>#!/bin/bash
-# Um script para listar os números de versão de ferramentas críticas de desenvolvimento
+# Um conjunto sequencial de comandos para listar os números de versão de ferramentas críticas de desenvolvimento
 
-# Se você tiver ferramentas instaladas em outros diretórios, ajuste PATH 
-# aqui E em ~lfs/.bashrc (seção 4.4) também.
+# Se você tiver ferramentas instaladas em outros diretórios, [então] ajuste "PATH" aqui E
+# em ~lfs/.bashrc (seção 4.4) também.
 
 LC_ALL=C 
 PATH=/usr/bin:/bin
@@ -195,14 +206,14 @@ ver_check()
 {
    if ! type -p $2 &amp;>/dev/null
    then 
-     echo "ERRO: Não consigo encontrar $2 ($1)"; return 1; 
+     echo "ERRO: Não conseguiu encontrar $2 ($1)"; return 1; 
    fi
    v=$($2 --version 2>&amp;1 | grep -E -o '[0-9]+\.[0-9\.]+[a-z]*' | head -n1)
    if printf '%s\n' $3 $v | sort --version-sort --check &amp;>/dev/null
    then 
      printf "OK:    %-9s %-6s >= $3\n" "$1" "$v"; return 0;
    else 
-     printf "ERRO: %-9s é MUITO ANTIGO ($3 ou mais recente exigido)\n" "$1"; 
+     printf "ERRO:  %-9s é MUITO ANTIGO ($3 ou posterior exigido)\n" "$1"; 
      return 1; 
    fi
 }
@@ -212,23 +223,23 @@ ver_kernel()
    kver=$(uname -r | grep -E -o '^[0-9\.]+')
    if printf '%s\n' $1 $kver | sort --version-sort --check &amp;>/dev/null
    then 
-     printf "OK:    Núcleo Linux $kver >= $1\n"; return 0;
+     printf "OK:    núcleo Linux $kver >= $1\n"; return 0;
    else 
-     printf "ERRO: Núcleo Linux ($kver) é MUITO ANTIGO ($1 ou mais recente exigido)\n" "$kver"; 
+     printf "ERRO:  núcleo Linux ($kver) é MUITO ANTIGO ($1 ou posterior exigido)\n" "$kver"; 
      return 1; 
    fi
 }
 
-# Coreutils primeiro, pois o sort precisa do Coreutils >= 7.0
-ver_check Coreutils      sort     7.0 || bail "--version-sort não suportada"
+# "Coreutils" primeiro, pois "--version-sort" precisa do "Coreutils" >= 7.0
+ver_check Coreutils      sort     8.1 || bail "Coreutils muito antigo, pare"
 ver_check Bash           bash     3.2
 ver_check Binutils       ld       2.13.1
 ver_check Bison          bison    2.7
 ver_check Diffutils      diff     2.8.1
 ver_check Findutils      find     4.2.31
 ver_check Gawk           gawk     4.0.1
-ver_check GCC            gcc      5.1
-ver_check "GCC (C++)"    g++      5.1
+ver_check GCC            gcc      5.2
+ver_check "GCC (C++)"    g++      5.2
 ver_check Grep           grep     2.5.1a
 ver_check Gzip           gzip     1.3.12
 ver_check M4             m4       1.4.10
@@ -243,24 +254,30 @@ ver_check Xz             xz       5.0.0
 ver_kernel &min-kernel;
 
 if mount | grep -q 'devpts on /dev/pts' &amp;&amp; [ -e /dev/ptmx ]
-then echo "OK:    Núcleo Linux suporta UNIX 98 PTY";
-else echo "ERRO: Núcleo Linux NÃO suporta UNIX 98 PTY"; fi
+then echo "OK:    núcleo Linux suporta PTY do UNIX 98";
+else echo "ERRO:  núcleo Linux NÃO suporta PTY do UNIX 98"; fi
 
 alias_check() {
    if $1 --version 2>&amp;1 | grep -qi $2
    then printf "OK:    %-4s is $2\n" "$1";
-   else printf "ERRO: %-4s NÃO é $2\n" "$1"; fi
+   else printf "ERRO:  %-4s is NOT $2\n" "$1"; fi
 }
 echo "Aliases:"
 alias_check awk GNU
 alias_check yacc Bison
 alias_check sh Bash
 
-echo "Compiler check:"
+echo "Verificação do compilador:"
 if printf "int main(){}" | g++ -x c++ -
 then echo "OK:    g++ funciona";
-else echo "ERRO: g++ NÃO funciona"; fi
-rm -f a.out</literal>
+else echo "ERRO:  g++ NÃO funciona"; fi
+rm -f a.out
+
+if [ "$(nproc)" = "" ]; then
+   echo "ERRO: nproc não está disponível ou ele produz saída gerada vazia"
+else
+   echo "OK:   nproc informa que $(nproc) núcleos lógicos estão disponíveis"
+fi</literal>
 EOF
 
 bash version-check.sh</userinput></screen>

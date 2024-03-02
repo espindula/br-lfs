@@ -64,45 +64,48 @@ local. Use o seguinte comando para fazer isso.</para>
 
       <para>Agora monte os restantes sistemas de arquivos virtuais do núcleo:</para>
 
-<!--
-    <variablelist>
+      
 
-      <title>The meaning of the mount options for devpts:</title>
+<screen><!-- Do not put any option after $LFS/${mountpoint} or jhalfs cannot
+           handle it! -->
+<userinput>mount -vt devpts devpts -o gid=5,mode=0620 $LFS/dev/pts
+mount -vt proc proc $LFS/proc
+mount -vt sysfs sysfs $LFS/sys
+mount -vt tmpfs tmpfs $LFS/run</userinput></screen>
+
+    <variablelist>
+      <title>O significado das opções de montagem para devpts:</title>
 
       <varlistentry>
         <term><parameter>gid=5</parameter></term>
         <listitem>
-          <para>This ensures that all devpts-created device nodes are owned by
-          group ID 5.  This is the ID we will use later on for the <systemitem
-          class="groupname">tty</systemitem> group.  We use the group ID instead
-          of a name, since the host system might use a different ID for its
-          <systemitem class="groupname">tty</systemitem> group.</para>
+          <para>Isso garante que todos os nós de dispositivos criados pelo devpts são
+titularizados pelo ID de grupo 5. Esse é o ID que usaremos mais tarde para o
+grupo <systemitem class="groupname">tty</systemitem>. Nós usamos o ID de
+grupo em vez de um nome, pois o sistema anfitrião pode usar um ID diferente
+para o grupo <systemitem class="groupname">tty</systemitem> dele.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><parameter>mode=0620</parameter></term>
         <listitem>
-          <para>This ensures that all devpts-created device nodes have mode 0620
-          (user readable and writable, group writable).  Together with the
-          option above, this ensures that devpts will create device nodes that
-          meet the requirements of grantpt(), meaning the Glibc
-          <command>pt_chown</command> helper binary (which is not installed by
-          default) is not necessary.</para>
+          <para>Isso garante que todos os nós de dispositivos criados pelo devpts tenham o
+modo 0620 (legível e escrevível por usuário(a), escrevível por
+grupo). Juntamente com a opção acima, isso garante que o devpts criará nós
+de dispositivos que atendam às exigências de grantpt(), significando que o
+binário auxiliar da Glibc <command>pt_chown</command> (que não é instalado
+por padrão) não é necessário.</para>
         </listitem>
       </varlistentry>
 
     </variablelist>
--->
-<screen><userinput>mount -v --bind /dev/pts $LFS/dev/pts
-mount -vt proc proc $LFS/proc
-mount -vt sysfs sysfs $LFS/sys
-mount -vt tmpfs tmpfs $LFS/run</userinput></screen>
 
       <para>Em alguns sistemas anfitriões, <filename>/dev/shm</filename> é um link
-simbólico para <filename class="directory">/run/shm</filename>. O tmpfs /run
-foi montado acima, de modo que, nesse caso, somente um diretório precisa ser
-criado.</para>
+simbólico para um diretório, tipicamente <filename
+class="directory">/run/shm</filename>. O tmpfs do /run foi montado acima, de
+modo que, nesse caso, somente um diretório precisa ser criado com as
+permissões corretas.</para>
 
       <para>Em outros sistemas anfitriões, <filename>/dev/shm</filename> é um ponto de
 montagem para um tmpfs. Nesse caso, a montagem do /dev acima somente criará
@@ -110,9 +113,9 @@ montagem para um tmpfs. Nesse caso, a montagem do /dev acima somente criará
 precisamos montar explicitamente um tmpfs:</para>
 
 <screen><userinput>if [ -h $LFS/dev/shm ]; then
-  mkdir -pv $LFS/$(readlink $LFS/dev/shm)
+  install -v -d -m 1777 $LFS$(realpath /dev/shm)
 else
-  mount -t tmpfs -o nosuid,nodev tmpfs $LFS/dev/shm
+  mount -vt tmpfs -o nosuid,nodev tmpfs $LFS/dev/shm
 fi</userinput></screen>
 
   </sect2>
