@@ -39,24 +39,7 @@ C e C++.</para>
   <sect2 role="installation">
     <title>Instalação do GCC</title>
 
-
-    <!--
-    <para>
-At first, fix an issue breaking
-    <filename class="libraryfile">libasan.a</filename> building this package
-    with Glibc-2.34 or later:</para>
-
-<screen><userinput remap="pre">sed -e '/static.*SIGSTKSZ/d' \
-    -e 's/return kAltStackSize/return SIGSTKSZ * 4/' \
-    -i libsanitizer/sanitizer_common/sanitizer_posix_libcdep.cpp</userinput></screen>
--->
-<!--
-    <para>
-First fix a problem with the latest version of glibc:</para>
-
-    <screen><userinput remap="pre">patch -Np1 -i ../&gcc-upstream-fixes-patch;</userinput></screen>
--->
-<para>Se construir em x86_64, [então] mude o nome padrão de diretório para
+    <para>Se construir em x86_64, [então] mude o nome padrão de diretório para
 bibliotecas de 64 bits para <quote>lib</quote>:</para>
 
 <screen><userinput remap="pre">case $(uname -m) in
@@ -79,6 +62,7 @@ cd      build</userinput></screen>
              --enable-languages=c,c++ \
              --enable-default-pie     \
              --enable-default-ssp     \
+             --enable-host-pie        \
              --disable-multilib       \
              --disable-bootstrap      \
              --disable-fixincludes    \
@@ -91,7 +75,7 @@ instruções a respeito do como construir todas as linguagens suportadas do
 GCC.</para>
 
     <variablelist>
-      <title>O significado dos novos parâmetros do configure:</title>
+      <title>O significado dos novos parâmetros de configuração:</title>
 
       <varlistentry>
         <term><parameter>LD=ld</parameter></term>
@@ -154,10 +138,25 @@ significantemente adicionando-se -jx ao comando <command>make -k
 check</command> abaixo, onde x é o número de núcleos da CPU em seu sistema.</para>
     </important>
 
-   <para>Um conjunto de testes na suíte de teste do GCC é conhecido por esgotar a
-pilha padrão, então aumente o tamanho de pilha para executar os testes:</para>
+    <para>O GCC pode precisar de mais espaço de pilha para compilar alguns padrões de
+código extremamente complexos. Como precaução para as distribuições
+anfitriãs com um limite de pilha apertado, configure explicitamente o limite
+rígido do tamanho da pilha como infinito. Na maioria das distribuições
+anfitriãs (e no sistema LFS final), o limite rígido é infinito por padrão,
+mas não há mal algum em configurá-lo explicitamente. Não é necessário mudar
+o limite flexível do tamanho da pilha porque o GCC o configurará
+automaticamente para um valor apropriado, desde que o valor não exceda o
+limite rígido:</para>
 
-<screen><userinput remap="test">ulimit -s 32768</userinput></screen>
+<screen><userinput remap="test">ulimit -s -H unlimited</userinput></screen>
+
+    <para>Agora remova/corrija várias falhas conhecidas de teste:</para>
+
+<screen><userinput remap="test">sed -e '/cpython/d'               -i ../gcc/testsuite/gcc.dg/plugin/plugin.exp
+sed -e 's/no-pic /&amp;-no-pie /'     -i ../gcc/testsuite/gcc.target/i386/pr113689-1.c
+sed -e 's/300000/(1|300000)/'     -i ../libgomp/testsuite/libgomp.c-c++-common/pr109062.c
+sed -e 's/{ target nonpic } //' \
+    -e '/GOTPCREL/d'              -i ../gcc/testsuite/gcc.target/i386/fentryname3.c</userinput></screen>
 
     <para>Teste os resultados como um(a) usuário(a) não privilegiado(a), porém não
 pare em erros:</para>
@@ -176,23 +175,32 @@ su tester -c "PATH=$PATH make -k check"</userinput></screen>
 url="&test-results;"/> e <ulink
 url="https://gcc.gnu.org/ml/gcc-testresults/"/>.</para>
 
+    <!--
     <para>
-    <!-- https://gcc.gnu.org/PR106375 -->
-<!-- https://gcc.gnu.org/PR109353 -->
-Oito testes da GCC (de mais de 185.000): <filename>pr56837.c</filename> e
-sete testes no diretório <filename class='directory'>analyzer</filename> são
-conhecidos por falharem. Um teste da libstdc++ (de mais de 15.000),
-<filename>copy.cc</filename>, é conhecido por falhar. Para g++, 21 testes
-(de aproximadamente 250.000): 14 testes <quote>AddressSanitizer*</quote> e 7
-testes <filename>interception-malloc-test-1.C</filename> são conhecidos por
-falharem. Além disso, vários testes no diretório <filename
-class='directory'>vect</filename> são conhecidos por falharem se o hardware
-não suportar AVX.</para>
 
-    <para>Umas poucas falhas inesperadas não podem ser evitadas sempre. Os(As)
-desenvolvedores(as) do GCC geralmente estão cientes desses problemas, mas
-ainda não os resolveram. A menos que os resultados do teste sejam amplamente
-diferentes daqueles na URL acima, é seguro continuar.</para>
+    Eight gcc tests (out of over 185,000):
+    <!- - https://gcc.gnu.org/PR106375 - -><filename>pr56837.c</filename>
+    and seven tests in the <filename class='directory'>analyzer</filename>
+    directory are known to fail.
+
+    <!- - https://gcc.gnu.org/PR109353 - ->
+    One libstdc++ test (out of over 15000), <filename>copy.cc</filename>, is
+    known to fail.
+
+    For g++, 21 tests (out of approximately 250,000): 14
+    <quote>AddressSanitizer*</quote>
+    tests and 7 <filename>interception-malloc-test-1.C</filename> tests, are
+    known to fail.
+
+    Additionally, several tests in the
+    <filename class='directory'>vect</filename> directory are known to fail
+    if the hardware does not support AVX.</para>
+-->
+<para><!--The GCC developers
+    are usually aware of these issues, but have not resolved them yet.-->
+Umas poucas falhas inesperadas não podem ser evitadas sempre. A menos que os
+resultados do teste sejam amplamente diferentes daqueles na URL acima, é
+seguro continuar.</para>
 
     <para>Instale o pacote:</para>
 

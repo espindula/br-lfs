@@ -40,25 +40,17 @@ cada sistema operacional.</para>
     <title>Instalação do Coreutils</title>
 
     <para>POSIX exige que aplicativos originários do Coreutils reconheçam limites de
-carácter corretamente, mesmo em locales multi bytes. O seguinte remendo
-corrrije essa não-conformidade e outros defeitos relacionados à
+carácter corretamente, mesmo em localidades multi bytes. O seguinte remendo
+corrige essa não-conformidade e outros defeitos relacionados à
 internacionalização.</para>
 
 <screen><userinput remap="pre">patch -Np1 -i ../&coreutils-i18n-patch;</userinput></screen>
 
     <note>
-      <para>Muitos defeitos tem sido encontrados nesse remendo. Quando reportar novos
+      <para>Muitos defeitos tem sido encontrados nesse remendo. Quando informar novos
 defeitos para os(as) mantenedores(as) do Coreutils, por favor, verifique
 primeiro para ver se tais defeitos são reproduzíveis sem esse remendo.</para>
     </note>
-
-    
-    <!-- https://seclists.org/oss-sec/2024/q1/30 -->
-<para>Corrija uma vulnerabilidade de segurança no utilitário
-&quot;<command>split</command>&quot;:</para>
-
-<screen><userinput remap="pre">sed -e '/n_out += n_hold/,+4 s|.*bufsize.*|//&amp;|' \
-     -i src/split.c</userinput></screen>
 
     <para>Agora prepare Coreutils para compilação:</para>
 
@@ -120,28 +112,32 @@ usuário(a) <systemitem class="username">tester</systemitem> uma parte dele:</pa
     <para>Corrija algumas das permissões, de modo que o(a) usuário(a) não &root; possa
 compilar e executar os testes:</para>
 
+<!-- To editors: in jhalfs the standard input is always piped to "make"
+         so the test failures are not reproducible in jhalfs even if
+         running the build in a PTY.  Don't use jhalfs to test if we can
+         remove < /dev/null.  -->
 <screen><userinput remap="test">chown -R tester . </userinput></screen>
 
-    <para>Agora execute os testes:</para>
+    
+    <para>Agora execute os testes (usando <filename>/dev/null</filename> para a
+entrada padrão, ou dois testes possivelmente sejam quebrados se construir o
+LFS em um terminal gráfico ou uma sessão em SSH ou GNU Screen porque a
+entrada padrão é conectada a um PTY a partir da distribuição anfitriã, e o
+nó de dispositivo para tal PTY não pode ser acessado a partir do ambiente
+chroot do LFS):</para>
 
-<!-- Sometimes skipped, but if not it may fail.
-     Please DO NOT remove or comment out this unless we can fully
-     understand it!
-    <para>
-The test-getlogin test may fail in the LFS chroot environment.</para>
-    20240226: Commented out as it seems the upstream has root-caused and
-    fixed the issue.  I've checked the fix is in Coreutils 9.4 release
-    tarball:
-
-    https://lists.gnu.org/archive/html/bug-gnulib/2022-06/msg00079.html
--->
-<screen><userinput remap="test">su tester -c "PATH=$PATH make RUN_EXPENSIVE_TESTS=yes check"</userinput></screen>
-
-
+<screen><userinput remap="test">su tester -c "PATH=$PATH make -k RUN_EXPENSIVE_TESTS=yes check" \
+   &lt; /dev/null</userinput></screen>
 
     <para>Remova o grupo temporário:</para>
 
 <screen><userinput remap="test">groupdel dummy</userinput></screen>
+
+    <para>
+       Dois testes, <filename>tests/cp/preserve-mode.sh</filename> e
+<filename>tests/mv/acl.sh</filename>, são conhecidos por falharem no
+ambiente chroot, mas passam em um sistema completo.
+    </para>
 
     <para>Instale o pacote:</para>
 
@@ -672,7 +668,8 @@ arquivo especial de caractere, um arquivo especial de bloco ou um FIFO</para>
       <varlistentry id="mktemp">
         <term><command>mktemp</command></term>
         <listitem>
-          <para>Cria arquivos temporários de uma maneira segura; é usado em scripts</para>
+          <para>Cria arquivos temporários de uma maneira segura; é usado em conjuntos de
+comandos sequenciais</para>
         <indexterm zone="ch-system-coreutils mktemp">
           <primary sortas="b-mktemp">mktemp</primary>
         </indexterm>
