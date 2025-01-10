@@ -12,8 +12,8 @@ git clone https://salsa.debian.org/jamenson/br-lfs.git
 Chave pix para doações: jafesp@gmail.com
 
 Direitos autorais (Copyright) da Obra Derivada traduzida para o idioma 
-português escrito e falado no Brasil: (c) 2022, 2023, 2024 Jamenson 
-Ferreira Espindula de Almeida Melo (<jafesp@gmail.com>).
+português escrito e falado no Brasil: (c) 2022, 2023, 2024, 2025 
+Jamenson Ferreira Espindula de Almeida Melo (<jafesp@gmail.com>).
 
 # Atenção: todos os documentos aqui publicados são distribuídos sem qualquer garantia, implícita e (ou) explícita.
 
