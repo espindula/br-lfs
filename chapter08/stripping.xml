@@ -25,10 +25,15 @@ sistema LFS no estado atual dele.</para>
 
   <para>Um comando <command>strip</command> com a opção
 <parameter>--strip-unneeded</parameter> remove todos os símbolos de
-depuração de um binário ou de uma biblioteca. Também remove todas as
-entradas da tabela de símbolo não necessitadas pelo vinculador (para
-bibliotecas estáticas) ou pelo vinculador dinâmico (para binários vinculados
-dinamicamente e bibliotecas compartilhadas).</para>
+depuração de um binário ou biblioteca. Ele também remove todas as entradas
+da tabela de símbolos normalmente não necessárias para o vinculador (para
+bibliotecas estáticas) ou vinculador dinâmico (para binários lincados
+dinamicamente e bibliotecas compartilhadas). Usar
+<parameter>--strip-debug</parameter> não remove entradas da tabela de
+símbolos que podem ser necessárias para alguns aplicativos. A diferença
+entre "unneeded" e "debug" é muito pequena. Por exemplo, uma libc.a não
+despojada tem 22,4 MB. Depois de despojada com --strip-debug, ela tem 5,9
+MB. Usar --strip-unneeded somente reduz o tamanho para apenas 5,8 MB.</para>
 
   
   <!-- TODO: Zstd is better than Zlib for both speed and size.
@@ -89,7 +94,7 @@ cd /usr/lib
 for LIB in $save_usrlib; do
     objcopy --only-keep-debug --compress-debug-sections=zlib $LIB $LIB.dbg
     cp $LIB /tmp/$LIB
-    strip --strip-unneeded /tmp/$LIB
+    strip --strip-debug /tmp/$LIB
     objcopy --add-gnu-debuglink=$LIB.dbg /tmp/$LIB
     install -vm755 /tmp/$LIB /usr/lib
     rm /tmp/$LIB
@@ -108,14 +113,14 @@ online_usrlib="libbfd-&binutils-version;.so
 
 for BIN in $online_usrbin; do
     cp /usr/bin/$BIN /tmp/$BIN
-    strip --strip-unneeded /tmp/$BIN
+    strip --strip-debug /tmp/$BIN
     install -vm755 /tmp/$BIN /usr/bin
     rm /tmp/$BIN
 done
 
 for LIB in $online_usrlib; do
     cp /usr/lib/$LIB /tmp/$LIB
-    strip --strip-unneeded /tmp/$LIB
+    strip --strip-debug /tmp/$LIB
     install -vm755 /tmp/$LIB /usr/lib
     rm /tmp/$LIB
 done
@@ -126,7 +131,7 @@ for i in $(find /usr/lib -type f -name \*.so* ! -name \*dbg) \
     case "$online_usrbin $online_usrlib $save_usrlib" in
         *$(basename $i)* )
             ;;
-        * ) strip --strip-unneeded $i
+        * ) strip --strip-debug $i
             ;;
     esac
 done

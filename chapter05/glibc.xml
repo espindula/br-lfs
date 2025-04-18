@@ -90,7 +90,6 @@ class="directory">/usr/sbin</filename>:</para>
       --host=$LFS_TGT                    \
       --build=$(../scripts/config.guess) \
       --enable-kernel=&min-kernel;               \
-      --with-headers=$LFS/usr/include    \
       --disable-nscd                     \
       libc_cv_slibdir=/usr/lib</userinput></screen>
 
@@ -113,16 +112,6 @@ class="directory">$LFS/tools</filename>.</para>
           <para>Isso diz para a Glibc para compilar a biblioteca com suporte para núcleos
 Linux &min-kernel; e posteriores. Contornos para núcleos mais antigos não
 estão habilitados.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><parameter>--with-headers=$LFS/usr/include</parameter></term>
-        <listitem>
-          <para>Isso diz para a Glibc para compilar a si mesma contra os cabeçalhos
-recentemente instalados no diretório $LFS/usr/include, de forma que ela
-saiba exatamente quais recursos o núcleo tem e possa otimizar-se
-adequadamente.</para>
         </listitem>
       </varlistentry>
 
@@ -185,12 +174,12 @@ seguinte comando.</para></warning>
       <varlistentry>
         <term><parameter>DESTDIR=$LFS</parameter></term>
         <listitem>
-          <para>A variável <envar>DESTDIR</envar> de make é usada por quase todos os pacotes
+          <para>A variável <envar>DESTDIR</envar> do make é usada por quase todos os pacotes
 para definir o local onde o pacote deveria ser instalado. Se ela não estiver
-configurada, predefine para o diretório raiz (<filename
+configurada, padroniza para o diretório raiz (<filename
 class="directory">/</filename>). Aqui nós especificamos que o pacote seja
 instalado em <filename class="directory">$LFS</filename>, que se tornará o
-diretório raiz na <xref linkend= "ch-tools-chroot"/>.</para>
+diretório raiz na <xref linkend= "ch-tools-chroot" role='.'/></para>
         </listitem>
       </varlistentry>
 
@@ -201,33 +190,101 @@ script <command>ldd</command>:</para>
 
 <screen><userinput remap="install">sed '/RTLDLIST=/s@/usr@@g' -i $LFS/usr/bin/ldd</userinput></screen>
 
-    <caution>
-      <para>Neste ponto, é imperativo parar e certificar-se de que as funções básicas
-(compilar e lincar) do novo conjunto de ferramentas estão funcionando como
-esperado. Para realizar uma verificação de sanidade, execute os seguintes
-comandos:</para>
+    <para>Agora que nosso conjunto cruzado de ferramentas está no lugar, é importante
+garantir que compilação e vinculação funcionarão conforme esperado. Nós
+fazemos isso realizando algumas verificações de sanidade:</para>
 
-<screen><userinput>echo 'int main(){}' | $LFS_TGT-gcc -xc -
-readelf -l a.out | grep ld-linux</userinput></screen>
+<screen><userinput>echo 'int main(){}' | $LFS_TGT-gcc -x c - -v -Wl,--verbose &amp;&gt; dummy.log
+readelf -l a.out | grep ': /lib'</userinput></screen>
 
-      <para>Se tudo estiver funcionando corretamente, [então] não deveriam existir
-quaisquer erros e a saída do comando final será na forma:</para>
+  <para>Não deveriam existir erros, e a saída gerada do último comando será (levando
+em consideração diferenças específicas da plataforma no nome do vinculador
+dinâmico):</para>
 
 <screen><computeroutput>[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</computeroutput></screen>
 
-      <para>Observe que, para máquinas de 32 bits, o nome do interpretador será
-<filename>/lib/ld-linux.so.2</filename>.</para>
+  <para>Observe que esse caminho não deveria conter <filename
+class='directory'>/mnt/lfs</filename> (ou o valor da variável
+<envar>LFS</envar> se você usou uma diferente). O caminho é resolvido quando
+o programa compilado for executado, e isso só deveria acontecer depois que
+nós entrarmos no ambiente chroot onde o núcleo consideraria <filename
+class='directory'>$LFS</filename> como o diretório raiz (<filename
+class='directory'>/</filename>).</para>
 
-      <para>Se a saída gerada não for mostrada como acima ou não existir saída gerada
-nenhuma, então alguma coisa está errada. Investigue e refaça os passos para
-descobrir onde está o problema e corrija-o. Esse problema precisa ser
-resolvido antes de continuar.</para>
+  <para>Agora certifique-se de que nós estamos configurados para usar os arquivos
+corretos de iniciação:</para>
 
-      <para>Uma vez que tudo esteja bem, limpe o arquivo de teste:</para>
+<screen><userinput>grep -E -o "$LFS/lib.*/S?crt[1in].*succeeded" dummy.log</userinput></screen>
 
-<screen><userinput>rm -v a.out</userinput></screen>
+  <para>A saída gerada do último comando deveria ser:</para>
 
-    </caution>
+<screen><computeroutput>/mnt/lfs/lib/../lib/Scrt1.o succeeded
+/mnt/lfs/lib/../lib/crti.o succeeded
+/mnt/lfs/lib/../lib/crtn.o succeeded</computeroutput></screen>
+
+  <para>Verifique se o compilador está procurando os arquivos corretos de cabeçalho:</para>
+
+<screen><userinput>grep -B3 "^ $LFS/usr/include" dummy.log</userinput></screen>
+
+  <para>Esse comando deveria retornar a seguinte saída gerada:</para>
+
+<screen><computeroutput>#include &lt;...&gt; search starts here:
+ /mnt/lfs/tools/lib/gcc/x86_64-lfs-linux-gnu/&gcc-version;/include
+ /mnt/lfs/tools/lib/gcc/x86_64-lfs-linux-gnu/&gcc-version;/include-fixed
+ /mnt/lfs/usr/include</computeroutput></screen>
+
+   <para>Novamente, o diretório nomeado depois do teu tripleto alvo possivelmente
+seja diferente do acima, dependendo da arquitetura do teu sistema.</para>
+
+  <para>Agora, verifique se o novo vinculador está sendo usado com os caminhos
+corretos de procura:</para>
+
+<screen><userinput>grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'</userinput></screen>
+
+  <para>Referências para caminhos que tenham componentes com '-linux-gnu' deveriam
+ser ignoradas, porém, do contrário, a saída gerada do último comando deveria
+ser:</para>
+
+<screen><computeroutput>SEARCH_DIR("=/mnt/lfs/tools/x86_64-lfs-linux-gnu/lib64")
+SEARCH_DIR("=/usr/local/lib64")
+SEARCH_DIR("=/lib64")
+SEARCH_DIR("=/usr/lib64")
+SEARCH_DIR("=/mnt/lfs/tools/x86_64-lfs-linux-gnu/lib")
+SEARCH_DIR("=/usr/local/lib")
+SEARCH_DIR("=/lib")
+SEARCH_DIR("=/usr/lib");</computeroutput></screen>
+
+   <para>Um sistema de 32 bits possivelmente use alguns outros diretórios, mas de
+qualquer maneira o aspecto importante aqui é que todos os caminhos deveriam
+começar com um sinal de igual (<literal>=</literal>), que seria substituído
+pelo diretório sysroot que nós configuramos para o vinculador.</para>
+
+  <para>Em seguida, tenha certeza de que nós estamos usando a libc correta:</para>
+
+<screen><userinput>grep "/lib.*/libc.so.6 " dummy.log</userinput></screen>
+
+  <para>A saída gerada do último comando deveria ser:</para>
+
+<screen><computeroutput>attempt to open /mnt/lfs/usr/lib/libc.so.6 succeeded</computeroutput></screen>
+
+  <para>Tenha certeza de que GCC está usando o vinculador dinâmico correto:</para>
+
+<screen><userinput>grep found dummy.log</userinput></screen>
+
+  <para>A saída gerada do último comando deveria ser (levando em consideração
+diferenças específicas da plataforma no nome do vinculador dinâmico):</para>
+
+<screen><computeroutput>found ld-linux-x86-64.so.2 at /mnt/lfs/usr/lib/ld-linux-x86-64.so.2</computeroutput></screen>
+
+  <para>Se a saída gerada não aparecer conforme mostrado acima ou não for recebida,
+então alguma coisa está seriamente errada. Investigue e refaça as etapas
+para descobrir onde está o problema e corrija-o. Quaisquer problemas
+deveriam ser resolvidos antes de se continuar com o processo.</para>
+
+  <para>Uma vez que tudo esteja funcionando corretamente, remova os arquivos de
+teste:</para>
+
+<screen><userinput>rm -v a.out dummy.log</userinput></screen>
 
     <note><para>Construir os pacotes no próximo capítulo servirá como uma verificação
 adicional de que o conjunto de ferramentas foi construído adequadamente. Se
