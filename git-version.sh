@@ -32,8 +32,6 @@ if ! git status > /dev/null; then
     exit 0
 fi
 
-#export LC_ALL=en_US.utf8
-#export TZ=America/Chicago
 export LC_ALL=pt_BR.utf8
 export TZ=America/Recife
 
