@@ -23,6 +23,29 @@
 
     <para>O pacote GRUB contém o GRand Unified Bootloader.</para>
 
+    <note><para>Esta página está dividida em múltiplas seções destinadas para instalar para
+um método específico de inicialização (BIOS, UEFI de 64 bits e UEFI de 32
+bits). O GRUB não pode ser construído com todas as arquiteturas de métodos
+de inicialização de uma vez.</para>
+    <para>Você pode ignorar outras seções para ir para o método de inicialização que
+precisa. Se em dúvida, você pode seguir todas as seções, ao custo de tempo
+extra de construção. Depois que você tiver instalado suporte para teu método
+de inicialização, continue construindo o restante dos pacotes neste
+capítulo. Tornar teu sistema LFS inicializável com GRUB será discutido na
+<xref linkend="ch-bootable-grub" role='.'/></para></note>
+
+    <warning>
+      <para>Desconfigure quaisquer variáveis de ambiente que possivelmente afetem a
+construção:</para>
+
+      <screen><userinput remap='pre'>unset {C,CPP,CXX,LD}FLAGS</userinput></screen>
+
+      <para>Não tente <quote>ajustar</quote> esse pacote com sinalizadores
+personalizados de compilação. Esse pacote é um carregador de
+inicialização. As operações de baixo nível no código fonte possivelmente
+sejam quebradas por otimização agressiva.</para>
+    </warning>
+
     <segmentedlist>
       <segtitle>&buildtime;</segtitle>
       <segtitle>&diskspace;</segtitle>
@@ -36,30 +59,7 @@
   </sect2>
 
   <sect2 role="installation">
-    <title>Instalação do GRUB</title>
-
-    <note>
-      <para>
-        Se o teu sistema tem suporte UEFI e você desejar inicializar o LFS com UEFI,
-você precisa instalar o GRUB com suporte UEFI (e as dependências dele)
-seguindo as instruções na <ulink
-url="&blfs-book;postlfs/grub-efi.html">página BLFS</ulink>. Você pode
-ignorar esse pacote ou instalar esse pacote e o pacote GRUB para UEFI do
-BLFS sem conflito (a página BLFS fornece instruções para ambos os casos).
-      </para>
-    </note>
-
-    <warning>
-      <para>Desconfigure quaisquer variáveis de ambiente que possivelmente afetem a
-construção:</para>
-
-      <screen><userinput remap='pre'>unset {C,CPP,CXX,LD}FLAGS</userinput></screen>
-
-      <para>Não tente <quote>ajustar</quote> esse pacote com sinalizadores
-personalizados de compilação. Esse pacote é um carregador de
-inicialização. As operações de baixo nível no código fonte possivelmente
-sejam quebradas por otimização agressiva.</para>
-    </warning>
+    <title>Instalação do GRUB para BIOS</title>
 
     
     <!-- See https://wiki.linuxfromscratch.org/lfs/ticket/5857. Remove this at
@@ -107,10 +107,112 @@ check</command>.</para>
 
     <para>Instale o pacote:</para>
 
+    <screen><userinput remap="install">make install</userinput></screen>
+
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do GRUB para UEFI de 64 Bits</title>
+
+    <para>Se quiser inicializar com UEFI de 64 bits, você deveria construir suporte
+para ela.</para>
+
+    <para>Primeiro, se você construiu o GRUB a partir de alguma das seções acima,
+limpe a árvore do fonte:</para>
+
+<screen><userinput remap="pre">make clean</userinput></screen>
+
+    <para>Corrija um defeito introduzido no grub-2.14:</para>
+
+<screen><userinput remap="pre">sed 's/--image-base/--nonexist-linker-option/' -i configure</userinput></screen>
+
+    <para>Agora configure o GRUB para suporte UEFI de 64 bits:</para>
+
+<screen><userinput remap="configure">./configure --prefix=/usr       \
+            --sysconfdir=/etc   \
+            --target=x86_64     \
+            --with-platform=efi \
+            --disable-efiemu    \
+            --disable-werror</userinput></screen>
+
+    <variablelist>
+      <title>O significado das novas opções de configuração:</title>
+
+      <varlistentry>
+        <term><parameter>--target=x86_64</parameter></term>
+        <listitem>
+          <para>Isso define que a arquitetura do firmware UEFI é x86_64, a qual o GRUB
+deveria alvejar.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--with-platform=efi</parameter></term>
+        <listitem>
+          <para>Isso especifica que EFI é uma plataforma que o GRUB deveria alvejar. Em
+combinação com <parameter>--target=x86_64</parameter>, o GRUB terá a
+capacidade para alvejar a plataforma <literal>x86_64-efi</literal>.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile o pacote para suporte UEFI de 64 bits:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Instale suporte para UEFI de 64 bits:</para>
+
 <screen><userinput remap="install">make install</userinput></screen>
 
-  <para>Tornar teu sistema LFS inicializável com GRUB será discutido no <xref
-linkend="ch-bootable-grub" role='.'/></para>
+  </sect2>
+
+  <sect2 role="installation">
+    <title>Instalação do GRUB para UEFI de 32 Bits</title>
+
+    <para>Se quiser inicializar com UEFI de 32 bits, o que é muito raro, você deveria
+construir suporte para ela.</para>
+
+    <para>Primeiro, se você construiu o GRUB a partir de alguma das seções acima,
+limpe a árvore do fonte:</para>
+
+<screen><userinput remap="pre">make clean</userinput></screen>
+
+    <para>Corrija um defeito introduzido no grub-2.14:</para>
+
+<screen><userinput remap="pre">sed 's/--image-base/--nonexist-linker-option/' -i configure</userinput></screen>
+
+    <para>Agora configure o GRUB para suporte UEFI de 32 bits:</para>
+
+<screen><userinput remap="configure">./configure --prefix=/usr       \
+            --sysconfdir=/etc   \
+            --target=i386       \
+            --with-platform=efi \
+            --disable-efiemu    \
+            --disable-werror</userinput></screen>
+
+    <variablelist>
+      <title>O significado das novas opções de configuração:</title>
+
+      <varlistentry>
+        <term><parameter>--target=i386</parameter></term>
+        <listitem>
+          <para>Isso define que a arquitetura de firmware UEFI é i386/32 bits, que o GRUB
+deveria alvejar. Em combinação com
+<parameter>--with-platform=efi</parameter>, o GRUB terá a capacidade de
+alvejar a plataforma <literal>i386-efi</literal>.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Compile o pacote para suporte UEFI de 32 bits:</para>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+    <para>Instale o suporte para UEFI de 32 bits:</para>
+
+<screen><userinput remap="install">make install</userinput></screen>
 
   </sect2>
 
@@ -134,6 +236,12 @@ grub-set-default, grub-sparc64-setup e grub-syslinux2cfg</seg>
 grub-install for primeiro executado)</seg>
       </seglistitem>
     </segmentedlist>
+
+    <note><para>
+      <filename class="directory">/usr/lib/grub</filename> terá conteúdo diferente
+baseado em qual(is) plataforma(s) você tiver instalado o GRUB. Ou seja,
+existirão diferentes módulos do GRUB para cada plataforma.
+    </para></note>
 
     <variablelist>
       <bridgehead renderas="sect3">Descrições Curtas</bridgehead>
