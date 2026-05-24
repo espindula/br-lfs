@@ -37,6 +37,32 @@ Certifique-se de instalá-los se a tua distribuição os fornecer.</para>
    <para>Versões anteriores dos pacotes de software listados possivelmente funcionem,
 porém não foram testados.</para>
 
+   <warning>
+     <para>
+       Esteja ciente que GCC mais recente que &gcc-version; ou Binutils mais
+recente que &binutils-version; não foram testadas. Um GCC mais recente é
+altamente provável quebrar a construção deste lançamento do LFS. Não informe
+tal quebra para os(as) editores(as) do LFS. Se tua distribuição anfitriã
+tiver versões mais recentes desses pacotes, você tem várias opções:
+       <itemizedlist>
+         <listitem>
+           <simpara>Usar um lançamento mais recente do livro LFS, se existir um</simpara>
+         </listitem>
+         <listitem>
+           <simpara>Usar uma distribuição anfitriã mais antiga</simpara>
+         </listitem>
+         <listitem>
+           <simpara>Desatualizar o GCC se isso for suportado pela distribuição anfitriã</simpara>
+         </listitem>
+         <listitem>
+           <simpara>Usar o livro mais recente de desenvolvimento do LFS. As atualizações para a
+versão mais recente dos pacotes no LFS geralmente são adicionadas dentro de
+duas a quatro semanas depois do lançamento.</simpara>
+         </listitem>
+       </itemizedlist>
+     </para>
+   </warning>
+
   <itemizedlist spacing="compact">
 
     <listitem>
@@ -46,7 +72,8 @@ simbólico ou real para bash)</para>
 
     <listitem>
       <para><emphasis role="strong">Binutils-2.13.1</emphasis> (Versões maiores que
-&binutils-version; não são recomendadas dado que elas não foram testadas)</para>
+&binutils-version; possivelmente não funcionem dado que elas não foram
+testadas)</para>
     </listitem>
 
     <listitem>
@@ -55,9 +82,12 @@ link para bison ou script pequeno que executa bison)</para>
     </listitem>
 
     
-    <!-- In Coreutils-8.1 the nproc program is added.  -->
+    <!-- In Coreutils-8.1 the nproc program is added. uutils coreutils-0.8
+         is the first supported version, since it is the one introduced
+         in ubuntu-26.04-->
 <listitem>
-      <para><emphasis role="strong">Coreutils-8.1</emphasis></para>
+      <para><emphasis role="strong">GNU Coreutils-8.1</emphasis> or <emphasis
+role="strong">Uutils Coreutils-0.8</emphasis></para>
     </listitem>
 
     <listitem>
@@ -77,10 +107,10 @@ link para gawk)</para>
       
       <!-- See https://gcc.gnu.org/r15-4719.  -->
 <para><emphasis role="strong">GCC-5.4</emphasis> incluindo o compilador C++,
-<command>g++</command> (Versões maiores que &gcc-version; não são
-recomendadas dado que elas não foram testadas). As bibliotecas C e C++
-padrão (com cabeçalhos) também precisam estar presentes, de forma que o
-compilador C++ possa construir programas hospedados</para>
+<command>g++</command> (Versões maiores que &gcc-version; possivelmente não
+funcionem dado que elas não foram testadas). As bibliotecas C e C++ padrão
+(com cabeçalhos) também precisam estar presentes, de modo que o compilador
+C++ consiga construir programas hospedados</para>
     </listitem>
 
     <listitem>
@@ -194,31 +224,31 @@ habilidade de compilar aplicativos, execute os seguintes comandos:</para>
 
 <screen role="nodump"><?dbfo keep-together="auto"?><userinput>cat &gt; version-check.sh &lt;&lt; "EOF"
 <literal>#!/bin/bash
-# Um conjunto sequencial de comandos para listar os números de versão de ferramentas críticas de desenvolvimento
+# A script to list version numbers of critical development tools
 
-# Se você tiver ferramentas instaladas em outros diretórios, [então] ajuste "PATH" aqui E
-# em ~lfs/.bashrc (seção 4.4) também.
+# If you have tools installed in other directories, adjust PATH here AND
+# in ~lfs/.bashrc (section 4.4) as well.
 
 LC_ALL=C 
 PATH=/usr/bin:/bin
 
 bail() { echo "FATAL: $1"; exit 1; }
-grep --version > /dev/null 2> /dev/null || bail "grep não funciona"
-sed '' /dev/null || bail "sed não funciona"
-sort   /dev/null || bail "sort não funciona"
+grep --version > /dev/null 2> /dev/null || bail "grep does not work"
+sed '' /dev/null || bail "sed does not work"
+sort   /dev/null || bail "sort does not work"
 
 ver_check()
 {
    if ! type -p $2 &amp;>/dev/null
    then 
-     echo "ERRO: Não conseguiu encontrar $2 ($1)"; return 1; 
+     echo "ERROR: Cannot find $2 ($1)"; return 1; 
    fi
    v=$($2 --version 2>&amp;1 | grep -E -o '[0-9]+\.[0-9\.]+[a-z]*' | head -n1)
    if printf '%s\n' $3 $v | sort --version-sort --check &amp;>/dev/null
    then 
      printf "OK:    %-9s %-6s >= $3\n" "$1" "$v"; return 0;
    else 
-     printf "ERRO:  %-9s é MUITO ANTIGO ($3 ou posterior exigido)\n" "$1"; 
+     printf "ERROR: %-9s is TOO OLD ($3 or later required)\n" "$1"; 
      return 1; 
    fi
 }
@@ -228,15 +258,19 @@ ver_kernel()
    kver=$(uname -r | grep -E -o '^[0-9\.]+')
    if printf '%s\n' $1 $kver | sort --version-sort --check &amp;>/dev/null
    then 
-     printf "OK:    núcleo Linux $kver >= $1\n"; return 0;
+     printf "OK:    Linux Kernel $kver >= $1\n"; return 0;
    else 
-     printf "ERRO:  núcleo Linux ($kver) é MUITO ANTIGO ($1 ou posterior exigido)\n" "$kver"; 
+     printf "ERROR: Linux Kernel ($kver) is TOO OLD ($1 or later required)\n" "$kver"; 
      return 1; 
    fi
 }
 
-# "Coreutils" primeiro, pois "--version-sort" precisa do "Coreutils" >= 7.0
-ver_check Coreutils      sort     8.1 || bail "Coreutils muito antigo, pare"
+# Coreutils first because --version-sort needs Coreutils >= 7.0
+if sort --version |&amp; grep -q uutils; then
+    ver_check Coreutils  sort     0.8 || bail "Uutils Coreutils too old, stop"
+else
+    ver_check Coreutils  sort     8.1 || bail "GNU Coreutils too old, stop"
+fi
 ver_check Bash           bash     3.2
 ver_check Binutils       ld       2.13.1
 ver_check Bison          bison    2.7
@@ -259,29 +293,29 @@ ver_check Xz             xz       5.0.0
 ver_kernel &min-kernel;
 
 if mount | grep -q 'devpts on /dev/pts' &amp;&amp; [ -e /dev/ptmx ]
-then echo "OK:    núcleo Linux suporta PTY do UNIX 98";
-else echo "ERRO:  núcleo Linux NÃO suporta PTY do UNIX 98"; fi
+then echo "OK:    Linux Kernel supports UNIX 98 PTY";
+else echo "ERROR: Linux Kernel does NOT support UNIX 98 PTY"; fi
 
 alias_check() {
    if $1 --version 2>&amp;1 | grep -qi $2
    then printf "OK:    %-4s is $2\n" "$1";
-   else printf "ERRO:  %-4s is NOT $2\n" "$1"; fi
+   else printf "ERROR: %-4s is NOT $2\n" "$1"; fi
 }
 echo "Aliases:"
 alias_check awk GNU
 alias_check yacc Bison
 alias_check sh Bash
 
-echo "Verificação do compilador:"
+echo "Compiler check:"
 if printf "int main(){}" | g++ -x c++ -
-then echo "OK:    g++ funciona";
-else echo "ERRO:  g++ NÃO funciona"; fi
+then echo "OK:    g++ works";
+else echo "ERROR: g++ does NOT work"; fi
 rm -f a.out
 
 if [ "$(nproc)" = "" ]; then
-   echo "ERRO: nproc não está disponível ou ele produz saída gerada vazia"
+   echo "ERROR: nproc is not available or it produces empty output"
 else
-   echo "OK:   nproc informa que $(nproc) núcleos lógicos estão disponíveis"
+   echo "OK: nproc reports $(nproc) logical cores are available"
 fi</literal>
 EOF
 
