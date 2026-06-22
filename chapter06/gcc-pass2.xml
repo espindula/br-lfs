@@ -61,12 +61,6 @@ bibliotecas de 64 bits para <quote>lib</quote>:</para>
   ;;
 esac</userinput></screen>
 
-    <para>Substitua as regras de construção dos cabeçalhos da libgcc e da libstdc++
-para permitir construir essas bibliotecas com suporte a camadas POSIX:</para>
-
-<screen><userinput remap="pre">sed '/thread_header =/s/@.*@/gthr-posix.h/' \
-    -i libgcc/Makefile.in libstdc++-v3/include/Makefile.in</userinput></screen>
-
     <para>Crie um diretório de construção separado novamente:</para>
 
 <screen><userinput remap="pre">mkdir -v build
@@ -85,6 +79,7 @@ variáveis de ambiente que substituam os sinalizadores de otimização padrão.<
     --with-build-sysroot=$LFS  \
     --enable-default-pie       \
     --enable-default-ssp       \
+    --disable-fixincludes      \
     --disable-nls              \
     --disable-multilib         \
     --disable-libatomic        \
@@ -94,27 +89,14 @@ variáveis de ambiente que substituam os sinalizadores de otimização padrão.<
     --disable-libssp           \
     --disable-libvtv           \
     --enable-languages=c,c++   \
-    LDFLAGS_FOR_TARGET=-L$PWD/$LFS_TGT/libgcc</userinput></screen>
+    LDFLAGS_FOR_TARGET=-L$PWD/$LFS_TGT/libgcc \
+    target_configargs=gcc_cv_target_thread_file=posix</userinput></screen>
 
     <variablelist>
       <title>O significado das novas opções de configuração:</title>
 
       <!-- WIP -->
 <varlistentry>
-        <term><parameter>--with-build-sysroot=$LFS</parameter></term>
-        <listitem>
-          <para>Normalmente, usar <parameter>--host</parameter> garante que um compilador
-cruzado seja usado para construir o GCC e que o compilador sabe que tem que
-procurar por cabeçalhos e por bibliotecas em <filename
-class="directory">$LFS</filename>. Porém, o sistema de construção para o GCC
-usa ferramentas adicionais, que não estão cientes desse local. Essa chave é
-necessária, de forma que tais ferramentas procurarão pelos arquivos
-necessários em <filename class="directory">$LFS</filename>, e não no
-anfitrião.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><parameter>--target=$LFS_TGT</parameter></term>
         <listitem>
           <para>Nós estamos compilando cruzadamente o GCC, de forma que é impossível
@@ -131,6 +113,42 @@ pelo GCC passagem 1.</para>
       </varlistentry>
 
       <varlistentry>
+        <term><parameter>--with-build-sysroot=$LFS</parameter></term>
+        <listitem>
+          <para>Normalmente, usar <parameter>--host</parameter> garante que um compilador
+cruzado seja usado para construir o GCC e que o compilador sabe que tem que
+procurar por cabeçalhos e por bibliotecas em <filename
+class="directory">$LFS</filename>. Porém, o sistema de construção para o GCC
+usa ferramentas adicionais, que não estão cientes desse local. Essa chave é
+necessária, de forma que tais ferramentas procurarão pelos arquivos
+necessários em <filename class="directory">$LFS</filename>, e não no
+anfitrião.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-fixincludes</parameter></term>
+        <listitem>
+          <para>Por padrão, durante a instalação do GCC, alguns cabeçalhos do sistema seriam
+<quote>corrigidos</quote> para serem usados com o GCC. Isso não é necessário
+para um sistema Linux moderno e potencialmente danoso se um pacote for
+reinstalado depois da instalação do GCC. Essa chave impede o GCC de
+<quote>corrigir</quote> os cabeçalhos.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><parameter>--disable-libsanitizer</parameter></term>
+        <listitem>
+          <para>Desabilita as bibliotecas sanitizadoras de tempo de execução do GCC. Elas
+não são necessárias para a instalação temporária. Em <xref
+linkend='ch-tools-gcc-pass1'/> estava implícito por
+<parameter>--disable-libstdcxx</parameter> e agora temos que passá-lo
+explicitamente.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><parameter>LDFLAGS_FOR_TARGET=...</parameter></term>
         <listitem>
           <para>Permite que <filename class="libraryfile">libstdc++</filename> use o
@@ -143,13 +161,13 @@ a libc.</para>
       </varlistentry>
 
       <varlistentry>
-        <term><parameter>--disable-libsanitizer</parameter></term>
+        <term><parameter>target_configargs=gcc_cv_target_thread_file=posix</parameter></term>
         <listitem>
-          <para>Desabilita as bibliotecas sanitizadoras de tempo de execução do GCC. Elas
-não são necessárias para a instalação temporária. Em <xref
-linkend='ch-tools-gcc-pass1'/> estava implícito por
-<parameter>--disable-libstdcxx</parameter> e agora temos que passá-lo
-explicitamente.</para>
+          <para>Construa as bibliotecas alvo libgcc e libstdc++ com suporte de camada POSIX
+habilitado. O padrão é o de seguir a configuração do compilador usado para
+construir a biblioteca alvo (nesse caso, <xref
+linkend='ch-tools-gcc-pass1'/> que foi configurado com nenhum suporte a
+camada).</para>
         </listitem>
       </varlistentry>
 
